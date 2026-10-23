@@ -4,22 +4,13 @@ namespace CatEcommerce.Shared.Common.Constants;
 public sealed record DashboardTileDefinition(string Key, string Title, IReadOnlyList<string> Roles, string GateAction, string? DrillReportKey, IReadOnlyList<string>? AlternativeGateActions = null);
 
 /// <summary>
-/// HO-RPT-001 section 8.11 (ADR-286) -- the tiles each role sees, server-composed. Only the tiles whose source module is built are listed; a tile whose module is not merged (the three <c>boarding.*</c> tiles,
-/// HO-BRD-001) is <b>absent</b>, not zero. Where an owning handover names no read action the gate falls back to the category action of section 8.8 (named in the ACCEPTANCE report): the
-/// <c>revenue.*</c>, <c>payments.*</c>, <c>billing.*</c> and <c>orders.*</c> tiles use the report category action, <c>clinic.consultations-unfinalised</c> uses <c>Visits.View</c> and <c>surgery.today</c> uses <c>Surgery.View</c>.
+/// HO-RPT-001 section 8.11 (ADR-286) -- the tiles each role sees, server-composed. Only the tiles whose source module is built are listed. Where an owning handover names no read action the gate falls back to the category action of section 8.8 (named in the ACCEPTANCE report): the
+/// <c>revenue.*</c>, <c>payments.*</c>, <c>billing.*</c> and <c>orders.*</c> tiles use the report category action.
 /// </summary>
 public static class DashboardTiles
 {
-    private static readonly string[] AllClinical = [StaffRoles.Reception, StaffRoles.Vet, StaffRoles.Nurse, StaffRoles.Administrator];
-
     public static readonly IReadOnlyList<DashboardTileDefinition> All =
     [
-        new("clinic.appointments-today", "Appointments today", AllClinical, Actions.Appointments.View, ReportCatalogue.ClinicDailyScheduleKey),
-        new("clinic.queue-now", "Queue now", [StaffRoles.Reception, StaffRoles.Vet, StaffRoles.Nurse], Actions.Appointments.View, ReportCatalogue.ClinicQueuePerformanceKey),
-        new("clinic.my-appointments-today", "My appointments today", [StaffRoles.Vet], Actions.Appointments.View, ReportCatalogue.ClinicDailyScheduleKey),
-        new("clinic.vaccinations-due", "Vaccinations due", [StaffRoles.Reception, StaffRoles.Nurse], Actions.Cats.View, ReportCatalogue.VaccinationDueListKey),
-        new("clinic.consultations-unfinalised", "Consultations to finalise", [StaffRoles.Vet], Actions.Visits.View, null),
-        new("surgery.today", "Surgery today", [StaffRoles.Vet, StaffRoles.Nurse, StaffRoles.Reception], Actions.Surgery.View, ReportCatalogue.SurgeryRegisterKey),
         new("stock.expiry", "Expiring stock", [StaffRoles.Inventory, StaffRoles.Administrator], Actions.Reports.StockView, ReportCatalogue.StockNearExpiryKey),
         new("stock.low", "Low stock", [StaffRoles.Inventory], Actions.Reports.StockView, ReportCatalogue.StockLowReorderKey),
         new("stock.consignments-open", "Consignments awaiting clearance", [StaffRoles.Inventory], Actions.Reports.StockView, ReportCatalogue.ImportConsignmentsKey),

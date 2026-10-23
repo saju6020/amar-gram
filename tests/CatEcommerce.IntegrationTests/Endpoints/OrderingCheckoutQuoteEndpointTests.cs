@@ -20,7 +20,7 @@ public sealed class OrderingCheckoutQuoteEndpointTests(OrderingApiFactory factor
     private async Task<Shop> SetUpAsync(bool cod = true, decimal? codMax = null, object[]? windows = null, decimal? freeOver = null, int lead = 1, bool fillCart = true)
     {
         var context = await CreateContextAsync();
-        var food = await CreateSkuAsync(context, price: 850m, stock: 50m, onStorefront: true, name: "Royal Canin Kitten 2 kg");
+        var food = await CreateSkuAsync(context, price: 850m, stock: 50m, onStorefront: true, name: "Royal Basmati Rice 2 kg");
         var toy = await CreateSkuAsync(context, price: 120m, stock: 50m, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Feather wand");
         var district = NewDistrict();
         var zoneId = await CreateZoneAsync(context, district, cod: cod, codMax: codMax, slotWindows: windows, freeOver: freeOver, leadTimeDays: lead);

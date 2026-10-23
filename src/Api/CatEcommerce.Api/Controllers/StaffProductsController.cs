@@ -122,27 +122,13 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
         var command = new SetFoodDetailsCommand
         {
             ProductId = productId, ExpectedVersion = request.ExpectedVersion, Manufacturer = request.Manufacturer,
-            LifeStage = request.LifeStage, ProteinSource = request.ProteinSource, IngredientList = request.IngredientList,
+            ProteinSource = request.ProteinSource, IngredientList = request.IngredientList,
             GuaranteedAnalysis = request.GuaranteedAnalysis is null ? null : new GuaranteedAnalysisInput
             {
                 ProteinPercent = request.GuaranteedAnalysis.ProteinPercent, FatPercent = request.GuaranteedAnalysis.FatPercent,
                 FibrePercent = request.GuaranteedAnalysis.FibrePercent, MoisturePercent = request.GuaranteedAnalysis.MoisturePercent
             },
             FeedingGuide = request.FeedingGuide, StorageInstructions = request.StorageInstructions,
-            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
-        };
-
-        var response = await dispatcher.SendAsync(command);
-        return response.IsSuccess ? NoContent() : ToErrorResult(response);
-    }
-
-    [HttpPut("{productId:guid}/prescription")]
-    [RequireAction(Actions.Shop.ProductsManage)]
-    public async Task<IActionResult> SetPrescriptionRequired(Guid productId, [FromBody] SetPrescriptionRequiredRequest request)
-    {
-        var command = new SetPrescriptionRequiredCommand
-        {
-            ProductId = productId, ExpectedVersion = request.ExpectedVersion, PrescriptionRequired = request.PrescriptionRequired,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { EmptyState } from '@/components/common/EmptyState';
-import { EmptyCatIllustration } from '@/components/common/EmptyState';
+import { EmptyWarmIllustration } from '@/components/common/EmptyState';
 import { buttonVariants } from '@/components/ui/button';
 import { HearthBand } from '@/components/hearth/HearthBand';
 import { LineArtBasket } from '@/components/hearth/LineArtBasket';
@@ -26,7 +26,7 @@ export function NoResults({ q, suggestions, hrefForQuery, clearHref, lang }: NoR
   if (!q) {
     return (
       <EmptyState
-        icon={<EmptyCatIllustration />}
+        icon={<EmptyWarmIllustration />}
         title="Nothing matches these filters"
         description="Try removing a filter or two."
         action={

@@ -8,7 +8,6 @@ export interface ShiftSlot {
   dayOfWeek: DayOfWeekName;
   starts: string; // "HH:mm"
   ends: string;
-  defaultRoomId: string | null;
 }
 
 export interface StaffRoster {
@@ -109,7 +108,6 @@ export interface AvailabilityInterval {
   branchId: string;
   start: string; // instant
   end: string;
-  defaultRoomId: string | null;
   outsideOpeningHours: boolean;
 }
 

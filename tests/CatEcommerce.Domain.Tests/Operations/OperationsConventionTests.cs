@@ -32,16 +32,16 @@ public sealed class OperationsConventionTests
 
     // U-X2
     [Fact]
-    public void U_X2_TheNineOperationsSettings_AreRegistered_WithDefaultsInsideTheirBounds_AndUniqueKeys()
+    public void U_X2_TheSevenOperationsSettings_AreRegistered_WithDefaultsInsideTheirBounds_AndUniqueKeys()
     {
         string[] keys =
         [
-            SettingKeys.RetentionClinicalYears, SettingKeys.RetentionFinancialYears, SettingKeys.RetentionBoardingMediaMonths,
+            SettingKeys.RetentionFinancialYears,
             SettingKeys.RetentionNotificationContentMonths, SettingKeys.RetentionSecurityArtefactDays, SettingKeys.RetentionWebVitalsDays,
             SettingKeys.RetentionSweepHour, SettingKeys.OperationsRestoreTestIntervalDays, SettingKeys.OfflineSnapshotRefreshSeconds,
         ];
 
-        Assert.Equal(9, keys.Distinct().Count());
+        Assert.Equal(7, keys.Distinct().Count());
         Assert.Equal(SettingDefinitions.All.Count, SettingDefinitions.All.Select(d => d.Key).Distinct(StringComparer.Ordinal).Count());
 
         foreach (var key in keys)
@@ -62,9 +62,7 @@ public sealed class OperationsConventionTests
     [Fact]
     public void TheSettingDefaults_AreTheSrsAssumedPeriods()
     {
-        Assert.Equal("7", SettingDefinitions.Find(SettingKeys.RetentionClinicalYears)!.Default);
         Assert.Equal("6", SettingDefinitions.Find(SettingKeys.RetentionFinancialYears)!.Default);
-        Assert.Equal("12", SettingDefinitions.Find(SettingKeys.RetentionBoardingMediaMonths)!.Default);
         Assert.Equal("24", SettingDefinitions.Find(SettingKeys.RetentionNotificationContentMonths)!.Default);
         Assert.Equal("92", SettingDefinitions.Find(SettingKeys.OperationsRestoreTestIntervalDays)!.Default);
     }

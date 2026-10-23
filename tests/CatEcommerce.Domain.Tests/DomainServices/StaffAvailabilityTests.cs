@@ -45,8 +45,8 @@ public sealed class StaffAvailabilityTests
         var secondWednesday = firstWednesday.AddDays(7);
 
         var roster = BuildRoster(
-            currentSlots: [new ShiftSlotInput(DayOfWeek.Wednesday, new TimeOnly(9, 0), new TimeOnly(12, 0), null)],
-            nextSlots: [new ShiftSlotInput(DayOfWeek.Wednesday, new TimeOnly(14, 0), new TimeOnly(18, 0), null)],
+            currentSlots: [new ShiftSlotInput(DayOfWeek.Wednesday, new TimeOnly(9, 0), new TimeOnly(12, 0))],
+            nextSlots: [new ShiftSlotInput(DayOfWeek.Wednesday, new TimeOnly(14, 0), new TimeOnly(18, 0))],
             nextEffectiveFrom: secondWednesday,
             today: firstWednesday);
 
@@ -72,7 +72,7 @@ public sealed class StaffAvailabilityTests
     public void Intervals_ShiftOutsideOpeningHours_RestrictFalse_ReturnsFullIntervalFlagged_RestrictTrue_ReturnsNone()
     {
         var monday = NextDate(DayOfWeek.Monday);
-        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(20, 0), new TimeOnly(22, 0), null)], today: monday);
+        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(20, 0), new TimeOnly(22, 0))], today: monday);
         var branchOpenIntervals = new List<TimeInterval>
         {
             new(BranchCalendar.ToInstant(monday, new TimeOnly(9, 0), Dhaka), BranchCalendar.ToInstant(monday, new TimeOnly(17, 0), Dhaka))
@@ -98,7 +98,7 @@ public sealed class StaffAvailabilityTests
     public void Intervals_ApprovedLeaveCoveringTheDate_RemovesTheWholeDay()
     {
         var monday = NextDate(DayOfWeek.Monday);
-        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0), null)], today: monday);
+        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))], today: monday);
 
         var leave = new LeaveRequestAggregate(Guid.NewGuid());
         leave.Request(new LeaveRequestCreateDto(roster.StaffAccountId, monday, monday, LeaveKind.Annual, null, TestUserContext.Create(), Guid.NewGuid()));
@@ -119,7 +119,7 @@ public sealed class StaffAvailabilityTests
     {
         var tuesday = NextDate(DayOfWeek.Tuesday);
         // The roster's only pattern slot is Monday; Tuesday has nothing of its own.
-        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0), null)], today: tuesday);
+        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))], today: tuesday);
 
         var withoutException = StaffAvailability.Intervals(roster, [], [], [], "Asia/Dhaka", tuesday, tuesday, restrictToOpeningHours: false);
         Assert.Empty(withoutException);
@@ -141,7 +141,7 @@ public sealed class StaffAvailabilityTests
     public void Intervals_ShiftCancelledException_ShortensOrRemovesTheShift()
     {
         var monday = NextDate(DayOfWeek.Monday);
-        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0), null)], today: monday);
+        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))], today: monday);
 
         var partialCancellation = new RosterExceptionAggregate(Guid.NewGuid());
         partialCancellation.Create(new RosterExceptionCreateDto(roster.StaffAccountId, roster.BranchId, monday, RosterExceptionKind.ShiftCancelled,
@@ -170,7 +170,7 @@ public sealed class StaffAvailabilityTests
     public void Intervals_BranchClosedWholeDay_RestrictToOpeningHoursTrue_ReturnsNoIntervalThatDay()
     {
         var monday = NextDate(DayOfWeek.Monday);
-        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0), null)], today: monday);
+        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(17, 0))], today: monday);
 
         var results = StaffAvailability.Intervals(roster, [], [], [], "Asia/Dhaka", monday, monday, restrictToOpeningHours: true);
 
@@ -184,7 +184,7 @@ public sealed class StaffAvailabilityTests
     public void Intervals_AbuttingPatternShiftAndExtraShift_MergeIntoOneInterval()
     {
         var monday = NextDate(DayOfWeek.Monday);
-        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(12, 0), null)], today: monday);
+        var roster = BuildRoster([new ShiftSlotInput(DayOfWeek.Monday, new TimeOnly(9, 0), new TimeOnly(12, 0))], today: monday);
 
         var extraShift = new RosterExceptionAggregate(Guid.NewGuid());
         extraShift.Create(new RosterExceptionCreateDto(roster.StaffAccountId, roster.BranchId, monday, RosterExceptionKind.ExtraShift,

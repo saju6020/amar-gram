@@ -58,38 +58,6 @@ public sealed class WalkInEndpointTests(AccountsApiFactory factory) : AccountsIn
         Assert.Equal("Reception", body.GetProperty("registrationChannel").GetString());
     }
 
-    // HO-ACC-002 CR MEDIUM 2 (first-pass gate fix round, item 13): Q-H1 (GetStaffCustomer, the
-    // fresh read MergeReview uses -- ADR-FE-011) used to report only catCount; MergeReview needs the
-    // actual cats by name to show which are about to move in a merge, not just how many.
-    [Fact]
-    public async Task GetStaffCustomer_ReportsEveryOwnedCatByNameAlongsideCatCount()
-    {
-        using var client = await ReceptionClientAsync();
-        var walkInMobile = NewMobile();
-
-        var create = await client.PostAsJsonAsync("/api/staff/customers", new { fullName = "Cat Owner", mobileNumber = walkInMobile }, Json);
-        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
-        var created = await create.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var customerId = created.GetProperty("customerId").GetGuid();
-
-        var registerCat = await client.PostAsJsonAsync("/api/cats", new
-        {
-            ownerId = customerId, name = "Whiskers", sex = "Female", dateOfBirthPrecision = "Estimated"
-        }, Json);
-        Assert.Equal(HttpStatusCode.Created, registerCat.StatusCode);
-
-        var get = await client.GetAsync($"/api/staff/customers/{customerId}");
-        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
-        var body = await get.Content.ReadFromJsonAsync<JsonElement>(Json);
-
-        Assert.Equal(1, body.GetProperty("catCount").GetInt32());
-        var cats = body.GetProperty("cats").EnumerateArray().ToList();
-        Assert.Single(cats);
-        Assert.Equal("Whiskers", cats[0].GetProperty("name").GetString());
-        Assert.False(cats[0].GetProperty("isDeceased").GetBoolean());
-        Assert.NotEqual(Guid.Empty, cats[0].GetProperty("catId").GetGuid());
-    }
-
     // I-H2
     [Fact]
     public async Task DuplicateMobile_Returns400AndFindEndpointLocatesExistingRecord()

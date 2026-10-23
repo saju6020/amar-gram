@@ -17,16 +17,12 @@ public static class RetentionGuardSql
 
     /// <summary>
     /// Forbidden tables that already carry a complete append-only guard of their own (BEFORE DELETE row trigger and BEFORE TRUNCATE statement trigger), so a
-    /// second pair would only duplicate it. <c>audit.audit_entry</c>: HO-ACC-001 (F33). The two controlled-drug register tables: HO-PHM-001 ADR-144
-    /// (<c>PharmacyRegisterEndpointTests.I_D1</c> pins their trigger count at four).
+    /// second pair would only duplicate it. <c>audit.audit_entry</c>: HO-ACC-001 (F33).
     /// </summary>
     public static readonly IReadOnlyList<(string Schema, string Table, string Reason)> DedicatedlyGuardedTables =
     [
         ("audit", "audit_entry", "HO-ACC-001 F33: BEFORE UPDATE OR DELETE and BEFORE TRUNCATE triggers"),
-        ("pharmacy", "cd_register_entry", "HO-PHM-001 ADR-144: append-only DELETE and TRUNCATE triggers"),
-        ("pharmacy", "cd_register_seal", "HO-PHM-001 ADR-144: append-only DELETE and TRUNCATE triggers"),
     ];
-
 
     public const string CreateFunction = """
         CREATE SCHEMA IF NOT EXISTS retention;

@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace CatEcommerce.Infrastructure.Persistence.Configurations;
 
 /// <summary>
-/// Append-only leaf, "audit" schema -- HO-CAT-001 section 12.1. Extended by HO-ACC-001 §12.1
+/// Append-only leaf, "audit" schema -- the foundation handover section 12.1. Extended by HO-ACC-001 §12.1
 /// (US-ACC-12): <c>ip_address</c>, <c>category</c>, <c>correlation_id</c> and the two indexes
 /// investigation joins need. The immutability triggers on this table are added by the
 /// <c>AddAccounts</c> migration (§11.9), not here -- EF Core has no trigger API. That migration
-/// also backfills any audit row written before this column set existed (Cat Profiles' own rows)
+/// also backfills any audit row written before this column set existed
 /// to a valid <see cref="AuditCategory"/> before installing those triggers, since afterwards no
 /// UPDATE is possible even for that one-time fix.
 /// </summary>
@@ -29,9 +29,9 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
         builder.Property(x => x.Reason).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.ActorUserId).IsRequired();
         builder.Property(x => x.OccurredOn).HasColumnType("timestamptz").IsRequired();
-        // Integrator-authorised migration (HO-CAT-001 §1 Amended, 2026-09-26; SECURITY gate MEDIUM):
+        // Integrator-authorised migration (the foundation handover §1 Amended, 2026-09-26; SECURITY gate MEDIUM):
         // widened from character varying(2000) to text. AuditChangeCaptureInterceptor snapshots the
-        // whole aggregate root row on every write, and the cat validators alone allow ~3,450
+        // whole aggregate root row on every write, and the validators alone allow ~3,450
         // characters of root text (name, breed, colour, handling note, deceased note, dietary and
         // behavioural notes) -- comfortably over the old 2000-char cap, which failed the write with a
         // 500 once the snapshot exceeded it. Unbounded text is deliberate: this is a system-computed

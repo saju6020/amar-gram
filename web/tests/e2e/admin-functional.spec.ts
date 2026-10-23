@@ -131,40 +131,20 @@ test('E-B2: a staff member assigned to two branches sees the picker, and switchi
   // ADR-FE-016: the active branch is never persisted, so a `page.reload()` here would re-seed
   // from the primary branch, not prove anything about switching — the request to watch for is the
   // one `useSetActiveBranch`'s own `['admin']` query invalidation fires immediately on selection.
-  await page.goto('/staff/admin/services');
+  await page.goto('/staff/admin/tax-classes');
   const picker = page.getByLabel(/^branch$/i);
   await expect(picker).toBeVisible();
   await page.waitForLoadState('networkidle');
 
   const nextAdminRequest = page.waitForRequest(
-    (request) => request.url().includes('/api/admin/services') && request.method() === 'GET',
+    (request) => request.url().includes('/api/admin/tax-classes') && request.method() === 'GET',
   );
   await picker.selectOption(administrationFixtureIds.londonBranchId);
   const request = await nextAdminRequest;
   expect(request.headers()['x-branch-id']).toBe(administrationFixtureIds.londonBranchId);
 });
 
-test('E-C1: schedule a price for next month — appears under Scheduled, current stays unchanged', async ({
-  page,
-}) => {
-  await signInAsStaff(page);
-  await page.goto(`/staff/admin/services/${administrationFixtureIds.serviceConsultationId}`);
-  await page.getByRole('button', { name: /schedule a new price/i }).click();
-  await page.getByRole('radio', { name: /a future date and time/i }).click();
-  const future = new Date();
-  future.setMonth(future.getMonth() + 1);
-  const value = future.toISOString().slice(0, 16);
-  await page.getByLabel(/effective date and time/i).fill(value);
-  await page.getByLabel(/amount \(bdt\)/i).fill('2200.00');
-  await page.getByRole('button', { name: /^schedule$/i }).click();
-
-  await expect(page.getByText('Scheduled')).toBeVisible();
-  await expect(page.getByText(/2,?200\.00/)).toBeVisible();
-  // The current price (from the seeded fixture) is unchanged.
-  await expect(page.getByText('Current')).toBeVisible();
-});
-
-test('E-D1: a nurse requests leave, an administrator approves it, and the roster view marks the days "On leave"', async ({
+test('E-D1: a staff member requests leave, an administrator approves it, and the roster view marks the days "On leave"', async ({
   page,
 }) => {
   await signInAsStaff(page);
@@ -199,7 +179,10 @@ test('E-D1: a nurse requests leave, an administrator approves it, and the roster
   await expect(page.getByText('Leave requested.')).toBeVisible();
 
   await page.goto('/staff/admin/leave?status=Requested');
-  const row = page.getByRole('row', { name: /nadia nurse/i }).last();
+  const row = page
+    .getByRole('row')
+    .filter({ has: page.getByRole('button', { name: /^approve$/i }) })
+    .last();
   await row.getByRole('button', { name: /^approve$/i }).click();
   await page
     .getByRole('dialog')
@@ -315,18 +298,20 @@ test('E-F2: publishing a policy version that requires acceptance prompts a custo
   await expect(page.getByLabel(/full name/i)).toBeVisible();
 });
 
-test('E-G1: the audit log shows the seeded price-change row with a before/after diff; export downloads', async ({
+test('E-G1: the audit log shows the seeded maintenance row with a before/after diff; export downloads', async ({
   page,
 }) => {
   await signInAsStaff(page);
-  await page.goto('/staff/admin/audit-log?from=2027-01-01&to=2027-01-31&action=ServicePriceSet');
-  await expect(page.getByText('ServicePriceSet')).toBeVisible();
+  await page.goto(
+    '/staff/admin/audit-log?from=2027-01-01&to=2027-01-31&action=MaintenanceModeChanged',
+  );
+  await expect(page.getByText('MaintenanceModeChanged')).toBeVisible();
   await page
     .getByRole('button', { name: /show details/i })
     .first()
     .click();
-  await expect(page.getByText('1500.00')).toBeVisible();
-  await expect(page.getByText('1800.00')).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: 'maintenanceMode' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'true', exact: true }).first()).toBeVisible();
 
   // A SW-served top-level-navigation response is not always surfaced to a real browser's download
   // pipeline the same way a genuine network response is — a documented MSW/browser limitation, not
@@ -346,7 +331,7 @@ test('E-G1: the audit log shows the seeded price-change row with a before/after 
   }, exportHref!);
   expect(result.status).toBe(200);
   expect(result.contentDisposition).toContain('attachment');
-  expect(result.text).toContain('ServicePriceSet');
+  expect(result.text).toContain('MaintenanceModeChanged');
 });
 
 test('E-G3: an export over the row cap shows the narrow-the-range note', async ({ page }) => {
@@ -394,8 +379,8 @@ test('E-B3: long branch names keep the picker row inside the viewport (360/768/1
   // The seeded MSW store answers `GET /api/admin/branches` (a `page.route` does not reach it), so
   // the 40-character names are written through the real admin PUT before the page loads.
   const longNames: Record<string, string> = {
-    [mainBranchId]: 'Main clinic and surgical centre of Dhaka',
-    [londonBranchId]: 'London clinic and boarding hotel annex!!',
+    [mainBranchId]: 'Dhanmondi outlet and warehouse of Dhaka!',
+    [londonBranchId]: 'London outlet and click-and-collect desk',
   };
   for (const [id, name] of Object.entries(longNames)) {
     expect(name).toHaveLength(40);
@@ -419,7 +404,7 @@ test('E-B3: long branch names keep the picker row inside the viewport (360/768/1
   await page.goto('/staff/admin/leave');
   const picker = page.getByLabel(/^branch$/i);
   await expect(picker).toBeVisible();
-  await expect(picker).toHaveAttribute('title', /^Main clinic and surgical centre of Dhaka$/);
+  await expect(picker).toHaveAttribute('title', /^Dhanmondi outlet and warehouse of Dhaka!$/);
   for (const width of [360, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 800 });
     // Not `documentElement.scrollWidth`: several staff pages (tables, forms) overflow at 360 on

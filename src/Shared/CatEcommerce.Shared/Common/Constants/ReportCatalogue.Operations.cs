@@ -3,7 +3,7 @@ using CatEcommerce.Shared.Common.Enums;
 namespace CatEcommerce.Shared.Common.Constants;
 
 /// <summary>
-/// HO-RPT-001 section 8.3 phase H -- R27 only. R24 (boarding occupancy), R25 (care compliance) and R26 (incidents) read HO-BRD-001, which is not merged, so they are <b>not delivered yet</b> and absent from the
+/// HO-RPT-001 section 8.3 phase H -- R27 only (HO-P1 retired R24 to R26). Reports not delivered are absent from the
 /// catalogue, never present with empty rows.
 /// </summary>
 public static partial class ReportCatalogue

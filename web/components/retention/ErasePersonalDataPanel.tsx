@@ -65,7 +65,6 @@ export function ErasePersonalDataPanel({ customer }: { customer: ErasableCustome
 
   const years = (recordClass: string) =>
     schedule.data?.classes.find((c) => c.recordClass === recordClass)?.effectivePeriod ?? null;
-  const clinical = years('Clinical');
   const financial = years('Financial');
 
   async function confirm() {
@@ -96,9 +95,8 @@ export function ErasePersonalDataPanel({ customer }: { customer: ErasableCustome
         <div>
           <p className="font-semibold text-ink">Kept, and why</p>
           <p className="text-ink-muted">
-            Clinical records for {clinical ?? 'the statutory number of'} years and financial
-            records for {financial ?? 'the statutory number of'} years, because the law requires
-            it, and the audit trail. They no longer show who the customer was.
+            Financial records for {financial ?? 'the statutory number of'} years, because the law
+            requires it, and the audit trail. They no longer show who the customer was.
           </p>
         </div>
       </div>
@@ -154,8 +152,8 @@ export function ErasePersonalDataPanel({ customer }: { customer: ErasableCustome
               phone, email, addresses, marketing consent and message contents.
             </span>
             <span className="mt-2 block">
-              Clinical and financial records are kept for the periods the law requires, and the
-              audit trail is kept.
+              Financial records are kept for the period the law requires, and the audit trail is
+              kept.
             </span>
             <span className="mt-2 block font-semibold">This cannot be undone.</span>
           </>

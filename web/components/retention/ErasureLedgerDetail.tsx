@@ -35,7 +35,7 @@ export function ErasureLedgerDetail({ request, zone }: { request: ErasureRequest
       </p>
       <p className="rounded-[var(--radius-md)] border border-border bg-surface p-4 text-sm text-ink">
         Personal details are erased straight away. Some records are <strong>held</strong> instead,
-        because the law requires them to be kept for a set period (for example clinical and
+        because the law requires them to be kept for a set period (for example
         financial records). Held records keep only what that law requires and are anonymised or
         released when their date passes. Nothing here can be changed from this screen.
       </p>

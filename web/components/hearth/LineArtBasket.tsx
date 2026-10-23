@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 /**
- * The Hearth harvest-basket line illustration (Amar Gram, 2026-10-23; replaces the sitting cat): a woven
+ * The Hearth harvest-basket line illustration (Amar Gram, 2026-10-23; replaces the earlier mascot): a woven
  * basket with leaves and a grain stalk rising out of it. Stroke is `currentColor`, so the caller sets the
  * colour (warm-ink on a white disc). Decorative: hidden from assistive technology unless a `title` is passed.
  */

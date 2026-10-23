@@ -4,13 +4,13 @@ import { use, useState } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { FoodDetailsForm } from '@/components/staff-shop/FoodDetailsForm';
-import { setFoodDetails, setPrescriptionRequired } from '@/lib/api/staff-shop';
+import { setFoodDetails } from '@/lib/api/staff-shop';
 import { useStaffProduct, useTwoStepSave } from '@/lib/hooks/useStaffShop';
 
 /**
- * `/staff/shop/products/[productId]/food` — food & labelling (US-SHP-03). Cat Food only (U-D2).
- * Saves the labelling, then the prescription flag if it changed; the form is keyed only by an
- * explicit Reload, so a refused second command keeps what was typed (NFR-USA-5).
+ * `/staff/shop/products/[productId]/food` — food & labelling (US-SHP-03). Food only (U-D2).
+ * Saves the labelling; the form is keyed only by an explicit Reload, so a refused save keeps what
+ * was typed (NFR-USA-5).
  */
 export default function ProductFoodPage({ params }: { params: Promise<{ productId: string }> }) {
   const { productId } = use(params);
@@ -23,7 +23,7 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
     return (
       <EmptyState
         title="Food details don't apply to this product"
-        description="Only standard Cat Food products have labelling and a prescription flag."
+        description="Only standard food products have labelling."
       />
     );
   }
@@ -53,21 +53,14 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
             setFoodDetails(productId, {
               expectedVersion: p.version,
               manufacturer: v.manufacturer || null,
-              lifeStage: v.lifeStage || null,
               proteinSource: v.proteinSource || null,
               ingredientList: v.ingredientList || null,
               guaranteedAnalysis: analysis,
               feedingGuide: v.feedingGuide || null,
               storageInstructions: v.storageInstructions || null,
             }),
-          v.prescriptionRequired !== p.prescriptionRequired
-            ? () =>
-                setPrescriptionRequired(productId, {
-                  expectedVersion: p.version + 1,
-                  prescriptionRequired: v.prescriptionRequired,
-                })
-            : null,
-          'Labelling saved; the prescription setting was not changed',
+          null,
+          'Labelling saved',
         );
       }}
     />

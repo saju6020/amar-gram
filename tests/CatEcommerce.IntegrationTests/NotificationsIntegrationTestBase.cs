@@ -3,8 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using CatEcommerce.Domain.Aggregates.Account;
 using CatEcommerce.Domain.Aggregates.Administration;
-using CatEcommerce.Domain.Aggregates.Cat;
-using CatEcommerce.Domain.Aggregates.Vaccination;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Domain.ValueObjects;
@@ -21,7 +19,7 @@ using Xunit;
 namespace CatEcommerce.IntegrationTests;
 
 /// <summary>HO-NTF-001 §16 -- §16.1 rules apply (fresh ids per test, never assert emptiness, never
-/// TRUNCATE). Helpers mint fresh staff, customers and cats per test, and run the notification
+/// TRUNCATE). Helpers mint fresh staff and customers per test, and run the notification
 /// worker's passes directly (the worker loop itself is off in Testing).</summary>
 public abstract class NotificationsIntegrationTestBase(NotificationsApiFactory factory)
     : CatEcommerceIntegrationTestBase<NotificationsApiFactory>(factory)
@@ -130,113 +128,6 @@ public abstract class NotificationsIntegrationTestBase(NotificationsApiFactory f
         return (client, customerId, mobile);
     }
 
-    /// <summary>"Today" exactly as <c>CareReminderSweep</c> computes it: the main branch's local date
-    /// (Asia/Dhaka when unset), not the UTC date. The two differ for several hours a day (18:00-24:00
-    /// UTC for UTC+6), so a due date seeded from the UTC date lands a day off the sweep's window.</summary>
-    protected async Task<DateOnly> BusinessTodayAsync()
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var branchRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<BranchAggregate>>();
-        var mainBranch = await branchRepository.GetByIdAsync(AdministrationSeed.MainBranchId);
-        return BranchCalendar.LocalDateOf(DateTimeOffset.UtcNow, mainBranch?.TimeZoneId ?? "Asia/Dhaka");
-    }
-
-    /// <summary>Registers a fresh, active vaccine (so the reminder sweep's active-vaccine filter
-    /// finds it) and records a vaccination for <paramref name="catId"/> whose NextDueOn lands
-    /// exactly <paramref name="dueInDays"/> days from the business-local today (<see cref="BusinessTodayAsync"/>).</summary>
-    protected async Task<Guid> SeedVaccinationDueInAsync(Guid catId, int dueInDays)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var vaccineRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<VaccineAggregate>>();
-        var catRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var vaccine = new VaccineAggregate(Guid.NewGuid());
-        vaccine.Register(new VaccineRegistrationDto($"V-{Guid.NewGuid():N}"[..12], "Rabies", true, 12, null, TestUserContext(), Guid.NewGuid()));
-        await vaccineRepository.SaveAsync(vaccine, EventPublishOption.InMemoryPublishOnly);
-
-        var administeredOn = (await BusinessTodayAsync()).AddDays(dueInDays).AddMonths(-12);
-
-        var cat = await catRepository.GetByIdAsync(catId);
-        cat.RecordVaccination(new CatVaccinationDto(
-            Guid.NewGuid(), vaccine.Id, vaccine.Code, vaccine.Name, vaccine.IsCore, vaccine.ValidityMonths,
-            "BATCH-1", DateOnly.FromDateTime(DateTime.UtcNow).AddYears(1), administeredOn, Guid.NewGuid(), null,
-            DateOnly.FromDateTime(DateTime.UtcNow), TestUserContext(), Guid.NewGuid()));
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-
-        return vaccine.Id;
-    }
-
-    /// <summary>I-F6's setup half: records a SECOND vaccination for the SAME, already-registered
-    /// <paramref name="vaccineId"/> (the "renewed" case -- <c>NextDueOn</c> moves, but it is still
-    /// the same vaccine the earlier request's <c>SubjectRef</c> points at). Unlike
-    /// <see cref="SeedVaccinationDueInAsync"/>, this never registers a new vaccine.</summary>
-    protected async Task SeedAdditionalVaccinationAsync(Guid catId, Guid vaccineId, int dueInDays)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var vaccineRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<VaccineAggregate>>();
-        var catRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var vaccine = await vaccineRepository.GetByIdAsync(vaccineId);
-        var administeredOn = (await BusinessTodayAsync()).AddDays(dueInDays).AddMonths(-12);
-
-        var cat = await catRepository.GetByIdAsync(catId);
-        cat.RecordVaccination(new CatVaccinationDto(
-            Guid.NewGuid(), vaccine.Id, vaccine.Code, vaccine.Name, vaccine.IsCore, vaccine.ValidityMonths,
-            "BATCH-2", DateOnly.FromDateTime(DateTime.UtcNow).AddYears(1), administeredOn, Guid.NewGuid(), null,
-            DateOnly.FromDateTime(DateTime.UtcNow), TestUserContext(), Guid.NewGuid()));
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-    }
-
-    /// <summary>Records a Combined parasite treatment for <paramref name="catId"/> whose NextDueOn
-    /// lands exactly <paramref name="dueInDays"/> days from the business-local today (<see cref="BusinessTodayAsync"/>).</summary>
-    protected async Task SeedDewormingDueInAsync(Guid catId, int dueInDays, int intervalDays = 90)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var catRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var administeredOn = (await BusinessTodayAsync()).AddDays(dueInDays - intervalDays);
-
-        var cat = await catRepository.GetByIdAsync(catId);
-        cat.RecordParasiteTreatment(new CatParasiteTreatmentDto(
-            Guid.NewGuid(), ParasiteTreatmentType.Combined, "Broad-spectrum", "BATCH-1", administeredOn, Guid.NewGuid(), intervalDays, null,
-            DateOnly.FromDateTime(DateTime.UtcNow), TestUserContext(), Guid.NewGuid()));
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-    }
-
-    protected async Task MarkCatDeceasedAsync(Guid catId)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var catRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-        var cat = await catRepository.GetByIdAsync(catId);
-        cat.MarkDeceased(new CatDeceasedDto(DateOnly.FromDateTime(DateTime.UtcNow), null, DateOnly.FromDateTime(DateTime.UtcNow), TestUserContext(), Guid.NewGuid()));
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-    }
-
-    /// <summary>I-F5's setup half: transfers a cat to a different owner, exactly the change the
-    /// send-time guard (§8.7) must catch between enqueue and delivery.</summary>
-    protected async Task TransferCatOwnershipAsync(Guid catId, Guid newOwnerId)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var catRepository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-        var cat = await catRepository.GetByIdAsync(catId);
-        cat.TransferOwnership(new CatOwnershipTransferDto(newOwnerId, "Sold to a new owner", TestUserContext(), Guid.NewGuid()));
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-    }
-
-    protected async Task<Guid> SeedCatAsync(Guid ownerId, string name = "Test Cat")
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var cat = new CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, name, "Cat", CatSex.Female, DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2),
-            DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby", DateOnly.FromDateTime(DateTime.UtcNow), TestUserContext(), Guid.NewGuid()));
-
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
-    }
-
     private static UserContext TestUserContext() => new(Guid.NewGuid(), Guid.NewGuid());
 
     /// <summary>Runs one delivery pass (expand pending requests, deliver due notifications, redact
@@ -248,14 +139,6 @@ public abstract class NotificationsIntegrationTestBase(NotificationsApiFactory f
         await using var scope = services.CreateAsyncScope();
         var workCycle = scope.ServiceProvider.GetRequiredService<NotificationWorkCycle>();
         await workCycle.RunDeliveryPassAsync();
-    }
-
-    protected async Task RunReminderSweepAsync(WebApplicationFactory<Program>? factoryOverride = null)
-    {
-        var services = (factoryOverride ?? Factory).Services;
-        await using var scope = services.CreateAsyncScope();
-        var workCycle = scope.ServiceProvider.GetRequiredService<NotificationWorkCycle>();
-        await workCycle.RunReminderSweepAsync();
     }
 
     /// <summary>Dispatches a <c>RequestNotificationCommand</c> directly, in a fresh scope -- there

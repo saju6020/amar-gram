@@ -7,10 +7,10 @@
 // Count against HO-POR-001 §12.5 -- built so far (Phases A, B, C, D orders reader only):
 //   Q1 handler .................. 1   (GetPortalDashboardQueryHandler)
 //   PortalSectionComposer ....... 1
-//   Section readers ............. 7   (cats, appointments, profile; visits (EMR); balances (BIL); prescriptions (PHM); orders (ORD))
+//   Section readers ............. 3   (profile; balances (BIL); orders (ORD))
 // Not registered, by design: re-order (C1 + validator + handler) -- RETIRED 2026-10-10 (ADR-263); the customer uses Orders' own
-// POST /api/customers/me/orders/{id}/reorder, so Orders' eligibility applies by construction. Not built yet: stays (HO-BRD-001) and subscriptions (HO-SUB-001) -- not built.
-// Q2 (stay diary) is retired (README C-6).
+// POST /api/customers/me/orders/{id}/reorder, so Orders' eligibility applies by construction. Not built yet: subscriptions (HO-SUB-001).
+// HO-P1 retired the other sections and Q2.
 //
 // ValidateScopes/ValidateOnBuild stay on: every upstream IQueryHandlerAsync<,> a reader takes by constructor is therefore proven
 // registered at startup (I-A1), not on a customer's request.
@@ -30,12 +30,8 @@ public static class PortalModule
         services.AddScoped<IQueryHandlerAsync<GetPortalDashboardQuery, PortalDashboardViewModel>, GetPortalDashboardQueryHandler>();
         services.AddScoped<PortalSectionComposer>();
 
-        services.AddScoped<IPortalSectionReader<PortalCatsViewModel>, CatsSectionReader>();
-        services.AddScoped<IPortalSectionReader<PortalAppointmentsViewModel>, AppointmentsSectionReader>();
         services.AddScoped<IPortalSectionReader<PortalCustomerViewModel>, ProfileReader>();
-        services.AddScoped<IPortalSectionReader<PortalVisitsViewModel>, VisitsSectionReader>();
         services.AddScoped<IPortalSectionReader<PortalBalancesViewModel>, BalancesSectionReader>();
-        services.AddScoped<IPortalSectionReader<PortalPrescriptionsViewModel>, PrescriptionsSectionReader>();
         services.AddScoped<IPortalSectionReader<PortalOrdersViewModel>, OrdersSectionReader>();
 
         return services;

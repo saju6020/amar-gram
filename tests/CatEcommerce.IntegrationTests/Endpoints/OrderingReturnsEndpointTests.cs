@@ -27,7 +27,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
     private async Task<Delivered> DeliveredOrderAsync(DateOnly? foodExpires = null)
     {
         var shop = await SetUpShopAsync(fillCart: false);
-        var food = await CreateSkuAsync(shop.Context, price: 850m, stock: 20m, food: true, onStorefront: true, name: "Kitten food", expires: foodExpires);
+        var food = await CreateSkuAsync(shop.Context, price: 850m, stock: 20m, food: true, onStorefront: true, name: "Basmati rice", expires: foodExpires);
         var toy = shop.Toy;
         shop = shop with { Food = food };
         await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = food.SkuId, quantity = 2 }, Json));
@@ -68,7 +68,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         var returnId = created.GetProperty("returnRequestId").GetGuid();
 
         var mine = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await d.Shop.Customer.GetAsync($"/api/customers/me/returns/{returnId}")));
-        Assert.Equal("Kitten food", mine.GetProperty("lines")[0].GetProperty("productName").GetString());
+        Assert.Equal("Basmati rice", mine.GetProperty("lines")[0].GetProperty("productName").GetString());
 
         // the quantity left to return shrinks while a request is open; asking for more than is left is refused
         var detail = await ReadAsync(await d.Shop.Customer.GetAsync($"/api/customers/me/orders/{d.OrderId}"));
@@ -307,7 +307,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
     }
 
     [Fact]
-    public async Task TheReturnsList_IsBranchScoped_FilteredByStatus_AndNurseIsRefused()
+    public async Task TheReturnsList_IsBranchScoped_FilteredByStatus_AndAnAnonymousCallerIsRefused()
     {
         var d = await DeliveredOrderAsync();
         var returnId = (await ReadAsync(await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(LineOf(d, d.Shop.Toy.SkuId), 1), Json))).GetProperty("returnRequestId").GetGuid();
@@ -320,8 +320,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         Assert.Equal(HttpStatusCode.NotFound, (await elsewhere.GetAsync($"/api/staff/returns/{returnId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await elsewhere.PostAsJsonAsync($"/api/staff/returns/{returnId}/approve", new { lines = Array.Empty<object>() }, Json)).StatusCode);
 
-        var (nurse, _) = await StaffClientAsync(d.Shop.Context, StaffRoles.Nurse);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync("/api/staff/returns")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await CreateClient().GetAsync("/api/staff/returns")).StatusCode);
 
         // staff can file one on the customer's behalf
         var onBehalf = await ExpectAsync(HttpStatusCode.Created, await d.Reception.PostAsJsonAsync($"/api/staff/orders/{d.OrderId}/returns", ReturnBody(LineOf(d, d.Shop.Food.SkuId), 1), Json));
@@ -349,9 +348,9 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         var suggested = AmountOf(suggestion.GetProperty("suggestedAmount"));
         Assert.True(suggested > 0m && suggested < order.Totals.GrandTotal);
 
-        // Nurse has no Refunds.Issue
-        var (nurse, _) = await StaffClientAsync(d.Shop.Context, StaffRoles.Nurse);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync($"/api/staff/orders/{d.OrderId}/refund-options")).StatusCode);
+        // Inventory has no Refunds.Issue
+        var (inventory, _) = await StaffClientAsync(d.Shop.Context, StaffRoles.Inventory);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync($"/api/staff/orders/{d.OrderId}/refund-options")).StatusCode);
     }
 
     [Fact]

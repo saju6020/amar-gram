@@ -23,20 +23,17 @@ function rowsFor(key: string, columns: ReportColumn[], total: number): ReportRow
   for (let i = 0; i < total; i += 1) {
     const hour = String(9 + (i % 8)).padStart(2, '0');
     switch (key) {
-      case 'clinic-daily-schedule':
+      case 'order-fulfilment':
         rows.push(
           pick({
-            start: `2026-10-14T${hour}:${i % 2 ? '30' : '00'}:00+06:00`,
-            cat: ['Mittens', 'Bagha', 'Tuni', 'Lalu'][i % 4]!,
-            customer: ['Farhana Yasmin', 'Kamrul Hasan', 'Nafisa Rahman'][i % 3]!,
-            service: 'Standard consultation',
-            performer: 'Dr. Nusrat Jahan',
-            room: 'Consult 1',
-            channel: i % 3 === 0 ? 'Online' : 'Reception',
-            walkIn: i % 5 === 0,
-            status: i === 3 ? 'No-show' : 'Completed',
-            checkedInOn: i === 3 ? null : `2026-10-14T${hour}:05:00+06:00`,
-            waitMinutes: i === 3 ? null : 5 + i,
+            orderNumber: `PC-${String(1300 + i).padStart(6, '0')}`,
+            placedOn: `2026-10-14T${hour}:${i % 2 ? '30' : '00'}:00+06:00`,
+            channel: ['Online', 'Counter', 'Subscription'][i % 3]!,
+            status: i === 3 ? 'Cancelled' : 'Delivered',
+            ageHours: 4 + i,
+            slaBreach: i % 5 === 0,
+            dispatchedOn: i === 3 ? null : `2026-10-14T${hour}:45:00+06:00`,
+            deliveredOn: i === 3 ? null : `2026-10-15T${hour}:10:00+06:00`,
           }),
         );
         break;
@@ -61,7 +58,7 @@ function rowsFor(key: string, columns: ReportColumn[], total: number): ReportRow
         rows.push(
           pick({
             bucket: `2026-10-${String(1 + (i % 14)).padStart(2, '0')}`,
-            line: ['Clinic', 'Shop'][i % 2]!,
+            line: 'Shop',
             invoices: 10 + i,
             gross: money('12500.00'),
             discounts: money('250.00'),
@@ -97,9 +94,7 @@ function rowsFor(key: string, columns: ReportColumn[], total: number): ReportRow
         );
         break;
       default:
-        rows.push(
-          pick({ cat: 'Mittens', vaccine: 'FVRCP', dueOn: '2026-10-20', owner: 'Farhana Yasmin' }),
-        );
+        rows.push(pick({ bucket: '2026-10-14' }));
     }
   }
   return rows;
@@ -130,12 +125,11 @@ function totalsFor(key: string, columns: ReportColumn[]): ReportRow | null {
 
 function notesFor(key: string, roles: string[]): ReportNote[] {
   const notes: ReportNote[] = [];
-  if (key === 'clinic-daily-schedule') {
+  if (key === 'order-fulfilment') {
     notes.push({
-      code: 'HoldsExcluded',
-      text: 'Only confirmed bookings and walk-ins are listed. Provisional holds from online booking never appear.',
+      code: 'DispatchSla',
+      text: 'The dispatch service level is 24 hours from confirmation to dispatch.',
     });
-    notes.push({ code: 'WalkInOrder', text: 'Walk-ins are ordered by check-in time.' });
   }
   if (
     (key === 'revenue-by-business-line' || key === 'revenue-shop-by-category') &&
@@ -157,7 +151,7 @@ function notesFor(key: string, roles: string[]): ReportNote[] {
 
 const PAGED_TOTAL: Record<string, number> = {
   'payment-reconciliation': 500,
-  'clinic-daily-schedule': 11,
+  'order-fulfilment': 11,
 };
 
 export const reportsHandlers: HttpHandler[] = [
@@ -203,7 +197,7 @@ export const reportsHandlers: HttpHandler[] = [
         null,
       );
     }
-    const name = `purrcare-${entry.key}-${from}-to-${url.searchParams.get('to')}.${format}`;
+    const name = `amargram-${entry.key}-${from}-to-${url.searchParams.get('to')}.${format}`;
     const body =
       format === 'csv' ? `${entry.columns.map((c) => c.label).join(',')}\n` : '%PDF-1.4 mock';
     return new HttpResponse(body, {
@@ -267,7 +261,7 @@ export const reportsHandlers: HttpHandler[] = [
         { status: 429, headers: { 'Retry-After': '30' } },
       );
     }
-    if (from === reportFixtureIds.clinicalFailFrom) {
+    if (from === reportFixtureIds.serverErrorFrom) {
       return HttpResponse.json({ error: 'The request could not be completed.' }, { status: 500 });
     }
     const category = url.searchParams.get('category');

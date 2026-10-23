@@ -43,7 +43,7 @@ interface Shape {
 
 function seedWishlist(): MockWishlistEntry[] {
   return [
-    { skuId: shopFixtureIds.skuKitten400, addedOn: '2026-10-01T10:00:00Z' },
+    { skuId: shopFixtureIds.skuOats400, addedOn: '2026-10-01T10:00:00Z' },
     { skuId: 'b0000000-0000-0000-0000-000000009001', addedOn: '2026-09-15T10:00:00Z' },
   ];
 }
@@ -52,7 +52,7 @@ function seedAlerts(): MockAlert[] {
   return [
     {
       stockAlertId: 'e0000000-0000-0000-0000-000000000001',
-      skuId: shopFixtureIds.skuKitten4kg,
+      skuId: shopFixtureIds.skuOats4kg,
       status: 'Pending',
       requestedOn: '2026-10-02T10:00:00Z',
       notifiedOn: null,
@@ -161,8 +161,6 @@ export function catalogueItem(p: MockProduct) {
     countryOfOrigin: p.country
       ? { code: p.country, name: COUNTRY_NAMES[p.country] ?? p.country }
       : null,
-    lifeStage: p.lifeStage,
-    prescriptionRequired: p.prescriptionRequired,
     fromPrice: from ? money(from) : null,
     priceVaries: varies,
     availability: productAvailability(p),
@@ -198,12 +196,10 @@ export function detailView(p: MockProduct, locale: string | undefined) {
     countryOfOrigin: p.country
       ? { code: p.country, name: COUNTRY_NAMES[p.country] ?? p.country }
       : null,
-    prescriptionRequired: p.prescriptionRequired,
     food:
       isFood && p.kind === 'Standard'
         ? {
             manufacturer: p.manufacturer,
-            lifeStage: p.lifeStage,
             proteinSource: p.protein,
             ingredientList: ingredientList.value,
             guaranteedAnalysis: p.analysis,
@@ -224,7 +220,7 @@ export function detailView(p: MockProduct, locale: string | undefined) {
       availability: skuAvailability(p, s),
       expiryNotice: s.expiresOn && s.inStock ? { expiresOn: s.expiresOn } : null,
       images:
-        s.code === 'RC-K-4KG'
+        s.code === 'OAT-4KG'
           ? [{ ...imageFor(p, true, s.skuId), altText: `${p.name} 4 kg bag` }]
           : [],
     })),

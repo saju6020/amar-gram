@@ -16,9 +16,7 @@ using CatEcommerce.Infrastructure.Configuration;
 using CatEcommerce.Infrastructure.Retention.Erasers;
 using CatEcommerce.Infrastructure.Scheduling;
 using CatEcommerce.Read.Queries.Administration;
-using CatEcommerce.Read.Queries.Cat;
 using CatEcommerce.Read.QueryHandlers.Administration;
-using CatEcommerce.Read.QueryHandlers.Cat;
 using CatEcommerce.Read.ViewModels;
 using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
@@ -33,10 +31,6 @@ public static class AdministrationModule
 {
     public static IServiceCollection AddAdministrationModule(this IServiceCollection services, IConfiguration configuration)
     {
-        // ── Phase A: authorization -- GetCatOwnerQuery backs RequireActionFilter's customer
-        // ownership scoping (§12.3); it is dispatched, never called on a controller. ──────────────
-        services.AddScoped<IQueryHandlerAsync<GetCatOwnerQuery, Guid?>, GetCatOwnerQueryHandler>();
-
         // Gate fix 2026-09-26 (TEST gate I-E3): the audit-export row cap is bound from
         // configuration (default 50,000, AuditExportRules.MaxRows) instead of being a hard-coded
         // constant only -- a test factory can now override "AuditExport:MaxRows" the same way
@@ -109,12 +103,6 @@ public static class AdministrationModule
         services.AddScoped<ICommandHandlerAsync<CancelBranchClosureCommand>, CancelBranchClosureCommandHandler>();
         services.AddScoped<IValidator<CancelBranchClosureCommand>, CancelBranchClosureCommandValidator>();
 
-        services.AddScoped<ICommandHandlerAsync<CreateRoomCommand>, CreateRoomCommandHandler>();
-        services.AddScoped<IValidator<CreateRoomCommand>, CreateRoomCommandValidator>();
-
-        services.AddScoped<ICommandHandlerAsync<UpdateRoomCommand>, UpdateRoomCommandHandler>();
-        services.AddScoped<IValidator<UpdateRoomCommand>, UpdateRoomCommandValidator>();
-
         services.AddScoped<ICommandHandlerAsync<AssignStaffBranchesCommand>, AssignStaffBranchesCommandHandler>();
         services.AddScoped<IValidator<AssignStaffBranchesCommand>, AssignStaffBranchesCommandValidator>();
 
@@ -141,18 +129,6 @@ public static class AdministrationModule
 
         services.AddScoped<ICommandHandlerAsync<CancelLeaveCommand>, CancelLeaveCommandHandler>();
         services.AddScoped<IValidator<CancelLeaveCommand>, CancelLeaveCommandValidator>();
-
-        services.AddScoped<ICommandHandlerAsync<CreateClinicServiceCommand>, CreateClinicServiceCommandHandler>();
-        services.AddScoped<IValidator<CreateClinicServiceCommand>, CreateClinicServiceCommandValidator>();
-
-        services.AddScoped<ICommandHandlerAsync<UpdateClinicServiceCommand>, UpdateClinicServiceCommandHandler>();
-        services.AddScoped<IValidator<UpdateClinicServiceCommand>, UpdateClinicServiceCommandValidator>();
-
-        services.AddScoped<ICommandHandlerAsync<SetClinicServiceActivationCommand>, SetClinicServiceActivationCommandHandler>();
-        services.AddScoped<IValidator<SetClinicServiceActivationCommand>, SetClinicServiceActivationCommandValidator>();
-
-        services.AddScoped<ICommandHandlerAsync<SetServicePriceCommand>, SetServicePriceCommandHandler>();
-        services.AddScoped<IValidator<SetServicePriceCommand>, SetServicePriceCommandValidator>();
 
         services.AddScoped<ICommandHandlerAsync<CreateTaxClassCommand>, CreateTaxClassCommandHandler>();
         services.AddScoped<IValidator<CreateTaxClassCommand>, CreateTaxClassCommandValidator>();
@@ -203,7 +179,6 @@ public static class AdministrationModule
         services.AddScoped<IQueryHandlerAsync<GetAdminBranchesQuery, IReadOnlyList<AdminBranchViewModel>>, GetAdminBranchesQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetAdminBranchQuery, AdminBranchViewModel?>, GetAdminBranchQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetBranchClosuresQuery, IReadOnlyList<BranchClosureViewModel>>, GetBranchClosuresQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetRoomsQuery, IReadOnlyList<RoomViewModel>>, GetRoomsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetBranchCalendarQuery, IReadOnlyList<TimeIntervalViewModel>>, GetBranchCalendarQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetStaffBranchAssignmentQuery, StaffBranchAssignmentViewModel?>, GetStaffBranchAssignmentQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetMyBranchesQuery, StaffBranchAssignmentViewModel?>, GetMyBranchesQueryHandler>();
@@ -214,10 +189,6 @@ public static class AdministrationModule
         services.AddScoped<IQueryHandlerAsync<GetMyLeaveRequestsQuery, IReadOnlyList<LeaveRequestViewModel>>, GetMyLeaveRequestsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetLeaveRequestsQuery, PagedResult<LeaveRequestViewModel>>, GetLeaveRequestsQueryHandler>();
 
-        services.AddScoped<IQueryHandlerAsync<GetPublicServicesQuery, IReadOnlyList<PublicServiceViewModel>>, GetPublicServicesQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetAdminServicesQuery, IReadOnlyList<AdminServiceViewModel>>, GetAdminServicesQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetAdminServiceQuery, AdminServiceViewModel?>, GetAdminServiceQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetServicePricesQuery, IReadOnlyList<ServicePriceViewModel>>, GetServicePricesQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetTaxClassesQuery, IReadOnlyList<TaxClassViewModel>>, GetTaxClassesQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetTaxRatesQuery, IReadOnlyList<TaxRateViewModel>>, GetTaxRatesQueryHandler>();
 

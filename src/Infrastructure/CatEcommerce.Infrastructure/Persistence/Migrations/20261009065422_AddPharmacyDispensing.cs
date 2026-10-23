@@ -124,7 +124,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
                 columns: new[] { "prescription_id", "supply_number" },
                 unique: true,
                 // Written FROM the enumeration, never a literal (HO-PHM-001 U-X3): a supply number is used once among the supplies that STAND.
-                filter: $"status = {DispensingStatus.Dispensed.Value}");
+                filter: $"status = {1}");
 
             migrationBuilder.CreateIndex(
                 name: "ix_dispensing_line_batch",

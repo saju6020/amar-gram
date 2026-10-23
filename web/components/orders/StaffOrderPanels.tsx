@@ -68,7 +68,6 @@ export function StaffLinesPanel({
     key: l.lineId,
     productName: l.productName,
     variantLabel: l.variantLabel,
-    cat: l.cat,
     quantity: l.quantity,
     unitPrice: l.unitPrice,
     lineTotal: l.lineTotal,

@@ -138,14 +138,14 @@ public sealed class AdminAuditEntriesEndpointTests(AdministrationApiFactory fact
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = await SignInStaffAsync(nurse.Mobile, nurse.Password);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
 
         var from = DateTimeOffset.UtcNow.AddMinutes(-5);
 
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30);
         var endsOn = startsOn.AddDays(1);
-        var request = await nurseClient.PostAsJsonAsync("/api/staff/leave-requests", new
+        var request = await receptionClient.PostAsJsonAsync("/api/staff/leave-requests", new
         {
             startsOn = startsOn.ToString("yyyy-MM-dd"), endsOn = endsOn.ToString("yyyy-MM-dd"), kind = "Annual"
         }, Json);
@@ -216,136 +216,6 @@ public sealed class AdminAuditEntriesEndpointTests(AdministrationApiFactory fact
         var response = await client.GetAsync($"/api/admin/audit-entries?from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    /// <summary>Owner decision 2026-09-26: an Accountant (holds AuditLog.View, not Cats.View) sees
-    /// that a cat record changed but never its clinical content.</summary>
-    [Fact]
-    public async Task AccountantStaff_SearchingACatAuditRow_SeesRedactedValues()
-    {
-        var owner = await RegisterAndSignInCustomerAsync();
-        using var ownerClient = owner.Client;
-        var catId = await SeedCatAsync(owner.CustomerId, "Whiskers The Accountant Test Cat");
-
-        var accountant = await SeedStaffAsync(StaffRoles.Accountant);
-        using var client = await SignInStaffAsync(accountant.Mobile, accountant.Password);
-
-        var from = DateTimeOffset.UtcNow.AddMinutes(-5);
-        var to = DateTimeOffset.UtcNow.AddMinutes(5);
-        var search = await client.GetAsync(
-            $"/api/admin/audit-entries?entityId={catId}&entityType=CatAggregate&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}");
-        Assert.Equal(HttpStatusCode.OK, search.StatusCode);
-
-        var body = await search.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var items = body.GetProperty("items").EnumerateArray().ToList();
-        Assert.NotEmpty(items);
-        var row = items.First(i => i.GetProperty("entityId").GetGuid() == catId);
-        var afterValue = row.GetProperty("afterValue").GetString();
-        Assert.NotNull(afterValue);
-        Assert.Contains("Redacted", afterValue);
-        Assert.DoesNotContain("Whiskers The Accountant Test Cat", afterValue);
-    }
-
-    /// <summary>Owner decision 2026-09-26: a Vet (holds Cats.View) sees the actual clinical content.</summary>
-    [Fact]
-    public async Task VetStaff_SearchingACatAuditRow_SeesActualValues()
-    {
-        var owner = await RegisterAndSignInCustomerAsync();
-        using var ownerClient = owner.Client;
-        var catId = await SeedCatAsync(owner.CustomerId, "Whiskers The Vet Test Cat");
-
-        var vet = await SeedStaffAsync(StaffRoles.Vet, StaffRoles.Accountant); // Accountant role grants AuditLog.View
-        using var client = await SignInStaffAsync(vet.Mobile, vet.Password);
-
-        var from = DateTimeOffset.UtcNow.AddMinutes(-5);
-        var to = DateTimeOffset.UtcNow.AddMinutes(5);
-        var search = await client.GetAsync(
-            $"/api/admin/audit-entries?entityId={catId}&entityType=CatAggregate&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}");
-        Assert.Equal(HttpStatusCode.OK, search.StatusCode);
-
-        var body = await search.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var items = body.GetProperty("items").EnumerateArray().ToList();
-        var row = items.First(i => i.GetProperty("entityId").GetGuid() == catId);
-        var afterValue = row.GetProperty("afterValue").GetString();
-        Assert.NotNull(afterValue);
-        Assert.DoesNotContain("Redacted", afterValue);
-        Assert.Contains("Whiskers The Vet Test Cat", afterValue);
-    }
-
-    /// <summary>Gate fix 2026-09-26 (SEC MEDIUM #3): owner decision (a) previously missed the four
-    /// `Cat`-labelled BusinessEvent rows a high-risk flag, clear, or ownership transfer writes --
-    /// an Accountant could read the handling note and every reason through the audit log even
-    /// though the cat record itself was already redacted. Covers search and the CSV export.</summary>
-    [Fact]
-    public async Task AccountantStaff_SearchingCatBusinessEventRows_SeesRedactedValuesAndReasons_AdministratorSeesActualContent()
-    {
-        var admin = await SeedStaffAsync(StaffRoles.Administrator);
-        using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
-
-        var owner = await RegisterAndSignInCustomerAsync();
-        using var ownerClient = owner.Client;
-        var catId = await SeedCatAsync(owner.CustomerId, "Whiskers The BusinessEvent Test Cat");
-
-        const string handlingNote = "HANDLINGNOTE-marker: muzzle required, bites when restrained";
-        const string flagReason = "FLAGREASON-marker: FIV positive, high risk of transmission";
-        const string clearReason = "CLEARREASON-marker: re-tested negative, flag no longer needed";
-        const string transferReason = "TRANSFERREASON-marker: relocating, cat stays with prior owner's family";
-
-        var flag = await adminClient.PutAsJsonAsync($"/api/cats/{catId}/high-risk-flag", new { handlingNote, reason = flagReason }, Json);
-        Assert.Equal(HttpStatusCode.OK, flag.StatusCode);
-
-        var clear = await adminClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, $"/api/cats/{catId}/high-risk-flag")
-        {
-            Content = JsonContent.Create(new { reason = clearReason }, options: Json)
-        });
-        Assert.Equal(HttpStatusCode.OK, clear.StatusCode);
-
-        var newOwner = await RegisterAndSignInCustomerAsync();
-        using var newOwnerClient = newOwner.Client;
-        var transfer = await adminClient.PostAsJsonAsync($"/api/cats/{catId}/ownership-transfer", new { newOwnerId = newOwner.CustomerId, reason = transferReason }, Json);
-        Assert.Equal(HttpStatusCode.OK, transfer.StatusCode);
-
-        var from = DateTimeOffset.UtcNow.AddMinutes(-5);
-        var to = DateTimeOffset.UtcNow.AddMinutes(5);
-        var query = $"entityId={catId}&entityType=Cat&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}";
-
-        var accountant = await SeedStaffAsync(StaffRoles.Accountant);
-        using var accountantClient = await SignInStaffAsync(accountant.Mobile, accountant.Password);
-
-        var accountantSearch = await accountantClient.GetAsync($"/api/admin/audit-entries?{query}");
-        Assert.Equal(HttpStatusCode.OK, accountantSearch.StatusCode);
-        var accountantBody = await accountantSearch.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var accountantItems = accountantBody.GetProperty("items").EnumerateArray().ToList();
-        Assert.Equal(3, accountantItems.Count);
-        foreach (var item in accountantItems)
-        {
-            Assert.Contains("Redacted", item.GetProperty("reason").GetString());
-            var itemAfterValue = item.GetProperty("afterValue").GetString();
-            if (itemAfterValue is not null) Assert.Contains("Redacted", itemAfterValue);
-        }
-
-        var accountantCsv = await accountantClient.GetAsync($"/api/admin/audit-entries/export.csv?{query}");
-        Assert.Equal(HttpStatusCode.OK, accountantCsv.StatusCode);
-        var accountantCsvBody = await accountantCsv.Content.ReadAsStringAsync();
-        Assert.DoesNotContain(handlingNote, accountantCsvBody);
-        Assert.DoesNotContain(flagReason, accountantCsvBody);
-        Assert.DoesNotContain(clearReason, accountantCsvBody);
-        Assert.DoesNotContain(transferReason, accountantCsvBody);
-
-        // The Administrator holds both AuditLog.View and Cats.View, so sees the actual content.
-        var adminSearch = await adminClient.GetAsync($"/api/admin/audit-entries?{query}");
-        var adminBody = await adminSearch.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var adminItems = adminBody.GetProperty("items").EnumerateArray().ToList();
-
-        var flagRow = adminItems.Single(i => i.GetProperty("action").GetString() == "CatFlaggedHighRisk");
-        Assert.Contains(handlingNote, flagRow.GetProperty("afterValue").GetString());
-        Assert.Equal(flagReason, flagRow.GetProperty("reason").GetString());
-
-        var clearRow = adminItems.Single(i => i.GetProperty("action").GetString() == "CatHighRiskFlagCleared");
-        Assert.Equal(clearReason, clearRow.GetProperty("reason").GetString());
-
-        var transferRow = adminItems.Single(i => i.GetProperty("action").GetString() == "CatOwnershipTransferred");
-        Assert.Equal(transferReason, transferRow.GetProperty("reason").GetString());
     }
 
     /// <summary>I-E3, TEST gate seventh pass: <c>AuditExportRules.MaxRows</c> is now overridable per

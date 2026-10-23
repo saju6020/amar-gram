@@ -17,7 +17,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
     public partial class AddClinicAppointments : Migration
     {
         private static readonly string OccupyingStatusList = string.Join(", ",
-            AppointmentStatus.Held.Value, AppointmentStatus.Booked.Value, AppointmentStatus.CheckedIn.Value, AppointmentStatus.InConsultation.Value);
+            1, 4, 5, 6);
 
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

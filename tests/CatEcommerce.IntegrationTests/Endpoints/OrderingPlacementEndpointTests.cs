@@ -11,7 +11,6 @@ namespace CatEcommerce.IntegrationTests;
 /// HO-ORD-001 Phase D -- placement (<c>POST /api/customers/me/orders</c>, C9) through real HTTP against the real Shop, Inventory and Billing implementations:
 /// I-D1, I-D2, I-D4, I-D6, I-D7, I-D8 (atomicity), I-D9 (twenty parallel placements for the last unit), I-D10 / I-D11 (double submit), I-D12 (a discount's
 /// last use), I-D13, I-D14 (no card data anywhere) and the placement halves of I-E1 (a transfer order) and I-F12 (a pickup order paid on collection).
-/// The diet-gate rows (I-D5, I-D5b, a prescription line) run against the real HO-PHM-001 gate.
 /// </summary>
 public sealed class OrderingPlacementEndpointTests(OrderingApiFactory factory) : OrderingShopTestBase(factory)
 {
@@ -360,80 +359,6 @@ public sealed class OrderingPlacementEndpointTests(OrderingApiFactory factory) :
         await ExpectAsync(HttpStatusCode.Created, await shop.Customer.SendAsync(PostOrder(PlaceBody(shop, accepted))));
     }
 
-    // ── I-D5 / I-D5b: prescription lines against the REAL HO-PHM-001 IDietAuthorisationGate ─────────
-    /// <summary>A shop whose customer has a cat and one prescription line in the cart, authorised by a real diet authorisation unless told otherwise.</summary>
-    private async Task<(Shop Shop, OrderingSku Rx, Guid CatId, Guid? AuthorisationId)> SetUpPrescriptionShopAsync(bool authorise = true)
-    {
-        var shop = await SetUpShopAsync(fillCart: false);
-        var rx = await CreateSkuAsync(shop.Context, price: 900m, stock: 25m, food: true, prescription: true, onStorefront: true, name: "Renal diet " + NewCode());
-        var cat = await SeedCatAsync(shop.CustomerId);
-        Guid? authorisationId = authorise ? await AuthoriseDietAsync(cat, shop.CustomerId, rx.ProductId, rx.Name) : null;
-
-        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = rx.SkuId, quantity = 1, catId = cat }, Json));
-        return (shop, rx, cat, authorisationId);
-    }
-
-    [Fact]
-    public async Task I_D5_APrescriptionLineWithoutACat_CannotBePlaced()
-    {
-        var (shop, _, _, _) = await SetUpPrescriptionShopAsync();
-
-        // the cart refuses such a line at add time, so stand the cart in the state only a lost cat can reach: the line is there and its cat is not
-        await using (var connection = await OpenConnectionAsync())
-        {
-            await using var command = new Npgsql.NpgsqlCommand(
-                "UPDATE ordering.cart_line SET cat_id = NULL WHERE cart_id IN (SELECT \"Id\" FROM ordering.cart WHERE customer_id = @c AND status = 1)", connection);
-            command.Parameters.AddWithValue("c", shop.CustomerId);
-            Assert.Equal(1, await command.ExecuteNonQueryAsync());
-        }
-
-        await AcceptPendingPoliciesAsync(shop.Customer);
-        var quote = await QuoteAsync(shop.Customer, QuoteUrl(shop));
-        Assert.False(quote.GetProperty("canPlace").GetBoolean());
-        Assert.Contains("PrescriptionCatRequired", quote.GetProperty("blockingReasons").EnumerateArray().Select(r => r.GetString()));
-
-        await AssertErrorAsync(await shop.Customer.SendAsync(PostOrder(PlaceBody(shop, quote))), "PrescriptionCatRequired");
-        Assert.Equal(0, await WithDbAsync(db => db.Orders.AsNoTracking().CountAsync(o => o.CustomerId == shop.CustomerId)));
-    }
-
-    [Fact]
-    public async Task I_D5_AnAuthorisedPrescriptionLine_IsPlaced_WhenTheRealGateSaysAuthorised()
-    {
-        var (shop, rx, cat, _) = await SetUpPrescriptionShopAsync();
-
-        var placed = await PlaceCodOrderAsync(shop);
-
-        var order = await LoadOrderAsync(placed.GetProperty("orderId").GetGuid());
-        var line = Assert.Single(order.Lines);
-        Assert.Equal(rx.SkuId, line.SkuId);
-        Assert.Equal(cat, line.CatId);
-    }
-
-    [Fact]
-    public async Task I_D5b_ALapsedAuthorisation_BlocksThePrescriptionLineAtPlacement()
-    {
-        var (shop, rx, _, authorisationId) = await SetUpPrescriptionShopAsync();
-        await AcceptPendingPoliciesAsync(shop.Customer);
-        var quote = await QuoteAsync(shop.Customer, QuoteUrl(shop));
-        Assert.True(quote.GetProperty("canPlace").GetBoolean());
-
-        // the authorisation lapses between the quote and the placement (US-SHP-10 AC3)
-        await LapseDietAuthorisationAsync(authorisationId!.Value);
-
-        // the old quote can no longer be placed, and nothing is ordered
-        await AssertErrorAsync(await shop.Customer.SendAsync(PostOrder(PlaceBody(shop, quote))), "CheckoutQuoteChanged", HttpStatusCode.Conflict);
-        Assert.Equal(0, await WithDbAsync(db => db.Orders.AsNoTracking().CountAsync(o => o.CustomerId == shop.CustomerId)));
-
-        // a fresh quote names the line as excluded because its authorisation ended, and has nothing left to place
-        var fresh = await QuoteAsync(shop.Customer, QuoteUrl(shop));
-        var excluded = Assert.Single(fresh.GetProperty("excludedLines").EnumerateArray());
-        Assert.Equal(rx.SkuId, excluded.GetProperty("skuId").GetGuid());
-        Assert.Equal("PrescriptionAuthorisationExpired", excluded.GetProperty("reasonCode").GetString());
-        Assert.False(fresh.GetProperty("canPlace").GetBoolean());
-        await AssertErrorAsync(await shop.Customer.SendAsync(PostOrder(PlaceBody(shop, fresh))), "NothingToPlace");
-    }
-
-    // ── I-E1 (US-ORD-19 AC1): the transfer order placed ─────────────────────────────────────────────
     [Fact]
     public async Task I_E1_ABankTransferOrder_IsHeldPendingPayment_WithStockReserved_AndTheBankDetailsShown()
     {

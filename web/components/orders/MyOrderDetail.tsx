@@ -87,7 +87,6 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
     key: line.lineId,
     productName: line.productName,
     variantLabel: line.variantLabel,
-    cat: line.cat,
     quantity: line.quantity,
     unitPrice: line.unitPrice,
     lineTotal: line.lineTotal,

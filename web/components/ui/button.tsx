@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 /**
- * shadcn/ui-style Button — copied in and owned (HO-CAT-002 §3.1, §9). Consumed by the staff
+ * shadcn/ui-style Button — copied in and owned (the scaffold handover §3.1, §9). Consumed by the staff
  * shell's nav-collapse control; every area is expected to reuse this rather than hand-roll a
  * second button.
  */
@@ -39,7 +39,7 @@ const buttonVariants = cva(
   },
 );
 
-// Exported (added by HO-CAT-002) for the one case a real `<button>` is wrong: a navigation
+// Exported (added by the scaffold handover) for the one case a real `<button>` is wrong: a navigation
 // action that must be an `<a>`/`next/link` `<Link>` for semantics and keyboard/middle-click
 // behaviour, but should still look like a button — `<Link className={buttonVariants({variant})}>`
 // rather than nesting a `<button>` inside an `<a>`, which `asChild` would otherwise require.

@@ -2,9 +2,7 @@ import { http, HttpResponse, type HttpHandler } from 'msw';
 import { db as shopDb } from '../shop/store';
 import { noContent, notFound, orderingIds as ids, violation } from './fixtures';
 import {
-  CAT_NAMES,
   allocateOrder,
-  authorisedCatsFor,
   batchFor,
   db,
   findOrder,
@@ -45,7 +43,6 @@ function posSku(skuId: string) {
     barcode: info.barcode,
     unitPrice: info.priceCents !== null ? money(info.priceCents) : null,
     sellable,
-    requiresPrescription: info.requiresPrescription,
     isBundle: info.isBundle,
     fefoBatches:
       sellable > 0 && !info.isBundle
@@ -94,7 +91,7 @@ export const posOrderingHandlers: HttpHandler[] = [
   http.post(`${API}/quote`, async ({ request }) => {
     const body = (await request.json()) as {
       customerId?: string | null;
-      lines: Array<{ skuId: string; quantity: number; catId?: string | null }>;
+      lines: Array<{ skuId: string; quantity: number }>;
       discountCode?: string | null;
     };
     if (!body.lines || body.lines.length === 0 || body.lines.some((l) => l.quantity < 1)) {
@@ -104,7 +101,6 @@ export const posOrderingHandlers: HttpHandler[] = [
       lineId: uuid(),
       skuId: l.skuId,
       quantity: l.quantity,
-      catId: l.catId ?? null,
       priceWhenAddedCents: skuInfo(l.skuId)?.priceCents ?? 0,
     }));
     const result = computeQuote(lines, {
@@ -123,7 +119,7 @@ export const posOrderingHandlers: HttpHandler[] = [
     const body = (await request.json()) as {
       customerName?: string;
       customerMobile?: string;
-      lines: Array<{ skuId: string; quantity: number; catId?: string | null }>;
+      lines: Array<{ skuId: string; quantity: number }>;
       discountCode?: string | null;
       tenders: Array<{ method: string; amount: unknown; reference?: string | null }>;
     };
@@ -147,7 +143,6 @@ export const posOrderingHandlers: HttpHandler[] = [
       lineId: uuid(),
       skuId: l.skuId,
       quantity: l.quantity,
-      catId: l.catId ?? null,
       priceWhenAddedCents: skuInfo(l.skuId)?.priceCents ?? 0,
     }));
     const result = computeQuote(lines, {
@@ -155,20 +150,6 @@ export const posOrderingHandlers: HttpHandler[] = [
       discountCode: body.discountCode ?? undefined,
       customerHasOrders: true,
     });
-    // A prescription line needs an existing customer who owns an authorised cat.
-    for (const l of lines) {
-      const info = skuInfo(l.skuId);
-      if (info?.requiresPrescription) {
-        const isKnown = mobile.endsWith(ids.customerMobile.slice(-9));
-        if (!l.catId || !isKnown || !authorisedCatsFor(l.skuId).includes(l.catId)) {
-          return violation(
-            'Lines',
-            'PrescriptionCatRequired',
-            `'${info.productName}' needs an existing customer and one of their cats with a current vet authorisation.`,
-          );
-        }
-      }
-    }
     if (!result.canPlace && result.blocking.some((c) => c !== 'PaymentMethodUnavailable')) {
       return violation('Lines', result.blocking[0] ?? 'NothingToPlace', '');
     }
@@ -198,7 +179,6 @@ export const posOrderingHandlers: HttpHandler[] = [
       skuId: p.skuId,
       productName: p.productName,
       variantLabel: p.variantLabel,
-      catId: p.catId,
       quantity: p.quantity,
       unitCents: p.unitCents,
       subtotalCents: p.subtotalCents,
@@ -343,4 +323,4 @@ export const posOrderingHandlers: HttpHandler[] = [
   }),
 ];
 
-export { CAT_NAMES, noContent };
+export { noContent };

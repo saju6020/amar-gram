@@ -1,6 +1,5 @@
 import type { Money } from '@/lib/format/money';
-import { addDaysIso } from '@/lib/format/appointment';
-import { todayInZone } from '@/lib/format/time';
+import { addDaysIso, todayInZone } from '@/lib/format/time';
 import { looksLikeCardNumber } from '@/lib/validation/cardNumberGuard';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import { billingIds as ids } from './fixtures';
@@ -65,7 +64,7 @@ export interface DbCharge {
   id: string;
   customerId: string;
   branchId: string;
-  businessLine: 'Clinic' | 'Shop' | 'Boarding';
+  businessLine: 'Shop';
   itemKind: string;
   sourceKind: string;
   sourceId: string;
@@ -87,7 +86,7 @@ export interface DbCharge {
 export interface DbLine {
   lineId: string;
   chargeId: string | null;
-  businessLine: 'Clinic' | 'Shop' | 'Boarding';
+  businessLine: 'Shop';
   itemKind: string;
   sourceKind: string;
   sourceId: string;
@@ -335,7 +334,7 @@ export interface Db {
     occurredOn: string;
   }>;
   loyaltyEnabled: boolean;
-  /** Completed appointments with no charge yet (`GET …/uncaptured-sources`). `skipReason` is a mock trigger: capture answers it as skipped. */
+  /** Completed orders with no charge yet (`GET …/uncaptured-sources`). `skipReason` is a mock trigger: capture answers it as skipped. */
   capturable: Array<{
     sourceKind: string;
     sourceId: string;
@@ -439,8 +438,8 @@ function line(
   return {
     lineId: uid('11111111'),
     chargeId: null,
-    businessLine: 'Clinic',
-    itemKind: 'Service',
+    businessLine: 'Shop',
+    itemKind: 'Product',
     sourceKind: 'Manual',
     sourceId: uid('22222222'),
     qtyMilli: 1000,
@@ -457,9 +456,9 @@ function charge(partial: Partial<DbCharge> & Pick<DbCharge, 'id' | 'description'
   return {
     customerId: ids.customerId,
     branchId: ids.mainBranchId,
-    businessLine: 'Clinic',
-    itemKind: 'Service',
-    sourceKind: 'Appointment',
+    businessLine: 'Shop',
+    itemKind: 'Product',
+    sourceKind: 'Order',
     sourceId: uid('33333333'),
     qtyMilli: 1000,
     discountCents: 0,
@@ -552,11 +551,11 @@ function seed(): Db {
   });
 
   const charges: DbCharge[] = [
-    charge({ id: ids.chargeConsultId, description: 'Consultation — Momo', unitCents: 80_000 }),
-    charge({ id: ids.chargeVaccineId, description: 'Vaccination (FVRCP) — Momo', unitCents: 120_000 }),
+    charge({ id: ids.chargeRiceId, description: 'Organic rice 5 kg', unitCents: 80_000 }),
+    charge({ id: ids.chargeOilId, description: 'Mustard oil 1 L', unitCents: 120_000 }),
     charge({
       id: ids.chargeFoodId,
-      description: 'Royal Canin Kitten 2 kg',
+      description: 'Raw honey 500 g',
       unitCents: 145_000,
       qtyMilli: 2000,
       businessLine: 'Shop',
@@ -564,15 +563,14 @@ function seed(): Db {
       sourceKind: 'Order',
     }),
     charge({
-      id: ids.chargeBoardingId,
-      description: 'Boarding — 3 nights, Momo',
+      id: ids.chargeDeliveryId,
+      description: 'Home delivery — 3 trips',
       unitCents: 90_000,
       qtyMilli: 3000,
-      businessLine: 'Boarding',
       itemKind: 'Service',
-      sourceKind: 'BoardingStay',
+      sourceKind: 'Manual',
     }),
-    charge({ id: ids.chargeRacyId, description: 'Nail trim', unitCents: 15_000, racy: true }),
+    charge({ id: ids.chargeRacyId, description: 'Gift wrapping', unitCents: 15_000, racy: true }),
     charge({
       id: ids.chargeNoRateId,
       description: 'Special handling fee',
@@ -581,7 +579,7 @@ function seed(): Db {
       itemKind: 'Fee',
       sourceKind: 'Manual',
     }),
-    charge({ id: ids.chargeDentalId, description: 'Dental check — Momo', unitCents: 60_000 }),
+    charge({ id: ids.chargeGheeId, description: 'Organic ghee 1 kg', unitCents: 60_000 }),
   ];
 
   const draft: DbInvoice = {
@@ -597,8 +595,8 @@ function seed(): Db {
     lines: [
       line(
         {
-          chargeId: ids.chargeDentalId,
-          description: 'Dental check — Momo',
+          chargeId: ids.chargeGheeId,
+          description: 'Organic ghee 1 kg',
           unitCents: 60_000,
           taxRatePercent: null,
         },
@@ -615,14 +613,14 @@ function seed(): Db {
     issueKey: null,
   };
 
-  const i1 = issued(ids.issuedInvoiceId, 101, [line({ description: 'Consultation — Momo', unitCents: 80_000 }, 1)]);
+  const i1 = issued(ids.issuedInvoiceId, 101, [line({ description: 'Organic rice 5 kg', unitCents: 80_000 }, 1)]);
   const i2 = issued(
     ids.partPaidInvoiceId,
     102,
     [
       line(
         {
-          description: 'Royal Canin Kitten 2 kg',
+          description: 'Raw honey 500 g',
           unitCents: 145_000,
           qtyMilli: 2000,
           businessLine: 'Shop',
@@ -637,26 +635,26 @@ function seed(): Db {
   const i3 = issued(
     ids.paidInvoiceId,
     103,
-    [line({ description: 'Vaccination (FVRCP) — Momo', unitCents: 100_000 }, 1)],
+    [line({ description: 'Mustard oil 1 L', unitCents: 100_000 }, 1)],
     { paidCents: 115_000, status: 'Paid', issueDate: addDaysIso(day, -10) },
   );
   const i4 = issued(
     ids.creditedInvoiceId,
     104,
-    [line({ description: 'Grooming — Momo', unitCents: 50_000 }, 1)],
+    [line({ description: 'Gift hamper — large', unitCents: 50_000 }, 1)],
     { creditedCents: 57_500, status: 'Credited', issueDate: addDaysIso(day, -8), correctedByInvoiceId: ids.correctedInvoiceId },
   );
   const i5 = issued(
     ids.correctedInvoiceId,
     105,
-    [line({ description: 'Grooming (corrected) — Momo', unitCents: 45_000 }, 1)],
+    [line({ description: 'Gift hamper — medium (corrected)', unitCents: 45_000 }, 1)],
     { issueDate: addDaysIso(day, -7), correctsInvoiceId: ids.creditedInvoiceId, correctsCreditNoteId: ids.creditNoteId },
   );
   const otherLines = (sd: number, due: number, seq: number, id?: string): DbInvoice =>
     issued(
       id ?? uid('d2000000'),
       seq,
-      [line({ description: `Treatment ${seq}`, unitCents: 100_000 }, 1)],
+      [line({ description: `Grocery order ${seq}`, unitCents: 100_000 }, 1)],
       { customerId: ids.otherCustomerId, issueDate: addDaysIso(day, sd), dueOn: addDaysIso(day, due) },
     );
   const others = [
@@ -671,14 +669,14 @@ function seed(): Db {
     id: ids.creditNoteId,
     number: `CN-MAIN-${FY_COMPACT}-000101`,
     kind: 'Correction',
-    reason: 'Wrong service billed — grooming was not performed.',
+    reason: 'Wrong item billed — the large hamper was not delivered.',
     invoiceId: ids.creditedInvoiceId,
     customerId: ids.customerId,
     branchId: ids.mainBranchId,
     lines: [
       {
         invoiceLineId: i4.lines[0]!.lineId,
-        description: 'Grooming — Momo',
+        description: 'Gift hamper — large',
         quantity: '1.000',
         requestedCents: null,
         netCents: 50_000,
@@ -729,9 +727,9 @@ function seed(): Db {
       receivedOn: addDaysIso(day, -2),
       businessDate: addDaysIso(day, -2),
       earmark: {
-        kind: 'BoardingStay',
+        kind: 'Order',
         sourceId: uid('55555555'),
-        label: 'Boarding deposit — Momo',
+        label: 'Order deposit — PC-001250',
         isReleased: false,
         releasedOn: null,
         releaseReason: null,
@@ -893,7 +891,7 @@ function seed(): Db {
         addressLines: ['House 12, Road 5, Dhanmondi', 'Dhaka 1209'],
         phone: '+88 02 5511 0000',
         email: 'accounts@purrcare.test',
-        invoiceFooter: 'Thank you for trusting us with your cat. Goods sold are not returnable once opened.',
+        invoiceFooter: 'Thank you for shopping with Amar Gram. Goods sold are not returnable once opened.',
         bankAccounts: [
           { bankName: 'City Bank', accountName: 'Amar Gram Ltd', accountNumber: '1234-567890-01', branchName: 'Dhanmondi', routingNumber: '225261719' },
           { bankName: 'BRAC Bank', accountName: 'Amar Gram Ltd', accountNumber: '2001-554433-02', branchName: 'Gulshan', routingNumber: null },
@@ -931,19 +929,19 @@ function seed(): Db {
     loyaltyEnabled: true,
     capturable: [
       {
-        sourceKind: 'Appointment',
+        sourceKind: 'Order',
         sourceId: 'a7000000-0000-0000-0000-000000000001',
         customerId: ids.customerId,
         completedOn: new Date().toISOString(),
-        label: 'Consultation — Momo (Sam Rahman)',
+        label: 'Order PC-001260 (Sam Rahman)',
       },
       {
-        sourceKind: 'Appointment',
+        sourceKind: 'Order',
         sourceId: 'a7000000-0000-0000-0000-000000000002',
         customerId: ids.otherCustomerId,
         completedOn: new Date().toISOString(),
-        label: 'Nail trim — Biscuit (Rahima Akter)',
-        skipReason: 'The service has no price set, so no charge could be created.',
+        label: 'Order PC-001261 (Rahima Akter)',
+        skipReason: 'The order has an item with no price set, so no charge could be created.',
       },
     ],
     seq: { invoice: 106, creditNote: 102, receipt: 130 },
@@ -1017,7 +1015,6 @@ export function lineView(l: DbLine, invoice: DbInvoice) {
     itemKind: l.itemKind,
     sourceKind: l.sourceKind,
     sourceId: l.sourceId,
-    catId: null,
     description: l.description,
     quantity: qtyText(l.qtyMilli),
     unitPrice: money(l.unitCents),
@@ -1143,7 +1140,6 @@ export function chargeView(c: DbCharge) {
     customerId: c.customerId,
     customerName: customerName(c.customerId),
     branchId: c.branchId,
-    catId: null,
     businessLine: c.businessLine,
     itemKind: c.itemKind,
     sourceKind: c.sourceKind,
@@ -1259,7 +1255,7 @@ export function receiptView(p: DbPayment) {
   return {
     receiptNumber: receiptText(p.receiptSeq),
     seller: sellerOf(p.branchId),
-    branchName: p.branchId === ids.londonBranchId ? 'London branch' : 'Main clinic',
+    branchName: p.branchId === ids.londonBranchId ? 'London branch' : 'Main outlet',
     customerName: customerName(p.customerId),
     method: p.method,
     reference: p.reference,

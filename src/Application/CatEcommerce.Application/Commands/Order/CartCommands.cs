@@ -15,19 +15,17 @@ public sealed class AddCartLineCommand : Command
     public string? NewGuestTokenHash { get; init; }
     public required Guid SkuId { get; init; }
     public required int Quantity { get; init; }
-    public Guid? CatId { get; init; }
 }
 
 /// <summary>The result of C5.</summary>
 public sealed record AddCartLineResult(Guid LineId, Guid CartId, bool GuestCartCreated);
 
-/// <summary>C6 -- change a line's quantity and/or its cat. The cart is the caller's own: another caller's line is not found.</summary>
+/// <summary>C6 -- change a line's quantity. The cart is the caller's own: another caller's line is not found.</summary>
 public sealed class UpdateCartLineCommand : Command
 {
     public required Guid LineId { get; init; }
     public string? GuestTokenHash { get; init; }
     public int? Quantity { get; init; }
-    public Guid? CatId { get; init; }
 }
 
 /// <summary>C6 -- remove a line (idempotent).</summary>

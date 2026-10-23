@@ -5,7 +5,6 @@ import { act, render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import ProductEditorLayout from '@/app/(staff)/staff/shop/products/[productId]/layout';
-import CatFoodPage from '@/app/(portal)/portal/cats/[catId]/food/page';
 
 class NotFoundSignal extends Error {}
 vi.mock('next/navigation', () => ({
@@ -53,19 +52,6 @@ describe('non-GUID route ids are a 404 and send no request — S10', () => {
         <p>child</p>
       </ProductEditorLayout>,
     );
-    expect(await screen.findByText('not-found-page')).toBeInTheDocument();
-    expect(calls).toEqual([]);
-  });
-
-  it("a customer's cat food page", async () => {
-    const calls: string[] = [];
-    server.use(
-      http.get('*/api/customers/me/cats/*', ({ request }) => {
-        calls.push(request.url);
-        return HttpResponse.json({});
-      }),
-    );
-    await renderBoundary(<CatFoodPage params={Promise.resolve({ catId: 'not-a-guid' })} />);
     expect(await screen.findByText('not-found-page')).toBeInTheDocument();
     expect(calls).toEqual([]);
   });

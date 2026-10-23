@@ -1,7 +1,7 @@
--- HO-RPT-001 section 8.4 (HO-BIL-001, FR-BIL-1/2/8): one row per invoice line with the classification HO-BIL-001 stores ON the line -- business_line (Clinic, Shop, Boarding) and item_kind -- so a combined invoice
+-- HO-RPT-001 section 8.4 (HO-BIL-001, FR-BIL-1/2/8): one row per invoice line with the classification HO-BIL-001 stores ON the line -- business_line and item_kind -- so a combined invoice
 -- (FR-ORD-19) is classified per line. Revenue is Sigma net_amount (after the line discount and the invoice discount share, excluding tax). source_line_id identifies the ORDER LINE behind a shop line (the
--- charge's source line reference is the order line id without dashes), so the cost of goods can be found in the stock ledger (ADR-284). Sku and product come from that order line; service_category from the
--- appointment behind a clinic line. Draft and discarded invoices are filtered by the reports on invoice_status, never here, so the view stays a faithful published contract.
+-- charge's source line reference is the order line id without dashes), so the cost of goods can be found in the stock ledger (ADR-284). Sku and product come from that order line; order_channel from the
+-- order behind an order line (HO-P1: revenue is split by sales channel). Draft and discarded invoices are filtered by the reports on invoice_status, never here, so the view stays a faithful published contract.
 CREATE VIEW report.rv_invoice_line AS
 SELECT
     l.id                                AS invoice_line_id,
@@ -19,7 +19,7 @@ SELECT
     src.line_id                         AS source_line_id,
     ol.sku_id                           AS sku_id,
     ol.product_id                       AS product_id,
-    ap.service_category                 AS service_category,
+    so.channel                          AS order_channel,
     l.description                       AS description,
     l.quantity                          AS quantity,
     l.unit_price                        AS unit_price,
@@ -38,4 +38,4 @@ LEFT JOIN LATERAL (
     SELECT CASE WHEN l.source_kind = {{ORDER_SOURCE}} AND ch.source_line_ref ~ '^[0-9a-f]{32}$' THEN ch.source_line_ref::uuid END AS line_id
 ) src ON true
 LEFT JOIN ordering.order_line ol    ON ol.id = src.line_id
-LEFT JOIN clinic.appointment ap     ON ap."Id" = l.source_id AND l.source_kind = {{APPOINTMENT_SOURCE}};
+LEFT JOIN ordering.sales_order so   ON so."Id" = l.source_id AND l.source_kind = {{ORDER_SOURCE}};

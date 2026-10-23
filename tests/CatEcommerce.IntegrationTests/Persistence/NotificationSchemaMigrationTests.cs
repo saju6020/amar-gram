@@ -8,10 +8,9 @@ namespace CatEcommerce.IntegrationTests.Persistence;
 
 /// <summary>
 /// HO-NTF-001 §16, "migration apply from empty". <see cref="MigrationsOnAnEmptyDatabaseTests"/> only
-/// asserts the `account`/`audit`/`clinic` schemas it was written for -- it never checks that the
+/// asserts the `account`/`audit` schemas it was written for -- it never checks that the
 /// squashed `AddNotificationsModule` migration produces the `notify` schema at all. TEST gate
-/// addition, mirroring both that file's and <see cref="AddFilesMigrationDeletesLegacyCatPhotoRowsTests"/>'s
-/// own scratch-database pattern.
+/// addition, mirroring that file's own scratch-database pattern.
 /// </summary>
 public sealed class NotificationSchemaMigrationTests : IAsyncLifetime
 {
@@ -110,7 +109,6 @@ public sealed class NotificationSchemaMigrationTests : IAsyncLifetime
         Assert.True(await ColumnExistsAsync("account", "customer_notification_preferences", "preferred_channel"));
 
         // Unrelated schemas from earlier/later handovers must be unaffected.
-        Assert.True(await TableExistsAsync("clinic", "cat"));
         Assert.True(await TableExistsAsync("account", "customer_account"));
     }
 }

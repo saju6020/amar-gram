@@ -51,8 +51,8 @@ beforeEach(() => {
 });
 
 async function addLineWithPicker(user: ReturnType<typeof userEvent.setup>, pickerLabel: RegExp) {
-  await user.type(screen.getByLabelText(pickerLabel), 'kitten');
-  await user.click(await screen.findByRole('option', { name: /kitten dry food/i }));
+  await user.type(screen.getByLabelText(pickerLabel), 'rice');
+  await user.click(await screen.findByRole('option', { name: /organic rice/i }));
 }
 
 describe('U-E1 / U-E2 — AdjustmentForm', () => {
@@ -99,7 +99,7 @@ describe('U-E1 / U-E2 — AdjustmentForm', () => {
     expect(
       within(dialog).getByText(/cannot be undone — a correction is a new adjustment/i),
     ).toBeInTheDocument();
-    expect(within(dialog).getByText(/reduces kitten dry food/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/reduces organic rice/i)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: /request adjustment/i }));
     await waitFor(() => expect(onRequest).toHaveBeenCalled());
     expect(onRequest.mock.calls[0]![0].lines[0]).toMatchObject({
@@ -176,8 +176,8 @@ function adjustment(overrides: Partial<AdjustmentData> = {}): AdjustmentData {
       {
         lineId: 'l1',
         skuId: 'k',
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice',
         batchId: 'b1',
         lotNumber: 'L2408B',
         quantityDelta: '-8',
@@ -295,8 +295,8 @@ function openCount(): CountDetail {
     lines: [
       {
         skuId: 'k',
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice',
         batchId: 'b1',
         lotNumber: 'L2409E',
         expiresOn: '2027-01-30',
@@ -327,18 +327,18 @@ describe('U-E5 — CountSheet is blind', () => {
     expect(document.body).not.toHaveTextContent(/book quantity|variance|on hand/i);
 
     // Adding a line: the lot chooser shows lot and expiry only — never what the books say.
-    await user.type(screen.getByLabelText(/or find an item/i), 'litter');
-    await user.click(await screen.findByRole('option', { name: /cat litter/i }));
-    const chooser = await screen.findByLabelText(/which lot of cat litter/i);
+    await user.type(screen.getByLabelText(/or find an item/i), 'jute');
+    await user.click(await screen.findByRole('option', { name: /jute shopping bag/i }));
+    const chooser = await screen.findByLabelText(/which lot of jute shopping bag/i);
     await waitFor(() => expect(within(chooser).getAllByRole('option').length).toBeGreaterThan(1));
     expect(chooser).not.toHaveTextContent(/on hand|\d+ bags/i);
-    await user.selectOptions(chooser, ids.batchLitterId);
+    await user.selectOptions(chooser, ids.batchBagId);
     await user.click(screen.getByRole('button', { name: /add to the sheet/i }));
     const counted = (await screen.findAllByLabelText(/counted \(bags\)/i)).at(-1)!;
     await user.type(counted, '38');
     await user.tab();
     await waitFor(() =>
-      expect(onRecordLine).toHaveBeenCalledWith(ids.litterSkuId, ids.batchLitterId, '38'),
+      expect(onRecordLine).toHaveBeenCalledWith(ids.bagSkuId, ids.batchBagId, '38'),
     );
     await waitFor(() => expect(screen.getAllByText('Saved')).toHaveLength(2));
     expect(document.body).not.toHaveTextContent(/book quantity|variance/i);
@@ -375,8 +375,8 @@ describe('U-E6 — CountVariance', () => {
     lines: [
       {
         skuId: 'k',
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice',
         batchId: 'b1',
         lotNumber: 'L2408B',
         stockUnit: 'bags',
@@ -387,8 +387,8 @@ describe('U-E6 — CountVariance', () => {
       },
       {
         skuId: 'k',
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice',
         batchId: 'b2',
         lotNumber: 'L2409E',
         stockUnit: 'bags',
@@ -480,8 +480,8 @@ describe('U-E7 — TransferForm', () => {
     );
     await user.selectOptions(screen.getByLabelText(/^from/i), ids.warehouseId);
     await user.selectOptions(screen.getByLabelText(/^to/i), ids.shopFloorId);
-    await user.type(screen.getByLabelText(/or find an item/i), 'kitten');
-    await user.click(await screen.findByRole('option', { name: /kitten dry food/i }));
+    await user.type(screen.getByLabelText(/or find an item/i), 'rice');
+    await user.click(await screen.findByRole('option', { name: /organic rice/i }));
     await waitFor(() =>
       expect(
         within(screen.getByLabelText(/^batch/i)).getAllByRole('option').length,

@@ -75,7 +75,7 @@ public sealed class HostCompositionTests(AccountsApiFactory factory) : AccountsI
         // appsettings.Testing.json, so NotificationOptions' own [Required]/https/non-placeholder
         // ValidateOnStart checks (Notifications:ApiBaseUrl) and PublicSiteStartupGuardHostedService's
         // own "required in Production" check (PublicSite:WebBaseUrl, the shared web base URL --
-        // integrator instruction, post HO-CAT-001-gates merge) would otherwise ALSO fail here --
+        // integrator instruction after the foundation gates) would otherwise ALSO fail here --
         // pinned to real-shaped https URLs so this test's Production host fails ONLY for the one
         // seam it names.
         using var productionFactory = Factory.WithWebHostBuilder(builder =>
@@ -112,7 +112,7 @@ public sealed class HostCompositionTests(AccountsApiFactory factory) : AccountsI
     // well-formed.
     [InlineData("not-a-url", "absolute http(s)")] // not absolute at all
     [InlineData("ftp://trusted.example", "absolute http(s)")] // absolute, but not http(s)
-    [InlineData("https://trusted.example/cats", "path, query or fragment")]
+    [InlineData("https://trusted.example/shop", "path, query or fragment")]
     [InlineData("https://trusted.example?x=1", "path, query or fragment")]
     [InlineData("https://trusted.example#section", "path, query or fragment")]
     public void HostInTesting_WithAMalformedPublicSiteWebBaseUrl_FailsToStart(string badUrl, string expectedMessageFragment)

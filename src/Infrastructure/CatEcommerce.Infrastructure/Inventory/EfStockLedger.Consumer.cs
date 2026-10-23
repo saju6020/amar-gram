@@ -18,8 +18,7 @@ namespace CatEcommerce.Infrastructure.Inventory;
 /// never throws for a business rule. Plan and read methods write nothing.
 ///
 /// <b>Rules every method applies</b> (§8.8): the SKU exists and is active and the quantity is positive and whole unless fractional is allowed;
-/// the party stamp the recall trace depends on (<c>Sale</c> needs the customer unless the reference is a <c>PosSale</c>, <c>Dispense</c> and
-/// <c>BoardingUse</c> need both, <c>ClinicalUse</c> needs the cat); the purpose is permitted at every location used; the batch is <c>Available</c>
+/// the party stamp the recall trace depends on (<c>Sale</c> needs the customer unless the reference is a <c>PosSale</c>); the purpose is permitted at every location used; the batch is <c>Available</c>
 /// and NOT expired in the branch's local date -- <b>no member of this port or any type it takes relaxes that</b> (U-E9, ADR-101); FEFO decides the
 /// plan, and a different explicit plan needs a reason, flags the entries and enlists a <c>BusinessEvent</c> audit entry beside them (ADR-102).
 /// The commit-time race (the last unit) is caught by <c>ck_stock_position_balance</c>, not by anything here (ADR-099).
@@ -48,7 +47,7 @@ public sealed partial class EfStockLedger : IStockLedger
         {
             db.StockReservationEntries.Add(StockReservationEntryAggregate.Record(new StockReservationEntryDto(
                 demand.BranchId, line.LocationId, demand.SkuId, line.BatchId, ReservationEntryKind.Reserve, line.Quantity, reference.ReferenceKind, reference.ReferenceId,
-                lineId, party.CustomerId, party.CatId, plan.Overridden, plan.OverrideReason, user.UserId, now, user)));
+                lineId, party.CustomerId, plan.Overridden, plan.OverrideReason, user.UserId, now, user)));
         }
 
         EnlistOverrideAudit(plan, reference, user, now);
@@ -121,7 +120,7 @@ public sealed partial class EfStockLedger : IStockLedger
         {
             db.StockReservationEntries.Add(StockReservationEntryAggregate.Record(new StockReservationEntryDto(
                 locations[held.LocationId].BranchId, held.LocationId, held.SkuId, held.BatchId, ReservationEntryKind.Release, -held.Quantity, reference.ReferenceKind,
-                reference.ReferenceId, held.ReferenceLineId, null, null, FefoOverridden: false, OverrideReason: null, user.UserId, now, user)));
+                reference.ReferenceId, held.ReferenceLineId, null, FefoOverridden: false, OverrideReason: null, user.UserId, now, user)));
         }
 
         return StockResult<Unit>.Success(Unit.Value);
@@ -167,15 +166,15 @@ public sealed partial class EfStockLedger : IStockLedger
         {
             db.StockLedgerEntries.Add(StockLedgerEntryAggregate.Record(new StockLedgerEntryDto(
                 locations[held.LocationId].BranchId, held.LocationId, held.SkuId, held.BatchId, MovementKind.Sale, -held.Quantity, ConsumesReservation: true,
-                reference.ReferenceKind, reference.ReferenceId, held.ReferenceLineId, Truncate(reference.ReferenceLabel, 60), party.CustomerId, party.CatId,
+                reference.ReferenceKind, reference.ReferenceId, held.ReferenceLineId, Truncate(reference.ReferenceLabel, 60), party.CustomerId,
                 FefoOverridden: false, OverrideReason: null, user.UserId, Note: null, now, user)));
         }
 
         return StockResult<IReadOnlyList<StockMovementLine>>.Success(lines);
     }
 
-    /// <summary>Deducts <c>Purpose</c> (<c>Sale</c>, <c>Dispense</c>, <c>ClinicalUse</c> or <c>BoardingUse</c>) from usable, unreserved stock -- FEFO, or an
-    /// explicit batch (HO-PHM-001's dispensing names the batch it gave).</summary>
+    /// <summary>Deducts <c>Purpose</c> (<c>Sale</c>) from usable, unreserved stock -- FEFO, or an
+    /// explicit batch.</summary>
     public async Task<StockResult<IReadOnlyList<StockMovementLine>>> DeductAsync(StockDemand demand, StockReference reference, StockParty party, CancellationToken ct)
     {
         var resolved = await ResolveAsync(demand, reference, party, allowShortfall: false, ct);
@@ -189,7 +188,7 @@ public sealed partial class EfStockLedger : IStockLedger
         {
             db.StockLedgerEntries.Add(StockLedgerEntryAggregate.Record(new StockLedgerEntryDto(
                 demand.BranchId, line.LocationId, demand.SkuId, line.BatchId, demand.Purpose, -line.Quantity, ConsumesReservation: false, reference.ReferenceKind,
-                reference.ReferenceId, reference.ReferenceLineId, Truncate(reference.ReferenceLabel, 60), party.CustomerId, party.CatId, plan.Overridden, plan.OverrideReason,
+                reference.ReferenceId, reference.ReferenceLineId, Truncate(reference.ReferenceLabel, 60), party.CustomerId, plan.Overridden, plan.OverrideReason,
                 user.UserId, Note: null, now, user)));
         }
 
@@ -215,13 +214,13 @@ public sealed partial class EfStockLedger : IStockLedger
         if (quarantine is null)
             return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.StockLocationNotFound, "This branch has no active quarantine location to receive the return.", "BranchId");
 
-        if (!await positions.WasConsumedByPartyAsync(stockReturn.BatchId, party.CustomerId, party.CatId, ct))
-            return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.ReturnNotTraceable, "That batch was not supplied to this customer or cat, so it cannot be returned.", nameof(stockReturn.BatchId));
+        if (!await positions.WasConsumedByPartyAsync(stockReturn.BatchId, party.CustomerId, ct))
+            return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.ReturnNotTraceable, "That batch was not supplied to this customer, so it cannot be returned.", nameof(stockReturn.BatchId));
 
         var user = userContextProvider.GetUserContext();
         db.StockLedgerEntries.Add(StockLedgerEntryAggregate.Record(new StockLedgerEntryDto(
             stockReturn.BranchId, quarantine.LocationId, stockReturn.SkuId, stockReturn.BatchId, MovementKind.Return, stockReturn.Quantity, ConsumesReservation: false,
-            reference.ReferenceKind, reference.ReferenceId, reference.ReferenceLineId, Truncate(reference.ReferenceLabel, 60), party.CustomerId, party.CatId,
+            reference.ReferenceKind, reference.ReferenceId, reference.ReferenceLineId, Truncate(reference.ReferenceLabel, 60), party.CustomerId,
             FefoOverridden: false, OverrideReason: null, user.UserId, Truncate(stockReturn.Reason, InventoryRules.NoteMaxLength), timeProvider.GetUtcNow(), user)));
 
         return StockResult<IReadOnlyList<StockMovementLine>>.Success(
@@ -245,55 +244,7 @@ public sealed partial class EfStockLedger : IStockLedger
         db.InventoryAlerts.Add(alert);
     }
 
-    /// <summary>A controlled-drug register correction (HO-PHM-001 C7) -- never a routine stock edit. Reason at least five characters; over
-    /// <c>inventory.adjustmentApprovalThreshold</c> it also needs an approver other than the caller. ONE <c>BusinessEvent</c> audit entry names the
-    /// caller's reference.</summary>
-    public async Task<StockResult<IReadOnlyList<StockMovementLine>>> AdjustAsync(StockAdjustment adjustment, StockReference reference, StockParty party, CancellationToken ct)
-    {
-        var reason = adjustment.Reason?.Trim() ?? string.Empty;
-        if (reason.Length < InventoryRules.ReasonMinLength || reason.Length > InventoryRules.NoteMaxLength)
-            return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.AdjustmentNoteRequired, "Explain the correction in 5 to 500 characters.", nameof(adjustment.Reason));
-        if (adjustment.QuantityDelta == 0m || decimal.Round(adjustment.QuantityDelta, 3) != adjustment.QuantityDelta)
-            return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.InvalidQuantity, "The quantity must be non-zero with at most three decimal places.", nameof(adjustment.QuantityDelta));
-
-        var batches = await positions.GetBatchFactsAsync([adjustment.BatchId], ct);
-        if (!batches.TryGetValue(adjustment.BatchId, out var batch) || batch.SkuId != adjustment.SkuId)
-            return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.BatchNotFound, "That batch does not exist for that SKU.", nameof(adjustment.BatchId));
-
-        var locations = await positions.GetLocationsAsync([adjustment.LocationId], ct);
-        if (!locations.TryGetValue(adjustment.LocationId, out var location) || !location.IsActive || location.BranchId != adjustment.BranchId)
-            return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.StockLocationNotFound, "That location does not exist at this branch.", nameof(adjustment.LocationId));
-
-        var kind = adjustment.QuantityDelta > 0m ? MovementKind.AdjustmentIn : MovementKind.AdjustmentOut;
-        if (!StockLocationRules.Permits(location.Kind, kind))
-            return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.MovementNotPermittedAtLocation, $"An adjustment is not permitted at a {location.Kind.DisplayName} location.", nameof(adjustment.LocationId));
-
-        var user = userContextProvider.GetUserContext();
-        var costs = await positions.GetUnitCostsAsync([adjustment.BatchId], ct);
-        var value = Math.Abs(adjustment.QuantityDelta) * (costs.TryGetValue(adjustment.BatchId, out var cost) ? cost.UnitCostBase : 0m);
-        if (value > settings.GetDecimal(SettingKeys.InventoryAdjustmentApprovalThreshold, adjustment.BranchId))
-        {
-            if (adjustment.ApprovedByStaffId is null)
-                return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.AdjustmentNotPending, "This correction is worth more than the approval threshold and needs an approver.", nameof(adjustment.ApprovedByStaffId));
-            if (adjustment.ApprovedByStaffId == user.UserId)
-                return Fail<IReadOnlyList<StockMovementLine>>(BusinessViolationCodes.ApproverMustDiffer, "A correction must be approved by someone other than the person who makes it.", nameof(adjustment.ApprovedByStaffId));
-        }
-
-        var now = timeProvider.GetUtcNow();
-        db.StockLedgerEntries.Add(StockLedgerEntryAggregate.Record(new StockLedgerEntryDto(
-            adjustment.BranchId, adjustment.LocationId, adjustment.SkuId, adjustment.BatchId, kind, adjustment.QuantityDelta, ConsumesReservation: false, reference.ReferenceKind,
-            reference.ReferenceId, reference.ReferenceLineId, Truncate(reference.ReferenceLabel, 60), party.CustomerId, party.CatId, FefoOverridden: false, OverrideReason: null,
-            user.UserId, Truncate(reason, InventoryRules.NoteMaxLength), now, user)));
-
-        EnlistAudit(
-            reference.ReferenceKind.DisplayName, reference.ReferenceId, "StockCorrectedThroughLedger", reason, user, now,
-            before: null, after: new { adjustment.BatchId, adjustment.LocationId, adjustment.QuantityDelta, Approver = adjustment.ApprovedByStaffId });
-
-        return StockResult<IReadOnlyList<StockMovementLine>>.Success(
-            [new StockMovementLine(batch.BatchId, batch.LotNumber, batch.ExpiresOn, adjustment.LocationId, adjustment.QuantityDelta, FefoOverridden: false)]);
-    }
-
-    /// <summary>Per-batch balances across every location of the branch, with RESERVED separate so a register reconciliation (US-PHM-07) can tell
+    /// <summary>Per-batch balances across every location of the branch, with RESERVED separate so a caller can tell
     /// "missing" from "spoken for". Read-only.</summary>
     public async Task<StockResult<IReadOnlyList<BatchBalance>>> GetBranchBalancesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct)
     {
@@ -308,49 +259,6 @@ public sealed partial class EfStockLedger : IStockLedger
 
         return StockResult<IReadOnlyList<BatchBalance>>.Success(
             rows.Select(r => new BatchBalance(r.SkuId, r.BatchId, r.LotNumber, r.ExpiresOn, r.LocationId, r.OnHand, r.Reserved)).ToList());
-    }
-
-    /// <summary>The batches the branch's ACTIVE clinic dispensary holds for the SKUs (on-hand or reserved above zero), with each batch's status. Read-only.
-    /// Added 2026-10-09 so HO-PHM-001 needs no Inventory-internal reader.</summary>
-    public async Task<StockResult<IReadOnlyList<DispensaryBatch>>> GetDispensaryBatchesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct)
-    {
-        var result = new List<DispensaryBatch>();
-        foreach (var skuId in skuIds.Distinct())
-        {
-            foreach (var c in await positions.GetCandidatesAsync(branchId, skuId, ct))
-            {
-                if (c.LocationKind != StockLocationKind.ClinicDispensary) continue;
-                result.Add(new DispensaryBatch(skuId, c.BatchId, c.LotNumber, c.ExpiresOn, c.BatchStatus, c.LocationId, c.OnHand, c.Reserved));
-            }
-        }
-
-        return StockResult<IReadOnlyList<DispensaryBatch>>.Success(result);
-    }
-
-    /// <summary>The distinct SKUs with stock on hand at the branch's active clinic dispensary. Read-only. Added 2026-10-13 for HO-EMR-001's dispensary item list.</summary>
-    public async Task<StockResult<IReadOnlyList<Guid>>> GetDispensarySkuIdsAsync(Guid branchId, CancellationToken ct)
-    {
-        var ids = await (
-            from p in db.StockPositions.AsNoTracking()
-            join l in db.StockLocations.AsNoTracking() on p.LocationId equals l.Id
-            where l.BranchId == branchId && l.Kind == StockLocationKind.ClinicDispensary && l.IsActive && p.OnHand > 0m
-            select p.SkuId).Distinct().ToListAsync(ct);
-
-        return StockResult<IReadOnlyList<Guid>>.Success(ids);
-    }
-
-    /// <summary>The branch's active clinic dispensary location. Read-only.</summary>
-    public async Task<StockResult<DispensaryLocation>> GetClinicDispensaryAsync(Guid branchId, CancellationToken ct)
-    {
-        var row = await db.StockLocations.AsNoTracking()
-            .Where(l => l.BranchId == branchId && l.Kind == StockLocationKind.ClinicDispensary && l.IsActive)
-            .OrderBy(l => l.Code)
-            .Select(l => new { l.Id, l.Code })
-            .FirstOrDefaultAsync(ct);
-
-        return row is null
-            ? Fail<DispensaryLocation>("DispensaryNotFound", "This branch has no active clinic dispensary.", "BranchId")
-            : StockResult<DispensaryLocation>.Success(new DispensaryLocation(row.Id, row.Code));
     }
 
     // ── resolving a demand into a plan: read the facts here, DECIDE in the pure StockDemandPlanner ─────────────────────────────────

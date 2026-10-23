@@ -29,13 +29,13 @@ function renderWithClient(children: React.ReactNode) {
 }
 
 const CATALOGUE = {
-  roleIds: ['Administrator', 'Reception', 'Nurse', 'Vet'],
+  roleIds: ['Administrator', 'Reception', 'Inventory', 'Accountant'],
   capabilities: ['Register customers'],
   cells: [
     { capability: 'Register customers', roleId: 'Administrator', access: 'Full', qualifier: null },
     { capability: 'Register customers', roleId: 'Reception', access: 'Full', qualifier: null },
-    { capability: 'Register customers', roleId: 'Nurse', access: 'None', qualifier: null },
-    { capability: 'Register customers', roleId: 'Vet', access: 'None', qualifier: null },
+    { capability: 'Register customers', roleId: 'Inventory', access: 'None', qualifier: null },
+    { capability: 'Register customers', roleId: 'Accountant', access: 'None', qualifier: null },
   ],
 };
 
@@ -65,9 +65,9 @@ describe('StaffAccountForm — US-ACC-07', () => {
     const user = userEvent.setup();
     renderWithClient(<StaffAccountFormWithHooks />);
 
-    await user.click(await screen.findByRole('checkbox', { name: 'Nurse' }));
+    await user.click(await screen.findByRole('checkbox', { name: 'Inventory' }));
     expect(screen.getByText(/indicative/i)).toBeInTheDocument();
-    // Nurse alone has no access to "Register customers".
+    // Inventory alone has no access to "Register customers".
     expect(screen.getAllByText('None').length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('checkbox', { name: 'Reception' }));

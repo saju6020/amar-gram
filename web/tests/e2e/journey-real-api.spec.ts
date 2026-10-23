@@ -428,9 +428,9 @@ test.describe('staff', () => {
     await expect(page.getByText(/respects your privacy/).first()).toBeVisible();
   });
 
-  test('5f. branches load with Main clinic', async () => {
+  test('5f. branches load with the seeded main branch', async () => {
     await page.goto('/staff/admin/branches');
-    await expect(page.getByText('Main clinic').first()).toBeVisible();
+    await expect(page.getByText(/^Main /).first()).toBeVisible();
     await expectNoErrorState(page);
   });
 });

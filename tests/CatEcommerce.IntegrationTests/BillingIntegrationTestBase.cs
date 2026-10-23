@@ -22,8 +22,8 @@ namespace CatEcommerce.IntegrationTests;
 /// HO-BIL-001 §16.1 -- every test creates its own branch (so its invoice series, cash-ups and statements are
 /// its own), its own billing profile, its own tax class and rates, and its own customers. Invoice numbers are
 /// never asserted as literals -- only as <c>INV-{thatBranchCode}-…</c> and contiguous within the series.
-/// Producers that do not exist yet (Shop, Boarding, Pharmacy) are simulated by resolving
-/// <c>IBillableChargeRecorder</c> in a DI scope and saving -- the same port HO-ORD-001 and HO-BRD-001 will call.
+/// Producers are simulated by resolving <c>IBillableChargeRecorder</c> in a DI scope and saving -- the same
+/// port HO-ORD-001 calls.
 /// </summary>
 public abstract class BillingIntegrationTestBase(BillingApiFactory factory)
     : CatEcommerceIntegrationTestBase<BillingApiFactory>(factory)
@@ -221,87 +221,19 @@ public abstract class BillingIntegrationTestBase(BillingApiFactory factory)
     protected Task<int> CountAsync<TAggregate>(System.Linq.Expressions.Expression<Func<TAggregate, bool>> predicate) where TAggregate : AggregateRoot =>
         WithDbAsync(db => db.Set<TAggregate>().AsNoTracking().CountAsync(predicate));
 
-    // ── Clinic: a branch where an appointment can be walked in, started and completed ───────────────────
-    protected sealed record ClinicSetup(Guid ServiceId, Guid VetStaffAccountId, Guid RoomId, decimal Price);
-
-    /// <summary>Opens the context's branch every day, adds one consultation room, a rostered vet and a service
-    /// priced from the fake clock's "now" (a price must be effective at or after "now" when created, and in force
-    /// when read -- only reliable with a controlled clock).</summary>
-    protected async Task<ClinicSetup> SeedClinicAsync(BillingContext context, decimal price = 800m, Guid? taxClassId = null)
-    {
-        var admin = context.Admin;
-        var days = new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-
-        await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/admin/branches/{context.BranchId}/hours",
-            new { intervals = days.Select(d => new { dayOfWeek = d, opens = "00:00", closes = "23:45" }).ToArray() }, Json));
-
-        var room = await ExpectAsync(HttpStatusCode.Created, await admin.PostAsJsonAsync($"/api/admin/branches/{context.BranchId}/rooms",
-            new { name = "Room " + NewCode(), kind = "Consultation" }, Json));
-        var roomId = (await ReadAsync(room)).GetProperty("roomId").GetGuid();
-
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
-        await AssignAsync(admin, vet.StaffAccountId, context.BranchId);
-        await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/admin/branches/{context.BranchId}/rosters/{vet.StaffAccountId}/pattern",
-            new { slots = days.Select(d => new { dayOfWeek = d, starts = "00:00", ends = "23:45" }).ToArray() }, Json));
-
-        var service = await ExpectAsync(HttpStatusCode.Created, await admin.PostAsJsonAsync("/api/admin/services", new
-        {
-            code = NewCode(), name = "Consultation " + NewCode(), description = "Billing test service", category = "Consultation",
-            durationMinutes = 30, qualifiedRoleIds = new[] { StaffRoles.Vet }, requiredRoomKind = "Consultation",
-            taxClassId = taxClassId ?? context.TaxClassId, isBookableOnline = true,
-        }, Json));
-        var serviceId = (await ReadAsync(service)).GetProperty("serviceId").GetGuid();
-
-        await SetServicePriceAsync(context, serviceId, price);
-        return new ClinicSetup(serviceId, vet.StaffAccountId, roomId, price);
-    }
-
-    protected async Task SetServicePriceAsync(BillingContext context, Guid serviceId, decimal price) =>
-        await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync($"/api/admin/services/{serviceId}/prices",
-            new { amount = price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), currencyCode = "BDT", effectiveFrom = Now }, Json));
-
-    protected async Task<Guid> SeedCatAsync(Guid ownerId)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatEcommerce.Domain.Aggregates.Cat.CatAggregate>>();
-
-        var cat = new CatEcommerce.Domain.Aggregates.Cat.CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, "Cat " + NewCode(), "Cat", CatEcommerce.Shared.Common.Enums.CatSex.Female, DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2),
-            CatEcommerce.Shared.Common.Enums.DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby", DateOnly.FromDateTime(DateTime.UtcNow),
-            new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
-    }
-
-    /// <summary>Registers a walk-in at the context's branch (the snapshot price is taken now) and returns its id.</summary>
-    protected async Task<Guid> RegisterWalkInAsync(BillingContext context, ClinicSetup clinic, Guid customerId)
-    {
-        var catId = await SeedCatAsync(customerId);
-        var response = await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync("/api/staff/walk-ins",
-            new { customerId, catId, serviceId = clinic.ServiceId, triagePriority = "Routine" }, Json));
-        return (await ReadAsync(response)).GetProperty("appointmentId").GetGuid();
-    }
-
-    protected async Task<HttpResponseMessage> CompleteAppointmentAsync(BillingContext context, ClinicSetup clinic, Guid appointmentId)
-    {
-        await ExpectAsync(HttpStatusCode.NoContent, await context.Admin.PostAsJsonAsync($"/api/staff/appointments/{appointmentId}/start", new { performerId = clinic.VetStaffAccountId, roomId = clinic.RoomId }, Json));
-        return await context.Admin.PostAsync($"/api/staff/appointments/{appointmentId}/complete", null);
-    }
-
     // ── Producers that do not exist yet, simulated through the real port (§16.1 rule 3) ──────────────────
-    /// <summary>Records one charge exactly as HO-ORD-001 / HO-BRD-001 will: resolve <c>IBillableChargeRecorder</c> in a
+    /// <summary>Records one charge exactly as HO-ORD-001 does: resolve <c>IBillableChargeRecorder</c> in a
     /// DI scope, enlist, and save. No test-only endpoint exists in the Api.</summary>
     protected async Task<Guid> RecordChargeAsync(
         BillingContext context, Guid customerId, decimal unitPrice = 100m, decimal quantity = 1m, decimal discount = 0m,
         CatEcommerce.Shared.Common.Enums.ItemKind? itemKind = null, CatEcommerce.Shared.Common.Enums.ChargeSourceKind? sourceKind = null,
         CatEcommerce.Shared.Common.Enums.BusinessLine? businessLine = null, Guid? sourceId = null, Guid? taxClassId = null, string sourceLineRef = "main",
-        CatEcommerce.Shared.Common.Enums.BillingGroupKind? groupKind = null, Guid? groupId = null, DateOnly? serviceDate = null, string description = "Test item")
+        DateOnly? serviceDate = null, string description = "Test item")
     {
         var source = sourceKind ?? CatEcommerce.Shared.Common.Enums.ChargeSourceKind.Order;
         var request = new ChargeRequestDto(
-            customerId, context.BranchId, null, businessLine ?? ChargeRules.DefaultBusinessLine(source),
-            itemKind ?? CatEcommerce.Shared.Common.Enums.ItemKind.Product, source, sourceId ?? Guid.NewGuid(), sourceLineRef, groupKind, groupId, description,
+            customerId, context.BranchId, businessLine ?? ChargeRules.DefaultBusinessLine(source),
+            itemKind ?? CatEcommerce.Shared.Common.Enums.ItemKind.Product, source, sourceId ?? Guid.NewGuid(), sourceLineRef, description,
             quantity, new Money(unitPrice, "BDT"), new Money(discount, "BDT"), taxClassId ?? context.TaxClassId, serviceDate ?? Today);
 
         await using var scope = Factory.Services.CreateAsyncScope();

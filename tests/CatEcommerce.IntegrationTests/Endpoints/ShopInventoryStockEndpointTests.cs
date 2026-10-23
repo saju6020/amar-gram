@@ -69,12 +69,6 @@ public sealed class ShopInventoryStockEndpointTests(ShopApiFactory factory) : Sh
         Assert.Equal(2, cardBySku.Count);
         Assert.Equal("InStock", cardBySku[product.StockedSku]);
         Assert.Equal("OutOfStock", cardBySku[product.UnstockedSku]);
-
-        var purchasability = await JsonOkAsync(await customer.GetAsync($"/api/customers/me/shop/products/{product.Slug}/purchasability"));
-        var purchasableBySku = purchasability.GetProperty("skus").EnumerateArray()
-            .ToDictionary(s => s.GetProperty("skuId").GetGuid(), s => s.GetProperty("purchasable").GetBoolean());
-        Assert.True(purchasableBySku[product.StockedSku]);
-        Assert.False(purchasableBySku[product.UnstockedSku]);
     }
 
     [Fact]

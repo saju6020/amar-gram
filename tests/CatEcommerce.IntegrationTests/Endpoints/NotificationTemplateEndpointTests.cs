@@ -15,16 +15,16 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 [Collection("Notifications")]
 public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory factory) : NotificationsIntegrationTestBase(factory)
 {
-    private const string Key = NotificationTemplateCatalogue.VaccinationDue;
+    private const string Key = NotificationTemplateCatalogue.BillingInvoiceIssued;
 
-    private static object ValidVaccinationContents(int expectedVersion, string suffix) => new
+    private static object ValidInvoiceContents(int expectedVersion, string suffix) => new
     {
         expectedContentVersion = expectedVersion,
         contents = new object[]
         {
-            new { channel = "Sms", body = $"{{{{catName}}}} {{{{vaccineName}}}} {{{{dueOn}}}} {{{{bookingLink}}}} {suffix}" },
-            new { channel = "Email", subject = "Reminder", body = $"{{{{catName}}}} {{{{vaccineName}}}} {{{{dueOn}}}} {{{{bookingLink}}}} {suffix}" },
-            new { channel = "InApp", title = "Reminder", body = $"{{{{catName}}}} {{{{vaccineName}}}} {{{{dueOn}}}} {suffix}", linkPath = "{{bookingLink}}" },
+            new { channel = "Sms", body = $"{{{{invoiceNumber}}}} {{{{totalText}}}} {{{{dueOn}}}} {{{{invoiceLink}}}} {suffix}" },
+            new { channel = "Email", subject = "Reminder", body = $"{{{{invoiceNumber}}}} {{{{totalText}}}} {{{{dueOn}}}} {{{{invoiceLink}}}} {suffix}" },
+            new { channel = "InApp", title = "Reminder", body = $"{{{{invoiceNumber}}}} {{{{totalText}}}} {{{{dueOn}}}} {suffix}", linkPath = "{{invoiceLink}}" },
         }
     };
 
@@ -52,7 +52,7 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
         try
         {
             var versionBefore = await GetCurrentVersionAsync(client);
-            var save = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidVaccinationContents(versionBefore, "edit1"), Json);
+            var save = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidInvoiceContents(versionBefore, "edit1"), Json);
             Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
 
             var detail = await client.GetFromJsonAsync<JsonElement>($"/api/admin/notification-templates/{Key}", Json);
@@ -78,9 +78,9 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
             expectedContentVersion = version,
             contents = new object[]
             {
-                new { channel = "Sms", body = "{{catname}} due" },
-                new { channel = "Email", subject = "s", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                new { channel = "InApp", title = "t", body = "{{catName}} {{vaccineName}} {{dueOn}}", linkPath = "{{bookingLink}}" },
+                new { channel = "Sms", body = "{{invoicenumber}} due" },
+                new { channel = "Email", subject = "s", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                new { channel = "InApp", title = "t", body = "{{invoiceNumber}} {{totalText}} {{dueOn}}", linkPath = "{{invoiceLink}}" },
             }
         }, Json);
 
@@ -88,7 +88,7 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
         var errors = body.GetProperty("errors").EnumerateArray().ToList();
         Assert.Contains(errors, e => e.GetProperty("errorCode").GetString() == BusinessViolationCodes.UnknownTemplatePlaceholder
-            && e.GetProperty("errorMessage").GetString()!.Contains("{{catname}}"));
+            && e.GetProperty("errorMessage").GetString()!.Contains("{{invoicenumber}}"));
 
         // Nothing should have been written -- the version is unchanged.
         Assert.Equal(version, await GetCurrentVersionAsync(client));
@@ -104,10 +104,10 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
         {
             var version = await GetCurrentVersionAsync(client);
 
-            var first = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidVaccinationContents(version, "v1"), Json);
+            var first = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidInvoiceContents(version, "v1"), Json);
             Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
 
-            var second = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidVaccinationContents(version, "v2-conflict"), Json);
+            var second = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidInvoiceContents(version, "v2-conflict"), Json);
             Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
         }
         finally
@@ -128,9 +128,9 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
         {
             contents = new object[]
             {
-                new { channel = "Sms", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                new { channel = "Email", subject = "s", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                new { channel = "InApp", title = "t", body = "{{catName}} {{vaccineName}} {{dueOn}}", linkPath = "{{bookingLink}}" },
+                new { channel = "Sms", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                new { channel = "Email", subject = "s", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                new { channel = "InApp", title = "t", body = "{{invoiceNumber}} {{totalText}} {{dueOn}}", linkPath = "{{invoiceLink}}" },
             }
         }, Json);
 
@@ -146,7 +146,7 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
     }
 
     [Fact]
-    public async Task ShopManager_CanPreviewAndCannotSave_NurseCannotView()
+    public async Task ShopManager_CanPreviewAndCannotSave_InventoryCannotView()
     {
         var shopManager = await SeedStaffAsync(StaffRoles.ShopManager);
         using var managerClient = await SignInStaffAsync(shopManager.Mobile, shopManager.Password);
@@ -155,20 +155,20 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
         {
             contents = new object[]
             {
-                new { channel = "Sms", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                new { channel = "Email", subject = "s", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                new { channel = "InApp", title = "t", body = "{{catName}} {{vaccineName}} {{dueOn}}", linkPath = "{{bookingLink}}" },
+                new { channel = "Sms", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                new { channel = "Email", subject = "s", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                new { channel = "InApp", title = "t", body = "{{invoiceNumber}} {{totalText}} {{dueOn}}", linkPath = "{{invoiceLink}}" },
             }
         }, Json);
         Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
 
         var version = await GetCurrentVersionAsync(managerClient);
-        var save = await managerClient.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidVaccinationContents(version, "shopmgr"), Json);
+        var save = await managerClient.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidInvoiceContents(version, "shopmgr"), Json);
         Assert.Equal(HttpStatusCode.Forbidden, save.StatusCode);
 
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = await SignInStaffAsync(nurse.Mobile, nurse.Password);
-        var view = await nurseClient.GetAsync($"/api/admin/notification-templates/{Key}");
+        var inventory = await SeedStaffAsync(StaffRoles.Inventory);
+        using var inventoryClient = await SignInStaffAsync(inventory.Mobile, inventory.Password);
+        var view = await inventoryClient.GetAsync($"/api/admin/notification-templates/{Key}");
         Assert.Equal(HttpStatusCode.Forbidden, view.StatusCode);
     }
 
@@ -181,7 +181,7 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
         try
         {
             var version = await GetCurrentVersionAsync(client);
-            var save = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidVaccinationContents(version, "audit"), Json);
+            var save = await client.PutAsJsonAsync($"/api/admin/notification-templates/{Key}", ValidInvoiceContents(version, "audit"), Json);
             Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
 
             var from = DateTimeOffset.UtcNow.AddMinutes(-2);
@@ -224,11 +224,11 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
             {
                 contents = new object[]
                 {
-                    new { channel = "Sms", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                    new { channel = "Email", subject = "s", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                    new { channel = "InApp", title = "t", body = "{{catName}} {{vaccineName}} {{dueOn}}", linkPath = "{{bookingLink}}" },
+                    new { channel = "Sms", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                    new { channel = "Email", subject = "s", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                    new { channel = "InApp", title = "t", body = "{{invoiceNumber}} {{totalText}} {{dueOn}}", linkPath = "{{invoiceLink}}" },
                 },
-                sampleValues = new Dictionary<string, string> { ["bookingLink"] = "javascript:alert(1)" }
+                sampleValues = new Dictionary<string, string> { ["invoiceLink"] = "javascript:alert(1)" }
             }
         ];
         yield return
@@ -237,9 +237,9 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
             {
                 contents = new object[]
                 {
-                    new { channel = "Sms", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                    new { channel = "Email", subject = "s", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                    new { channel = "InApp", title = "t", body = "{{catName}} {{vaccineName}} {{dueOn}}", linkPath = "{{bookingLink}}" },
+                    new { channel = "Sms", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                    new { channel = "Email", subject = "s", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                    new { channel = "InApp", title = "t", body = "{{invoiceNumber}} {{totalText}} {{dueOn}}", linkPath = "{{invoiceLink}}" },
                 },
                 sampleValues = new Dictionary<string, string> { ["dueOn"] = "junk" }
             }
@@ -250,9 +250,9 @@ public sealed class NotificationTemplateEndpointTests(NotificationsApiFactory fa
             {
                 contents = new object[]
                 {
-                    new { channel = "Sms", body = "{{catName}} 99 {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                    new { channel = "Email", subject = "s", body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-                    new { channel = "InApp", title = "t", body = "{{catName}} {{vaccineName}} {{dueOn}}", linkPath = "{{bookingLink}}" },
+                    new { channel = "Sms", body = "{{invoiceNumber}} 99 {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                    new { channel = "Email", subject = "s", body = "{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}" },
+                    new { channel = "InApp", title = "t", body = "{{invoiceNumber}} {{totalText}} {{dueOn}}", linkPath = "{{invoiceLink}}" },
                 }
             }
         ];

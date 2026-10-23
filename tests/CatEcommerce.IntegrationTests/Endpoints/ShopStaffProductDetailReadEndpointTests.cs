@@ -53,7 +53,7 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var food = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
         {
             expectedVersion = await ProductVersionAsync(staff, productId),
-            manufacturer = "Royal Canin", lifeStage = "Kitten", proteinSource = "Chicken", ingredientList = "Chicken, rice",
+            manufacturer = "Royal Canin", proteinSource = "Chicken", ingredientList = "Chicken, rice",
             guaranteedAnalysis = new { proteinPercent = 32.0m, fatPercent = 15.0m, fibrePercent = 4.0m, moisturePercent = 10.0m },
             feedingGuide = "Feed twice daily.", storageInstructions = "Store in a cool, dry place."
         }, Json);
@@ -81,7 +81,6 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
 
         var food = body.GetProperty("food");
         Assert.Equal("Royal Canin", food.GetProperty("manufacturer").GetString());
-        Assert.Equal("Kitten", food.GetProperty("lifeStage").GetString());
         Assert.Equal("Chicken", food.GetProperty("proteinSource").GetString());
         Assert.Equal("Chicken, rice", food.GetProperty("ingredientList").GetString());
         Assert.Equal("Feed twice daily.", food.GetProperty("feedingGuide").GetString());
@@ -158,7 +157,7 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var setFood = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
         {
             expectedVersion = await ProductVersionAsync(staff, productId),
-            manufacturer = food.GetProperty("manufacturer").GetString(), lifeStage = food.GetProperty("lifeStage").GetString(),
+            manufacturer = food.GetProperty("manufacturer").GetString(),
             proteinSource = food.GetProperty("proteinSource").GetString(), ingredientList = food.GetProperty("ingredientList").GetString(),
             guaranteedAnalysis = food.GetProperty("guaranteedAnalysis"),
             feedingGuide = food.GetProperty("feedingGuide").GetString(), storageInstructions = food.GetProperty("storageInstructions").GetString()

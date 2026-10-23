@@ -11,7 +11,7 @@ import { describeOperationsError, hasOperationsCode } from '@/lib/api/errors';
  * `components/retention/RunRetentionNow.tsx` — HO-XCT-002 §11.5, U-B2. The confirmation says what
  * the run WILL do (purge expired sign-in sessions and tokens and old measurements, blank old
  * message contents, process open erasure requests, recount records eligible for review) and what
- * it will NOT (it never deletes clinical, financial, regulatory or audit records). A `409` reads
+ * it will NOT (it never deletes financial, regulatory or audit records). A `409` reads
  * "A retention run is already in progress."
  */
 export function RunRetentionNow() {
@@ -60,7 +60,7 @@ export function RunRetentionNow() {
               recount the records eligible for review.
             </span>
             <span className="mt-2 block font-semibold">
-              It will not delete clinical, financial, regulatory or audit records. Those are only
+              It will not delete financial, regulatory or audit records. Those are only
               counted for review.
             </span>
           </>

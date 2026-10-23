@@ -150,7 +150,7 @@ export function ProfileForm({ profile, onSave, isPending, rateLimitError }: Prof
               className="rounded-[var(--radius-sm)] border border-border bg-surface-sunken px-3 py-2 text-sm text-ink-muted"
             />
             <p id="emailAddress-explanation" className="text-xs text-ink-muted">
-              Your email is how you sign in. Contact the clinic to change it.
+              Your email is how you sign in. Contact us to change it.
             </p>
           </>
         )}
@@ -184,7 +184,7 @@ export function ProfileForm({ profile, onSave, isPending, rateLimitError }: Prof
           className="rounded-[var(--radius-sm)] border border-border bg-surface-sunken px-3 py-2 text-sm text-ink-muted"
         />
         <p id="mobile-explanation" className="text-xs text-ink-muted">
-          Your mobile number is how you sign in. Contact the clinic to change it.
+          Your mobile number is how you sign in. Contact us to change it.
         </p>
       </div>
 

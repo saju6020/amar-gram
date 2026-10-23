@@ -2,7 +2,7 @@ import type { ValidationResponse } from './types';
 import { getActiveBranchId } from '../branch';
 
 /**
- * The typed fetch client (HO-CAT-002 §11.2). Responsibilities, and nothing beyond them:
+ * The typed fetch client (the scaffold handover §11.2). Responsibilities, and nothing beyond them:
  *  - base URL from NEXT_PUBLIC_API_BASE_URL
  *  - identity rides in HttpOnly session cookies (`pc_session` / `pc_staff_session` — HO-ACC-001
  *    §12.5 ADR-031, rule R7) that the browser attaches on its own once `credentials: 'include'`
@@ -20,7 +20,7 @@ import { getActiveBranchId } from '../branch';
  *    discard the user's input
  *  - anything else / 5xx -> ApiError with a message that is ours, never the server's (NFR-USA-4)
  *
- * This is the ONLY place in the app that calls `fetch` (HO-CAT-002 §8.2 rule 2). Endpoint
+ * This is the ONLY place in the app that calls `fetch` (the scaffold handover §8.2 rule 2). Endpoint
  * modules in `lib/api/<area>.ts` call `apiFetch`; components and `lib/hooks/` query/mutation
  * functions never call `fetch` directly.
  */
@@ -53,9 +53,8 @@ export class ApiNotFoundError extends ApiError {
 }
 
 export class ApiConflictError extends ApiError {
-  /** HO-APT-002 §11.8 (additive) — a `409` from the Appointments slot-claim endpoints carries a
-   *  `ValidationResponse` naming the violation (`SlotNoLongerAvailable`, a stale calendar version…).
-   *  Absent for every other `409`, which still has no usable body. */
+  /** Additive — a `409` that carries a `ValidationResponse` naming the violation (a stale version,
+   *  a stock line taken meanwhile…). Absent for every other `409`, which has no usable body. */
   readonly response?: ValidationResponse;
 
   constructor(response?: ValidationResponse) {
@@ -167,7 +166,7 @@ export function setConnectivityReporter(reporter: ConnectivityReporter | null): 
 /**
  * ARCH gate HIGH 2 (first pass) — this used to be ONE global handler, with `isStaff` guessed from
  * `path.startsWith('/api/staff')`. That guess is wrong for staff screens calling anything outside
- * that prefix (`/api/cats`, `/api/vaccines`, HO-ADM-002's `/api/admin/**`, and every future staff
+ * that prefix (HO-ADM-002's `/api/admin/**`, `/api/branches`, and every future staff
  * endpoint that doesn't happen to live under `/api/staff/`) — a role change rotating the security
  * stamp mid-session, for example, would send a member of staff to the CUSTOMER sign-in, discarding
  * the intended `?next=` along the way (the customer sanitiser doesn't allow-list `/staff/**`).
@@ -214,7 +213,7 @@ function resolveBaseUrl(): string {
 /**
  * `${NEXT_PUBLIC_API_BASE_URL}${path}` — exported for the handful of call sites that need a
  * plain URL rather than a JSON round-trip: an `<a href>`/`window.open` download link for a
- * binary response (US-CAT-10's medical-history PDF, US-CAT-11's cage-card QR image). Building
+ * binary response (a report export, a packing slip PDF). Building
  * that URL is not a `fetch` call, so it does not break the "only client.ts calls fetch" rule —
  * it is the one other thing this module is allowed to own about the base URL.
  */
@@ -329,7 +328,7 @@ export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Prom
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch (caught) {
-    // Network failure, CORS rejection, TLS/dev-cert failure (HO-CAT-002 §12.3/§12.4) — none of
+    // Network failure, CORS rejection, TLS/dev-cert failure (the scaffold handover §12.3/§12.4) — none of
     // these have a status code, and none should ever surface as a raw browser error message.
     // A caller that aborts its own request (a navigation, a superseded search) says nothing about the
     // server, so it is not reported: two aborts must not flip the app offline.

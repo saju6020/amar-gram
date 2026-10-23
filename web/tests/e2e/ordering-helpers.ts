@@ -4,7 +4,7 @@ import type { OrderingMockControls } from '../../mocks/handlers/ordering/control
 
 /**
  * Helpers for the HO-ORD-002 specs (MSW mode). The Ordering mock server runs in the page; a few
- * things a test cannot cause through the UI ("the price changed", "an authorisation lapsed", "the
+ * things a test cannot cause through the UI ("the price changed", "the stock ran out", "the
  * transfer window is 30 seconds", "someone else is the staff member") go through
  * `window.__orderingMock` (`mocks/handlers/ordering/control.ts`) — test controls of the mock server,
  * never app code.

@@ -18,8 +18,8 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
     test.setTimeout(120_000);
     await signInAsStaff(page);
     const stamp = Date.now().toString().slice(-6);
-    const name = `E2E Thai Kitten Food ${stamp}`;
-    const slug = `e2e-thai-kitten-food-${stamp}`;
+    const name = `E2E Thai Rice ${stamp}`;
+    const slug = `e2e-thai-rice-${stamp}`;
 
     await page.goto('/staff/shop/products/new');
     // A cold dev server can lose the mock worker's start race: the page then offers a retry.
@@ -62,11 +62,6 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
     await priceDialog.getByRole('button', { name: 'Schedule', exact: true }).click();
     await expect(page.getByRole('region', { name: 'Current' })).toContainText('৳1,200.00');
 
-    // Food labelling with a life stage (no country of origin yet).
-    await page.goto(`${editorUrl}/food`);
-    await page.getByLabel('Life stage').selectOption('Kitten');
-    await page.getByRole('button', { name: 'Save' }).click();
-
     // Publish without a country of origin: refused, naming it; the checklist takes focus.
     await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page
@@ -101,7 +96,7 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
   }) => {
     await signInAsStaff(page);
     await page.goto(`/staff/shop/products/${shopFixtureIds.multiVariantProductId}/variants`);
-    await page.getByRole('button', { name: 'Prices for RC-K-400G' }).click();
+    await page.getByRole('button', { name: 'Prices for OAT-400G' }).click();
     await page.getByRole('button', { name: 'Schedule a new price' }).click();
     const dialog = page.getByRole('dialog', { name: 'Schedule a new price' });
     await dialog.getByLabel('Amount (BDT)').fill('700');
@@ -144,7 +139,7 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
   test('E-C3: a rejected review needs a reason', async ({ page }) => {
     await signInAsStaff(page);
     await page.goto('/staff/shop/reviews');
-    const pending = page.getByRole('article').filter({ hasText: 'Nice salmon smell' });
+    const pending = page.getByRole('article').filter({ hasText: 'Lovely aroma' });
     await pending.getByRole('button', { name: /Reject review of/ }).click();
     const dialog = page.getByRole('dialog', { name: 'Reject this review?' });
     await dialog.getByRole('button', { name: 'Reject review' }).click();
@@ -159,12 +154,10 @@ test.describe('content languages (US-SHP-14)', () => {
   test('E-F1: switch to bn on a product (English fallback where missing); staff edits the bn feeding guide', async ({
     page,
   }) => {
-    await page.goto(`/shop/products/${shopFixtureIds.thaiKittenSlug}`);
+    await page.goto(`/shop/products/${shopFixtureIds.thaiRiceSlug}`);
     await page.getByLabel('Product language').selectOption('bn');
     await expect(page).toHaveURL(/lang=bn/);
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'হুইস্কাস কিটেন স্যামন' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'থাই জেসমিন চাল' })).toBeVisible();
     await page.getByRole('tab', { name: 'Feeding guide' }).click();
     const feeding = page.getByRole('tabpanel', { name: 'Feeding guide' });
     await expect(feeding).toContainText('Daily amounts'); // falls back to English
@@ -172,7 +165,7 @@ test.describe('content languages (US-SHP-14)', () => {
 
     await page.goto('/staff/sign-in');
     await signInAsStaff(page);
-    await page.goto(`/staff/shop/products/${shopFixtureIds.thaiKittenProductId}/translations`);
+    await page.goto(`/staff/shop/products/${shopFixtureIds.thaiRiceProductId}/translations`);
     await expect(page.getByRole('heading', { name: /Bangla \(bn\)/ })).toBeVisible();
     await page
       .getByLabel('Feeding guide', { exact: true })
@@ -191,7 +184,9 @@ test.describe('origins (US-SHP-05, staff)', () => {
     await page.getByRole('button', { name: 'Add origin' }).click();
     const dialog = page.getByRole('dialog', { name: 'Add an origin' });
     await dialog.getByLabel('Country').selectOption('JP');
-    await dialog.getByLabel('Sourcing notes', { exact: true }).fill('Small-batch **tofu** litter.');
+    await dialog
+      .getByLabel('Sourcing notes', { exact: true })
+      .fill('Small-batch **tofu** and miso.');
     await expect(dialog.getByLabel('Sourcing notes preview').locator('strong')).toHaveText('tofu');
     await dialog.getByRole('button', { name: 'Save origin' }).click();
     await expect(page.getByRole('rowheader', { name: 'Japan' })).toBeVisible();

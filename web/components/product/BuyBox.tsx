@@ -11,8 +11,6 @@ export interface BuyBoxProps {
   pricesIncludeTax: boolean;
   /** The size option cards, drawn between the price and the buy row. */
   variants?: React.ReactNode;
-  /** `PrescriptionGate`, shown when the product needs a vet authorisation. */
-  gate?: React.ReactNode;
   /** Only used with a custom `actions` slot; the default buy row carries its own wishlist button. */
   wishlist?: React.ReactNode;
   stockAlert?: React.ReactNode;
@@ -24,14 +22,13 @@ export interface BuyBoxProps {
  * HO-SHP-002 §11.3 `BuyBox` — everything that decides whether a variant can be bought, for the
  * selected SKU, ALL from API fields (ADR-FE-032): price with the tax label and availability (the
  * "Price and availability" region), the size cards, the best-before notice (`expiryNotice`,
- * US-SHP-07 AC2), the prescription gate, the buy row, the back-in-stock card and the delivery
+ * US-SHP-07 AC2), the buy row, the back-in-stock card and the delivery
  * promise. No stock number, no arithmetic.
  */
 export function BuyBox({
   sku,
   pricesIncludeTax,
   variants,
-  gate,
   wishlist,
   stockAlert,
   actions,
@@ -63,7 +60,6 @@ export function BuyBox({
           </span>
         </p>
       )}
-      {gate}
       <div data-slot="buy-box-actions">{actions}</div>
       {wishlist && <div className="flex flex-col gap-2">{wishlist}</div>}
       {stockAlert && (

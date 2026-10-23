@@ -18,7 +18,7 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
         var setFood = await client.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
         {
             expectedVersion = await GetVersionAsync(client, productId),
-            manufacturer = "Royal Canin", lifeStage = "Kitten", proteinSource = "Chicken",
+            manufacturer = "Royal Canin", proteinSource = "Chicken",
             ingredientList = "Chicken, rice", guaranteedAnalysis = new { proteinPercent = 32.0m, fatPercent = 15.0m, fibrePercent = 4.0m, moisturePercent = 10.0m },
             feedingGuide = "Feed twice daily.", storageInstructions = "Store in a cool, dry place."
         }, Json);
@@ -27,22 +27,6 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
         var detail = await client.GetAsync($"/api/staff/shop/products/{productId}");
         var body = await detail.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal("DE", body.GetProperty("countryOfOriginCode").GetString());
-    }
-
-    [Fact]
-    public async Task SetPrescriptionRequired_ReflectedInDetail()
-    {
-        var client = await SignInAsShopManagerAsync();
-        var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
-        var productId = await CreateFoodProductAsync(client, taxClassId, UniqueSlug("rx-food"));
-
-        var setRx = await client.PutAsJsonAsync($"/api/staff/shop/products/{productId}/prescription",
-            new { expectedVersion = await GetVersionAsync(client, productId), prescriptionRequired = true }, Json);
-        Assert.Equal(HttpStatusCode.NoContent, setRx.StatusCode);
-
-        var detail = await client.GetAsync($"/api/staff/shop/products/{productId}");
-        var body = await detail.Content.ReadFromJsonAsync<JsonElement>(Json);
-        Assert.True(body.GetProperty("prescriptionRequired").GetBoolean());
     }
 
     [Fact]
@@ -66,7 +50,7 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
         var skuId = skuBody.GetProperty("skuId").GetGuid();
 
         await client.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food",
-            new { expectedVersion = await GetVersionAsync(client, productId), lifeStage = "Adult" }, Json);
+            new { expectedVersion = await GetVersionAsync(client, productId) }, Json);
 
         await client.PostAsJsonAsync($"/api/staff/shop/skus/{skuId}/prices",
             new { amount = 1000.00m, currencyCode = "BDT", effectiveFrom = DateTimeOffset.UtcNow }, Json);

@@ -173,7 +173,7 @@ export function BatchDetail({
         open={dialog === 'quarantine'}
         onOpenChange={(open) => setDialog(open ? 'quarantine' : null)}
         title={`Quarantine ${name}`}
-        consequence={`Lot ${batch.lotNumber} is held back at once: it can't be sold, dispensed or fed until someone releases it.`}
+        consequence={`Lot ${batch.lotNumber} is held back at once: it can't be sold or used until someone releases it.`}
         reasonLabel="Reason"
         confirmLabel="Quarantine this batch"
         onConfirm={onQuarantine}

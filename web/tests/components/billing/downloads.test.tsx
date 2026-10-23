@@ -8,7 +8,7 @@ import { DownloadButton } from '@/components/billing/DownloadButton';
 import { registerQueryClient } from '@/lib/branch';
 import { ACTIVE_BRANCH_KEY } from '@/lib/hooks/useActiveBranch';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 describe('staff downloads send the active branch (architecture HIGH)', () => {
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe('staff downloads send the active branch (architecture HIGH)', () => {
 describe('card numbers never reach the URL via the filters (security LOW)', () => {
   it('the invoice-number filter refuses a card number and writes nothing', async () => {
     const { InvoiceListScreen } = await import('@/components/billing/InvoiceListScreen');
-    const nav = await import('../booking/nav-mock');
+    const nav = await import('../common/nav-mock');
     nav.setUrl('/staff/billing/invoices');
     const { QueryClientProvider } = await import('@tanstack/react-query');
     render(

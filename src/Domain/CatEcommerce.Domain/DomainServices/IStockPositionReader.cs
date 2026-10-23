@@ -37,9 +37,9 @@ public interface IStockPositionReader
     /// <summary>Remaining reservations of a reference (or one line): Σ reservation entries + Σ consuming ledger entries (§8.7).</summary>
     Task<IReadOnlyList<ReservationRemaining>> GetRemainingReservationsAsync(StockReferenceKind referenceKind, Guid referenceId, Guid? referenceLineId, CancellationToken ct);
 
-    /// <summary>The party actually received this batch: a consuming ledger entry of the batch names the customer or the cat (§8.8 rule 8 -- a return
-    /// is only traceable to someone who got it). With neither given, an anonymous counter (<c>PosSale</c>) sale of the batch counts.</summary>
-    Task<bool> WasConsumedByPartyAsync(Guid batchId, Guid? customerId, Guid? catId, CancellationToken ct);
+    /// <summary>The party actually received this batch: a consuming ledger entry of the batch names the customer (§8.8 rule 8 -- a return
+    /// is only traceable to someone who got it). With none given, an anonymous counter (<c>PosSale</c>) sale of the batch counts.</summary>
+    Task<bool> WasConsumedByPartyAsync(Guid batchId, Guid? customerId, CancellationToken ct);
 
     /// <summary>Σ accepted / rejected per purchase order line over posted receipt lines (ADR-112).</summary>
     Task<IReadOnlyList<PurchaseOrderLineReceipt>> GetPurchaseOrderReceiptsAsync(Guid purchaseOrderId, CancellationToken ct);

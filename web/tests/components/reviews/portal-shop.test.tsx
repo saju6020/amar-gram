@@ -4,16 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { MyReviewsList } from '@/components/reviews/MyReviewsList';
 import { StockAlertList, WishlistList } from '@/components/wishlist/WishlistList';
-import { FoodSuggestions } from '@/components/recommendations/FoodSuggestions';
 import { ApiValidationError } from '@/lib/api/client';
-import type {
-  FoodRecommendations,
-  MyReview,
-  StockAlert,
-  WishlistItem,
-} from '@/lib/api/shop-customer';
-import { makeItem } from '../catalogue/catalogue-fixtures';
-import { renderWithClient } from '../product/test-utils';
+import type { MyReview, StockAlert, WishlistItem } from '@/lib/api/shop-customer';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -29,50 +21,6 @@ function fillValid(user: ReturnType<typeof userEvent.setup>) {
     await user.type(screen.getByLabelText(/Your review/), 'Lovely food.');
   })();
 }
-
-describe('FoodSuggestions — HO-SHP-002 §11.5, US-SHP-11', () => {
-  const data: FoodRecommendations = {
-    cat: { catId: 'c1', name: 'Mitu', lifeStage: 'Adult', lifeStageIsEstimated: true },
-    items: [
-      {
-        item: makeItem({ productId: 'a', name: 'Pick A' }),
-        reasons: [
-          { code: 'LifeStageMatch', values: { lifeStage: 'Adult', about: 'true' } },
-          { code: 'Sterilised', values: {} },
-          { code: 'WeightManagement', values: { weightKg: '6.80' } },
-          { code: 'ConditionMatch', values: { focus: 'Urinary' } },
-        ],
-      },
-    ],
-    excludedForAllergy: [{ allergen: 'Chicken', count: 3 }],
-    hints: ['AddDateOfBirth'],
-  };
-
-  it('U-E1: each reason as text, the allergy exclusion sentence, and the date-of-birth hint link', () => {
-    renderWithClient(<FoodSuggestions data={data} />);
-    expect(screen.getByText('Suits about adult cats')).toBeInTheDocument();
-    expect(screen.getByText('For neutered cats')).toBeInTheDocument();
-    expect(screen.getByText('Weight-management recipe — Mitu weighs 6.8 kg')).toBeInTheDocument();
-    expect(screen.getByText("May suit Mitu's recorded urinary condition")).toBeInTheDocument();
-    expect(
-      screen.getByText('We left out 3 products containing chicken (recorded allergy).'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Go to Mitu.s profile/ })).toHaveAttribute(
-      'href',
-      '/portal/cats/c1',
-    );
-    expect(
-      screen.getByText('General guidance — ask our vets for advice for your cat.'),
-    ).toBeInTheDocument();
-  });
-
-  it('says so when there is nothing to suggest', () => {
-    renderWithClient(
-      <FoodSuggestions data={{ ...data, items: [], excludedForAllergy: [], hints: [] }} />,
-    );
-    expect(screen.getByText('No suggestions right now')).toBeInTheDocument();
-  });
-});
 
 describe('ReviewForm — US-SHP-09', () => {
   it('U-E2: a server ReviewNotPermitted shows in plain language and keeps the values', async () => {
@@ -90,7 +38,7 @@ describe('ReviewForm — US-SHP-09', () => {
         ],
       }),
     );
-    render(<ReviewForm productName="Royal Canin Kitten" purchasedSkus={SKUS} onSave={onSave} />);
+    render(<ReviewForm productName="Organic Rolled Oats" purchasedSkus={SKUS} onSave={onSave} />);
     await fillValid(user);
     await user.click(screen.getByRole('button', { name: 'Send review' }));
 

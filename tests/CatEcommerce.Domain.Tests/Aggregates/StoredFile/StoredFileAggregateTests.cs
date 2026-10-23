@@ -15,7 +15,7 @@ public sealed class StoredFileAggregateTests
         "image/png",
         1024,
         new string('a', 64),
-        "cat.png",
+        "product.png",
         "ProductImage/2026/09/" + Guid.NewGuid().ToString("N"),
         Guid.NewGuid(),
         DateTimeOffset.UtcNow,
@@ -163,7 +163,7 @@ public sealed class StoredFileAggregateTests
         var dto = ValidDto();
         file.Register(dto);
 
-        var eligible = file.IsEligibleForAttach(FilePurpose.ClinicalPhoto, dto.UploadedBy, dto.UploadedOn, TimeSpan.FromMinutes(30));
+        var eligible = file.IsEligibleForAttach(FilePurpose.ReportExport, dto.UploadedBy, dto.UploadedOn, TimeSpan.FromMinutes(30));
 
         Assert.False(eligible);
     }

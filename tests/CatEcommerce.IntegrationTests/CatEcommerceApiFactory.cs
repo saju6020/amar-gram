@@ -11,7 +11,7 @@ namespace CatEcommerce.IntegrationTests;
 
 /// <summary>
 /// Shared base for every area's <see cref="WebApplicationFactory{TEntryPoint}"/>. Extracted after
-/// wave A (HO-CAT-001's <c>CatApiFactory</c>, HO-ACC-001's <c>AccountsApiFactory</c>), which had
+/// wave A (the foundation handover's first factory, HO-ACC-001's <c>AccountsApiFactory</c>), which had
 /// each independently duplicated the Testing-environment setup and the connection-string literal.
 ///
 /// A new area's factory derives from this class and overrides <see cref="ConfigureAdditionalSettings"/>
@@ -20,7 +20,7 @@ namespace CatEcommerce.IntegrationTests;
 /// tests/CatEcommerce.IntegrationTests/README.md for the full "adding a new area" walkthrough.
 ///
 /// Real HTTP through TestServer, against the shared local Postgres database -- the same instance
-/// the Development profile uses (§5.1 / HO-CAT-001 §16.1). No Testcontainers, no in-memory EF
+/// the Development profile uses (§5.1 / the foundation handover §16.1). No Testcontainers, no in-memory EF
 /// provider (§20.1).
 /// </summary>
 public abstract class CatEcommerceApiFactory : WebApplicationFactory<Program>
@@ -46,9 +46,7 @@ public abstract class CatEcommerceApiFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:CatEcommerce"] = TestConnectionString,
                 // The hosted order worker expires unpaid bank-transfer orders with THIS host's clock. Every area's tests share one database, and several move their clock
                 // forward, so an enabled worker here would expire other areas' fresh orders (HO-ORD-001). The Ordering tests drive OrderWorkCycle by hand.
-                ["Orders:Worker:Enabled"] = "false",
-                // The hosted Boarding worker would lapse, expire, confirm and invoice other areas' Boarding stays against the shared database with THIS host's clock; the Boarding tests drive BoardingWorkCycle by hand.
-                ["Boarding:Worker:Enabled"] = "false"
+                ["Orders:Worker:Enabled"] = "false"
             };
             ConfigureAdditionalSettings(settings);
             configBuilder.AddInMemoryCollection(settings);

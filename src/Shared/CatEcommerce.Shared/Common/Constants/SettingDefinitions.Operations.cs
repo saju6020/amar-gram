@@ -8,12 +8,8 @@ public static partial class SettingDefinitions
 {
     private static readonly IReadOnlyList<SettingDefinition> OperationsEntries =
     [
-        new SettingDefinition(SettingKeys.RetentionClinicalYears, "Retention", SettingType.Integer, "1", "50", "years", "7", false,
-            "Clinical record retention", "Years after a cat's last visit or death that its clinical record is reported as eligible for review (D-8). Nothing is deleted automatically."),
         new SettingDefinition(SettingKeys.RetentionFinancialYears, "Retention", SettingType.Integer, "1", "50", "years", "6", false,
             "Financial record retention", "Years after the document date that a financial record is reported as eligible for review, and that personal data held inside it is erased (D-9)."),
-        new SettingDefinition(SettingKeys.RetentionBoardingMediaMonths, "Retention", SettingType.Integer, "1", "120", "months", "12", false,
-            "Boarding photo and video retention", "Months after which boarding photos and videos not attached to an incident are purged (D-10)."),
         new SettingDefinition(SettingKeys.RetentionNotificationContentMonths, "Retention", SettingType.Integer, "1", "120", "months", "24", false,
             "Notification content retention", "Months after which the text of a sent notification is redacted. Channel, template, status and timestamps are kept."),
         new SettingDefinition(SettingKeys.RetentionSecurityArtefactDays, "Retention", SettingType.Integer, "7", "365", "days", "30", false,

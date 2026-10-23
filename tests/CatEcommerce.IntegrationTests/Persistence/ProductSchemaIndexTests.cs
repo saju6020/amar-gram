@@ -64,7 +64,7 @@ public sealed class ProductSchemaIndexTests : IAsyncLifetime
             return await command.ExecuteScalarAsync() as string ?? "";
         }
 
-        foreach (var name in new[] { "ix_product_brand", "ix_product_country_of_origin", "ix_product_food_life_stage", "ix_product_food_protein_source" })
+        foreach (var name in new[] { "ix_product_brand", "ix_product_country_of_origin", "ix_product_food_protein_source" })
         {
             var def = await IndexDefAsync(name);
             Assert.True(def.Length > 0, $"Expected index {name}.");
@@ -72,7 +72,6 @@ public sealed class ProductSchemaIndexTests : IAsyncLifetime
             Assert.Contains("status", def);
         }
 
-        Assert.Contains("food_life_stage", await IndexDefAsync("ix_product_food_life_stage"));
         Assert.Contains("food_protein_source", await IndexDefAsync("ix_product_food_protein_source"));
 
         var newest = await IndexDefAsync("ix_product_first_published_on_desc");

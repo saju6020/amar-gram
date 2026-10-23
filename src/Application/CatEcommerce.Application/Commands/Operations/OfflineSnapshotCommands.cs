@@ -11,7 +11,7 @@ public sealed class RecordOfflineSnapshotIssuedCommand : Command
     public required Guid BranchId { get; init; }
     public required DateOnly LocalDate { get; init; }
 
-    /// <summary>Section key to number of items, for example <c>appointments</c> to 12.</summary>
+    /// <summary>Section key to number of items, for example <c>orders</c> to 12.</summary>
     public required IReadOnlyDictionary<string, int> SectionCounts { get; init; }
 
     public required string ETag { get; init; }

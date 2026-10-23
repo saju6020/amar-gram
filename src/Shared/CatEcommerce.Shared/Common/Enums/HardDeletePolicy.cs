@@ -7,7 +7,7 @@ namespace CatEcommerce.Shared.Common.Enums;
 /// </summary>
 public sealed class HardDeletePolicy(int value, string displayName) : Enumeration(value, displayName)
 {
-    /// <summary>No delete by any path. The default for Clinical, Financial, Regulatory, Audit,
+    /// <summary>No delete by any path. The default for Financial, Regulatory, Audit,
     /// Notification and most Operational tables.</summary>
     public static readonly HardDeletePolicy Forbidden = new(1, nameof(Forbidden));
 

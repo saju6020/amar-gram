@@ -226,7 +226,7 @@ public sealed class CreateCorrectedDraftCommandHandler(
             return Violation(BusinessViolationCodes.CorrectedDraftInvalid, nameof(command.CreditNoteId), "A corrected invoice already exists for this credit note.");
 
         var lines = source.Lines.OrderBy(l => l.SortOrder).Select(l => new DraftInvoiceLineInput(
-            null, l.Id, l.BusinessLine, l.ItemKind, l.SourceKind, l.SourceId, l.BillingGroupKind, l.BillingGroupId, l.CatId,
+            null, l.Id, l.BusinessLine, l.ItemKind, l.SourceKind, l.SourceId,
             l.Description, l.Quantity, l.UnitPrice, l.LineDiscount, l.TaxClassId)).ToList();
 
         var draft = new InvoiceAggregate(command.NewInvoiceId);
@@ -282,8 +282,8 @@ public sealed class SetCorrectedDraftLinesCommandHandler(
                 return Violation(BusinessViolationCodes.DiscountExceedsAmount, nameof(command.Lines), "A discount cannot exceed the line amount.");
 
             inputs.Add(new DraftInvoiceLineInput(
-                null, line.CorrectsInvoiceLineId, line.BusinessLine, line.ItemKind, line.SourceKind, line.SourceId, line.BillingGroupKind,
-                line.BillingGroupId, line.CatId, edit.Description.Trim(), edit.Quantity, edit.UnitPrice, edit.LineDiscount, edit.TaxClassId));
+                null, line.CorrectsInvoiceLineId, line.BusinessLine, line.ItemKind, line.SourceKind, line.SourceId,
+                edit.Description.Trim(), edit.Quantity, edit.UnitPrice, edit.LineDiscount, edit.TaxClassId));
         }
 
         try

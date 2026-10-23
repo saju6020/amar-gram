@@ -5,7 +5,7 @@ public sealed record MainBranchTime(DateTimeOffset Utc, string TimeZoneId, DateO
 
 /// <summary>
 /// HO-XCT-001 section 8.8 / 12.2 -- the one place the Operations context learns "today". Hold dates, retention cut-offs and the nightly
-/// sweep hour are calendar concepts of the clinic, not of UTC: the main branch's zone (<c>Asia/Dhaka</c> when unset) decides them, via
+/// sweep hour are calendar concepts of the business, not of UTC: the main branch's zone (<c>Asia/Dhaka</c> when unset) decides them, via
 /// <c>BranchCalendar</c> and the injected <see cref="TimeProvider"/> (a test drives it with a fake). Never <c>DateTime.Today</c>.
 /// </summary>
 public interface IOperationsClock

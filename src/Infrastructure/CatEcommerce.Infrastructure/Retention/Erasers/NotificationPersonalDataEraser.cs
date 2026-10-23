@@ -19,7 +19,7 @@ namespace CatEcommerce.Infrastructure.Retention.Erasers;
 /// event-driven anonymisation path and this retention-worker-driven path can never disagree on what
 /// "erased" means for this context.
 ///
-/// No table this context owns is <c>Clinical</c>/<c>Financial</c>/<c>Regulatory</c>
+/// No table this context owns is <c>Financial</c>/<c>Regulatory</c>
 /// (<c>RecordClassification.Notifications.cs</c>), so nothing is ever legally held -- this eraser
 /// always returns <see cref="ErasureOutcome.Completed"/>.
 /// </summary>

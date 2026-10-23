@@ -4,39 +4,27 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Bed,
   Boxes,
   ChevronDown,
   Building2,
   Calendar,
-  CalendarDays,
   CalendarOff,
-  CalendarPlus,
-  Cat,
   ChartColumn,
-  ClipboardList,
   Copy,
-  FlaskConical,
   House,
   Inbox,
   LayoutDashboard,
-  ListChecks,
   Mail,
   Menu,
   Package,
   PanelLeftClose,
   PawPrint,
-  Pill,
   Receipt,
-  Scissors,
   Settings,
   Settings2,
   Shield,
-  ShieldAlert,
   ShoppingCart,
-  Stethoscope,
   Store,
-  Syringe,
   Truck,
   Undo2,
   UserPlus,
@@ -66,7 +54,7 @@ import { cn } from '@/lib/utils';
 
 // Below `sm` (640px, Tailwind's default breakpoint), the fixed w-64 (256px) sidebar plus any real
 // content (a form, a DataTable's Previous/Next pager, …) doesn't fit UI-1's 360px floor — verified
-// by HO-CAT-002's E18. Below `sm`, the in-flow `<aside>` is therefore now ALWAYS the collapsed
+// by the scaffold handover's E18. Below `sm`, the in-flow `<aside>` is therefore now ALWAYS the collapsed
 // w-16 (64px) rail — a pure CSS fact (`w-16` with no `sm:`-gated width class overriding it below
 // `sm`), true from the very first byte of server-rendered HTML, through hydration, with no JS
 // timing involved (E18's own root cause was a *default* that depended on JS having run at all).
@@ -78,7 +66,7 @@ import { cn } from '@/lib/utils';
 // The rail's own "Expand menu" button instead opens the full nav in a Radix `Dialog` rendered as a
 // left sheet (`components/ui/dialog.tsx`'s `sheet-left` variant) — a real modal, so focus-trapping,
 // `Escape`-to-close, overlay-click-to-close, focus-return-to-trigger and hiding the rest of the
-// document from assistive tech all come from Radix itself (HO-CAT-002 §8.5), not from a second
+// document from assistive tech all come from Radix itself (the scaffold handover §8.5), not from a second
 // hand-rolled implementation of each.
 //
 // At `sm` and up, nothing here changes: the in-flow sticky aside is w-64 expanded or w-16
@@ -121,7 +109,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
     return () => query.removeEventListener('change', onChange);
   }, [sheetOpen]);
 
-  // CODE_REVIEW gate MEDIUM (HO-CAT-002, 2nd pass): `StaffShell` is a persistent App Router layout
+  // CODE_REVIEW gate MEDIUM (the scaffold handover, 2nd pass): `StaffShell` is a persistent App Router layout
   // component, so `sheetOpen` otherwise survives any route change that doesn't go through one of
   // the sheet's own `SheetNav` links — most notably the browser's Back/Forward buttons, which are
   // chrome, not page DOM, so neither the dialog's overlay nor its focus trap can intercept them. A
@@ -138,10 +126,9 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
     document.querySelector('aside [aria-current="page"]')?.scrollIntoView?.({ block: 'center' });
   }, [pathname]);
 
-  // Per-item `audience` (nav/types.ts, added by HO-CAT-002) overrides the area's own audience,
-  // for an area like Cat Profiles whose single `audience: 'both'` mixes staff-only and
-  // portal-only screens in one items array — falls back to the area's audience when an item
-  // doesn't set one, which is every pre-existing area, so this is not a behaviour change there.
+  // Per-item `audience` (nav/types.ts) overrides the area's own audience, for an area whose
+  // single `audience: 'both'` mixes staff-only and portal-only screens in one items array — falls
+  // back to the area's audience when an item doesn't set one.
   const sections: NavArea[] = navRegistry
     .map((area) => ({
       ...area,
@@ -301,35 +288,23 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
 /** Area files name their icons as lucide strings (nav/types.ts); the shell maps them here. */
 const NAV_ICONS: Record<string, LucideIcon> = {
   'bar-chart': ChartColumn,
-  bed: Bed,
   boxes: Boxes,
   building: Building2,
   calendar: Calendar,
-  'calendar-days': CalendarDays,
   'calendar-off': CalendarOff,
-  'calendar-plus': CalendarPlus,
-  cat: Cat,
   'chart-column': ChartColumn,
-  'clipboard-list': ClipboardList,
   copy: Copy,
-  'flask-conical': FlaskConical,
   home: House,
   inbox: Inbox,
   'layout-dashboard': LayoutDashboard,
-  'list-checks': ListChecks,
   mail: Mail,
   package: Package,
-  pill: Pill,
   receipt: Receipt,
-  scissors: Scissors,
   settings: Settings,
   'settings-2': Settings2,
   shield: Shield,
-  'shield-alert': ShieldAlert,
   'shopping-cart': ShoppingCart,
-  stethoscope: Stethoscope,
   store: Store,
-  syringe: Syringe,
   truck: Truck,
   undo: Undo2,
   'user-plus': UserPlus,
@@ -338,7 +313,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
 
 /**
  * The one renderer for both the always-in-flow aside nav and the below-`sm` sheet's nav
- * (ARCHITECTURE gate LOW, HO-CAT-002 4th pass): one link per item with its icon, the current page
+ * (ARCHITECTURE gate LOW): one link per item with its icon, the current page
  * marked (`aria-current="page"`, a teal tint), grouped by daily job (staff-nav-groups.ts).
  *
  * `mode="compact"` is the aside: below `sm` it is always the `w-16` rail (icons only, the label as
@@ -391,7 +366,7 @@ function NavSections({
           >
             {section.label && (
               <>
-                {/* text-ink-muted, not text-ink-faint (HO-CAT-002 E17/UI-6): 4.5:1 on the surface. */}
+                {/* text-ink-muted, not text-ink-faint (the scaffold handover E17/UI-6): 4.5:1 on the surface. */}
                 <button
                   type="button"
                   aria-expanded={open}

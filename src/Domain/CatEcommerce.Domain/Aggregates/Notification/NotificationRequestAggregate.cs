@@ -31,8 +31,7 @@ public sealed class NotificationRequestAggregate : AggregateRoot
     /// has no clock).</summary>
     public DateTimeOffset? SendAfter { get; private set; }
 
-    /// <summary>HO-APT-001 §8.9 amendment. Compared by a subject guard (e.g.
-    /// <c>AppointmentReminderGuard</c>) against the subject's own current stamp -- a producer
+    /// <summary>Compared by a subject guard against the subject's own current stamp -- a producer
     /// invalidates a stale, already-enqueued request by enqueueing a fresh one with a new stamp;
     /// the old one then fails its guard at expansion (or delivery) time.</summary>
     public string? SubjectStamp { get; private set; }

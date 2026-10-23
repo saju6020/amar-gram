@@ -12,6 +12,11 @@ import { test, expect, signInAsStaff } from './fixtures';
  */
 test.describe.configure({ timeout: 120_000 });
 
+/** Any ordinary staff page: the offline copy is kept from every page of the staff app. */
+const START = '/staff/orders';
+/** What the board shows when the copy holds no section (no offline section is defined today). */
+const BOARD_TEXT = 'Nothing from today was saved for offline use in this copy.';
+
 interface XctMockWindow {
   __xctMock: {
     setPing: (mode: 'ok' | 'fail' | 'serverError') => void;
@@ -64,14 +69,14 @@ let boardCompiled = false;
 async function compileBoardOnce(page: Page) {
   if (boardCompiled) return;
   await page.goto('/staff/offline');
-  await expect(page).toHaveURL(/\/staff\/(front-desk|sign-in)/, { timeout: 60_000 });
+  await expect(page).toHaveURL(/\/staff(\/sign-in)?$/, { timeout: 60_000 });
   boardCompiled = true;
 }
 
-/** Front desk with a stored copy -> server down -> banner offline. */
-async function frontDeskOffline(page: Page) {
+/** A staff page with a stored copy -> server down -> banner offline. */
+async function staffPageOffline(page: Page) {
   await compileBoardOnce(page);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await expect.poll(() => storedCopies(page), { timeout: 30_000 }).toBeGreaterThan(0);
   await setPing(page, 'fail');
@@ -93,25 +98,23 @@ test.beforeEach(async ({ page }) => {
 test('A15 banner offline (with a saved copy), the board with data, then the locked board', async ({ page }) => {
   await optIn(page);
   await page.clock.install();
-  await frontDeskOffline(page);
+  await staffPageOffline(page);
   await seriousFindings(page, 'banner offline, saved copy');
 
   await openBoardFromBanner(page);
   await expect(page.getByText('Offline · read-only')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('heading', { name: /Today.s appointments/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /boarding tasks/ })).toBeVisible();
-  await expect(page.getByText('Luna')).toBeVisible();
+  await expect(page.getByText(BOARD_TEXT)).toBeVisible();
   await seriousFindings(page, 'board with data');
 
   await page.clock.fastForward('31:00');
   await expect(page.getByText('Locked. Sign in again when the connection returns.')).toBeVisible();
-  await expect(page.getByText('Luna')).toHaveCount(0);
+  await expect(page.getByText(BOARD_TEXT)).toHaveCount(0);
   await seriousFindings(page, 'board locked');
 });
 
 test('A15 the board refuses a copy saved by someone else', async ({ page }) => {
   await optIn(page);
-  await frontDeskOffline(page);
+  await staffPageOffline(page);
   // The copy on this device now belongs to another person (the mock's own switch resets on every
   // full load, so the stored record is re-attributed in place while the server is down).
   await page.evaluate(
@@ -138,13 +141,13 @@ test('A15 the board refuses a copy saved by someone else', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'This copy was saved by someone else.' })).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByText('Luna')).toHaveCount(0);
+  await expect(page.getByText(BOARD_TEXT)).toHaveCount(0);
   await seriousFindings(page, 'board refusal (other person)');
 });
 
 test('A15 banner offline with no saved copy, then recovered', async ({ page }) => {
   await compileBoardOnce(page);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await setPing(page, 'fail');
   const banner = page.getByTestId('connectivity-banner');
@@ -157,7 +160,7 @@ test('A15 banner offline with no saved copy, then recovered', async ({ page }) =
 });
 
 test('A15 banner degraded (the server answers with errors)', async ({ page }) => {
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await setPing(page, 'serverError');
   await expect(page.getByTestId('connectivity-banner')).toContainText('The server is having trouble', {

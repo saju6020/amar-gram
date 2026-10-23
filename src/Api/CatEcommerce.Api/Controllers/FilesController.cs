@@ -555,7 +555,7 @@ public sealed class FilesController(
 
     /// <summary>Gate-fix 2026-09-27 (CODE_REVIEW LOW): the standard ADR-014 <see cref="ValidationResponse"/>
     /// shape, not a bespoke <c>{ error }</c> body -- <c>FilesInvalidPurpose</c> rather than the
-    /// generic <c>InvalidEnumValue</c> name ho/CAT-001-gates coins for the same defect in
+    /// generic <c>InvalidEnumValue</c> name another area coined for the same defect in
     /// <c>CatsController</c>, to avoid a duplicate-const-member conflict on merge (neither branch
     /// can see the other's exact declaration; recorded in HO-FIL-001.md §1 Amended).</summary>
     private IActionResult? TryParseEnum<T>(string value, out T? result) where T : Enumeration

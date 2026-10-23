@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { EmptyCatIllustration, EmptyState } from '@/components/common/EmptyState';
+import { EmptyWarmIllustration, EmptyState } from '@/components/common/EmptyState';
 import { formatShortInstant } from '@/lib/format/shop';
 import type { MyReview, MyReviewStatus } from '@/lib/api/shop-customer';
 
@@ -31,7 +31,7 @@ export function MyReviewsList({ reviews, onWithdraw }: MyReviewsListProps) {
   if (reviews.length === 0) {
     return (
       <EmptyState
-        icon={<EmptyCatIllustration />}
+        icon={<EmptyWarmIllustration />}
         title="You haven't written any reviews yet"
         description="After you buy something, you can review it from its product page."
         action={

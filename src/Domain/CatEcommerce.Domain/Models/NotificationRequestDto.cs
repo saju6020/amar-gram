@@ -10,7 +10,7 @@ namespace CatEcommerce.Domain.Models;
 /// <paramref name="SendAfter"/>/<paramref name="SubjectStamp"/> -- HO-APT-001 §8.9 amendment (§1
 /// Amended there). A reminder is not expanded before <paramref name="SendAfter"/> (honoured by
 /// <c>NotificationWorkQueue</c>); <paramref name="SubjectStamp"/> is copied onto the request and
-/// compared by a subject guard (e.g. <c>AppointmentReminderGuard</c>) so a producer can invalidate
+/// compared by a subject guard so a producer can invalidate
 /// an already-enqueued reminder by changing the stamp on the next one, without deleting the old row.
 /// Both default so every existing positional/named call site is unaffected.
 /// </summary>

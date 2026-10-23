@@ -9,9 +9,9 @@ import { billingIds as ids, resetBillingMockData } from '../../../mocks/handlers
 import { RecordPaymentForm } from '@/components/billing/RecordPaymentForm';
 import { ApprovalsQueue } from '@/components/billing/ApprovalsQueue';
 import { InvoiceActions } from '@/components/billing/InvoiceActions';
-import { setUrl } from '../booking/nav-mock';
+import { setUrl } from '../common/nav-mock';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({

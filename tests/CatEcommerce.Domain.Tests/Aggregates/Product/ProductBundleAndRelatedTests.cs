@@ -18,8 +18,8 @@ public sealed class ProductBundleAndRelatedTests
     {
         var product = new ProductAggregate(Guid.NewGuid());
         product.Create(new ProductCreateDto(
-            ProductKind.Bundle, "Kitten Starter Kit", "PurrCare", ProductCategory.HealthAndGrooming, null,
-            TaxClassId, "kitten-starter-kit", Guid.NewGuid(), "KIT-1", TestUserContext.Create(), Guid.NewGuid()));
+            ProductKind.Bundle, "Pantry Starter Kit", "PurrCare", ProductCategory.HealthAndGrooming, null,
+            TaxClassId, "pantry-starter-kit", Guid.NewGuid(), "KIT-1", TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }
 
@@ -32,8 +32,8 @@ public sealed class ProductBundleAndRelatedTests
         return product;
     }
 
-    private static BundleComponentFact Fact(Guid skuId, string code = "COMP", bool active = true, bool bundle = false, bool prescription = false) =>
-        new(skuId, code, active, ProductIsActive: true, IsBundleSku: bundle, IsPrescriptionProduct: prescription);
+    private static BundleComponentFact Fact(Guid skuId, string code = "COMP", bool active = true, bool bundle = false) =>
+        new(skuId, code, active, ProductIsActive: true, IsBundleSku: bundle);
 
     private static void SetComponents(ProductAggregate product, IReadOnlyList<BundleComponentInputDto> inputs, params BundleComponentFact[] facts) =>
         product.SetBundleComponents(inputs, facts, TestUserContext.Create(), Guid.NewGuid());
@@ -78,18 +78,6 @@ public sealed class ProductBundleAndRelatedTests
 
         Assert.Equal(BusinessViolationCodes.InvalidBundleComponent, ex.ErrorCode);
         Assert.Contains("OTHER-KIT", ex.Message);
-    }
-
-    [Fact]
-    public void U_F3_ComponentIsAPrescriptionProduct_Refused()
-    {
-        var bundle = CreateBundle();
-        var rx = Guid.NewGuid();
-
-        var ex = Assert.Throws<DomainRuleViolationException>(() =>
-            SetComponents(bundle, [new(Guid.NewGuid(), rx, 1)], Fact(rx, "RX-1", prescription: true)));
-
-        Assert.Equal(BusinessViolationCodes.InvalidBundleComponent, ex.ErrorCode);
     }
 
     [Fact]

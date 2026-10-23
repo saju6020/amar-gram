@@ -23,7 +23,7 @@ test('E-C1/E-C2 an Administrator erases a customer; the record shows the placeho
 }) => {
   await page.goto(`/staff/customers/${accountsFixtureIds.customerId}`);
   await expect(page.getByRole('heading', { name: 'Erase personal data' })).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByText(/Clinical records for 7 years/)).toBeVisible();
+  await expect(page.getByText(/Financial records for 10 years/)).toBeVisible();
   await page.getByLabel('How was the request made?').selectOption('InPerson');
   await page.getByLabel('How was identity checked?').selectOption('InPersonPhotoId');
   await page.getByRole('button', { name: /Erase personal data…/ }).click();
@@ -38,15 +38,15 @@ test('E-C1/E-C2 an Administrator erases a customer; the record shows the placeho
   expect(text).not.toMatch(/@|\+88|01[3-9]\d{8}/);
 });
 
-test('E-C3/E-C4 the schedule says nothing clinical is deleted; run retention now confirms what it will not do', async ({
+test('E-C3/E-C4 the schedule says statutory records are review-only; run retention now confirms what it will not do', async ({
   page,
 }) => {
   await page.goto('/staff/admin/retention');
   await expect(page.getByRole('heading', { name: 'Data retention' })).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText('Eligible for review. Nothing is deleted automatically.')).toBeVisible();
-  await expect(page.getByRole('row', { name: /Clinical records/ })).toContainText('Review only');
+  await expect(page.getByRole('row', { name: /Financial records/ })).toContainText('Review only');
   await page.getByRole('button', { name: 'Run retention now' }).click();
-  await expect(page.getByRole('dialog')).toContainText('It will not delete clinical, financial, regulatory or audit records');
+  await expect(page.getByRole('dialog')).toContainText(/It will not delete .*financial, regulatory or audit records/);
   await page.getByRole('dialog').getByRole('button', { name: 'Run retention' }).click();
   await expect(page.getByText('Retention run requested').first()).toBeVisible();
 

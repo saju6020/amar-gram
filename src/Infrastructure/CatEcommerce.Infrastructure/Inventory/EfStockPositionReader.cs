@@ -122,15 +122,15 @@ public sealed class EfStockPositionReader(CatEcommerceDbContext db) : IStockPosi
             .ToList();
     }
 
-    public Task<bool> WasConsumedByPartyAsync(Guid batchId, Guid? customerId, Guid? catId, CancellationToken ct)
+    public Task<bool> WasConsumedByPartyAsync(Guid batchId, Guid? customerId, CancellationToken ct)
     {
         var consuming = db.StockLedgerEntries.AsNoTracking().Where(e => e.BatchId == batchId);
-        consuming = consuming.Where(e => e.Kind == MovementKind.Sale || e.Kind == MovementKind.Dispense || e.Kind == MovementKind.ClinicalUse || e.Kind == MovementKind.BoardingUse);
+        consuming = consuming.Where(e => e.Kind == MovementKind.Sale);
 
-        if (customerId is null && catId is null)
+        if (customerId is null)
             return consuming.AnyAsync(e => e.ReferenceKind == StockReferenceKind.PosSale && e.CustomerId == null, ct);
 
-        return consuming.AnyAsync(e => (customerId != null && e.CustomerId == customerId) || (catId != null && e.CatId == catId), ct);
+        return consuming.AnyAsync(e => e.CustomerId == customerId, ct);
     }
 
     // ── procurement progress (ADR-112) -- derived from posted receipt lines, never stored. ─────────────────────────────────────────

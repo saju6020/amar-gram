@@ -358,7 +358,7 @@ public sealed class NotificationClaimAndDeliveryEndpointTests(NotificationsApiFa
     {
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
         var dedupKey = $"test:concurrent:{Guid.NewGuid():N}";
-        var variables = new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" };
+        var variables = new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" };
 
         var tasks = Enumerable.Range(0, 10).Select(async _ =>
         {
@@ -366,7 +366,7 @@ public sealed class NotificationClaimAndDeliveryEndpointTests(NotificationsApiFa
             var dispatcher = scope.ServiceProvider.GetRequiredService<IInMemoryDispatcher>();
             return await dispatcher.SendAsync(new CatEcommerce.Application.Commands.Notification.RequestNotificationCommand
             {
-                RequestId = Guid.NewGuid(), TemplateKey = NotificationTemplateCatalogue.VaccinationDue,
+                RequestId = Guid.NewGuid(), TemplateKey = NotificationTemplateCatalogue.BillingInvoiceIssued,
                 RecipientKind = NotificationRecipientKind.Customer.DisplayName, RecipientId = customerId,
                 Variables = variables, DeduplicationKey = dedupKey,
                 UserContext = TestUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
@@ -395,8 +395,8 @@ public sealed class NotificationClaimAndDeliveryEndpointTests(NotificationsApiFa
 
         var (client, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         var deletion = await client.PostAsJsonAsync("/api/customers/me/deletion", new { currentPassword = CustomerPassword }, Json);
@@ -435,8 +435,8 @@ public sealed class NotificationClaimAndDeliveryEndpointTests(NotificationsApiFa
             builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(new FakeTimeProvider(SafeDaytimeInstant()))));
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync(NewEmail());
 
-        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         async Task<Type?> ExpandOnceAsync()
@@ -470,7 +470,7 @@ public sealed class NotificationClaimAndDeliveryEndpointTests(NotificationsApiFa
         var request = await db.Set<NotificationRequestAggregate>().AsNoTracking().SingleAsync(r => r.Id == command.RequestId);
         Assert.Equal(NotificationRequestStatus.Expanded, request.Status);
 
-        // Exactly one expansion's worth of notifications -- vaccination-due has Sms/Email/InApp
+        // Exactly one expansion's worth of notifications -- invoice-issued has Sms/Email/InApp
         // wording, so Plan picks one external primary plus the always-on inbox copy (R6): 2 rows,
         // never 4 from a double expansion.
         var notificationCount = await db.Set<NotificationAggregate>().AsNoTracking().CountAsync(n => n.RequestId == command.RequestId);

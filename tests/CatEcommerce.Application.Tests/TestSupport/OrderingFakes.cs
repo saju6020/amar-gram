@@ -13,10 +13,10 @@ public sealed class FakeCatalogueLookup : ICatalogueLookup
     public Dictionary<Guid, OrderCatalogueSku> Skus { get; } = [];
     public HashSet<Guid> ExistingProducts { get; } = [];
 
-    public OrderCatalogueSku Add(decimal price = 100m, bool purchasable = true, bool prescription = false, string name = "Test product", int category = 5)
+    public OrderCatalogueSku Add(decimal price = 100m, bool purchasable = true, string name = "Test product", int category = 5)
     {
         var sku = new OrderCatalogueSku(
-            Guid.NewGuid(), Guid.NewGuid(), name, name, null, category, ProductReturnClass.Other, price, "BDT", Guid.NewGuid(), purchasable, prescription, null, false, []);
+            Guid.NewGuid(), Guid.NewGuid(), name, name, null, category, ProductReturnClass.Other, price, "BDT", Guid.NewGuid(), purchasable, null, false, []);
         Skus[sku.SkuId] = sku;
         ExistingProducts.Add(sku.ProductId);
         return sku;
@@ -42,25 +42,6 @@ public sealed class FakeSkuAvailabilityReader : ISkuAvailabilityReader
     public Task<IReadOnlyDictionary<Guid, AvailabilityStatus>> GetAsync(IReadOnlyCollection<Guid> skuIds, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyDictionary<Guid, AvailabilityStatus>>(
             skuIds.Distinct().ToDictionary(id => id, id => InStock.Contains(id) ? AvailabilityStatus.InStock : AvailabilityStatus.OutOfStock));
-}
-
-/// <summary>A controllable <see cref="IDietAuthorisationGate"/> for UNIT tests of the handlers (the integration tests that need the real gate wait for
-/// HO-PHM-001): it authorises exactly the (cat, sku) pairs a test lists.</summary>
-public sealed class FakeDietAuthorisationGate : IDietAuthorisationGate
-{
-    public HashSet<(Guid CatId, Guid SkuId)> Authorised { get; } = [];
-    public List<(Guid CustomerId, Guid CatId, Guid SkuId)> Checks { get; } = [];
-
-    public Task<DietGateResult> CheckAsync(Guid customerId, Guid catId, Guid skuId, CancellationToken ct)
-    {
-        Checks.Add((customerId, catId, skuId));
-        return Task.FromResult(Authorised.Contains((catId, skuId))
-            ? new DietGateResult(DietGateOutcome.Authorised, Guid.NewGuid(), DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30), "ok")
-            : new DietGateResult(DietGateOutcome.NoAuthorisation, null, null, "no authorisation"));
-    }
-
-    public Task<IReadOnlyList<AuthorisedCat>> GetAuthorisedCatsAsync(Guid customerId, Guid skuId, CancellationToken ct) =>
-        Task.FromResult<IReadOnlyList<AuthorisedCat>>([]);
 }
 
 public sealed class FakeCartFinder : ICartFinder

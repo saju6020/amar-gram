@@ -7,8 +7,8 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('AdminNav — HO-ADM-002 §11.1, ADR-FE-014', () => {
-  it('U-A1: hides admin-only items for a nurse', () => {
-    render(<AdminNav roleIds={['Nurse']} />);
+  it('U-A1: hides admin-only items for an inventory clerk', () => {
+    render(<AdminNav roleIds={['Inventory']} />);
     expect(screen.getByRole('link', { name: 'Branches' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Leave approvals' })).not.toBeInTheDocument();
@@ -25,8 +25,8 @@ describe('AdminNav — HO-ADM-002 §11.1, ADR-FE-014', () => {
   });
 
   it('renders nothing for a role with no visible admin item', () => {
-    const { container } = render(<AdminNav roleIds={['Caretaker']} />);
-    // Branches/Services are visible to every staff role, so Caretaker still sees them —
+    const { container } = render(<AdminNav roleIds={['Reception']} />);
+    // Branches is visible to every staff role, so Reception still sees it —
     // this asserts the empty-case guard exists rather than a false claim of zero items.
     expect(container.querySelector('nav')).toBeInTheDocument();
   });

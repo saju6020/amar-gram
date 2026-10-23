@@ -7,16 +7,15 @@ import type { RetentionActionAtEnd, RetentionRunStatus } from '@/lib/api/retenti
  */
 
 export const RECORD_CLASS_INFO: Record<string, { title: string; covers: string }> = {
-  Clinical: { title: 'Clinical records', covers: 'Visits, notes, diagnoses, prescriptions and results.' },
   Financial: { title: 'Financial records', covers: 'Invoices, payments, refunds and receipts.' },
-  Regulatory: { title: 'Regulatory records', covers: 'Controlled-drug register and similar statutory registers.' },
+  Regulatory: { title: 'Regulatory records', covers: 'Tax, import and similar statutory registers.' },
   Audit: { title: 'Audit trail', covers: 'Who did what, and when, across the system.' },
   CustomerPersonal: { title: 'Customer personal data', covers: 'Name, phone, email, addresses and marketing consent.' },
   CurrentState: { title: 'Current-state records', covers: 'Settings and catalogues that always show their present value.' },
-  Operational: { title: 'Operational records', covers: 'Day-to-day working data such as rosters and bookings.' },
+  Operational: { title: 'Operational records', covers: 'Day-to-day working data such as rosters and stock counts.' },
   Notification: { title: 'Message contents', covers: 'The text of emails and messages already sent.' },
   Security: { title: 'Security artefacts', covers: 'Sessions and password-reset tokens.' },
-  Media: { title: 'Boarding media', covers: 'Photos and clips shared with owners during a stay.' },
+  Media: { title: 'Uploaded media', covers: 'Photos and other uploaded media files.' },
   Telemetry: { title: 'Performance measurements', covers: 'Anonymous web-vitals samples.' },
 };
 
@@ -86,7 +85,6 @@ export function glossErrorCode(code: string): string {
 export const SCOPE_LABEL: Record<string, string> = {
   Accounts: 'Account and sign-in details',
   Billing: 'Billing records',
-  Clinical: 'Clinical records',
   Notifications: 'Messages',
   Ordering: 'Orders and delivery',
   Files: 'Uploaded files',

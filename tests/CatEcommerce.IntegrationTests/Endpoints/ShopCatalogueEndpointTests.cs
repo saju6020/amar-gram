@@ -60,15 +60,15 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
     }
 
     [Fact]
-    public async Task Filter_ByOriginCategoryLifeStageAndPriceRange_ReturnsExactMatches()
+    public async Task Filter_ByOriginCategoryAndPriceRange_ReturnsExactMatches()
     {
         var client = await SignInAsShopManagerAsync();
         var brand = "FilterBrand" + Guid.NewGuid().ToString("N")[..8];
         var country = "FR";
-        var (matchId, _) = await CreateActiveFoodProductAsync(client, brand, "Matching Kitten Food " + Guid.NewGuid().ToString("N")[..6], country, lifeStage: "Kitten", price: 1200m);
-        var (nonMatchId, _) = await CreateActiveFoodProductAsync(client, brand, "Other Adult Food " + Guid.NewGuid().ToString("N")[..6], "DE", lifeStage: "Adult", price: 3000m);
+        var (matchId, _) = await CreateActiveFoodProductAsync(client, brand, "Matching Food " + Guid.NewGuid().ToString("N")[..6], country, price: 1200m);
+        var (nonMatchId, _) = await CreateActiveFoodProductAsync(client, brand, "Other Adult Food " + Guid.NewGuid().ToString("N")[..6], "DE", price: 3000m);
 
-        var response = await AnonymousGetAsync($"/api/shop/products?brand={Uri.EscapeDataString(brand)}&origin={country}&lifeStage=Kitten&minPrice=1000&maxPrice=1500&category=CatFood");
+        var response = await AnonymousGetAsync($"/api/shop/products?brand={Uri.EscapeDataString(brand)}&origin={country}&minPrice=1000&maxPrice=1500&category=CatFood");
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
 
         var ids = body.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("productId").GetGuid()).ToList();
@@ -164,7 +164,7 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
     private async Task<HttpResponseMessage> AnonymousGetAsync(string url) => await CreateClient().GetAsync(url);
 
     private async Task<(Guid ProductId, string Slug)> CreateActiveFoodProductAsync(
-        HttpClient staffClient, string brand, string name, string countryCode, string? lifeStage = "Adult", string? ingredientList = null, decimal price = 1000m)
+        HttpClient staffClient, string brand, string name, string countryCode, string? ingredientList = null, decimal price = 1000m)
     {
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
         var slug = UniqueSlug(name.ToLowerInvariant().Replace(" ", "-"));
@@ -178,7 +178,7 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
         { expectedVersion = 1, name, brand, category = "CatFood", taxClassId, countryOfOriginCode = countryCode }, Json);
 
         await staffClient.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
-        { expectedVersion = 2, lifeStage, ingredientList }, Json);
+        { expectedVersion = 2, ingredientList }, Json);
 
         var addSku = await staffClient.PostAsJsonAsync($"/api/staff/shop/products/{productId}/skus",
             new { expectedVersion = 3, code = UniqueCode("SKU") }, Json);

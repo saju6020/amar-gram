@@ -1,5 +1,4 @@
 using System;
-using CatEcommerce.Infrastructure.Pharmacy;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -13,7 +12,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // HO-PHM-001 §8.9 / V1 -- the register's entries are numbered from this sequence (the column default); it must exist before the table.
-            migrationBuilder.Sql(ControlledDrugRegisterSql.CreateEntryNumberSequence());
+            // HO-P1: ControlledDrugRegisterSql was removed with the retired module; the baseline migration replaces this one.
 
             migrationBuilder.CreateTable(
                 name: "cd_register_entry",
@@ -142,14 +141,14 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
                 unique: true);
 
             // HO-PHM-001 §8.9 layer 3 (ADR-144, V2) -- the four triggers that refuse UPDATE, DELETE and TRUNCATE of the register and its seals.
-            migrationBuilder.Sql(ControlledDrugRegisterSql.CreateImmutabilityTriggers());
+            // HO-P1: ControlledDrugRegisterSql was removed with the retired module; the baseline migration replaces this one.
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // NEVER run this against a database holding real register entries (HO-PHM-001 §20.8): it drops the triggers that protect them, and then the tables.
-            migrationBuilder.Sql(ControlledDrugRegisterSql.DropImmutabilityTriggers());
+            // HO-P1: ControlledDrugRegisterSql was removed with the retired module; the baseline migration replaces this one.
 
             migrationBuilder.DropTable(
                 name: "cd_register_entry",

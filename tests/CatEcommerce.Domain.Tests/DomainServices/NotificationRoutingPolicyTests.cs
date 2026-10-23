@@ -9,7 +9,7 @@ namespace CatEcommerce.Domain.Tests.DomainServices;
 /// <summary>HO-NTF-001 §15 U-B1..U-B10. Pure -- no database.</summary>
 public sealed class NotificationRoutingPolicyTests
 {
-    private static readonly NotificationTemplateDefinition Transactional = NotificationTemplateCatalogue.Find(NotificationTemplateCatalogue.VaccinationDue)!;
+    private static readonly NotificationTemplateDefinition Transactional = NotificationTemplateCatalogue.Find(NotificationTemplateCatalogue.BillingInvoiceIssued)!;
 
     private static readonly NotificationTemplateDefinition Marketing = new(
         "shop.back-in-stock", "d", "d", NotificationCategory.Marketing, NotificationUrgency.Normal,
@@ -27,7 +27,7 @@ public sealed class NotificationRoutingPolicyTests
             preferred ?? (mobile is not null ? NotificationChannel.Sms : NotificationChannel.Email), _ => marketingGranted);
 
     private static RecipientProfile Staff(bool isActive = true, string? mobile = "+8801700000000", string? email = "s@example.com") =>
-        new(NotificationRecipientKind.Staff, Guid.NewGuid(), isActive, "Nurse", mobile, email, NotificationChannel.Email, _ => false);
+        new(NotificationRecipientKind.Staff, Guid.NewGuid(), isActive, "Sam", mobile, email, NotificationChannel.Email, _ => false);
 
     [Fact]
     public void Transactional_PreferredSms_BothIdentifiers_PrimarySms_InboxOn()

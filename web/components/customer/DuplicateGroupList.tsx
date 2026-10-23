@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Skull } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -87,20 +86,6 @@ export function DuplicateGroupList({
                     {member.mobileNumber ?? '—'} · {member.emailAddress ?? '—'} ·{' '}
                     {member.registrationChannel === 'Reception' ? 'Walk-in' : 'Self-service'}
                   </span>
-                  {member.cats.length > 0 && (
-                    <ul className="flex flex-wrap gap-2 text-xs text-ink-muted">
-                      {member.cats.map((cat) => (
-                        <li key={cat.catId} className="flex items-center gap-1">
-                          {cat.name}
-                          {cat.isDeceased && (
-                            <Badge variant="neutral" icon={<Skull size={10} aria-hidden="true" />}>
-                              Deceased
-                            </Badge>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </li>
               ))}
             </ul>

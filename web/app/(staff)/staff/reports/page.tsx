@@ -7,7 +7,7 @@ import { useReportCatalogue } from '@/lib/hooks/useReports';
 
 /**
  * `/staff/reports` — HO-RPT-002 §11.3, US-RPT-01. The catalogue grouped by category. The server
- * returns only the reports the caller may open (ADR-FE-137); a `403` (a Nurse) renders
+ * returns only the reports the caller may open (ADR-FE-137); a `403` (a role with no reports) renders
  * `PermissionDeniedState`.
  */
 export default function ReportsPage() {

@@ -3,7 +3,7 @@ using CatEcommerce.Shared.Common.Enums;
 namespace CatEcommerce.Shared.Common.Constants;
 
 /// <summary>
-/// HO-RPT-001 section 8.3 phase F -- R18 to R20 (US-RPT-04, SRS section 8.3). R21 (subscription health, HO-SUB-001), R22 (cross-line conversion, which needs the boarding line) and R23 (cart abandonment, whose reminders
+/// HO-RPT-001 section 8.3 phase F -- R18 to R20 (US-RPT-04, SRS section 8.3). R21 (subscription health, HO-SUB-001) and R23 (cart abandonment, whose reminders
 /// HO-ORD-001 has not built) are <b>not delivered yet</b> and are therefore absent from the catalogue, never present with empty rows (section 17).
 /// </summary>
 public static partial class ReportCatalogue
@@ -30,20 +30,16 @@ public static partial class ReportCatalogue
             ],
             "bucket", true, true, ["BIL", "ACC"]),
 
-        // R19 -- lifetime value across the lines, for customers first seen in the window.
+        // R19 -- lifetime value, for customers first seen in the window.
         new ReportDefinition(
             CustomerLifetimeValueKey, "Customer lifetime value",
-            "For customers whose first invoice fell in the range: their net revenue to the end of the range across clinic, shop and boarding, in value bands, and the fifty highest.",
+            "For customers whose first invoice fell in the range: their net revenue to the end of the range, in value bands, and the fifty highest.",
             ReportCategory.Growth, ReportKind.Period, ReportRelativePeriod.PreviousMonth, 731, [],
             [
                 new ReportColumn("section", "Section", ReportColumnType.Text),
                 new ReportColumn("label", "Band or customer", ReportColumnType.Text),
                 new ReportColumn("customers", "Customers", ReportColumnType.Integer),
                 new ReportColumn("averageLtv", "Average lifetime value", ReportColumnType.Money),
-                new ReportColumn("clinicShare", "Clinic share %", ReportColumnType.Percent),
-                new ReportColumn("shopShare", "Shop share %", ReportColumnType.Percent),
-                new ReportColumn("boardingShare", "Boarding share %", ReportColumnType.Percent),
-                new ReportColumn("linesUsed", "Lines used", ReportColumnType.Text),
             ],
             null, false, false, ["BIL", "ACC"]),
 
@@ -52,7 +48,7 @@ public static partial class ReportCatalogue
             CohortRetentionKey, "Cohort retention",
             "Monthly cohorts by the month of the customer's first invoice, and the percentage still buying in each of the next twelve months. A month that has not happened yet is blank.",
             ReportCategory.Growth, ReportKind.Period, ReportRelativePeriod.PreviousMonth, 731,
-            [new ReportParameter("measure", "Retained means", ReportParameterType.Enum, "AnyLine", ["AnyLine", "RepeatPurchase", "RepeatVisit"])],
+            [new ReportParameter("measure", "Retained means", ReportParameterType.Enum, "AnyLine", ["AnyLine", "RepeatPurchase"])],
             [
                 new ReportColumn("cohortMonth", "Cohort month", ReportColumnType.Text),
                 new ReportColumn("cohortSize", "Cohort size", ReportColumnType.Integer),

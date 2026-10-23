@@ -7,7 +7,7 @@ namespace CatEcommerce.Domain.DomainServices;
 /// (<c>SkuRows</c>, <c>PriceRows</c>, <c>BundleComponentRows</c>) rather than a lookup port, so this port is Ordering's own, implemented in
 /// Infrastructure over those projections -- the precedent is HO-IMP-001's <c>ISkuDirectory</c> / <c>CatalogueSkuDirectory</c> (HO-ORD-001 §1
 /// Amended). Read-only, never an aggregate; "purchasable" is the one rule the storefront already uses (an Active listed product, an Active SKU,
-/// a price in force, and for a bundle every component Active and priced with no prescription component).
+/// a price in force, and for a bundle every component Active and priced).
 /// </summary>
 public interface ICatalogueLookup
 {

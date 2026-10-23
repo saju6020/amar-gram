@@ -9,7 +9,7 @@ namespace CatEcommerce.Domain.Aggregates.Inventory;
 /// <summary>What <see cref="StockLedgerEntryAggregate.Record"/> needs; built only by <c>EfStockLedger</c> (§8.8).</summary>
 public sealed record StockLedgerEntryDto(
     Guid BranchId, Guid LocationId, Guid SkuId, Guid BatchId, MovementKind Kind, decimal QuantityDelta, bool ConsumesReservation,
-    StockReferenceKind ReferenceKind, Guid ReferenceId, Guid? ReferenceLineId, string? ReferenceLabel, Guid? CustomerId, Guid? CatId,
+    StockReferenceKind ReferenceKind, Guid ReferenceId, Guid? ReferenceLineId, string? ReferenceLabel, Guid? CustomerId,
     bool FefoOverridden, string? OverrideReason, Guid PerformedBy, string? Note, DateTimeOffset OccurredOn, UserContext UserContext);
 
 /// <summary>
@@ -35,7 +35,6 @@ public sealed class StockLedgerEntryAggregate : AggregateRoot
     public Guid? ReferenceLineId { get; private set; }
     public string? ReferenceLabel { get; private set; }
     public Guid? CustomerId { get; private set; }
-    public Guid? CatId { get; private set; }
     public bool FefoOverridden { get; private set; }
     public string? OverrideReason { get; private set; }
     public Guid PerformedBy { get; private set; }
@@ -57,7 +56,7 @@ public sealed class StockLedgerEntryAggregate : AggregateRoot
             OccurredOn = dto.OccurredOn, BranchId = dto.BranchId, LocationId = dto.LocationId, SkuId = dto.SkuId, BatchId = dto.BatchId,
             Kind = dto.Kind, QuantityDelta = dto.QuantityDelta, ConsumesReservation = dto.ConsumesReservation,
             ReferenceKind = dto.ReferenceKind, ReferenceId = dto.ReferenceId, ReferenceLineId = dto.ReferenceLineId, ReferenceLabel = dto.ReferenceLabel,
-            CustomerId = dto.CustomerId, CatId = dto.CatId, FefoOverridden = dto.FefoOverridden, OverrideReason = dto.OverrideReason,
+            CustomerId = dto.CustomerId, FefoOverridden = dto.FefoOverridden, OverrideReason = dto.OverrideReason,
             PerformedBy = dto.PerformedBy, Note = dto.Note
         };
         entry.SetDefaultValue(dto.UserContext);

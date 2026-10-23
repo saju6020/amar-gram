@@ -74,7 +74,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
             // its evidence never edited. The only permitted UPDATE is the one that withdraws it (status, withdrawn_on/by/reason,
             // and the aggregate's own version/audit columns); after that it changes no more. The functions append_only /
             // no_delete / no_truncate were created by AddClinicalRecordImmutability.
-            var withdrawn = ConsentStatus.Withdrawn.Value;
+            var withdrawn = 2;
 
             migrationBuilder.Sql($"""
                 CREATE OR REPLACE FUNCTION clinic.consent_record_guard() RETURNS trigger AS $body$

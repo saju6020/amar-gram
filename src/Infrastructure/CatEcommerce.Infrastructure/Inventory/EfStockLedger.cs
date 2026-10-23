@@ -50,7 +50,7 @@ public sealed partial class EfStockLedger(
         {
             db.StockLedgerEntries.Add(StockLedgerEntryAggregate.Record(new StockLedgerEntryDto(
                 draft.BranchId, draft.LocationId, draft.SkuId, draft.BatchId, draft.Kind, draft.QuantityDelta, ConsumesReservation: false,
-                draft.ReferenceKind, draft.ReferenceId, draft.ReferenceLineId, Truncate(draft.ReferenceLabel, 60), CustomerId: null, CatId: null,
+                draft.ReferenceKind, draft.ReferenceId, draft.ReferenceLineId, Truncate(draft.ReferenceLabel, 60), CustomerId: null,
                 FefoOverridden: false, OverrideReason: null, PerformedBy: user.UserId, Truncate(draft.Note, InventoryRules.NoteMaxLength), now, user)));
         }
 

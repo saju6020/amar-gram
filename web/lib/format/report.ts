@@ -10,7 +10,7 @@ import type { ReportCell, ReportColumn, ReportMoneyCell } from '@/lib/api/report
  *  - percent, decimal and integer text is grouped and suffixed as TEXT — nothing is rounded,
  *    summed or converted;
  *  - a date is formatted from its `yyyy-MM-dd` text with no `Date` object at all, so no zone can
- *    shift it by a day (HO-CAT-002 §9);
+ *    shift it by a day;
  *  - an instant is rendered in the zone the payload names;
  *  - `null` is "not recorded" and is never a zero (HO-ACC-002 ADR-FE-012).
  */
@@ -172,20 +172,9 @@ export function formatAxisTick(value: number, currencyCode?: string): string {
 // Plain-language labels for the server's enumerations.
 // ---------------------------------------------------------------------------------------------
 
-export const CATEGORY_ORDER = [
-  'ClinicOperations',
-  'Clinical',
-  'Boarding',
-  'Stock',
-  'Sales',
-  'Financial',
-  'Growth',
-] as const;
+export const CATEGORY_ORDER = ['Stock', 'Sales', 'Financial', 'Growth'] as const;
 
 export const CATEGORY_LABELS: Readonly<Record<string, string>> = {
-  ClinicOperations: 'Clinic operations',
-  Clinical: 'Clinical',
-  Boarding: 'Boarding',
   Stock: 'Stock',
   Sales: 'Sales',
   Financial: 'Financial',
@@ -256,8 +245,6 @@ export function describeRunFailure(code: string | null | undefined): string {
       return 'Too many rows for a CSV. Choose a shorter period or a single branch.';
     case 'ReportFileNotStored':
       return 'The file could not be stored, so nothing was sent. Run it again.';
-    case 'ClinicalAccessLogFailed':
-      return 'The access record for clinical data could not be written, so nothing was sent. Run it again.';
     case 'UnknownReport':
       return 'The report no longer exists. Cancel this schedule and create a new one.';
     default:

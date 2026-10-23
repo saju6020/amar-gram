@@ -1,7 +1,6 @@
 import { apiFetch } from './client';
 import type { Money } from '../format/money';
 import type { PagedResult } from './types';
-import type { CartCat } from './cart';
 import type { OrderTotals, TransferInstructions } from './checkout';
 
 /**
@@ -56,7 +55,6 @@ export interface OrderLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  cat: CartCat | null;
   quantity: number;
   unitPrice: Money;
   lineSubtotal: Money;

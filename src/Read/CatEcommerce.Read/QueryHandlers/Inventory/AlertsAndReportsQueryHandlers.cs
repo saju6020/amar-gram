@@ -17,7 +17,7 @@ internal sealed record ReorderPair(
 
 internal static class ReorderReads
 {
-    private static readonly MovementKind[] Consuming = [MovementKind.Sale, MovementKind.Dispense, MovementKind.ClinicalUse, MovementKind.BoardingUse];
+    private static readonly MovementKind[] Consuming = [MovementKind.Sale];
 
     public static async Task<IReadOnlyList<Guid>> ActiveBranchIdsAsync(CatEcommerceDbContext db, Guid? only = null) =>
         await db.Branches.AsNoTracking().Where(b => b.IsActive && (only == null || b.Id == only)).Select(b => b.Id).ToListAsync();

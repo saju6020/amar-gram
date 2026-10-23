@@ -77,7 +77,7 @@ public sealed partial class BillingTestGateDatabaseTests(BillingApiFactory facto
     }
 
     // ── XI-7 ────────────────────────────────────────────────────────────────────────────────────────
-    // Was an observed FAIL (SECURITY gate LOW, F-2); fixed by migration HardenClinicalAndBillingTriggers (BEFORE TRUNCATE on every billing table).
+    // Was an observed FAIL (SECURITY gate LOW, F-2); fixed by the billing-trigger hardening migration (BEFORE TRUNCATE on every billing table).
     [Fact]
     public async Task XI_7_TruncateOfAnImmutableBillingTable_IsRefused()
     {

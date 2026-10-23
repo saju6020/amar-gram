@@ -6,7 +6,7 @@ namespace CatEcommerce.Application.Tests.TestSupport;
 
 /// <summary>
 /// Hand-written in-memory test double for IAggregateRootRepository&lt;T&gt; -- no mocking
-/// library is in the allowed scope for this slice (HO-CAT-001 section 13). Records every
+/// library is in the allowed scope for this slice (the foundation handover, section 13). Records every
 /// Save/Update call so handler tests can assert which aggregates were persisted.
 /// </summary>
 public sealed class FakeAggregateRootRepository<TAggregate> : IAggregateRootRepository<TAggregate>

@@ -17,8 +17,8 @@ public sealed class NotificationRequestAggregateTests
     {
         var aggregate = new NotificationRequestAggregate(Guid.NewGuid());
         aggregate.Create(new NotificationRequestCreateDto(
-            "care.vaccination-due", NotificationRecipientKind.Customer, Guid.NewGuid(),
-            variables ?? new Dictionary<string, string> { ["catName"] = "Mitu" },
+            "billing.invoice-issued", NotificationRecipientKind.Customer, Guid.NewGuid(),
+            variables ?? new Dictionary<string, string> { ["customerName"] = "Mitu" },
             null, null, null, null, null, null, dedupKey, null, false,
             DateTimeOffset.UtcNow, Guid.NewGuid(), TestUserContext.Create(), Guid.NewGuid()));
         return aggregate;

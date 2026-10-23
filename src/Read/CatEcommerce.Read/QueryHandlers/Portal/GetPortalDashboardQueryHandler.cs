@@ -12,12 +12,8 @@ namespace CatEcommerce.Read.QueryHandlers.Portal;
 /// </summary>
 public sealed class GetPortalDashboardQueryHandler(
     PortalSectionComposer composer,
-    IPortalSectionReader<PortalCatsViewModel> cats,
-    IPortalSectionReader<PortalAppointmentsViewModel> appointments,
     IPortalSectionReader<PortalOrdersViewModel> orders,
     IPortalSectionReader<PortalBalancesViewModel> balances,
-    IPortalSectionReader<PortalVisitsViewModel> visits,
-    IPortalSectionReader<PortalPrescriptionsViewModel> prescriptions,
     IPortalSectionReader<PortalCustomerViewModel> profile,
     TimeProvider timeProvider)
     : IQueryHandlerAsync<GetPortalDashboardQuery, PortalDashboardViewModel>
@@ -27,17 +23,13 @@ public sealed class GetPortalDashboardQueryHandler(
         var caller = new PortalCaller(query.UserContext.UserId, query.UserContext, query.CorrelationId);
 
         // Order is the section diagram's of §8.2; sections whose upstream is not merged yet are simply not here.
-        var catsSection = await composer.RunAsync("cats", caller.CorrelationId, () => cats.ReadAsync(caller));
-        var appointmentsSection = await composer.RunAsync("appointments", caller.CorrelationId, () => appointments.ReadAsync(caller));
         var ordersSection = await composer.RunAsync("orders", caller.CorrelationId, () => orders.ReadAsync(caller));
         var balancesSection = await composer.RunAsync("balances", caller.CorrelationId, () => balances.ReadAsync(caller));
-        var visitsSection = await composer.RunAsync("visits", caller.CorrelationId, () => visits.ReadAsync(caller));
-        var prescriptionsSection = await composer.RunAsync("prescriptions", caller.CorrelationId, () => prescriptions.ReadAsync(caller));
         var customerSection = await composer.RunAsync("customer", caller.CorrelationId, () => profile.ReadAsync(caller));
 
         return new QueryResponse<PortalDashboardViewModel>
         {
-            Result = new PortalDashboardViewModel(timeProvider.GetUtcNow(), customerSection, catsSection, appointmentsSection, balancesSection, visitsSection, prescriptionsSection, ordersSection)
+            Result = new PortalDashboardViewModel(timeProvider.GetUtcNow(), customerSection, balancesSection, ordersSection)
         };
     }
 }

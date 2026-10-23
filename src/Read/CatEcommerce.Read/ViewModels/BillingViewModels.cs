@@ -27,16 +27,14 @@ public sealed record BillingProfileViewModel(
 public sealed record BilledOnInvoiceViewModel(Guid InvoiceId, string? Number, string Status);
 
 public sealed record ChargeViewModel(
-    Guid ChargeId, Guid CustomerId, string CustomerName, Guid BranchId, Guid? CatId, string BusinessLine, string ItemKind,
-    string SourceKind, Guid SourceId, string SourceLineRef, string? BillingGroupKind, Guid? BillingGroupId, string Description,
+    Guid ChargeId, Guid CustomerId, string CustomerName, Guid BranchId, string BusinessLine, string ItemKind,
+    string SourceKind, Guid SourceId, string SourceLineRef, string Description,
     string Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineDiscount, MoneyViewModel LineTotal, Guid TaxClassId, DateOnly ServiceDate,
     string Status, DateTimeOffset RecordedOn, string? VoidReason, BilledOnInvoiceViewModel? BilledOnInvoice);
 
-public sealed record UncapturedSourceViewModel(string SourceKind, Guid SourceId, Guid CustomerId, DateTimeOffset CompletedOn, string Label);
-
 // ── Invoices (§12.4) ────────────────────────────────────────────────────────────────────────────────
 public sealed record InvoiceLineViewModel(
-    Guid LineId, Guid? ChargeId, string BusinessLine, string ItemKind, string SourceKind, Guid SourceId, Guid? CatId, string Description,
+    Guid LineId, Guid? ChargeId, string BusinessLine, string ItemKind, string SourceKind, Guid SourceId, string Description,
     string Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineDiscount, MoneyViewModel InvoiceDiscountShare, Guid TaxClassId,
     string? TaxClassCode, string TaxRatePercent, MoneyViewModel NetAmount, MoneyViewModel TaxAmount, MoneyViewModel GrossAmount, int SortOrder);
 

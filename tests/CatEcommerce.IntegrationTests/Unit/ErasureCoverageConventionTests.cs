@@ -11,8 +11,8 @@ namespace CatEcommerce.IntegrationTests.Unit;
 /// HO-XCT-001 U-B6 / ADR-316 -- every context that keeps a customer id on an aggregate has either registered an
 /// <see cref="IPersonalDataEraser"/> or been exempted, with a reason, in <see cref="ErasureExemptions"/>. The check reflects over every
 /// aggregate under <c>CatEcommerce.Domain.Aggregates</c> for a property named <c>*CustomerId</c>, <c>*CustomerAccountId</c> or <c>OwnerId</c>
-/// and fails for a context that is neither. <b>Boarding and Subscriptions are skipped by the owner (2026-10-10)</b>: they have no aggregates,
-/// so nothing here names them and nothing here invents their duties.
+/// and fails for a context that is neither. <b>Subscriptions are skipped by the owner (2026-10-10)</b>: it has no aggregates,
+/// so nothing here names it and nothing here invents its duties.
 /// </summary>
 public sealed class ErasureCoverageConventionTests : IClassFixture<XctApiFactory>
 {
@@ -28,19 +28,12 @@ public sealed class ErasureCoverageConventionTests : IClassFixture<XctApiFactory
     {
         ["Account"] = "account",
         ["Administration"] = "administration",
-        ["Boarding"] = "boarding",
         ["Billing"] = "billing",
-        ["Cat"] = "cat",
-        ["Vaccination"] = "cat",
-        ["Clinic"] = "appointments",
-        ["Visit"] = "consultation",
-        ["Prescription"] = "pharmacy",
         ["Inventory"] = "inventory",
         ["Notification"] = "notification",
         ["Order"] = "orders",
         ["Product"] = "shop",
         ["StoredFile"] = "files",
-        ["Surgery"] = "surgery",
         // No customer personal data by construction: the audit log keeps actor ids (and is itself immutable, D-5); the erasure ledger IS the
         // customer id and nothing else; the Operations roots hold no customer reference.
         ["Audit"] = "exempt-by-design",

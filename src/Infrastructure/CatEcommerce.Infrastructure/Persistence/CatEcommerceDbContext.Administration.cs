@@ -9,13 +9,10 @@ public sealed partial class CatEcommerceDbContext
 {
     public DbSet<BranchAggregate> Branches => Set<BranchAggregate>();
     public DbSet<BranchClosureAggregate> BranchClosures => Set<BranchClosureAggregate>();
-    public DbSet<RoomAggregate> Rooms => Set<RoomAggregate>();
     public DbSet<StaffBranchAssignmentAggregate> StaffBranchAssignments => Set<StaffBranchAssignmentAggregate>();
     public DbSet<StaffRosterAggregate> StaffRosters => Set<StaffRosterAggregate>();
     public DbSet<RosterExceptionAggregate> RosterExceptions => Set<RosterExceptionAggregate>();
     public DbSet<LeaveRequestAggregate> LeaveRequests => Set<LeaveRequestAggregate>();
-    public DbSet<ClinicServiceAggregate> ClinicServices => Set<ClinicServiceAggregate>();
-    public DbSet<ServicePriceAggregate> ServicePrices => Set<ServicePriceAggregate>();
     public DbSet<TaxClassAggregate> TaxClasses => Set<TaxClassAggregate>();
     public DbSet<TaxRateAggregate> TaxRates => Set<TaxRateAggregate>();
     public DbSet<BusinessSettingsAggregate> BusinessSettings => Set<BusinessSettingsAggregate>();

@@ -47,7 +47,7 @@ public sealed class CustomerProfileController(
     // acceptable trade-off over adding a second endpoint for a still-rare, interactive action
     // (§1 Amended (18)). The customer partition also means repeated profile saves can no longer
     // block that same customer's own deletion/export attempt (different bucket), and two
-    // customers behind shared NAT or clinic Wi-Fi no longer share one bucket.
+    // customers behind shared NAT or outlet Wi-Fi no longer share one bucket.
     [HttpPut]
     [EnableRateLimiting(RateLimitPolicies.ProfileUpdate)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateCustomerProfileRequest request)

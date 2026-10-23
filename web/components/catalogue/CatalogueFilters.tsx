@@ -4,7 +4,7 @@ import { useId, useState } from 'react';
 import { Globe } from 'lucide-react';
 import { pillInputClass } from '@/components/hearth/fields';
 import { countryFlag } from '@/lib/format/shop';
-import { categoryLabel, lifeStageLabel, proteinLabel, subcategoryLabel } from '@/lib/shop/labels';
+import { categoryLabel, proteinLabel, subcategoryLabel } from '@/lib/shop/labels';
 import { toggleValue, type CatalogueParams } from '@/lib/shop/catalogueParams';
 import type { CatalogueFilters as Facets, CategoryNode } from '@/lib/api/shop-catalogue';
 import { CheckOption, FilterGroup, RadioOption } from './FilterGroup';
@@ -57,7 +57,7 @@ export function CatalogueFilters({
     <div className="flex flex-col gap-3">
       <FilterGroup legend="Category" active={!!value.category}>
         <RadioOption
-          id={`${uid}-cat-all`}
+          id={`${uid}-category-all`}
           name={`${uid}-category`}
           label="All categories"
           checked={!value.category}
@@ -66,7 +66,7 @@ export function CatalogueFilters({
         {categories.map((category) => (
           <div key={category.value} className="flex flex-col gap-1.5">
             <RadioOption
-              id={`${uid}-cat-${category.value}`}
+              id={`${uid}-category-${category.value}`}
               name={`${uid}-category`}
               label={categoryLabel(category.value)}
               count={category.productCount}
@@ -160,21 +160,6 @@ export function CatalogueFilters({
               {showAllBrands ? 'Show fewer brands' : `Show all ${matchingBrands.length} brands`}
             </button>
           )}
-        </FilterGroup>
-      )}
-
-      {facets.lifeStages.length > 0 && (
-        <FilterGroup legend="Life stage" defaultOpen={false} active={value.lifeStage.length > 0}>
-          {facets.lifeStages.map((stage) => (
-            <CheckOption
-              key={stage.value}
-              id={`${uid}-stage-${stage.value}`}
-              label={lifeStageLabel(stage.value)}
-              count={stage.count}
-              checked={value.lifeStage.includes(stage.value)}
-              onChange={() => onChange({ lifeStage: toggleValue(value.lifeStage, stage.value) })}
-            />
-          ))}
         </FilterGroup>
       )}
 

@@ -24,7 +24,7 @@ public sealed class StockReportBuilderTests
 
     private static readonly IReadOnlyDictionary<Guid, RvSkuRow> Skus = new Dictionary<Guid, RvSkuRow>
     {
-        [Sku] = new() { SkuId = Sku, SkuCode = "SKU-1", ProductName = "Cat food", Category = ProductCategory.CatFood.Value, CurrentPrice = 20m, CurrencyCode = "BDT" },
+        [Sku] = new() { SkuId = Sku, SkuCode = "SKU-1", ProductName = "Rice", Category = ProductCategory.CatFood.Value, CurrentPrice = 20m, CurrencyCode = "BDT" },
     };
 
     private static readonly IReadOnlyDictionary<Guid, RvStockLocationRow> Locations = new Dictionary<Guid, RvStockLocationRow>

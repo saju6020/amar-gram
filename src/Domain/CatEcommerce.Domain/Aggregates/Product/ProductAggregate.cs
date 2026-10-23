@@ -39,7 +39,6 @@ public sealed partial class ProductAggregate : AggregateRoot
     public DateTimeOffset? FirstPublishedOn { get; private set; }
     public Guid TaxClassId { get; private set; }
     public string? CountryOfOriginCode { get; private set; }
-    public bool PrescriptionRequired { get; private set; }
     public bool IsExpiryTracked { get; private set; }
     public bool ListedOnStorefront { get; private set; } = true;
     public string SearchText { get; private set; } = "";
@@ -121,9 +120,8 @@ public sealed partial class ProductAggregate : AggregateRoot
             var leavingFood = IsFood && dto.Category != ProductCategory.CatFood;
             Category = dto.Category;
 
-            // Row 31: food-only state cannot outlive the category. Left in place it would make a non-food product
-            // "prescription required" with no way to clear the flag (SetPrescriptionRequired refuses non-food).
-            if (leavingFood) ClearFoodOnlyState(dto.UserContext, dto.CorrelationId);
+            // Row 31: food-only state cannot outlive the category.
+            if (leavingFood) FoodDetails = null;
         }
         Subcategory = dto.Subcategory;
         TaxClassId = dto.TaxClassId;
@@ -139,17 +137,6 @@ public sealed partial class ProductAggregate : AggregateRoot
         AddDomainEvent(new ProductDetailsUpdatedEvent { ProductId = Id, CorrelationId = dto.CorrelationId, UserContext = dto.UserContext });
 
         UpdateVersion();
-    }
-
-    private void ClearFoodOnlyState(Platform.Infrastructure.Common.Security.UserContext userContext, Guid correlationId)
-    {
-        FoodDetails = null;
-
-        if (!PrescriptionRequired) return;
-
-        PrescriptionRequired = false;
-        AddDomainEvent(new ProductPrescriptionRequirementChangedEvent
-        { ProductId = Id, PrescriptionRequired = false, CorrelationId = correlationId, UserContext = userContext });
     }
 
     public void ChangeSlug(string slug, Platform.Infrastructure.Common.Security.UserContext userContext, Guid correlationId)

@@ -33,11 +33,8 @@ public static class CheckoutPricing
 
         foreach (var line in i.Lines) Classify(i, line, priced, excluded, changes);
 
-        // A prescription line without a cat is the reason to show first (I-D5): "nothing to place" would hide the one thing the customer can fix.
-        var catRequired = i.Lines.Any(l => l.Prescription == PrescriptionLineStatus.CatRequired);
         if (i.Lines.Count == 0) blocking.Add(BusinessViolationCodes.CartEmpty);
-        else if (priced.Count == 0 && !catRequired) blocking.Add(BusinessViolationCodes.NothingToPlace);
-        if (catRequired) blocking.Add(BusinessViolationCodes.PrescriptionCatRequired);
+        else if (priced.Count == 0) blocking.Add(BusinessViolationCodes.NothingToPlace);
 
         // ── discount ──
         var discountLines = priced.Select(p => new DiscountCartLine(p.Line.LineId, p.Line.Sku.ProductId, p.Line.Sku.CategoryId, p.Subtotal)).ToList();
@@ -60,7 +57,7 @@ public static class CheckoutPricing
 
             return new QuoteLine(
                 p.Line.LineId, p.Line.Sku.SkuId, p.Line.Sku.ProductId, p.Line.Sku.ProductName, p.Line.Sku.VariantLabel, p.Line.Sku.Barcode, p.Line.Sku.ReturnClass,
-                p.Line.Sku.IsBundle, p.Line.Sku.RequiresPrescription ? p.Line.CatId : null, p.Quantity, p.Unit, p.Subtotal, lineDiscount, share, p.Line.Sku.TaxClassId,
+                p.Line.Sku.IsBundle, p.Quantity, p.Unit, p.Subtotal, lineDiscount, share, p.Line.Sku.TaxClassId,
                 p.Line.TaxRatePercent!.Value, tax, taxBase + tax, p.Line.Sku.BundleComponents);
         }).ToList();
 
@@ -117,7 +114,7 @@ public static class CheckoutPricing
 
         void Exclude(CheckoutChangeKind kind, string reason, string message, string? before = null, string? after = null)
         {
-            excluded.Add(new ExcludedLine(line.LineId, sku.SkuId, name, line.CatId, line.CartQuantity, reason));
+            excluded.Add(new ExcludedLine(line.LineId, sku.SkuId, name, line.CartQuantity, reason));
             changes.Add(new CheckoutChange(kind, line.LineId, name, before, after, message));
         }
 
@@ -131,20 +128,6 @@ public static class CheckoutPricing
         if (!sku.IsPurchasable || sku.CurrentPrice is null || !string.Equals(sku.CurrencyCode, i.CurrencyCode, StringComparison.OrdinalIgnoreCase))
         {
             Exclude(CheckoutChangeKind.NowUnavailable, nameof(CheckoutChangeKind.NowUnavailable), $"'{name}' is no longer available and has been left out of this order.");
-            return;
-        }
-
-        if (sku.RequiresPrescription && line.Prescription == PrescriptionLineStatus.CatRequired)
-        {
-            excluded.Add(new ExcludedLine(line.LineId, sku.SkuId, name, line.CatId, line.CartQuantity, nameof(CheckoutChangeKind.PrescriptionCatRequired)));
-            changes.Add(new CheckoutChange(CheckoutChangeKind.PrescriptionCatRequired, line.LineId, name, null, null, $"Choose which cat '{name}' is for before you check out."));
-            return;
-        }
-
-        if (sku.RequiresPrescription && line.Prescription == PrescriptionLineStatus.NotAuthorised)
-        {
-            Exclude(CheckoutChangeKind.PrescriptionAuthorisationExpired, nameof(CheckoutChangeKind.PrescriptionAuthorisationExpired),
-                $"'{name}' needs a current veterinary authorisation for your cat, and it is no longer valid. Book a consultation to renew it.");
             return;
         }
 
@@ -249,7 +232,7 @@ public static class CheckoutPricing
 
         foreach (var l in lines)
         {
-            text.Append("L|").Append(l.SkuId.ToString("D")).Append('|').Append(l.CatId?.ToString("D")).Append('|').Append(l.Quantity.ToString(inv))
+            text.Append("L|").Append(l.SkuId.ToString("D")).Append('|').Append(l.Quantity.ToString(inv))
                 .Append('|').Append(l.UnitPrice.Value.ToString(inv)).Append('|').Append(l.LineDiscount.Value.ToString(inv)).Append('|').Append(l.OrderDiscountShare.Value.ToString(inv))
                 .Append('|').Append(l.TaxRatePercent.ToString("F2", inv)).Append('|').Append(l.TaxAmount.Value.ToString(inv)).Append('\n');
         }

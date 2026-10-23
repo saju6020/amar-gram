@@ -32,21 +32,10 @@ public sealed class RecordManualChargeCommandValidator : AbstractValidator<Recor
         RuleFor(x => x.Quantity).QuantityShape();
         RuleFor(x => x.LineDiscount).MoneyShape(allowZero: true);
 
-        RuleFor(x => x).Must(c => c.ServiceId is not null != (c.Description is not null))
-            .WithMessage("Give either a service or a description, price and tax class -- not both and not neither.");
-        When(x => x.ServiceId is null, () =>
-        {
-            RuleFor(x => x.Description).NotEmpty().MaximumLength(BillingRules.MaxDescriptionLength).NoControlCharacters();
-            RuleFor(x => x.UnitPrice).NotNull();
-            RuleFor(x => x.UnitPrice).Must(p => p is null || (p >= 0m && p <= BillingRules.MaxAmount && BillingShapeRules.HasAtMostDecimals(p.Value, 2))).WithMessage("must not be negative and have at most two decimals.");
-            RuleFor(x => x.TaxClassId).NotNull().NotEqual(Guid.Empty);
-        });
-        When(x => x.ServiceId is not null, () =>
-        {
-            RuleFor(x => x.ServiceId).NotEqual(Guid.Empty);
-            RuleFor(x => x.UnitPrice).Null().WithMessage("must not be set when a service is chosen.");
-            RuleFor(x => x.TaxClassId).Null().WithMessage("must not be set when a service is chosen.");
-        });
+        RuleFor(x => x.Description).NotEmpty().MaximumLength(BillingRules.MaxDescriptionLength).NoControlCharacters();
+        RuleFor(x => x.UnitPrice).NotNull();
+        RuleFor(x => x.UnitPrice).Must(p => p is null || (p >= 0m && p <= BillingRules.MaxAmount && BillingShapeRules.HasAtMostDecimals(p.Value, 2))).WithMessage("must not be negative and have at most two decimals.");
+        RuleFor(x => x.TaxClassId).NotNull().NotEqual(Guid.Empty);
 
         RuleFor(x => x.BusinessLine).MustBeValidEnumeration<RecordManualChargeCommand, BusinessLine>().When(x => x.BusinessLine is not null);
         RuleFor(x => x.ServiceDate).Must(d => BillingShapeRules.NotMoreThanADayAhead(d, timeProvider)).WithMessage("cannot be in the future.");
@@ -60,14 +49,5 @@ public sealed class VoidChargeCommandValidator : AbstractValidator<VoidChargeCom
         RuleFor(x => x.ChargeId).NotEmpty();
         RuleFor(x => x.BranchId).NotEmpty();
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(ChargeRules.MaxVoidReasonLength).NoControlCharacters();
-    }
-}
-
-public sealed class CaptureSourceChargesCommandValidator : AbstractValidator<CaptureSourceChargesCommand>
-{
-    public CaptureSourceChargesCommandValidator()
-    {
-        RuleFor(x => x.SourceKind).NotEmpty().MustBeValidEnumeration<CaptureSourceChargesCommand, ChargeSourceKind>();
-        RuleFor(x => x.SourceId).NotEmpty();
     }
 }

@@ -9,7 +9,7 @@ namespace CatEcommerce.IntegrationTests;
 
 /// <summary>
 /// HO-ORD-001 Phase H, the point of sale -- I-H1 to I-H4 through real HTTP against the real Inventory, Shop and Billing: a barcode finds the SKU with its FEFO batch (US-ORD-16
-/// AC2), a cash sale gives change and deducts through the same ledger as an online order (AC1), a prescription food needs a customer and a cat, the receipt is structured and
+/// AC2), a cash sale gives change and deducts through the same ledger as an online order (AC1), the receipt is structured and
 /// 48 columns wide, and a double submit with one key makes one sale (US-ORD-18 AC1).
 /// </summary>
 public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : OrderingShopTestBase(factory)
@@ -19,7 +19,7 @@ public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : Order
     private async Task<Till> TillAsync()
     {
         var shop = await SetUpShopAsync(fillCart: false);
-        var food = await CreateSkuAsync(shop.Context, price: 850m, stock: 20m, food: true, name: "Kitten food", barcode: NewBarcode());
+        var food = await CreateSkuAsync(shop.Context, price: 850m, stock: 20m, food: true, name: "Basmati rice", barcode: NewBarcode());
         var toy = await CreateSkuAsync(shop.Context, price: 120m, stock: 20m, taxClassId: shop.Context.ZeroTaxClassId, name: "Feather wand " + Guid.NewGuid().ToString("N")[..8], barcode: NewBarcode());
         var (cashier, _) = await StaffClientAsync(shop.Context, StaffRoles.Reception);
         return new Till(shop, cashier, food, toy);
@@ -231,22 +231,6 @@ public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : Order
         Assert.Equal(20m, await SellableAsync(till.Shop.Context.BranchId, till.Food.SkuId));
     }
 
-    // ── I-H2 ────────────────────────────────────────────────────────────────────────────────────────
-    [Fact]
-    public async Task I_H2_APrescriptionFood_WithoutACustomerAndCat_IsRefused()
-    {
-        var till = await TillAsync();
-        var rx = await CreateSkuAsync(till.Shop.Context, price: 500m, stock: 10m, prescription: true, food: true, name: "Renal diet", barcode: NewBarcode());
-        var body = new { customerName = "New Buyer", customerMobile = NewMobile(), lines = new[] { new { skuId = rx.SkuId, quantity = 1 } }, tenders = new object[] { Cash(2000m) } };
-
-        await AssertErrorAsync(await StaffPostAsync(till.Cashier, "/api/staff/pos/sales", body), "PrescriptionCatRequired");
-
-        // an existing customer (found by mobile) without a cat is still refused
-        var withCustomer = new { customerName = "Ordering Customer", customerMobile = await MobileOfAsync(till.Shop.CustomerId), lines = new[] { new { skuId = rx.SkuId, quantity = 1 } }, tenders = new object[] { Cash(2000m) } };
-        await AssertErrorAsync(await StaffPostAsync(till.Cashier, "/api/staff/pos/sales", withCustomer), "PrescriptionCatRequired");
-        Assert.Equal(10m, await SellableAsync(till.Shop.Context.BranchId, rx.SkuId));
-    }
-
     // ── I-H3 ────────────────────────────────────────────────────────────────────────────────────────
     [Fact]
     public async Task I_H3_TheReceipt_IsStructured_AndTheTextIs48ColumnsWide()
@@ -267,14 +251,14 @@ public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : Order
         Assert.All(lines, l => Assert.True(l.Length <= 48, $"'{l}' is {l.Length} columns"));
         Assert.Contains(lines, l => l.StartsWith("TOTAL") && l.EndsWith("1,097.50") && l.Length == 48);
         Assert.Contains(lines, l => l.StartsWith("Change") && l.EndsWith("102.50"));
-        Assert.Contains("Kitten food", text);
+        Assert.Contains("Basmati rice", text);
 
         // another branch has no such receipt; a role without Pos.Sell is refused
         var (elsewhere, _) = await StaffClientAsync(await CreateContextAsync(), StaffRoles.Reception);
         Assert.Equal(HttpStatusCode.NotFound, (await elsewhere.GetAsync($"/api/staff/pos/sales/{orderId}/receipt")).StatusCode);
-        var (nurse, _) = await StaffClientAsync(till.Shop.Context, StaffRoles.Nurse);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync($"/api/staff/pos/sales/{orderId}/receipt")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await StaffPostAsync(nurse, "/api/staff/pos/sales", Sale(till, [Cash(2000m)]))).StatusCode);
+        var (inventory, _) = await StaffClientAsync(till.Shop.Context, StaffRoles.Inventory);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync($"/api/staff/pos/sales/{orderId}/receipt")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await StaffPostAsync(inventory, "/api/staff/pos/sales", Sale(till, [Cash(2000m)]))).StatusCode);
     }
 
     // ── I-H4 (US-ORD-18 AC1) ────────────────────────────────────────────────────────────────────────

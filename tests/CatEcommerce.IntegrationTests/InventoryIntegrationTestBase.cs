@@ -96,9 +96,9 @@ public abstract class InventoryIntegrationTestBase(InventoryApiFactory factory) 
     /// <summary>One signed-in staff client of a role, assigned to the branch and naming it in <c>X-Branch-Id</c>.</summary>
     protected sealed record StaffClient(HttpClient Client, Guid StaffAccountId, string Mobile, string Password);
 
-    /// <summary>A test's own branch: an administrator assigned to it (the <see cref="Admin"/> client) and the five locations it created.</summary>
+    /// <summary>A test's own branch: an administrator assigned to it (the <see cref="Admin"/> client) and the three locations it created.</summary>
     protected sealed record BranchContext(
-        Guid BranchId, StaffClient Admin, Guid ShopId, Guid WarehouseId, Guid DispensaryId, Guid BoardingId, Guid QuarantineId,
+        Guid BranchId, StaffClient Admin, Guid ShopId, Guid WarehouseId, Guid QuarantineId,
         WebApplicationFactory<Program> ApiFactory);
 
     protected async Task<BranchContext> SeedBranchAsync(WebApplicationFactory<Program>? apiFactory = null, bool withLocations = true)
@@ -117,12 +117,11 @@ public abstract class InventoryIntegrationTestBase(InventoryApiFactory factory) 
         UseBranch(client, branchId);
 
         var adminClient = new StaffClient(client, admin.StaffAccountId, admin.Mobile, admin.Password);
-        if (!withLocations) return new BranchContext(branchId, adminClient, default, default, default, default, default, apiFactory);
+        if (!withLocations) return new BranchContext(branchId, adminClient, default, default, default, apiFactory);
 
         return new BranchContext(
             branchId, adminClient,
             await CreateLocationAsync(client, "ShopFloor"), await CreateLocationAsync(client, "Warehouse"),
-            await CreateLocationAsync(client, "ClinicDispensary"), await CreateLocationAsync(client, "BoardingStore"),
             await CreateLocationAsync(client, "Quarantine"), apiFactory);
     }
 
@@ -149,8 +148,8 @@ public abstract class InventoryIntegrationTestBase(InventoryApiFactory factory) 
 
     protected sealed record SeededSku(Guid ProductId, Guid SkuId, string SkuCode, string? Barcode, string Name);
 
-    /// <summary>Mints a product and one SKU through the shop endpoints. A <paramref name="food"/> product is Cat Food (expiry always
-    /// tracked, D-2); <paramref name="expiryTracked"/> makes a non-food product expiry-tracked too (a stand-in for a medicine).</summary>
+    /// <summary>Mints a product and one SKU through the shop endpoints. A <paramref name="food"/> product is in the food category (expiry always
+    /// tracked, D-2); <paramref name="expiryTracked"/> makes a non-food product expiry-tracked too (a stand-in for any perishable).</summary>
     protected async Task<SeededSku> CreateSkuAsync(HttpClient admin, bool food = false, bool expiryTracked = false, string? barcode = null, string? name = null)
     {
         var taxCode = NewCode("TAX");
@@ -340,7 +339,7 @@ public abstract class InventoryIntegrationTestBase(InventoryApiFactory factory) 
     protected static StockReference OrderReference(Guid? orderId = null, StockReferenceKind? kind = null) =>
         new(kind ?? StockReferenceKind.CustomerOrder, orderId ?? Guid.NewGuid(), null, "Order PC-" + Random.Shared.Next(100000, 999999));
 
-    protected static StockParty Customer(Guid? customerId = null, Guid? catId = null) => new(customerId ?? Guid.NewGuid(), catId);
+    protected static StockParty Customer(Guid? customerId = null) => new(customerId ?? Guid.NewGuid());
 
     protected static void AssertPort<T>(StockResult<T> result, string expectedCode)
     {

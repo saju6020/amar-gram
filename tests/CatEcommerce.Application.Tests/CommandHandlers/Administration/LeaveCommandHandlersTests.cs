@@ -33,7 +33,7 @@ public sealed class LeaveCommandHandlersTests
     private static LeaveRequestAggregate CreateRequestedLeave(Guid staffAccountId, DateOnly startsOn, DateOnly endsOn)
     {
         var leave = new LeaveRequestAggregate(Guid.NewGuid());
-        leave.Request(new LeaveRequestCreateDto(staffAccountId, startsOn, endsOn, LeaveKind.Annual, null, ContextFor(staffAccountId, "Nurse"), Guid.NewGuid()));
+        leave.Request(new LeaveRequestCreateDto(staffAccountId, startsOn, endsOn, LeaveKind.Annual, null, ContextFor(staffAccountId, "Reception"), Guid.NewGuid()));
         return leave;
     }
 
@@ -94,16 +94,16 @@ public sealed class LeaveCommandHandlersTests
         Assert.Contains(response.ValidationResult!.Errors, e => e.ErrorCode == BusinessViolationCodes.LeaveCannotBeCancelled);
     }
 
-    /// <summary>U-C7: a Nurse requesting leave on behalf of someone else (a non-null,
+    /// <summary>U-C7: a receptionist requesting leave on behalf of someone else (a non-null,
     /// not-the-caller <c>StaffAccountId</c>) is refused with <c>ActionNotPermitted</c> -- distinct
-    /// from <c>NurseApprovingLeave_Returns403</c> (I-C5), which is the *decision* path, refused at
+    /// from <c>ReceptionApprovingLeave_Returns403</c> (I-C5), which is the *decision* path, refused at
     /// the authorization layer before the handler ever runs; this is the *request* path, refused
     /// inside the handler itself, since <c>Actions.Leave.Request</c> is open to every staff role and
     /// only the handler can tell "for myself" from "for someone else".</summary>
     [Fact]
-    public async Task RequestLeave_NurseRequestsForSomeoneElse_ReturnsActionNotPermitted()
+    public async Task RequestLeave_ReceptionRequestsForSomeoneElse_ReturnsActionNotPermitted()
     {
-        var nurseId = Guid.NewGuid();
+        var receptionId = Guid.NewGuid();
         var someoneElseId = Guid.NewGuid();
         var leaveRepository = new FakeAggregateRootRepository<LeaveRequestAggregate>();
         var handler = new RequestLeaveCommandHandler(leaveRepository);
@@ -112,7 +112,7 @@ public sealed class LeaveCommandHandlersTests
         {
             LeaveRequestId = Guid.NewGuid(), StaffAccountId = someoneElseId,
             StartsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(10), EndsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(11),
-            Kind = LeaveKind.Annual.DisplayName, UserContext = ContextFor(nurseId, StaffRoles.Nurse), CorrelationId = Guid.NewGuid()
+            Kind = LeaveKind.Annual.DisplayName, UserContext = ContextFor(receptionId, StaffRoles.Reception), CorrelationId = Guid.NewGuid()
         });
 
         Assert.False(response.IsSuccess);

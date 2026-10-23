@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { EmptyCatIllustration, EmptyState } from '@/components/common/EmptyState';
+import { EmptyWarmIllustration, EmptyState } from '@/components/common/EmptyState';
 import { buttonVariants } from '@/components/ui/button';
 
 /** A draft, archived, unlisted or unknown slug is a not-found page on every public route. */
@@ -10,7 +10,7 @@ export default function ShopNotFound() {
         Page not found
       </h1>
       <EmptyState
-        icon={<EmptyCatIllustration />}
+        icon={<EmptyWarmIllustration />}
         title="We couldn't find that product."
         description="It may have been removed, or the address may be wrong."
         action={

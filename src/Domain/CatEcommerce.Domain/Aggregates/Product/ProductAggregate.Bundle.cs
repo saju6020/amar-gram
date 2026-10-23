@@ -9,7 +9,7 @@ using Platform.Infrastructure.Common.Security;
 namespace CatEcommerce.Domain.Aggregates.Product;
 
 /// <summary>HO-SHP-001 section 8.10 -- bundle composition and curated related products. Facts
-/// about other products (is this SKU a bundle, a prescription product, discontinued) are gathered
+/// about other products (is this SKU a bundle, discontinued) are gathered
 /// by the handler and passed in; this aggregate decides (rule 20).</summary>
 public sealed partial class ProductAggregate
 {
@@ -44,9 +44,6 @@ public sealed partial class ProductAggregate
 
             if (fact.IsBundleSku)
                 throw new DomainRuleViolationException(BusinessViolationCodes.InvalidBundleComponent, $"SKU {fact.ComponentSkuCode} is a bundle and cannot be a component.", nameof(components));
-
-            if (fact.IsPrescriptionProduct)
-                throw new DomainRuleViolationException(BusinessViolationCodes.InvalidBundleComponent, $"SKU {fact.ComponentSkuCode} is a prescription product and cannot be bundled.", nameof(components));
 
             if (!fact.IsActive)
                 throw new DomainRuleViolationException(BusinessViolationCodes.InvalidBundleComponent, $"SKU {fact.ComponentSkuCode} is discontinued.", nameof(components));

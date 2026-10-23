@@ -21,9 +21,8 @@ namespace CatEcommerce.Shared.Common.Constants;
 /// callers with two different enforcement policies, both legitimate -- do not assume the wrong one
 /// for a new caller. Every paged **admin** endpoint (<c>AdminAuditEntriesController</c>,
 /// <c>AdminLeaveRequestsController</c>) **rejects** a <c>pageSize</c> above the cap with 400. The
-/// Cat and Vaccine list endpoints (<c>CatsController</c>/<c>VaccinesController</c>, via the shared
-/// <c>Api.Controllers.PagingHelper</c>) **clamp** it to the cap instead (owner decision, HO-CAT-001
-/// §1 Amended, 2026-09-26) and return the total via <c>PagedResult&lt;T&gt;</c>, so a clamped
+/// list endpoints that use the shared <c>Api.Controllers.PagingHelper</c> **clamp** it to the cap
+/// instead (owner decision, 2026-09-26) and return the total via <c>PagedResult&lt;T&gt;</c>, so a clamped
 /// request still tells the caller how many rows exist. <see cref="MaxPageNumber"/> is enforced the
 /// same way (rejected with 400) by both sets of callers.
 /// </summary>

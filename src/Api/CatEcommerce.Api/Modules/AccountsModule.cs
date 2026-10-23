@@ -30,7 +30,6 @@ using CatEcommerce.Application.DomainEventHandlers.Account;
 using CatEcommerce.Domain.Aggregates.Account;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Events.Account;
-using CatEcommerce.Domain.Events.Cat;
 using CatEcommerce.Infrastructure.Configuration;
 using CatEcommerce.Infrastructure.Hosting;
 using CatEcommerce.Infrastructure.Notifications;
@@ -206,8 +205,6 @@ public static class AccountsModule
         services.AddScoped<IEventHandlerAsync<StaffPasswordSetEvent>, AuditStaffPasswordSetHandler>();
         services.AddScoped<IEventHandlerAsync<StaffAccountDetailsChangedEvent>, AuditStaffAccountDetailsChangedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerMergedEvent>, AuditCustomerMergedHandler>();
-        services.AddScoped<IEventHandlerAsync<CustomerMergedEvent>, ReassignCatsOnCustomerMergedHandler>();
-        services.AddScoped<IEventHandlerAsync<CatOwnerReassignedOnMergeEvent>, AuditCatOwnerReassignedOnMergeHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, AuditCustomerAnonymisedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, ClearAddressBookOnAnonymisedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, ClearPreferencesOnAnonymisedHandler>();
@@ -283,7 +280,7 @@ public static class AccountsModule
     /// <summary>
     /// HO-ACC-001 §1 Amended (18), follow-up (2026-09-25): the profile-update/email step-up path
     /// must not share a bucket with account deletion/export (§12.7's <c>AccountSensitive</c>, IP
-    /// partitioned), and customers behind shared NAT or clinic Wi-Fi must not block each other.
+    /// partitioned), and customers behind shared NAT or outlet Wi-Fi must not block each other.
     /// Partitioned by the signed-in customer id when one is resolved -- read from
     /// <c>HttpContext.Items[ResolvedCaller.HttpContextItemsKey]</c>, written by
     /// <c>SessionAuthenticationMiddleware</c>, which runs before <c>UseRateLimiter()</c>

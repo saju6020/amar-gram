@@ -38,7 +38,7 @@ public sealed class ProductSection16GapTests
     // handler lets its FileId anywhere near SetImages (SetProductImagesCommandHandler).
 
     private static StoredFileRegistrationDto FileDto(string contentType, FilePurpose purpose) => new(
-        Guid.NewGuid(), purpose, contentType, 1024, new string('a', 64), "cat.file",
+        Guid.NewGuid(), purpose, contentType, 1024, new string('a', 64), "product.file",
         "ProductImage/2026/10/" + Guid.NewGuid().ToString("N"), Guid.NewGuid(), DateTimeOffset.UtcNow,
         "DevelopmentNoOp", null, TestUserContext.Create(), Guid.NewGuid());
 
@@ -79,7 +79,7 @@ public sealed class ProductSection16GapTests
     {
         var product = CreateProduct(ProductCategory.CatFood);
 
-        product.SetFoodDetails(new FoodDetails(null, null, null, null, new GuaranteedAnalysis(32, 15, 4, 10), null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails(null, null, null, new GuaranteedAnalysis(32, 15, 4, 10), null, null), TestUserContext.Create(), Guid.NewGuid());
 
         var analysis = product.FoodDetails!.GuaranteedAnalysis!;
         Assert.Equal((32m, 15m, 4m, 10m), (analysis.ProteinPercent, analysis.FatPercent, analysis.FibrePercent, analysis.MoisturePercent));
@@ -126,7 +126,7 @@ public sealed class ProductSection16GapTests
     public void U_B2_NoAnalysis_IsNull_AndTheTypeHasNoPartialConstructor()
     {
         var product = CreateProduct(ProductCategory.CatFood);
-        product.SetFoodDetails(new FoodDetails(null, null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails(null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
         Assert.Null(product.FoodDetails!.GuaranteedAnalysis);
         Assert.All(typeof(GuaranteedAnalysis).GetConstructors(), c => Assert.Equal(4, c.GetParameters().Length));

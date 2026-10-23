@@ -339,7 +339,7 @@ internal static class BatchRecallReads
 }
 
 /// <summary>HO-IMP-001 §12.4 / US-IMP-15 AC1 -- the ledger search: SKU, batch, delta, location, reference and user on every row. The range is
-/// REQUIRED (the controller refuses a missing or over-long one) and rows carry NO customer or cat (those are in the recall trace only).</summary>
+/// REQUIRED (the controller refuses a missing or over-long one) and rows carry NO customer (that is in the recall trace only).</summary>
 public sealed class GetLedgerQueryHandler(CatEcommerceDbContext db) : IQueryHandlerAsync<GetLedgerQuery, PagedResult<LedgerEntryViewModel>>
 {
     public async Task<QueryResponse<PagedResult<LedgerEntryViewModel>>> HandleAsync(GetLedgerQuery query)

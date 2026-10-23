@@ -4,7 +4,7 @@ namespace CatEcommerce.Shared.Common.Constants;
 /// HO-SHP-001 §8.3/§10.3 -- ISO-3166-1 alpha-2 country codes to their English display name (C-8).
 /// Used to validate <c>ProductAggregate.CountryOfOriginCode</c> (<c>InvalidCountryCode</c>) and to
 /// label a <c>SourcingOriginAggregate</c> in "Shop by Country" (US-SHP-05). Not exhaustive of every
-/// ISO-assigned code, but covers every country a cat-food/litter import business is realistically
+/// ISO-assigned code, but covers every country an import business is realistically
 /// sourcing from or trading with; a code genuinely missing here is a data addition, not a code
 /// change (new countries are appended, never renumbered).
 /// </summary>

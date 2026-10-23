@@ -86,15 +86,14 @@ public sealed class ShopCrossCuttingTests
         Assert.True(ActionRoles.TryGetRoles(action, out var roles));
         Assert.Equal(expectedRoles.OrderBy(r => r), roles.OrderBy(r => r));
 
-        // Vet, Nurse, Caretaker and Accountant have no catalogue access (Appendix D).
-        foreach (var excluded in new[] { "Vet", "Nurse", "Caretaker", "Accountant" })
-            Assert.DoesNotContain(excluded, roles);
+        // Accountant has no catalogue access (Appendix D).
+        Assert.DoesNotContain("Accountant", roles);
     }
 
     [Fact]
     public void U_X4_ShopRoleIds_AreTheHO_ACC_001Ones()
     {
-        var all = new[] { "Reception", "Nurse", "Vet", "Caretaker", "Inventory", "ShopManager", "Accountant", "Administrator" };
+        var all = new[] { "Reception", "Inventory", "ShopManager", "Accountant", "Administrator" };
         foreach (var action in new[] { "Products.View", "Products.Manage", "Products.ManagePrices", "SourcingOrigins.Manage", "Reviews.Moderate" })
         {
             Assert.True(ActionRoles.TryGetRoles(action, out var roles));

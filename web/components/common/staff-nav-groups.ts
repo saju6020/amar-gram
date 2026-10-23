@@ -27,38 +27,9 @@ interface StaffNavEntry {
 export const STAFF_NAV_GROUPS: readonly StaffNavGroup[] = [
   { key: 'home', label: null, entries: [{ href: '/staff', icon: 'layout-dashboard' }] },
   {
-    key: 'front',
-    label: 'Front desk',
-    entries: [
-      { href: '/staff/front-desk' },
-      { href: '/staff/appointments', icon: 'calendar-days' },
-      { href: '/staff/customers/new' },
-      { href: '/staff/notifications', icon: 'inbox' },
-    ],
-  },
-  {
-    key: 'clinic',
-    label: 'Clinic',
-    entries: [
-      { href: '/staff/visits' },
-      { href: '/staff/diagnostics' },
-      { href: '/staff/surgeries', match: '/staff/surger' },
-      { href: '/staff/cats' },
-      { href: '/staff/vaccines' },
-    ],
-  },
-  {
-    key: 'pharmacy',
-    label: 'Pharmacy',
-    entries: [
-      { href: '/staff/pharmacy' },
-      { href: '/staff/pharmacy/controlled-drugs', icon: 'shield-alert' },
-    ],
-  },
-  {
-    key: 'boarding',
-    label: 'Boarding',
-    entries: [{ href: '/staff/boarding' }, { href: '/staff/boarding/tasks' }],
+    key: 'customers',
+    label: 'Customers',
+    entries: [{ href: '/staff/customers/new' }, { href: '/staff/notifications', icon: 'inbox' }],
   },
   {
     key: 'shop',
@@ -89,7 +60,6 @@ export const STAFF_NAV_GROUPS: readonly StaffNavGroup[] = [
     entries: [
       { href: '/staff/admin/staff-accounts', icon: 'users' },
       { href: '/staff/customers/duplicates' },
-      { href: '/staff/admin/boarding/units', match: '/staff/admin/boarding' },
       { href: '/staff/admin/branches', icon: 'settings-2', match: '/staff/admin' },
       { href: '/staff/leave', icon: 'calendar-off' },
     ],
@@ -133,8 +103,8 @@ export function groupStaffNav(areas: readonly NavArea[]): StaffNavSection[] {
 }
 
 /**
- * The href of the link for the current page: the longest matching prefix wins (so Care tasks beats
- * Boarding on /staff/boarding/tasks), and Home only ever matches /staff itself.
+ * The href of the link for the current page: the longest matching prefix wins (so Staff accounts
+ * beats Branches, whose prefix is /staff/admin, on /staff/admin/staff-accounts/42), and Home only ever matches /staff itself.
  */
 export function activeStaffHref(
   sections: readonly StaffNavSection[],

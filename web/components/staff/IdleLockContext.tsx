@@ -100,7 +100,7 @@ import { focusManager, onlineManager } from '@tanstack/react-query';
  * dispatched as `{type: 'error', error: CancelledError}` (`query.js`), turning every query that
  * happened to be in flight at the exact moment of locking into `isError: true` — including a
  * page's very FIRST load, which has no `data` yet to fall back on, so this call alone could make a
- * cat/staff-account form's loading state flash straight to an error screen. The comment that
+ * staff-account form's loading state flash straight to an error screen. The comment that
  * shipped alongside it also had `revert` backwards: `revert: true` (TanStack's own default, which
  * this fix never needs to override) is what PRESERVES a query's prior state across a cancelled
  * fetch — including its `data` — precisely the safe, existing default. Pausing

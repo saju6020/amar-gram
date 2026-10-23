@@ -18,19 +18,15 @@ public sealed record RecallHeldViewModel(Guid LocationId, string? LocationCode, 
 public sealed record RecallTraceCustomerViewModel(
     Guid CustomerId, string Name, string? MobileNumber, string? Email, bool IsAnonymised, Guid? OriginalCustomerId);
 
-public sealed record RecallTraceCatViewModel(Guid CatId, string Name, RecallTraceCustomerViewModel? CurrentOwner);
-
-/// <summary>One consumption of the recalled batch. For an entry that names a customer but no cat (an ordinary food order) <c>HouseholdCats</c> lists the
-/// customer's living cats, as "household cats -- not specifically recorded" (OQ-18).</summary>
+/// <summary>One consumption of the recalled batch.</summary>
 public sealed record RecallTraceReceivedViewModel(
-    DateTimeOffset OccurredOn, string Kind, string Quantity, Guid LocationId, string? LocationCode, string? ReferenceLabel, RecallTraceCustomerViewModel? Customer,
-    RecallTraceCatViewModel? Cat, IReadOnlyList<string> HouseholdCats);
+    DateTimeOffset OccurredOn, string Kind, string Quantity, Guid LocationId, string? LocationCode, string? ReferenceLabel, RecallTraceCustomerViewModel? Customer);
 
 public sealed record RecallTraceReturnedViewModel(string ReferenceKind, Guid ReferenceId, string? ReferenceLabel, string Quantity, RecallTraceCustomerViewModel? Customer);
 
 /// <summary>Stock of the recalled batch that is reserved for an order and has not shipped: the orders HO-ORD-001 must not dispatch.</summary>
 public sealed record RecallTraceUnshippedViewModel(
-    string ReferenceKind, Guid ReferenceId, string Quantity, RecallTraceCustomerViewModel? Customer, RecallTraceCatViewModel? Cat);
+    string ReferenceKind, Guid ReferenceId, string Quantity, RecallTraceCustomerViewModel? Customer);
 
 public sealed record RecallTraceUnidentifiedViewModel(int Count, string Quantity);
 

@@ -39,7 +39,7 @@ public sealed class GetFefoPreviewQueryHandler(IStockLedger ledger, CatEcommerce
         var unit = sku?.StockUnit ?? "each";
 
         if (!EnumerationParsing.TryParse<MovementKind>(query.Purpose, out var purpose) || purpose is null)
-            return Refused("InvalidPurpose", "The purpose must be Sale, Dispense, ClinicalUse or BoardingUse.", unit);
+            return Refused("InvalidPurpose", "The purpose must be Sale.", unit);
 
         var result = await ledger.PlanAsync(
             new StockDemand(query.BranchId, query.SkuId, query.Quantity, purpose, query.LocationId is { } id ? [id] : null, ExplicitLines: null, OverrideReason: null), CancellationToken.None);

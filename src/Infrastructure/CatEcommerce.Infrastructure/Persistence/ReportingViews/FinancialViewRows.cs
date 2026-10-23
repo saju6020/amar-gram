@@ -19,7 +19,7 @@ public sealed class RvInvoiceLineRow
     public Guid? SourceLineId { get; set; }
     public Guid? SkuId { get; set; }
     public Guid? ProductId { get; set; }
-    public int? ServiceCategory { get; set; }
+    public int? OrderChannel { get; set; }
     public string Description { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
@@ -55,7 +55,7 @@ public sealed class RvCreditNoteLineRow
     public Guid? SourceLineId { get; set; }
     public Guid? SkuId { get; set; }
     public Guid? ProductId { get; set; }
-    public int? ServiceCategory { get; set; }
+    public int? OrderChannel { get; set; }
     public string Description { get; set; } = string.Empty;
     public string CurrencyCode { get; set; } = string.Empty;
 }

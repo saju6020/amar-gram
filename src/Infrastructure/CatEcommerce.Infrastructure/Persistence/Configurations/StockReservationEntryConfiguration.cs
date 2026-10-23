@@ -33,7 +33,6 @@ public sealed class StockReservationEntryConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.ReferenceId).HasColumnName("reference_id").IsRequired();
         builder.Property(x => x.ReferenceLineId).HasColumnName("reference_line_id").IsRequired();
         builder.Property(x => x.CustomerId).HasColumnName("customer_id");
-        builder.Property(x => x.CatId).HasColumnName("cat_id");
         builder.Property(x => x.FefoOverridden).HasColumnName("fefo_overridden").IsRequired();
         builder.Property(x => x.OverrideReason).HasColumnName("override_reason").HasMaxLength(InventoryRules.NoteMaxLength);
         builder.Property(x => x.PerformedBy).HasColumnName("performed_by").IsRequired();

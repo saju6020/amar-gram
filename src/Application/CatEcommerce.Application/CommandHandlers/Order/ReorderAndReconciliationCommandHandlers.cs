@@ -1,5 +1,4 @@
 using CatEcommerce.Application.Commands.Order;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.Aggregates.Order;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Exceptions;
@@ -13,17 +12,14 @@ namespace CatEcommerce.Application.CommandHandlers.Order;
 
 /// <summary>
 /// HO-ORD-001 §11.4 C15 (US-ORD-19 AC3, US-POR-02) -- "order again". Own order only. Each line goes back into the customer's one active cart (created if
-/// they have none) at <b>today's price</b>: it must still be purchasable, in stock and -- for a prescription line -- still authorised for that line's cat
-/// (the same <see cref="PrescriptionLineGuard"/> as add-to-cart); any other line is listed with its reason (an archived SKU is <c>NotPurchasable</c>).
+/// they have none) at <b>today's price</b>: it must still be purchasable and in stock; any other line is listed with its reason (an archived SKU is <c>NotPurchasable</c>).
 /// <b>No order is created</b>; the customer reviews the cart and checks out as usual.
 /// </summary>
 public sealed class ReorderCommandHandler(
     IAggregateRootRepository<OrderAggregate> orders,
     IAggregateRootRepository<CartAggregate> carts,
-    IAggregateRootRepository<CatAggregate> cats,
     ICatalogueLookup catalogue,
     ISkuAvailabilityReader availability,
-    IDietAuthorisationGate dietGate,
     IBusinessSettings settings,
     TimeProvider timeProvider)
     : ICommandHandlerAsync<ReorderCommand>
@@ -66,21 +62,9 @@ public sealed class ReorderCommandHandler(
                 continue;
             }
 
-            Guid? catId = null;
-            if (sku.RequiresPrescription)
-            {
-                if (await PrescriptionLineGuard.CheckAsync(customerId, line.CatId, line.SkuId, cats, dietGate) is not null)
-                {
-                    unavailable.Add(new UnavailableReorderLine(line.ProductName, "PrescriptionNotAuthorised"));
-                    continue;
-                }
-
-                catId = line.CatId;
-            }
-
             try
             {
-                cart.AddLine(line.SkuId, Math.Min(line.Quantity, maxQuantity), catId, sku.CurrentPrice.Value, sku.CurrencyCode, now, maxQuantity, maxLines);
+                cart.AddLine(line.SkuId, Math.Min(line.Quantity, maxQuantity), sku.CurrentPrice.Value, sku.CurrencyCode, now, maxQuantity, maxLines);
                 added++;
             }
             catch (DomainRuleViolationException ex)

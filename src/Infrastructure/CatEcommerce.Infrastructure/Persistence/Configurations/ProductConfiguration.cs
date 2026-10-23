@@ -31,7 +31,6 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<CatEcommerce
         builder.Property(x => x.FirstPublishedOn).HasColumnName("first_published_on").HasColumnType("timestamptz");
         builder.Property(x => x.TaxClassId).HasColumnName("tax_class_id").IsRequired();
         builder.Property(x => x.CountryOfOriginCode).HasColumnName("country_of_origin_code").HasMaxLength(2).IsFixedLength();
-        builder.Property(x => x.PrescriptionRequired).HasColumnName("prescription_required").IsRequired();
         builder.Property(x => x.IsExpiryTracked).HasColumnName("is_expiry_tracked").IsRequired();
         builder.Property(x => x.ListedOnStorefront).HasColumnName("listed_on_storefront").IsRequired();
         builder.Property(x => x.SearchText).HasColumnName("search_text").HasColumnType("text").IsRequired();
@@ -86,11 +85,8 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<CatEcommerce
         builder.OwnsOne(x => x.FoodDetails, food =>
         {
             food.Property(f => f.Manufacturer).HasColumnName("food_manufacturer").HasMaxLength(ProductRules.ManufacturerMaxLength);
-            food.Property(f => f.LifeStage).HasColumnName("food_life_stage")
-                .HasConversion(v => v == null ? (int?)null : v.Value, v => v == null ? null : Enumeration.FromValue<LifeStage>(v.Value));
             food.Property(f => f.ProteinSource).HasColumnName("food_protein_source")
                 .HasConversion(v => v == null ? (int?)null : v.Value, v => v == null ? null : Enumeration.FromValue<ProteinSource>(v.Value));
-            food.HasIndex(f => f.LifeStage).HasDatabaseName("ix_product_food_life_stage").HasFilter($"status = {ProductStatus.Active.Value}");
             food.HasIndex(f => f.ProteinSource).HasDatabaseName("ix_product_food_protein_source").HasFilter($"status = {ProductStatus.Active.Value}");
             food.Property(f => f.IngredientList).HasColumnName("food_ingredient_list").HasMaxLength(ProductRules.IngredientListMaxLength);
             food.Property(f => f.FeedingGuide).HasColumnName("food_feeding_guide").HasMaxLength(ProductRules.FeedingGuideMaxLength);

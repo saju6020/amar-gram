@@ -12,7 +12,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(ReportingViewSql.Load("rv_invoice_line.v1", ("ORDER_SOURCE", ChargeSourceKind.Order.Value.ToString()), ("APPOINTMENT_SOURCE", ChargeSourceKind.Appointment.Value.ToString())));
+            migrationBuilder.Sql(ReportingViewSql.Load("rv_invoice_line.v1", ("ORDER_SOURCE", ChargeSourceKind.Order.Value.ToString()), ("APPOINTMENT_SOURCE", "1")));
             migrationBuilder.Sql(ReportingViewSql.Load("rv_credit_note_line.v1"));
             migrationBuilder.Sql(ReportingViewSql.Load("rv_credit_note.v1"));
             migrationBuilder.Sql(ReportingViewSql.Load("rv_refund.v1"));

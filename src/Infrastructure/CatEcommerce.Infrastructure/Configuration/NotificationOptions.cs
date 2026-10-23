@@ -5,9 +5,9 @@ namespace CatEcommerce.Infrastructure.Configuration;
 /// <summary>
 /// HO-NTF-001 §12.2. Bound from configuration section "Notifications".
 ///
-/// Integrator instruction (2026-09-27, post HO-CAT-001-gates merge): <c>WebBaseUrl</c> is REMOVED
+/// Integrator instruction (2026-09-27): <c>WebBaseUrl</c> is REMOVED
 /// -- the site's public web address is now the ONE shared <c>PublicSiteOptions.WebBaseUrl</c>
-/// (<c>CatProfilesModule.cs</c>), used for both the cage-card QR code (US-CAT-11) and every
+/// , used for every
 /// notification link this area builds (<c>NotificationLinkBuilder</c>). Validated at real host
 /// startup by <c>PublicSiteStartupGuardHostedService</c>, not by this class's own DataAnnotations.
 /// <c>ApiBaseUrl</c> stays a Notifications-only setting (no shared equivalent exists).
@@ -70,7 +70,4 @@ public sealed class NotificationWorkerOptions
 
     [Range(1, 120)]
     public int SendTimeoutSeconds { get; set; } = 10;
-
-    [Range(1, 1440)]
-    public int ReminderSweepIntervalMinutes { get; set; } = 60;
 }

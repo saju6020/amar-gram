@@ -27,8 +27,8 @@ describe('safeFilename — a server filename becomes a harmless basename', () =>
 
 describe('exportBaseName — the fallback filename uses safe characters only', () => {
   it('builds amargram-{key}-{from}-to-{to}', () => {
-    expect(exportBaseName('clinic-daily-schedule', { from: '2026-10-14', to: '2026-10-15' })).toBe(
-      'amargram-clinic-daily-schedule-2026-10-14-to-2026-10-15',
+    expect(exportBaseName('order-fulfilment', { from: '2026-10-14', to: '2026-10-15' })).toBe(
+      'amargram-order-fulfilment-2026-10-14-to-2026-10-15',
     );
   });
 

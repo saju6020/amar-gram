@@ -25,7 +25,6 @@ public sealed class XctErasureContractTests(XctApiFactory factory) : XctIntegrat
         var (logged, logs) = Factory.WithCapturedLogs();
         var (admin, _) = await SignedInStaffAsync(StaffRoles.Administrator, logged);
         var (customer, customerId, mobile, password) = await RegisterAndSignInCustomerAsync(logged);
-        await SeedCatAsync(customerId, "Contract Cat", logged);
 
         var key = "xct-" + Guid.NewGuid().ToString("N")[..12];
         await admin.PostAsJsonAsync("/api/admin/policies", new { key, title = "Terms", requiresAcceptance = true }, Json);

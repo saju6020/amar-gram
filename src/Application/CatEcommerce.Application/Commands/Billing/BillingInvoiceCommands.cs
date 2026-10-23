@@ -38,18 +38,16 @@ public sealed class IssueInvoiceCommand : Command
     public string? IdempotencyKey { get; init; }
 }
 
-/// <summary>Exactly one of <see cref="ChargeIds"/>, <see cref="Source"/> or <see cref="BillingGroup"/> (§8.13).</summary>
+/// <summary>Exactly one of <see cref="ChargeIds"/> or <see cref="Source"/> (§8.13).</summary>
 public sealed record InvoiceChargeSelector(
-    IReadOnlyList<Guid>? ChargeIds = null, SourceChargeSelector? Source = null, BillingGroupChargeSelector? BillingGroup = null)
+    IReadOnlyList<Guid>? ChargeIds = null, SourceChargeSelector? Source = null)
 {
-    public int FormCount => (ChargeIds is not null ? 1 : 0) + (Source is not null ? 1 : 0) + (BillingGroup is not null ? 1 : 0);
+    public int FormCount => (ChargeIds is not null ? 1 : 0) + (Source is not null ? 1 : 0);
 }
 
-/// <summary>Every unbilled charge of a source (an order, an appointment) -- <c>Kind</c> is a <c>ChargeSourceKind</c> name.</summary>
+/// <summary>Every unbilled charge of a source (an order) -- <c>Kind</c> is a <c>ChargeSourceKind</c> name.</summary>
 public sealed record SourceChargeSelector(string Kind, Guid Id);
 
-/// <summary>Every unbilled charge of a billing group (a boarding stay) up to <c>ServiceDateTo</c> -- a cycle invoice (US-BRD-20).</summary>
-public sealed record BillingGroupChargeSelector(string Kind, Guid Id, DateOnly? ServiceDateTo = null);
 
 /// <summary>C9 -- the published contract of §8.13: select the charges, create the draft and issue it <b>in the same
 /// save</b>. <see cref="BranchId"/> is the caller's active branch on the staff path, the producer's branch otherwise.</summary>

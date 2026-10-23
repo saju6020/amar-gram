@@ -14,7 +14,6 @@ export type ConsignmentStatus = 'Planned' | 'InTransit' | 'AtCustoms' | 'Cleared
 export type ImportDocumentKind =
   | 'ImportPermit'
   | 'HealthCertificate'
-  | 'VeterinaryCertificate'
   | 'CustomsDeclaration'
   | 'BillOfLading'
   | 'CommercialInvoice'

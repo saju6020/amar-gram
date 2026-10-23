@@ -73,12 +73,12 @@ public sealed class ErasureCommandHandlerTests
     {
         var customerId = Guid.NewGuid();
         var ledgers = new FakeAggregateRootRepository<ErasureRequestAggregate>();
-        ledgers.Seed(Ledger(customerId, "boarding"));
+        ledgers.Seed(Ledger(customerId, "wishlist"));
         var handler = new ExecuteErasureScopeCommandHandler(
             ledgers, [], ScopeFactoryWith<IAggregateRootRepository<ErasureRequestAggregate>>(ledgers), new FakeOperationsClock(Now),
             NullLogger<ExecuteErasureScopeCommandHandler>.Instance);
 
-        await handler.HandleAsync(new ExecuteErasureScopeCommand { CustomerAccountId = customerId, ContextKey = "boarding", UserContext = Admin, CorrelationId = Guid.NewGuid() });
+        await handler.HandleAsync(new ExecuteErasureScopeCommand { CustomerAccountId = customerId, ContextKey = "wishlist", UserContext = Admin, CorrelationId = Guid.NewGuid() });
 
         Assert.Equal(ExecuteErasureScopeCommandHandler.EraserNotRegistered, (await ledgers.GetByIdAsync(customerId)).Scopes.Single().LastErrorCode);
     }

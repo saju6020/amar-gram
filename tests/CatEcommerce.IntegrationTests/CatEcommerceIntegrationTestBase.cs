@@ -5,7 +5,7 @@ namespace CatEcommerce.IntegrationTests;
 
 /// <summary>
 /// Shared base for every area's real-HTTP integration test base class. Extracted after wave A
-/// (HO-CAT-001's <c>CatIntegrationTestBase</c>, HO-ACC-001's <c>AccountsIntegrationTestBase</c>),
+/// (the foundation handover's first test base, HO-ACC-001's <c>AccountsIntegrationTestBase</c>),
 /// which had each independently declared the shared JSON options and the factory-exposing pattern.
 /// See tests/CatEcommerce.IntegrationTests/README.md for how a new area adds its own.
 /// </summary>

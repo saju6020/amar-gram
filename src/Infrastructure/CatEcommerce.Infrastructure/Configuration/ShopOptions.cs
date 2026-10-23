@@ -7,7 +7,6 @@ public sealed class ShopOptions
 
     public ShopWorkerOptions Worker { get; set; } = new();
     public ShopCatalogueOptions Catalogue { get; set; } = new();
-    public ShopFoodRecommendationOptions FoodRecommendations { get; set; } = new();
 
     /// <summary>
     /// HO-SHP-001 section 8.7 -- the branch whose <c>inventory.v_sku_sellable</c> rows the storefront shows. Null (the
@@ -23,15 +22,6 @@ public sealed class ShopWorkerOptions
 {
     public bool Enabled { get; set; } = true;
     public int IntervalSeconds { get; set; } = 120;
-}
-
-/// <summary>Backlog row 20 -- the `food-recommendations` rate limit, per signed-in customer. Read at request
-/// time so a test factory can lower it.</summary>
-public sealed class ShopFoodRecommendationOptions
-{
-    public int PermitLimit { get; set; } = 30;
-
-    public int WindowMinutes { get; set; } = 1;
 }
 
 public sealed class ShopCatalogueOptions

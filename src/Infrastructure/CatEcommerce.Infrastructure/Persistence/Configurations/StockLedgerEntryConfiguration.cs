@@ -10,7 +10,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Configurations;
 /// <summary>
 /// HO-IMP-001 §8.7 / §12.1 / ADR-098. One row per movement, append-only: the database refuses <c>UPDATE</c>, <c>DELETE</c> and <c>TRUNCATE</c>
 /// (<c>tg_stock_ledger_immutable</c>), and the application has no mutation method. <c>sequence</c> is a <c>bigint GENERATED ALWAYS AS IDENTITY</c>
-/// that EF reads and never writes. Foreign keys go only to the batch and the location (ADR-011); the SKU, branch, customer and cat are
+/// that EF reads and never writes. Foreign keys go only to the batch and the location (ADR-011); the SKU, branch and customer are
 /// references by id (rule 2). The consuming-kind index set serves the recall trace (ADR-104).
 /// </summary>
 public sealed class StockLedgerEntryConfiguration : IEntityTypeConfiguration<StockLedgerEntryAggregate>
@@ -36,7 +36,6 @@ public sealed class StockLedgerEntryConfiguration : IEntityTypeConfiguration<Sto
         builder.Property(x => x.ReferenceLineId).HasColumnName("reference_line_id");
         builder.Property(x => x.ReferenceLabel).HasColumnName("reference_label").HasMaxLength(60);
         builder.Property(x => x.CustomerId).HasColumnName("customer_id");
-        builder.Property(x => x.CatId).HasColumnName("cat_id");
         builder.Property(x => x.FefoOverridden).HasColumnName("fefo_overridden").IsRequired();
         builder.Property(x => x.OverrideReason).HasColumnName("override_reason").HasMaxLength(InventoryRules.NoteMaxLength);
         builder.Property(x => x.PerformedBy).HasColumnName("performed_by").IsRequired();
@@ -52,7 +51,6 @@ public sealed class StockLedgerEntryConfiguration : IEntityTypeConfiguration<Sto
         builder.HasIndex(x => new { x.ReferenceKind, x.ReferenceId }).HasDatabaseName("ix_stock_ledger_entry_reference");
         builder.HasIndex(x => x.OccurredOn).HasDatabaseName("ix_stock_ledger_entry_occurred_on");
         builder.HasIndex(x => x.CustomerId).HasDatabaseName("ix_stock_ledger_entry_customer").HasFilter("customer_id IS NOT NULL");
-        builder.HasIndex(x => x.CatId).HasDatabaseName("ix_stock_ledger_entry_cat").HasFilter("cat_id IS NOT NULL");
         builder.HasIndex(x => new { x.BranchId, x.Kind, x.OccurredOn }).HasDatabaseName("ix_stock_ledger_entry_branch_kind_occurred_on");
     }
 }

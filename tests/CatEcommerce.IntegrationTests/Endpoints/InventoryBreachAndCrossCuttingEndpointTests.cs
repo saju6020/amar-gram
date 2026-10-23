@@ -19,13 +19,13 @@ public sealed class InventoryBreachAndCrossCuttingEndpointTests(InventoryApiFact
     {
         var branch = await SeedBranchAsync();
         var keeper = await StaffAsync(branch, StaffRoles.Inventory);
-        var nurse = await StaffAsync(branch, StaffRoles.Nurse);
+        var reception = await StaffAsync(branch, StaffRoles.Reception);
         var sku = await CreateSkuAsync(branch.Admin.Client);
-        var first = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.BoardingId, 6m);
-        var second = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.BoardingId, 4m);
+        var first = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 6m);
+        var second = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 4m);
         await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.ShopId, 9m); // another location: not affected
 
-        var report = await nurse.Client.PostAsJsonAsync(Breaches, new { locationId = branch.BoardingId, condition = "The fridge door was left open overnight.", temperatureC = 14.5m, durationMinutes = 480 }, Json);
+        var report = await reception.Client.PostAsJsonAsync(Breaches, new { locationId = branch.WarehouseId, condition = "The fridge door was left open overnight.", temperatureC = 14.5m, durationMinutes = 480 }, Json);
         var body = await JsonOkAsync(report);
         var breachId = body.GetProperty("breachId").GetGuid();
 
@@ -36,15 +36,15 @@ public sealed class InventoryBreachAndCrossCuttingEndpointTests(InventoryApiFact
         Assert.Equal("Open", detail.GetProperty("summary").GetProperty("status").GetString());
 
         var alerts = (await JsonOkAsync(await keeper.Client.GetAsync("/api/staff/inventory/alerts?kind=StorageBreach"))).GetProperty("items").EnumerateArray().ToList();
-        Assert.Equal(branch.BoardingId, Assert.Single(alerts).GetProperty("locationId").GetGuid());
+        Assert.Equal(branch.WarehouseId, Assert.Single(alerts).GetProperty("locationId").GetGuid());
 
-        // reporting moved nothing; a nurse may report but not quarantine
-        Assert.Equal((6m, 0m), await PositionAsync(first, branch.BoardingId));
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.Client.PostAsync($"{Breaches}/{breachId}/quarantine", null)).StatusCode);
+        // reporting moved nothing; a receptionist may report but not quarantine
+        Assert.Equal((6m, 0m), await PositionAsync(first, branch.WarehouseId));
+        Assert.Equal(HttpStatusCode.Forbidden, (await reception.Client.PostAsync($"{Breaches}/{breachId}/quarantine", null)).StatusCode);
 
         Assert.Equal(HttpStatusCode.NoContent, (await keeper.Client.PostAsync($"{Breaches}/{breachId}/quarantine", null)).StatusCode);
 
-        Assert.Equal((0m, 0m), await PositionAsync(first, branch.BoardingId));
+        Assert.Equal((0m, 0m), await PositionAsync(first, branch.WarehouseId));
         Assert.Equal((6m, 0m), await PositionAsync(first, branch.QuarantineId));
         Assert.Equal((4m, 0m), await PositionAsync(second, branch.QuarantineId));
         var ledger = (await JsonOkAsync(await keeper.Client.GetAsync(
@@ -74,9 +74,9 @@ public sealed class InventoryBreachAndCrossCuttingEndpointTests(InventoryApiFact
         var other = await SeedBranchAsync();
 
         await AssertErrorAsync(
-            await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = branch.BoardingId, condition = "Warm." }, Json), BusinessViolationCodes.NoStockAtLocation);
+            await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = branch.WarehouseId, condition = "Warm." }, Json), BusinessViolationCodes.NoStockAtLocation);
         Assert.Equal(HttpStatusCode.NotFound,
-            (await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = other.BoardingId, condition = "Warm." }, Json)).StatusCode);
+            (await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = other.WarehouseId, condition = "Warm." }, Json)).StatusCode);
     }
 
     // ── I-J2 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -178,17 +178,17 @@ public sealed class InventoryBreachAndCrossCuttingEndpointTests(InventoryApiFact
         var branch = await SeedBranchAsync();
         var keeper = await StaffAsync(branch, StaffRoles.Inventory);
         var sku = await CreateSkuAsync(branch.Admin.Client);
-        await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.BoardingId, 2m);
+        await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 2m);
         var local = DateTimeOffset.UtcNow.AddHours(-2).ToOffset(TimeSpan.FromHours(6)); // the same instant as a +06:00 wall-clock time
 
-        var accepted = await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = branch.BoardingId, condition = "Warm.", observedOn = local.ToString("O") }, Json);
+        var accepted = await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = branch.WarehouseId, condition = "Warm.", observedOn = local.ToString("O") }, Json);
 
         var body = await JsonOkAsync(accepted);
         var detail = await JsonOkAsync(await keeper.Client.GetAsync($"{Breaches}/{body.GetProperty("breachId").GetGuid()}"));
         var stored = detail.GetProperty("summary").GetProperty("observedOn").GetDateTimeOffset();
         Assert.True((local - stored).Duration() < TimeSpan.FromSeconds(1), $"{local:O} vs {stored:O}");
 
-        var future = await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = branch.BoardingId, condition = "Warm.", observedOn = DateTimeOffset.UtcNow.AddDays(2).ToString("O") }, Json);
+        var future = await keeper.Client.PostAsJsonAsync(Breaches, new { locationId = branch.WarehouseId, condition = "Warm.", observedOn = DateTimeOffset.UtcNow.AddDays(2).ToString("O") }, Json);
         Assert.Equal(HttpStatusCode.BadRequest, future.StatusCode);
     }
 }

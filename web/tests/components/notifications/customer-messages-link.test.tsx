@@ -14,7 +14,7 @@ describe('CustomerMessagesLink — HO-NTF-002 §11.5', () => {
     },
   );
 
-  it.each([['Nurse'], ['Vet'], ['Inventory']])(
+  it.each([['Inventory'], ['ShopManager'], ['Accountant']])(
     'is hidden from %s (the server still decides)',
     (role) => {
       render(<CustomerMessagesLink customerId="c-1" roleIds={[role]} />);

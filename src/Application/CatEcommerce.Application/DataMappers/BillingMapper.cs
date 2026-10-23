@@ -22,8 +22,8 @@ public static class BillingMapper
 
     /// <summary>A charge becomes an invoice line as a snapshot -- the charge is never re-priced (HO-ADM-001 ADR-049).</summary>
     public static DraftInvoiceLineInput ToDraftLine(this ChargeAggregate charge) =>
-        new(charge.Id, null, charge.BusinessLine, charge.ItemKind, charge.SourceKind, charge.SourceId, charge.BillingGroupKind, charge.BillingGroupId,
-            charge.CatId, charge.Description, charge.Quantity, charge.UnitPriceAmount, charge.LineDiscountAmount, charge.TaxClassId);
+        new(charge.Id, null, charge.BusinessLine, charge.ItemKind, charge.SourceKind, charge.SourceId,
+            charge.Description, charge.Quantity, charge.UnitPriceAmount, charge.LineDiscountAmount, charge.TaxClassId);
 
     public static BillingProfileSetDto ToDomainDto(this SetBillingProfileCommand c) =>
         new(c.LegalName, c.TaxRegistrationNumber, c.AddressLines, c.Phone, c.Email, c.InvoiceFooter, c.BankAccounts, c.ToBillingActor());

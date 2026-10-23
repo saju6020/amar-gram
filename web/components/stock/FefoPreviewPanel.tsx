@@ -13,9 +13,6 @@ import type { FefoPreview, FefoPreviewLine, FefoPurpose } from '@/lib/api/invent
 
 export const FEFO_PURPOSES: ReadonlyArray<{ value: FefoPurpose; label: string }> = [
   { value: 'Sale', label: 'A sale' },
-  { value: 'Dispense', label: 'Dispensing medicine' },
-  { value: 'ClinicalUse', label: 'Clinical use' },
-  { value: 'BoardingUse', label: 'Boarding use' },
 ];
 
 export interface FefoRequest {

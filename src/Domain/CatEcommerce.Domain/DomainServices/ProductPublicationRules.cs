@@ -14,7 +14,6 @@ public static class ProductPublicationRules
     public const string PricedSkus = "PricedSkus";
     public const string TaxClassActive = "TaxClassActive";
     public const string CountryOfOrigin = "CountryOfOrigin";
-    public const string FoodDetailsItem = "FoodDetails";
     public const string PrimaryImage = "PrimaryImage";
     public const string LabellingComplete = "LabellingComplete";
     public const string BundleComposition = "BundleComposition";
@@ -36,10 +35,6 @@ public static class ProductPublicationRules
             !product.IsFood || product.CountryOfOriginCode is not null,
             "Add the country of origin before publishing this food product."));
 
-        items.Add(new PublicationChecklistItem(FoodDetailsItem, product.IsFood,
-            !product.IsFood || product.FoodDetails?.LifeStage is not null,
-            "Set the life stage before publishing this food product."));
-
         items.Add(new PublicationChecklistItem(PrimaryImage, false, product.Images.Count > 0,
             "Products without a photo convert poorly."));
 
@@ -51,7 +46,7 @@ public static class ProductPublicationRules
         {
             var isMet = EvaluateBundleComposition(product, facts);
             items.Add(new PublicationChecklistItem(BundleComposition, true, isMet,
-                "A bundle needs at least two component units, each an active SKU of an active, non-bundle, non-prescription product."));
+                "A bundle needs at least two component units, each an active SKU of an active, non-bundle product."));
         }
 
         return items;
@@ -67,7 +62,7 @@ public static class ProductPublicationRules
         foreach (var component in product.BundleComponents)
         {
             if (!factsBySkuId.TryGetValue(component.ComponentSkuId, out var fact)) return false;
-            if (!fact.IsActive || !fact.ProductIsActive || fact.IsBundleSku || fact.IsPrescriptionProduct) return false;
+            if (!fact.IsActive || !fact.ProductIsActive || fact.IsBundleSku) return false;
 
             totalUnits += component.Quantity;
         }

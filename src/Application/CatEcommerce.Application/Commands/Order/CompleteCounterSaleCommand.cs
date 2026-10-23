@@ -3,8 +3,8 @@ using Platform.Infrastructure.Core.Commands;
 
 namespace CatEcommerce.Application.Commands.Order;
 
-/// <summary>One scanned line of a counter sale. A prescription food names the cat it is for (the customer is then required).</summary>
-public sealed record CounterSaleLineInput(Guid SkuId, int Quantity, Guid? CatId);
+/// <summary>One scanned line of a counter sale.</summary>
+public sealed record CounterSaleLineInput(Guid SkuId, int Quantity);
 
 /// <summary>One tender taken at the till: <c>Cash</c> is the money handed over (the change is worked out), <c>InStoreCard</c> is charged at face value and carries the
 /// terminal slip reference -- never a card number (C-5).</summary>

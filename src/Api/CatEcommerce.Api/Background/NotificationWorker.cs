@@ -11,8 +11,7 @@ namespace CatEcommerce.Api.Background;
 /// <summary>
 /// HO-NTF-001 §12.2 / ADR-060/ADR-065 -- the only asynchronous element in the solution. When
 /// <c>Worker:Enabled</c>, loops every <c>PollIntervalSeconds</c> calling
-/// <see cref="NotificationWorkCycle.RunDeliveryPassAsync"/>, and -- once 30 s after start, then
-/// every <c>ReminderSweepIntervalMinutes</c> -- calls <c>RunReminderSweepAsync</c>, each in a new
+/// <see cref="NotificationWorkCycle.RunDeliveryPassAsync"/>, each pass in a new
 /// scope. Never throws out of <c>ExecuteAsync</c>; honours the stopping token.
 /// </summary>
 public sealed class NotificationWorker(
@@ -30,10 +29,6 @@ public sealed class NotificationWorker(
 
         LogUnconfiguredSendersOnce();
 
-        // Gate fix 2026-09-27 (CODE_REVIEW LOW): TimeProvider, not DateTimeOffset.UtcNow -- matches
-        // every other instant in this slice, and can be driven by FakeTimeProvider in a test.
-        var nextSweep = timeProvider.GetUtcNow().AddSeconds(30);
-
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -41,12 +36,6 @@ public sealed class NotificationWorker(
                 await using var scope = scopeFactory.CreateAsyncScope();
                 var workCycle = scope.ServiceProvider.GetRequiredService<NotificationWorkCycle>();
                 await workCycle.RunDeliveryPassAsync(stoppingToken);
-
-                if (timeProvider.GetUtcNow() >= nextSweep)
-                {
-                    await workCycle.RunReminderSweepAsync(stoppingToken);
-                    nextSweep = timeProvider.GetUtcNow().AddMinutes(worker.ReminderSweepIntervalMinutes);
-                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

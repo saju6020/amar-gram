@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CatEcommerce.Infrastructure.Persistence;
 
 /// <summary>
-/// One DbContext for the solution -- HO-CAT-001 section 12.1.
+/// One DbContext for the solution -- the foundation handover section 12.1.
 ///
 /// <c>partial</c> so each functional area (ADR-341) adds its own <c>DbSet</c> properties in its
 /// own <c>CatEcommerceDbContext.[Area].cs</c> file (e.g. <c>CatEcommerceDbContext.Shop.cs</c>)

@@ -1,7 +1,6 @@
 using CatEcommerce.Application.CommandHandlers.Order;
 using CatEcommerce.Application.Commands.Order;
 using CatEcommerce.Application.Tests.TestSupport;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.Aggregates.Order;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Shared.Common.Constants;
@@ -18,10 +17,8 @@ public sealed class CartCommandHandlerTests
     private static readonly string OtherGuestHash = new('b', 64);
 
     private readonly FakeAggregateRootRepository<CartAggregate> _carts = new();
-    private readonly FakeAggregateRootRepository<CatAggregate> _cats = new();
     private readonly FakeCatalogueLookup _catalogue = new();
     private readonly FakeSkuAvailabilityReader _availability = new();
-    private readonly FakeDietAuthorisationGate _gate = new();
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2026, 10, 9, 8, 0, 0, TimeSpan.Zero));
     private readonly Guid _customerId = Guid.NewGuid();
 
@@ -29,33 +26,23 @@ public sealed class CartCommandHandlerTests
     private static UserContext Guest() => new(Guid.Empty, Guid.NewGuid());
 
     private AddCartLineCommandHandler AddHandler(Dictionary<string, object>? settings = null) =>
-        new(_carts, _cats, _catalogue, _availability, _gate, OrderingTestSettings.Defaults(settings), _time);
+        new(_carts, _catalogue, _availability, OrderingTestSettings.Defaults(settings), _time);
 
-    private OrderCatalogueSku StockedSku(decimal price = 100m, bool prescription = false)
+    private OrderCatalogueSku StockedSku(decimal price = 100m)
     {
-        var sku = _catalogue.Add(price, prescription: prescription);
+        var sku = _catalogue.Add(price);
         _availability.InStock.Add(sku.SkuId);
         return sku;
     }
 
-    private static AddCartLineCommand Add(UserContext user, Guid skuId, int quantity = 1, string? guestHash = null, string? newGuestHash = null, Guid? catId = null) => new()
+    private static AddCartLineCommand Add(UserContext user, Guid skuId, int quantity = 1, string? guestHash = null, string? newGuestHash = null) => new()
     {
-        NewCartId = Guid.NewGuid(), GuestTokenHash = guestHash, NewGuestTokenHash = newGuestHash, SkuId = skuId, Quantity = quantity, CatId = catId,
+        NewCartId = Guid.NewGuid(), GuestTokenHash = guestHash, NewGuestTokenHash = newGuestHash, SkuId = skuId, Quantity = quantity,
         UserContext = user, CorrelationId = Guid.NewGuid(),
     };
 
     private static string[] Codes(Platform.Infrastructure.Core.Commands.CommandResponse response) =>
         response.ValidationResult?.Errors.Select(e => e.ErrorCode).ToArray() ?? [];
-
-    private CatAggregate SeedCat(Guid ownerId)
-    {
-        var cat = new CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, "Mitu", "Cat", CatSex.Female, DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2), DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby",
-            DateOnly.FromDateTime(DateTime.UtcNow), new UserContext(ownerId, Guid.NewGuid()), Guid.NewGuid()));
-        _cats.Seed(cat);
-        return cat;
-    }
 
     [Fact]
     public async Task AGuestFirstAdd_CreatesTheCartFromTheMintedHash_AndReportsItWasCreated()
@@ -146,56 +133,6 @@ public sealed class CartCommandHandlerTests
     }
 
     [Fact]
-    public async Task APrescriptionSku_NeedsACustomer_ACat_OwnershipAndALiveAuthorisation()
-    {
-        var rx = StockedSku(prescription: true);
-        var own = SeedCat(_customerId);
-        var strangers = SeedCat(Guid.NewGuid());
-
-        Assert.Contains("PrescriptionCatRequired", Codes(await AddHandler().HandleAsync(Add(Guest(), rx.SkuId, newGuestHash: GuestHash))));      // a guest
-        Assert.Contains("PrescriptionCatRequired", Codes(await AddHandler().HandleAsync(Add(Customer(), rx.SkuId))));                              // no cat
-        Assert.Contains("CatNotOwnedByCaller", Codes(await AddHandler().HandleAsync(Add(Customer(), rx.SkuId, catId: strangers.Id))));            // not theirs
-        Assert.Contains("CatNotOwnedByCaller", Codes(await AddHandler().HandleAsync(Add(Customer(), rx.SkuId, catId: Guid.NewGuid()))));          // unknown
-        Assert.Contains("PrescriptionNotAuthorised", Codes(await AddHandler().HandleAsync(Add(Customer(), rx.SkuId, catId: own.Id))));            // owned, no authorisation
-        Assert.Empty(_carts.Saved);
-
-        // the gate is asked only for a cat the caller owns, and with the customer, the cat and the SKU
-        Assert.Equal([(_customerId, own.Id, rx.SkuId)], _gate.Checks);
-
-        _gate.Authorised.Add((own.Id, rx.SkuId));
-        var ok = await AddHandler().HandleAsync(Add(Customer(), rx.SkuId, catId: own.Id));
-        Assert.True(ok.IsSuccess);
-        Assert.Equal(own.Id, Assert.Single(_carts.Saved).Lines[0].CatId);
-    }
-
-    [Fact]
-    public async Task APrescriptionSku_ForTwoCats_IsTwoLines()
-    {
-        var rx = StockedSku(prescription: true);
-        var mitu = SeedCat(_customerId);
-        var luna = SeedCat(_customerId);
-        _gate.Authorised.Add((mitu.Id, rx.SkuId));
-        _gate.Authorised.Add((luna.Id, rx.SkuId));
-
-        await AddHandler().HandleAsync(Add(Customer(), rx.SkuId, catId: mitu.Id));
-        await AddHandler().HandleAsync(Add(Customer(), rx.SkuId, catId: luna.Id));
-
-        Assert.Equal(2, _carts.Saved[0].Lines.Count);
-    }
-
-    [Fact]
-    public async Task AnOrdinarySku_NeverCarriesACat_EvenIfOneIsSent()
-    {
-        var sku = StockedSku();
-        var cat = SeedCat(_customerId);
-
-        await AddHandler().HandleAsync(Add(Customer(), sku.SkuId, catId: cat.Id));
-
-        Assert.Null(_carts.Saved[0].Lines[0].CatId);
-        Assert.Empty(_gate.Checks);
-    }
-
-    [Fact]
     public async Task TheLineCapAndTheQuantityMaximum_AreTheSettings_NotLiterals()
     {
         var one = StockedSku();
@@ -214,7 +151,7 @@ public sealed class CartCommandHandlerTests
         var sku = StockedSku();
         var add = await AddHandler().HandleAsync(Add(Customer(), sku.SkuId));
         var lineId = Assert.IsType<AddCartLineResult>(add.Result).LineId;
-        var handler = new UpdateCartLineCommandHandler(_carts, _cats, _catalogue, _gate, OrderingTestSettings.Defaults(), _time);
+        var handler = new UpdateCartLineCommandHandler(_carts, OrderingTestSettings.Defaults(), _time);
 
         var stranger = await handler.HandleAsync(new UpdateCartLineCommand { LineId = lineId, Quantity = 9, UserContext = new UserContext(Guid.NewGuid(), Guid.NewGuid()) { Roles = ["Customer"] }, CorrelationId = Guid.NewGuid() });
         Assert.Contains("CartLineNotFound", Codes(stranger));
@@ -223,26 +160,6 @@ public sealed class CartCommandHandlerTests
         var mine = await handler.HandleAsync(new UpdateCartLineCommand { LineId = lineId, Quantity = 9, UserContext = Customer(), CorrelationId = Guid.NewGuid() });
         Assert.True(mine.IsSuccess);
         Assert.Equal(9, _carts.Saved[0].Lines[0].Quantity);
-    }
-
-    [Fact]
-    public async Task ChangingAPrescriptionLinesCat_ReChecksOwnershipAndAuthorisation()
-    {
-        var rx = StockedSku(prescription: true);
-        var mitu = SeedCat(_customerId);
-        var luna = SeedCat(_customerId);
-        _gate.Authorised.Add((mitu.Id, rx.SkuId));
-        var add = await AddHandler().HandleAsync(Add(Customer(), rx.SkuId, catId: mitu.Id));
-        var lineId = Assert.IsType<AddCartLineResult>(add.Result).LineId;
-        var handler = new UpdateCartLineCommandHandler(_carts, _cats, _catalogue, _gate, OrderingTestSettings.Defaults(), _time);
-
-        var denied = await handler.HandleAsync(new UpdateCartLineCommand { LineId = lineId, CatId = luna.Id, UserContext = Customer(), CorrelationId = Guid.NewGuid() });
-        Assert.Contains("PrescriptionNotAuthorised", Codes(denied));
-        Assert.Equal(mitu.Id, _carts.Saved[0].Lines[0].CatId);
-
-        _gate.Authorised.Add((luna.Id, rx.SkuId));
-        Assert.True((await handler.HandleAsync(new UpdateCartLineCommand { LineId = lineId, CatId = luna.Id, UserContext = Customer(), CorrelationId = Guid.NewGuid() })).IsSuccess);
-        Assert.Equal(luna.Id, _carts.Saved[0].Lines[0].CatId);
     }
 
     [Fact]
@@ -290,7 +207,7 @@ public sealed class CartCommandHandlerTests
     {
         var existing = StockedSku();
         var fits = StockedSku();
-        var noRoom = _catalogue.Add(name: "Royal Canin Kitten 2 kg");
+        var noRoom = _catalogue.Add(name: "Organic Rice 2 kg");
         _availability.InStock.Add(noRoom.SkuId);
         var settings = new Dictionary<string, object> { [SettingKeys.OrdersMaxCartLines] = 2 };
 
@@ -303,7 +220,7 @@ public sealed class CartCommandHandlerTests
 
         var result = Assert.IsType<MergeGuestCartResult>(response.Result);
         var dropped = Assert.Single(result.DroppedLines);
-        Assert.Equal("Royal Canin Kitten 2 kg", dropped.ProductName);
+        Assert.Equal("Organic Rice 2 kg", dropped.ProductName);
         Assert.Equal("CartFull", dropped.Reason);
     }
 

@@ -4,7 +4,7 @@ import { server } from '@/mocks/server';
 import { apiFetch } from '@/lib/api/client';
 
 /**
- * `lib/api/client.ts`'s identity headers (HO-CAT-002 §11.2, per the Accounts contract —
+ * `lib/api/client.ts`'s identity headers (the scaffold handover §11.2, per the Accounts contract —
  * HO-ACC-001 §12.5 ADR-031 rule R7, HO-ADM-001 §8.3 ADR-046):
  *  - `X-CSRF-Token` from the non-HttpOnly `pc_csrf` cookie, on unsafe methods only.
  *  - `X-Branch-Id` on every request, reads included — sent whenever `lib/branch.ts`'s

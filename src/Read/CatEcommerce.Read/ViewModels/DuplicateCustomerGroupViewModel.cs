@@ -1,13 +1,11 @@
 namespace CatEcommerce.Read.ViewModels;
 
-public sealed record DuplicateCustomerCatViewModel(Guid CatId, string Name, bool IsDeceased);
-
 /// <summary>
 /// SECURITY gate LOW (second pass, HO-ACC-001 §1 Amended (18)): <see cref="MobileMatchedOn"/> is
 /// "Primary" when this member's own PRIMARY mobile is one of the numbers shared with another
 /// member of the group, "Additional" when the only phone overlap is via one of this member's
 /// unverified additional numbers, and <c>null</c> when the group's overlap is by email only. An
-/// "Additional" label means staff should confirm identity before merging or attaching cats from
+/// "Additional" label means staff should confirm identity before merging from
 /// this pairing -- an additional number is never verified, so it can be someone else's real
 /// primary mobile that this record's owner merely typed in (see <c>FindCustomersQueryHandler</c>'s
 /// identical Q-H2 label).
@@ -20,7 +18,7 @@ public sealed record DuplicateCustomerCatViewModel(Guid CatId, string Name, bool
 /// </summary>
 public sealed record DuplicateCustomerMemberViewModel(
     Guid CustomerId, string FullName, string? MobileNumber, string? EmailAddress,
-    IReadOnlyList<DuplicateCustomerCatViewModel> Cats, string? MobileMatchedOn,
+    string? MobileMatchedOn,
     string RecordStatus, string RegistrationChannel);
 
 /// <summary>No orders, invoices or balances fields exist -- §4.3.</summary>

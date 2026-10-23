@@ -12,18 +12,11 @@ public sealed class SetFoodDetailsRequest
 {
     public required int ExpectedVersion { get; init; }
     public string? Manufacturer { get; init; }
-    public string? LifeStage { get; init; }
     public string? ProteinSource { get; init; }
     public string? IngredientList { get; init; }
     public GuaranteedAnalysisRequest? GuaranteedAnalysis { get; init; }
     public string? FeedingGuide { get; init; }
     public string? StorageInstructions { get; init; }
-}
-
-public sealed class SetPrescriptionRequiredRequest
-{
-    public required int ExpectedVersion { get; init; }
-    public required bool PrescriptionRequired { get; init; }
 }
 
 public sealed class SourcingOriginRequest

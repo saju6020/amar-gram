@@ -49,16 +49,16 @@ public sealed class GoodsReceiptTests
         var violation = Assert.Single(violations);
         Assert.Equal(BusinessViolationCodes.ExpiryDateRequired, violation.Code);
         Assert.Equal("Lines[0].ExpiresOn", violation.PropertyName);
-        Assert.Equal("Food and medicine must be received with an expiry date.", violation.Message);
+        Assert.Equal("Food must be received with an expiry date.", violation.Message);
     }
 
     [Fact]
-    public void U_D1_AMedicineStyleSkuThatTracksExpiryIsRefusedToo_ButARejectedOnlyLineNeedsNoExpiry()
+    public void U_D1_AnotherSkuThatTracksExpiryIsRefusedToo_ButARejectedOnlyLineNeedsNoExpiry()
     {
-        var medicine = Sku(expiryRequired: true, stockClass: StockClass.Medicine);
+        var tracked = Sku(expiryRequired: true, stockClass: StockClass.Consumable);
 
-        Assert.Contains(Violations(Dto(Line(medicine)), Context([medicine])), v => v.Code == BusinessViolationCodes.ExpiryDateRequired);
-        Assert.Empty(Violations(Dto(Line(medicine, accepted: 0m, rejected: 3m, reason: RejectionReason.Damaged)), Context([medicine])));
+        Assert.Contains(Violations(Dto(Line(tracked)), Context([tracked])), v => v.Code == BusinessViolationCodes.ExpiryDateRequired);
+        Assert.Empty(Violations(Dto(Line(tracked, accepted: 0m, rejected: 3m, reason: RejectionReason.Damaged)), Context([tracked])));
     }
 
     [Fact]
@@ -207,11 +207,11 @@ public sealed class GoodsReceiptTests
     public void U_D5_ALocationThatCannotReceiveOrAnUnknownOneIsRefused_AndADuplicateLotInOneReceiptIs()
     {
         var general = Sku(expiryRequired: false);
-        var dispensaryOnly = Context([general], locationKind: StockLocationKind.ClinicDispensary);
+        var quarantineOnly = Context([general], locationKind: StockLocationKind.Quarantine);
 
         // Every kind permits Receipt (§8.3), so a location the receipt does not know is the refusal.
         var unknown = Line(general) with { LocationId = Guid.NewGuid() };
-        Assert.Contains(Violations(Dto(unknown), dispensaryOnly), v => v.Code == BusinessViolationCodes.StockLocationNotFound);
+        Assert.Contains(Violations(Dto(unknown), quarantineOnly), v => v.Code == BusinessViolationCodes.StockLocationNotFound);
 
         var duplicate = Violations(Dto(Line(general, lot: "SAME", expires: Today.AddDays(5)), Line(general, lot: "SAME", expires: Today.AddDays(5))), Context([general]));
         Assert.Contains(duplicate, v => v.Code == BusinessViolationCodes.DuplicateReceiptLine && v.PropertyName == "Lines[1].LotNumber");

@@ -3,7 +3,7 @@ using Platform.Infrastructure.Common.Security;
 
 namespace CatEcommerce.Domain.Models;
 
-// HO-IMP-001 §11.3 -- the Domain DTOs of the Inventory context. One file, like AppointmentDtos.cs. Every command
+// HO-IMP-001 §11.3 -- the Domain DTOs of the Inventory context. One file. Every command
 // handler maps its command to one of these; an aggregate takes nothing else.
 
 /// <summary>Who did it and under which correlation id -- carried by every DTO so an aggregate's domain event can

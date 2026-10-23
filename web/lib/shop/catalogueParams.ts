@@ -15,7 +15,7 @@ export const CATALOGUE_SORTS = [
 ] as const;
 export type CatalogueSort = (typeof CATALOGUE_SORTS)[number];
 
-export const MULTI_PARAMS = ['brand', 'origin', 'lifeStage', 'protein'] as const;
+export const MULTI_PARAMS = ['brand', 'origin', 'protein'] as const;
 export type MultiParam = (typeof MULTI_PARAMS)[number];
 
 export interface CatalogueParams {
@@ -24,7 +24,6 @@ export interface CatalogueParams {
   subcategory: string;
   brand: string[];
   origin: string[];
-  lifeStage: string[];
   protein: string[];
   minPrice: string;
   maxPrice: string;
@@ -42,7 +41,6 @@ export const EMPTY_CATALOGUE_PARAMS: CatalogueParams = {
   subcategory: '',
   brand: [],
   origin: [],
-  lifeStage: [],
   protein: [],
   minPrice: '',
   maxPrice: '',
@@ -91,7 +89,6 @@ export function parseCatalogueParams(input: CatalogueParamsInput): CataloguePara
     subcategory: firstOf(input, 'subcategory'),
     brand: listOf(input, 'brand'),
     origin: listOf(input, 'origin'),
-    lifeStage: listOf(input, 'lifeStage'),
     protein: listOf(input, 'protein'),
     minPrice: DECIMAL.test(minPrice) ? minPrice : '',
     maxPrice: DECIMAL.test(maxPrice) ? maxPrice : '',
@@ -151,7 +148,6 @@ export function activeFilterCount(params: CatalogueParams): number {
   return (
     params.brand.length +
     params.origin.length +
-    params.lifeStage.length +
     params.protein.length +
     (params.category ? 1 : 0) +
     (params.subcategory ? 1 : 0) +

@@ -1,4 +1,4 @@
--- HO-RPT-001 section 8.4 (HO-IMP-001, FR-IMP-15, D-3): the immutable stock ledger. source_type / source_id / source_line_id identify the order line, POS line, dispense or stay charge that
+-- HO-RPT-001 section 8.4 (HO-IMP-001, FR-IMP-15, D-3): the immutable stock ledger. source_type / source_id / source_line_id identify the order line or POS line that
 -- caused a sale-type movement -- margin depends on it (ADR-284). For a customer order source_line_id is the order line id.
 CREATE VIEW report.rv_stock_ledger AS
 SELECT

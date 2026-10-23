@@ -11,8 +11,7 @@ namespace CatEcommerce.Infrastructure.Ordering;
 /// HO-ORD-001 §8.14 -- <see cref="ICatalogueLookup"/> over HO-SHP-001's published projections (<c>SkuRows</c>, <c>PriceRows</c>,
 /// <c>BundleComponentRows</c>): the ONE file in Ordering that knows Shop's schema. No aggregate is materialised; a fixed handful of small
 /// queries however many SKUs are asked about. A SKU is <b>purchasable</b> by the storefront's own rule -- an Active, listed product with an
-/// Active SKU and a price in force at <c>asOf</c>; a bundle also needs every component Active and priced and no prescription component
-/// (BR-2, OQ-14). Stock is not part of "purchasable": availability is Inventory's (<c>inventory.v_sku_sellable</c>), asked separately.
+/// Active SKU and a price in force at <c>asOf</c>; a bundle also needs every component Active and priced. Stock is not part of "purchasable": availability is Inventory's (<c>inventory.v_sku_sellable</c>), asked separately.
 /// </summary>
 public sealed class CatalogueLookup(CatEcommerceDbContext db) : ICatalogueLookup
 {
@@ -92,14 +91,13 @@ public sealed class CatalogueLookup(CatEcommerceDbContext db) : ICatalogueLookup
             var purchasable = OnSale(row.SkuId);
             if (isBundle)
             {
-                purchasable = purchasable && parts.Count > 0 && parts.All(p => OnSale(p.ComponentSkuId))
-                              && !parts.Any(p => all.TryGetValue(p.ComponentSkuId, out var part) && part.PrescriptionRequired);
+                purchasable = purchasable && parts.Count > 0 && parts.All(p => OnSale(p.ComponentSkuId));
             }
 
             current.TryGetValue(row.SkuId, out var price);
             result[row.SkuId] = new OrderCatalogueSku(
                 row.SkuId, row.ProductId, row.ProductName, row.Label, row.Barcode, row.Category.Value, ReturnClassOf(row.Category),
-                price?.Amount, price?.CurrencyCode, row.TaxClassId, purchasable, row.PrescriptionRequired,
+                price?.Amount, price?.CurrencyCode, row.TaxClassId, purchasable,
                 row.ShippingWeightGrams, // Shop's published SkuRow (CONTRACTS #25); null = not set, counts as 0 g
                 isBundle, parts);
         }

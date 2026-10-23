@@ -67,8 +67,8 @@ public static class NewVersusReturningBuilder
 }
 
 /// <summary>
-/// HO-RPT-001 section 8.3 R19, <b>pure</b>. Lifetime value = net revenue (invoices less credit notes) across all lines to the end of the range, for customers first seen inside it. Shown in value bands and as the
-/// fifty highest customers; the shares are each line's part of the group's revenue.
+/// HO-RPT-001 section 8.3 R19, <b>pure</b>. Lifetime value = net revenue (invoices less credit notes) to the end of the range, for customers first seen inside it. Shown in value bands and as the
+/// fifty highest customers.
 /// </summary>
 public static class LifetimeValueBuilder
 {
@@ -87,22 +87,14 @@ public static class LifetimeValueBuilder
         {
             Id = g.Key,
             Ltv = g.Sum(e => e.Net),
-            Clinic = g.Where(e => e.BusinessLine == BusinessLine.Clinic.Value).Sum(e => e.Net),
-            Shop = g.Where(e => e.BusinessLine == BusinessLine.Shop.Value).Sum(e => e.Net),
-            Boarding = g.Where(e => e.BusinessLine == BusinessLine.Boarding.Value).Sum(e => e.Net),
-            Lines = g.Where(e => !e.IsCredit && e.Net > 0m).Select(e => BusinessLineRules.Classify(e.BusinessLine)).Distinct().Order().ToList(),
         }).ToList();
 
-        ReportRow Row(string section, string label, int count, decimal total, decimal clinic, decimal shop, decimal boarding, string lines) => new()
+        ReportRow Row(string section, string label, int count, decimal total) => new()
         {
             ["section"] = section,
             ["label"] = label,
             ["customers"] = (long)count,
             ["averageLtv"] = count == 0 ? null : new ReportMoney(ReportMath.Money(total / count), currency),
-            ["clinicShare"] = total > 0m ? ReportMath.Percent(clinic, total) : null,
-            ["shopShare"] = total > 0m ? ReportMath.Percent(shop, total) : null,
-            ["boardingShare"] = total > 0m ? ReportMath.Percent(boarding, total) : null,
-            ["linesUsed"] = lines,
         };
 
         var rows = new List<ReportRow>();
@@ -110,11 +102,11 @@ public static class LifetimeValueBuilder
         {
             var inBand = customers.Where(c => BandOf(c.Ltv) == band.Label).ToList();
             if (inBand.Count == 0) continue;
-            rows.Add(Row("Band", band.Label, inBand.Count, inBand.Sum(c => c.Ltv), inBand.Sum(c => c.Clinic), inBand.Sum(c => c.Shop), inBand.Sum(c => c.Boarding), ""));
+            rows.Add(Row("Band", band.Label, inBand.Count, inBand.Sum(c => c.Ltv)));
         }
 
         foreach (var c in customers.OrderByDescending(c => c.Ltv).Take(TopCustomers))
-            rows.Add(Row("Top 50", names.GetValueOrDefault(c.Id) ?? "Customer", 1, c.Ltv, c.Clinic, c.Shop, c.Boarding, string.Join(", ", c.Lines)));
+            rows.Add(Row("Top 50", names.GetValueOrDefault(c.Id) ?? "Customer", 1, c.Ltv));
 
         return rows;
     }
@@ -122,7 +114,7 @@ public static class LifetimeValueBuilder
 
 /// <summary>
 /// HO-RPT-001 section 8.3 R20 (OQ-8), <b>pure</b>. Monthly cohorts by the month of the customer's first invoice; the percentage of the cohort with a qualifying invoice in cohort month + 1 ... 12. The measure is
-/// any line, a repeat purchase (a shop invoice line) or a repeat visit (a clinic invoice line). A month that has not happened yet is <c>null</c>.
+/// any line or a repeat purchase (a shop invoice line). A month that has not happened yet is <c>null</c>.
 /// </summary>
 public static class CohortRetentionBuilder
 {
@@ -134,7 +126,6 @@ public static class CohortRetentionBuilder
         var lineFilter = measure switch
         {
             "RepeatPurchase" => (Func<ActivityEvent, bool>)(e => e.BusinessLine == BusinessLine.Shop.Value),
-            "RepeatVisit" => e => e.BusinessLine == BusinessLine.Clinic.Value,
             _ => _ => true,
         };
 

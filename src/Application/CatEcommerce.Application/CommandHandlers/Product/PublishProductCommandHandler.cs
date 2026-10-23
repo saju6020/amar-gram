@@ -57,8 +57,7 @@ public sealed class PublishProductCommandHandler(
                 sku?.Code ?? component.ComponentSkuId.ToString(),
                 sku?.Status == SkuStatus.Active,
                 owner?.Status == ProductStatus.Active,
-                owner?.Kind == ProductKind.Bundle,
-                owner?.PrescriptionRequired ?? false));
+                owner?.Kind == ProductKind.Bundle));
         }
 
         var facts = new PublicationFacts(pricedSkuIds, taxClass?.IsActive ?? false, bundleComponentFacts);

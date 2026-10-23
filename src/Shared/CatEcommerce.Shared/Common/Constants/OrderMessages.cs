@@ -25,9 +25,6 @@ public static class OrderMessages
     public const string SkuNotPurchasable = "This item is not available to buy.";
     public const string SkuUnavailable = "This item is out of stock.";
     public const string CartFull = "Your cart is full. Remove an item before adding another.";
-    public const string DuplicateCartLine = "Your cart already has this item for that cat.";
-    public const string PrescriptionCatRequired = "Choose which cat this prescription food is for.";
-    public const string PrescriptionNotAuthorised = "This food needs a current veterinary authorisation for the cat. Book a consultation to get one.";
 
     /// <summary>The commit-time stock race (the last unit went to someone else) -- the generic form; a planned refusal names the product.</summary>
     public const string StockNoLongerAvailable = "Sorry - something in your order has just sold out. Please review your order and place it again.";

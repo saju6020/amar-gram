@@ -1,4 +1,5 @@
 using CatEcommerce.Domain.Aggregates.Account;
+using CatEcommerce.Domain.Aggregates.Audit;
 using Microsoft.EntityFrameworkCore;
 
 namespace CatEcommerce.Infrastructure.Persistence;
@@ -21,10 +22,12 @@ namespace CatEcommerce.Infrastructure.Persistence;
 /// delegate, so there is no second, interceptor-less code path left to fall into (ARCHITECTURE
 /// gate on HO-ACC-001, §12.1: "Register the two interceptors via `AddInterceptors` in the
 /// `AddDbContext` call. Nothing else changes."). This partial file now carries only what is
-/// actually Accounts-specific -- its seven `DbSet`s.
+/// actually Accounts-specific -- its `DbSet`s, plus the audit log's (HO-ACC-001 §8.11 extended it; it moved
+/// here from the retired foundation partial in HO-P1).
 /// </summary>
 public sealed partial class CatEcommerceDbContext
 {
+    public DbSet<AuditEntryAggregate> AuditEntries => Set<AuditEntryAggregate>();
     public DbSet<CustomerAccountAggregate> CustomerAccounts => Set<CustomerAccountAggregate>();
     public DbSet<CustomerSessionAggregate> CustomerSessions => Set<CustomerSessionAggregate>();
     public DbSet<PasswordResetTokenAggregate> PasswordResetTokens => Set<PasswordResetTokenAggregate>();

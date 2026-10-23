@@ -10,5 +10,4 @@ public sealed record BundleComponentFact(
     string ComponentSkuCode,
     bool IsActive,
     bool ProductIsActive,
-    bool IsBundleSku,
-    bool IsPrescriptionProduct);
+    bool IsBundleSku);

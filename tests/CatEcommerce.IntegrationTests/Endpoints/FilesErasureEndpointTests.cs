@@ -34,14 +34,14 @@ public sealed class FilesErasureEndpointTests(FilesApiFactory factory) : FilesIn
     {
         var fileId = Guid.NewGuid();
         var put = await fileStore.PutAsync(new FilePutRequest(
-            fileId, FilePurpose.CatProfilePhoto, new MemoryStream("x"u8.ToArray()), "image/png", 1, new string('a', 64)),
+            fileId, FilePurpose.ProductImage, new MemoryStream("x"u8.ToArray()), "image/png", 1, new string('a', 64)),
             CancellationToken.None);
         Assert.True(put.IsSuccess);
 
         var aggregate = new StoredFileAggregate(fileId);
         aggregate.Register(new StoredFileRegistrationDto(
-            fileId, FilePurpose.CatProfilePhoto, "image/png", 1, new string('a', 64),
-            "cat.png", put.Value!, uploadedBy, DateTimeOffset.UtcNow, "DevelopmentNoOp", retainUntil,
+            fileId, FilePurpose.ProductImage, "image/png", 1, new string('a', 64),
+            "product.png", put.Value!, uploadedBy, DateTimeOffset.UtcNow, "DevelopmentNoOp", retainUntil,
             new UserContext(uploadedBy, Guid.NewGuid()), Guid.NewGuid()));
         await fileRepository.SaveAsync(aggregate, EventPublishOption.InMemoryPublishOnly);
 

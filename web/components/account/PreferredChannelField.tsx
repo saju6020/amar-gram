@@ -89,8 +89,8 @@ export function PreferredChannelField({
         })}
       </div>
       <p id={helpId} className="text-xs text-ink-muted">
-        Password resets, reminders and updates are sent this way, and a copy always appears in your
-        inbox.
+        Password resets, order updates and account messages are sent this way, and a copy always
+        appears in your inbox.
       </p>
       {error && (
         <p id={errorId} role="alert" className="text-sm font-semibold text-danger-ink">

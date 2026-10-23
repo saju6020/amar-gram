@@ -17,17 +17,8 @@ function makeFile(name: string, type: string, sizeInBytes: number): File {
 
 describe('FILE_RULES — mirrors HO-FIL-001 §8.3 (backend FileRules.cs)', () => {
   const expected: Record<FilePurpose, { types: string[]; maxMb: number }> = {
-    LabResult: {
-      types: ['application/pdf', 'image/jpeg', 'image/png', 'application/dicom'],
-      maxMb: 50,
-    },
-    ClinicalPhoto: { types: ['image/jpeg', 'image/png', 'image/webp'], maxMb: 15 },
-    ConsentForm: { types: ['application/pdf', 'image/jpeg', 'image/png'], maxMb: 15 },
     ProductImage: { types: ['image/jpeg', 'image/png', 'image/webp'], maxMb: 5 },
-    BoardingMedia: { types: ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'], maxMb: 50 },
-    BoardingBelongings: { types: ['image/jpeg', 'image/png', 'image/webp'], maxMb: 15 },
     ReportExport: { types: ['application/pdf', 'text/csv', 'application/zip'], maxMb: 50 },
-    CatProfilePhoto: { types: ['image/jpeg', 'image/png', 'image/webp'], maxMb: 5 },
   };
 
   it.each(Object.entries(expected))(

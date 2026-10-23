@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { act } from 'react';
 
 // use-toast.ts holds one module-level store shared by every caller (by design — it's a single
-// app-wide toast surface, HO-CAT-002 §8.4's "ephemeral UI state"). Reset the module registry
+// app-wide toast surface, the scaffold handover §8.4's "ephemeral UI state"). Reset the module registry
 // between tests so one test's toast can't leak into the next.
 beforeEach(() => {
   vi.resetModules();
@@ -16,11 +16,11 @@ describe('Toaster', () => {
     render(<Toaster />);
 
     act(() => {
-      toast({ title: 'Saved', description: 'The vaccination was recorded.' });
+      toast({ title: 'Saved', description: 'The stock count was recorded.' });
     });
 
     expect(await screen.findByText('Saved')).toBeInTheDocument();
-    expect(screen.getByText('The vaccination was recorded.')).toBeInTheDocument();
+    expect(screen.getByText('The stock count was recorded.')).toBeInTheDocument();
   });
 
   it('dismisses when its close control is activated', async () => {

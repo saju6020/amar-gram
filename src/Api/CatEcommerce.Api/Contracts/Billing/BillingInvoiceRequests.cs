@@ -23,14 +23,13 @@ public sealed class IssueInvoiceRequest
     public int ExpectedVersion { get; init; }
 }
 
-/// <summary>Exactly one of <c>chargeIds</c>, <c>source</c> or <c>billingGroup</c> (§8.13).</summary>
+/// <summary>Exactly one of <c>chargeIds</c> or <c>source</c> (§8.13).</summary>
 public sealed class InvoiceChargeSelectorRequest
 {
     public IReadOnlyList<Guid>? ChargeIds { get; init; }
     public SourceChargeSelector? Source { get; init; }
-    public BillingGroupChargeSelector? BillingGroup { get; init; }
 
-    public InvoiceChargeSelector ToSelector() => new(ChargeIds, Source, BillingGroup);
+    public InvoiceChargeSelector ToSelector() => new(ChargeIds, Source);
 }
 
 /// <summary><c>POST /api/staff/billing/invoices/issue-from-charges</c> (C9).</summary>

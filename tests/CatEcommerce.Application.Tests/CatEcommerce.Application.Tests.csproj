@@ -22,9 +22,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Application\CatEcommerce.Application\CatEcommerce.Application.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\CatEcommerce.Infrastructure\CatEcommerce.Infrastructure.csproj" />
-    <!-- Test-only reference. CatVaccinationStatusCalculator (src/Read) is a pure function
-         deliberately factored out of GetCatVaccinationStatusQueryHandler so it can be
-         unit-tested without a database (HO-CAT-001 section 15, U34 to U38). This does not
+    <!-- Test-only reference. The pure builders and section readers of src/Read (reporting,
+         portal, offline snapshot) are unit-tested here without a database. This does not
          violate "Application never references Read" (.ai/cqrs.md rule 2): that rule
          constrains the production CatEcommerce.Application assembly, which this project
          reference is not part of. -->

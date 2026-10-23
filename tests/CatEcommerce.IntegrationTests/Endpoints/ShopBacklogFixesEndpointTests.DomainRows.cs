@@ -19,7 +19,7 @@ using Xunit;
 
 namespace CatEcommerce.IntegrationTests.Endpoints;
 
-/// <summary>Rows 29, 31, 32, 35 -- price bound, category change, AddSku on an Active product, sales-stats AsOf.</summary>
+/// <summary>Rows 29, 32, 35 -- price bound, AddSku on an Active product, sales-stats AsOf.</summary>
 public sealed partial class ShopBacklogFixesEndpointTests
 {
     // ── Row 29: an oversized price is a 400 ─────────────────────────────────────────────────────
@@ -34,27 +34,6 @@ public sealed partial class ShopBacklogFixesEndpointTests
             new { amount = 10_000_000_000m, currencyCode = "BDT", effectiveFrom = DateTimeOffset.UtcNow.AddDays(1) }, Json);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    // ── Row 31: a Draft category change away from CatFood ───────────────────────────────────────
-
-    [Fact]
-    public async Task Row31_DraftFoodProduct_MovedToANonFoodCategory_LosesThePrescriptionFlag()
-    {
-        var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("LeaveFood"), "Leaves Food", "CatFood", prescription: true, publish: false);
-        var detail = await staff.GetFromJsonAsync<JsonElement>($"/api/staff/shop/products/{product.ProductId}", Json);
-        Assert.True(detail.GetProperty("prescriptionRequired").GetBoolean());
-        var taxClassId = detail.GetProperty("taxClassId").GetGuid();
-
-        var update = await staff.PutAsJsonAsync($"/api/staff/shop/products/{product.ProductId}", new
-        {
-            expectedVersion = detail.GetProperty("version").GetInt32(), name = "Leaves Food", brand = "Acme", category = "ToysAndFurniture", taxClassId
-        }, Json);
-        Assert.Equal(HttpStatusCode.NoContent, update.StatusCode);
-
-        var after = await staff.GetFromJsonAsync<JsonElement>($"/api/staff/shop/products/{product.ProductId}", Json);
-        Assert.False(after.GetProperty("prescriptionRequired").GetBoolean());
     }
 
     // ── Row 32: AddSku on an Active product ─────────────────────────────────────────────────────

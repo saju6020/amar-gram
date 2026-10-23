@@ -15,11 +15,11 @@ public sealed class ProductAggregateTests
 
     // Defaults to a non-food category so generic lifecycle tests are not food-gated (country of
     // origin / life stage) -- food-specific rules have their own dedicated tests (Phase B).
-    private static ProductAggregate CreateStandardProduct(string slug = "royal-canin-kitten", ProductCategory? category = null, ProductSubcategory? subcategory = null)
+    private static ProductAggregate CreateStandardProduct(string slug = "royal-canin-adult", ProductCategory? category = null, ProductSubcategory? subcategory = null)
     {
         var product = new ProductAggregate(Guid.NewGuid());
         product.Create(new ProductCreateDto(
-            ProductKind.Standard, "Royal Canin Kitten", "Royal Canin", category ?? ProductCategory.HealthAndGrooming, subcategory,
+            ProductKind.Standard, "Royal Canin Adult", "Royal Canin", category ?? ProductCategory.HealthAndGrooming, subcategory,
             TaxClassId, slug, null, null, TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }
@@ -30,8 +30,8 @@ public sealed class ProductAggregateTests
         var product = CreateStandardProduct();
 
         Assert.Equal(ProductStatus.Draft, product.Status);
-        Assert.Equal("Royal Canin Kitten", product.Name);
-        Assert.Contains("royal canin kitten", product.SearchText);
+        Assert.Equal("Royal Canin Adult", product.Name);
+        Assert.Contains("royal canin adult", product.SearchText);
         Assert.Contains("royal canin", product.SearchText);
         Assert.Single(product.Events);
     }
@@ -40,10 +40,10 @@ public sealed class ProductAggregateTests
     [InlineData("Litter", "Dry")]
     public void Create_SubcategoryNotBelongingToCategory_Throws(string category, string subcategory)
     {
-        var cat = Enumeration.FromDisplayName<ProductCategory>(category);
+        var parsedCategory = Enumeration.FromDisplayName<ProductCategory>(category);
         var sub = Enumeration.FromDisplayName<ProductSubcategory>(subcategory);
 
-        var ex = Assert.Throws<DomainRuleViolationException>(() => CreateStandardProduct(category: cat, subcategory: sub));
+        var ex = Assert.Throws<DomainRuleViolationException>(() => CreateStandardProduct(category: parsedCategory, subcategory: sub));
         Assert.Equal(BusinessViolationCodes.InvalidProductCategory, ex.ErrorCode);
     }
 
@@ -262,7 +262,7 @@ public sealed class ProductAggregateTests
         Assert.Contains("salmon", product.SearchText);
 
         product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Kitten", "Royal Canin", "", ProductCategory.CatFood, null, ["Grain Free"],
+            "Royal Canin Adult", "Royal Canin", "", ProductCategory.CatFood, null, ["Grain Free"],
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.Contains("grain-free", product.SearchText);
@@ -274,14 +274,14 @@ public sealed class ProductAggregateTests
         var product = CreateStandardProduct();
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Kitten", "Royal Canin", "", ProductCategory.CatFood, null,
+            "Royal Canin Adult", "Royal Canin", "", ProductCategory.CatFood, null,
             Enumerable.Range(0, 21).Select(i => $"tag{i}").ToList(),
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid())));
 
         Assert.Equal(BusinessViolationCodes.TagLimitExceeded, ex.ErrorCode);
 
         product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Kitten", "Royal Canin", "", ProductCategory.CatFood, null, ["Grain Free"],
+            "Royal Canin Adult", "Royal Canin", "", ProductCategory.CatFood, null, ["Grain Free"],
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid()));
         Assert.Contains("grain-free", product.Tags);
     }
@@ -295,7 +295,7 @@ public sealed class ProductAggregateTests
         product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Kitten", "Royal Canin", "", ProductCategory.Litter, null, [],
+            "Royal Canin Adult", "Royal Canin", "", ProductCategory.Litter, null, [],
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid())));
 
         Assert.Equal(BusinessViolationCodes.CategoryLockedWhileActive, ex.ErrorCode);

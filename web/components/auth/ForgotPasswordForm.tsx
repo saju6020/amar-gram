@@ -126,7 +126,7 @@ export function ForgotPasswordForm({
 
       {hearth ? (
         <p className="text-[13px] leading-relaxed text-ink-muted">
-          Can&rsquo;t get to your phone or email? Ask at the clinic reception and we&rsquo;ll help
+          Can&rsquo;t get to your phone or email? Ask at any Amar Gram outlet and we&rsquo;ll help
           you in person.
         </p>
       ) : (

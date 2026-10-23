@@ -38,8 +38,8 @@ public static class OrderBilling
         {
             var description = string.IsNullOrWhiteSpace(line.VariantLabel) ? line.ProductName : $"{line.ProductName} - {line.VariantLabel}";
             charges.Add(new ChargeRequestDto(
-                customerId, order.BranchId, line.CatId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, order.Id, line.Id.ToString("N"),
-                null, null, description.Length > 300 ? description[..300] : description, line.Quantity, new Money(line.UnitPrice, currency),
+                customerId, order.BranchId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, order.Id, line.Id.ToString("N"),
+                description.Length > 300 ? description[..300] : description, line.Quantity, new Money(line.UnitPrice, currency),
                 new Money(line.LineDiscount + line.OrderDiscountShare, currency), line.TaxClassId, serviceDate));
         }
 
@@ -50,8 +50,8 @@ public static class OrderBilling
             var taxClassId = deliveryTaxClassId ?? throw new BillingSeamException("The shop has no tax class for the delivery charge (DELIVERY).");
 
             charges.Add(new ChargeRequestDto(
-                customerId, order.BranchId, null, BusinessLine.Shop, ItemKind.Fee, ChargeSourceKind.Order, order.Id, DeliveryLineRef,
-                null, null, "Delivery charge", 1m, new Money(order.Totals.DeliveryCharge, currency), Money.Zero(currency), taxClassId, serviceDate));
+                customerId, order.BranchId, BusinessLine.Shop, ItemKind.Fee, ChargeSourceKind.Order, order.Id, DeliveryLineRef,
+                "Delivery charge", 1m, new Money(order.Totals.DeliveryCharge, currency), Money.Zero(currency), taxClassId, serviceDate));
         }
 
         return charges;

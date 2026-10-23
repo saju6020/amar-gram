@@ -22,7 +22,6 @@ namespace CatEcommerce.Infrastructure.Ordering;
 public sealed class CheckoutInputsLoader(
     CatEcommerceDbContext db,
     ICatalogueLookup catalogue,
-    IDietAuthorisationGate dietGate,
     ICustomerDirectory customers,
     ICustomerPolicyStatus policies,
     IBusinessSettings settings,
@@ -41,7 +40,7 @@ public sealed class CheckoutInputsLoader(
         var cartLines = await db.Carts.AsNoTracking()
             .Where(c => c.CustomerId == customerId && c.Status == CartStatus.Active)
             .SelectMany(c => c.Lines.OrderBy(l => l.AddedOn).ThenBy(l => l.Id))
-            .Select(l => new { l.Id, l.SkuId, l.CatId, l.Quantity, l.PriceWhenAdded })
+            .Select(l => new { l.Id, l.SkuId, l.Quantity, l.PriceWhenAdded })
             .ToListAsync(ct);
 
         var address = choice.AddressId is { } addressId ? await customers.GetAddressAsync(customerId, addressId, ct) : null;
@@ -71,8 +70,7 @@ public sealed class CheckoutInputsLoader(
             if (!skus.TryGetValue(line.SkuId, out var sku)) continue; // a SKU that no longer exists at all drops out of the quote; the cart keeps the line
 
             lines.Add(new CheckoutLineInput(
-                line.Id, sku, line.CatId, line.Quantity, line.PriceWhenAdded, sellable.GetValueOrDefault(sku.SkuId), rates.TryGetValue(sku.TaxClassId, out var rate) ? rate : null,
-                await PrescriptionStatusAsync(customerId, sku, line.CatId, ct)));
+                line.Id, sku, line.Quantity, line.PriceWhenAdded, sellable.GetValueOrDefault(sku.SkuId), rates.TryGetValue(sku.TaxClassId, out var rate) ? rate : null));
         }
 
         var (discount, facts) = await DiscountAsync(customerId, choice.DiscountCode, ct);
@@ -99,12 +97,8 @@ public sealed class CheckoutInputsLoader(
         {
             if (!skus.TryGetValue(line.SkuId, out var sku)) continue; // an unknown SKU drops out of the quote and is reported as excluded by the caller
 
-            var prescription = !sku.RequiresPrescription ? PrescriptionLineStatus.NotRequired
-                : customerId is null || line.CatId is null ? PrescriptionLineStatus.CatRequired
-                : await PrescriptionStatusAsync(customerId.Value, sku, line.CatId, ct);
-
             lines.Add(new CheckoutLineInput(
-                Guid.NewGuid(), sku, line.CatId, line.Quantity, sku.CurrentPrice ?? 0m, sellable.GetValueOrDefault(sku.SkuId), rates.TryGetValue(sku.TaxClassId, out var rate) ? rate : null, prescription));
+                Guid.NewGuid(), sku, line.Quantity, sku.CurrentPrice ?? 0m, sellable.GetValueOrDefault(sku.SkuId), rates.TryGetValue(sku.TaxClassId, out var rate) ? rate : null));
         }
 
         var (discount, facts) = await DiscountAsync(customerId, choice.DiscountCode, ct);
@@ -127,15 +121,6 @@ public sealed class CheckoutInputsLoader(
         if (Interlocked.Exchange(ref _weightWarningLogged, 1) == 1) return;
 
         logger.LogWarning("Some SKUs in a checkout have no shipping weight (Shop's ShippingWeightGrams is not populated); they count as 0 g, so delivery weight bands add no surcharge for them.");
-    }
-
-    private async Task<PrescriptionLineStatus> PrescriptionStatusAsync(Guid customerId, OrderCatalogueSku sku, Guid? catId, CancellationToken ct)
-    {
-        if (!sku.RequiresPrescription) return PrescriptionLineStatus.NotRequired;
-        if (catId is null) return PrescriptionLineStatus.CatRequired;
-
-        var result = await dietGate.CheckAsync(customerId, catId.Value, sku.SkuId, ct);
-        return PrescriptionPurchaseGate.FromOutcome(result.Outcome).IsPermitted ? PrescriptionLineStatus.Authorised : PrescriptionLineStatus.NotAuthorised;
     }
 
     private async Task<DeliveryZoneFacts?> ResolveZoneAsync(AddressFacts address, CancellationToken ct)

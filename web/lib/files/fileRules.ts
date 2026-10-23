@@ -28,49 +28,15 @@ export interface FilePurposeRule {
 const ONE_MB = 1024 * 1024;
 
 export const FILE_RULES: Readonly<Record<FilePurpose, FilePurposeRule>> = {
-  LabResult: {
-    purpose: 'LabResult',
-    allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'application/dicom'],
-    maxSizeInBytes: 50 * ONE_MB,
-  },
-  ClinicalPhoto: {
-    purpose: 'ClinicalPhoto',
-    allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    maxSizeInBytes: 15 * ONE_MB,
-  },
-  ConsentForm: {
-    purpose: 'ConsentForm',
-    allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png'],
-    maxSizeInBytes: 15 * ONE_MB,
-  },
   ProductImage: {
     purpose: 'ProductImage',
     allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
     maxSizeInBytes: 5 * ONE_MB,
   },
-  BoardingMedia: {
-    purpose: 'BoardingMedia',
-    allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'],
-    maxSizeInBytes: 50 * ONE_MB,
-  },
-  BoardingBelongings: {
-    purpose: 'BoardingBelongings',
-    allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    maxSizeInBytes: 15 * ONE_MB,
-  },
   ReportExport: {
     purpose: 'ReportExport',
     allowedContentTypes: ['application/pdf', 'text/csv', 'application/zip'],
     maxSizeInBytes: 50 * ONE_MB,
-  },
-  // Integrator-authorised addition on HO-FIL-001 (§1 Amended, 2026-09-26) — cap mirrors the
-  // pre-existing CatPhotoRules the Cat Profiles aggregate already enforced (5 MB). Listed here
-  // for completeness/accuracy; no page in this repo consumes `purpose="CatProfilePhoto"` through
-  // this slice yet — see HO-FIL-002's own §1 Amended row on the cat-photo page.
-  CatProfilePhoto: {
-    purpose: 'CatProfilePhoto',
-    allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
-    maxSizeInBytes: 5 * ONE_MB,
   },
 };
 
@@ -95,8 +61,6 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
   'image/jpeg': 'JPEG',
   'image/png': 'PNG',
   'image/webp': 'WebP',
-  'application/dicom': 'DICOM',
-  'video/mp4': 'MP4 video',
   'text/csv': 'CSV',
   'application/zip': 'ZIP',
 };

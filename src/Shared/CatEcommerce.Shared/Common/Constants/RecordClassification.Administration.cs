@@ -12,19 +12,16 @@ public static partial class RecordClassification
     [
         new TableClassification("admin", "branch", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "branch_closure", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
-        new TableClassification("admin", "room", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "staff_branch_assignment", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "staff_roster", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "roster_exception", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "leave_request", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
-        new TableClassification("admin", "clinic_service", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "tax_class", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "business_settings", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "content_item", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "policy_document", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
         new TableClassification("admin", "system_status", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-XCT-001 §10.3"),
 
-        new TableClassification("admin", "service_price", RecordClass.Financial, HardDeletePolicy.Forbidden, "D-9 (price in force)"),
         new TableClassification("admin", "tax_rate", RecordClass.Financial, HardDeletePolicy.Forbidden, "D-9 (price in force)"),
 
         new TableClassification("admin", "policy_version", RecordClass.Regulatory, HardDeletePolicy.Forbidden, "NFR-LEG-5"),

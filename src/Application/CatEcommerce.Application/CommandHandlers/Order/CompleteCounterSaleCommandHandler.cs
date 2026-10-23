@@ -19,7 +19,7 @@ namespace CatEcommerce.Application.CommandHandlers.Order;
 
 /// <summary>
 /// HO-ORD-001 §8.11, §11.4 C26 (US-ORD-16, ADR-212, ADR-215, ADR-216) -- the counter sale. The checks, in order: the customer's mobile is a valid number and, when an active customer already has it as their primary number, that customer is the buyer (found through HO-ACC-001's <c>FindCustomersQuery</c> -- a new buyer is registered, passwordless until they claim the account, through <c>RegisterWalkInCustomerCommand</c> in its own short transaction before the sale's transaction opens and before any business check, so a refused sale still leaves the buyer stored -- FU1 D2; a Merged holder of the mobile is followed to its surviving account -- FU1 D1: <see cref="ICounterBuyerRegistrar"/>); the lines are priced by the same
-/// <see cref="CheckoutPricing"/> an online order uses, with no delivery; a prescription food needs a customer and a cat (<c>PrescriptionCatRequired</c>); every scanned line
+/// <see cref="CheckoutPricing"/> an online order uses, with no delivery; every scanned line
 /// must be sellable in the quantity asked (a counter sale is never silently reduced); the tenders cover the total exactly (<see cref="TenderCalculator"/>). Then, in
 /// <b>one database transaction</b>: the order is placed, the stock <b>deducted</b> FEFO through <see cref="IStockLedger"/> (the same ledger as online orders), the discount use
 /// counted, the charges recorded and saved, the invoice issued by Billing, one payment recorded per tender, and the order finished
@@ -58,7 +58,7 @@ public sealed class CompleteCounterSaleCommandHandler(
         }
 
         // ADR-216 (amended 2026-10-10, ORD 42/43; FU1 D2): the buyer is found or registered in its own short transaction BEFORE any business check and before the
-        // sale's scope opens. A shape-valid name + mobile therefore always leaves the walk-in stored, even when the sale is then refused (stock, prescription, tenders...);
+        // sale's scope opens. A shape-valid name + mobile therefore always leaves the walk-in stored, even when the sale is then refused (stock, tenders...);
         // the account intentionally outlives a refused sale and the retry reuses it. A lost race on the unique mobile cannot abort the sale. FU1 D1: a mobile held by a
         // Merged account resolves to the surviving account; one held by an account whose survivor is not active is a clear cashier-facing refusal.
         var customer = await customerFinder.FindActiveByPrimaryMobileAsync(mobile, default);
@@ -70,12 +70,8 @@ public sealed class CompleteCounterSaleCommandHandler(
         }
 
         var inputs = await inputsLoader.LoadCounterAsync(
-            branch.Id, customer.CustomerId, command.Lines.Select(l => new CounterLineRequest(l.SkuId, l.Quantity, l.CatId)).ToList(), command.DiscountCode, now, default);
+            branch.Id, customer.CustomerId, command.Lines.Select(l => new CounterLineRequest(l.SkuId, l.Quantity)).ToList(), command.DiscountCode, now, default);
         var quote = CheckoutPricing.Quote(inputs);
-
-        // The prescription refusal is the one the cashier can act on (add the customer and cat); it outranks "nothing to sell" when that line was the only one.
-        if (quote.BlockingReasons.Contains(BusinessViolationCodes.PrescriptionCatRequired))
-            return Violation(BusinessViolationCodes.PrescriptionCatRequired, "Lines", OrderMessages.PrescriptionCatRequired);
 
         if (!quote.CanPlace) return OrderPlacement.RefusalFor(quote);
         if (CounterRefusal(command, inputs, quote) is { } refusal) return refusal;
@@ -120,7 +116,7 @@ public sealed class CompleteCounterSaleCommandHandler(
 
         if (quote.ExcludedLines.FirstOrDefault() is { } excluded)
         {
-            var code = excluded.ReasonCode == nameof(CheckoutChangeKind.PrescriptionAuthorisationExpired) ? BusinessViolationCodes.PrescriptionNotAuthorised : BusinessViolationCodes.SkuUnavailable;
+            var code = BusinessViolationCodes.SkuUnavailable;
             var message = quote.Changes.FirstOrDefault(c => c.LineRef == excluded.LineRef)?.Message ?? $"'{excluded.ProductName}' cannot be sold.";
             return Violation(code, "Lines", message);
         }

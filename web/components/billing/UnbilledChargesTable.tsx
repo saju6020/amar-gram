@@ -82,7 +82,7 @@ export function UnbilledChargesTable({
       onRetry={onRetry}
       emptyState={{
         title: 'Nothing is waiting to be billed.',
-        description: 'Charges from visits, shop orders and boarding appear here once they are recorded.',
+        description: 'Charges from shop orders and manual charges appear here once they are recorded.',
       }}
     />
   );

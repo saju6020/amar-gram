@@ -19,7 +19,6 @@ import {
   scheduleSkuPrice,
   setBundleComponents,
   setFoodDetails,
-  setPrescriptionRequired,
   setProductImages,
   setProductTranslation,
   setRelatedProducts,
@@ -79,7 +78,7 @@ function useInvalidateProduct(productId: string) {
 }
 
 /**
- * Two-command saves (details then slug; food then prescription flag). The product is invalidated ONCE,
+ * Two-command saves (details then slug). The product is invalidated ONCE,
  * after both commands settle — invalidating between them refetched the product mid-save while the
  * second command was still in flight. A refusal of the SECOND command becomes a `PartialSaveError`
  * (the first is saved; the form stays mounted with what was typed and says so). The second command's
@@ -137,15 +136,6 @@ export function useSetFoodDetails(productId: string) {
   const invalidate = useInvalidateProduct(productId);
   return useMutation({
     mutationFn: (request: SetFoodDetailsRequest) => setFoodDetails(productId, request),
-    onSuccess: invalidate,
-  });
-}
-
-export function useSetPrescriptionRequired(productId: string) {
-  const invalidate = useInvalidateProduct(productId);
-  return useMutation({
-    mutationFn: (request: { expectedVersion: number; prescriptionRequired: boolean }) =>
-      setPrescriptionRequired(productId, request),
     onSuccess: invalidate,
   });
 }

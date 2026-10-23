@@ -1,3 +1,4 @@
+using CatEcommerce.Api.Hosting;
 using CatEcommerce.Api.Modules;
 using CatEcommerce.Infrastructure.Configuration;
 using Microsoft.Extensions.FileProviders;

@@ -100,7 +100,7 @@ public sealed class PasswordResetEndpointTests(AccountsApiFactory factory) : Acc
         var mobile = NewMobile();
         var staff = new CatEcommerce.Domain.Aggregates.Account.StaffAccountAggregate(Guid.NewGuid());
         staff.Create(new CatEcommerce.Domain.Models.StaffAccountCreationDto(
-            "Reset Me", CatEcommerce.Domain.ValueObjects.MobileNumber.Create(mobile), null, ["Nurse"],
+            "Reset Me", CatEcommerce.Domain.ValueObjects.MobileNumber.Create(mobile), null, ["Reception"],
             new Platform.Infrastructure.Common.Security.UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
         await repository.SaveAsync(staff, Platform.Infrastructure.Core.Commands.EventPublishOption.InMemoryPublishOnly);
 

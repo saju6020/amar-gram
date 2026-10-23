@@ -21,14 +21,14 @@ public sealed class StaffChargesController(
     [HttpGet("charges")]
     [RequireAction(Actions.Billing.View)]
     public async Task<IActionResult> GetCharges(
-        [FromQuery] Guid? customerId, [FromQuery] string? status, [FromQuery] string? sourceKind, [FromQuery] Guid? billingGroupId,
+        [FromQuery] Guid? customerId, [FromQuery] string? status, [FromQuery] string? sourceKind,
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50)
     {
         if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
 
         var response = await dispatcher.GetResultAsync(new GetChargesQuery
         {
-            BranchId = branchId, CustomerId = customerId, Status = status, SourceKind = sourceKind, BillingGroupId = billingGroupId,
+            BranchId = branchId, CustomerId = customerId, Status = status, SourceKind = sourceKind,
             PageNumber = pageNumber, PageSize = pageSize, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(),
         });
 
@@ -44,7 +44,7 @@ public sealed class StaffChargesController(
         var chargeId = Guid.NewGuid();
         var response = await dispatcher.SendAsync(new RecordManualChargeCommand
         {
-            ChargeId = chargeId, CustomerId = request.CustomerId, BranchId = branchId, CatId = request.CatId, ServiceId = request.ServiceId,
+            ChargeId = chargeId, CustomerId = request.CustomerId, BranchId = branchId,
             Description = request.Description, UnitPrice = request.UnitPrice, TaxClassId = request.TaxClassId, Quantity = request.Quantity,
             LineDiscount = request.LineDiscount, ServiceDate = request.ServiceDate, BusinessLine = request.BusinessLine,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true,
@@ -66,34 +66,5 @@ public sealed class StaffChargesController(
         });
 
         return response.IsSuccess ? NoContent() : RespondToFailure(response.ValidationResult, BusinessViolationCodes.ChargeNotFound);
-    }
-
-    [HttpGet("uncaptured-sources")]
-    [RequireAction(Actions.Billing.View)]
-    public async Task<IActionResult> GetUncapturedSources([FromQuery] DateOnly from, [FromQuery] DateOnly to)
-    {
-        if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
-        if (to < from || to.DayNumber - from.DayNumber > BillingRules.MaxExportRangeDays)
-            return BadRequest(new { error = $"The range must be at most {BillingRules.MaxExportRangeDays} days and not end before it starts." });
-
-        var response = await dispatcher.GetResultAsync(new GetUncapturedSourcesQuery
-        { BranchId = branchId, From = from, To = to, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
-
-        return Ok(response.Result);
-    }
-
-    [HttpPost("sources/{sourceKind}/{sourceId:guid}/capture")]
-    [RequireAction(Actions.Billing.ManageCharges)]
-    public async Task<IActionResult> Capture(string sourceKind, Guid sourceId)
-    {
-        if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
-
-        var response = await dispatcher.SendAsync(new CaptureSourceChargesCommand
-        {
-            SourceKind = sourceKind, SourceId = sourceId, BranchId = branchId,
-            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true,
-        });
-
-        return response.IsSuccess ? Ok(response.Result) : RespondToFailure(response.ValidationResult, BusinessViolationCodes.SourceNotFound);
     }
 }

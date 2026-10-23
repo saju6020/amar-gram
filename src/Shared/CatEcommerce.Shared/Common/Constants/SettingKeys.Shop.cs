@@ -6,7 +6,4 @@ public static partial class SettingKeys
 {
     public const string CommercePricesIncludeTax = "commerce.pricesIncludeTax";
     public const string ShopExpiryDisplayWindowDays = "shop.expiryDisplayWindowDays";
-    public const string ShopRecommendationKittenMaxAgeMonths = "shop.recommendationKittenMaxAgeMonths";
-    public const string ShopRecommendationSeniorFromAgeYears = "shop.recommendationSeniorFromAgeYears";
-    public const string ShopRecommendationWeightManagementFromKg = "shop.recommendationWeightManagementFromKg";
 }

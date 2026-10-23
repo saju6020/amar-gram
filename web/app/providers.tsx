@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { apiFetch } from '@/lib/api/client';
 import { registerQueryClient } from '@/lib/branch';
 
-// The single QueryClient for the app (HO-CAT-002 §8.4 — server data lives in TanStack Query,
+// The single QueryClient for the app (the scaffold handover §8.4 — server data lives in TanStack Query,
 // never copied into useState). No global store of our own is created here or anywhere else.
 //
 // ARCH gate HIGH fix (HO-ADM-002-ARCHITECTURE, owner decision 2026-09-28) — `lib/branch.ts`'s
@@ -26,7 +26,7 @@ import { registerQueryClient } from '@/lib/branch';
 // written to it. An effect body runs only against the already-settled `queryClient` value, so this
 // registers exactly the instance passed to `QueryClientProvider` below.
 //
-// Also starts browser-side MSW (HO-CAT-002 §5.1) in development, only when
+// Also starts browser-side MSW (the scaffold handover §5.1) in development, only when
 // NEXT_PUBLIC_USE_MOCKS=true (web/.env.local.example) — see web/README.md. Dynamically imported
 // so `msw/browser` is never bundled into a production build. `worker.start()` is async and this
 // effect fires after first paint, so a request made in the same tick as mount can race the

@@ -36,9 +36,6 @@ public sealed class EfBillingFinder(CatEcommerceDbContext db) : IBillingFinder
         if (criteria.SourceKind is { } kind && criteria.SourceId is { } sourceId)
             charges = charges.Where(c => c.SourceKind == kind && c.SourceId == sourceId);
 
-        if (criteria.GroupKind is { } groupKind && criteria.GroupId is { } groupId)
-            charges = charges.Where(c => c.BillingGroupKind == groupKind && c.BillingGroupId == groupId);
-
         if (criteria.ServiceDateTo is { } to)
             charges = charges.Where(c => c.ServiceDate <= to);
 

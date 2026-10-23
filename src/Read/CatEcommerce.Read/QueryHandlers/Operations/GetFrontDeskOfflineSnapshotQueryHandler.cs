@@ -13,7 +13,7 @@ namespace CatEcommerce.Read.QueryHandlers.Operations;
 
 /// <summary>
 /// HO-XCT-001 section 12.4/12.6 Q1, ADR-306 -- composes the offline snapshot from every registered section source. For each known section key: the caller
-/// may not have its action (<c>NotPermitted</c>); no source is registered (<c>NotAvailable</c>, as for <c>boardingTasks</c> while Boarding is not built);
+/// may not have its action (<c>NotPermitted</c>); no source is registered (<c>NotAvailable</c>);
 /// otherwise the source builds it. The ETag is the strong SHA-256 of the canonical content and excludes <c>generatedOn</c>, so an unchanged day gives 304.
 /// </summary>
 public sealed class GetFrontDeskOfflineSnapshotQueryHandler(
@@ -25,7 +25,7 @@ public sealed class GetFrontDeskOfflineSnapshotQueryHandler(
     : IQueryHandlerAsync<GetFrontDeskOfflineSnapshotQuery, FrontDeskSnapshotViewModel?>
 {
     /// <summary>Every section the schema can carry, in output order. A key with no registered source is reported <c>NotAvailable</c>.</summary>
-    public static readonly IReadOnlyList<string> KnownSections = [ClinicDayListSnapshotSource.Key, "boardingTasks"];
+    public static readonly IReadOnlyList<string> KnownSections = [];
 
     private static readonly JsonSerializerOptions CanonicalJson = new(JsonSerializerDefaults.Web);
 
@@ -53,7 +53,7 @@ public sealed class GetFrontDeskOfflineSnapshotQueryHandler(
             if (built is null) { omitted.Add(new SnapshotOmittedSection(key, "NotAvailable")); continue; }
 
             sections[key] = built;
-            counts[key] = built is SnapshotAppointmentsSection appointments ? appointments.Items.Count : 0;
+            counts[key] = 0;
         }
 
         var etag = ComputeETag(branch, localDate, sections, omitted);

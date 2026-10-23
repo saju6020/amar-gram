@@ -10,7 +10,6 @@ public static partial class BusinessViolationCodes
     public const string BranchNotFound = nameof(BranchNotFound);
     public const string PastClosureCannotBeCancelled = nameof(PastClosureCannotBeCancelled);
     public const string InvalidClosure = nameof(InvalidClosure);
-    public const string RoomNameAlreadyExists = nameof(RoomNameAlreadyExists);
     public const string RoomNotFound = nameof(RoomNotFound);
     public const string BranchNotAssigned = nameof(BranchNotAssigned);
     public const string BranchAssignmentRequired = nameof(BranchAssignmentRequired);
@@ -24,7 +23,6 @@ public static partial class BusinessViolationCodes
     public const string ServiceCodeAlreadyExists = nameof(ServiceCodeAlreadyExists);
     public const string InvalidServiceDuration = nameof(InvalidServiceDuration);
     public const string ServiceRolesRequired = nameof(ServiceRolesRequired);
-    public const string ServiceNotFound = nameof(ServiceNotFound);
     public const string PriceCannotBeBackdated = nameof(PriceCannotBeBackdated);
     public const string DuplicatePriceEffectiveDate = nameof(DuplicatePriceEffectiveDate);
     public const string TaxClassNotFound = nameof(TaxClassNotFound);
@@ -40,10 +38,8 @@ public static partial class BusinessViolationCodes
     public const string PolicyKeyAlreadyExists = nameof(PolicyKeyAlreadyExists);
     public const string PolicyVersionAlreadyExists = nameof(PolicyVersionAlreadyExists);
     public const string PolicyAlreadyAccepted = nameof(PolicyAlreadyAccepted);
-    public const string CatNotOwnedByCaller = nameof(CatNotOwnedByCaller);
     public const string RoleRequired = nameof(RoleRequired);
     public const string UnknownStaffRoleReferenced = nameof(UnknownStaffRoleReferenced);
-    public const string RoomNotInBranch = nameof(RoomNotInBranch);
     public const string ContentNotFound = nameof(ContentNotFound);
     public const string InvalidClosureWindow = nameof(InvalidClosureWindow);
 }

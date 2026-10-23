@@ -55,7 +55,7 @@ describe('U-A4 no request and nothing written while the device flag is off', () 
   });
 
   it('writeSnapshot itself refuses without the flag', async () => {
-    expect(await writeSnapshot(buildSnapshot('both', xctFixtureIds.branchId, 1), '"e"')).toBe(false);
+    expect(await writeSnapshot(buildSnapshot('current', xctFixtureIds.branchId, 1), '"e"')).toBe(false);
     expect(stores.snapshot.size).toBe(0);
   });
 });
@@ -66,7 +66,7 @@ describe('U-A5 200 then 304', () => {
     // Cross-origin the API must expose ETag; the mock does, as a fixed API would.
     await sync(xctFixtureIds.branchId, xctFixtureIds.staffAccountId);
     const first = await readSnapshot(xctFixtureIds.branchId);
-    expect(first?.etag).toMatch(/xct-both-v1/);
+    expect(first?.etag).toMatch(/xct-current-v1/);
     expect(xctMock.snapshotRequests[0]).toEqual({ ifNoneMatch: null, status: 200 });
 
     await new Promise((r) => setTimeout(r, 20));
@@ -176,7 +176,7 @@ describe('U-A16 / E-A8 / E-A9 every wipe path', () => {
   });
 
   it('a record of another schema version is not usable and is dropped', async () => {
-    const odd = recordFor('both', { schemaVersion: 2 });
+    const odd = recordFor('current', { schemaVersion: 2 });
     expect(isSnapshotUsable(odd)).toBe(false);
     await enableOfflineCopy(xctFixtureIds.staffAccountId);
     stores.snapshot.set(odd.branchId, odd);
@@ -185,7 +185,7 @@ describe('U-A16 / E-A8 / E-A9 every wipe path', () => {
   });
 
   it('the person-change effect clears a stranger\'s record on mount even with the flag off', async () => {
-    const stranger = recordFor('both', { staffAccountId: xctFixtureIds.otherStaffAccountId });
+    const stranger = recordFor('current', { staffAccountId: xctFixtureIds.otherStaffAccountId });
     stores.snapshot.set(stranger.branchId, stranger);
     renderWithClient(<OfflineSnapshotSync />, syncClient(null));
     await waitFor(() => expect(stores.snapshot.size).toBe(0));

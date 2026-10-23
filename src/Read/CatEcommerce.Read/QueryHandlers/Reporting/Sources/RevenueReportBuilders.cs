@@ -17,12 +17,12 @@ public sealed record LineCost(decimal SaleCogs, bool Costed, IReadOnlyList<(Date
 
 /// <summary>
 /// HO-RPT-001 section 8.6 / ADR-284 -- the cost of goods behind an invoice line, <b>pure</b>. The stock ledger entries that carry the line's id as their source line are the sale-type movements
-/// (<c>Sale</c>, <c>Dispense</c>, <c>BoardingUse</c>, cost = -delta x landed unit cost) and the <c>Return</c>s (cost = delta x landed unit cost, subtracted on the return's own date). A line is
+/// (<c>Sale</c>, cost = -delta x landed unit cost) and the <c>Return</c>s (cost = delta x landed unit cost, subtracted on the return's own date). A line is
 /// <b>costed</b> only if it has sale-type entries and <b>every</b> contributing batch has a landed cost; a partly costed line is treated as uncosted. There is no fallback to the purchase-order cost and no estimate.
 /// </summary>
 public static class LineCosting
 {
-    private static readonly int[] SaleKinds = [MovementKind.Sale.Value, MovementKind.Dispense.Value, MovementKind.BoardingUse.Value];
+    private static readonly int[] SaleKinds = [MovementKind.Sale.Value];
 
     public static LineCost Cost(IEnumerable<LedgerCostEntry> entries)
     {
@@ -63,23 +63,22 @@ public static class RevenueFacts
     public const string DeliveryAndFees = "Delivery and fees";
     public const string NotApplicable = "Not applicable";
 
-    public static (string Line, string Category, string SubCategory, string Origin, string ServiceGroup) Dimensions(int businessLine, int itemKind, int? serviceCategory, RvSkuRow? sku)
+    /// <summary>The sales channel of the order behind the line (HO-P1: the split that replaced the retired business lines); a line with no order behind it is <see cref="OtherChannel"/>.</summary>
+    public const string OtherChannel = "Other";
+
+    public static (string Line, string Category, string SubCategory, string Origin, string ServiceGroup) Dimensions(int? orderChannel, RvSkuRow? sku)
     {
-        var line = BusinessLineRules.Classify(businessLine);
+        var line = orderChannel is { } channel ? ReportLabels.Of<OrderChannel>(channel) : OtherChannel;
         var category = sku is null ? DeliveryAndFees : ReportLabels.Of<ProductCategory>(sku.Category);
         var subCategory = sku?.SubCategory is { } sub ? ReportLabels.Of<ProductSubcategory>(sub) : "—";
         var origin = string.IsNullOrWhiteSpace(sku?.CountryOfOrigin) ? NotApplicable : sku!.CountryOfOrigin!.Trim();
 
-        var group = businessLine == BusinessLine.Shop.Value ? category
-            : businessLine == BusinessLine.Clinic.Value && serviceCategory is { } sc ? ReportLabels.Of<ServiceCategory>(sc)
-            : ReportLabels.Of<ItemKind>(itemKind);
-
-        return (line, category, subCategory, origin, group);
+        return (line, category, subCategory, origin, category);
     }
 
     public static RevenueFact FromInvoiceLine(RvInvoiceLineRow row, RvSkuRow? sku, LineCost cost, DateOnly date)
     {
-        var d = Dimensions(row.BusinessLine, row.ItemKind, row.ServiceCategory, sku);
+        var d = Dimensions(row.OrderChannel, sku);
         return new RevenueFact(
             date, row.CurrencyCode, RevenueFactKind.Invoice, d.Line, d.Category, d.SubCategory, d.Origin, d.ServiceGroup,
             row.Quantity, row.Quantity * row.UnitPrice, row.LineDiscount + row.InvoiceDiscountShare, row.NetAmount, row.TaxAmount,
@@ -88,13 +87,13 @@ public static class RevenueFacts
 
     public static RevenueFact FromCreditLine(RvCreditNoteLineRow row, RvSkuRow? sku, LineCost cost, DateOnly date)
     {
-        var d = Dimensions(row.BusinessLine, row.ItemKind, row.ServiceCategory, sku);
+        var d = Dimensions(row.OrderChannel, sku);
         return new RevenueFact(date, row.CurrencyCode, RevenueFactKind.Credit, d.Line, d.Category, d.SubCategory, d.Origin, d.ServiceGroup, 0m, 0m, 0m, row.NetAmount, row.TaxAmount, 0m, cost.Costed);
     }
 
     public static RevenueFact ReturnCost(RvInvoiceLineRow row, RvSkuRow? sku, decimal cost, DateOnly date, string currency)
     {
-        var d = Dimensions(row.BusinessLine, row.ItemKind, row.ServiceCategory, sku);
+        var d = Dimensions(row.OrderChannel, sku);
         return new RevenueFact(date, currency, RevenueFactKind.ReturnCost, d.Line, d.Category, d.SubCategory, d.Origin, d.ServiceGroup, 0m, 0m, 0m, 0m, 0m, cost, true);
     }
 }

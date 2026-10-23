@@ -38,8 +38,8 @@ const locations: StockLocation[] = [
 const food: SkuLookup = {
   skuId: 'k1',
   productId: 'p1',
-  skuCode: 'FD-KDC-2KG',
-  displayName: 'Kitten dry food',
+  skuCode: 'FD-RCE-5KG',
+  displayName: 'Organic rice',
   barcode: '4006381333931',
   stockClass: 'Food',
   expiryRequired: true,
@@ -49,13 +49,13 @@ const food: SkuLookup = {
   isActive: true,
   storage: null,
 };
-const vaccine: SkuLookup = {
+const milk: SkuLookup = {
   skuId: 'k2',
   productId: 'p2',
-  skuCode: 'MED-FVX-TRI',
-  displayName: 'Tricat vaccine',
+  skuCode: 'FD-MLK-LSE',
+  displayName: 'Fresh cow milk',
   barcode: '5012345678900',
-  stockClass: 'Medicine',
+  stockClass: 'Food',
   expiryRequired: true,
   stockUnit: 'ml',
   allowsFractionalQuantity: true,
@@ -72,7 +72,7 @@ const vaccine: SkuLookup = {
 function setup(overrides: Partial<React.ComponentProps<typeof GoodsReceiptForm>> = {}) {
   const onPost = vi.fn().mockResolvedValue(undefined);
   const onScan = vi.fn(async (barcode: string) =>
-    barcode === food.barcode ? food : barcode === vaccine.barcode ? vaccine : null,
+    barcode === food.barcode ? food : barcode === milk.barcode ? milk : null,
   );
   const utils = renderWithClient(
     <GoodsReceiptForm
@@ -98,7 +98,7 @@ async function scan(user: ReturnType<typeof userEvent.setup>, barcode: string) {
 
 async function addFoodLine(user: ReturnType<typeof userEvent.setup>) {
   await scan(user, food.barcode!);
-  await screen.findByRole('listitem', { name: /line 1: kitten dry food/i });
+  await screen.findByRole('listitem', { name: /line 1: organic rice/i });
 }
 
 beforeEach(() => {
@@ -108,9 +108,9 @@ beforeEach(() => {
 describe('U-C — goods receipt', () => {
   it('U-C3: a scan adds a line, announces it, and shows the storage requirement', async () => {
     const { user } = setup();
-    await scan(user, vaccine.barcode!);
-    expect(await screen.findByText(/added: tricat vaccine — med-fvx-tri/i)).toBeInTheDocument();
-    const line = await screen.findByRole('listitem', { name: /line 1: tricat vaccine/i });
+    await scan(user, milk.barcode!);
+    expect(await screen.findByText(/added: fresh cow milk — fd-mlk-lse/i)).toBeInTheDocument();
+    const line = await screen.findByRole('listitem', { name: /line 1: fresh cow milk/i });
     expect(within(line).getByText(/store: refrigerated 2–8 °C/i)).toBeInTheDocument();
   });
 
@@ -122,7 +122,7 @@ describe('U-C — goods receipt', () => {
     await user.type(screen.getByLabelText(/accepted \(bags\)/i), '20');
     await user.click(screen.getByRole('button', { name: /review and post/i }));
     expect(
-      await screen.findAllByText('Food and medicine must be received with an expiry date.'),
+      await screen.findAllByText('Food and other perishables must be received with an expiry date.'),
     ).not.toHaveLength(0);
     expect(onPost).not.toHaveBeenCalled();
     expect(screen.getByLabelText(/expiry date/i)).toHaveAttribute('aria-invalid', 'true');
@@ -149,7 +149,7 @@ describe('U-C — goods receipt', () => {
     expect(within(dialog).getByText(/1 line will be received/i)).toBeInTheDocument();
     expect(
       within(dialog).getByText(
-        /20 bags of kitten dry food — fd-kdc-2kg, lot L2409E → main warehouse/i,
+        /20 bags of organic rice — fd-rce-5kg, lot L2409E → main warehouse/i,
       ),
     ).toBeInTheDocument();
     expect(within(dialog).getByText(/a posted receipt cannot be edited/i)).toBeInTheDocument();
@@ -196,11 +196,11 @@ describe('U-C — goods receipt', () => {
 
     const second = setup();
     await screen.findByText('Restore the receipt you were entering?');
-    await scan(second.user, vaccine.barcode!);
-    await screen.findByRole('listitem', { name: /line 1: tricat vaccine/i });
+    await scan(second.user, milk.barcode!);
+    await screen.findByRole('listitem', { name: /line 1: fresh cow milk/i });
     await second.user.click(screen.getByRole('button', { name: /restore the draft/i }));
-    expect(await screen.findByRole('listitem', { name: /line 1: kitten dry food/i })).toBeInTheDocument();
-    expect(screen.getByRole('listitem', { name: /line 2: tricat vaccine/i })).toBeInTheDocument();
+    expect(await screen.findByRole('listitem', { name: /line 1: organic rice/i })).toBeInTheDocument();
+    expect(screen.getByRole('listitem', { name: /line 2: fresh cow milk/i })).toBeInTheDocument();
   });
 
   it('U-C6: a 400 with three line violations lands each on its own field, scrolls to the first, shows no error code', async () => {
@@ -217,7 +217,7 @@ describe('U-C — goods receipt', () => {
           violation(
             'Lines[0].ExpiresOn',
             'ExpiryDateRequired',
-            'Food and medicine must be received with an expiry date.',
+            'Food and other perishables must be received with an expiry date.',
           ),
           violation(
             'Lines[0].LotNumber',
@@ -238,8 +238,8 @@ describe('U-C — goods receipt', () => {
     };
     const { user } = setup({ onPost });
     await addFoodLine(user);
-    await scan(user, vaccine.barcode!);
-    await screen.findByRole('listitem', { name: /line 2: tricat vaccine/i });
+    await scan(user, milk.barcode!);
+    await screen.findByRole('listitem', { name: /line 2: fresh cow milk/i });
     for (const [index, qty] of ['20', '5'].entries()) {
       await user.type(screen.getAllByLabelText(/^accepted/i)[index]!, qty);
     }
@@ -257,7 +257,7 @@ describe('U-C — goods receipt', () => {
       await screen.findByText('Only 4 is still outstanding on that order line.', { selector: 'p' }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByText('Food and medicine must be received with an expiry date.', {
+      screen.getAllByText('Food and other perishables must be received with an expiry date.', {
         selector: 'p',
       }),
     ).not.toHaveLength(0);

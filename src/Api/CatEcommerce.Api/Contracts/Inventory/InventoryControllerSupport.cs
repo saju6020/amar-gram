@@ -9,7 +9,7 @@ namespace CatEcommerce.Api.Contracts.Inventory;
 /// <summary>
 /// HO-IMP-001 §12.3/§12.4 -- the two things every Inventory controller does the same way, in one place:
 /// resolve the caller's ACTIVE branch (<c>X-Branch-Id</c>, HO-ADM-001 §8.3 -- a refusal is a 403 naming the refusal code, exactly
-/// like <c>StaffAppointmentsController</c>), and turn a failed <see cref="CommandResponse"/> into the right status. "Not found" outcomes
+/// like the other staff controllers), and turn a failed <see cref="CommandResponse"/> into the right status. "Not found" outcomes
 /// (the record the request ADDRESSES is missing or another branch's -- the handler marks it with <c>InventoryRules.NotFoundResource</c>) are 404; a record
 /// merely referenced in a body is a 400. A record of another branch never leaks its existence, a stale version is 409, everything else is the 400 body of
 /// <c>ValidationResponse</c> (ADR-014). Never 202.

@@ -1,19 +1,17 @@
 import { test, expect as baseExpect, signInAsStaff } from './fixtures';
 import { control } from './ordering-helpers';
-import { orderingIds as ids } from '../../mocks/handlers/ordering/fixtures';
 
 const expect = baseExpect.configure({ timeout: 20_000 });
 test.describe.configure({ timeout: 120_000, retries: 1 });
 
 /**
  * HO-ORD-002 §16 point-of-sale E-series on MSW. E-F1 measures the time of a counter sale driven from the
- * keyboard (NFR-USA-2 spirit: under 60 s); E-F2 shows a prescription line blocked until a customer and a
- * cat are attached. Barcodes are the shop mock's (`89` + the SKU's number, 11 digits).
+ * keyboard (NFR-USA-2 spirit: under 60 s). Barcodes are the shop mock's (`89` + the SKU's number,
+ * 11 digits).
  */
-const KITTEN_400 = '8900000000101';
-const KITTEN_2KG = '8900000000102';
-const WHISKAS = '8900000000201';
-const RX_ELIGIBLE = '8900000000601';
+const OATS_400 = '8900000000101';
+const OATS_2KG = '8900000000102';
+const JASMINE_RICE = '8900000000201';
 
 async function start(page: import('@playwright/test').Page) {
   await page.goto('/staff/sign-in');
@@ -36,7 +34,7 @@ test.describe('point of sale (US-ORD-16)', () => {
     await page.getByLabel(/Mobile number/).fill('01711112222');
     const began = Date.now();
 
-    for (const code of [KITTEN_400, KITTEN_2KG, WHISKAS]) await scan(page, code);
+    for (const code of [OATS_400, OATS_2KG, JASMINE_RICE]) await scan(page, code);
     const basket = page.getByRole('list', { name: 'Basket' });
     await expect(basket.getByRole('listitem')).toHaveCount(3);
     await expect(page.locator('#pos-scan-live')).toContainText(/Added .*quantity 1/);
@@ -79,37 +77,18 @@ test.describe('point of sale (US-ORD-16)', () => {
     page.on('request', (request) => {
       if (request.url().includes('/api/staff/pos/sku?')) lookups += 1;
     });
-    await page.keyboard.type(KITTEN_400, { delay: 80 });
+    await page.keyboard.type(OATS_400, { delay: 80 });
     await page.waitForTimeout(500);
     expect(lookups).toBe(0);
     await page.keyboard.press('Enter');
     await expect(page.getByRole('list', { name: 'Basket' }).getByRole('listitem')).toHaveCount(1);
   });
 
-  test('E-F2: prescription food is blocked until a customer and a cat are attached', async ({ page }) => {
-    await start(page);
-    await scan(page, RX_ELIGIBLE);
-    await expect(page.getByText(/Attach an existing customer and choose their cat/)).toBeVisible();
-    await page.locator('#pos-tender-amount').fill('9999');
-    await page.getByRole('button', { name: 'Add payment' }).click();
-    await expect(page.getByRole('button', { name: 'Complete sale', exact: true })).toBeDisabled();
-
-    await page.getByLabel(/Customer name/).fill('Sam Rahman');
-    await page.getByLabel(/Mobile number/).fill(ids.customerMobile);
-    await page.getByRole('button', { name: 'Find an existing customer' }).click();
-    await page.getByRole('button', { name: /^Attach/ }).first().click();
-    await page.getByRole('combobox', { name: /Which cat is/ }).selectOption({ label: 'Whiskers' });
-    await expect(page.getByRole('button', { name: 'Complete sale', exact: true })).toBeEnabled();
-    await page.getByRole('button', { name: 'Complete sale', exact: true }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Complete sale' }).click();
-    await expect(page.getByRole('heading', { name: /Sale complete/ })).toBeVisible();
-  });
-
   test('a double Enter on the review records one sale', async ({ page }) => {
     await start(page);
     await page.getByLabel(/Customer name/).fill('Walk-in Buyer');
     await page.getByLabel(/Mobile number/).fill('01711113333');
-    await scan(page, WHISKAS);
+    await scan(page, JASMINE_RICE);
     await page.locator('#pos-tender-amount').fill('2000');
     await page.keyboard.press('Enter');
     let sales = 0;

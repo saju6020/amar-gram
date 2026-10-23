@@ -17,10 +17,7 @@ describe('groupStaffNav', () => {
     expect(groups[0]).toMatchObject({ label: null, items: [{ href: '/staff', label: 'Home' }] });
     expect(groups.map((g) => g.label)).toEqual([
       null,
-      'Front desk',
-      'Clinic',
-      'Pharmacy',
-      'Boarding',
+      'Customers',
       'Shop & orders',
       'Stock',
       'Money & reports',
@@ -50,15 +47,15 @@ describe('groupStaffNav', () => {
   });
 
   it('drops a group whose links the member of staff cannot see', () => {
-    const onlyFrontDesk = groupStaffNav([
+    const onlyCustomers = groupStaffNav([
       {
-        key: 'appointments',
-        label: 'Appointments',
+        key: 'accounts',
+        label: 'Accounts',
         audience: 'staff',
-        items: [{ label: 'Front desk', href: '/staff/front-desk' }],
+        items: [{ label: 'Register customer', href: '/staff/customers/new' }],
       },
     ]);
-    expect(onlyFrontDesk.map((g) => g.label)).toEqual(['Front desk']);
+    expect(onlyCustomers.map((g) => g.label)).toEqual(['Customers']);
   });
 });
 
@@ -68,14 +65,10 @@ describe('activeStaffHref', () => {
     ['/staff', '/staff'],
     ['/staff/orders', '/staff/orders'],
     ['/staff/orders/123', '/staff/orders'],
-    ['/staff/boarding', '/staff/boarding'],
-    ['/staff/boarding/tasks', '/staff/boarding/tasks'],
-    ['/staff/pharmacy/controlled-drugs/register', '/staff/pharmacy/controlled-drugs'],
     ['/staff/shop/products/abc', '/staff/shop/products'],
     ['/staff/procurement/purchase-orders', '/staff/procurement/suppliers'],
     ['/staff/admin/settings', '/staff/admin/branches'],
     ['/staff/admin/staff-accounts/42', '/staff/admin/staff-accounts'],
-    ['/staff/admin/boarding/units', '/staff/admin/boarding/units'],
     ['/staff/something-new', null],
   ];
   it.each(cases)('%s marks %s', (pathname, expected) => {

@@ -7,13 +7,12 @@ namespace CatEcommerce.Domain.DomainServices;
 /// (HO-XCT-001 §8.9, ADR-304). Registered by the owning area in its own module. The retention
 /// worker (owned by HO-XCT-001, not built here) calls <see cref="PurgeAsync"/> once per pass,
 /// batched, and never passes a table name -- only a context that owns the table may delete from
-/// it. The one implementation named by HO-XCT-001 today is HO-BRD-001's <c>boarding-media</c>
-/// source (§5.2 C-BRD-2): it deletes the stored object before the metadata row, and is
-/// idempotent.
+/// it. A source that holds stored objects deletes the object before the metadata
+/// row, and is idempotent.
 /// </summary>
 public interface IRetentionPurgeSource
 {
-    /// <summary>Stable identifier for this source, e.g. "boarding-media". Used in the
+    /// <summary>Stable identifier for this source, e.g. "stored-file:ReportExport". Used in the
     /// <c>RetentionPassResult</c> audit row.</summary>
     string SourceKey { get; }
 

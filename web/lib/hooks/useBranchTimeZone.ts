@@ -1,7 +1,7 @@
 import { useMyBranches } from './useActiveBranch';
 import { useAdminBranches } from './useAdminBranches';
 
-/** The fallback while branches load (or when the caller cannot read them): the clinic's own zone. */
+/** The fallback while branches load (or when the caller cannot read them): the business's own zone. */
 export const DEFAULT_BRANCH_TIME_ZONE = 'Asia/Dhaka';
 
 /**

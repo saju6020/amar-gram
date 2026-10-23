@@ -5,7 +5,7 @@ namespace CatEcommerce.Application.Commands.Billing;
 /// <summary>Who physically took the money: a staff member, or a courier (code and name snapshot, OQ-11).</summary>
 public sealed record PaymentCollectorInput(string Kind, Guid? StaffAccountId = null, string? CourierCode = null, string? CourierName = null);
 
-/// <summary>A deposit: money set aside for one order or boarding stay (<c>Kind</c> is an <c>EarmarkKind</c> name).</summary>
+/// <summary>A deposit: money set aside for one order (<c>Kind</c> is an <c>EarmarkKind</c> name).</summary>
 public sealed record PaymentEarmarkInput(string Kind, Guid SourceId, string Label);
 
 public sealed record PaymentAllocationInput(Guid InvoiceId, decimal Amount);
@@ -64,7 +64,7 @@ public sealed class AllocatePaymentCommand : Command
     public required IReadOnlyList<PaymentAllocationInput> Allocations { get; init; }
 }
 
-/// <summary>C14 -- a deposit that will not be used for its order or stay becomes free credit.</summary>
+/// <summary>C14 -- a deposit that will not be used for its order becomes free credit.</summary>
 public sealed class ReleasePaymentEarmarkCommand : Command
 {
     public required Guid PaymentId { get; init; }

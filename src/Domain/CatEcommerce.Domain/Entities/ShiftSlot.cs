@@ -9,16 +9,14 @@ public sealed class ShiftSlot
     public DayOfWeek DayOfWeek { get; private set; }
     public TimeOnly Starts { get; private set; }
     public TimeOnly Ends { get; private set; }
-    public Guid? DefaultRoomId { get; private set; }
 
     private ShiftSlot() { }
 
-    public ShiftSlot(Guid id, DayOfWeek dayOfWeek, TimeOnly starts, TimeOnly ends, Guid? defaultRoomId)
+    public ShiftSlot(Guid id, DayOfWeek dayOfWeek, TimeOnly starts, TimeOnly ends)
     {
         Id = id;
         DayOfWeek = dayOfWeek;
         Starts = starts;
         Ends = ends;
-        DefaultRoomId = defaultRoomId;
     }
 }

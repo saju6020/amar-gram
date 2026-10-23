@@ -58,8 +58,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             await ExpectAsync(HttpStatusCode.BadRequest, noEmailResponse);
             Assert.Contains(BusinessViolationCodes.ReportRecipientHasNoEmail, await CodesAsync(noEmailResponse));
 
-            var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-            var notPermitted = await context.Admin.PostAsJsonAsync("/api/admin/report-schedules", Body(context, ReportCatalogue.RevenueByBusinessLineKey, "MonthToDate", "07:00", [reception.Id]), Json);
+            var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+            var notPermitted = await context.Admin.PostAsJsonAsync("/api/admin/report-schedules", Body(context, ReportCatalogue.RevenueByBusinessLineKey, "MonthToDate", "07:00", [inventory.Id]), Json);
             await ExpectAsync(HttpStatusCode.BadRequest, notPermitted);
             Assert.Contains(BusinessViolationCodes.ReportRecipientNotPermitted, await CodesAsync(notPermitted));
 
@@ -96,7 +96,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
         var context = await CreateBillingContextAsync();
         var accountant = await SeedRecipientAsync(context, StaffRoles.Accountant);
         var customerId = await SeedCustomerAsync(context);
-        var charge = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Service, sourceKind: ChargeSourceKind.Appointment, description: "Consultation");
+        var charge = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Fee, sourceKind: ChargeSourceKind.Manual, description: "Service fee");
         await IssueFromChargesAsync(context.Admin, customerId, [charge]);
 
         var created = await CreateScheduleAsync(context.Admin, Body(context, ReportCatalogue.RevenueByBusinessLineKey, "MonthToDate", "07:00", [accountant.Id]));
@@ -125,7 +125,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(accountant.Email).Count > 0));
 
             var email = Assert.Single(EmailsTo(accountant.Email));
-            Assert.Contains("Revenue by business line", email.Subject);
+            Assert.Contains("Revenue by sales channel", email.Subject);
             var attachment = Assert.Single(email.AttachmentList);
             Assert.Equal(fileName, attachment.FileName);
             Assert.StartsWith("text/csv", attachment.ContentType);
@@ -137,7 +137,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             var export = await client.GetAsync($"/api/staff/reports/{ReportCatalogue.RevenueByBusinessLineKey}/export.csv?from={run.GetProperty("periodFrom").GetString()}&to={run.GetProperty("periodTo").GetString()}&branchId={context.BranchId}");
             await ExpectAsync(HttpStatusCode.OK, export);
             Assert.Equal(await export.Content.ReadAsByteArrayAsync(), attachment.Content);
-            Assert.Contains("Clinic", Encoding.UTF8.GetString(attachment.Content));
+            Assert.Contains("Other", Encoding.UTF8.GetString(attachment.Content));
 
             // The schedule moved on: next 07:00.
             admin = await FreshAdminAsync(context);
@@ -161,8 +161,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id]));
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
         try
         {
             await AdvanceToAsync(created.NextRunOn!.Value);
@@ -173,7 +173,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             var admin = await FreshAdminAsync(context);
             Assert.Single(await RunsAsync(admin, created.ScheduleId));
 
-            var race = await CreateScheduleAsync(admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id], name: "Race"));
+            var race = await CreateScheduleAsync(admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id], name: "Race"));
             try
             {
                 var due = race.NextRunOn!.Value;
@@ -209,9 +209,9 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             }
 
             // And the first schedule, run twice: one email to its recipient, not two.
-            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(reception.Email).Any(m => m.AttachmentList.Any(a => a.FileName.StartsWith("purrcare-fixture-rows-")))));
-            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(reception.Email).Count(m => m.AttachmentList.Any()) >= 2));
-            Assert.Equal(2, EmailsTo(reception.Email).Count(m => m.AttachmentList.Any())); // one per schedule (the race schedule and the first), never two for one slot
+            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(inventory.Email).Any(m => m.AttachmentList.Any(a => a.FileName.StartsWith("purrcare-fixture-rows-")))));
+            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(inventory.Email).Count(m => m.AttachmentList.Any()) >= 2));
+            Assert.Equal(2, EmailsTo(inventory.Email).Count(m => m.AttachmentList.Any())); // one per schedule (the race schedule and the first), never two for one slot
         }
         finally
         {
@@ -225,8 +225,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id]));
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
         try
         {
             await AdvanceToAsync(created.NextRunOn!.Value);
@@ -275,7 +275,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             Assert.True(await GuardAsync(runId, accountant.Id));
 
             // ... and once the role is gone it is not.
-            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{accountant.Id}/roles", new { roleIds = new[] { StaffRoles.Reception } }, Json));
+            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{accountant.Id}/roles", new { roleIds = new[] { StaffRoles.Inventory } }, Json));
             Assert.False(await GuardAsync(runId, accountant.Id));
 
             Factory.Clock.Advance(TimeSpan.FromHours(1));
@@ -297,8 +297,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id]));
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
         try
         {
             await AdvanceToAsync(created.NextRunOn!.Value);
@@ -306,15 +306,15 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             var admin = await FreshAdminAsync(context);
             var runId = Assert.Single(await RunsAsync(admin, created.ScheduleId)).GetProperty("runId").GetGuid();
 
-            Assert.True(await GuardAsync(runId, reception.Id));
-            Assert.False(await GuardAsync(Guid.NewGuid(), reception.Id));      // no such run
+            Assert.True(await GuardAsync(runId, inventory.Id));
+            Assert.False(await GuardAsync(Guid.NewGuid(), inventory.Id));      // no such run
             Assert.False(await GuardAsync(runId, Guid.NewGuid()));              // no such account
 
             // An account whose roles are all removed is inactive for this purpose.
-            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{reception.Id}/roles", new { roleIds = new[] { StaffRoles.Nurse } }, Json));
-            Assert.False(await GuardAsync(runId, reception.Id));
-            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{reception.Id}/roles", new { roleIds = new[] { StaffRoles.Reception } }, Json));
-            Assert.True(await GuardAsync(runId, reception.Id));
+            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{inventory.Id}/roles", new { roleIds = new[] { StaffRoles.Reception } }, Json));
+            Assert.False(await GuardAsync(runId, inventory.Id));
+            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{inventory.Id}/roles", new { roleIds = new[] { StaffRoles.Inventory } }, Json));
+            Assert.True(await GuardAsync(runId, inventory.Id));
 
             // A purged run: the file is gone.
             await using (var scope = Factory.Services.CreateAsyncScope())
@@ -324,7 +324,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
                 run.Purge(Now, new UserContext(ReportingSystemActors.ReportingWorker, Guid.Empty));
                 await repository.UpdateAsync(run, EventPublishOption.InMemoryPublishOnly);
             }
-            Assert.False(await GuardAsync(runId, reception.Id));
+            Assert.False(await GuardAsync(runId, inventory.Id));
         }
         finally
         {
@@ -338,8 +338,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id]));
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
         try
         {
             await AdvanceToAsync(created.NextRunOn!.Value);
@@ -359,7 +359,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
 
             await RunDeliveryPassesUntilAsync(async () => (await NotificationsForRunAsync(runId)) is { Count: > 0 } rows && rows.All(n => n.Status != "Pending" && n.Status != "Queued"));
 
-            Assert.Empty(EmailsTo(reception.Email));
+            Assert.Empty(EmailsTo(inventory.Email));
             var notification = Assert.Single(await NotificationsForRunAsync(runId));
             Assert.Equal("Cancelled", notification.Status);
             Assert.Equal(NotificationCloseReason.SubjectNoLongerApplies.DisplayName, notification.CloseReason);
@@ -376,8 +376,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id]));
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
         try
         {
             await AdvanceToAsync(created.NextRunOn!.Value);
@@ -407,10 +407,10 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
         var administrator = await SeedRecipientAsync(context, StaffRoles.Administrator);
 
-        var mixed = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id, administrator.Id], name: "Mixed"));
+        var mixed = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id, administrator.Id], name: "Mixed"));
         var adminsOnly = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [administrator.Id], name: "Admins"));
         try
         {
@@ -421,11 +421,11 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             var mixedRun = Assert.Single(await RunsAsync(admin, mixed.ScheduleId));
             var adminsRun = Assert.Single(await RunsAsync(admin, adminsOnly.ScheduleId));
 
-            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(reception.Email).Count > 0 && EmailsTo(administrator.Email).Count >= 2));
+            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(inventory.Email).Count > 0 && EmailsTo(administrator.Email).Count >= 2));
 
-            var receptionCsv = Encoding.UTF8.GetString(Assert.Single(EmailsTo(reception.Email)).AttachmentList.Single().Content);
-            Assert.DoesNotContain("Secret", receptionCsv);
-            Assert.Contains("Amount", receptionCsv);
+            var inventoryCsv = Encoding.UTF8.GetString(Assert.Single(EmailsTo(inventory.Email)).AttachmentList.Single().Content);
+            Assert.DoesNotContain("Secret", inventoryCsv);
+            Assert.Contains("Amount", inventoryCsv);
 
             // The administrator got the same restricted file from the mixed schedule, and the full one from the administrators-only schedule.
             var adminFiles = EmailsTo(administrator.Email).Select(m => Encoding.UTF8.GetString(m.AttachmentList.Single().Content)).ToList();
@@ -451,10 +451,10 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
 
         await SetMaxAttachmentMegabytesAsync(context.Admin, 1);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id], parameters: new Dictionary<string, string> { ["rows"] = "40000" }));
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id], parameters: new Dictionary<string, string> { ["rows"] = "40000" }));
         try
         {
             await AdvanceToAsync(created.NextRunOn!.Value);
@@ -466,8 +466,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             Assert.Equal("Generated", run.GetProperty("status").GetString());
             Assert.True(run.GetProperty("contentLength").GetInt64() > 1024 * 1024);
 
-            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(reception.Email).Count > 0));
-            var email = Assert.Single(EmailsTo(reception.Email));
+            await RunDeliveryPassesUntilAsync(() => Task.FromResult(EmailsTo(inventory.Email).Count > 0));
+            var email = Assert.Single(EmailsTo(inventory.Email));
             Assert.Empty(email.AttachmentList);
             Assert.Contains("too large to attach", email.TextBody);
             Assert.Contains("/staff/reports/" + ReportingFixtures.RowsKey, email.TextBody);
@@ -485,8 +485,8 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id]));
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
         try
         {
             var runNow = await context.Admin.PostAsync($"/api/admin/report-schedules/{created.ScheduleId}/run-now", null);
@@ -545,14 +545,14 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
         var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var nurse = await SeedRecipientAsync(context, StaffRoles.Nurse);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id], name: "Reception rows"));
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id], name: "Inventory rows"));
         try
         {
             var list = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await context.Admin.GetAsync($"/api/admin/report-schedules?status=Active&reportKey={ReportingFixtures.RowsKey}")));
             var item = list.GetProperty("items").EnumerateArray().Single(i => i.GetProperty("id").GetGuid() == created.ScheduleId);
-            Assert.Equal("Reception rows", item.GetProperty("name").GetString());
+            Assert.Equal("Inventory rows", item.GetProperty("name").GetString());
             Assert.Equal("Daily", item.GetProperty("frequencyLabel").GetString());
             Assert.Equal("10:00", item.GetProperty("sendAtLocal").GetString());
             Assert.Equal("Asia/Dhaka", item.GetProperty("timeZoneId").GetString());
@@ -564,14 +564,14 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
             Assert.True(recipient.GetProperty("stillPermitted").GetBoolean());
             var version = detail.GetProperty("version").GetInt32();
 
-            // Eligible recipients: the receptionist holds the clinic-operations action, the nurse does not.
+            // Eligible recipients: the inventory clerk holds the stock action, the receptionist does not.
             var eligible = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await context.Admin.GetAsync($"/api/admin/report-schedules/recipients?reportKey={ReportingFixtures.RowsKey}&branchId={context.BranchId}")));
             var ids = eligible.EnumerateArray().Select(e => e.GetProperty("id").GetGuid()).ToList();
-            Assert.Contains(reception.Id, ids);
-            Assert.DoesNotContain(nurse.Id, ids);
+            Assert.Contains(inventory.Id, ids);
+            Assert.DoesNotContain(reception.Id, ids);
             await ExpectAsync(HttpStatusCode.NotFound, await context.Admin.GetAsync("/api/admin/report-schedules/recipients?reportKey=nope"));
 
-            var update = Body(context, ReportingFixtures.RowsKey, "Today", "12:30", [reception.Id], name: "Renamed", expectedVersion: version);
+            var update = Body(context, ReportingFixtures.RowsKey, "Today", "12:30", [inventory.Id], name: "Renamed", expectedVersion: version);
             var ok = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await context.Admin.PutAsJsonAsync($"/api/admin/report-schedules/{created.ScheduleId}", update, Json)));
             Assert.Equal(NextLocalOccurrence(new TimeOnly(12, 30)), DateTimeOffset.Parse(ok.GetProperty("nextRunOn").GetString()!));
 
@@ -634,10 +634,10 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
 
         // The write fixture tries to write inside the read-only scope and fails every time.
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.WriteKey, "Today", "10:00", [reception.Id]));
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.WriteKey, "Today", "10:00", [inventory.Id]));
         try
         {
             await AdvanceToAsync(created.NextRunOn!.Value);
@@ -654,7 +654,7 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
                 else Assert.True(next > Now, "Advanced after the third failed attempt.");
             }
 
-            Assert.Empty(EmailsTo(reception.Email));
+            Assert.Empty(EmailsTo(inventory.Email));
         }
         finally
         {
@@ -692,12 +692,12 @@ public sealed class ReportingScheduleDstEndpointTests(ReportingApiFactory factor
         await AssignAsync(admin.Client, admin.Id, branchId);
         admin.Client.DefaultRequestHeaders.Add(CatEcommerce.Api.Branches.HttpContextActiveBranchAccessor.BranchHeaderName, branchId.ToString());
 
-        var reception = await SeedStaffWithEmailAsync(StaffRoles.Reception);
-        await AssignAsync(admin.Client, reception.Id, branchId);
+        var inventory = await SeedStaffWithEmailAsync(StaffRoles.Inventory);
+        await AssignAsync(admin.Client, inventory.Id, branchId);
 
         var created = await CreateScheduleAsync(admin.Client, new
         {
-            name = "London daily", reportKey = ReportingFixtures.RowsKey, branchId, period = "Today", format = "Csv", frequency = "Daily", sendAtLocal = "07:00", recipientIds = new[] { reception.Id }
+            name = "London daily", reportKey = ReportingFixtures.RowsKey, branchId, period = "Today", format = "Csv", frequency = "Daily", sendAtLocal = "07:00", recipientIds = new[] { inventory.Id }
         });
         try
         {

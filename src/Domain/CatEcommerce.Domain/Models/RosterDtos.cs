@@ -2,7 +2,7 @@ using Platform.Infrastructure.Common.Security;
 
 namespace CatEcommerce.Domain.Models;
 
-public sealed record ShiftSlotInput(DayOfWeek DayOfWeek, TimeOnly Starts, TimeOnly Ends, Guid? DefaultRoomId);
+public sealed record ShiftSlotInput(DayOfWeek DayOfWeek, TimeOnly Starts, TimeOnly Ends);
 
 public sealed record RosterCurrentPatternSetDto(
     IReadOnlyList<ShiftSlotInput> Slots, DateOnly Today, UserContext UserContext, Guid CorrelationId);

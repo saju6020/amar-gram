@@ -50,7 +50,7 @@ public sealed class PurgeExpiredRecordsCommand : Command
     public required int BatchSize { get; init; }
 }
 
-/// <summary>C8 -- one batch of one registered <c>IRetentionPurgeSource</c> (for example boarding media). Returns its <c>PurgeResult</c>.</summary>
+/// <summary>C8 -- one batch of one registered <c>IRetentionPurgeSource</c>. Returns its <c>PurgeResult</c>.</summary>
 public sealed class RunPurgeSourceCommand : Command
 {
     public required string SourceKey { get; init; }

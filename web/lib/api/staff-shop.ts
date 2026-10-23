@@ -113,7 +113,6 @@ export interface StaffTranslation {
 }
 export interface StaffFoodDetail {
   manufacturer: string | null;
-  lifeStage: string | null;
   proteinSource: string | null;
   ingredientList: string | null;
   guaranteedAnalysis: {
@@ -150,7 +149,6 @@ export interface StaffProductDetail {
   firstPublishedOn: string | null;
   taxClassId: string;
   countryOfOriginCode: string | null;
-  prescriptionRequired: boolean;
   isExpiryTracked: boolean;
   listedOnStorefront: boolean;
   skus: StaffSku[];
@@ -218,7 +216,6 @@ export function changeProductSlug(
 export interface SetFoodDetailsRequest {
   expectedVersion: number;
   manufacturer?: string | null;
-  lifeStage?: string | null;
   proteinSource?: string | null;
   ingredientList?: string | null;
   guaranteedAnalysis?: {
@@ -232,13 +229,6 @@ export interface SetFoodDetailsRequest {
 }
 export function setFoodDetails(productId: string, request: SetFoodDetailsRequest): Promise<void> {
   return apiFetch(`${productPath(productId)}/food`, { method: 'PUT', body: request });
-}
-
-export function setPrescriptionRequired(
-  productId: string,
-  request: { expectedVersion: number; prescriptionRequired: boolean },
-): Promise<void> {
-  return apiFetch(`${productPath(productId)}/prescription`, { method: 'PUT', body: request });
 }
 
 export interface ProductImageInput {

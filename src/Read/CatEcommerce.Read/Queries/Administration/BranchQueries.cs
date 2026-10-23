@@ -19,11 +19,6 @@ public sealed class GetBranchClosuresQuery : Query<IReadOnlyList<BranchClosureVi
     public DateOnly? To { get; init; }
 }
 
-public sealed class GetRoomsQuery : Query<IReadOnlyList<RoomViewModel>>
-{
-    public required Guid BranchId { get; init; }
-}
-
 public sealed class GetBranchCalendarQuery : Query<IReadOnlyList<TimeIntervalViewModel>>
 {
     public required Guid BranchId { get; init; }

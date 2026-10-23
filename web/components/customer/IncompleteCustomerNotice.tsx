@@ -11,7 +11,7 @@ export function IncompleteCustomerNotice() {
         set their password.
       </p>
       <p className="mt-1">
-        Online password setup isn&rsquo;t available yet; the customer can be served in the clinic.
+        Online password setup isn&rsquo;t available yet; the customer can be served at the outlet.
       </p>
     </div>
   );

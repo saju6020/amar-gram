@@ -94,7 +94,7 @@ internal static class InvoiceViewMapper
     public static MoneyViewModel Money(decimal amount, string currencyCode) => BillingMoney.Of(amount, currencyCode);
 
     public static InvoiceLineViewModel ToView(this InvoiceLineRow l, string currency) => new(
-        l.Id, l.ChargeId, l.BusinessLine.DisplayName, l.ItemKind.DisplayName, l.SourceKind.DisplayName, l.SourceId, l.CatId, l.Description,
+        l.Id, l.ChargeId, l.BusinessLine.DisplayName, l.ItemKind.DisplayName, l.SourceKind.DisplayName, l.SourceId, l.Description,
         BillingMoney.Quantity(l.Quantity), Money(l.UnitPrice, currency), Money(l.LineDiscount, currency), Money(l.InvoiceDiscountShare, currency),
         l.TaxClassId, l.TaxClassCode, l.TaxRatePercent.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
         Money(l.NetAmount, currency), Money(l.TaxAmount, currency), Money(l.GrossAmount, currency), l.SortOrder);

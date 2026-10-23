@@ -24,13 +24,12 @@ beforeEach(() => {
 });
 
 describe('ProductCard — HO-SHP-002 §11.2', () => {
-  it('U-A3: varying price, out of stock, prescription, rated, no image URL', () => {
+  it('U-A3: varying price, out of stock, rated, no image URL', () => {
     renderWithClient(
       <ProductCard
         item={makeItem({
           priceVaries: true,
           availability: 'OutOfStock',
-          prescriptionRequired: true,
           kind: 'Bundle',
         })}
       />,
@@ -38,15 +37,14 @@ describe('ProductCard — HO-SHP-002 §11.2', () => {
     const card = within(screen.getByRole('article'));
     expect(card.getByText('From ৳650.00')).toBeInTheDocument();
     expect(card.getByText('Out of stock')).toBeInTheDocument();
-    expect(card.getByText('Vet authorisation needed')).toBeInTheDocument();
     expect(card.getByText('4.5 out of 5 (23 reviews)')).toBeInTheDocument();
     expect(card.getByText('Kit')).toBeInTheDocument();
     // No photo URL: the tinted pack drawing stands in, named by the API's alt text.
-    expect(card.getByRole('img', { name: 'Royal Canin Kitten bag' })).toBeInTheDocument();
-    expect(card.getByRole('heading', { level: 2 })).toHaveTextContent('Royal Canin Kitten');
-    expect(card.getByRole('link', { name: 'Royal Canin Kitten' })).toHaveAttribute(
+    expect(card.getByRole('img', { name: 'Organic Rolled Oats bag' })).toBeInTheDocument();
+    expect(card.getByRole('heading', { level: 2 })).toHaveTextContent('Organic Rolled Oats');
+    expect(card.getByRole('link', { name: 'Organic Rolled Oats' })).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten',
+      '/shop/products/organic-rolled-oats',
     );
   });
 
@@ -60,9 +58,9 @@ describe('ProductCard — HO-SHP-002 §11.2', () => {
 
   it('carries the content language on the product link', () => {
     renderWithClient(<ProductCard item={makeItem()} lang="bn" />);
-    expect(screen.getByRole('link', { name: 'Royal Canin Kitten' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Organic Rolled Oats' })).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten?lang=bn',
+      '/shop/products/organic-rolled-oats?lang=bn',
     );
   });
 });
@@ -71,18 +69,18 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
   const single = () =>
     makeItem({
       productId: 'p-2',
-      slug: shopFixtureIds.thaiKittenSlug,
-      name: 'Whiskas Kitten Salmon',
+      slug: shopFixtureIds.thaiRiceSlug,
+      name: 'Thai Jasmine Rice',
     });
 
   it('shows the 44px wishlist heart; a guest is sent to sign in and back to the product', async () => {
     renderWithClient(<ProductCard item={single()} />);
     const heart = await screen.findByRole('link', {
-      name: 'Save Whiskas Kitten Salmon to wishlist: sign in first',
+      name: 'Save Thai Jasmine Rice to wishlist: sign in first',
     });
     expect(heart).toHaveAttribute(
       'href',
-      `/sign-in?next=${encodeURIComponent(`/shop/products/${shopFixtureIds.thaiKittenSlug}`)}`,
+      `/sign-in?next=${encodeURIComponent(`/shop/products/${shopFixtureIds.thaiRiceSlug}`)}`,
     );
     expect(heart).toHaveClass('size-11');
   });
@@ -92,7 +90,7 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
     signInForTest();
     renderWithClient(<ProductCard item={single()} />);
     const heart = await screen.findByRole('button', {
-      name: 'Save Whiskas Kitten Salmon to wishlist',
+      name: 'Save Thai Jasmine Rice to wishlist',
     });
     expect(heart).toHaveAttribute('aria-pressed', 'false');
     await user.click(heart);
@@ -104,9 +102,9 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
   it('Add puts a single-size product straight in the cart', async () => {
     const user = userEvent.setup();
     renderWithClient(<ProductCard item={single()} />);
-    await user.click(screen.getByRole('button', { name: 'Add Whiskas Kitten Salmon to cart' }));
+    await user.click(screen.getByRole('button', { name: 'Add Thai Jasmine Rice to cart' }));
     // No visible note (owner, 2026-10-18): only a screen-reader announcement, and no View cart link.
-    expect(await screen.findByText(/Added Whiskas Kitten Salmon to your cart/)).toHaveClass('sr-only');
+    expect(await screen.findByText(/Added Thai Jasmine Rice to your cart/)).toHaveClass('sr-only');
     expect(screen.queryByRole('link', { name: 'View cart' })).not.toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
@@ -120,30 +118,17 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
       />,
     );
     await user.click(
-      screen.getByRole('button', { name: 'Add Royal Canin Kitten: choose options' }),
+      screen.getByRole('button', { name: 'Add Organic Rolled Oats: choose options' }),
     );
-    expect(push).toHaveBeenCalledWith('/shop/products/royal-canin-kitten?lang=bn');
-  });
-
-  it('Add on a prescription diet goes to the product page, where the cat flow lives', async () => {
-    const user = userEvent.setup();
-    renderWithClient(
-      <ProductCard
-        item={makeItem({ slug: shopFixtureIds.rxEligibleSlug, prescriptionRequired: true })}
-      />,
-    );
-    await user.click(
-      screen.getByRole('button', { name: 'Add Royal Canin Kitten: choose options' }),
-    );
-    expect(push).toHaveBeenCalledWith(`/shop/products/${shopFixtureIds.rxEligibleSlug}`);
+    expect(push).toHaveBeenCalledWith('/shop/products/organic-rolled-oats?lang=bn');
   });
 
   it('an out-of-stock card offers Alert me (the stock alert) instead of Add', () => {
     renderWithClient(<ProductCard item={makeItem({ availability: 'OutOfStock' })} />);
     expect(screen.queryByRole('button', { name: /^Add / })).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'Tell me when Royal Canin Kitten is back' }),
-    ).toHaveAttribute('href', '/shop/products/royal-canin-kitten#stock-alert');
+      screen.getByRole('link', { name: 'Tell me when Organic Rolled Oats is back' }),
+    ).toHaveAttribute('href', '/shop/products/organic-rolled-oats#stock-alert');
   });
 });
 
@@ -153,17 +138,17 @@ describe('NoResults — HO-SHP-002 §11.2, US-SHP-06 AC3', () => {
       <NoResults
         q="royl canan"
         suggestions={{
-          didYouMean: ['royal canin'],
+          didYouMean: ['rolled oats'],
           popular: [makeItem({ productId: 'p-2', name: 'Popular Pick' })],
         }}
-        hrefForQuery={(q) => `/shop/products?q=${encodeURIComponent(q)}&brand=Whiskas`}
+        hrefForQuery={(q) => `/shop/products?q=${encodeURIComponent(q)}&brand=Sunfield`}
         clearHref="/shop/products?q=royl%20canan"
       />,
     );
     expect(screen.getByText(/No products match/)).toHaveTextContent('“royl canan”');
-    expect(screen.getByRole('link', { name: 'royal canin' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'rolled oats' })).toHaveAttribute(
       'href',
-      '/shop/products?q=royal%20canin&brand=Whiskas',
+      '/shop/products?q=rolled%20oats&brand=Sunfield',
     );
     expect(screen.getByRole('heading', { name: 'Popular right now' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Popular Pick' })).toBeInTheDocument();
@@ -229,7 +214,7 @@ describe('ProductCard — one card per size', () => {
     renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
     const card = within(screen.getByRole('article'));
     expect(card.getByText('1 kg')).toBeInTheDocument();
-    const link = card.getByRole('link', { name: /Royal Canin Kitten\s*·\s*1 kg/ });
+    const link = card.getByRole('link', { name: /Organic Rolled Oats\s*·\s*1 kg/ });
     expect(link.getAttribute('href')).toContain('sku=sku-1kg');
   });
 
@@ -246,7 +231,7 @@ describe('ProductCard — one card per size', () => {
       <ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg', priceVaries: false })} />,
     );
     await userEvent.click(
-      screen.getByRole('button', { name: /^Add Royal Canin Kitten · 1 kg to cart/ }),
+      screen.getByRole('button', { name: /^Add Organic Rolled Oats · 1 kg to cart/ }),
     );
     await waitFor(() => expect(posted).toEqual([{ skuId: 'sku-1kg', quantity: 1 }]));
     expect(push).not.toHaveBeenCalled();

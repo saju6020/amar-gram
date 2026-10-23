@@ -3,24 +3,9 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  Bed,
-  Calendar,
-  Cat,
-  Heart,
-  House,
-  LogOut,
-  Package,
-  Pill,
-  Receipt,
-  Scissors,
-  Star,
-  User,
-  type LucideIcon,
-} from 'lucide-react';
+import { Heart, House, LogOut, Package, Receipt, Star, User, type LucideIcon } from 'lucide-react';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { useCustomerProfile } from '@/lib/hooks/useAccount';
-import { useCats } from '@/lib/hooks/useCats';
 import { useMyOrders } from '@/lib/hooks/useMyOrders';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
@@ -34,11 +19,6 @@ import {
 
 const ICONS: Record<AccountIcon, LucideIcon> = {
   home: House,
-  cat: Cat,
-  calendar: Calendar,
-  pill: Pill,
-  scissors: Scissors,
-  bed: Bed,
   package: Package,
   heart: Heart,
   star: Star,
@@ -56,18 +36,13 @@ export function initialsOf(fullName: string): string {
   return (first + last).toUpperCase() || '?';
 }
 
-/** "2 cats · member since 2026" — each half only once its figure has loaded. */
+/** "Member since 2026" — only once the profile has loaded. */
 function useAccountSummary(): string | null {
-  const cats = useCats({ pageNumber: 1, pageSize: 1 });
   const profile = useCustomerProfile();
-  const parts: string[] = [];
-  const catCount = cats.data?.totalCount;
-  if (catCount !== undefined) parts.push(`${catCount} ${catCount === 1 ? 'cat' : 'cats'}`);
   const year = profile.data?.registeredOn
     ? new Date(profile.data.registeredOn).getFullYear()
     : null;
-  if (year) parts.push(`member since ${year}`);
-  return parts.length > 0 ? parts.join(' · ') : null;
+  return year ? `Member since ${year}` : null;
 }
 
 function useOpenOrderCount(): number {
@@ -78,7 +53,7 @@ function useOpenOrderCount(): number {
 /**
  * Option A "Account sidebar" as approved by the owner (2026-10-17;
  * https://claude.ai/artifact/K3WKkwpv67BqLJJdSr3bUh): on desktop a left menu with the customer
- * ("2 cats · member since 2026"), Overview and three groups — My cats & care, Shopping (Orders
+ * ("Member since 2026"), Overview and two groups — Shopping (Orders
  * with its open count), Account (Billing, Profile & security, Sign out). The current page is teal.
  */
 export function AccountSidebar() {
@@ -227,7 +202,7 @@ export function AccountPills() {
 
 /**
  * The account frame: on /portal pages for a signed-in customer, the pills (phone) or the sidebar
- * (desktop) beside the page; anywhere else in the group (booking, checkout, boarding search) just
+ * (desktop) beside the page; anywhere else in the group (checkout) just
  * the page, so a flow keeps its focus.
  */
 export function AccountFrame({ children }: { children: React.ReactNode }) {

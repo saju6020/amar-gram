@@ -1,7 +1,6 @@
 using System.Globalization;
 using CatEcommerce.Domain.Aggregates.Account;
 using CatEcommerce.Domain.Aggregates.Administration;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.Aggregates.Inventory;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Infrastructure.Persistence;
@@ -96,7 +95,7 @@ public sealed class GetStaffOrderDetailQueryHandler(CatEcommerceDbContext db) : 
                 },
                 Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new
                 {
-                    l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.CatId, l.Quantity, l.UnitPrice, l.LineTotal, l.QuantityReturned,
+                    l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.Quantity, l.UnitPrice, l.LineTotal, l.QuantityReturned,
                     Allocations = l.Allocations.Select(a => new { a.BatchId, a.LotNumber, a.BatchExpiresOn, a.LocationId, a.Quantity }).ToList(),
                 }).ToList(),
                 History = o.StatusHistory.OrderBy(h => h.ChangedOn).Select(h => new { h.From, h.To, h.ChangedOn, h.ChangedBy, h.Note }).ToList(),
@@ -118,11 +117,6 @@ public sealed class GetStaffOrderDetailQueryHandler(CatEcommerceDbContext db) : 
         var actorIds = head.History.Select(h => h.ChangedBy).Distinct().ToList();
         var staffNames = await db.Set<StaffAccountAggregate>().AsNoTracking().Where(s => actorIds.Contains(s.Id)).Select(s => new { s.Id, s.FullName }).ToDictionaryAsync(s => s.Id, s => s.FullName);
 
-        var catIds = head.Lines.Where(l => l.CatId != null).Select(l => l.CatId!.Value).Distinct().ToList();
-        var cats = catIds.Count == 0
-            ? new Dictionary<Guid, string>()
-            : await db.Set<CatAggregate>().AsNoTracking().Where(c => catIds.Contains(c.Id)).Select(c => new { c.Id, c.Name }).ToDictionaryAsync(c => c.Id, c => c.Name);
-
         string? pickupName = null;
         string? pickupAddress = null;
         if (head.F.PickupBranchId is { } pickupId)
@@ -140,7 +134,7 @@ public sealed class GetStaffOrderDetailQueryHandler(CatEcommerceDbContext db) : 
             head.Id, head.Version, head.OrderNumber, head.PlacedOn, head.Channel.DisplayName, head.CustomerId, head.Status.DisplayName, head.FulfilmentMethod.DisplayName,
             head.PaymentMethod.DisplayName, timeZoneId,
             head.Lines.Select(l => new StaffOrderLineViewModel(
-                l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.CatId is { } c && cats.TryGetValue(c, out var catName) ? new CartCatViewModel(c, catName) : null, l.Quantity,
+                l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.Quantity,
                 Money(l.UnitPrice), Money(l.LineTotal), l.QuantityReturned,
                 l.Allocations.Select(a => new StaffAllocationViewModel(a.BatchId, a.LotNumber, a.BatchExpiresOn, a.LocationId, locations.GetValueOrDefault(a.LocationId, string.Empty), a.Quantity)).ToList())).ToList(),
             new OrderTotalsViewModel(
@@ -221,17 +215,13 @@ public sealed class GetPackingSlipQueryHandler(CatEcommerceDbContext db) : IQuer
                     o.Fulfilment.RecipientName, o.Fulfilment.RecipientPhone, o.Fulfilment.Line1, o.Fulfilment.Line2, o.Fulfilment.City, o.Fulfilment.District, o.Fulfilment.PostalCode,
                     o.Fulfilment.DeliveryInstructions, o.Fulfilment.SlotDate, o.Fulfilment.SlotWindowLabel, o.Fulfilment.PickupBranchId,
                 },
-                Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new { l.LineNumber, l.ProductName, l.VariantLabel, l.Quantity, l.CatId, Batches = l.Allocations.Select(a => a.LotNumber).ToList() }).ToList(),
+                Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new { l.LineNumber, l.ProductName, l.VariantLabel, l.Quantity, Batches = l.Allocations.Select(a => a.LotNumber).ToList() }).ToList(),
             })
             .FirstOrDefaultAsync();
 
         if (order is null) return new QueryResponse<PackingSlipViewModel?> { Result = null };
 
         var timeZoneId = await db.Set<BranchAggregate>().AsNoTracking().Where(b => b.Id == query.BranchId).Select(b => b.TimeZoneId).FirstOrDefaultAsync() ?? "UTC";
-        var catIds = order.Lines.Where(l => l.CatId != null).Select(l => l.CatId!.Value).Distinct().ToList();
-        var cats = catIds.Count == 0
-            ? new Dictionary<Guid, string>()
-            : await db.Set<CatAggregate>().AsNoTracking().Where(c => catIds.Contains(c.Id)).Select(c => new { c.Id, c.Name }).ToDictionaryAsync(c => c.Id, c => c.Name);
 
         string? pickupName = null;
         if (order.F.PickupBranchId is { } pickupId)
@@ -244,7 +234,7 @@ public sealed class GetPackingSlipQueryHandler(CatEcommerceDbContext db) : IQuer
             order.Id, order.OrderNumber, order.PlacedOn, order.F.RecipientName, order.F.RecipientName, order.F.RecipientPhone, order.FulfilmentMethod.DisplayName,
             string.IsNullOrEmpty(address) ? null : address, pickupName,
             order.F.SlotDate is { } date ? $"{date:yyyy-MM-dd} {order.F.SlotWindowLabel}".Trim() : null,
-            order.Lines.Select(l => new PackingSlipLineViewModel(l.LineNumber, l.ProductName, l.VariantLabel, l.Quantity, l.CatId is { } c ? cats.GetValueOrDefault(c) : null, l.Batches)).ToList(),
+            order.Lines.Select(l => new PackingSlipLineViewModel(l.LineNumber, l.ProductName, l.VariantLabel, l.Quantity, l.Batches)).ToList(),
             codDue is { } due ? OrderMoney.Of(due, order.CurrencyCode) : null, order.F.DeliveryInstructions, timeZoneId);
 
         return new QueryResponse<PackingSlipViewModel?> { Result = view };

@@ -1,6 +1,6 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import { looksLikeCardNumber } from '@/lib/validation/cardNumberGuard';
-import { addDaysIso } from '@/lib/format/appointment';
+import { addDaysIso } from '@/lib/format/time';
 import { billingIds as ids, forbidden, isAccountsRole, isAdministrator, notFound, pageParams, paged, violation } from './fixtures';
 import {
   cashUpFor,

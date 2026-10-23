@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { TriangleAlert } from 'lucide-react';
 import type { PortalBalances, PortalMoney } from '@/lib/api/portal';
-import { usePortalClinicContacts } from '@/lib/hooks/usePortalDashboard';
+import { usePortalBranchContacts } from '@/lib/hooks/usePortalDashboard';
 import { formatMoney } from '@/lib/format/money';
 import { formatDateOnly } from '@/lib/format/time';
 import { portalInvoiceHref } from '@/lib/routing/portal-links';
@@ -13,7 +13,7 @@ import { TileEmpty, TileRow } from './DashboardSection';
 
 /**
  * Balances are guidance, not a payment surface (SRS §1.2, ADR-FE-122): what is owed per currency,
- * how to pay offline (the backend's own text), the clinics' phone numbers, and links to the
+ * how to pay offline (the backend's own text), the outlets' phone numbers, and links to the
  * invoices. There is no pay control, and amounts in different currencies are never added.
  */
 
@@ -25,8 +25,8 @@ function overdueFor(overdue: PortalMoney[], currencyCode: string): PortalMoney |
   return overdue.find((m) => m.currencyCode === currencyCode && Number(m.amount) > 0);
 }
 
-function ClinicContacts() {
-  const { data } = usePortalClinicContacts();
+function BranchContacts() {
+  const { data } = usePortalBranchContacts();
   const withPhone = (data ?? []).filter((branch) => branch.phoneNumber);
   if (withPhone.length === 0) return null;
   return (
@@ -90,7 +90,7 @@ export function BalancesTile({ data }: { data: PortalBalances }) {
           <p>
             <b>How to pay.</b> {data.howToPay}
           </p>
-          <ClinicContacts />
+          <BranchContacts />
         </div>
       </div>
       <div>

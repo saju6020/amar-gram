@@ -40,7 +40,11 @@ public sealed class RetentionGuardMigrationTests
 
         Assert.DoesNotContain(inMigration, t => RetentionGuardSql.DedicatedlyGuardedTables.Any(d => $"{d.Schema}.{d.Table}" == t));
         Assert.Equal(inMigration.Count, inMigration.Distinct().Count());
-        Assert.All(inMigration, table => Assert.Contains(table, forbidden));
+        // Tables retired since the migration was written are no longer classified at all; every table still classified must be Forbidden.
+        var stillClassified = CatEcommerce.Infrastructure.Persistence.Migrations.AddRetentionGuards.TablesAtMigration
+            .Where(t => RecordClassification.Find(t.Schema, t.Table) is not null)
+            .Select(t => $"{t.Schema}.{t.Table}");
+        Assert.All(stillClassified, table => Assert.Contains(table, forbidden));
     }
 
     /// <summary>Tables a migration after AddRetentionGuards attaches the two triggers to (scanned from the migration sources).</summary>

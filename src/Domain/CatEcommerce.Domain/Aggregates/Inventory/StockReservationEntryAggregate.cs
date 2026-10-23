@@ -7,7 +7,7 @@ namespace CatEcommerce.Domain.Aggregates.Inventory;
 
 public sealed record StockReservationEntryDto(
     Guid BranchId, Guid LocationId, Guid SkuId, Guid BatchId, ReservationEntryKind Kind, decimal QuantityDelta,
-    StockReferenceKind ReferenceKind, Guid ReferenceId, Guid ReferenceLineId, Guid? CustomerId, Guid? CatId,
+    StockReferenceKind ReferenceKind, Guid ReferenceId, Guid ReferenceLineId, Guid? CustomerId,
     bool FefoOverridden, string? OverrideReason, Guid PerformedBy, DateTimeOffset OccurredOn, UserContext UserContext);
 
 /// <summary>
@@ -30,7 +30,6 @@ public sealed class StockReservationEntryAggregate : AggregateRoot
     public Guid ReferenceId { get; private set; }
     public Guid ReferenceLineId { get; private set; }
     public Guid? CustomerId { get; private set; }
-    public Guid? CatId { get; private set; }
     public bool FefoOverridden { get; private set; }
     public string? OverrideReason { get; private set; }
     public Guid PerformedBy { get; private set; }
@@ -49,7 +48,7 @@ public sealed class StockReservationEntryAggregate : AggregateRoot
         {
             OccurredOn = dto.OccurredOn, BranchId = dto.BranchId, LocationId = dto.LocationId, SkuId = dto.SkuId, BatchId = dto.BatchId,
             Kind = dto.Kind, QuantityDelta = dto.QuantityDelta, ReferenceKind = dto.ReferenceKind, ReferenceId = dto.ReferenceId,
-            ReferenceLineId = dto.ReferenceLineId, CustomerId = dto.CustomerId, CatId = dto.CatId, FefoOverridden = dto.FefoOverridden,
+            ReferenceLineId = dto.ReferenceLineId, CustomerId = dto.CustomerId, FefoOverridden = dto.FefoOverridden,
             OverrideReason = dto.OverrideReason, PerformedBy = dto.PerformedBy
         };
         entry.SetDefaultValue(dto.UserContext);

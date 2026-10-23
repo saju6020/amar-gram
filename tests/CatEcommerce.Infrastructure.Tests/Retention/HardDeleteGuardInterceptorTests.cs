@@ -1,11 +1,10 @@
 using CatEcommerce.Domain.Aggregates.Account;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.Models;
+using CatEcommerce.Domain.ValueObjects;
 using CatEcommerce.Infrastructure.Persistence;
 using CatEcommerce.Infrastructure.Retention;
 using CatEcommerce.Shared.Common.Constants;
 using CatEcommerce.Shared.Common.Enums;
-using CatEcommerce.Shared.SharedDto.Cat;
 using Microsoft.EntityFrameworkCore;
 using Platform.Infrastructure.Common.Security;
 
@@ -17,20 +16,25 @@ namespace CatEcommerce.Infrastructure.Tests.Retention;
 /// </summary>
 public sealed class HardDeleteGuardInterceptorTests
 {
-    private static readonly DateOnly Today = DateOnly.FromDateTime(DateTime.UtcNow);
     private static UserContext Actor => new(Guid.NewGuid(), Guid.NewGuid());
 
     private static CatEcommerceDbContext NewDb() => new(new DbContextOptionsBuilder<CatEcommerceDbContext>()
         .UseNpgsql("Host=localhost;Database=model_only;Username=model_only").Options);
 
-    private static CatAggregate CatWithAllergy()
+    private static StaffAccountAggregate StaffAccount()
     {
-        var cat = new CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            Guid.NewGuid(), "Mittens", "Cat", CatSex.Female, null, DateOfBirthPrecision.Estimated, null, null, Today, Actor, Guid.NewGuid()));
-        cat.UpdateMedicalProfile(new CatMedicalProfileDto(
-            [new AllergyInput("Chicken", "Itching", AllergySeverity.Mild, Today)], [], [], null, null, Actor, Guid.NewGuid()));
-        return cat;
+        var staff = new StaffAccountAggregate(Guid.NewGuid());
+        staff.Create(new StaffAccountCreationDto(
+            "Staff", MobileNumber.Create("01712345678"), null, [StaffRoles.Reception], Actor, Guid.NewGuid()));
+        return staff;
+    }
+
+    private static CustomerAddressBookAggregate AddressBookWithOneAddress()
+    {
+        var addressBook = new CustomerAddressBookAggregate(Guid.NewGuid());
+        addressBook.Open(new CustomerAddressBookOpenDto(Actor, Guid.NewGuid()));
+        addressBook.AddAddress(new DeliveryAddressAddDto(Guid.NewGuid(), "Home", "1 Road", null, "Dhaka", "Dhaka", null, null, DateTimeOffset.UtcNow, Actor, Guid.NewGuid()));
+        return addressBook;
     }
 
     // U-A3
@@ -38,14 +42,14 @@ public sealed class HardDeleteGuardInterceptorTests
     public void U_A3_RemovingAForbiddenRoot_IsRefusedBeforeAnySql()
     {
         using var db = NewDb();
-        var cat = CatWithAllergy();
-        db.Attach(cat);
-        db.Remove(cat);
+        var staff = StaffAccount();
+        db.Attach(staff);
+        db.Remove(staff);
 
         var refused = Assert.Throws<ProtectedRecordDeletionException>(() => HardDeleteGuardInterceptor.EnsureNoProtectedDeletes(db));
 
-        Assert.Equal("clinic", refused.Schema);
-        Assert.Equal("cat", refused.Table);
+        Assert.Equal("account", refused.Schema);
+        Assert.Equal("staff_account", refused.Table);
         Assert.Equal(HardDeletePolicy.Forbidden, refused.Policy);
     }
 
@@ -54,13 +58,13 @@ public sealed class HardDeleteGuardInterceptorTests
     public void U_A4_AnAggregateReplacingItsOwnCurrentStateCollection_IsAllowed()
     {
         using var db = NewDb();
-        var cat = CatWithAllergy();
-        db.Attach(cat);
+        var addressBook = AddressBookWithOneAddress();
+        db.Attach(addressBook);
 
-        // F32: UpdateMedicalProfile replaces the allergy collection wholesale, so EF marks the old owned item Deleted.
-        cat.UpdateMedicalProfile(new CatMedicalProfileDto([], [], [], null, null, Actor, Guid.NewGuid()));
+        // F32: Clear empties the address collection through the aggregate, so EF marks the old owned item Deleted.
+        addressBook.Clear(new CustomerAddressBookClearDto(Actor, Guid.NewGuid()));
 
-        Assert.Contains(db.ChangeTracker.Entries(), e => e.State == EntityState.Deleted && e.Metadata.GetTableName() == "cat_allergy");
+        Assert.Contains(db.ChangeTracker.Entries(), e => e.State == EntityState.Deleted && e.Metadata.GetTableName() == "customer_delivery_address");
         HardDeleteGuardInterceptor.EnsureNoProtectedDeletes(db);
     }
 
@@ -69,9 +73,7 @@ public sealed class HardDeleteGuardInterceptorTests
     public void U_A5_RemovingAnOwnedItemWhoseOwnerIsNotTracked_IsRefused()
     {
         using var db = NewDb();
-        var addressBook = new CustomerAddressBookAggregate(Guid.NewGuid());
-        addressBook.Open(new CustomerAddressBookOpenDto(Actor, Guid.NewGuid()));
-        addressBook.AddAddress(new DeliveryAddressAddDto(Guid.NewGuid(), "Home", "1 Road", null, "Dhaka", "Dhaka", null, null, DateTimeOffset.UtcNow, Actor, Guid.NewGuid()));
+        var addressBook = AddressBookWithOneAddress();
         var address = addressBook.Addresses.Single();
 
         // Track the owner, then detach ONLY the owner so the owned item is deleted with no tracked owner.

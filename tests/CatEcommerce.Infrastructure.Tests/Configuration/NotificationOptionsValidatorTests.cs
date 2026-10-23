@@ -6,7 +6,7 @@ namespace CatEcommerce.Infrastructure.Tests.Configuration;
 
 /// <summary>
 /// HO-NTF-001 §15, U-B16. <c>WebBaseUrl</c> moved to the shared <c>PublicSiteOptions.WebBaseUrl</c>
-/// (integrator instruction, 2026-09-27, post HO-CAT-001-gates merge) -- validated by
+/// (integrator instruction, 2026-09-27, post the foundation handover gates merge) -- validated by
 /// <c>PublicSiteStartupGuardHostedService</c> instead, so every case here now only exercises
 /// <c>ApiBaseUrl</c>, the setting that stayed.
 /// </summary>

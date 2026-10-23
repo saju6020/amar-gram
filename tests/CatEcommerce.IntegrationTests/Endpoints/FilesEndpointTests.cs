@@ -23,7 +23,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
     {
         using var client = await SignedInStaffClientAsync(StaffRoles.Administrator);
 
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var response = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
 
         Assert.True(response.StatusCode == HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
@@ -51,7 +51,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
     {
         using var client = await SignedInStaffClientAsync(StaffRoles.Administrator);
 
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var response = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
 
         Assert.True(response.StatusCode == HttpStatusCode.Created, await response.Content.ReadAsStringAsync());
@@ -140,7 +140,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var response = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -160,7 +160,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         var content = new byte[cap + 1];
         MinimalPng().CopyTo(content, 0);
 
-        using var form = BuildUpload(content, "cat.png", "image/png");
+        using var form = BuildUpload(content, "product.png", "image/png");
         var response = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -183,7 +183,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var response = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -229,7 +229,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var response = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
@@ -243,7 +243,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
     public async Task Signed_url_works_twice_within_the_window_then_is_refused_after_expiry()
     {
         using var client = await SignedInStaffClientAsync(StaffRoles.Administrator);
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var upload = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
         Assert.Equal(HttpStatusCode.Created, upload.StatusCode);
         var uploadBody = await upload.Content.ReadFromJsonAsync<JsonElement>(Json);
@@ -272,7 +272,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         var signIn = await fakeClockClient.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = mobile, password }, Json);
         fakeClockClient.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
-        using var freshForm = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var freshForm = BuildUpload(MinimalPng(), "product.png", "image/png");
         var freshUpload = await fakeClockClient.PostAsync("/api/staff/files?purpose=ProductImage", freshForm);
         var freshUrl = (await freshUpload.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("url").GetString()!;
 
@@ -286,16 +286,10 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
 
     // I7
     [Fact]
-    public async Task Dicom_and_zip_are_always_served_as_attachment_even_when_inline_is_requested()
+    public async Task A_zip_is_always_served_as_attachment_even_when_inline_is_requested()
     {
-        // HO-EMR-001 (2026-10-07): LabResult is now owned by Consultation -- uploading one needs Visits.WriteNote (Vet), no longer
-        // "any staff role" via the test-only fall-back. The ReportExport zip below is still unowned, so the same Vet may upload it.
-        using var client = await SignedInStaffClientAsync(StaffRoles.Vet);
-
-        using var dicomForm = BuildUpload(BuildDicomBytes(), "scan.dcm", "application/dicom");
-        var dicomUpload = await client.PostAsync("/api/staff/files?purpose=LabResult", dicomForm);
-        Assert.Equal(HttpStatusCode.Created, dicomUpload.StatusCode);
-        var dicomFileId = (await dicomUpload.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("fileId").GetGuid();
+        // The ReportExport purpose is unowned, so any staff role may upload it through the test-only fall-back.
+        using var client = await SignedInStaffClientAsync(StaffRoles.Reception);
 
         using var zipForm = BuildUpload([0x50, 0x4B, 0x03, 0x04, 0x00, 0x00], "export.zip", "application/zip");
         var zipUpload = await client.PostAsync("/api/staff/files?purpose=ReportExport", zipForm);
@@ -305,13 +299,10 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         await using var scope = Factory.Services.CreateAsyncScope();
         var signer = scope.ServiceProvider.GetRequiredService<HmacFileUrlSigner>();
 
-        foreach (var fileId in new[] { dicomFileId, zipFileId })
-        {
-            var inlineUrl = signer.Sign(fileId, TimeSpan.FromMinutes(5), "inline");
-            var response = await client.GetAsync(inlineUrl);
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Contains("attachment", response.Content.Headers.ContentDisposition!.ToString(), StringComparison.OrdinalIgnoreCase);
-        }
+        var inlineUrl = signer.Sign(zipFileId, TimeSpan.FromMinutes(5), "inline");
+        var response = await client.GetAsync(inlineUrl);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("attachment", response.Content.Headers.ContentDisposition!.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     // I8
@@ -576,7 +567,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         var signIn = await client.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = mobile, password }, Json);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var upload = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
         var uploadBody = await upload.Content.ReadFromJsonAsync<JsonElement>(Json);
         var url = uploadBody.GetProperty("url").GetString()!;
@@ -668,7 +659,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         HttpResponseMessage? last = null;
         for (var i = 0; i < 3; i++)
         {
-            using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+            using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
             last = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
         }
 
@@ -688,7 +679,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
-        using var form = BuildUpload(MinimalPng(), "cat.png", "image/png");
+        using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var upload = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
         Assert.Equal(HttpStatusCode.Created, upload.StatusCode);
         var url = (await upload.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("url").GetString()!;
@@ -706,12 +697,5 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         var bytes = new byte[size];
         bytes[0] = 0x50; bytes[1] = 0x4B; bytes[2] = 0x03; bytes[3] = 0x04;
         return bytes;
-    }
-
-    private static byte[] BuildDicomBytes()
-    {
-        var header = new byte[140];
-        "DICM"u8.CopyTo(header.AsSpan(128));
-        return header;
     }
 }

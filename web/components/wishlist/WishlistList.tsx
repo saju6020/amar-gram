@@ -3,7 +3,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart } from 'lucide-react';
 import { ProductPackArt } from '@/components/hearth/ProductPackArt';
-import { EmptyCatIllustration, EmptyState } from '@/components/common/EmptyState';
+import { EmptyWarmIllustration, EmptyState } from '@/components/common/EmptyState';
 import { AvailabilityText } from '@/components/product/StatusText';
 import { formatMoney } from '@/lib/format/money';
 import { resolveFileUrl } from '@/lib/api/files';
@@ -32,7 +32,7 @@ export function WishlistList({
   if (items.length === 0) {
     return (
       <EmptyState
-        icon={<EmptyCatIllustration />}
+        icon={<EmptyWarmIllustration />}
         title="Nothing saved yet"
         description="Tap Save on a product to keep it here."
         action={

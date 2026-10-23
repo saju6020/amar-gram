@@ -29,12 +29,10 @@ public sealed class NotificationsApiFactory : CatEcommerceApiFactory
         settings["RateLimiting:AccountSensitive:PermitLimit"] = "100000";
         settings["RateLimiting:ProfileUpdate:PermitLimit"] = "100000";
 
-        // Integrator instruction (2026-09-27, post HO-CAT-001-gates merge): the web base URL is now
-        // the shared PublicSite:WebBaseUrl (also used for the cage-card QR code), which defaults to
-        // empty in Testing (CatApiFactory's own owner-ratified default, ACCEPTANCE gate A22) --
-        // Notifications' own NotificationLinkBuilder has no relative-path fallback the way
-        // GetCatCageCardQueryHandler does, so every Notifications test needs a real value, the same
-        // way CatApiFactory.WithPublicSiteWebBaseUrl opts ONE test in.
+        // Integrator instruction (2026-09-27): the web base URL is the shared PublicSite:WebBaseUrl,
+        // which defaults to empty in Testing (an owner-ratified default, ACCEPTANCE gate A22) --
+        // Notifications' own NotificationLinkBuilder has no relative-path fallback, so every
+        // Notifications test needs a real value.
         settings["PublicSite:WebBaseUrl"] = "https://portal.example.test";
         settings["Notifications:ApiBaseUrl"] = "https://api.example.test";
         settings["Notifications:Channels:Sms:Sender"] = "Capturing";

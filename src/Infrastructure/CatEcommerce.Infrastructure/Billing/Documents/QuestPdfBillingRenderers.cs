@@ -8,8 +8,8 @@ namespace CatEcommerce.Infrastructure.Billing.Documents;
 
 /// <summary>
 /// HO-BIL-001 §12.2 -- the invoice PDF. The Community licence is confirmed by the owner (set once at host start-up, as the
-/// cat medical-history renderer relies on). Every customer-supplied string goes through <c>Text(...)</c> -- never anything
-/// that interprets markup. The Bengali fallback font is registered once per process by the cat renderer's constructor,
+/// other PDF renderers rely on). Every customer-supplied string goes through <c>Text(...)</c> -- never anything
+/// that interprets markup. The Bengali fallback font is registered once per process by <c>QuestPdfFonts</c>,
 /// which this one calls so a Bengali customer name or item description never crashes the document.
 /// </summary>
 public sealed class QuestPdfInvoiceRenderer : IInvoicePdfRenderer
@@ -191,7 +191,7 @@ internal static class BillingPdf
 {
     private const string Fallback = "Noto Sans Bengali";
 
-    public static void EnsureFonts() => _ = new QuestPdfCatMedicalHistoryRenderer();
+    public static void EnsureFonts() => QuestPdfFonts.EnsureRegistered();
 
     public static void Configure(PageDescriptor page)
     {

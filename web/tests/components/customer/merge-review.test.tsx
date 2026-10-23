@@ -37,10 +37,7 @@ function renderWithClient(children: React.ReactNode) {
   return render(<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>);
 }
 
-// CR MEDIUM 2 (first-pass gate fix round, item 13) — `catNames` builds `cats` (the fresh read's
-// own per-cat list, now what MergeConfirmDialog actually renders) alongside the unchanged
-// `catCount`, kept in sync with it.
-function customerResponse(id: string, fullName: string, catNames: string[]) {
+function customerResponse(id: string, fullName: string) {
   return {
     id,
     fullName,
@@ -48,8 +45,6 @@ function customerResponse(id: string, fullName: string, catNames: string[]) {
     emailAddress: null,
     recordStatus: 'Complete',
     registrationChannel: 'SelfService',
-    catCount: catNames.length,
-    cats: catNames.map((name, index) => ({ catId: `${id}-cat-${index}`, name, isDeceased: false })),
     status: 'Active',
     mergedIntoCustomerId: null,
   };
@@ -62,7 +57,7 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
       http.get('*/api/staff/customers/:id', ({ params }) => {
         getCallCount += 1;
         return HttpResponse.json(
-          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta', ['Whiskers']),
+          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta'),
         );
       }),
     );
@@ -81,10 +76,7 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
     server.use(
       http.get('*/api/staff/customers/:id', ({ params }) =>
         HttpResponse.json(
-          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta', [
-            'Whiskers',
-            'Mittens',
-          ]),
+          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta'),
         ),
       ),
     );
@@ -106,7 +98,9 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
     const dialog = await screen.findByRole('dialog');
     expect(dialog.textContent).toMatch(/alpha will be kept/i);
     expect(dialog.textContent).toMatch(/beta will be retired/i);
-    expect(within(dialog).getByText(/whiskers, mittens will move from beta/i)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/beta will be marked as merged into alpha/i),
+    ).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole('button', { name: /^merge$/i }));
 
@@ -118,7 +112,7 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
     server.use(
       http.get('*/api/staff/customers/:id', ({ params }) =>
         HttpResponse.json(
-          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta', ['Whiskers']),
+          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta'),
         ),
       ),
     );
@@ -153,19 +147,24 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
     ]);
   });
 
-  it('U-I4: never calls a cat endpoint', async () => {
+  it('U-I4: the merge is one request; no other endpoint is written to', async () => {
     server.use(
       http.get('*/api/staff/customers/:id', ({ params }) =>
         HttpResponse.json(
-          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta', ['Whiskers']),
+          customerResponse(params.id as string, params.id === 'a' ? 'Alpha' : 'Beta'),
         ),
       ),
       http.post('*/api/staff/customers/:id/merge', () =>
         HttpResponse.json({ survivingCustomerId: 'a', isReapplication: false }),
       ),
     );
-    const catSpy = vi.fn();
-    server.use(http.all('*/api/cats*', () => (catSpy(), new HttpResponse(null, { status: 200 }))));
+    const otherWrites = vi.fn();
+    server.use(
+      http.post(
+        '*/api/customers/*',
+        () => (otherWrites(), new HttpResponse(null, { status: 200 })),
+      ),
+    );
 
     const user = userEvent.setup();
     renderWithClient(<MergeReviewWithHooks customerIds={['a', 'b']} />);
@@ -178,7 +177,7 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
     );
 
     await screen.findByText(/the records have been merged/i);
-    expect(catSpy).not.toHaveBeenCalled();
+    expect(otherWrites).not.toHaveBeenCalled();
   });
 
   // ARCHITECTURE gate third pass, HIGH — the root-cause part of this fix (StaffLockProvider
@@ -195,8 +194,6 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
         emailAddress: null,
         recordStatus: 'Complete',
         registrationChannel: 'SelfService',
-        catCount: 0,
-        cats: [],
         status: 'Active',
         mergedIntoCustomerId: null,
       },
@@ -207,8 +204,6 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
         emailAddress: null,
         recordStatus: 'Complete',
         registrationChannel: 'SelfService',
-        catCount: 0,
-        cats: [],
         status: 'Active',
         mergedIntoCustomerId: null,
       },

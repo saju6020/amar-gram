@@ -10,8 +10,7 @@ public sealed class FileVariantsTests
     public void Only_product_photos_have_copies()
     {
         Assert.Equal([FileVariants.Card, FileVariants.Detail], FileVariants.For(FilePurpose.ProductImage));
-        Assert.Empty(FileVariants.For(FilePurpose.ClinicalPhoto));
-        Assert.Empty(FileVariants.For(FilePurpose.CatProfilePhoto));
+        Assert.Empty(FileVariants.For(FilePurpose.ReportExport));
     }
 
     [Fact]
@@ -23,8 +22,8 @@ public sealed class FileVariantsTests
 
     [Theory]
     [InlineData("ProductImage/2026/10/abc", 2)]
-    [InlineData("ClinicalPhoto/2026/10/abc", 0)]
-    [InlineData("LabResult/2026/10/ProductImage", 0)]
+    [InlineData("ReportExport/2026/10/abc", 0)]
+    [InlineData("ReportExport/2026/10/ProductImage", 0)]
     public void A_store_finds_the_copies_to_delete_from_the_key_alone(string storageKey, int copies)
     {
         Assert.Equal(copies, FileVariants.ForStorageKey(storageKey).Count);

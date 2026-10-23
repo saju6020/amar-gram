@@ -1,6 +1,5 @@
-import { test, expect, signInAsStaff } from './fixtures';
+import { test, expect, signInAsStaff, secondStaff } from './fixtures';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
-import { catProfilesFixtureIds } from '../../mocks/handlers/areas/cat-profiles';
 
 /**
  * `tests/e2e/staff-auth.spec.ts` — US-ACC-08/US-ACC-14, HO-ACC-002 §16. §13 names this file. The
@@ -155,10 +154,10 @@ test('ARCHITECTURE gate third pass, HIGH: on a page WITH its own page query (sta
   test.setTimeout(45_000);
 
   await signInAsStaff(page);
-  await page.goto(`/staff/admin/staff-accounts/${accountsFixtureIds.nurseStaffId}`);
+  await page.goto(`/staff/admin/staff-accounts/${secondStaff.staffId}`);
 
-  // A changed role selection — the unsaved draft this test protects. The nurse's own detail page
-  // (not the signed-in administrator's own account) so nothing about "editing your own roles" is
+  // A changed role selection — the unsaved draft this test protects. Another staff member's detail
+  // page (not the signed-in administrator's own account) so nothing about "editing your own roles" is
   // special-cased into this assertion.
   const administratorRole = page.getByRole('checkbox', { name: 'Administrator' });
   await administratorRole.check();
@@ -206,145 +205,6 @@ test('ARCHITECTURE gate third pass, HIGH: on a page WITH its own page query (sta
 
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('checkbox', { name: 'Administrator' })).toBeChecked();
-});
-
-test('E-G2 (ARCHITECTURE gate fourth pass, HIGH): on a cat form (CatProfileDataShell, a HO-CAT-002 shared layout), lock -> refocus -> the cat query 401s too -> the edited draft survives -> unlock -> draft intact — in a real browser', async ({
-  page,
-}) => {
-  test.setTimeout(45_000);
-
-  await signInAsStaff(page);
-  const catId = catProfilesFixtureIds.catWithAllergiesExactDob; // Whiskers
-  await page.goto(`/staff/cats/${catId}/edit`);
-
-  const nameField = page.getByLabel(/^Name/);
-  await expect(nameField).toBeVisible();
-  await nameField.fill('Whiskers The Edited');
-
-  const cookies = await page.context().cookies();
-  const staffSessionCookie = cookies.find((c) => c.name === 'pc_staff_session');
-  expect(staffSessionCookie).toBeTruthy();
-  const token = staffSessionCookie!.value;
-
-  // Forces the session to end (mirroring the real API's own EndForIdleTimeout on first
-  // detection). mocks/handlers/areas/cat-profiles.ts's own endpoints never checked staff-session
-  // state at all (HO-CAT-001 predates HO-ACC-001's session system), so this alone would not make
-  // the cat query itself 401 — `__forceCatQuerySessionInvalid` (that file's own dedicated,
-  // one-shot test hook) is the mock-side equivalent for this one endpoint, modelling what a real
-  // API's `RequireActionFilter` would do once the staff session it depends on has actually ended.
-  await page.evaluate((forcedToken) => {
-    (
-      window as unknown as { __forceStaffIdleExpired?: (t: string) => void }
-    ).__forceStaffIdleExpired?.(forcedToken);
-    (
-      window as unknown as { __forceCatQuerySessionInvalid?: () => void }
-    ).__forceCatQuerySessionInvalid?.();
-  }, token);
-
-  // A real window-focus event refetches every stale active query at once — the session query AND
-  // this page's own cat-profile query (`CatProfileDataShell`'s `useCat(catId)`).
-  // `__invalidateQueries` triggers both deterministically, the same way the tests above trigger
-  // the session query alone.
-  await page.evaluate(() => {
-    const invalidate = (
-      window as unknown as { __invalidateQueries?: (queryKey: readonly unknown[]) => void }
-    ).__invalidateQueries;
-    invalidate?.(['session', 'staff']);
-    invalidate?.(['cat']);
-  });
-
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('heading')).toContainText(/signed out after/i);
-
-  // The shared cat-profile layout never swapped to ErrorState — `getByRole` (unlike `getByLabel`)
-  // respects `aria-hidden`, which Radix's own modal Dialog correctly applies to the rest of the
-  // page while open, so the field's value is read directly rather than through a role query here.
-  await expect(page.getByLabel(/^Name/)).toHaveValue('Whiskers The Edited');
-  await expect(page.getByText(/couldn't load this cat's profile/i)).not.toBeVisible();
-
-  // Unlock via re-authentication as the same person — the draft is still there.
-  await dialog.getByLabel(/mobile number or email/i).fill(accountsFixtureIds.adminIdentifier);
-  await dialog.getByLabel(/^password/i).fill(accountsFixtureIds.adminPassword);
-  await dialog.getByRole('button', { name: /^sign in$/i }).click();
-
-  await expect(dialog).toBeHidden();
-  await expect(page.getByLabel(/^Name/)).toHaveValue('Whiskers The Edited');
-});
-
-test('E-G3 (CODE_REVIEW gate fifth pass, LOW): once locked, a real window-focus event does not even attempt to refetch the cat query — the pause itself, not only the isError && !data fallback, in a real browser', async ({
-  page,
-}) => {
-  test.setTimeout(45_000);
-
-  // CODE_REVIEW gate fourth pass, LOW — E-G2 above triggers both refetches through
-  // `__invalidateQueries`, which calls `queryClient.invalidateQueries()` directly and so bypasses
-  // `focusManager` entirely; it proves the `isError && !data` fallback, never the pause mechanism
-  // the ARCHITECTURE gate fourth-pass HIGH fix actually is (detaching `focusManager`'s real
-  // `window` listener while locked). This test dispatches a REAL `visibilitychange` event on
-  // `window` — the exact `EventTarget` `@tanstack/query-core`'s own real `focusManager` listens to,
-  // in this real, unmocked browser bundle, not a jsdom simulation — AFTER the lock has already
-  // fully engaged, closing that gap: if a future change ever regressed the pause (e.g. reverting to
-  // `queryClient.setDefaultOptions`, or the listener-swap itself breaking), this test would fail,
-  // where E-G2 alone would not. `idle-lock-context.test.tsx`'s `FetchCountingQuery` tests prove the
-  // identical mechanism at the component level; this is their real-browser counterpart.
-  await signInAsStaff(page);
-  const catId = catProfilesFixtureIds.catWithAllergiesExactDob; // Whiskers
-  await page.goto(`/staff/cats/${catId}/edit`);
-
-  const nameField = page.getByLabel(/^Name/);
-  await expect(nameField).toBeVisible();
-  await nameField.fill('Whiskers Untouched By The Pause');
-
-  const cookies = await page.context().cookies();
-  const staffSessionCookie = cookies.find((c) => c.name === 'pc_staff_session');
-  expect(staffSessionCookie).toBeTruthy();
-  const token = staffSessionCookie!.value;
-
-  // Reach the locked state deterministically (same trigger every other lock test in this file
-  // uses) — the real focus event below is the only non-deterministic-trigger step in this test,
-  // isolating exactly what it is meant to prove.
-  await page.evaluate((forcedToken) => {
-    (
-      window as unknown as { __forceStaffIdleExpired?: (t: string) => void }
-    ).__forceStaffIdleExpired?.(forcedToken);
-  }, token);
-  await page.evaluate(() => {
-    (
-      window as unknown as { __invalidateQueries?: (queryKey: readonly unknown[]) => void }
-    ).__invalidateQueries?.(['session', 'staff']);
-  });
-
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-
-  // Arms the cat query's own next read to 401 too — if the pause below were broken (a future
-  // regression), this is what would surface as the ErrorState the assertions below check for; if
-  // the pause holds, this armed 401 is never even reached, because no refetch is attempted at all.
-  await page.evaluate(() => {
-    (
-      window as unknown as { __forceCatQuerySessionInvalid?: () => void }
-    ).__forceCatQuerySessionInvalid?.();
-  });
-
-  // `useCat`'s own `staleTime` is 0 (always considered stale), so this would refetch immediately —
-  // and hit the armed 401 above — if the pause were not in effect.
-  await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')));
-  await page.waitForTimeout(500); // lets any (incorrect) refetch attempt settle, if one occurred
-
-  // Still locked, still no ErrorState, still the same draft — the cat query never even attempted to
-  // refetch, so there was nothing here for the isError && !data fallback to need to catch.
-  await expect(dialog).toBeVisible();
-  await expect(page.getByLabel(/^Name/)).toHaveValue('Whiskers Untouched By The Pause');
-  await expect(page.getByText(/couldn't load this cat's profile/i)).not.toBeVisible();
-
-  // Unlock via re-authentication as the same person — the draft is still there.
-  await dialog.getByLabel(/mobile number or email/i).fill(accountsFixtureIds.adminIdentifier);
-  await dialog.getByLabel(/^password/i).fill(accountsFixtureIds.adminPassword);
-  await dialog.getByRole('button', { name: /^sign in$/i }).click();
-
-  await expect(dialog).toBeHidden();
-  await expect(page.getByLabel(/^Name/)).toHaveValue('Whiskers Untouched By The Pause');
 });
 
 test('ARCHITECTURE gate fifth pass, MEDIUM: locking while genuinely offline does not deadlock re-sign-in, in a real browser', async ({

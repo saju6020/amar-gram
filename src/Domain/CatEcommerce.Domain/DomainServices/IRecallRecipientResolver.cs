@@ -4,7 +4,7 @@ namespace CatEcommerce.Domain.DomainServices;
 
 /// <summary>
 /// HO-IMP-001 §8.12 -- the distinct customers to notify of a recall: purchasers (resolved through merges) plus the CURRENT owners of
-/// recorded cats, excluding anonymised and merged-away ids and those already notified (<c>recall:{batchId}:{customerId}</c>).
+/// recorded reservations, excluding anonymised and merged-away ids and those already notified (<c>recall:{batchId}:{customerId}</c>).
 /// Read-only.
 /// </summary>
 public interface IRecallRecipientResolver

@@ -15,7 +15,7 @@ export function useRegisterWalkInCustomer() {
 }
 
 /**
- * ADR-FE-011 — one request to the merge endpoint, never client-orchestrated cat moves. Takes
+ * ADR-FE-011 — one request to the merge endpoint, never client-orchestrated follow-up calls. Takes
  * `duplicateCustomerId` as part of the mutate call (not fixed at hook-creation time) so
  * `MergeReview` can re-run it identically — same id, same body — from its "Run again" recovery
  * path (§11.13) without re-instantiating the hook.
@@ -24,7 +24,7 @@ export function useRegisterWalkInCustomer() {
  * (`['staff-customers','customer', id]`) — the same reasoning as this codebase's session queries
  * (`lib/hooks/useSession.ts`): `MergeReview` itself is still the mounted observer at merge time
  * (the detail screen for either customer isn't open yet), so `invalidateQueries`'s default
- * `refetchType: 'active'` would leave the pre-merge `catCount` sitting in the cache — fresh enough
+ * `refetchType: 'active'` would leave the pre-merge record sitting in the cache — fresh enough
  * (`staleTime: 30_000`, `app/providers.tsx`) that the detail screen would show it unrefetched the
  * moment "View the surviving record" is clicked, silently contradicting ADR-FE-011(c)'s own "fresh
  * read" promise for the one screen a real user checks right after a merge. The duplicates LIST

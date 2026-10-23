@@ -9,7 +9,7 @@ import { LoadingState } from '@/components/common/LoadingState';
  * `components/auth/CaptchaField.tsx` — HO-ACC-002 §11.3/§8.6, ADR-FE-006. The client never judges
  * an answer; it only shows the challenge and lets the caller `refetch()` a new one. Callers
  * (`RegisterForm`) own the `useCaptcha()` query and pass its state down as props — components
- * never fetch (HO-CAT-002 §8.2).
+ * never fetch (the shell handover §8.2).
  *
  *  - `alt` states purpose, never the answer (WCAG SC 1.1.1, SRS Q-17).
  *  - "New code" is a real text button, not an icon.
@@ -110,7 +110,7 @@ export function CaptchaField({
         {...inputProps}
       />
       <p id={helpId} className="text-xs text-ink-muted">
-        Type the letters and numbers shown above. Or register in person at the clinic reception.
+        Type the letters and numbers shown above. Or register in person at any Amar Gram outlet.
       </p>
       {error && (
         <p id={errorId} role="alert" className="text-xs font-semibold text-danger-ink">

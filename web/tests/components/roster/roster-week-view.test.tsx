@@ -11,7 +11,7 @@ const WEEK = [
   '2027-01-09',
   '2027-01-10',
 ];
-const ROWS = [{ staffAccountId: 's1', staffFullName: 'Nadia Nurse' }];
+const ROWS = [{ staffAccountId: 's1', staffFullName: 'Nadia Karim' }];
 
 describe('RosterWeekView — ⭐ HO-ADM-002 §11.4, ADR-FE-017, UI-1/UI-6', () => {
   it('U-D1: renders a real <table> with row/column headers AND a day-grouped list — both always in the DOM, CSS-toggled, never JS-conditional on viewport', () => {
@@ -32,7 +32,7 @@ describe('RosterWeekView — ⭐ HO-ADM-002 §11.4, ADR-FE-017, UI-1/UI-6', () =
 
     const table = screen.getByRole('table');
     expect(within(table).getByRole('columnheader', { name: 'Staff' })).toBeInTheDocument();
-    expect(within(table).getByRole('rowheader', { name: 'Nadia Nurse' })).toBeInTheDocument();
+    expect(within(table).getByRole('rowheader', { name: 'Nadia Karim' })).toBeInTheDocument();
 
     // The day-grouped list (below-768px layout) is also in the DOM, not conditionally rendered.
     expect(

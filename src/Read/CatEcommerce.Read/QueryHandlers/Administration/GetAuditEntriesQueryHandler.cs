@@ -11,21 +11,9 @@ namespace CatEcommerce.Read.QueryHandlers.Administration;
 
 /// <summary>HO-ADM-001 §12.6 -- filters in SQL on the indexed columns; actor names via a SQL-side
 /// left join, projected directly (gate fix 2026-09-26: previously materialized every matching
-/// aggregate, then ran two more queries in memory). Read-only.
-///
-/// Owner decision 2026-09-26: <c>BeforeValue</c>/<c>AfterValue</c>/<c>Reason</c> are redacted for a
-/// clinical entity (<see cref="ClinicalAuditEntityTypes"/>, gate fix 2026-09-26 -- was a hard-coded
-/// two-entry list that only covered the interceptor's own <c>DataChange</c> rows and never redacted
-/// <c>Reason</c>, missing the four <c>Cat</c>-labelled <c>BusinessEvent</c> rows a high-risk flag,
-/// clear, ownership transfer or merge reassignment writes) unless the caller also holds
-/// <see cref="Actions.Cats.View"/> -- an Accountant using <c>AuditLog.View</c> sees who touched a
-/// cat's record, when and from where, never the clinical content or the reason given for changing
-/// it. The redaction is a placeholder string, not <c>null</c>, so it is never confused with a
-/// genuinely absent value.</summary>
+/// aggregate, then ran two more queries in memory). Read-only.</summary>
 public sealed class GetAuditEntriesQueryHandler(CatEcommerceDbContext db) : IQueryHandlerAsync<GetAuditEntriesQuery, PagedResult<AuditEntryViewModel>>
 {
-    private const string RedactedPlaceholder = "[Redacted -- clinical record, requires Cats.View]";
-
     public async Task<QueryResponse<PagedResult<AuditEntryViewModel>>> HandleAsync(GetAuditEntriesQuery query)
     {
         var filtered = db.Set<AuditEntryAggregate>().AsNoTracking()
@@ -68,12 +56,8 @@ public sealed class GetAuditEntriesQueryHandler(CatEcommerceDbContext db) : IQue
 
         var rows = await projected.Skip(query.Skip).Take(query.Take).ToListAsync();
 
-        var canSeeClinicalValues = ActionRoles.TryGetRoles(Actions.Cats.View, out var catViewRoles) &&
-            (query.UserContext.Roles ?? []).Intersect(catViewRoles, StringComparer.Ordinal).Any();
-
         var items = rows.Select(r =>
         {
-            var redact = !canSeeClinicalValues && ClinicalAuditEntityTypes.Contains(r.EntityType);
             return new AuditEntryViewModel(
                 r.OccurredOn,
                 r.ActorUserId,
@@ -82,9 +66,9 @@ public sealed class GetAuditEntriesQueryHandler(CatEcommerceDbContext db) : IQue
                 r.Category.DisplayName,
                 r.EntityType,
                 r.EntityId,
-                redact && !string.IsNullOrEmpty(r.Reason) ? RedactedPlaceholder : r.Reason,
-                redact && r.BeforeValue is not null ? RedactedPlaceholder : r.BeforeValue,
-                redact && r.AfterValue is not null ? RedactedPlaceholder : r.AfterValue,
+                r.Reason,
+                r.BeforeValue,
+                r.AfterValue,
                 r.IpAddress?.ToString());
         }).ToList();
 

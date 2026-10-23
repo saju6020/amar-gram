@@ -58,7 +58,7 @@ public sealed class UnsubscribeEndpointTests(NotificationsApiFactory factory) : 
         await client.PutAsJsonAsync("/api/customers/me/notification-preferences", new { changes = new[] { new { channel = "Email", category = "Marketing", isGranted = true } } }, Json);
 
         await RequestNotificationAsync(marketingFactory, definition.Key, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["productName"] = "Cat Food" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
+            new Dictionary<string, string> { ["productName"] = "Mustard Oil" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(marketingFactory);
         await RunDeliveryPassAsync(marketingFactory);
 
@@ -109,7 +109,7 @@ public sealed class UnsubscribeEndpointTests(NotificationsApiFactory factory) : 
         await client.PutAsJsonAsync("/api/customers/me/notification-preferences", new { changes = new[] { new { channel = "Email", category = "Marketing", isGranted = true } } }, Json);
 
         await RequestNotificationAsync(marketingFactory, definition.Key, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["productName"] = "Cat Food" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
+            new Dictionary<string, string> { ["productName"] = "Mustard Oil" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(marketingFactory);
         await RunDeliveryPassAsync(marketingFactory);
 
@@ -144,7 +144,7 @@ public sealed class UnsubscribeEndpointTests(NotificationsApiFactory factory) : 
         await client.PutAsJsonAsync("/api/customers/me/notification-preferences", new { changes = new[] { new { channel = "Email", category = "Marketing", isGranted = true } } }, Json);
 
         var requestCommand = await RequestNotificationAsync(marketingFactory, definition.Key, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["productName"] = "Cat Food" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
+            new Dictionary<string, string> { ["productName"] = "Mustard Oil" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
         await ExpandOnlyAsync(marketingFactory, requestCommand.RequestId); // Queued, not yet delivered -- a full pass would also deliver it in the same call
 
         var admin = await SeedStaffAsync(CatEcommerce.Shared.Common.Constants.StaffRoles.Administrator);

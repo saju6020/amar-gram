@@ -90,7 +90,7 @@ internal static class RevenueLoader
         var ids = sourceLineIds.OfType<Guid>().Distinct().ToList();
         if (ids.Count == 0) return [];
 
-        var kinds = new[] { MovementKind.Sale.Value, MovementKind.Dispense.Value, MovementKind.BoardingUse.Value, MovementKind.Return.Value };
+        var kinds = new[] { MovementKind.Sale.Value, MovementKind.Return.Value };
         var entries = await (
             from e in db.Set<RvStockLedgerRow>().AsNoTracking()
             join b in db.Set<RvBatchRow>().AsNoTracking() on e.BatchId equals b.BatchId
@@ -147,22 +147,17 @@ internal static class RevenueRows
         return totals;
     }
 
-    public static IReadOnlyList<ReportNote> Notes(IReadOnlyList<RevenueAggregate> aggregates, bool includeCost, string scope, bool clinicNotes)
+    public static IReadOnlyList<ReportNote> Notes(IReadOnlyList<RevenueAggregate> aggregates, bool includeCost, string scope)
     {
         var notes = new List<ReportNote>();
         if (includeCost && RevenueBuilder.CoverageNote(RevenueBuilder.Coverage(aggregates), scope) is { } coverage) notes.Add(coverage);
-
-        if (clinicNotes)
-        {
-            notes.Add(new ReportNote("ClinicVisitChargesNotDelivered", ReportingMessages.ClinicVisitChargesNotDelivered));
-            if (aggregates.Any(a => a.Dimensions.Contains(nameof(BusinessLine.Clinic)))) notes.Add(new ReportNote("ServicesHaveNoCost", ReportingMessages.ServicesHaveNoCost));
-        }
 
         return notes;
     }
 }
 
-/// <summary>R9 -- <c>revenue-by-business-line</c> (US-RPT-03 AC1, AC2). Revenue by the line HO-BIL-001 stored on each invoice line; margin only where the landed cost is known, with its coverage (ADR-283, ADR-284).</summary>
+/// <summary>R9 -- <c>revenue-by-business-line</c> (US-RPT-03 AC1, AC2). Revenue by the sales channel of the order behind each invoice line (HO-P1: the
+/// split that replaced the retired business lines); margin only where the landed cost is known, with its coverage (ADR-283, ADR-284).</summary>
 public sealed class RevenueByBusinessLineSource : IReportSource
 {
     public string Key => ReportCatalogue.RevenueByBusinessLineKey;
@@ -172,12 +167,12 @@ public sealed class RevenueByBusinessLineSource : IReportSource
         var facts = await RevenueLoader.LoadAsync(db, request, shopOnly: false, includeCost: true, ct);
         var aggregates = RevenueBuilder.Aggregate(facts, request.GroupBy ?? TimeBucket.Day, f => [f.Line]);
 
-        var lineOrder = new[] { nameof(BusinessLine.Clinic), nameof(BusinessLine.Shop), nameof(BusinessLine.Boarding), BusinessLineRules.Other };
+        var lineOrder = new[] { nameof(OrderChannel.Online), nameof(OrderChannel.Counter), RevenueFacts.OtherChannel };
         var ordered = aggregates.OrderBy(a => a.Bucket, StringComparer.Ordinal).ThenBy(a => Array.IndexOf(lineOrder, a.Dimensions[0])).ThenBy(a => a.Currency, StringComparer.Ordinal).ToList();
-        var rows = ordered.Select(a => RevenueRows.Row(a, ["businessLine"], includeCost: true, withCreditColumns: true, "quantity")).ToList();
+        var rows = ordered.Select(a => RevenueRows.Row(a, ["channel"], includeCost: true, withCreditColumns: true, "quantity")).ToList();
 
         return new ReportSourceResult(
-            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(ordered, true, true, "quantity", "bucket"), RevenueRows.Notes(ordered, true, "total", clinicNotes: true), RevenueBuilder.Coverage(ordered));
+            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(ordered, true, true, "quantity", "bucket"), RevenueRows.Notes(ordered, true, "total"), RevenueBuilder.Coverage(ordered));
     }
 }
 
@@ -194,7 +189,7 @@ public sealed class RevenueShopByCategorySource : IReportSource
         var rows = aggregates.Select(a => RevenueRows.Row(a, ["category", "subCategory"], includeCost, withCreditColumns: false, "units")).ToList();
 
         return new ReportSourceResult(
-            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(aggregates, includeCost, false, "units", "bucket"), RevenueRows.Notes(aggregates, includeCost, "shop", clinicNotes: false),
+            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(aggregates, includeCost, false, "units", "bucket"), RevenueRows.Notes(aggregates, includeCost, "shop"),
             includeCost ? RevenueBuilder.Coverage(aggregates) : null);
     }
 }
@@ -212,12 +207,12 @@ public sealed class RevenueShopByOriginSource : IReportSource
         var rows = aggregates.Select(a => RevenueRows.Row(a, ["origin"], includeCost, withCreditColumns: false, "units")).ToList();
 
         return new ReportSourceResult(
-            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(aggregates, includeCost, false, "units", "bucket"), RevenueRows.Notes(aggregates, includeCost, "shop", clinicNotes: false),
+            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(aggregates, includeCost, false, "units", "bucket"), RevenueRows.Notes(aggregates, includeCost, "shop"),
             includeCost ? RevenueBuilder.Coverage(aggregates) : null);
     }
 }
 
-/// <summary>R12 -- <c>revenue-by-service</c> (SRS section 8.2): revenue by business line and service or product group.</summary>
+/// <summary>R12 -- <c>revenue-by-service</c> (SRS section 8.2): revenue by sales channel and product group.</summary>
 public sealed class RevenueByServiceSource : IReportSource
 {
     public string Key => ReportCatalogue.RevenueByServiceKey;
@@ -226,11 +221,11 @@ public sealed class RevenueByServiceSource : IReportSource
     {
         var facts = await RevenueLoader.LoadAsync(db, request, shopOnly: false, includeCost: true, ct);
         var aggregates = RevenueBuilder.Aggregate(facts, request.GroupBy ?? TimeBucket.Day, f => [f.Line, f.ServiceGroup]);
-        var rows = aggregates.Select(a => RevenueRows.Row(a, ["businessLine", "group"], includeCost: true, withCreditColumns: false, "quantity")).ToList();
+        var rows = aggregates.Select(a => RevenueRows.Row(a, ["channel", "group"], includeCost: true, withCreditColumns: false, "quantity")).ToList();
         foreach (var row in rows) row.Remove("marginPercent");
 
         return new ReportSourceResult(
-            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(aggregates, true, false, "quantity", "bucket"), RevenueRows.Notes(aggregates, true, "total", clinicNotes: true), RevenueBuilder.Coverage(aggregates));
+            rows.Take(request.RowLimit).ToList(), RevenueRows.Totals(aggregates, true, false, "quantity", "bucket"), RevenueRows.Notes(aggregates, true, "total"), RevenueBuilder.Coverage(aggregates));
     }
 }
 

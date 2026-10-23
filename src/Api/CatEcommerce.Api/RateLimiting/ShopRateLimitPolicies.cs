@@ -7,5 +7,4 @@ public static class ShopRateLimitPolicies
     public const string Catalogue = "catalogue";
     public const string Reviews = "reviews";
     public const string StockAlerts = "stock-alerts";
-    public const string FoodRecommendations = "food-recommendations";
 }

@@ -10,7 +10,7 @@ public sealed class InMemoryBusinessSettingsTests
         var sut = new InMemoryBusinessSettings();
 
         Assert.Equal(0, sut.GetInt("inventory.defaultReorderPoint"));
-        Assert.Equal(0m, sut.GetDecimal("boarding.depositPercent"));
+        Assert.Equal(0m, sut.GetDecimal("ordering.depositPercent"));
         Assert.False(sut.GetBool("system.maintenanceMode"));
     }
 
@@ -28,11 +28,11 @@ public sealed class InMemoryBusinessSettingsTests
         var branchId = Guid.NewGuid();
         var sut = new InMemoryBusinessSettings(new Dictionary<string, object>
         {
-            ["boarding.depositPercent"] = 30m,
-            [$"boarding.depositPercent:{branchId}"] = 50m
+            ["ordering.depositPercent"] = 30m,
+            [$"ordering.depositPercent:{branchId}"] = 50m
         });
 
-        Assert.Equal(50m, sut.GetDecimal("boarding.depositPercent", branchId));
-        Assert.Equal(30m, sut.GetDecimal("boarding.depositPercent"));
+        Assert.Equal(50m, sut.GetDecimal("ordering.depositPercent", branchId));
+        Assert.Equal(30m, sut.GetDecimal("ordering.depositPercent"));
     }
 }

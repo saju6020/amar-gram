@@ -10,12 +10,12 @@ namespace CatEcommerce.Shared.Common.Constants;
 public static class StandardTemplateVariables
 {
     public const string RecipientName = "recipientName";
-    public const string ClinicName = "clinicName";
-    public const string ClinicPhone = "clinicPhone";
+    public const string OutletName = "outletName";
+    public const string OutletPhone = "outletPhone";
     public const string UnsubscribeLink = "unsubscribeLink";
 
     /// <summary>Available to every template, transactional or marketing.</summary>
-    public static readonly IReadOnlyList<string> Common = [RecipientName, ClinicName, ClinicPhone];
+    public static readonly IReadOnlyList<string> Common = [RecipientName, OutletName, OutletPhone];
 
     public static bool IsStandard(string name, bool isMarketing) =>
         Common.Contains(name, StringComparer.Ordinal) || (isMarketing && name == UnsubscribeLink);
@@ -23,8 +23,8 @@ public static class StandardTemplateVariables
     public static readonly IReadOnlyDictionary<string, TemplateVariableKind> Kinds = new Dictionary<string, TemplateVariableKind>(StringComparer.Ordinal)
     {
         [RecipientName] = TemplateVariableKind.Text,
-        [ClinicName] = TemplateVariableKind.Text,
-        [ClinicPhone] = TemplateVariableKind.Text,
+        [OutletName] = TemplateVariableKind.Text,
+        [OutletPhone] = TemplateVariableKind.Text,
         [UnsubscribeLink] = TemplateVariableKind.Url,
     };
 }

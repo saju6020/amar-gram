@@ -2,7 +2,7 @@ namespace CatEcommerce.Read.ViewModels;
 
 // HO-IMP-001 §12.4 -- goods receipts, stock, batches and the ledger. Quantities are strings with the stock unit beside them; every batch view
 // carries isExpired, daysToExpiry and branchTimeZoneId (expiry is DERIVED in the branch's local date, never stored -- ADR-101); every SKU,
-// receipt, batch and stock read carries `storage` (US-IMP-16 AC1). The ledger view has NO customer or cat field -- those are in the recall
+// receipt, batch and stock read carries `storage` (US-IMP-16 AC1). The ledger view has NO customer field -- that is in the recall
 // trace only (ADR-104).
 
 public sealed record GoodsReceiptSummaryViewModel(

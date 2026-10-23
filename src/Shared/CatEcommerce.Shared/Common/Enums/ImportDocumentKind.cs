@@ -5,7 +5,6 @@ public sealed class ImportDocumentKind(int value, string displayName) : Enumerat
 {
     public static readonly ImportDocumentKind ImportPermit = new(1, nameof(ImportPermit));
     public static readonly ImportDocumentKind HealthCertificate = new(2, nameof(HealthCertificate));
-    public static readonly ImportDocumentKind VeterinaryCertificate = new(3, nameof(VeterinaryCertificate));
     public static readonly ImportDocumentKind CustomsDeclaration = new(4, nameof(CustomsDeclaration));
     public static readonly ImportDocumentKind BillOfLading = new(5, nameof(BillOfLading));
     public static readonly ImportDocumentKind CommercialInvoice = new(6, nameof(CommercialInvoice));

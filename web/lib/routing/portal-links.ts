@@ -5,8 +5,7 @@
  *
  * Section 20.5: a route whose handover is not built yet still gets its constant here (recorded in
  * docs/test-cases/TC-HO-POR-002.md "Cross-area links"), so the day that page lands nothing but
- * the page itself changes. Not built when this file was written: `PORTAL_ORDERS` /
- * `portalOrderHref` and `CART` (HO-ORD-002), `PORTAL_PRESCRIPTIONS` (HO-PHM-002).
+ * the page itself changes.
  */
 
 import { sanitizeNextPath } from '@/lib/validation/nextPath';
@@ -18,14 +17,7 @@ export const DEFAULT_CUSTOMER_LANDING = '/portal/orders';
 
 /** The `?next=` paths a customer may come back to after signing in (see the sign-in page for why
  *  each one is here). Shared with the register page so "Create an account" keeps the same return. */
-export const CUSTOMER_RETURN_PREFIXES = [
-  '/portal/',
-  '/book',
-  '/shop',
-  '/cart',
-  '/checkout',
-  '/boarding',
-];
+export const CUSTOMER_RETURN_PREFIXES = ['/portal/', '/shop', '/cart', '/checkout'];
 
 /** `path?next=...` when `next` is an allowed customer return path, otherwise just `path`
  *  (Issues.md #5: sign-in -> register -> sign-in keeps the checkout the visitor started from). */
@@ -35,29 +27,12 @@ export function withCustomerNext(path: string, next: string | null): string {
 }
 
 export const PORTAL_HOME = '/portal';
-export const PORTAL_CATS = '/portal/cats';
-export const PORTAL_ADD_CAT = '/portal/cats/new';
-export const PORTAL_APPOINTMENTS = '/portal/appointments';
 export const PORTAL_BILLING = '/portal/billing';
-export const PORTAL_PRESCRIPTIONS = '/portal/prescriptions';
 export const PORTAL_ORDERS = '/portal/orders';
-export const BOOK_APPOINTMENT = '/book';
 export const CART = '/cart';
 export const SHOP = '/shop';
 
-export const portalCatHref = (catId: string) => `${PORTAL_CATS}/${encodeURIComponent(catId)}`;
-export const portalCatVisitsHref = (catId: string) => `${portalCatHref(catId)}/visits`;
-export const portalAppointmentHref = (appointmentId: string) =>
-  `${PORTAL_APPOINTMENTS}/${encodeURIComponent(appointmentId)}`;
 export const portalInvoiceHref = (invoiceId: string) =>
   `${PORTAL_BILLING}/invoices/${encodeURIComponent(invoiceId)}`;
 export const portalOrderHref = (orderId: string) =>
   `${PORTAL_ORDERS}/${encodeURIComponent(orderId)}`;
-export const portalVisitHref = (visitId: string) => `/portal/visits/${encodeURIComponent(visitId)}`;
-
-/** `/book?catId=…&category=Vaccination` — the booking flow already reads both params
- *  (HO-APT-002 `BookingFlow`). */
-export function bookVaccinationHref(catId: string): string {
-  const params = new URLSearchParams({ catId, category: 'Vaccination' });
-  return `${BOOK_APPOINTMENT}?${params.toString()}`;
-}

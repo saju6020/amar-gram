@@ -62,12 +62,6 @@ public sealed record AgeingRowViewModel(
 public sealed record AgeingViewModel(DateOnly AsOf, AgeingTotalsViewModel Totals, PagedResult<AgeingRowViewModel> Rows);
 
 // ── Published read contracts (§8.13) ────────────────────────────────────────────────────────────────
-public sealed record BillingGroupLineViewModel(string BusinessLine, int Charges, MoneyViewModel Billed, MoneyViewModel Unbilled);
-
-public sealed record BillingGroupSummaryViewModel(
-    IReadOnlyList<BillingGroupLineViewModel> ByBusinessLine, MoneyViewModel BilledTotal, MoneyViewModel UnbilledTotal, MoneyViewModel InvoicedOutstanding,
-    IReadOnlyList<EarmarkedCreditViewModel> EarmarkedPayments, IReadOnlyList<Guid> InvoiceIds);
-
 public sealed record SourceBillingInvoiceViewModel(Guid InvoiceId, string? Number, string Status, MoneyViewModel Outstanding);
 
 public sealed record SourceBillingStatusViewModel(

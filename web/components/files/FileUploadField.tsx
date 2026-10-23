@@ -8,8 +8,8 @@ import { formatFileSize } from '@/lib/files/fileRules';
 import type { FilePurpose, StoredFileViewModel } from '@/lib/api/files';
 
 /**
- * `FileUploadField` — HO-EMR-002 §11.7, ADR-FE-055. ONE file for a clinical purpose (`LabResult`,
- * `ClinicalPhoto`, `ConsentForm`), built on the File Storage module's `FileUploader` (HO-FIL-002) so
+ * `FileUploadField` — ADR-FE-055. ONE file for a single-file purpose (for example `ProductImage`),
+ * built on the File Storage module's `FileUploader` (HO-FIL-002) so
  * the type/size pre-check mirrors `FileRules` and a refusal (`FileTooLarge`, `FileTypeNotAllowed`,
  * `FileContentMismatch`, `FileRejected`, `FileScanUnavailable`) is shown as its plain-language
  * sentence with progress and cancel — never reimplemented here. After upload this shows a chip with

@@ -29,7 +29,7 @@ public sealed class ProductAggregateFoodTests
     public void SetFoodDetails_OnNonFoodProduct_ThrowsFoodDetailsOnlyForFood()
     {
         var product = CreateProduct(ProductCategory.Litter, ProductSubcategory.Clumping);
-        var details = new FoodDetails(null, null, null, null, null, null, null);
+        var details = new FoodDetails(null, null, null, null, null, null);
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.SetFoodDetails(details, TestUserContext.Create(), Guid.NewGuid()));
         Assert.Equal(BusinessViolationCodes.FoodDetailsOnlyForFood, ex.ErrorCode);
@@ -40,14 +40,14 @@ public sealed class ProductAggregateFoodTests
     {
         var product = CreateProduct(ProductCategory.CatFood);
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetFoodDetails(new FoodDetails("Royal Canin", LifeStage.Kitten, ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails("Royal Canin", ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
         var facts = new PublicationFacts([product.Skus.Single().Id], true, []);
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.Contains("country of origin", ex.Message.ToLowerInvariant());
 
-        // Add it -> now publishable (assuming life stage and priced SKU are present).
+        // Add it -> now publishable (assuming a priced SKU is present).
         product.UpdateDetails(DetailsDto(product, "DE"));
         product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid());
         Assert.Equal(CatEcommerce.Shared.Common.Enums.ProductStatus.Active, product.Status);
@@ -58,41 +58,13 @@ public sealed class ProductAggregateFoodTests
     {
         var product = CreateProduct(ProductCategory.CatFood);
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetFoodDetails(new FoodDetails(null, LifeStage.Kitten, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails(null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         product.UpdateDetails(DetailsDto(product, "DE"));
         var facts = new PublicationFacts([product.Skus.Single().Id], true, []);
         product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.UpdateDetails(DetailsDto(product, null)));
         Assert.Equal(BusinessViolationCodes.CountryOfOriginRequired, ex.ErrorCode);
-    }
-
-    [Fact]
-    public void SetPrescriptionRequired_OnFood_RaisesEvent_OnNonFood_Throws()
-    {
-        var food = CreateProduct(ProductCategory.CatFood, slug: "food-a");
-        food.SetPrescriptionRequired(true, TestUserContext.Create(), Guid.NewGuid());
-        Assert.True(food.PrescriptionRequired);
-
-        var litter = CreateProduct(ProductCategory.Litter, ProductSubcategory.Clumping, slug: "litter-a");
-        var ex = Assert.Throws<DomainRuleViolationException>(() => litter.SetPrescriptionRequired(true, TestUserContext.Create(), Guid.NewGuid()));
-        Assert.Equal(BusinessViolationCodes.PrescriptionOnlyForFood, ex.ErrorCode);
-    }
-
-    [Fact]
-    public void SetPrescriptionRequired_On_WhileAComponentOfABundle_IsRefused_NamingTheBundle_ButOffIsAllowed()
-    {
-        var food = CreateProduct(ProductCategory.CatFood, slug: "food-in-kit");
-
-        var ex = Assert.Throws<DomainRuleViolationException>(() =>
-            food.SetPrescriptionRequired(true, TestUserContext.Create(), Guid.NewGuid(), ["Starter Kit"]));
-        Assert.Equal(BusinessViolationCodes.PrescriptionProductInBundle, ex.ErrorCode);
-        Assert.Contains("Starter Kit", ex.Message);
-        Assert.False(food.PrescriptionRequired);
-
-        food.SetPrescriptionRequired(true, TestUserContext.Create(), Guid.NewGuid(), []);
-        food.SetPrescriptionRequired(false, TestUserContext.Create(), Guid.NewGuid(), ["Starter Kit"]);
-        Assert.False(food.PrescriptionRequired);
     }
 
     [Theory]
@@ -126,7 +98,7 @@ public sealed class ProductAggregateFoodTests
     {
         var product = CreateProduct(ProductCategory.CatFood);
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetFoodDetails(new FoodDetails("Royal Canin", LifeStage.Kitten, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails("Royal Canin", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         product.UpdateDetails(DetailsDto(product, "DE"));
 
         var facts = new PublicationFacts([product.Skus.Single().Id], true, []);

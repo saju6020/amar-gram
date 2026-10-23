@@ -13,7 +13,7 @@ import {
 /**
  * `mocks/handlers/ordering/control.ts` — HO-ORD-002 §12.1. Test controls for the mock **server**
  * (never app code): a few things an end-to-end test cannot cause through the UI — "the price changed
- * between cart and checkout", "an authorisation lapsed", "the transfer window is 30 seconds", "someone
+ * between cart and checkout", "the transfer window is 30 seconds", "someone
  * else is signed in as staff", "the next placement answers 409". Exposed on `window.__orderingMock`
  * only in a development/test build; mocks load only when `NEXT_PUBLIC_USE_MOCKS=true`.
  */
@@ -28,8 +28,6 @@ export interface OrderingMockControls {
   actAsAdmin(): void;
   setTransferWindowSeconds(seconds: number): void;
   expireTransfersNow(): void;
-  lapseAuthorisation(catId: string): void;
-  restoreAuthorisation(catId: string): void;
   setPrice(skuId: string, amount: string): void;
   setStock(skuId: string, quantity: number): void;
   recallBatchOf(orderId: string): void;
@@ -65,14 +63,6 @@ export function createControls(): OrderingMockControls {
           o.paymentDueBy = new Date(Date.now() - 1000).toISOString();
         }
       }
-      persist();
-    },
-    lapseAuthorisation: (catId) => {
-      if (!db.lapsedCats.includes(catId)) db.lapsedCats.push(catId);
-      persist();
-    },
-    restoreAuthorisation: (catId) => {
-      db.lapsedCats = db.lapsedCats.filter((id) => id !== catId);
       persist();
     },
     setPrice: (skuId, amount) => {
@@ -116,7 +106,6 @@ export function createControls(): OrderingMockControls {
         lineId: uuid(),
         skuId,
         quantity,
-        catId: null,
         priceWhenAddedCents: info.priceCents,
       });
       persist();

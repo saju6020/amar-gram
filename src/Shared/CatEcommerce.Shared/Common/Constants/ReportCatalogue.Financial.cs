@@ -25,12 +25,12 @@ public static partial class ReportCatalogue
     [
         // R9 -- ADR-283 (revenue) and ADR-284 (cost and margin).
         new ReportDefinition(
-            RevenueByBusinessLineKey, "Revenue by business line",
-            "Net revenue (after discounts, before tax, less credit notes) for clinic, shop and boarding, with the cost of goods and margin where the landed cost is known, and how much of the revenue that margin covers.",
+            RevenueByBusinessLineKey, "Revenue by sales channel",
+            "Net revenue (after discounts, before tax, less credit notes) by sales channel (online, counter; lines with no order behind them are Other), with the cost of goods and margin where the landed cost is known, and how much of the revenue that margin covers.",
             ReportCategory.Financial, ReportKind.Period, ReportRelativePeriod.PreviousMonth, 731, [],
             [
                 new ReportColumn("bucket", "Period", ReportColumnType.Text),
-                new ReportColumn("businessLine", "Business line", ReportColumnType.Text),
+                new ReportColumn("channel", "Sales channel", ReportColumnType.Text),
                 new ReportColumn("gross", "Gross", ReportColumnType.Money),
                 new ReportColumn("discounts", "Discounts", ReportColumnType.Money),
                 new ReportColumn("creditNotes", "Credit notes", ReportColumnType.Money),
@@ -78,13 +78,13 @@ public static partial class ReportCatalogue
             "bucket", true, true, ["BIL", "SHP", "IMP"]),
 
         new ReportDefinition(
-            RevenueByServiceKey, "Revenue by service and product group",
-            "Net revenue by business line and service or product group, with cost of goods and margin where known.",
+            RevenueByServiceKey, "Revenue by channel and product group",
+            "Net revenue by sales channel and product group, with cost of goods and margin where known.",
             ReportCategory.Financial, ReportKind.Period, ReportRelativePeriod.PreviousMonth, 731, [],
             [
                 new ReportColumn("bucket", "Period", ReportColumnType.Text),
-                new ReportColumn("businessLine", "Business line", ReportColumnType.Text),
-                new ReportColumn("group", "Service or product group", ReportColumnType.Text),
+                new ReportColumn("channel", "Sales channel", ReportColumnType.Text),
+                new ReportColumn("group", "Product group", ReportColumnType.Text),
                 new ReportColumn("quantity", "Quantity", ReportColumnType.Decimal),
                 new ReportColumn("netRevenue", "Net revenue", ReportColumnType.Money),
                 new ReportColumn("cogs", "Cost of goods", ReportColumnType.Money),

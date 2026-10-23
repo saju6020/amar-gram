@@ -5,7 +5,7 @@ import { dashboardFor, portalIds, reorderResults, type PortalScenario } from './
  * `mocks/handlers/portal/index.ts` — HO-POR-002 §12. The portal dashboard and Orders' re-order, as
  * the merged backend sends them (HO-POR-001 `PortalController`; HO-ORD-001 C15
  * `CustomerOrdersController.Reorder`). `mocks/handlers/areas/portal.ts` stays the empty stub
- * HO-CAT-002 scaffolded (HO-ADM-002's precedent); `mocks/handlers/index.ts` adds this array.
+ * an earlier handover scaffolded (HO-ADM-002's precedent); `mocks/handlers/index.ts` adds this array.
  *
  * Scenario: which dashboard the mock answers with. In the browser a Playwright test sets the
  * `pc_mock_portal` cookie (the handlers run in the page, so a module variable would die on every

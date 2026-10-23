@@ -9,7 +9,7 @@ import { OfflineSnapshotSync } from '@/components/offline/OfflineSnapshotSync';
 import { OverdueRestoreBanner } from '@/components/operations/OverdueRestoreBanner';
 import { ServiceWorkerRegistrar } from '@/components/offline/ServiceWorkerRegistrar';
 
-// Back-office shell for every /staff/** route (HO-CAT-002 §8.3). Thin by design (§8.2 rule 5) —
+// Back-office shell for every /staff/** route (the scaffold handover §8.3). Thin by design (§8.2 rule 5) —
 // the interactive shell itself lives in a client component; this layout only composes it.
 //
 // HO-ACC-002 §11.9, ADR-FE-004/010: `StaffSessionGuard` replaces `lib/identity.ts` for every

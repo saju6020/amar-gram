@@ -33,7 +33,7 @@ public sealed class ChangeStaffRolesCommandHandlerTests
 
         var response = await handler.HandleAsync(new ChangeStaffRolesCommand
         {
-            StaffAccountId = lastAdmin.Id, RoleIds = ["Nurse"], UserContext = AdminContext, CorrelationId = Guid.NewGuid()
+            StaffAccountId = lastAdmin.Id, RoleIds = ["Reception"], UserContext = AdminContext, CorrelationId = Guid.NewGuid()
         });
 
         Assert.False(response.IsSuccess);
@@ -53,7 +53,7 @@ public sealed class ChangeStaffRolesCommandHandlerTests
 
         var response = await handler.HandleAsync(new ChangeStaffRolesCommand
         {
-            StaffAccountId = admin1.Id, RoleIds = ["Nurse"], UserContext = AdminContext, CorrelationId = Guid.NewGuid()
+            StaffAccountId = admin1.Id, RoleIds = ["Reception"], UserContext = AdminContext, CorrelationId = Guid.NewGuid()
         });
 
         Assert.True(response.IsSuccess);

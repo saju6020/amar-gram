@@ -8,12 +8,6 @@ namespace CatEcommerce.Shared.Common.Constants;
 /// maximum size. Domain configuration data owned by this context, not a seam another area calls
 /// through (docs/handover/CONTRACTS.md §5) -- a new purpose is a new <see cref="FilePurpose"/>
 /// member plus a row here, in the same commit, per §8.3's own rule.
-///
-/// <see cref="FilePurpose.CatProfilePhoto"/>'s row was added by HO-FIL-001 itself, under
-/// integrator authorisation, to close the carried HO-CAT-002-SECURITY item (see HO-FIL-001 §1
-/// Amended) -- its cap and allowed types match the pre-existing <c>CatPhotoRules</c> the Cat
-/// Profiles aggregate already enforced, so the aggregate-level check and the upload-time check
-/// agree.
 /// </summary>
 public static class FileRules
 {
@@ -21,9 +15,9 @@ public static class FileRules
 
     /// <summary>
     /// How long a minted <see cref="FilePurpose"/> file reference stays eligible to be attached
-    /// by a consuming write (e.g. Cat Profiles' "add photo"). Not named by any handover verbatim
+    /// by a consuming write. Not named by any handover verbatim
     /// -- inferred so a leaked/old file id cannot be replayed indefinitely by a consumer that
-    /// checks freshness (the "expiry check" called for by the carried HO-CAT-002-SECURITY item).
+    /// checks freshness.
     /// A FIL-owned policy, not a business rule of any consuming area.
     /// </summary>
     public static readonly TimeSpan AttachWindow = TimeSpan.FromMinutes(30);
@@ -31,46 +25,15 @@ public static class FileRules
     private static readonly IReadOnlyDictionary<FilePurpose, FilePurposeRule> Rules =
         new Dictionary<FilePurpose, FilePurposeRule>
         {
-            [FilePurpose.LabResult] = new(
-                FilePurpose.LabResult,
-                ["application/pdf", "image/jpeg", "image/png", "application/dicom"],
-                50 * OneMb),
-
-            [FilePurpose.ClinicalPhoto] = new(
-                FilePurpose.ClinicalPhoto,
-                ["image/jpeg", "image/png", "image/webp"],
-                15 * OneMb),
-
-            [FilePurpose.ConsentForm] = new(
-                FilePurpose.ConsentForm,
-                ["application/pdf", "image/jpeg", "image/png"],
-                15 * OneMb),
-
             [FilePurpose.ProductImage] = new(
                 FilePurpose.ProductImage,
                 ["image/jpeg", "image/png", "image/webp"],
                 5 * OneMb),
 
-            [FilePurpose.BoardingMedia] = new(
-                FilePurpose.BoardingMedia,
-                ["image/jpeg", "image/png", "image/webp", "video/mp4"],
-                50 * OneMb),
-
-            [FilePurpose.BoardingBelongings] = new(
-                FilePurpose.BoardingBelongings,
-                ["image/jpeg", "image/png", "image/webp"],
-                15 * OneMb),
-
             [FilePurpose.ReportExport] = new(
                 FilePurpose.ReportExport,
                 ["application/pdf", "text/csv", "application/zip"],
                 50 * OneMb),
-
-            // Integrator-authorised addition -- see the type doc comment above.
-            [FilePurpose.CatProfilePhoto] = new(
-                FilePurpose.CatProfilePhoto,
-                ["image/jpeg", "image/png", "image/webp"],
-                CatPhotoRules.MaxSizeInBytes),
         };
 
     public static FilePurposeRule? Find(FilePurpose purpose) =>

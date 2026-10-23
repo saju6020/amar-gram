@@ -19,20 +19,6 @@ function lookup(map: Readonly<Record<string, StatusLabel>>, key: string): Status
   return map[key] ?? UNKNOWN_STATUS;
 }
 
-const VACCINATION: Readonly<Record<string, StatusLabel>> = {
-  Current: { label: 'Up to date', tone: 'success' },
-  DueSoon: { label: 'Due soon', tone: 'warning' },
-  Overdue: { label: 'Overdue', tone: 'danger' },
-};
-export const vaccinationLabel = (status: string) => lookup(VACCINATION, status);
-
-const APPOINTMENT: Readonly<Record<string, StatusLabel>> = {
-  Booked: { label: 'Booked', tone: 'success' },
-  CheckedIn: { label: 'Checked in', tone: 'success' },
-  InConsultation: { label: 'In consultation', tone: 'success' },
-};
-export const appointmentStatusLabel = (status: string) => lookup(APPOINTMENT, status);
-
 const ORDER: Readonly<Record<string, StatusLabel>> = {
   PendingPayment: { label: 'Awaiting payment', tone: 'warning' },
   Confirmed: { label: 'Confirmed', tone: 'success' },

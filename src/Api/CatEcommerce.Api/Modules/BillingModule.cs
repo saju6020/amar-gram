@@ -11,14 +11,9 @@ using CatEcommerce.Application.Commands.Billing;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Infrastructure.Billing;
 using CatEcommerce.Infrastructure.Billing.Documents;
-using CatEcommerce.Infrastructure.Billing.ItemSources;
 using CatEcommerce.Application.DomainEventHandlers.Billing;
 using CatEcommerce.Domain.Events.Account;
 using CatEcommerce.Domain.Events.Billing;
-using CatEcommerce.Domain.Events.Clinic;
-using CatEcommerce.Domain.Events.Prescription;
-using CatEcommerce.Domain.Events.Surgery;
-using CatEcommerce.Domain.Events.Visit;
 using Platform.Infrastructure.Core.Events;
 using CatEcommerce.Read.Queries.Billing;
 using CatEcommerce.Read.QueryHandlers.Billing;
@@ -53,14 +48,6 @@ public static class BillingModule
         services.AddScoped<IPersonalDataEraser, BillingPersonalDataEraser>();
         services.AddScoped<IRetentionReviewSource, BillingRetentionReviewSource>();
 
-        // Item sources, keyed by ChargeSourceKind through the resolver (§12.7). Phase J (owner decisions 2026-10-14) adds Visit, Dispense and Surgery.
-        services.AddScoped<IBillableItemSource, AppointmentBillableItemSource>();
-        services.AddScoped<IBillableItemSource, VisitBillableItemSource>();
-        services.AddScoped<IBillableItemSource, DispenseBillableItemSource>();
-        services.AddScoped<IBillableItemSource, SurgeryBillableItemSource>();
-        services.AddScoped<IBillableItemSourceResolver, BillableItemSourceResolver>();
-
-
         // HO-BIL-001 §12.5 / ADR-187 -- the parallel double-submit of a money-moving write is answered with the original result.
         services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options => options.Filters.Add<CatEcommerce.Api.Filters.BillingIdempotencyReplayFilter>());
 
@@ -81,8 +68,6 @@ public static class BillingModule
         services.AddScoped<IValidator<RecordManualChargeCommand>, RecordManualChargeCommandValidator>();
         services.AddScoped<ICommandHandlerAsync<VoidChargeCommand>, VoidChargeCommandHandler>();
         services.AddScoped<IValidator<VoidChargeCommand>, VoidChargeCommandValidator>();
-        services.AddScoped<ICommandHandlerAsync<CaptureSourceChargesCommand>, CaptureSourceChargesCommandHandler>();
-        services.AddScoped<IValidator<CaptureSourceChargesCommand>, CaptureSourceChargesCommandValidator>();
 
         // Phase C -- invoices
         services.AddScoped<ICommandHandlerAsync<CreateDraftInvoiceCommand>, CreateDraftInvoiceCommandHandler>();
@@ -158,7 +143,6 @@ public static class BillingModule
 
         // Phase B
         services.AddScoped<IQueryHandlerAsync<GetChargesQuery, PagedResult<ChargeViewModel>>, GetChargesQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetUncapturedSourcesQuery, IReadOnlyList<UncapturedSourceViewModel>>, GetUncapturedSourcesQueryHandler>();
 
         // Phase C
         services.AddScoped<IQueryHandlerAsync<GetInvoicesQuery, PagedResult<InvoiceSummaryViewModel>>, GetInvoicesQueryHandler>();
@@ -177,7 +161,6 @@ public static class BillingModule
         services.AddScoped<IQueryHandlerAsync<GetCustomerPaymentsQuery, PagedResult<PaymentSummaryViewModel>>, GetCustomerPaymentsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetCustomerBillingSummaryQuery, CustomerBillingSummaryViewModel>, GetCustomerBillingSummaryQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetAgeingQuery, AgeingViewModel>, GetAgeingQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetBillingGroupSummaryQuery, BillingGroupSummaryViewModel>, GetBillingGroupSummaryQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetSourceBillingStatusQuery, SourceBillingStatusViewModel>, GetSourceBillingStatusQueryHandler>();
 
         // Phase E
@@ -205,15 +188,6 @@ public static class BillingModule
 
     private static void RegisterDomainEventHandlers(IServiceCollection services)
     {
-        // Phase B -- thin capture handler (fresh scope, swallow and log); never enqueues.
-        services.AddScoped<IEventHandlerAsync<AppointmentCompletedEvent>, CaptureChargesOnAppointmentCompletedHandler>();
-
-        // Phase J -- the same thin shape for the three areas merged since; the reversal handler voids what was not yet invoiced.
-        services.AddScoped<IEventHandlerAsync<VisitFinalisedEvent>, CaptureChargesOnVisitFinalisedHandler>();
-        services.AddScoped<IEventHandlerAsync<PrescriptionDispensedEvent>, CaptureChargesOnPrescriptionDispensedHandler>();
-        services.AddScoped<IEventHandlerAsync<SurgeryDischargedEvent>, CaptureChargesOnSurgeryDischargedHandler>();
-        services.AddScoped<IEventHandlerAsync<DispensingReversedEvent>, VoidChargesOnDispensingReversedHandler>();
-
         // Phase C -- the merge is binding on every context holding a customer id (HO-ACC-001 ADR-039).
         services.AddScoped<IEventHandlerAsync<CustomerMergedEvent>, ReassignBillingOnCustomerMergedHandler>();
 

@@ -21,7 +21,7 @@ public static class StockPositionBuilder
 {
     private static readonly int[] InKinds = [MovementKind.Receipt.Value, MovementKind.TransferIn.Value, MovementKind.Return.Value];
     private static readonly int[] OutKinds =
-        [MovementKind.Sale.Value, MovementKind.Dispense.Value, MovementKind.ClinicalUse.Value, MovementKind.BoardingUse.Value, MovementKind.TransferOut.Value, MovementKind.Wastage.Value];
+        [MovementKind.Sale.Value, MovementKind.TransferOut.Value, MovementKind.Wastage.Value];
     private static readonly int[] AdjustKinds = [MovementKind.AdjustmentIn.Value, MovementKind.AdjustmentOut.Value, MovementKind.CountGain.Value, MovementKind.CountLoss.Value];
 
     public static StockReportOutput Build(

@@ -30,7 +30,7 @@ export function formatRating(average: number | null | undefined, count: number):
   return `${value} out of 5 (${count} ${count === 1 ? 'review' : 'reviews'})`;
 }
 
-/** `12 Nov 2026` — a date-only value, never shifted by a time zone (HO-CAT-002 §9). */
+/** `12 Nov 2026` — a date-only value, never shifted by a time zone. */
 export function formatBestBefore(dateOnly: string): string {
   if (!dateOnly) return '';
   return format(parseDateOnly(dateOnly), 'd MMM yyyy');

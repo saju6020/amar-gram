@@ -85,7 +85,7 @@ export interface FefoPreview {
   stockUnit: string;
 }
 
-export type FefoPurpose = 'Sale' | 'Dispense' | 'ClinicalUse' | 'BoardingUse';
+export type FefoPurpose = 'Sale';
 
 /** A refusal (unknown SKU, a purpose the location does not permit) is a `400`. */
 export async function getFefoPreview(params: {

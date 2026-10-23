@@ -79,7 +79,7 @@ public sealed class InventorySchemaTests(InventoryApiFactory factory) : Inventor
     }
 
     [Fact]
-    public async Task I_A1_TheMainBranchHasTheFiveSeededLocations()
+    public async Task I_A1_TheMainBranchHasTheThreeSeededLocations()
     {
         await using var connection = await OpenConnectionAsync();
         await using var command = new NpgsqlCommand(
@@ -90,12 +90,10 @@ public sealed class InventorySchemaTests(InventoryApiFactory factory) : Inventor
         await using (var reader = await command.ExecuteReaderAsync())
             while (await reader.ReadAsync()) rows.Add((reader.GetGuid(0), reader.GetString(1), reader.GetInt32(2), reader.GetBoolean(3)));
 
-        Assert.Equal(5, rows.Count);
+        Assert.Equal(3, rows.Count);
         Assert.All(rows, r => Assert.True(r.Active));
         Assert.Contains(rows, r => r.Id == InventorySeed.QuarantineLocationId && r.Code == InventorySeed.QuarantineCode && r.Kind == CatEcommerce.Shared.Common.Enums.StockLocationKind.Quarantine.Value);
         Assert.Contains(rows, r => r.Id == InventorySeed.ShopLocationId && r.Code == InventorySeed.ShopCode);
         Assert.Contains(rows, r => r.Id == InventorySeed.WarehouseLocationId && r.Code == InventorySeed.WarehouseCode);
-        Assert.Contains(rows, r => r.Id == InventorySeed.DispensaryLocationId && r.Code == InventorySeed.DispensaryCode);
-        Assert.Contains(rows, r => r.Id == InventorySeed.BoardingStoreLocationId && r.Code == InventorySeed.BoardingStoreCode);
     }
 }

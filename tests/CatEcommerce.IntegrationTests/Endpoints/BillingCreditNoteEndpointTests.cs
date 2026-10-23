@@ -246,21 +246,21 @@ public sealed class BillingCreditNoteEndpointTests(BillingApiFactory factory) : 
     {
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
-        var stayId = Guid.NewGuid();
+        var orderId = Guid.NewGuid();
         var deposit = await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 5000m,
-            earmark: new { kind = "BoardingStay", sourceId = stayId, label = "Stay deposit" });
+            earmark: new { kind = "Order", sourceId = orderId, label = "Order deposit" });
         var paymentId = deposit.GetProperty("paymentId").GetGuid();
 
         var refund = await ReadAsync(await ExpectAsync(HttpStatusCode.Created, await RefundAsync(context.Admin, new
         {
-            paymentId, method = "CashInStore", amount = 5000m, reason = "Stay cancelled, deposit returned (BR-12)",
+            paymentId, method = "CashInStore", amount = 5000m, reason = "Order cancelled, deposit returned (BR-12)",
         })));
         var refundId = refund.GetProperty("refundId").GetGuid();
 
         var audit = await WithDbAsync(db => db.Set<AuditEntryAggregate>().AsNoTracking()
             .Where(a => a.EntityId == refundId && a.Category == AuditCategory.BusinessEvent && a.Action == "RefundIssued").ToListAsync());
         var row = Assert.Single(audit);
-        Assert.Contains("Stay cancelled, deposit returned (BR-12)", row.AfterValue);
+        Assert.Contains("Order cancelled, deposit returned (BR-12)", row.AfterValue);
 
         Assert.Equal(0m, AmountOf((await GetPaymentAsync(context.Admin, paymentId)).GetProperty("summary").GetProperty("unallocated")));
     }
@@ -343,7 +343,7 @@ public sealed class BillingCreditNoteEndpointTests(BillingApiFactory factory) : 
         }
     }
 
-    /// <summary>Authority -- a vet may not issue a credit note or a refund; the invoice of another branch is not found.</summary>
+    /// <summary>Authority -- a inventory may not issue a credit note or a refund; the invoice of another branch is not found.</summary>
     [Fact]
     public async Task CreditNotesAndRefunds_AreForTheirRoles_AndTheirBranch()
     {
@@ -351,10 +351,10 @@ public sealed class BillingCreditNoteEndpointTests(BillingApiFactory factory) : 
         var other = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(mine);
         var (invoiceId, _, _) = await IssueSimpleInvoiceAsync(mine, customerId, 100m);
-        var (vet, _) = await StaffClientAsync(mine, StaffRoles.Vet);
+        var (inventory, _) = await StaffClientAsync(mine, StaffRoles.Inventory);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await CreditAsync(vet, invoiceId, new { kind = "Goodwill", reason = "x", fullCredit = true })).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await RefundAsync(vet, new { paymentId = Guid.NewGuid(), method = "CashInStore", amount = 1m, reason = "x" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await CreditAsync(inventory, invoiceId, new { kind = "Goodwill", reason = "x", fullCredit = true })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await RefundAsync(inventory, new { paymentId = Guid.NewGuid(), method = "CashInStore", amount = 1m, reason = "x" })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await CreditAsync(other.Admin, invoiceId, new { kind = "Goodwill", reason = "x", fullCredit = true })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await RefundAsync(other.Admin, new { paymentId = Guid.NewGuid(), method = "CashInStore", amount = 1m, reason = "x" })).StatusCode);
     }

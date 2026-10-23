@@ -29,7 +29,7 @@ public sealed class StockDemandPlanner(FefoAllocator fefo)
         IReadOnlyDictionary<Guid, StockLocationFact> namedLocations, DateOnly branchToday, bool allowShortfall)
     {
         if (!MovementKindRules.IsConsuming(demand.Purpose))
-            return Fail(BusinessViolationCodes.MovementKindNotAllowed, "Only a sale, dispensing, clinical use or boarding use can be planned.", nameof(demand.Purpose));
+            return Fail(BusinessViolationCodes.MovementKindNotAllowed, "Only a sale can be planned.", nameof(demand.Purpose));
 
         if (reference is not null && party is not null && PartyRefusal(demand.Purpose, reference.ReferenceKind, party) is { } missing)
             return Fail(missing.Code, missing.Message, missing.Property);
@@ -112,18 +112,11 @@ public sealed class StockDemandPlanner(FefoAllocator fefo)
     }
 
     /// <summary>The recall stamp every consuming movement must carry (ADR-104), enforced by the port at write time so a module added later is
-    /// covered automatically. <c>Sale</c> needs the customer unless the reference is a <c>PosSale</c>; <c>Dispense</c> and <c>BoardingUse</c> need both;
-    /// <c>ClinicalUse</c> needs the cat.</summary>
+    /// covered automatically. <c>Sale</c> needs the customer unless the reference is a <c>PosSale</c>.</summary>
     public static (string Code, string Message, string Property)? PartyRefusal(MovementKind purpose, StockReferenceKind referenceKind, StockParty party)
     {
         if (purpose == MovementKind.Sale && party.CustomerId is null && referenceKind != StockReferenceKind.PosSale)
             return (BusinessViolationCodes.StockPartyRequired, "A sale needs the customer (only a counter sale may be anonymous).", nameof(StockParty.CustomerId));
-
-        if ((purpose == MovementKind.Dispense || purpose == MovementKind.BoardingUse) && (party.CustomerId is null || party.CatId is null))
-            return (BusinessViolationCodes.StockPartyRequired, $"{purpose.DisplayName} needs both the customer and the cat.", party.CustomerId is null ? nameof(StockParty.CustomerId) : nameof(StockParty.CatId));
-
-        if (purpose == MovementKind.ClinicalUse && party.CatId is null)
-            return (BusinessViolationCodes.StockPartyRequired, "Clinical use needs the cat.", nameof(StockParty.CatId));
 
         return null;
     }

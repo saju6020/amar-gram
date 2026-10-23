@@ -24,7 +24,7 @@ public sealed class ReportingCrossCuttingEndpointTests(ReportingApiFactory facto
     {
         await RetireOtherSchedulesAsync();
         var (context, admin) = await ContextWithRoleAsync(StaffRoles.Administrator);
-        var recipient = await SeedRecipientAsync(context, StaffRoles.Reception);
+        var recipient = await SeedRecipientAsync(context, StaffRoles.Inventory);
         var customerName = "Zubaida Logcheck " + NewCode();
         var customerMobile = NewMobile();
         await ExpectAsync(HttpStatusCode.Created, await admin.PostAsJsonAsync("/api/staff/customers", new { fullName = customerName, mobileNumber = customerMobile }, Json));
@@ -64,7 +64,7 @@ public sealed class ReportingCrossCuttingEndpointTests(ReportingApiFactory facto
     {
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
-        var charge = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Service, sourceKind: ChargeSourceKind.Appointment, description: "Consultation");
+        var charge = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Fee, sourceKind: ChargeSourceKind.Manual, description: "Service fee");
         await IssueFromChargesAsync(context.Admin, customerId, [charge]);
 
         var bodies = new List<(string What, JsonElement Body)>

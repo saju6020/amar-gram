@@ -160,11 +160,11 @@ public sealed class BillingCashUpEndpointTests(BillingApiFactory factory) : Bill
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
         var (reception, _) = await StaffClientAsync(context, StaffRoles.Reception);
-        var (vet, _) = await StaffClientAsync(context, StaffRoles.Vet);
+        var (inventory, _) = await StaffClientAsync(context, StaffRoles.Inventory);
 
         var counted = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await CountAsync(reception, Today, 0m)));
         Assert.Equal(HttpStatusCode.Forbidden, (await CloseAsync(reception, Today, counted.GetProperty("version").GetInt32())).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await vet.GetAsync(Url(Today))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync(Url(Today))).StatusCode);
 
         var (accountant, _) = await StaffClientAsync(context, StaffRoles.Accountant);
         await RecordPaymentAsync(accountant, customerId, "BankTransfer", 60_000m, reference: "TRX-BIG-F4");

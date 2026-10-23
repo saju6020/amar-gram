@@ -23,7 +23,7 @@ public sealed class InventoryConsignmentEndpointTests(InventoryApiFactory factor
     private static object PlanBody(Guid orderId, bool withClearanceNumbers = true) => new
     {
         originCountryCode = "DE", shipmentReference = "BL-" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant(), purchaseOrderIds = new[] { orderId },
-        hsCodes = new[] { new { code = "2309.10", description = (string?)"Dog or cat food, retail" }, new { code = "230990", description = (string?)null } },
+        hsCodes = new[] { new { code = "2309.10", description = (string?)"Pet food, retail" }, new { code = "230990", description = (string?)null } },
         importPermitNumber = withClearanceNumbers ? "IP-2026-001" : null, healthCertificateNumber = withClearanceNumbers ? "VC-778" : null,
         customsDeclarationNumber = withClearanceNumbers ? "CD-9001" : null, expectedArrivalOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(20)
     };

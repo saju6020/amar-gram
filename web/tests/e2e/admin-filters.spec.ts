@@ -38,20 +38,20 @@ test('audit-log: typing at realistic speed keeps every keystroke, in the field a
 
   const actionInput = page.getByLabel('action', { exact: true });
   await actionInput.click();
-  await actionInput.pressSequentially('ServicePriceSet', { delay: 50 });
-  await expect(actionInput).toHaveValue('ServicePriceSet');
+  await actionInput.pressSequentially('TaxRateScheduled', { delay: 50 });
+  await expect(actionInput).toHaveValue('TaxRateScheduled');
 
   const entityIdInput = page.getByLabel('entityId', { exact: true });
   await entityIdInput.click();
-  await entityIdInput.pressSequentially('svc12345', { delay: 30 });
-  await expect(entityIdInput).toHaveValue('svc12345');
+  await entityIdInput.pressSequentially('tax12345', { delay: 30 });
+  await expect(entityIdInput).toHaveValue('tax12345');
 
   // Both fields keep their exact typed value even after the second field's own edits settle …
-  await expect(actionInput).toHaveValue('ServicePriceSet');
-  await expect(entityIdInput).toHaveValue('svc12345');
+  await expect(actionInput).toHaveValue('TaxRateScheduled');
+  await expect(entityIdInput).toHaveValue('tax12345');
   // … and both land in the URL — a quick edit to a second field never silently overwrote the first.
-  await expect(page).toHaveURL(/action=ServicePriceSet/);
-  await expect(page).toHaveURL(/entityId=svc12345/);
+  await expect(page).toHaveURL(/action=TaxRateScheduled/);
+  await expect(page).toHaveURL(/entityId=tax12345/);
 });
 
 test('audit-log: typing at 150ms/key never drops or corrupts a character, repeated 5 times (TEST gate HIGH, third pass)', async ({
@@ -107,8 +107,8 @@ test('audit-log: changing a date after typing, then Back restores the whole prev
 
   const actionInput = page.getByLabel('action', { exact: true });
   await actionInput.click();
-  await actionInput.pressSequentially('ServicePriceSet', { delay: 50 });
-  await expect(page).toHaveURL(/action=ServicePriceSet/);
+  await actionInput.pressSequentially('TaxRateScheduled', { delay: 50 });
+  await expect(page).toHaveURL(/action=TaxRateScheduled/);
   // Let the action edit's own navigation actually commit (see file header) before the next, distinct
   // edit — otherwise this test could not tell "Back undoes one whole edit" from "Back undoes two".
   await page.waitForTimeout(300);
@@ -126,8 +126,8 @@ test('audit-log: changing a date after typing, then Back restores the whole prev
   await expect(page).toHaveURL(/from=2027-01-01/);
   await expect(fromInput).toHaveValue('2027-01-01');
   // The earlier `action` edit — a separate history entry — is unaffected by this one Back press.
-  await expect(actionInput).toHaveValue('ServicePriceSet');
-  await expect(page).toHaveURL(/action=ServicePriceSet/);
+  await expect(actionInput).toHaveValue('TaxRateScheduled');
+  await expect(page).toHaveURL(/action=TaxRateScheduled/);
 });
 
 test('content list: Back twice restores each earlier filter state', async ({ page }) => {
@@ -168,12 +168,12 @@ test('deep links pre-fill filters on both the audit log and the content list (§
   await signInAsStaff(page);
 
   await page.goto(
-    '/staff/admin/audit-log?from=2027-01-01&to=2027-01-31&action=ServicePriceSet&entityId=svc1',
+    '/staff/admin/audit-log?from=2027-01-01&to=2027-01-31&action=TaxRateScheduled&entityId=tax1',
   );
   await expect(page.getByLabel('From', { exact: true })).toHaveValue('2027-01-01');
   await expect(page.getByLabel('To', { exact: true })).toHaveValue('2027-01-31');
-  await expect(page.getByLabel('action', { exact: true })).toHaveValue('ServicePriceSet');
-  await expect(page.getByLabel('entityId', { exact: true })).toHaveValue('svc1');
+  await expect(page.getByLabel('action', { exact: true })).toHaveValue('TaxRateScheduled');
+  await expect(page.getByLabel('entityId', { exact: true })).toHaveValue('tax1');
 
   await page.goto('/staff/admin/content?kind=Banner&status=Published');
   await expect(page.getByLabel('Kind', { exact: true })).toHaveValue('Banner');

@@ -17,7 +17,7 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 
 /// <summary>
 /// HO-IMP-001 I-X1 (TEST gate addition): across a recall, its trace (JSON and CSV) and the notify run, everything logged at Information and above carries ids
-/// and codes only -- no customer name, mobile number, cat name or advice text. The captured log is asserted non-empty AND to contain the recall's own line, so an
+/// and codes only -- no customer name, mobile number or advice text. The captured log is asserted non-empty AND to contain the recall's own line, so an
 /// empty capture cannot pass for a clean one.
 /// </summary>
 public sealed class InventoryLogPrivacyEndpointTests(InventoryApiFactory factory) : InventoryIntegrationTestBase(factory)
@@ -42,7 +42,7 @@ public sealed class InventoryLogPrivacyEndpointTests(InventoryApiFactory factory
     }
 
     [Fact]
-    public async Task I_X1_LogsAcrossRecallTraceAndNotifyCarryNoCustomerNamesMobilesCatNamesOrAdviceText()
+    public async Task I_X1_LogsAcrossRecallTraceAndNotifyCarryNoCustomerNamesMobilesOrAdviceText()
     {
         var capture = new CapturingProvider();
         using var logged = Factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services => services.AddLogging(l => l.AddProvider(capture))));
@@ -53,11 +53,10 @@ public sealed class InventoryLogPrivacyEndpointTests(InventoryApiFactory factory
         var batchId = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 20m, lot: lot);
 
         const string customerName = "Zephyrine Quillfeather";
-        const string ownerName = "Barnaby Thistlewick";
-        const string catName = "Mr Snufflepuss";
+        const string secondName = "Barnaby Thistlewick";
         const string advice = "Burn the remaining sacks behind the barn ZQX";
         var customerMobile = MobileNumber.Create($"017{Random.Shared.Next(10000000, 99999999)}");
-        var ownerMobile = MobileNumber.Create($"019{Random.Shared.Next(10000000, 99999999)}");
+        var secondMobile = MobileNumber.Create($"019{Random.Shared.Next(10000000, 99999999)}");
         var seeder = new UserContext(Guid.NewGuid(), Guid.NewGuid());
 
         async Task<Guid> SeedAsync(string name, MobileNumber mobile)
@@ -71,11 +70,7 @@ public sealed class InventoryLogPrivacyEndpointTests(InventoryApiFactory factory
         }
 
         var customerId = await SeedAsync(customerName, customerMobile);
-        var ownerId = await SeedAsync(ownerName, ownerMobile);
-
-        var cat = await branch.Admin.Client.PostAsJsonAsync("/api/cats",
-            new { ownerId, name = catName, species = "Cat", sex = "Male", dateOfBirth = UtcToday.AddYears(-3), dateOfBirthPrecision = "Exact" }, Json);
-        var catId = (await JsonOkAsync(cat)).GetProperty("catId").GetGuid();
+        var secondId = await SeedAsync(secondName, secondMobile);
 
         await using (var port = OpenPort())
         {
@@ -84,11 +79,11 @@ public sealed class InventoryLogPrivacyEndpointTests(InventoryApiFactory factory
         }
 
         await keeper.Client.PostAsJsonAsync("/api/staff/inventory/transfers", new
-        { fromLocationId = branch.WarehouseId, toLocationId = branch.DispensaryId, reason = "Stock the unit", lines = new[] { new { skuId = sku.SkuId, batchId, quantity = 5m } } }, Json);
+        { fromLocationId = branch.WarehouseId, toLocationId = branch.ShopId, reason = "Stock the shelf", lines = new[] { new { skuId = sku.SkuId, batchId, quantity = 5m } } }, Json);
         await using (var port = OpenPort())
         {
-            Assert.True((await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Dispense, locations: [branch.DispensaryId]),
-                OrderReference(kind: StockReferenceKind.Prescription), Customer(null, catId), default)).IsSuccess);
+            Assert.True((await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Sale, locations: [branch.ShopId]),
+                new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-LOG"), Customer(secondId), default)).IsSuccess);
             await port.CommitAsync();
         }
 
@@ -98,12 +93,12 @@ public sealed class InventoryLogPrivacyEndpointTests(InventoryApiFactory factory
         Assert.Contains(customerName, trace.ToString()); // the trace DOES carry them (that is its job) -- only the log must not
         Assert.Equal(HttpStatusCode.OK, (await keeper.Client.GetAsync($"/api/staff/inventory/recalls/{batchId}/trace.csv")).StatusCode);
         var notify = await JsonOkAsync(await keeper.Client.PostAsync($"/api/staff/inventory/recalls/{batchId}/notify", null));
-        Assert.Equal(2, notify.GetProperty("requested").GetInt32()); // the customer and the cat's owner
+        Assert.Equal(2, notify.GetProperty("requested").GetInt32()); // the two customers who received the batch
 
         var text = string.Join('\n', capture.Lines);
         Assert.Contains($"Declaring a recall of batch {batchId}", text); // the capture works and saw the recall
         Assert.Contains($"Notifying the recipients of the recall of batch {batchId}", text);
-        foreach (var secret in new[] { customerName, ownerName, catName, advice, "Quillfeather", "Thistlewick", "Snufflepuss", customerMobile.Value, ownerMobile.Value, customerMobile.Value[^8..], ownerMobile.Value[^8..] })
+        foreach (var secret in new[] { customerName, secondName, advice, "Quillfeather", "Thistlewick", customerMobile.Value, secondMobile.Value, customerMobile.Value[^8..], secondMobile.Value[^8..] })
             Assert.DoesNotContain(secret, text, StringComparison.OrdinalIgnoreCase);
     }
 }

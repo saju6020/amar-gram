@@ -9,10 +9,10 @@ public static partial class RecordClassification
 {
     private static readonly IReadOnlyList<TableClassification> FilesEntries =
     [
-        // Media, not Clinical/Financial/Regulatory: the row is bookkeeping about an upload
-        // (who, when, what type/size, which scanner) -- the clinical, financial or regulatory
+        // Media, not Financial/Regulatory: the row is bookkeeping about an upload
+        // (who, when, what type/size, which scanner) -- the financial or regulatory
         // significance of the bytes themselves belongs to whichever context's own record
-        // references the file by id (HO-FIL-001 §2: "It knows nothing about cats, visits, stays or
+        // references the file by id (HO-FIL-001 §2: "It knows nothing about
         // products"). Purgeable, not Forbidden: §8.7's own purge/erasure (StoredFilePurgeSource,
         // IStoredFileEraser) is this context's normal, designed hard-delete path, not an exception
         // to a "never delete" rule -- LegalHold and RetainUntil are what actually holds a row back.

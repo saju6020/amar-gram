@@ -14,12 +14,12 @@ public static class MovementKindRules
     public static readonly IReadOnlyList<MovementKind> Outgoing =
     [
         MovementKind.TransferOut, MovementKind.AdjustmentOut, MovementKind.CountLoss, MovementKind.Wastage,
-        MovementKind.Sale, MovementKind.Dispense, MovementKind.ClinicalUse, MovementKind.BoardingUse
+        MovementKind.Sale
     ];
 
-    /// <summary>The kinds that hand stock to a customer, a cat or a clinical use (§8.7).</summary>
+    /// <summary>The kinds that hand stock to a customer (§8.7).</summary>
     public static readonly IReadOnlyList<MovementKind> Consuming =
-        [MovementKind.Sale, MovementKind.Dispense, MovementKind.ClinicalUse, MovementKind.BoardingUse];
+        [MovementKind.Sale];
 
     public static bool IsConsuming(MovementKind kind) => Consuming.Contains(kind);
 

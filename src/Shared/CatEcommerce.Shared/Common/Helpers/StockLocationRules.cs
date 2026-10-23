@@ -19,8 +19,6 @@ public static class StockLocationRules
         {
             [StockLocationKind.ShopFloor] = [.. Everywhere, MovementKind.Sale],
             [StockLocationKind.Warehouse] = [.. Everywhere, MovementKind.Sale],
-            [StockLocationKind.ClinicDispensary] = [.. Everywhere, MovementKind.Dispense, MovementKind.ClinicalUse],
-            [StockLocationKind.BoardingStore] = [.. Everywhere, MovementKind.BoardingUse],
             [StockLocationKind.Quarantine] = [.. Everywhere, MovementKind.Return],
         };
 

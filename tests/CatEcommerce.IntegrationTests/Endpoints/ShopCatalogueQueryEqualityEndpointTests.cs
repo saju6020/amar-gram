@@ -26,10 +26,10 @@ public sealed class ShopCatalogueQueryEqualityEndpointTests(ShopApiFactory facto
         var category = new Dictionary<Guid, string>();
         var bundles = new HashSet<Guid>();
 
-        async Task<SeededProduct> Standard(string name, string cat, decimal amount, decimal stock)
+        async Task<SeededProduct> Standard(string name, string categoryName, decimal amount, decimal stock)
         {
-            var p = await CreateProductAsync(staff, brand, name, cat, amount, stock: stock);
-            price[p.ProductId] = amount; category[p.ProductId] = cat;
+            var p = await CreateProductAsync(staff, brand, name, categoryName, amount, stock: stock);
+            price[p.ProductId] = amount; category[p.ProductId] = categoryName;
             if (stock > 0) inStock.Add(p.ProductId);
             return p;
         }

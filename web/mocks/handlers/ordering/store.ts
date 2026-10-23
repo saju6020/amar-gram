@@ -7,7 +7,7 @@ import { orderingIds as ids } from './fixtures';
  * the other mock stores) Ordering database plus the *mock server's* rules. Amounts are integer minor
  * units here and ONLY here; every response renders them as the API does
  * (`{ amount: "1250.00", currencyCode: "BDT" }`). The real UI never computes any of this
- * (ADR-FE-092). The catalogue (names, prices, in-stock flags, prescription flag, barcodes) is the SHOP
+ * (ADR-FE-092). The catalogue (names, prices, in-stock flags, barcodes) is the SHOP
  * mock's, so Add to cart on a real product page reaches a real cart line.
  */
 
@@ -54,7 +54,6 @@ export interface DbCartLine {
   lineId: string;
   skuId: string;
   quantity: number;
-  catId: string | null;
   priceWhenAddedCents: Cents;
 }
 
@@ -73,7 +72,6 @@ export interface DbOrderLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  catId: string | null;
   quantity: number;
   unitCents: Cents;
   subtotalCents: Cents;
@@ -309,8 +307,6 @@ export interface Db {
   codes: DbCode[];
   bank: DbBank;
   stock: Record<string, number>;
-  /** Cats whose prescription authorisation has lapsed (E-B6). */
-  lapsedCats: string[];
   /** Batch ids a recall has been recorded against (BatchRecalled on dispatch, U-D3). */
   recalledBatches: string[];
   /** The staff member the mock acts as (`__orderingMock.actAs`). */
@@ -360,7 +356,6 @@ export interface SkuInfo {
   barcode: string | null;
   priceCents: Cents | null;
   purchasable: boolean;
-  requiresPrescription: boolean;
   isBundle: boolean;
   returnClass: 'Food' | 'Litter' | 'Other';
   categoryId: number;
@@ -379,7 +374,6 @@ export function skuInfo(skuId: string): SkuInfo | undefined {
     barcode: sku.barcode,
     priceCents: sku.price ? centsOfString(sku.price) : null,
     purchasable: product.status === 'Active' && sku.status === 'Active' && sku.price !== null,
-    requiresPrescription: product.prescriptionRequired,
     isBundle: product.kind === 'Bundle',
     returnClass:
       product.category === 'CatFood' ? 'Food' : product.category === 'Litter' ? 'Litter' : 'Other',
@@ -393,26 +387,6 @@ export function stockOf(skuId: string): number {
   const found = findSku(skuId);
   return found && found.sku.inStock ? DEFAULT_STOCK : 0;
 }
-
-/** Cats the Rx products are authorised for (shop mock parity): the eligible-food SKU has two. */
-export function authorisedCatsFor(skuId: string): string[] {
-  if (skuId === ids.skuRxEligible) {
-    // The cat-profiles mock's Whiskers and Mittens are the same cats under their own ids (POS picks from those).
-    return [
-      ids.catWhiskers,
-      ids.catMittens,
-      '20000000-0000-0000-0000-000000000001',
-      '20000000-0000-0000-0000-000000000004',
-    ].filter((id) => !db.lapsedCats.includes(id));
-  }
-  return [];
-}
-
-export const CAT_NAMES: Record<string, string> = {
-  [ids.catWhiskers]: 'Whiskers',
-  [ids.catMittens]: 'Mittens',
-  [ids.catBiscuit]: 'Biscuit',
-};
 
 export const PICKUP_BRANCHES = [
   { id: ids.mainBranchId, name: 'Amar Gram Dhanmondi', address: 'House 12, Road 5, Dhanmondi, Dhaka', phone: '+880 1700 000001' },
@@ -464,7 +438,6 @@ function line(
     skuId,
     productName: info?.productName ?? 'Product',
     variantLabel: info?.variantLabel ?? '',
-    catId: null,
     quantity,
     unitCents: unit,
     subtotalCents: unit * quantity,
@@ -588,9 +561,9 @@ function step(order: DbOrder, to: OrderStatusName, minutes: number, by: string =
 }
 
 function seedOrders(): DbOrder[] {
-  const kitten2 = ids.skuKitten2kg;
-  const kitten400 = ids.skuKitten400;
-  const whiskas = ids.skuWhiskas;
+  const oats2 = ids.skuOats2kg;
+  const oats400 = ids.skuOats400;
+  const rice = ids.skuJasmineRice;
 
   const awaiting = orderFrom({
     id: ids.orders.awaitingTransfer,
@@ -598,7 +571,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 90,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten2, 2)],
+    lines: [line(1, oats2, 2)],
     extra: { paymentDueBy: hoursFromNow(30) },
   });
 
@@ -608,7 +581,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 240,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten400, 3)],
+    lines: [line(1, oats400, 3)],
     customerName: 'Farhana Yasmin',
     customerId: 'c0000000-0000-0000-0000-0000000000a2',
     extra: {
@@ -624,7 +597,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 600,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten2, 80)],
+    lines: [line(1, oats2, 80)],
     customerName: 'Nusrat Jahan',
     customerId: 'c0000000-0000-0000-0000-0000000000a3',
     extra: {
@@ -647,7 +620,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 120,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, kitten2, 1)), allocated(line(2, whiskas, 2))],
+    lines: [allocated(line(1, oats2, 1)), allocated(line(2, rice, 2))],
   });
 
   const packing = orderFrom({
@@ -657,7 +630,7 @@ function seedOrders(): DbOrder[] {
     placedMinutesAgo: 300,
     fulfilmentMethod: 'Pickup',
     paymentMethod: 'PayOnCollection',
-    lines: [allocated(line(1, kitten400, 2))],
+    lines: [allocated(line(1, oats400, 2))],
     extra: { collectBy: addDays(todayLocal(), 6) },
   });
   step(packing, 'Packing', 200);
@@ -668,7 +641,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 1500,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, kitten2, 2))],
+    lines: [allocated(line(1, oats2, 2))],
   });
   step(dispatched, 'Packing', 1400);
   step(dispatched, 'Dispatched', 1300);
@@ -687,7 +660,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 4000,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, kitten2, 2)), allocated(line(2, kitten400, 1))],
+    lines: [allocated(line(1, oats2, 2)), allocated(line(2, oats400, 1))],
   });
   step(delivered, 'Packing', 3900);
   step(delivered, 'Dispatched', 3800);
@@ -717,7 +690,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 3200,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten400, 2)],
+    lines: [line(1, oats400, 2)],
   });
   step(expired, 'Cancelled', 100, ids.adminStaffId);
   expired.cancellationReason = 'PaymentWindowExpired';
@@ -733,7 +706,7 @@ function seedOrders(): DbOrder[] {
     channel: 'Counter',
     customerName: 'Walk-in customer',
     customerId: null,
-    lines: [allocated(line(1, whiskas, 1))],
+    lines: [allocated(line(1, rice, 1))],
   });
   step(counter, 'Delivered', 59);
   counter.invoiceNumber = 'INV-MAIN-2627-000401';
@@ -748,7 +721,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 2500,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, whiskas, 1))],
+    lines: [allocated(line(1, rice, 1))],
   });
   step(openedFood, 'Packing', 2400);
   step(openedFood, 'Dispatched', 2300);
@@ -763,7 +736,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 900,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten400, 1)],
+    lines: [line(1, oats400, 1)],
     customerName: 'Tanvir Ahmed',
     customerId: 'c0000000-0000-0000-0000-0000000000a4',
   });
@@ -1004,8 +977,7 @@ function seed(): Db {
       routingNumber: '060261726',
       isActive: true,
     },
-    stock: { [ids.skuWhiskas]: 1 },
-    lapsedCats: [],
+    stock: { [ids.skuJasmineRice]: 1 },
     recalledBatches: [],
     actor: ids.adminStaffId,
     transferWindowSeconds: 48 * 3600,

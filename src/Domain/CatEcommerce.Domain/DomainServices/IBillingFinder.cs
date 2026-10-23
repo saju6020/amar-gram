@@ -3,10 +3,10 @@ using CatEcommerce.Shared.Common.Enums;
 namespace CatEcommerce.Domain.DomainServices;
 
 /// <summary>Which unbilled, active charges of one customer at one branch a selector names (§8.13): a single source,
-/// or a billing group (a boarding stay) up to a service date.</summary>
+/// optionally up to a service date.</summary>
 public sealed record UnbilledChargeCriteria(
     Guid CustomerId, Guid? BranchId, ChargeSourceKind? SourceKind, Guid? SourceId,
-    BillingGroupKind? GroupKind, Guid? GroupId, DateOnly? ServiceDateTo);
+    DateOnly? ServiceDateTo);
 
 /// <summary>A payment's free credit, as a posting needs it: the payment, what is unallocated, and the
 /// instant it was accepted (oldest first, ADR-185).</summary>
@@ -18,7 +18,6 @@ public sealed record FreeCreditPayment(Guid PaymentId, decimal Unallocated, Date
 /// reference this charge"). Implemented in Infrastructure over the shared <c>DbContext</c>, always
 /// <c>AsNoTracking</c> id/value lookups -- the handler then loads each aggregate it will mutate through its own
 /// repository (rule 5: handlers orchestrate; existence and cross-record lookups are repository-side calls).
-/// The precedent is HO-APT-001's <c>IFlaggableAppointmentFinder</c>.
 /// </summary>
 public interface IBillingFinder
 {

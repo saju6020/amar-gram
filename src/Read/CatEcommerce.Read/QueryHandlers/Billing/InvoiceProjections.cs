@@ -20,7 +20,7 @@ internal sealed record InvoiceHeader(
 
 /// <summary>One invoice line, selected in SQL.</summary>
 internal sealed record InvoiceLineRow(
-    Guid Id, Guid? ChargeId, BusinessLine BusinessLine, ItemKind ItemKind, ChargeSourceKind SourceKind, Guid SourceId, Guid? CatId, string Description,
+    Guid Id, Guid? ChargeId, BusinessLine BusinessLine, ItemKind ItemKind, ChargeSourceKind SourceKind, Guid SourceId, string Description,
     decimal Quantity, decimal UnitPrice, decimal LineDiscount, decimal InvoiceDiscountShare, Guid TaxClassId, string? TaxClassCode, decimal TaxRatePercent,
     decimal NetAmount, decimal TaxAmount, decimal GrossAmount, int SortOrder);
 
@@ -41,7 +41,7 @@ internal static class InvoiceProjections
             .SelectMany(i => i.Lines)
             .OrderBy(l => l.SortOrder)
             .Select(l => new InvoiceLineRow(
-                l.Id, l.ChargeId, l.BusinessLine, l.ItemKind, l.SourceKind, l.SourceId, l.CatId, l.Description, l.Quantity, l.UnitPrice, l.LineDiscount,
+                l.Id, l.ChargeId, l.BusinessLine, l.ItemKind, l.SourceKind, l.SourceId, l.Description, l.Quantity, l.UnitPrice, l.LineDiscount,
                 l.InvoiceDiscountShare, l.TaxClassId, l.TaxClassCode, l.TaxRatePercent, l.NetAmount, l.TaxAmount, l.GrossAmount, l.SortOrder))
             .ToListAsync();
 }

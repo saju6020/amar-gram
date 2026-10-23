@@ -12,7 +12,7 @@ namespace CatEcommerce.Shared.Common.Constants;
 /// <c>StaffAccountConfiguration</c>, <c>StaffSessionConfiguration</c>,
 /// <c>PasswordResetTokenConfiguration</c>).
 ///
-/// <c>audit.audit_entry</c> is also classified here, not by Cat Profiles, per §10.3 ("Audit |
+/// <c>audit.audit_entry</c> is also classified here, per §10.3 ("Audit |
 /// Forbidden (HO-ACC-001's triggers, F33) | D-5") and ADR-341 (only the owning area classifies a
 /// table) -- this closes the intentional, temporary gap <c>RecordClassification.CatProfiles.cs</c>
 /// left open until Accounts landed. The two immutability triggers enforcing "Forbidden" here are

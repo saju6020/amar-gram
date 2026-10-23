@@ -32,14 +32,14 @@ public static class ProductMapper
     public static SkuPriceCreateDto ToDomainDto(this ScheduleSkuPriceCommand command, DateTimeOffset now) =>
         new(command.SkuId, new Money(command.Amount, command.CurrencyCode), command.EffectiveFrom, command.UserContext.UserId, now, command.UserContext, command.CorrelationId);
 
-    public static FoodDetails ToDomainDto(this SetFoodDetailsCommand command, LifeStage? lifeStage, ProteinSource? proteinSource)
+    public static FoodDetails ToDomainDto(this SetFoodDetailsCommand command, ProteinSource? proteinSource)
     {
         var analysis = command.GuaranteedAnalysis is null
             ? null
             : new GuaranteedAnalysis(command.GuaranteedAnalysis.ProteinPercent, command.GuaranteedAnalysis.FatPercent,
                 command.GuaranteedAnalysis.FibrePercent, command.GuaranteedAnalysis.MoisturePercent);
 
-        return new FoodDetails(command.Manufacturer, lifeStage, proteinSource, command.IngredientList, analysis,
+        return new FoodDetails(command.Manufacturer, proteinSource, command.IngredientList, analysis,
             command.FeedingGuide, command.StorageInstructions);
     }
 

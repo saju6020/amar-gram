@@ -14,7 +14,7 @@ namespace CatEcommerce.Application.DomainEventHandlers.Billing;
 
 /// <summary>
 /// HO-BIL-001 section 8.11 / 11.6 (US-BIL-10 AC1, ADR-191) -- points accrue when an invoice becomes <c>Paid</c>: <c>floor(qualifying net / spend per point)</c>, the
-/// qualifying net being the frozen net of every line that is not a fee (after all discounts, before tax) -- across clinic, shop and boarding alike.
+/// qualifying net being the frozen net of every line that is not a fee (after all discounts, before tax).
 /// One posting (account + <c>Accrual</c> entry); a no-op when loyalty is off; idempotent by the invoice (a second delivery of the event finds the
 /// entry). It mutates Billing roots only and <b>never enqueues</b>. Credit notes issued before the invoice settled are applied at once, so the order
 /// the two events arrive in cannot leave points the customer should not have.

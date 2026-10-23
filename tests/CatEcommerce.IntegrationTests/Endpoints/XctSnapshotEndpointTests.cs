@@ -10,9 +10,8 @@ using Xunit;
 namespace CatEcommerce.IntegrationTests.Endpoints;
 
 /// <summary>
-/// HO-XCT-001 section 16 D1 -- the offline front-desk snapshot and the ping. Each case builds its own branch (so its snapshot holds only its own
-/// appointments) under a fake clock at 10:00 Asia/Dhaka on the next local day. Boarding is skipped by the owner (2026-10-10): I-D6 is deferred and
-/// <c>boardingTasks</c> is always <c>NotAvailable</c> (I-D7).
+/// HO-XCT-001 section 16 D1 -- the offline front-desk snapshot and the ping. Each case builds its own branch under a fake clock at 10:00
+/// Asia/Dhaka on the next local day. HO-P1 retired the two sections the snapshot carried, so it is issued with no sections.
 /// </summary>
 [Collection("XctRetention")]
 public sealed class XctSnapshotEndpointTests(XctApiFactory factory) : XctIntegrationTestBase(factory)
@@ -22,13 +21,13 @@ public sealed class XctSnapshotEndpointTests(XctApiFactory factory) : XctIntegra
     /// <summary>
     /// 10:00 Asia/Dhaka on the NEXT local day, derived from the real clock (gate fix 2026-10-13, TEST gate row 53). A pinned date is a time bomb: the
     /// session cookie is issued with a real-clock expiry, so a baseline in the past makes every seeding POST answer 401. The next local day is always in
-    /// the future, sits on the booking grid, and keeps the +2 h .. +5 h appointments of these cases inside one local day.
+    /// the future.
     /// </summary>
     private static readonly DateOnly LocalDay = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Dhaka")).DateTime).AddDays(1);
     private static readonly DateTimeOffset Baseline = new DateTimeOffset(LocalDay.ToDateTime(new TimeOnly(10, 0)), TimeSpan.FromHours(6)).ToUniversalTime();
 
     private sealed record World(
-        WebApplicationFactory<Program> App, FakeTimeProvider Clock, Guid BranchId, Guid ServiceId, Guid VetId, HttpClient Admin, HttpClient Customer, Guid CustomerId, string AdminMobile, string AdminPassword);
+        WebApplicationFactory<Program> App, FakeTimeProvider Clock, Guid BranchId, HttpClient Admin, HttpClient Customer, Guid CustomerId, string AdminMobile, string AdminPassword);
 
     private static string Code() => "X" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
 
@@ -46,50 +45,12 @@ public sealed class XctSnapshotEndpointTests(XctApiFactory factory) : XctIntegra
         var days = new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/api/admin/branches/{branchId}/hours",
             new { intervals = days.Select(d => new { dayOfWeek = d, opens = "00:00", closes = "23:45" }).ToArray() }, Json)).StatusCode);
-        var room = await admin.PostAsJsonAsync($"/api/admin/branches/{branchId}/rooms", new { name = "Consult " + Code(), kind = "Consultation" }, Json);
-        Assert.Equal(HttpStatusCode.Created, room.StatusCode);
-
-        var vet = await SeedStaffAsync(app, StaffRoles.Vet);
-        Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches",
-            new { branchIds = new[] { branchId }, primaryBranchId = branchId }, Json)).StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern",
-            new { slots = days.Select(d => new { dayOfWeek = d, starts = "00:00", ends = "23:45" }).ToArray() }, Json)).StatusCode);
-
-        var taxClass = await admin.PostAsJsonAsync("/api/admin/tax-classes", new { code = Code(), name = "Standard " + Code() }, Json);
-        Assert.Equal(HttpStatusCode.Created, taxClass.StatusCode);
-        var taxClassId = (await taxClass.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("taxClassId").GetGuid();
-        var service = await admin.PostAsJsonAsync("/api/admin/services", new
-        {
-            code = Code(), name = "Vaccination " + Code(), description = "Test", category = "Consultation", durationMinutes = 30,
-            qualifiedRoleIds = new[] { StaffRoles.Vet }, requiredRoomKind = "Consultation", taxClassId, isBookableOnline = true
-        }, Json);
-        Assert.Equal(HttpStatusCode.Created, service.StatusCode);
-        var serviceId = (await service.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("serviceId").GetGuid();
-        Assert.Equal(HttpStatusCode.Created, (await admin.PostAsJsonAsync($"/api/admin/services/{serviceId}/prices",
-            new { amount = "500.00", currencyCode = "BDT", effectiveFrom = Baseline }, Json)).StatusCode);
-
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/api/admin/staff/{adminSeed.StaffAccountId}/branches",
             new { branchIds = new[] { branchId }, primaryBranchId = branchId }, Json)).StatusCode);
         admin.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, branchId.ToString());
 
         var (customer, customerId, _, _) = await RegisterAndSignInCustomerAsync(app);
-        return new World(app, clock, branchId, serviceId, vet.StaffAccountId, admin, customer, customerId, adminSeed.Mobile, adminSeed.Password);
-    }
-
-    private async Task<Guid> HoldAsync(World w, Guid catId, DateTimeOffset startsOn)
-    {
-        var hold = await w.Customer.PostAsJsonAsync("/api/customers/me/appointment-holds",
-            new { branchId = w.BranchId, serviceId = w.ServiceId, catId, startsOn, performerId = w.VetId }, Json);
-        Assert.True(hold.StatusCode == HttpStatusCode.Created, await hold.Content.ReadAsStringAsync());
-        return (await hold.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("appointmentId").GetGuid();
-    }
-
-    private async Task<Guid> BookAsync(World w, Guid catId, DateTimeOffset startsOn)
-    {
-        var id = await HoldAsync(w, catId, startsOn);
-        var confirm = await w.Customer.PostAsJsonAsync($"/api/customers/me/appointments/{id}/confirm", new { }, Json);
-        Assert.True(confirm.StatusCode == HttpStatusCode.OK, await confirm.Content.ReadAsStringAsync());
-        return id;
+        return new World(app, clock, branchId, admin, customer, customerId, adminSeed.Mobile, adminSeed.Password);
     }
 
     /// <summary>A staff member of <paramref name="role"/> assigned to the world's branch, signed in, with the branch header set.</summary>
@@ -113,20 +74,11 @@ public sealed class XctSnapshotEndpointTests(XctApiFactory factory) : XctIntegra
     private Task<int> SnapshotAuditAsync(Guid branchId) =>
         ScalarAsync<int>("SELECT COUNT(*)::int FROM audit.audit_entry WHERE \"Action\" = 'OfflineSnapshotIssued' AND \"EntityId\" = @id", ("id", branchId));
 
-    // I-D1, I-D7, I-D9, U-D6
+    // I-D1, I-D9, U-D6
     [Fact]
-    public async Task I_D1_TheSnapshot_HoldsTodaysAppointmentsExceptHeldAndCancelled_SortedAudited_WithMinimalFields()
+    public async Task I_D1_TheSnapshot_IsIssuedWithNoSections_Audited_WithTheContractFieldsOnly()
     {
         var w = await SeedWorldAsync();
-        var calm = await SeedCatAsync(w.CustomerId, "Mitu", w.App);
-        var second = await SeedCatAsync(w.CustomerId, "Tuktuk", w.App);
-        var third = await SeedCatAsync(w.CustomerId, "Gone", w.App);
-        var fourth = await SeedCatAsync(w.CustomerId, "Pending", w.App);
-        var later = await BookAsync(w, second, Baseline.AddHours(4));
-        var first = await BookAsync(w, calm, Baseline.AddHours(2));
-        var cancelled = await BookAsync(w, third, Baseline.AddHours(3));
-        await HoldAsync(w, fourth, Baseline.AddHours(5));                      // Held -- not in the snapshot
-        Assert.Equal(HttpStatusCode.NoContent, (await w.Admin.PostAsJsonAsync($"/api/staff/appointments/{cancelled}/cancel", new { reason = "x" }, Json)).StatusCode);
         var (reception, _, _) = await StaffAtBranchAsync(w, StaffRoles.Reception);
 
         var response = await reception.GetAsync("/api/staff/offline-snapshot");
@@ -134,42 +86,22 @@ public sealed class XctSnapshotEndpointTests(XctApiFactory factory) : XctIntegra
 
         Assert.True(response.Headers.CacheControl!.NoStore && response.Headers.CacheControl.Private);
         Assert.StartsWith("\"", response.Headers.ETag!.Tag);
-        var items = body.GetProperty("sections").GetProperty("appointments").GetProperty("items").EnumerateArray().ToList();
-        Assert.Equal([first, later], items.Select(i => i.GetProperty("appointmentId").GetGuid()).ToList());   // sorted by start time, cancelled and held out
+        Assert.Empty(body.GetProperty("sections").EnumerateObject());
+        Assert.Empty(body.GetProperty("omittedSections").EnumerateArray());
         Assert.Equal(1, body.GetProperty("schemaVersion").GetInt32());
         Assert.Equal(LocalDay.ToString("yyyy-MM-dd"), body.GetProperty("localDate").GetString());
         Assert.Equal(LocalDay.AddDays(1).ToString("yyyy-MM-dd") + "T02:00:00+06:00", body.GetProperty("validUntil").GetDateTimeOffset().ToString("yyyy-MM-ddTHH:mm:sszzz"));
         Assert.Equal(1, await SnapshotAuditAsync(w.BranchId));
-
-        // I-D7: the boarding section is not available (Boarding skipped).
-        var omitted = body.GetProperty("omittedSections").EnumerateArray().Single();
-        Assert.Equal("boardingTasks", omitted.GetProperty("section").GetString());
-        Assert.Equal("NotAvailable", omitted.GetProperty("reason").GetString());
-
-        // I-D9: no field beyond the contract; handlingNote only for a high-risk cat.
-        var allowed = new[]
-        {
-            "appointmentId", "startsOn", "endsOn", "status", "isWalkIn", "triagePriority", "catName", "catIsHighRisk", "handlingNote", "customerName",
-            "customerPhone", "serviceName", "performerName", "roomName"
-        };
-        Assert.All(items, i =>
-        {
-            Assert.All(i.EnumerateObject(), p => Assert.Contains(p.Name, allowed));
-            Assert.Null(i.GetProperty("handlingNote").GetString());
-            Assert.Equal("Booked", i.GetProperty("status").GetString());
-        });
         Assert.Equal(["schemaVersion", "branch", "localDate", "generatedOn", "validUntil", "staffAccountId", "idleTimeoutMinutes", "refreshAfterSeconds", "sections", "omittedSections"],
             body.EnumerateObject().Select(p => p.Name).ToList());
     }
 
-    // I-D2 + I-D3
+    // I-D2
     [Fact]
-    public async Task I_D2_D3_AnUnchangedDay_Is304WithNoAudit_AndAStatusChangeGivesANewETag()
+    public async Task I_D2_AnUnchangedDay_Is304WithNoAudit()
     {
         var w = await SeedWorldAsync();
-        var cat = await SeedCatAsync(w.CustomerId, "Mitu", w.App);
-        var appointment = await BookAsync(w, cat, Baseline.AddHours(2));
-        var (reception, mobile, password) = await StaffAtBranchAsync(w, StaffRoles.Reception);
+        var (reception, _, _) = await StaffAtBranchAsync(w, StaffRoles.Reception);
 
         var first = await reception.GetAsync("/api/staff/offline-snapshot");
         await BodyAsync(first);
@@ -182,37 +114,6 @@ public sealed class XctSnapshotEndpointTests(XctApiFactory factory) : XctIntegra
         var notModified = await reception.SendAsync(request);
         Assert.Equal(HttpStatusCode.NotModified, notModified.StatusCode);
         Assert.Equal(1, await SnapshotAuditAsync(w.BranchId));
-
-        w.Clock.SetUtcNow(Baseline.AddHours(2));
-        var checkInClient = await SignInStaffAsync(w.AdminMobile, w.AdminPassword, w.App);
-        checkInClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, w.BranchId.ToString());
-        Assert.Equal(HttpStatusCode.NoContent, (await checkInClient.PostAsJsonAsync($"/api/staff/appointments/{appointment}/check-in", new { }, Json)).StatusCode);
-
-        var reauth = await SignInStaffAsync(mobile, password, w.App);
-        reauth.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, w.BranchId.ToString());
-        var changed = new HttpRequestMessage(HttpMethod.Get, "/api/staff/offline-snapshot");
-        changed.Headers.TryAddWithoutValidation("If-None-Match", etag);
-        var after = await reauth.SendAsync(changed);
-        var body = await BodyAsync(after);
-
-        Assert.NotEqual(etag, after.Headers.ETag!.Tag);
-        Assert.Equal("CheckedIn", body.GetProperty("sections").GetProperty("appointments").GetProperty("items")[0].GetProperty("status").GetString());
-        Assert.Equal(2, await SnapshotAuditAsync(w.BranchId));
-    }
-
-    // U-D3
-    [Fact]
-    public async Task U_D3_ACaretakerWithoutAppointmentsView_GetsTheSectionOmittedAsNotPermitted()
-    {
-        var w = await SeedWorldAsync();
-        var (caretaker, _, _) = await StaffAtBranchAsync(w, StaffRoles.Caretaker);
-
-        var body = await BodyAsync(await caretaker.GetAsync("/api/staff/offline-snapshot"));
-
-        Assert.False(body.GetProperty("sections").TryGetProperty("appointments", out _));
-        var reasons = body.GetProperty("omittedSections").EnumerateArray().ToDictionary(o => o.GetProperty("section").GetString()!, o => o.GetProperty("reason").GetString());
-        Assert.Equal("NotPermitted", reasons["appointments"]);
-        Assert.Equal("NotAvailable", reasons["boardingTasks"]);
     }
 
     // I-D5

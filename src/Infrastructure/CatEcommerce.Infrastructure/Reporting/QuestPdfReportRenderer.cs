@@ -10,9 +10,9 @@ using QuestPDF.Infrastructure;
 namespace CatEcommerce.Infrastructure.Reporting;
 
 /// <summary>
-/// HO-RPT-001 section 8.12 (ADR-285) -- A4, portrait up to six columns and landscape above. Header with the clinic, branch, report title, period with its zone, filters, generated on and generated
-/// by; a repeated table header; a totals row; the notes (coverage included); page n of m. The QuestPDF Community licence is owner-confirmed (HO-CAT-001 section 1 Amended, 2026-09-26) and is set
-/// once by <c>CatProfilesModule</c>. Fonts are HO-CAT-001's: Lato with Noto Sans Bengali as the fallback, so a Bengali customer name renders instead of crashing the document (OQ-11).
+/// HO-RPT-001 section 8.12 (ADR-285) -- A4, portrait up to six columns and landscape above. Header with the business, branch, report title, period with its zone, filters, generated on and generated
+/// by; a repeated table header; a totals row; the notes (coverage included); page n of m. The QuestPDF Community licence is owner-confirmed (the foundation handover section 1 Amended, 2026-09-26) and is set
+/// once by this renderer. Fonts: Lato with Noto Sans Bengali as the fallback, so a Bengali customer name renders instead of crashing the document (OQ-11).
 /// </summary>
 public sealed class QuestPdfReportRenderer : IReportExportRenderer
 {
@@ -25,8 +25,8 @@ public sealed class QuestPdfReportRenderer : IReportExportRenderer
 
     public QuestPdfReportRenderer()
     {
-        // Registers the embedded Bengali fallback font once per process (the shared, locked registration of HO-CAT-001's renderer).
-        _ = new QuestPdfCatMedicalHistoryRenderer();
+        // Registers the embedded Bengali fallback font once per process.
+        QuestPdfFonts.EnsureRegistered();
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
@@ -45,7 +45,7 @@ public sealed class QuestPdfReportRenderer : IReportExportRenderer
 
                 page.Header().Column(column =>
                 {
-                    column.Item().Text(context.ClinicName).FontSize(9).FontColor(Colors.Grey.Darken2);
+                    column.Item().Text(context.OutletName).FontSize(9).FontColor(Colors.Grey.Darken2);
                     column.Item().Text(result.Title).FontSize(15).Bold();
                     column.Item().Text($"Branch: {result.Filters.BranchName}");
                     column.Item().Text($"Period: {result.Filters.From:yyyy-MM-dd} to {result.Filters.To:yyyy-MM-dd} ({result.Filters.TimeZoneId})");

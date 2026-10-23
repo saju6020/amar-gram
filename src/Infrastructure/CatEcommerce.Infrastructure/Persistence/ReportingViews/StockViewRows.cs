@@ -74,7 +74,6 @@ public sealed class RvSkuRow
     public string? CountryOfOrigin { get; set; }
     public decimal? CurrentPrice { get; set; }
     public string? CurrencyCode { get; set; }
-    public bool RequiresVetAuthorisation { get; set; }
 }
 
 /// <summary>HO-RPT-001 R7 -- the position of a batch at a location with the facts the usability rule needs.</summary>

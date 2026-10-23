@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { ClipboardCheck, FileText, HandCoins } from 'lucide-react';
-import { addDaysIso } from '@/lib/format/appointment';
-import { formatDateOnly, todayInZone } from '@/lib/format/time';
+import { addDaysIso, formatDateOnly, todayInZone } from '@/lib/format/time';
 import { useActiveBranchZone } from '@/lib/hooks/billing/useActiveBranchZone';
 import { useApprovals, useInvoices, usePayments, useUncapturedSources } from '@/lib/hooks/billing/useBillingQueries';
 import { useCaptureSource } from '@/lib/hooks/billing/useBillingMutations';

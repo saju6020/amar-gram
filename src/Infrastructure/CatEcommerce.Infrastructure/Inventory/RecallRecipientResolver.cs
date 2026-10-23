@@ -9,7 +9,7 @@ namespace CatEcommerce.Infrastructure.Inventory;
 
 /// <summary>
 /// HO-IMP-001 section 8.12 / ADR-104 -- read-only. The customers to notify of a recall: the PURCHASERS of the batch (consuming ledger entries and the orders still
-/// holding a reservation of it) plus the CURRENT owners of the cats it was dispensed or used on, each resolved through HO-ACC-001's merge chain at READ time
+/// holding a reservation of it) each resolved through HO-ACC-001's merge chain at READ time
 /// (the ledger is immutable, so nothing rewrites it when two customers merge) and cut off after <see cref="MaxMergeHops"/> hops. Anonymised customers and ids
 /// that were merged away are excluded; so is anyone whose request with the key <c>recall:{batchId}:{customerId}</c> already exists.
 /// </summary>
@@ -17,7 +17,7 @@ public sealed class RecallRecipientResolver(CatEcommerceDbContext db) : IRecallR
 {
     private const int MaxMergeHops = 5;
 
-    private static readonly MovementKind[] Consuming = [MovementKind.Sale, MovementKind.Dispense, MovementKind.ClinicalUse, MovementKind.BoardingUse];
+    private static readonly MovementKind[] Consuming = [MovementKind.Sale];
 
     public async Task<IReadOnlyList<RecallRecipient>> ResolveAsync(Guid batchId, CancellationToken ct)
     {
@@ -42,7 +42,7 @@ public sealed class RecallRecipientResolver(CatEcommerceDbContext db) : IRecallR
         return await db.NotificationRequests.AsNoTracking().CountAsync(r => r.DeduplicationKey != null && r.DeduplicationKey.StartsWith(prefix), ct);
     }
 
-    /// <summary>The distinct customers who should hear: purchasers and current cat owners, followed through merges, minus the anonymised and merged-away.</summary>
+    /// <summary>The distinct customers who should hear: purchasers and reservers, followed through merges, minus the anonymised and merged-away.</summary>
     private async Task<HashSet<Guid>> SurvivingRecipientsAsync(Guid batchId, CancellationToken ct)
     {
         var purchasers = await db.StockLedgerEntries.AsNoTracking()
@@ -51,12 +51,8 @@ public sealed class RecallRecipientResolver(CatEcommerceDbContext db) : IRecallR
         var open = await OpenReservations.ForBatchAsync(db, batchId, ct); // released and consumed reservations are not unshipped any more
         var reservers = open.Where(r => r.CustomerId != null).Select(r => r.CustomerId!.Value).Distinct().ToList();
 
-        var catIds = await db.StockLedgerEntries.AsNoTracking()
-            .Where(e => e.BatchId == batchId && Consuming.Contains(e.Kind) && e.CatId != null).Select(e => e.CatId!.Value).Distinct().ToListAsync(ct);
-        var catIdsReserved = open.Where(r => r.CatId != null).Select(r => r.CatId!.Value).Distinct().ToList();
-        var owners = await db.Cats.AsNoTracking().Where(c => catIds.Contains(c.Id) || catIdsReserved.Contains(c.Id)).Select(c => c.OwnerId).Distinct().ToListAsync(ct);
 
-        var start = purchasers.Concat(reservers).Concat(owners).Distinct().ToList();
+        var start = purchasers.Concat(reservers).Distinct().ToList();
         var chain = await db.CustomerAccounts.AsNoTracking()
             .Where(c => start.Contains(c.Id)).Select(c => new { c.Id, c.MergedIntoCustomerId, c.Status }).ToDictionaryAsync(c => c.Id, ct);
 

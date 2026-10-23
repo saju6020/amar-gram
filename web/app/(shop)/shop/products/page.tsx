@@ -31,7 +31,7 @@ export async function generateMetadata({
  */
 export default async function CataloguePage({ searchParams }: { searchParams: SearchParams }) {
   const params = parseCatalogueParams(await searchParams);
-  // The title follows what is shown (2026-10-16): "Cat food · Wet", or a single chosen brand.
+  // The title follows what is shown (2026-10-16): "Food · Wet", or a single chosen brand.
   const heading = params.q
     ? `Results for “${params.q}”`
     : params.category

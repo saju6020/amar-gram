@@ -5,7 +5,7 @@ using FluentValidation;
 namespace CatEcommerce.Application.CommandHandlers.Validators;
 
 /// <summary>Shape only (section 11.2): ids, quantity range, collection size. Duplicates, bundle /
-/// prescription / discontinued components and the unit minimum are the aggregate's rules.</summary>
+/// discontinued components and the unit minimum are the aggregate's rules.</summary>
 public sealed class SetBundleComponentsCommandValidator : AbstractValidator<SetBundleComponentsCommand>
 {
     public SetBundleComponentsCommandValidator()

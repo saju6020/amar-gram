@@ -4,8 +4,6 @@ using System.Text.Json;
 using CatEcommerce.Api.Branches;
 using CatEcommerce.Domain.Aggregates.Account;
 using CatEcommerce.Domain.Aggregates.Administration;
-using CatEcommerce.Domain.Aggregates.Cat;
-using CatEcommerce.Domain.Aggregates.Prescription;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Domain.ValueObjects;
@@ -26,7 +24,7 @@ namespace CatEcommerce.IntegrationTests;
 /// HO-ORD-001 §16.1 -- the rules, as helpers. <b>Every test creates its own branch, delivery zone, SKUs and stock</b> through the upstream endpoints
 /// (HO-ADM-001 branches and tax classes, HO-IMP-001 locations and goods receipts, HO-SHP-001 products and prices) and its own customers, so stock,
 /// discount-usage and order-number assertions never see another test's rows. Discount codes are minted per test; idempotency keys are fresh UUIDs.
-/// Shop, Inventory and Billing are the <b>real</b> implementations from their merged slices -- never fakes (only Pharmacy's gate is not merged).
+/// Shop, Inventory and Billing are the <b>real</b> implementations from their merged slices -- never fakes.
 /// The clock is <see cref="AdjustableTimeProvider"/>: fixtures built from <c>Now</c> are always in force.
 /// </summary>
 public abstract class OrderingIntegrationTestBase(OrderingApiFactory factory) : CatEcommerceIntegrationTestBase<OrderingApiFactory>(factory)
@@ -221,7 +219,7 @@ public abstract class OrderingIntegrationTestBase(OrderingApiFactory factory) : 
     /// <summary>Mints a product and one SKU through HO-SHP-001's staff endpoints, prices it from <see cref="Now"/> (in force immediately), publishes
     /// it and receives <paramref name="stock"/> units into the context's shop floor through HO-IMP-001's goods receipt.</summary>
     protected async Task<OrderingSku> CreateSkuAsync(
-        OrderingContext context, decimal price = 100m, decimal stock = 50m, Guid? taxClassId = null, bool food = false, bool prescription = false,
+        OrderingContext context, decimal price = 100m, decimal stock = 50m, Guid? taxClassId = null, bool food = false,
         string? barcode = null, string? name = null, DateOnly? expires = null, bool publish = true, bool onStorefront = false)
     {
         var admin = context.Admin;
@@ -240,11 +238,7 @@ public abstract class OrderingIntegrationTestBase(OrderingApiFactory factory) : 
 
         if (food)
             await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food",
-                new { expectedVersion = await ProductVersionAsync(admin, productId), lifeStage = "Adult" }, Json));
-
-        if (prescription)
-            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff/shop/products/{productId}/prescription",
-                new { expectedVersion = await ProductVersionAsync(admin, productId), prescriptionRequired = true }, Json));
+                new { expectedVersion = await ProductVersionAsync(admin, productId), manufacturer = "Test Manufacturer" }, Json));
 
         var addSku = await admin.PostAsJsonAsync($"/api/staff/shop/products/{productId}/skus",
             new { expectedVersion = await ProductVersionAsync(admin, productId), code = NewCode("SKU"), barcode }, Json);
@@ -397,50 +391,6 @@ public abstract class OrderingIntegrationTestBase(OrderingApiFactory factory) : 
     }
 
     protected static string ConnectionString { get; } = OrderingApiFactory.RequireOrderingDatabase();
-
-    /// <summary>Registers a cat for <paramref name="ownerId"/> through the aggregate (the same way the Cat slice does).</summary>
-    protected async Task<Guid> SeedCatAsync(Guid ownerId)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var cat = new CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, "Cat " + NewCode(), "Cat", CatSex.Female, DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2),
-            DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby", DateOnly.FromDateTime(DateTime.UtcNow),
-            new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
-    }
-
-    /// <summary>
-    /// Issues a REAL HO-PHM-001 diet authorisation (the <c>DietAuthorisationAggregate</c> through its repository -- the table the real
-    /// <c>IDietAuthorisationGate</c> reads) for <paramref name="catId"/> and <paramref name="productId"/>, valid from yesterday for ten days (wide enough for any
-    /// branch-local date). The visit is a stand-in id: Ordering tests are not about the clinic, and Pharmacy's own tests cover the visit rules.
-    /// </summary>
-    protected async Task<Guid> AuthoriseDietAsync(Guid catId, Guid customerId, Guid productId, string productName)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<DietAuthorisationAggregate>>();
-
-        var today = DateOnly.FromDateTime(Now.UtcDateTime);
-        var vet = new UserContext(Guid.NewGuid(), Guid.NewGuid());
-        var authorisation = new DietAuthorisationAggregate(Guid.NewGuid());
-        authorisation.Authorise(new DietAuthorisationDto(
-            catId, customerId, productId, productName, Guid.NewGuid(), vet.UserId, today.AddDays(-1), today.AddDays(10), null,
-            today.AddDays(-1), 30, Now, new PharmacyActor(vet, Guid.NewGuid())));
-        await repository.SaveAsync(authorisation, EventPublishOption.InMemoryPublishOnly);
-        return authorisation.Id;
-    }
-
-    /// <summary>Moves an authorisation's whole validity window into the past, as time passing would (the gate reads the dates, not a stored status).</summary>
-    protected static async Task LapseDietAuthorisationAsync(Guid authorisationId)
-    {
-        await using var connection = await OpenConnectionAsync();
-        await using var command = new NpgsqlCommand("UPDATE pharmacy.diet_authorisation SET valid_from = valid_from - 40, valid_to = valid_to - 40 WHERE \"Id\" = @id", connection);
-        command.Parameters.AddWithValue("id", authorisationId);
-        Assert.Equal(1, await command.ExecuteNonQueryAsync());
-    }
 
     protected static async Task<NpgsqlConnection> OpenConnectionAsync()
     {

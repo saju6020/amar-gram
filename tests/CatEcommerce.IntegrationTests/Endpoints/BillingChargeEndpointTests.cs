@@ -13,8 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CatEcommerce.IntegrationTests.Endpoints;
 
-/// <summary>HO-BIL-001 §16 group B (I-B1…I-B5, U-B3) -- charges reach Billing from appointments without loss;
-/// failures are listed and recoverable; the push port is idempotent by source key (ADR-178).</summary>
+/// <summary>HO-BIL-001 §16 group B (I-B3…I-B5, U-B3) -- manual charges and voids; the push port is idempotent by
+/// source key (ADR-178).</summary>
 public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : BillingIntegrationTestBase(factory)
 {
     private async Task<JsonElement> ChargesOfAsync(BillingContext context, Guid customerId, string? status = null)
@@ -24,132 +24,32 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
         return page.GetProperty("items");
     }
 
-    private async Task SetServiceTaxClassAsync(Guid serviceId, Guid taxClassId) =>
-        await WithDbAsync(async db => await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE admin.clinic_service SET tax_class_id = {taxClassId} WHERE \"Id\" = {serviceId}"));
-
-    /// <summary>I-B1 -- completing an appointment records one charge whose price is the appointment's snapshot, even
-    /// after the service price changed (HO-ADM-001 ADR-049).</summary>
+    /// <summary>I-B3 -- a manual charge is a free-text fee, recorded as entered.</summary>
     [Fact]
-    public async Task I_B1_CompletingAnAppointment_RecordsOneCharge_AtTheSnapshotPrice_EvenAfterThePriceChanged()
+    public async Task I_B3_AManualCharge_IsAFreeTextFee_AsEntered()
     {
         var context = await CreateBillingContextAsync();
-        var clinic = await SeedClinicAsync(context, price: 800m);
         var customerId = await SeedCustomerAsync(context);
-
-        var appointmentId = await RegisterWalkInAsync(context, clinic, customerId);
-
-        Factory.Clock.Advance(TimeSpan.FromMinutes(1));
-        await SetServicePriceAsync(context, clinic.ServiceId, 999m);
-
-        await ExpectAsync(HttpStatusCode.NoContent, await CompleteAppointmentAsync(context, clinic, appointmentId));
-
-        var charges = await ChargesOfAsync(context, customerId);
-        var charge = Assert.Single(charges.EnumerateArray());
-        Assert.Equal("800.00", charge.GetProperty("unitPrice").GetProperty("amount").GetString());
-        Assert.Equal("Appointment", charge.GetProperty("sourceKind").GetString());
-        Assert.Equal(appointmentId, charge.GetProperty("sourceId").GetGuid());
-        Assert.Equal("service", charge.GetProperty("sourceLineRef").GetString());
-        Assert.Equal("Clinic", charge.GetProperty("businessLine").GetString());
-        Assert.Equal("Service", charge.GetProperty("itemKind").GetString());
-        Assert.Equal(context.TaxClassId, charge.GetProperty("taxClassId").GetGuid());
-        Assert.Equal(Today.ToString("yyyy-MM-dd"), charge.GetProperty("serviceDate").GetString());
-    }
-
-    /// <summary>I-B2 -- a capture that breaks never fails the appointment's request; the appointment is listed
-    /// as uncaptured, and after fixing the data a manual capture records the charge.</summary>
-    [Fact]
-    public async Task I_B2_ABrokenCapture_DoesNotFailTheAppointment_IsListed_AndIsRecoverable()
-    {
-        var context = await CreateBillingContextAsync();
-        var clinic = await SeedClinicAsync(context);
-        var customerId = await SeedCustomerAsync(context);
-        var appointmentId = await RegisterWalkInAsync(context, clinic, customerId);
-
-        await SetServiceTaxClassAsync(clinic.ServiceId, Guid.NewGuid()); // the tax class "disappears"
-        await ExpectAsync(HttpStatusCode.NoContent, await CompleteAppointmentAsync(context, clinic, appointmentId));
-
-        Assert.Empty((await ChargesOfAsync(context, customerId)).EnumerateArray());
-
-        var uncaptured = await ReadAsync(await ExpectAsync(HttpStatusCode.OK,
-            await context.Admin.GetAsync($"/api/staff/billing/uncaptured-sources?from={Today.AddDays(-1):yyyy-MM-dd}&to={Today.AddDays(1):yyyy-MM-dd}")));
-        var entry = uncaptured.EnumerateArray().Single(e => e.GetProperty("sourceId").GetGuid() == appointmentId);
-        Assert.Equal("Appointment", entry.GetProperty("sourceKind").GetString());
-        Assert.Equal(customerId, entry.GetProperty("customerId").GetGuid());
-
-        var stillBroken = await ReadAsync(await ExpectAsync(HttpStatusCode.OK,
-            await context.Admin.PostAsync($"/api/staff/billing/sources/Appointment/{appointmentId}/capture", null)));
-        Assert.Equal(0, stillBroken.GetProperty("captured").GetInt32());
-        Assert.Equal("TaxClassNotFound", Assert.Single(stillBroken.GetProperty("skipped").EnumerateArray()).GetProperty("reason").GetString());
-
-        await SetServiceTaxClassAsync(clinic.ServiceId, context.TaxClassId); // fixed
-
-        var recovered = await ReadAsync(await ExpectAsync(HttpStatusCode.OK,
-            await context.Admin.PostAsync($"/api/staff/billing/sources/Appointment/{appointmentId}/capture", null)));
-        Assert.Equal(1, recovered.GetProperty("captured").GetInt32());
-        Assert.Single((await ChargesOfAsync(context, customerId)).EnumerateArray());
-
-        var after = await ReadAsync(await context.Admin.GetAsync($"/api/staff/billing/uncaptured-sources?from={Today.AddDays(-1):yyyy-MM-dd}&to={Today.AddDays(1):yyyy-MM-dd}"));
-        Assert.DoesNotContain(after.EnumerateArray(), e => e.GetProperty("sourceId").GetGuid() == appointmentId);
-
-        var again = await ReadAsync(await context.Admin.PostAsync($"/api/staff/billing/sources/Appointment/{appointmentId}/capture", null));
-        Assert.Equal(0, again.GetProperty("captured").GetInt32()); // U-B6 end to end
-    }
-
-    [Fact]
-    public async Task ACaptureOfAnAppointmentThatIsNotCompleted_IsAZeroWithTheReason_AndAnUnknownOneIs404()
-    {
-        var context = await CreateBillingContextAsync();
-        var clinic = await SeedClinicAsync(context);
-        var customerId = await SeedCustomerAsync(context);
-        var appointmentId = await RegisterWalkInAsync(context, clinic, customerId);
-
-        var result = await ReadAsync(await ExpectAsync(HttpStatusCode.OK,
-            await context.Admin.PostAsync($"/api/staff/billing/sources/Appointment/{appointmentId}/capture", null)));
-        Assert.Equal(0, result.GetProperty("captured").GetInt32());
-        Assert.Equal("AppointmentNotCompleted", Assert.Single(result.GetProperty("skipped").EnumerateArray()).GetProperty("reason").GetString());
-
-        Assert.Equal(HttpStatusCode.NotFound, (await context.Admin.PostAsync($"/api/staff/billing/sources/Appointment/{Guid.NewGuid()}/capture", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await context.Admin.PostAsync($"/api/staff/billing/sources/Order/{Guid.NewGuid()}/capture", null)).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await context.Admin.PostAsync($"/api/staff/billing/sources/Nonsense/{Guid.NewGuid()}/capture", null)).StatusCode);
-    }
-
-    /// <summary>I-B3 -- a manual charge for a service uses the price at now; a free-text fee is as entered.</summary>
-    [Fact]
-    public async Task I_B3_ManualCharges_ForAService_AndForAFreeTextFee()
-    {
-        var context = await CreateBillingContextAsync();
-        var clinic = await SeedClinicAsync(context, price: 650m);
-        var customerId = await SeedCustomerAsync(context);
-
-        var service = await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync("/api/staff/billing/charges",
-            new { customerId, serviceId = clinic.ServiceId, quantity = 2, serviceDate = Today.ToString("yyyy-MM-dd") }, Json));
-        var serviceChargeId = (await ReadAsync(service)).GetProperty("chargeId").GetGuid();
 
         var fee = await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync("/api/staff/billing/charges", new
         {
             customerId, description = "Late pickup fee", unitPrice = 125.50m, taxClassId = context.ZeroTaxClassId, quantity = 1, lineDiscount = 5.50m,
-            serviceDate = Today.ToString("yyyy-MM-dd"), businessLine = "Boarding",
+            serviceDate = Today.ToString("yyyy-MM-dd"), businessLine = "Shop",
         }, Json));
         var feeChargeId = (await ReadAsync(fee)).GetProperty("chargeId").GetGuid();
 
         var charges = (await ChargesOfAsync(context, customerId)).EnumerateArray().ToList();
-        var byService = charges.Single(c => c.GetProperty("chargeId").GetGuid() == serviceChargeId);
-        Assert.Equal("650.00", byService.GetProperty("unitPrice").GetProperty("amount").GetString());
-        Assert.Equal("2.000", byService.GetProperty("quantity").GetString());
-        Assert.Equal("1300.00", byService.GetProperty("lineTotal").GetProperty("amount").GetString());
-        Assert.Equal("Manual", byService.GetProperty("sourceKind").GetString());
-        Assert.Equal("Service", byService.GetProperty("itemKind").GetString());
-
         var byFee = charges.Single(c => c.GetProperty("chargeId").GetGuid() == feeChargeId);
         Assert.Equal("Late pickup fee", byFee.GetProperty("description").GetString());
         Assert.Equal("125.50", byFee.GetProperty("unitPrice").GetProperty("amount").GetString());
         Assert.Equal("120.00", byFee.GetProperty("lineTotal").GetProperty("amount").GetString());
         Assert.Equal("Fee", byFee.GetProperty("itemKind").GetString());
-        Assert.Equal("Boarding", byFee.GetProperty("businessLine").GetString());
+        Assert.Equal("Manual", byFee.GetProperty("sourceKind").GetString());
+        Assert.Equal("Shop", byFee.GetProperty("businessLine").GetString());
     }
 
     [Fact]
-    public async Task AManualCharge_ForAnUnknownCustomer_OrWithBothForms_OrABadShape_Is400()
+    public async Task AManualCharge_ForAnUnknownCustomer_OrABadShape_Is400()
     {
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
@@ -157,8 +57,6 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
 
         Assert.Equal(HttpStatusCode.BadRequest, (await context.Admin.PostAsJsonAsync("/api/staff/billing/charges",
             new { customerId = Guid.NewGuid(), description = "x", unitPrice = 1, taxClassId = context.TaxClassId, quantity = 1, serviceDate = date }, Json)).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await context.Admin.PostAsJsonAsync("/api/staff/billing/charges",
-            new { customerId, serviceId = Guid.NewGuid(), description = "x", unitPrice = 1, taxClassId = context.TaxClassId, quantity = 1, serviceDate = date }, Json)).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await context.Admin.PostAsJsonAsync("/api/staff/billing/charges",
             new { customerId, description = "x", unitPrice = 1.005m, taxClassId = context.TaxClassId, quantity = 1, serviceDate = date }, Json)).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await context.Admin.PostAsJsonAsync("/api/staff/billing/charges",
@@ -191,8 +89,8 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
         var customerId = await SeedCustomerAsync(context);
         var sourceId = Guid.NewGuid();
         var request = new ChargeRequestDto(
-            customerId, context.BranchId, null, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, sourceId, "line-1", null, null,
-            "Cat food 2kg", 2m, new Money(450m, "BDT"), new Money(0m, "BDT"), context.TaxClassId, Today);
+            customerId, context.BranchId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, sourceId, "line-1",
+            "Mustard oil 1 L", 2m, new Money(450m, "BDT"), new Money(0m, "BDT"), context.TaxClassId, Today);
 
         Guid first, second;
         await using (var scope = Factory.Services.CreateAsyncScope())
@@ -222,7 +120,7 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
         var bad = new ChargeRequestDto(
-            customerId, context.BranchId, null, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "main", null, null,
+            customerId, context.BranchId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "main",
             "x", 1m, new Money(10m, "USD"), new Money(0m, "USD"), context.TaxClassId, Today);
 
         await using var scope = Factory.Services.CreateAsyncScope();
@@ -240,19 +138,19 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
         var sourceId = Guid.NewGuid();
-        await RecordChargeAsync(context, customerId, sourceId: sourceId, sourceLineRef: "night-1");
+        await RecordChargeAsync(context, customerId, sourceId: sourceId, sourceLineRef: "line-1");
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
             var recorder = scope.ServiceProvider.GetRequiredService<IBillableChargeRecorder>();
-            await recorder.VoidAsync(new ChargeSourceKey(ChargeSourceKind.Order, Guid.NewGuid(), "night-1"), "nothing there");
-            await recorder.VoidAsync(new ChargeSourceKey(ChargeSourceKind.Order, sourceId, "night-1"), "Night cancelled");
+            await recorder.VoidAsync(new ChargeSourceKey(ChargeSourceKind.Order, Guid.NewGuid(), "line-1"), "nothing there");
+            await recorder.VoidAsync(new ChargeSourceKey(ChargeSourceKind.Order, sourceId, "line-1"), "Line cancelled");
             await scope.ServiceProvider.GetRequiredService<CatEcommerceDbContext>().SaveChangesAsync();
         }
 
         var charge = await WithDbAsync(db => db.Charges.AsNoTracking().SingleAsync(c => c.SourceId == sourceId));
         Assert.Equal(ChargeStatus.Voided, charge.Status);
-        Assert.Equal("Night cancelled", charge.VoidReason);
+        Assert.Equal("Line cancelled", charge.VoidReason);
     }
 
     /// <summary>I-B5 -- two requests record the same source key concurrently: never two rows. The loser is either
@@ -268,7 +166,7 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
         {
             try
             {
-                await RecordChargeAsync(context, customerId, sourceId: sourceId, sourceLineRef: "night-1");
+                await RecordChargeAsync(context, customerId, sourceId: sourceId, sourceLineRef: "line-1");
                 return (true, false);
             }
             catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { ConstraintName: "ix_charge_source" })
@@ -298,7 +196,7 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
             {
                 var duplicate = new ChargeAggregate(Guid.NewGuid());
                 duplicate.Record(new ChargeRequestDto(
-                    customerId, context.BranchId, null, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, sourceId, "main", null, null,
+                    customerId, context.BranchId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, sourceId, "main",
                     "dup", 1m, new Money(1m, "BDT"), new Money(0m, "BDT"), context.TaxClassId, Today),
                     new ChargeRecordContext("BDT", Now, new BillingActor(new Platform.Infrastructure.Common.Security.UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid())));
                 db.Charges.Add(duplicate);
@@ -327,11 +225,11 @@ public sealed class BillingChargeEndpointTests(BillingApiFactory factory) : Bill
     public async Task ChargeEndpoints_AreRestrictedToBillingStaff()
     {
         var context = await CreateBillingContextAsync();
-        var (vet, _) = await StaffClientAsync(context, StaffRoles.Vet);
+        var (inventory, _) = await StaffClientAsync(context, StaffRoles.Inventory);
         var (reception, _) = await StaffClientAsync(context, StaffRoles.Reception);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await vet.GetAsync("/api/staff/billing/charges")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await vet.PostAsJsonAsync("/api/staff/billing/charges", new { }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync("/api/staff/billing/charges")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.PostAsJsonAsync("/api/staff/billing/charges", new { }, Json)).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await reception.GetAsync("/api/staff/billing/charges")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await CreateClient().GetAsync("/api/staff/billing/charges")).StatusCode);
     }

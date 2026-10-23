@@ -18,7 +18,7 @@ import { CheckoutFreeDelivery } from './CheckoutFreeDelivery';
 /**
  * `components/checkout/ReviewStep.tsx` — ⭐ HO-ORD-002 §11.2 step 4, in the Hearth layout
  * (docs/design/orders/CheckoutReview.dc.html). Left: the delivery and payment cards (`choiceCards`), the
- * prescription / changes panels the screen passes in, the quote's lines (a list, no horizontal scroll)
+ * changes panel the screen passes in, the quote's lines (a list, no horizontal scroll)
  * and the free-delivery nudge when the server sent an amount. Right: the six-row `OrderSummary`, the
  * discount and policy panels and **Place order · amount** (the quote's grand total) — which stays
  * disabled while the quote is settling, while any blocking reason stands, or while changes are not
@@ -30,7 +30,6 @@ export function ReviewStep({
   fulfilment,
   settling,
   choiceCards,
-  rxPanel,
   changesPanel,
   policiesPanel,
   discountField,
@@ -48,7 +47,6 @@ export function ReviewStep({
   settling: boolean;
   /** The delivery and payment cards with their Change links. */
   choiceCards?: ReactNode;
-  rxPanel: ReactNode;
   changesPanel: ReactNode;
   policiesPanel: ReactNode;
   discountField: ReactNode;
@@ -66,7 +64,6 @@ export function ReviewStep({
     key: line.lineRef,
     productName: line.productName,
     variantLabel: line.variantLabel,
-    cat: line.cat,
     quantity: line.quantity,
     unitPrice: line.unitPrice,
     lineTotal: line.lineTotal,
@@ -89,7 +86,6 @@ export function ReviewStep({
     <div className="grid items-start gap-x-7 gap-y-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-y-0">
       <div className="flex min-w-0 flex-col gap-[18px] lg:row-span-2">
         {choiceCards}
-        {rxPanel}
         {changesPanel}
         {quote.excludedLines.length > 0 && (
           <section

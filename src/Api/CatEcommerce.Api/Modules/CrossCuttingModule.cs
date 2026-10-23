@@ -58,11 +58,7 @@ public static class CrossCuttingModule
         services.AddScoped<RetentionWorkQueue>();
         services.AddScoped<RetentionWorkCycle>();
         services.AddScoped<IRetentionPurger, RetentionPurger>();
-        services.AddScoped<IRetentionReviewSource, CatClinicalReviewSource>();
         services.AddHostedService<RetentionWorker>();
-
-        // ── Offline front-desk snapshot (ADR-306): one registration per section source; boardingTasks has none until Boarding exists ──
-        services.AddScoped<IFrontDeskSnapshotSource, ClinicDayListSnapshotSource>();
 
         // ── Rate limits (section 12.5): per IP, fixed window, read lazily so a test can override them ──
         services.AddRateLimiter(options =>
@@ -97,14 +93,15 @@ public static class CrossCuttingModule
         services.AddScoped<ICommandHandlerAsync<ReapplyErasuresAfterRestoreCommand>, ReapplyErasuresAfterRestoreCommandHandler>();
         services.AddScoped<IValidator<ReapplyErasuresAfterRestoreCommand>, ReapplyErasuresAfterRestoreCommandValidator>();
 
-        services.AddScoped<ICommandHandlerAsync<RecordOfflineSnapshotIssuedCommand>, RecordOfflineSnapshotIssuedCommandHandler>();
-        services.AddScoped<IValidator<RecordOfflineSnapshotIssuedCommand>, RecordOfflineSnapshotIssuedCommandValidator>();
 
         services.AddScoped<ICommandHandlerAsync<RecordWebVitalsCommand>, RecordWebVitalsCommandHandler>();
         services.AddScoped<IValidator<RecordWebVitalsCommand>, RecordWebVitalsCommandValidator>();
 
         services.AddScoped<ICommandHandlerAsync<RecordRestoreTestCommand>, RecordRestoreTestCommandHandler>();
         services.AddScoped<IValidator<RecordRestoreTestCommand>, RecordRestoreTestCommandValidator>();
+
+        services.AddScoped<ICommandHandlerAsync<RecordOfflineSnapshotIssuedCommand>, RecordOfflineSnapshotIssuedCommandHandler>();
+        services.AddScoped<IValidator<RecordOfflineSnapshotIssuedCommand>, RecordOfflineSnapshotIssuedCommandValidator>();
 
         services.AddScoped<ICommandHandlerAsync<RequestRetentionRunCommand>, RequestRetentionRunCommandHandler>();
         services.AddScoped<IValidator<RequestRetentionRunCommand>, RequestRetentionRunCommandValidator>();
@@ -126,13 +123,13 @@ public static class CrossCuttingModule
     {
         services.AddScoped<IQueryHandlerAsync<GetErasureRequestsQuery, PagedResult<ErasureRequestViewModel>>, GetErasureRequestsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetErasureRequestQuery, ErasureRequestViewModel?>, GetErasureRequestQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetFrontDeskOfflineSnapshotQuery, FrontDeskSnapshotViewModel?>, GetFrontDeskOfflineSnapshotQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetWebVitalsSummaryQuery, WebVitalsSummaryViewModel>, GetWebVitalsSummaryQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetBackupStatusQuery, BackupStatusViewModel>, GetBackupStatusQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRestoreTestsQuery, PagedResult<RestoreTestSummaryViewModel>>, GetRestoreTestsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRestoreTestQuery, RestoreTestViewModel?>, GetRestoreTestQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRetentionScheduleQuery, RetentionScheduleViewModel>, GetRetentionScheduleQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRetentionRunsQuery, PagedResult<RetentionRunSummaryViewModel>>, GetRetentionRunsQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<GetFrontDeskOfflineSnapshotQuery, FrontDeskSnapshotViewModel?>, GetFrontDeskOfflineSnapshotQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRetentionRunQuery, RetentionRunViewModel?>, GetRetentionRunQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRetentionReviewQuery, RetentionReviewViewModel>, GetRetentionReviewQueryHandler>();
     }

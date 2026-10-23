@@ -72,8 +72,8 @@ export function ReportCatalogue({ reports }: { reports: ReportCatalogueEntry[] }
         />
       ) : (
         groups.map((group) => (
-          <section key={group.category} aria-labelledby={`cat-${group.category}`}>
-            <h2 id={`cat-${group.category}`} className="mb-2 text-base font-bold text-ink">
+          <section key={group.category} aria-labelledby={`category-${group.category}`}>
+            <h2 id={`category-${group.category}`} className="mb-2 text-base font-bold text-ink">
               {categoryLabel(group.category)}
             </h2>
             <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-2 xl:grid-cols-3">

@@ -15,7 +15,7 @@ import { Section } from './PageHeader';
  * `components/billing/MyInvoiceDetail.tsx` — HO-BIL-002 §11.11 (US-BIL-02, customer). The same
  * `InvoiceDocumentView` in read-only customer mode with **Download PDF** (the server's rendering),
  * and `HowToPay` — the issuing branch's bank accounts from the response and the server's instruction
- * to use the invoice number as the payment reference, or to pay at the clinic. **No pay-online
+ * to use the invoice number as the payment reference, or to pay at the shop. **No pay-online
  * button** exists (SRS Phase 5). Someone else's invoice is a `404` ("not found"), never an error.
  */
 function BankAccountCard({ account }: { account: BankAccount }) {
@@ -46,7 +46,7 @@ function BankAccountCard({ account }: { account: BankAccount }) {
 
 export function HowToPay({ howToPay, invoiceNumber }: { howToPay: HowToPayData; invoiceNumber: string | null }) {
   return (
-    <Section title="How to pay" description="Pay by bank transfer, or at the clinic by cash or card.">
+    <Section title="How to pay" description="Pay by bank transfer, or at the shop by cash or card.">
       <p className="text-sm font-semibold text-ink">{howToPay.referenceInstruction}</p>
       {invoiceNumber && (
         <p className="text-sm text-ink">
@@ -60,7 +60,7 @@ export function HowToPay({ howToPay, invoiceNumber }: { howToPay: HowToPayData; 
           ))}
         </ul>
       )}
-      <p className="text-sm text-ink-muted">Or pay at the clinic by cash or card.</p>
+      <p className="text-sm text-ink-muted">Or pay at the shop by cash or card.</p>
     </Section>
   );
 }

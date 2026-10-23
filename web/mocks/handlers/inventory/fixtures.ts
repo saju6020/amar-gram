@@ -15,18 +15,18 @@ export const inventoryFixtureIds = {
 
   warehouseId: 'e1000000-0000-4000-8000-000000000001',
   shopFloorId: 'e1000000-0000-4000-8000-000000000002',
-  dispensaryId: 'e1000000-0000-4000-8000-000000000003',
-  boardingStoreId: 'e1000000-0000-4000-8000-000000000004',
+  coldStoreId: 'e1000000-0000-4000-8000-000000000003',
+  backStoreId: 'e1000000-0000-4000-8000-000000000004',
   quarantineId: 'e1000000-0000-4000-8000-000000000005',
   londonWarehouseId: 'e2000000-0000-4000-8000-000000000001',
   londonQuarantineId: 'e2000000-0000-4000-8000-000000000002',
 
   foodSkuId: 'f1000000-0000-4000-8000-000000000001',
-  vaccineSkuId: 'f1000000-0000-4000-8000-000000000002',
-  litterSkuId: 'f1000000-0000-4000-8000-000000000003',
+  chilledSkuId: 'f1000000-0000-4000-8000-000000000002',
+  bagSkuId: 'f1000000-0000-4000-8000-000000000003',
   wetFoodSkuId: 'f1000000-0000-4000-8000-000000000004',
   foodBarcode: '4006381333931',
-  vaccineBarcode: '5012345678900',
+  chilledBarcode: '5012345678900',
 
   supplierId: 'a1000000-0000-4000-8000-000000000001',
   supplier2Id: 'a1000000-0000-4000-8000-000000000002',
@@ -51,9 +51,9 @@ export const inventoryFixtureIds = {
   batchFoodTodayId: 'c1000000-0000-4000-8000-000000000003',
   batchFoodExpiredId: 'c1000000-0000-4000-8000-000000000004',
   batchFoodQuarantinedId: 'c1000000-0000-4000-8000-000000000005',
-  batchVaccineId: 'c1000000-0000-4000-8000-000000000006',
+  batchChilledId: 'c1000000-0000-4000-8000-000000000006',
   batchRecalledId: 'c1000000-0000-4000-8000-000000000007',
-  batchLitterId: 'c1000000-0000-4000-8000-000000000008',
+  batchBagId: 'c1000000-0000-4000-8000-000000000008',
   batchWrittenOffId: 'c1000000-0000-4000-8000-000000000009',
   batchWetFoodId: 'c1000000-0000-4000-8000-00000000000a',
   batchLondonId: 'c1000000-0000-4000-8000-00000000000b',
@@ -84,15 +84,7 @@ export const MOCK_APPROVAL_THRESHOLD = 5000;
 // ---- roles (presentation of HO-IMP-001 §12.3, by name) ---------------------------------------
 
 export const ROLES = {
-  stockView: [
-    'Reception',
-    'Nurse',
-    'Vet',
-    'Caretaker',
-    'Inventory',
-    'ShopManager',
-    'Administrator',
-  ],
+  stockView: ['Reception', 'Inventory', 'ShopManager', 'Administrator'],
   stockManage: ['Inventory', 'Administrator'],
   approve: ['Administrator'],
   recalls: ['Inventory', 'Administrator'],

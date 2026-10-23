@@ -7,7 +7,7 @@ import { useIdempotencyKey } from '@/lib/hooks/useIdempotencyKey';
  * `lib/hooks/useReorder.ts` — HO-POR-002 §1 Amended (2): the portal has no re-order of its own;
  * this calls Orders' `POST /api/customers/me/orders/{orderId}/reorder` (ADR-FE-123) through
  * HO-ORD-002's `reorderOrder` (`lib/api/my-orders.ts`). The server decides what can be added
- * (stock, prescription, basket limits) — this hook checks nothing (ADR-FE-123).
+ * (stock, basket limits) — this hook checks nothing (ADR-FE-123).
  *
  * The `Idempotency-Key` is HO-ORD-002's `useIdempotencyKey` (ADR-FE-097): one UUID per button, kept
  * across a retry of the same click (a network error, a double click) so the server replays the first

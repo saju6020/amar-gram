@@ -6,8 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace CatEcommerce.Read.QueryHandlers.Portal;
 
 /// <summary>
-/// HO-POR-001 §8.4, ADR-260 -- the ONLY catch site of the dashboard path (plus the per-cat vaccination read, which the handover
-/// requires to degrade a single cat). One failing module marks its own section <c>Unavailable</c> (data <c>null</c>, never
+/// HO-POR-001 §8.4, ADR-260 -- the ONLY catch site of the dashboard path. One failing module marks its own section <c>Unavailable</c> (data <c>null</c>, never
 /// <c>[]</c> or <c>0</c>) and the rest of the page is unaffected. Request cancellation is never swallowed. The log line carries the
 /// section name, the exception and the correlation id -- no customer data and no upstream payload (I-X1).
 /// </summary>

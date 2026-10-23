@@ -11,7 +11,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 
 /**
- * The app's one toast surface (HO-CAT-002 §8.3's root-layout comment). Rendered once from
+ * The app's one toast surface (the scaffold handover §8.3's root-layout comment). Rendered once from
  * `app/providers.tsx`. Any component calls `toast({ title, description, variant })` from
  * `components/ui/use-toast.ts` — never render a second `<Toaster />` or build a second
  * notification surface.

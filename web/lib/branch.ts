@@ -19,7 +19,7 @@ import type { QueryClient } from '@tanstack/react-query';
  *
  * ARCH gate HIGH fix (HO-ADM-002-ARCHITECTURE, owner decision 2026-09-28) — registration flows
  * `app/providers.tsx` → this module, not the reverse (this module importing a getter FROM
- * `app/providers.tsx`), because that is the correct dependency direction per HO-CAT-002 §8.2
+ * `app/providers.tsx`), because that is the correct dependency direction per the scaffold handover §8.2
  * (`app/` depends on `lib/`, never the reverse); it also keeps this file free of any import beyond
  * the type used for annotation. **`app/providers.tsx` calls `registerQueryClient()` from a
  * `useEffect`, never from its own `useState` lazy initialiser** — verified against a real `next

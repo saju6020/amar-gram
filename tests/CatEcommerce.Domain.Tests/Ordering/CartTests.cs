@@ -28,8 +28,8 @@ public sealed class CartTests
         return cart;
     }
 
-    private static Guid Add(CartAggregate cart, Guid sku, int quantity, Guid? cat = null, decimal price = 100m, DateTimeOffset? at = null, int maxLines = MaxLines) =>
-        cart.AddLine(sku, quantity, cat, price, "BDT", at ?? T0, MaxQty, maxLines);
+    private static Guid Add(CartAggregate cart, Guid sku, int quantity, decimal price = 100m, DateTimeOffset? at = null, int maxLines = MaxLines) =>
+        cart.AddLine(sku, quantity, price, "BDT", at ?? T0, MaxQty, maxLines);
 
     // ── U-C1 ────────────────────────────────────────────────────────────────────────────────────────
     [Fact]
@@ -46,23 +46,6 @@ public sealed class CartTests
 
         Add(cart, sku, 19);
         Assert.Equal(MaxQty, Assert.Single(cart.Lines).Quantity);
-    }
-
-    [Fact]
-    public void U_C1_APrescriptionSku_AddedOncePerCat_IsTwoLines()
-    {
-        var cart = CustomerCart();
-        var sku = Guid.NewGuid();
-        var mitu = Guid.NewGuid();
-        var luna = Guid.NewGuid();
-
-        Add(cart, sku, 1, mitu);
-        Add(cart, sku, 1, luna);
-        Add(cart, sku, 2, mitu);
-
-        Assert.Equal(2, cart.Lines.Count);
-        Assert.Equal(3, cart.Lines.Single(l => l.CatId == mitu).Quantity);
-        Assert.Equal(1, cart.Lines.Single(l => l.CatId == luna).Quantity);
     }
 
     [Theory]
@@ -134,7 +117,7 @@ public sealed class CartTests
         Assert.Equal(3, account.Lines.Single(l => l.SkuId == a).Quantity); // the larger, not 2 + 3
         Assert.Equal(1, account.Lines.Single(l => l.SkuId == b).Quantity);
         Assert.Equal(1, account.Lines.Single(l => l.SkuId == c).Quantity);
-        Assert.Equal(account.Lines.Count, account.Lines.Select(l => (l.SkuId, l.CatId)).Distinct().Count());
+        Assert.Equal(account.Lines.Count, account.Lines.Select(l => l.SkuId).Distinct().Count());
         Assert.Equal(2, result.MergedLineCount);
         Assert.Empty(result.DroppedSkuIds);
         Assert.Equal(CartStatus.Merged, guest.Status);
@@ -155,22 +138,6 @@ public sealed class CartTests
         var line = Assert.Single(account.Lines);
         Assert.Equal(7, line.Quantity);
         Assert.Equal(90m, line.PriceWhenAdded);
-    }
-
-    [Fact]
-    public void U_C2_Merge_KeepsEachCatKeySeparate()
-    {
-        var sku = Guid.NewGuid();
-        var mitu = Guid.NewGuid();
-        var luna = Guid.NewGuid();
-        var guest = GuestCart();
-        Add(guest, sku, 1, mitu);
-        var account = CustomerCart();
-        Add(account, sku, 2, luna);
-
-        account.MergeFrom(guest, T0, MaxQty, MaxLines);
-
-        Assert.Equal(2, account.Lines.Count);
     }
 
     [Fact]
@@ -220,23 +187,6 @@ public sealed class CartTests
         Assert.Equal(BusinessViolationCodes.QuantityOutOfRange, Assert.Throws<DomainRuleViolationException>(() => cart.SetQuantity(line, 0, T0, MaxQty)).ErrorCode);
         Assert.Equal(BusinessViolationCodes.QuantityOutOfRange, Assert.Throws<DomainRuleViolationException>(() => cart.SetQuantity(line, MaxQty + 1, T0, MaxQty)).ErrorCode);
         Assert.Equal(BusinessViolationCodes.CartLineNotFound, Assert.Throws<DomainRuleViolationException>(() => cart.SetQuantity(Guid.NewGuid(), 2, T0, MaxQty)).ErrorCode);
-    }
-
-    [Fact]
-    public void SetLineCat_RefusesACollidingKey_AndAllowsAFreeOne()
-    {
-        var cart = CustomerCart();
-        var sku = Guid.NewGuid();
-        var mitu = Guid.NewGuid();
-        var luna = Guid.NewGuid();
-        var first = Add(cart, sku, 1, mitu);
-        var second = Add(cart, sku, 1, luna);
-
-        Assert.Equal(BusinessViolationCodes.DuplicateCartLine, Assert.Throws<DomainRuleViolationException>(() => cart.SetLineCat(second, mitu, T0)).ErrorCode);
-
-        var kiki = Guid.NewGuid();
-        cart.SetLineCat(first, kiki, T0);
-        Assert.Contains(cart.Lines, l => l.Id == first && l.CatId == kiki);
     }
 
     [Fact]

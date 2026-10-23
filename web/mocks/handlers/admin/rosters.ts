@@ -21,7 +21,6 @@ interface ShiftSlot {
   dayOfWeek: string;
   starts: string;
   ends: string;
-  defaultRoomId: string | null;
 }
 
 interface StaffRoster {
@@ -59,26 +58,23 @@ function rosterKey(staffAccountId: string, branchId: string) {
 
 function seedRosters(): Map<string, StaffRoster> {
   const roster: StaffRoster = {
-    staffAccountId: administrationFixtureIds.vetStaffId,
+    staffAccountId: administrationFixtureIds.rosterStaffId,
     branchId: administrationFixtureIds.mainBranchId,
     currentPattern: [
       {
         dayOfWeek: 'Monday',
         starts: '09:00',
         ends: '17:00',
-        defaultRoomId: administrationFixtureIds.consultationRoomId,
       },
       {
         dayOfWeek: 'Tuesday',
         starts: '09:00',
         ends: '17:00',
-        defaultRoomId: administrationFixtureIds.consultationRoomId,
       },
       {
         dayOfWeek: 'Wednesday',
         starts: '09:00',
         ends: '17:00',
-        defaultRoomId: administrationFixtureIds.consultationRoomId,
       },
     ],
     // A scheduled next pattern (§12's own fixture requirement) — effective a year out so it never
@@ -88,13 +84,11 @@ function seedRosters(): Map<string, StaffRoster> {
         dayOfWeek: 'Monday',
         starts: '10:00',
         ends: '18:00',
-        defaultRoomId: administrationFixtureIds.consultationRoomId,
       },
       {
         dayOfWeek: 'Tuesday',
         starts: '10:00',
         ends: '18:00',
-        defaultRoomId: administrationFixtureIds.consultationRoomId,
       },
     ],
     nextPatternEffectiveFrom: '2028-01-04',
@@ -105,7 +99,7 @@ function seedRosters(): Map<string, StaffRoster> {
 function seedExceptions(): Map<string, RosterException> {
   const extra: RosterException = {
     id: 'e0000000-0000-0000-0000-00000000a001',
-    staffAccountId: administrationFixtureIds.vetStaffId,
+    staffAccountId: administrationFixtureIds.rosterStaffId,
     branchId: administrationFixtureIds.mainBranchId,
     date: '2027-01-06', // a Wednesday with no base pattern slot beyond the seeded ones
     kind: 'ExtraShift',
@@ -115,7 +109,7 @@ function seedExceptions(): Map<string, RosterException> {
   };
   const cancelled: RosterException = {
     id: 'e0000000-0000-0000-0000-00000000a002',
-    staffAccountId: administrationFixtureIds.vetStaffId,
+    staffAccountId: administrationFixtureIds.rosterStaffId,
     branchId: administrationFixtureIds.mainBranchId,
     date: '2027-01-04', // a seeded Monday shift
     kind: 'ShiftCancelled',
@@ -177,7 +171,6 @@ function computeAvailability(
     branchId: string;
     start: string;
     end: string;
-    defaultRoomId: string | null;
     outsideOpeningHours: boolean;
   }> = [];
 
@@ -204,12 +197,12 @@ function computeAvailability(
 
     let slots = pattern
       .filter((s) => s.dayOfWeek === dayName)
-      .map((s) => ({ starts: s.starts, ends: s.ends, defaultRoomId: s.defaultRoomId }));
+      .map((s) => ({ starts: s.starts, ends: s.ends }));
 
     const todaysExceptions = dayExceptions.filter((e) => e.date === dateStr);
     if (todaysExceptions.some((e) => e.kind === 'ShiftCancelled')) slots = []; // rule 4, simplified
     for (const extra of todaysExceptions.filter((e) => e.kind === 'ExtraShift')) {
-      slots.push({ starts: extra.starts, ends: extra.ends, defaultRoomId: null });
+      slots.push({ starts: extra.starts, ends: extra.ends });
     }
 
     const openIntervals = branch.weeklyHours.filter((h) => h.dayOfWeek === dayName);
@@ -221,7 +214,6 @@ function computeAvailability(
         branchId,
         start: zonedTimeToUtcIso(dateStr, slot.starts, branch.timeZoneId),
         end: zonedTimeToUtcIso(dateStr, slot.ends, branch.timeZoneId),
-        defaultRoomId: slot.defaultRoomId,
         outsideOpeningHours: isOutside,
       });
     }

@@ -1,6 +1,6 @@
 import { defineConfig, devices, type PlaywrightTestConfig } from '@playwright/test';
 
-// HO-CAT-002 §16 — Playwright E2E, run against MSW first, then against the real API (§5.1).
+// Playwright E2E, run against MSW first, then against the real API (§5.1).
 // Each area adds its own specs under tests/e2e/; this config is shared and shouldn't need
 // per-area edits.
 //

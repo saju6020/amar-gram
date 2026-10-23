@@ -48,7 +48,7 @@ public sealed class GetStaffProductDetailQueryHandler(
             var row = componentRows.FirstOrDefault(r => r.SkuId == c.ComponentSkuId);
             return new BundleComponentFact(
                 c.ComponentSkuId, row?.SkuCode ?? c.ComponentSkuId.ToString(), row?.SkuStatus == SkuStatus.Active,
-                row?.ProductStatus == ProductStatus.Active, row?.Kind == ProductKind.Bundle, row?.PrescriptionRequired ?? false);
+                row?.ProductStatus == ProductStatus.Active, row?.Kind == ProductKind.Bundle);
         }).ToList();
 
         var facts = new PublicationFacts(pricedSkuIds, taxClassActive, componentFacts);
@@ -87,7 +87,7 @@ public sealed class GetStaffProductDetailQueryHandler(
 
         var fd = product.FoodDetails;
         var food = fd is null ? null : new FoodDetailViewModel(
-            fd.Manufacturer, fd.LifeStage?.DisplayName, fd.ProteinSource?.DisplayName, fd.IngredientList,
+            fd.Manufacturer, fd.ProteinSource?.DisplayName, fd.IngredientList,
             fd.GuaranteedAnalysis is { } ga ? new GuaranteedAnalysisViewModel(ga.ProteinPercent, ga.FatPercent, ga.FibrePercent, ga.MoisturePercent) : null,
             fd.FeedingGuide, fd.StorageInstructions);
 
@@ -98,7 +98,7 @@ public sealed class GetStaffProductDetailQueryHandler(
             product.Id, product.Version, product.Kind.DisplayName, product.Name, product.Brand, product.Description,
             product.Category.DisplayName, product.Subcategory?.DisplayName, product.Tags, product.Slug,
             product.Status.DisplayName, product.FirstPublishedOn, product.TaxClassId, product.CountryOfOriginCode,
-            product.PrescriptionRequired, product.IsExpiryTracked, product.ListedOnStorefront, skuViewModels, checklist,
+            product.IsExpiryTracked, product.ListedOnStorefront, skuViewModels, checklist,
             product.BundleComponents.Select(c =>
             {
                 var row = componentRows.FirstOrDefault(r => r.SkuId == c.ComponentSkuId);

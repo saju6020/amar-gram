@@ -9,7 +9,7 @@ import { test as base, expect, type Browser, type BrowserContext, type Page } fr
  * `NEXT_PUBLIC_USE_MOCKS=false NEXT_PUBLIC_API_BASE_URL=http://localhost:5007`, and `BIL_SEED` pointing at
  * a JSON file written by the seeder (admin, reception and accountant mobiles, a branch with a billing
  * profile and a 15 % tax class, three walk-in customers). Skipped otherwise. Serial: the cases share
- * one branch, one till and one set of customers, exactly as a day at the clinic does.
+ * one branch, one till and one set of customers, exactly as a day at the outlet does.
  */
 const SEED_PATH = process.env.BIL_SEED;
 const enabled = process.env.BIL_REAL_API === '1' && !!SEED_PATH;
@@ -56,9 +56,9 @@ async function api(page: Page, method: string, path: string, body?: unknown, hea
   }, { method, path, body, headers, branchId: seed!.branchId });
 }
 
-async function charge(page: Page, customerId: string, line: 'Clinic' | 'Shop' | 'Boarding', description: string, price: string) {
+async function charge(page: Page, customerId: string, description: string, price: string) {
   const r = await api(page, 'POST', '/api/staff/billing/charges', {
-    customerId, description, unitPrice: price, taxClassId: seed!.taxId, quantity: '1', serviceDate: today(), businessLine: line,
+    customerId, description, unitPrice: price, taxClassId: seed!.taxId, quantity: '1', serviceDate: today(), businessLine: 'Shop',
   });
   expect(r.status, r.text).toBe(201);
   return r.json.chargeId as string;
@@ -92,30 +92,30 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
   accountant = await signIn(await browser.newContext({ baseURL }), seed!.accountant);
 });
 
-test('E-A1: three business lines on one invoice, tax per line, a number in the branch series', async () => {
+test('E-A1: three charges on one invoice, tax per line, a number in the branch series', async () => {
   const c = seed!.customers[0]!.id;
   const ids = [
-    await charge(admin, c, 'Clinic', 'Consultation (real)', '1000.00'),
-    await charge(admin, c, 'Shop', 'Cat food (real)', '500.00'),
-    await charge(admin, c, 'Boarding', 'Boarding two nights (real)', '800.00'),
+    await charge(admin, c, 'Organic rice 5 kg (real)', '1000.00'),
+    await charge(admin, c, 'Mustard oil 1 L (real)', '500.00'),
+    await charge(admin, c, 'Home delivery (real)', '800.00'),
   ];
   expect(ids).toHaveLength(3);
   await admin.goto(`/staff/billing/invoices/new?customerId=${c}`);
-  for (const line of ['Clinic', 'Shop', 'Boarding']) await admin.getByRole('button', { name: `Select all in ${line}` }).click();
+  await admin.getByRole('button', { name: 'Select all in Shop' }).click();
   await expect(admin.getByText(/Estimate at today.s tax rates/)).toBeVisible();
   await expect(admin.getByRole('button', { name: 'Issue invoice' })).toBeEnabled({ timeout: 20_000 });
   await admin.getByRole('button', { name: 'Issue invoice' }).click();
   await admin.getByRole('dialog').getByRole('button', { name: 'Issue invoice' }).click();
   await expect(admin.getByRole('heading', { level: 1 })).toContainText(/INV-.+-\d{4}-\d{6}/, { timeout: 30_000 });
   const lines = admin.getByRole('table', { name: 'Invoice lines' });
-  for (const text of ['Clinic', 'Shop', 'Boarding', '15.00%']) await expect(lines).toContainText(text);
+  for (const text of ['Organic rice 5 kg (real)', 'Mustard oil 1 L (real)', 'Home delivery (real)', '15.00%']) await expect(lines).toContainText(text);
   state.invoice1 = admin.url().split('/').pop()!;
   state.number1 = (await admin.getByRole('heading', { level: 1 }).textContent())!;
 });
 
 test('E-A2: issuing the same draft twice — one succeeds, the other is refused', async () => {
   const c = seed!.customers[0]!.id;
-  const chargeId = await charge(admin, c, 'Clinic', 'Two-tab draft (real)', '200.00');
+  const chargeId = await charge(admin, c, 'Two-tab draft (real)', '200.00');
   const d = await api(admin, 'POST', '/api/staff/billing/invoices', { customerId: c, chargeIds: [chargeId] });
   const id = d.json.invoiceId as string;
   const version = (await api(admin, 'GET', `/api/staff/billing/invoices/${id}`)).json.version;
@@ -127,7 +127,7 @@ test('E-A2: issuing the same draft twice — one succeeds, the other is refused'
 
 test('E-B1: split tender — cash 400, card slip 350, transfer 400 — clears the invoice (three receipts)', async () => {
   const c = seed!.customers[1]!.id;
-  const ch = await charge(admin, c, 'Clinic', 'Split tender (real)', '1000.00');
+  const ch = await charge(admin, c, 'Split tender (real)', '1000.00');
   const inv = await issueInvoice(admin, c, [ch]);
   state.invoiceB1 = inv.id;
   await reception.goto(`/staff/billing/payments/new?customerId=${c}&invoiceId=${inv.id}`);
@@ -188,7 +188,7 @@ test('E-B3: a card number as reference is blocked in the browser (nothing sent) 
 
 test('E-B4: reverse a payment and re-enter it correctly', async () => {
   const c = seed!.customers[2]!.id;
-  const ch = await charge(admin, c, 'Clinic', 'Reverse me (real)', '400.00');
+  const ch = await charge(admin, c, 'Reverse me (real)', '400.00');
   const inv = await issueInvoice(admin, c, [ch]);
   const pay = await api(reception, 'POST', '/api/staff/billing/payments', {
     customerId: c, method: 'CashInStore', amount: 460, receivedOn: today(), allocations: [{ invoiceId: inv.id, amount: 460 }],
@@ -221,7 +221,7 @@ test('E-C1/E-C2/E-C3: credit note keeps credit, apply it elsewhere, corrected re
   await expect(accountant.getByText(/Credit note CN-.+ issued/)).toBeVisible({ timeout: 30_000 });
   await expect(accountant.getByText('Released to customer credit')).toBeVisible();
   // apply the released credit to a new invoice
-  const ch = await charge(admin, c, 'Clinic', 'Credit target (real)', '300.00');
+  const ch = await charge(admin, c, 'Credit target (real)', '300.00');
   const target = await issueInvoice(admin, c, [ch]);
   await accountant.goto(`/staff/billing/customers/${c}`);
   await accountant.getByRole('button', { name: 'Apply credit' }).click();
@@ -373,7 +373,7 @@ test('E-F1: a customer opens their invoice and downloads the PDF; another custom
     const res = await fetch(`${base}/api/auth/session`, { credentials: 'include' });
     return ((await res.json()) as { customerId: string }).customerId;
   });
-  const ch = await charge(admin, customerId, 'Clinic', 'Portal invoice (real)', '600.00');
+  const ch = await charge(admin, customerId, 'Portal invoice (real)', '600.00');
   const inv = await issueInvoice(admin, customerId, [ch]);
   await page.goto(`/portal/billing/invoices/${inv.id}`);
   await expect(page.getByRole('heading', { name: inv.number })).toBeVisible({ timeout: 20_000 });

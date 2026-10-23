@@ -33,7 +33,7 @@ const TILE_TONES: PackTone[] = ['warm', 'sunken', 'teal'];
 
 /**
  * `components/cart/CartScreen.tsx` — ⭐ HO-ORD-002 §11.1 `CartPage`, US-ORD-01, 02, in the Hearth layout
- * (docs/design/orders/Cart.dc.html). Lines as rounded cards with image, variant, cat chip, quantity
+ * (docs/design/orders/Cart.dc.html). Lines as rounded cards with image, variant, quantity
  * stepper, line subtotal and **Remove** (reversible, so no confirm — an *Undo* toast re-adds the line);
  * availability and price changes as text; the summary shows the item count and subtotal (both the
  * server's), *"Worked out at checkout"* for delivery and tax, and **Checkout · amount** (signed out →
@@ -89,13 +89,7 @@ export function CartScreen() {
           action: (
             <ToastAction
               altText={`Undo removing ${label}`}
-              onClick={() =>
-                add.mutate({
-                  skuId: line.skuId,
-                  quantity: line.quantity,
-                  catId: line.cat?.id,
-                })
-              }
+              onClick={() => add.mutate({ skuId: line.skuId, quantity: line.quantity })}
             >
               Undo
             </ToastAction>

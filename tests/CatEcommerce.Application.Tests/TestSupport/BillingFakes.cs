@@ -12,40 +12,11 @@ namespace CatEcommerce.Application.Tests.TestSupport;
 public sealed class FakeBillingPricingInputs : IBillingPricingInputs
 {
     public Dictionary<Guid, TaxRateInfo> TaxClasses { get; } = [];
-    public Dictionary<Guid, ServicePriceInfo> Services { get; } = [];
 
     public void AddTaxClass(Guid id, decimal? rate = 15m, string code = "STD") => TaxClasses[id] = new TaxRateInfo(id, code, rate);
 
     public Task<IReadOnlyDictionary<Guid, TaxRateInfo>> GetTaxRatesAsync(IReadOnlyCollection<Guid> taxClassIds, DateTimeOffset at, CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyDictionary<Guid, TaxRateInfo>>(taxClassIds.Where(TaxClasses.ContainsKey).Distinct().ToDictionary(id => id, id => TaxClasses[id]));
-
-    public Task<ServicePriceInfo?> GetServicePriceAsync(Guid serviceId, DateTimeOffset at, CancellationToken ct = default) =>
-        Task.FromResult(Services.GetValueOrDefault(serviceId));
-
-    public Task<Guid?> GetServiceTaxClassIdAsync(Guid serviceId, CancellationToken ct = default) =>
-        Task.FromResult<Guid?>(Services.TryGetValue(serviceId, out var s) ? s.TaxClassId : null);
-
-    public Dictionary<Guid, Guid> SkuTaxClasses { get; } = [];
-
-    public Task<IReadOnlyDictionary<Guid, Guid>> GetSkuTaxClassIdsAsync(IReadOnlyCollection<Guid> skuIds, CancellationToken ct = default) =>
-        Task.FromResult<IReadOnlyDictionary<Guid, Guid>>(skuIds.Where(SkuTaxClasses.ContainsKey).Distinct().ToDictionary(id => id, id => SkuTaxClasses[id]));
-}
-
-public sealed class FakeBillableItemSource(ChargeSourceKind kind, BillableSourceResult result) : IBillableItemSource
-{
-    public ChargeSourceKind Kind => kind;
-    public int Calls { get; private set; }
-
-    public Task<BillableSourceResult> GetItemsAsync(Guid sourceId, CancellationToken ct = default)
-    {
-        Calls++;
-        return Task.FromResult(result);
-    }
-}
-
-public sealed class FakeBillableItemSourceResolver(params IBillableItemSource[] sources) : IBillableItemSourceResolver
-{
-    public IBillableItemSource? Resolve(ChargeSourceKind kind) => sources.FirstOrDefault(s => s.Kind == kind);
 }
 
 public sealed class FakeNotificationOutbox : INotificationOutbox

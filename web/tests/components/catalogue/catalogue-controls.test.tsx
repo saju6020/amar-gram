@@ -56,13 +56,13 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
     search = 'origin=TH';
     view.rerender(controls());
     await user.click(aside().getByRole('button', { name: 'Brand' }));
-    await user.click(aside().getByRole('checkbox', { name: /Whiskas/ }));
-    expect(lastUrl()).toBe('/shop/products?brand=Whiskas&origin=TH');
+    await user.click(aside().getByRole('checkbox', { name: /Sunfield/ }));
+    expect(lastUrl()).toBe('/shop/products?brand=Sunfield&origin=TH');
 
-    search = 'brand=Whiskas&origin=TH';
+    search = 'brand=Sunfield&origin=TH';
     view.rerender(controls());
     await user.selectOptions(screen.getByLabelText('Sort by'), 'price_asc');
-    expect(lastUrl()).toBe('/shop/products?brand=Whiskas&origin=TH&sort=price_asc');
+    expect(lastUrl()).toBe('/shop/products?brand=Sunfield&origin=TH&sort=price_asc');
   }, 20_000);
 
   it('U-A1: the filter groups are real fieldsets with legends', () => {
@@ -71,7 +71,6 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
       'Category',
       'Country of origin',
       'Brand',
-      'Life stage',
       'Protein source',
       'Price',
       'Availability',
@@ -87,19 +86,12 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
     const aside = within(screen.getByRole('complementary', { name: 'Filters' }));
     for (const open of ['Category', 'Availability'])
       expect(aside.getByRole('button', { name: open })).toHaveAttribute('aria-expanded', 'true');
-    for (const closed of [
-      'Country of origin',
-      'Brand',
-      'Price',
-      'Life stage',
-      'Protein source',
-      'Rating',
-    ])
+    for (const closed of ['Country of origin', 'Brand', 'Price', 'Protein source', 'Rating'])
       expect(aside.getByRole('button', { name: closed })).toHaveAttribute('aria-expanded', 'false');
-    expect(aside.queryByRole('checkbox', { name: /Kitten/ })).not.toBeInTheDocument();
+    expect(aside.queryByRole('checkbox', { name: /Salmon/ })).not.toBeInTheDocument();
 
-    await user.click(aside.getByRole('button', { name: 'Life stage' }));
-    expect(aside.getByRole('checkbox', { name: /Kitten/ })).toBeVisible();
+    await user.click(aside.getByRole('button', { name: 'Protein source' }));
+    expect(aside.getByRole('checkbox', { name: /Salmon/ })).toBeVisible();
     await user.click(aside.getByRole('button', { name: 'Category' }));
     expect(aside.getByRole('button', { name: 'Category' })).toHaveAttribute(
       'aria-expanded',
@@ -133,22 +125,22 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
 
   it('U-A2: mobile sheet — change two filters, Show results navigates once, closes, returns focus', async () => {
     const user = userEvent.setup();
-    setup('brand=Whiskas&origin=TH');
+    setup('brand=Sunfield&origin=TH');
     const button = screen.getByRole('button', { name: 'Filters (2)' });
     await user.click(button);
 
     const dialog = screen.getByRole('dialog', { name: 'Filters' });
-    // Availability and Life stage start closed (2026-10-16); the shopper opens them first.
+    // Availability and Protein source start closed (2026-10-16); the shopper opens them first.
     await user.click(within(dialog).getByRole('button', { name: 'Availability' }));
     await user.click(within(dialog).getByRole('checkbox', { name: /In stock only/ }));
-    await user.click(within(dialog).getByRole('button', { name: 'Life stage' }));
-    await user.click(within(dialog).getByRole('checkbox', { name: /Kitten/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Protein source' }));
+    await user.click(within(dialog).getByRole('checkbox', { name: /Salmon/ }));
     expect(replace).not.toHaveBeenCalled();
 
     await user.click(within(dialog).getByRole('button', { name: 'Show results' }));
     expect(replace).toHaveBeenCalledTimes(1);
     expect(lastUrl()).toBe(
-      '/shop/products?brand=Whiskas&origin=TH&lifeStage=Kitten&availability=inStock',
+      '/shop/products?brand=Sunfield&origin=TH&protein=Salmon&availability=inStock',
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(button).toHaveFocus();
@@ -174,7 +166,7 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
   it('U-C2: an origin page fixes the country and keeps every other filter group', () => {
     setup('', { origin: ['TH'] });
     expect(screen.queryByRole('group', { name: 'Country of origin' })).not.toBeInTheDocument();
-    for (const legend of ['Brand', 'Life stage', 'Price', 'Availability']) {
+    for (const legend of ['Brand', 'Protein source', 'Price', 'Availability']) {
       expect(screen.getByRole('group', { name: legend })).toBeInTheDocument();
     }
     // The fixed country is neither counted nor offered as a removable chip.
@@ -186,9 +178,9 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
 
   it('removing a chip keeps the others; Clear all keeps the search text', async () => {
     const user = userEvent.setup();
-    setup('q=salmon&brand=Whiskas&origin=TH');
+    setup('q=salmon&brand=Sunfield&origin=TH');
     await user.click(screen.getByRole('button', { name: 'Remove filter: Thailand' }));
-    expect(lastUrl()).toBe('/shop/products?q=salmon&brand=Whiskas');
+    expect(lastUrl()).toBe('/shop/products?q=salmon&brand=Sunfield');
     await user.click(screen.getByRole('button', { name: 'Clear all' }));
     expect(lastUrl()).toBe('/shop/products?q=salmon');
   });

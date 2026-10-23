@@ -27,10 +27,10 @@ describe('useFilterUrlUpdate — HO-ADM-002 §8.3 back-button-safe filters (U-G4
   it('a filter change adds a history entry and resets paging', () => {
     const { result } = renderHook(() => useFilterUrlUpdate());
 
-    result.current('action', 'ServicePriceSet');
+    result.current('action', 'ProductPriceSet');
 
     expect(push).toHaveBeenCalledExactlyOnceWith(
-      '/staff/admin/audit-log?from=2027-01-01&action=ServicePriceSet',
+      '/staff/admin/audit-log?from=2027-01-01&action=ProductPriceSet',
     );
     expect(replace).not.toHaveBeenCalled();
   });
@@ -52,9 +52,9 @@ describe('useFilterUrlUpdate — HO-ADM-002 §8.3 back-button-safe filters (U-G4
     const { result } = renderHook(() => useFilterUrlUpdate());
 
     result.current('entityId', 'abc');
-    result.current('action', 'ServicePriceSet');
+    result.current('action', 'ProductPriceSet');
     vi.advanceTimersByTime(FILTER_TYPING_BURST_MS + 1);
-    result.current('action', 'ServicePriceCleared');
+    result.current('action', 'ProductPriceCleared');
 
     expect(push).toHaveBeenCalledTimes(3);
     expect(replace).not.toHaveBeenCalled();

@@ -58,15 +58,7 @@ export async function findCustomers(params: FindCustomersParams): Promise<StaffC
   return apiFetch<StaffCustomerSummary[]>(`/api/staff/customers?${query.toString()}`);
 }
 
-export interface DuplicateCustomerCat {
-  catId: string;
-  name: string;
-  isDeceased: boolean;
-}
-
-/** CR MEDIUM 2 (first-pass gate fix round, item 13) — the fresh single-customer read (Q-H1,
- *  MergeReview's own source, ADR-FE-011) used to report only `catCount`; `cats` is new. `catCount`
- *  is kept, unchanged, for `CustomerDetail.tsx` — always equal to `cats.length`. */
+/** The fresh single-customer read (Q-H1, MergeReview's own source, ADR-FE-011). */
 export interface StaffCustomer {
   id: string;
   fullName: string;
@@ -74,8 +66,6 @@ export interface StaffCustomer {
   emailAddress: string | null;
   recordStatus: 'Complete' | 'Incomplete';
   registrationChannel: 'SelfService' | 'Reception';
-  catCount: number;
-  cats: DuplicateCustomerCat[];
   status: 'Active' | 'Merged' | 'Anonymised';
   mergedIntoCustomerId: string | null;
 }
@@ -97,7 +87,6 @@ export interface DuplicateCustomerMember {
   fullName: string;
   mobileNumber: string | null;
   emailAddress: string | null;
-  cats: DuplicateCustomerCat[];
   mobileMatchedOn: MobileMatchedOn;
   recordStatus: 'Complete' | 'Incomplete';
   registrationChannel: 'SelfService' | 'Reception';

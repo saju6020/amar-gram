@@ -7,13 +7,11 @@ namespace CatEcommerce.Api.Controllers;
 
 /// <summary>
 /// Gate fix 2026-09-26 (second pass, ARCHITECTURE/CODE_REVIEW LOW). Shared pageNumber/pageSize
-/// validation and clamping for every Cat/Vaccine list endpoint -- previously duplicated between
-/// <c>CatsController.ApplyPaging</c> and <c>VaccinesController.GetVaccines</c>, with
-/// <c>VaccinesController</c> calling <c>CatsController</c>'s static helper directly (a
-/// controller-to-controller dependency). Both controllers now call this instead.
+/// validation and clamping for the paged list endpoints, so no controller duplicates it or calls
+/// another controller's helper.
 ///
 /// <c>pageSize</c> is clamped to <see cref="PagingRules.MaxPageSize"/>, not rejected (owner
-/// decision, HO-CAT-001 §1 Amended, 2026-09-26) -- <see cref="PagingRules"/>'s own comment now
+/// decision, 2026-09-26) -- <see cref="PagingRules"/>'s own comment now
 /// documents both of its callers' policies. <c>pageNumber</c> above
 /// <see cref="PagingRules.MaxPageNumber"/> is rejected with 400
 /// (<see cref="BusinessViolationCodes.InvalidPageNumber"/>), the same policy

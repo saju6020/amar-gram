@@ -23,22 +23,22 @@ public sealed class ReportingFinancialEndpointTests(ReportingApiFactory factory)
     private async Task<HttpResponseMessage> CreditAsync(HttpClient client, Guid invoiceId, object body) =>
         await client.SendAsync(WithKey(HttpMethod.Post, $"/api/staff/billing/invoices/{invoiceId}/credit-notes", body, null));
 
-    // ── I-D1: AC-16 -- one invoice, three business lines, a draft, a credit note the next day ─────────────────
+    // ── I-D1: AC-16 -- one invoice (a fee, a product, three zero-rated items), a draft, a credit note the next day ─────
     [Fact]
-    public async Task I_D1_RevenueIsSplitByBusinessLine_TaxIsExcluded_ADraftIsIgnored_AndACreditNoteCountsOnItsOwnDay()
+    public async Task I_D1_RevenueIsSplitBySalesChannel_TaxIsExcluded_ADraftIsIgnored_AndACreditNoteCountsOnItsOwnDay()
     {
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
-        var stay = Guid.NewGuid();
+        var order = Guid.NewGuid();
 
-        var consult = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Service, sourceKind: ChargeSourceKind.Appointment, description: "Consultation");
-        var product = await RecordChargeAsync(context, customerId, 450m, 2m, itemKind: ItemKind.Product, sourceKind: ChargeSourceKind.Order, description: "Cat food 2kg");
-        var nights = new List<Guid>();
-        for (var night = 1; night <= 3; night++)
-            nights.Add(await RecordChargeAsync(context, customerId, 1000m, 1m, itemKind: ItemKind.BoardingNight, sourceKind: ChargeSourceKind.BoardingStay, sourceId: stay,
-                sourceLineRef: $"night-{night}", taxClassId: context.ZeroTaxClassId, groupKind: BillingGroupKind.BoardingStay, groupId: stay, description: $"Boarding night {night}"));
+        var fee = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Fee, sourceKind: ChargeSourceKind.Manual, description: "Service fee");
+        var product = await RecordChargeAsync(context, customerId, 450m, 2m, itemKind: ItemKind.Product, sourceKind: ChargeSourceKind.Order, description: "Mustard oil 1 L");
+        var items = new List<Guid>();
+        for (var item = 1; item <= 3; item++)
+            items.Add(await RecordChargeAsync(context, customerId, 1000m, 1m, itemKind: ItemKind.Product, sourceKind: ChargeSourceKind.Order, sourceId: order,
+                sourceLineRef: $"item-{item}", taxClassId: context.ZeroTaxClassId, description: $"Zero-rated item {item}"));
 
-        var (invoiceId, _) = await IssueFromChargesAsync(context.Admin, customerId, new[] { consult, product }.Concat(nights));
+        var (invoiceId, _) = await IssueFromChargesAsync(context.Admin, customerId, new[] { fee, product }.Concat(items));
 
         // A draft that must not count.
         var spare = await RecordChargeAsync(context, customerId, 999m, 1m, itemKind: ItemKind.Product, sourceKind: ChargeSourceKind.Order, description: "Never issued");
@@ -46,7 +46,7 @@ public sealed class ReportingFinancialEndpointTests(ReportingApiFactory factory)
 
         var firstDay = Today;
         var invoice = await GetInvoiceAsync(context.Admin, invoiceId);
-        var shopLine = invoice.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("description").GetString() == "Cat food 2kg");
+        var shopLine = invoice.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("description").GetString() == "Mustard oil 1 L");
 
         // The credit note comes the next day.
         Factory.Clock.Advance(TimeSpan.FromDays(1));
@@ -59,16 +59,13 @@ public sealed class ReportingFinancialEndpointTests(ReportingApiFactory factory)
         var report = await RunReportAsync(context.Admin, ReportCatalogue.RevenueByBusinessLineKey, context, "groupBy=Day", firstDay, secondDay);
         string Day(DateOnly d) => d.ToString("yyyy-MM-dd");
 
-        var clinic = Find(report, r => r.GetProperty("bucket").GetString() == Day(firstDay) && r.GetProperty("businessLine").GetString() == "Clinic");
-        var shop = Find(report, r => r.GetProperty("bucket").GetString() == Day(firstDay) && r.GetProperty("businessLine").GetString() == "Shop");
-        var boarding = Find(report, r => r.GetProperty("bucket").GetString() == Day(firstDay) && r.GetProperty("businessLine").GetString() == "Boarding");
-        var shopNextDay = Find(report, r => r.GetProperty("bucket").GetString() == Day(secondDay) && r.GetProperty("businessLine").GetString() == "Shop");
+        // These charges came through Billing's port with no real order behind them, so every line is the "Other" channel.
+        var shop = Find(report, r => r.GetProperty("bucket").GetString() == Day(firstDay) && r.GetProperty("channel").GetString() == "Other");
+        var shopNextDay = Find(report, r => r.GetProperty("bucket").GetString() == Day(secondDay) && r.GetProperty("channel").GetString() == "Other");
+        Assert.DoesNotContain(Rows(report), r => r.GetProperty("channel").GetString() is "Online" or "Counter");
 
-        Assert.Equal(800m, Money(clinic.GetProperty("netRevenue")));      // tax (120) is not revenue
-        Assert.Equal(120m, Money(clinic.GetProperty("tax")));
-        Assert.Equal(900m, Money(shop.GetProperty("netRevenue")));
-        Assert.Equal(3000m, Money(boarding.GetProperty("netRevenue")));
-        Assert.Equal(0m, Money(boarding.GetProperty("tax")));
+        Assert.Equal(4700m, Money(shop.GetProperty("netRevenue")));      // tax (120 + 135) is not revenue
+        Assert.Equal(255m, Money(shop.GetProperty("tax")));
 
         // The draft (999) is nowhere; the credit note reduces the day it was issued, and the first day never changes.
         Assert.DoesNotContain(Rows(report), r => Money(r.GetProperty("netRevenue")) == 999m);
@@ -80,12 +77,11 @@ public sealed class ReportingFinancialEndpointTests(ReportingApiFactory factory)
         Assert.Equal(JsonValueKind.Null, shop.GetProperty("margin").ValueKind);
         Assert.Equal("0.0", shop.GetProperty("coveragePercent").GetString());
         Assert.Contains(report.GetProperty("notes").EnumerateArray(), n => n.GetProperty("code").GetString() == "MarginCoverage");
-        Assert.Contains(report.GetProperty("notes").EnumerateArray(), n => n.GetProperty("code").GetString() == "ClinicVisitChargesNotDelivered");
 
-        // R12 splits the same revenue by group.
+        // R12 splits the same revenue by channel and group.
         var byService = await RunReportAsync(context.Admin, ReportCatalogue.RevenueByServiceKey, context, "groupBy=Month", firstDay, secondDay);
-        Assert.Contains(Rows(byService), r => r.GetProperty("businessLine").GetString() == "Clinic" && Money(r.GetProperty("netRevenue")) == 800m);
-        Assert.Contains(Rows(byService), r => r.GetProperty("businessLine").GetString() == "Boarding" && Money(r.GetProperty("netRevenue")) == 3000m);
+        Assert.NotEmpty(Rows(byService));
+        Assert.All(Rows(byService), r => Assert.Equal("Other", r.GetProperty("channel").GetString()));
     }
 
     // ── I-D5: AC-8 -- the payment reconciliation, the four launch methods only ────────────────────────────────
@@ -283,7 +279,7 @@ public sealed class ReportingFinancialEndpointTests(ReportingApiFactory factory)
     [Fact]
     public async Task TheFinancialReports_AreForTheAccountantAndTheAdministrator_NotForReceptionOrTheShopManager()
     {
-        foreach (var role in new[] { StaffRoles.Reception, StaffRoles.ShopManager, StaffRoles.Inventory, StaffRoles.Vet })
+        foreach (var role in new[] { StaffRoles.Reception, StaffRoles.ShopManager, StaffRoles.Inventory })
         {
             var (context, client) = await ContextWithRoleAsync(role);
             var response = await client.GetAsync($"/api/staff/reports/{ReportCatalogue.RevenueByBusinessLineKey}" + Query(context, Today, Today));

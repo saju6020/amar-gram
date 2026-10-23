@@ -3,7 +3,7 @@ using Platform.Infrastructure.Core.Events;
 
 namespace CatEcommerce.Domain.Events.Administration;
 
-/// <summary>HO-ADM-001 §11.5. Also a contract: HO-APT-001 flags appointments inside a new closure.</summary>
+/// <summary>HO-ADM-001 §11.5.</summary>
 public sealed class BranchClosureCreatedEvent : Event
 {
     public required Guid BranchId { get; init; }

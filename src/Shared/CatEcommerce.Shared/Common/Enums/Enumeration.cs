@@ -4,7 +4,7 @@ namespace CatEcommerce.Shared.Common.Enums;
 
 /// <summary>
 /// Base class for rich enumerations. Ships in NO Platform.Infrastructure.* package (verified,
-/// HO-CAT-001 §7 F5) — this solution owns it. See ADR-022.
+/// the foundation handover §7 F5) — this solution owns it. See ADR-022.
 /// </summary>
 public abstract class Enumeration(int value, string displayName) : IComparable
 {

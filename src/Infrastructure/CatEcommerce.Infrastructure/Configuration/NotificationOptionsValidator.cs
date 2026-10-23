@@ -12,7 +12,7 @@ namespace CatEcommerce.Infrastructure.Configuration;
 ///
 /// <c>WebBaseUrl</c> is no longer this area's own setting -- it moved to the shared
 /// <c>PublicSiteOptions.WebBaseUrl</c>, validated by <c>PublicSiteStartupGuardHostedService</c>
-/// (integrator instruction, 2026-09-27, post HO-CAT-001-gates merge).
+/// (integrator instruction, 2026-09-27).
 /// </summary>
 public sealed class NotificationOptionsValidator(IHostEnvironment environment) : IValidateOptions<NotificationOptions>
 {

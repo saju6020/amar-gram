@@ -16,7 +16,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchId = await CreateBranchAsync(client);
         var setHours = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/hours", new
@@ -28,13 +28,13 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         // §11.4: the staff member must be assigned to the branch (or the sole-branch rule must
         // apply) -- other tests' branches already make this database multi-branch, so assign
         // explicitly rather than relying on the sole-branch exception.
-        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchId }, primaryBranchId = branchId
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
-        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern", new
+        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{reception.StaffAccountId}/pattern", new
         {
             slots = new[] { new { dayOfWeek = "Monday", starts = "09:00", ends = "17:00" } }
         }, Json);
@@ -42,7 +42,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
 
         var monday = NextMonday();
         var availability = await client.GetAsync(
-            $"/api/admin/branches/{branchId}/availability?from={monday:yyyy-MM-dd}&to={monday:yyyy-MM-dd}&staffAccountId={vet.StaffAccountId}&restrictToOpeningHours=true");
+            $"/api/admin/branches/{branchId}/availability?from={monday:yyyy-MM-dd}&to={monday:yyyy-MM-dd}&staffAccountId={reception.StaffAccountId}&restrictToOpeningHours=true");
         Assert.Equal(HttpStatusCode.OK, availability.StatusCode);
         var intervals = (await availability.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray().ToList();
         Assert.Single(intervals);
@@ -57,16 +57,16 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchId = await CreateBranchAsync(client);
-        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchId }, primaryBranchId = branchId
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
-        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern", new
+        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{reception.StaffAccountId}/pattern", new
         {
             slots = new[]
             {
@@ -81,7 +81,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         Assert.Equal(HttpStatusCode.OK, get.StatusCode);
 
         var rosters = (await get.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray().ToList();
-        var roster = rosters.Single(r => r.GetProperty("staffAccountId").GetGuid() == vet.StaffAccountId);
+        var roster = rosters.Single(r => r.GetProperty("staffAccountId").GetGuid() == reception.StaffAccountId);
         var currentPattern = roster.GetProperty("currentPattern").EnumerateArray().ToList();
 
         Assert.Equal(3, currentPattern.Count);
@@ -105,13 +105,13 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
 
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = await SignInStaffAsync(nurse.Mobile, nurse.Password);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
 
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(10);
         var endsOn = startsOn.AddDays(2);
 
-        var request = await nurseClient.PostAsJsonAsync("/api/staff/leave-requests", new
+        var request = await receptionClient.PostAsJsonAsync("/api/staff/leave-requests", new
         {
             startsOn = startsOn.ToString("yyyy-MM-dd"), endsOn = endsOn.ToString("yyyy-MM-dd"), kind = "Annual"
         }, Json);
@@ -121,7 +121,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         var approve = await adminClient.PostAsJsonAsync($"/api/admin/leave-requests/{leaveRequestId}/approve", new { }, Json);
         Assert.Equal(HttpStatusCode.NoContent, approve.StatusCode);
 
-        var list = await adminClient.GetAsync($"/api/admin/leave-requests?staffAccountId={nurse.StaffAccountId}");
+        var list = await adminClient.GetAsync($"/api/admin/leave-requests?staffAccountId={reception.StaffAccountId}");
         Assert.Equal(HttpStatusCode.OK, list.StatusCode);
         var items = (await list.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("items").EnumerateArray().ToList();
         Assert.Contains(items, i => i.GetProperty("id").GetGuid() == leaveRequestId && i.GetProperty("status").GetString() == "Approved");
@@ -136,11 +136,11 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
 
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = await SignInStaffAsync(nurse.Mobile, nurse.Password);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
 
         var approvedStart = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(40);
-        var approvedRequest = await nurseClient.PostAsJsonAsync("/api/staff/leave-requests", new
+        var approvedRequest = await receptionClient.PostAsJsonAsync("/api/staff/leave-requests", new
         {
             startsOn = approvedStart.ToString("yyyy-MM-dd"), endsOn = approvedStart.ToString("yyyy-MM-dd"), kind = "Annual"
         }, Json);
@@ -149,14 +149,14 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         Assert.Equal(HttpStatusCode.NoContent, (await adminClient.PostAsJsonAsync($"/api/admin/leave-requests/{approvedId}/approve", new { }, Json)).StatusCode);
 
         var pendingStart = approvedStart.AddDays(10);
-        var pendingRequest = await nurseClient.PostAsJsonAsync("/api/staff/leave-requests", new
+        var pendingRequest = await receptionClient.PostAsJsonAsync("/api/staff/leave-requests", new
         {
             startsOn = pendingStart.ToString("yyyy-MM-dd"), endsOn = pendingStart.ToString("yyyy-MM-dd"), kind = "Annual"
         }, Json);
         Assert.Equal(HttpStatusCode.Created, pendingRequest.StatusCode);
         var pendingId = (await pendingRequest.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("leaveRequestId").GetGuid();
 
-        var response = await adminClient.GetAsync($"/api/admin/leave-requests?staffAccountId={nurse.StaffAccountId}&status=approved");
+        var response = await adminClient.GetAsync($"/api/admin/leave-requests?staffAccountId={reception.StaffAccountId}&status=approved");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var items = (await response.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("items").EnumerateArray().ToList();
 
@@ -174,13 +174,13 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
 
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = await SignInStaffAsync(nurse.Mobile, nurse.Password);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
 
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30);
         var endsOn = startsOn.AddDays(1);
 
-        var request = await nurseClient.PostAsJsonAsync("/api/staff/leave-requests", new
+        var request = await receptionClient.PostAsJsonAsync("/api/staff/leave-requests", new
         {
             startsOn = startsOn.ToString("yyyy-MM-dd"), endsOn = endsOn.ToString("yyyy-MM-dd"), kind = "Annual"
         }, Json);
@@ -202,12 +202,12 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
     }
 
     [Fact]
-    public async Task NurseApprovingLeave_Returns403()
+    public async Task ReceptionApprovingLeave_Returns403()
     {
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = await SignInStaffAsync(nurse.Mobile, nurse.Password);
-        var otherNurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var otherClient = await SignInStaffAsync(otherNurse.Mobile, otherNurse.Password);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
+        var otherReception = await SeedStaffAsync(StaffRoles.Reception);
+        using var otherClient = await SignInStaffAsync(otherReception.Mobile, otherReception.Password);
 
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(20);
         var request = await otherClient.PostAsJsonAsync("/api/staff/leave-requests", new
@@ -217,7 +217,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         Assert.Equal(HttpStatusCode.Created, request.StatusCode);
         var leaveRequestId = (await request.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("leaveRequestId").GetGuid();
 
-        var response = await nurseClient.PostAsJsonAsync($"/api/admin/leave-requests/{leaveRequestId}/approve", new { }, Json);
+        var response = await receptionClient.PostAsJsonAsync($"/api/admin/leave-requests/{leaveRequestId}/approve", new { }, Json);
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
@@ -229,8 +229,8 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
     [Fact]
     public async Task TwoOverlappingLeaveRequests_SentConcurrently_OnlyOneSucceeds()
     {
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var client = await SignInStaffAsync(nurse.Mobile, nurse.Password);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
+        using var client = await SignInStaffAsync(reception.Mobile, reception.Password);
 
         var startsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(60);
         var endsOn = startsOn.AddDays(2);
@@ -307,13 +307,13 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
         var branchId = await CreateBranchAsync(client);
-        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new { branchIds = new[] { branchId }, primaryBranchId = branchId }, Json);
+        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new { branchIds = new[] { branchId }, primaryBranchId = branchId }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
         // Pattern A: current, set immediately.
-        var setCurrent = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern", new
+        var setCurrent = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{reception.StaffAccountId}/pattern", new
         {
             slots = new[] { new { dayOfWeek = "Monday", starts = "09:00", ends = "17:00" } }
         }, Json);
@@ -325,14 +325,14 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         var effectiveFrom = today.AddDays(1);
 
         // Pattern B: scheduled as next, effective tomorrow.
-        var scheduleNext = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern", new
+        var scheduleNext = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{reception.StaffAccountId}/pattern", new
         {
             slots = new[] { new { dayOfWeek = "Tuesday", starts = "10:00", ends = "18:00" } },
             effectiveFrom
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, scheduleNext.StatusCode);
 
-        var beforeAdvance = await GetRosterAsync(client, branchId, vet.StaffAccountId);
+        var beforeAdvance = await GetRosterAsync(client, branchId, reception.StaffAccountId);
         Assert.Equal(effectiveFrom, DateOnly.Parse(beforeAdvance.GetProperty("nextPatternEffectiveFrom").GetString()!));
         Assert.Single(beforeAdvance.GetProperty("currentPattern").EnumerateArray());
 
@@ -351,20 +351,20 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         afterAdvanceClient.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(reSignIn, "pc_csrf"));
 
         // (1) A bare read does not promote -- the stored split is unchanged.
-        var afterAdvanceNoWrite = await GetRosterAsync(afterAdvanceClient, branchId, vet.StaffAccountId);
+        var afterAdvanceNoWrite = await GetRosterAsync(afterAdvanceClient, branchId, reception.StaffAccountId);
         Assert.Equal(effectiveFrom, DateOnly.Parse(afterAdvanceNoWrite.GetProperty("nextPatternEffectiveFrom").GetString()!));
         Assert.Equal("Monday", afterAdvanceNoWrite.GetProperty("currentPattern")[0].GetProperty("dayOfWeek").GetString());
 
         // (2) The next roster-loading command (scheduling pattern C) promotes B to current first.
         var newEffectiveFrom = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime).AddDays(10);
-        var scheduleThird = await afterAdvanceClient.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern", new
+        var scheduleThird = await afterAdvanceClient.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{reception.StaffAccountId}/pattern", new
         {
             slots = new[] { new { dayOfWeek = "Wednesday", starts = "08:00", ends = "12:00" } },
             effectiveFrom = newEffectiveFrom
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, scheduleThird.StatusCode);
 
-        var afterPromotingWrite = await GetRosterAsync(afterAdvanceClient, branchId, vet.StaffAccountId);
+        var afterPromotingWrite = await GetRosterAsync(afterAdvanceClient, branchId, reception.StaffAccountId);
         var currentPattern = afterPromotingWrite.GetProperty("currentPattern").EnumerateArray().ToList();
         Assert.Single(currentPattern);
         Assert.Equal("Tuesday", currentPattern[0].GetProperty("dayOfWeek").GetString());
@@ -383,7 +383,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchId = await CreateBranchAsync(client);
         var setHours = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/hours", new
@@ -392,13 +392,13 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, setHours.StatusCode);
 
-        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchId }, primaryBranchId = branchId
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
-        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern", new
+        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{reception.StaffAccountId}/pattern", new
         {
             slots = new[] { new { dayOfWeek = "Monday", starts = "09:00", ends = "17:00" } }
         }, Json);
@@ -407,12 +407,12 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         var monday = NextMonday();
 
         var before = await client.GetAsync(
-            $"/api/admin/branches/{branchId}/availability?from={monday:yyyy-MM-dd}&to={monday:yyyy-MM-dd}&staffAccountId={vet.StaffAccountId}&restrictToOpeningHours=true");
+            $"/api/admin/branches/{branchId}/availability?from={monday:yyyy-MM-dd}&to={monday:yyyy-MM-dd}&staffAccountId={reception.StaffAccountId}&restrictToOpeningHours=true");
         Assert.Equal(HttpStatusCode.OK, before.StatusCode);
         Assert.Single((await before.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray().ToList());
 
-        using var vetClient = await SignInStaffAsync(vet.Mobile, vet.Password);
-        var requestLeave = await vetClient.PostAsJsonAsync("/api/staff/leave-requests", new
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
+        var requestLeave = await receptionClient.PostAsJsonAsync("/api/staff/leave-requests", new
         {
             startsOn = monday.ToString("yyyy-MM-dd"), endsOn = monday.ToString("yyyy-MM-dd"), kind = "Annual"
         }, Json);
@@ -423,7 +423,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         Assert.Equal(HttpStatusCode.NoContent, approve.StatusCode);
 
         var after = await client.GetAsync(
-            $"/api/admin/branches/{branchId}/availability?from={monday:yyyy-MM-dd}&to={monday:yyyy-MM-dd}&staffAccountId={vet.StaffAccountId}&restrictToOpeningHours=true");
+            $"/api/admin/branches/{branchId}/availability?from={monday:yyyy-MM-dd}&to={monday:yyyy-MM-dd}&staffAccountId={reception.StaffAccountId}&restrictToOpeningHours=true");
         Assert.Equal(HttpStatusCode.OK, after.StatusCode);
         Assert.Empty((await after.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray().ToList());
     }
@@ -435,7 +435,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchId = await CreateBranchAsync(client);
         var setHours = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/hours", new
@@ -444,7 +444,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, setHours.StatusCode);
 
-        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await client.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchId }, primaryBranchId = branchId
         }, Json);
@@ -452,7 +452,7 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
 
         // The only pattern slot is Monday -- Tuesday has none of its own, so any Tuesday interval
         // must come from the exception.
-        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern", new
+        var setPattern = await client.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{reception.StaffAccountId}/pattern", new
         {
             slots = new[] { new { dayOfWeek = "Monday", starts = "09:00", ends = "17:00" } }
         }, Json);
@@ -461,18 +461,18 @@ public sealed class AdminRosterLeaveEndpointTests(AdministrationApiFactory facto
         var tuesday = NextTuesday();
 
         var before = await client.GetAsync(
-            $"/api/admin/branches/{branchId}/availability?from={tuesday:yyyy-MM-dd}&to={tuesday:yyyy-MM-dd}&staffAccountId={vet.StaffAccountId}&restrictToOpeningHours=true");
+            $"/api/admin/branches/{branchId}/availability?from={tuesday:yyyy-MM-dd}&to={tuesday:yyyy-MM-dd}&staffAccountId={reception.StaffAccountId}&restrictToOpeningHours=true");
         Assert.Equal(HttpStatusCode.OK, before.StatusCode);
         Assert.Empty((await before.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray().ToList());
 
-        var addException = await client.PostAsJsonAsync($"/api/admin/branches/{branchId}/roster-exceptions?staffAccountId={vet.StaffAccountId}", new
+        var addException = await client.PostAsJsonAsync($"/api/admin/branches/{branchId}/roster-exceptions?staffAccountId={reception.StaffAccountId}", new
         {
             kind = "ExtraShift", date = tuesday, starts = "10:00", ends = "12:00", reason = "Cover"
         }, Json);
         Assert.Equal(HttpStatusCode.Created, addException.StatusCode);
 
         var after = await client.GetAsync(
-            $"/api/admin/branches/{branchId}/availability?from={tuesday:yyyy-MM-dd}&to={tuesday:yyyy-MM-dd}&staffAccountId={vet.StaffAccountId}&restrictToOpeningHours=true");
+            $"/api/admin/branches/{branchId}/availability?from={tuesday:yyyy-MM-dd}&to={tuesday:yyyy-MM-dd}&staffAccountId={reception.StaffAccountId}&restrictToOpeningHours=true");
         Assert.Equal(HttpStatusCode.OK, after.StatusCode);
         Assert.Single((await after.Content.ReadFromJsonAsync<JsonElement>(Json)).EnumerateArray().ToList());
     }

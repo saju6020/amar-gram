@@ -250,7 +250,7 @@ public sealed class PaymentAggregateTests
     [Fact]
     public void U_D9_AnEarmarkedPayment_AllocatesOnlyToAMatchingInvoice_UntilTheEarmarkIsReleased()
     {
-        var earmark = new PaymentEarmark(EarmarkKind.BoardingStay, Guid.NewGuid(), "Deposit - boarding 12-19 Oct");
+        var earmark = new PaymentEarmark(EarmarkKind.Order, Guid.NewGuid(), "Deposit - order ORD-1042");
         var payment = BillingTestData.Payment(BillingTestData.PaymentDto(500m, earmark: earmark));
         var other = Guid.NewGuid();
 
@@ -260,7 +260,7 @@ public sealed class PaymentAggregateTests
         payment.Allocate(Allocate(Guid.NewGuid(), 100m, matches: true));
 
         Assert.Equal(BusinessViolationCodes.ReasonRequired, ErrorOf(() => payment.ReleaseEarmark(" ", DateTimeOffset.UtcNow, BillingTestData.Actor())));
-        payment.ReleaseEarmark("Stay cancelled", DateTimeOffset.UtcNow, BillingTestData.Actor());
+        payment.ReleaseEarmark("Order cancelled", DateTimeOffset.UtcNow, BillingTestData.Actor());
 
         Assert.True(payment.IsFreeCredit);
         payment.Allocate(Allocate(other, 100m, matches: false));
@@ -367,12 +367,12 @@ public sealed class PaymentAggregateTests
     [Fact]
     public void ARecordedPayment_RaisesRecordedAndAccepted_WithTheEarmarkOnTheAcceptedEvent()
     {
-        var stay = Guid.NewGuid();
-        var payment = BillingTestData.Payment(BillingTestData.PaymentDto(500m, earmark: new PaymentEarmark(EarmarkKind.BoardingStay, stay, "Deposit")));
+        var order = Guid.NewGuid();
+        var payment = BillingTestData.Payment(BillingTestData.PaymentDto(500m, earmark: new PaymentEarmark(EarmarkKind.Order, order, "Deposit")));
 
         var accepted = Assert.Single(payment.Events.OfType<PaymentAcceptedEvent>());
-        Assert.Equal(EarmarkKind.BoardingStay, accepted.EarmarkKind);
-        Assert.Equal(stay, accepted.EarmarkId);
+        Assert.Equal(EarmarkKind.Order, accepted.EarmarkKind);
+        Assert.Equal(order, accepted.EarmarkId);
         Assert.Equal(500m, accepted.Amount);
     }
 }

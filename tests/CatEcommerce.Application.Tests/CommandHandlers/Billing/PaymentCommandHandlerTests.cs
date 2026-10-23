@@ -56,7 +56,7 @@ public sealed class PaymentCommandHandlerTests
         var actor = new BillingActor(TestUserContext.Create(), Guid.NewGuid());
         invoice.CreateDraft(new DraftInvoiceDto(
             _branchId, customerId ?? _customerId, "BDT",
-            [new DraftInvoiceLineInput(Guid.NewGuid(), null, BusinessLine.Shop, ItemKind.Product, source ?? ChargeSourceKind.Order, sourceId ?? Guid.NewGuid(), null, null, null, "Item", 1m, total, 0m, taxClass)],
+            [new DraftInvoiceLineInput(Guid.NewGuid(), null, BusinessLine.Shop, ItemKind.Product, source ?? ChargeSourceKind.Order, sourceId ?? Guid.NewGuid(), "Item", 1m, total, 0m, taxClass)],
             null, null, null, _time.GetUtcNow(), actor));
         invoice.Issue(new InvoiceIssueDto(
             number, "2026-27", 1, new Dictionary<Guid, TaxRateInfo> { [taxClass] = new(taxClass, "ZERO", 0m) },
@@ -84,19 +84,12 @@ public sealed class PaymentCommandHandlerTests
     private sealed class StubLinks : INotificationLinkBuilder
     {
         public string PasswordResetLink(string token) => "";
-        public string CatCareLink(Guid catId, string category) => "";
         public string UnsubscribeLink(string token) => "";
         public string OneClickUnsubscribeUrl(string token) => "";
-        public string AppointmentLink(Guid appointmentId) => "";
-        public string VisitSummaryLink(Guid visitId) => "";
-        public string BookingLink() => "";
         public string ProductLink(string slug, Guid skuId) => "";
         public string InvoiceLink(Guid invoiceId) => $"https://portal.example.test/portal/billing/invoices/{invoiceId}";
         public string ReceiptLink(Guid paymentId) => $"https://portal.example.test/portal/billing/payments/{paymentId}";
         public string OrderLink(Guid orderId) => "";
-        public string PrescriptionLink(Guid prescriptionId) => "";
-        public string RepeatRequestLink(Guid prescriptionId) => "";
-        public string DietAuthorisationsLink() => "";
     }
 
     // ── C10 ─────────────────────────────────────────────────────────────────────────────────────────
@@ -137,9 +130,9 @@ public sealed class PaymentCommandHandlerTests
     [Fact]
     public async Task C10_ADepositsMessage_SaysTheEarmarkLabel()
     {
-        await Handler().HandleAsync(Record(500m, earmark: new PaymentEarmarkInput("BoardingStay", Guid.NewGuid(), "Deposit — boarding 12–19 Oct")));
+        await Handler().HandleAsync(Record(500m, earmark: new PaymentEarmarkInput("Order", Guid.NewGuid(), "Deposit — order SO-1042")));
 
-        Assert.Equal("Deposit — boarding 12–19 Oct", Assert.Single(_outbox.Requests).Variables["purposeText"]);
+        Assert.Equal("Deposit — order SO-1042", Assert.Single(_outbox.Requests).Variables["purposeText"]);
     }
 
     [Fact]
@@ -239,19 +232,19 @@ public sealed class PaymentCommandHandlerTests
     }
 
     [Fact]
-    public async Task C10_ADepositAllocatesOnlyToItsOwnStaysInvoice()
+    public async Task C10_ADepositAllocatesOnlyToItsOwnOrdersInvoice()
     {
-        var stay = Guid.NewGuid();
-        var stayInvoice = SeedIssuedInvoice(source: ChargeSourceKind.BoardingStay, sourceId: stay);
+        var order = Guid.NewGuid();
+        var orderInvoice = SeedIssuedInvoice(source: ChargeSourceKind.Order, sourceId: order);
         var otherInvoice = SeedIssuedInvoice();
-        var earmark = new PaymentEarmarkInput("BoardingStay", stay, "Deposit");
+        var earmark = new PaymentEarmarkInput("Order", order, "Deposit");
 
         var refused = await Handler().HandleAsync(Record(300m, earmark: earmark, allocations: [new PaymentAllocationInput(otherInvoice.Id, 100m)]));
         Assert.Equal(BusinessViolationCodes.EarmarkMismatch, CodeOf(refused));
 
-        var allowed = await Handler().HandleAsync(Record(300m, earmark: earmark, allocations: [new PaymentAllocationInput(stayInvoice.Id, 100m)]));
+        var allowed = await Handler().HandleAsync(Record(300m, earmark: earmark, allocations: [new PaymentAllocationInput(orderInvoice.Id, 100m)]));
         Assert.True(allowed.IsSuccess);
-        Assert.Equal(900m, stayInvoice.Outstanding);
+        Assert.Equal(900m, orderInvoice.Outstanding);
     }
 
     // ── C11 ─────────────────────────────────────────────────────────────────────────────────────────

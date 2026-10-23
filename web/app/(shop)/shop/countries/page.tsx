@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { EmptyCatIllustration, EmptyState } from '@/components/common/EmptyState';
+import { EmptyWarmIllustration, EmptyState } from '@/components/common/EmptyState';
 import { ShopLoadError } from '@/components/shop/ShopLoadError';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
 import { OriginGrid } from '@/components/shop/OriginGrid';
@@ -32,7 +32,7 @@ export default async function CountriesPage({ searchParams }: { searchParams: Se
       </p>
       {origins.value.length === 0 ? (
         <EmptyState
-          icon={<EmptyCatIllustration />}
+          icon={<EmptyWarmIllustration />}
           title="No countries to show yet"
           description="We will list where our food comes from as soon as products are published."
         />

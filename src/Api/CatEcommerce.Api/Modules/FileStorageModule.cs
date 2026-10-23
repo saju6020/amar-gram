@@ -41,7 +41,7 @@ public static class FileStorageModule
         services.AddOptions<FileStorageOptions>()
             .Bind(configuration.GetSection(FileStorageOptions.SectionName))
             // ADR-370, SECURITY gate (LOW): only public catalogue photos may ever be served straight from the bucket;
-            // listing a clinical or personal purpose here is refused at startup, not silently honoured.
+            // listing a personal purpose here is refused at startup, not silently honoured.
             .Validate(o => GcsDirectFileUrlSigner.ParsePurposes(o.DirectServePurposes).All(GcsDirectFileUrlSigner.MayBeServedDirectly),
                 "FileStorage:DirectServePurposes may list only ProductImage (or none).")
             .ValidateOnStart();

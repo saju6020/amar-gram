@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using CatEcommerce.Domain.Aggregates.Account;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Domain.ValueObjects;
@@ -17,7 +16,7 @@ using Xunit;
 namespace CatEcommerce.IntegrationTests;
 
 /// <summary>HO-ADM-001 §16 -- §16.1 rules apply unchanged (fresh ids per test, never assert
-/// emptiness, never TRUNCATE). Helpers mint fresh staff, customers and cats per test.</summary>
+/// emptiness, never TRUNCATE). Helpers mint fresh staff and customers per test.</summary>
 public abstract class AdministrationIntegrationTestBase(AdministrationApiFactory factory)
     : CatEcommerceIntegrationTestBase<AdministrationApiFactory>(factory)
 {
@@ -96,22 +95,5 @@ public abstract class AdministrationIntegrationTestBase(AdministrationApiFactory
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
         return (client, customerId, mobile);
-    }
-
-    /// <summary>Seeds a cat directly through the repository, owned by <paramref name="ownerId"/>.</summary>
-    protected async Task<Guid> SeedCatAsync(Guid ownerId, string name = "Test Cat")
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var cat = new CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, name, "Cat", CatSex.Female, DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2),
-            DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby",
-            DateOnly.FromDateTime(DateTime.UtcNow),
-            new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
-
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
     }
 }

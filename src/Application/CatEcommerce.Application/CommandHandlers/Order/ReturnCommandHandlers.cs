@@ -204,7 +204,7 @@ public sealed class RejectReturnCommandHandler(
 
 /// <summary>
 /// C23 (US-ORD-14 AC1, ADR-208) -- the approved goods arrived. Per line, Inventory's <c>ReceiveReturnAsync</c> puts each unit into the branch's quarantine location
-/// (never sellable) <b>against the batch it was sold from</b> -- Ordering replays the line's allocations, it chooses nothing -- stamped with the customer and the line's cat.
+/// (never sellable) <b>against the batch it was sold from</b> -- Ordering replays the line's allocations, it chooses nothing -- stamped with the customer.
 /// The order (tracked) counts the units as returned (<c>Delivered -> Returned</c> when every line is back) and the return becomes <c>Received</c>. One save.
 /// </summary>
 public sealed class ReceiveReturnCommandHandler(
@@ -234,7 +234,7 @@ public sealed class ReceiveReturnCommandHandler(
                 {
                     var result = await stock.ReceiveReturnAsync(
                         new StockReturn(order.BranchId, receipt.SkuId, receipt.BatchId, receipt.Quantity, request.Kind == ReturnKind.DeliveryFailure ? "Delivery failed" : "Customer return"),
-                        new StockReference(StockReferenceKind.CustomerReturn, request.Id, orderLine.Id, order.OrderNumber), new StockParty(order.CustomerId, orderLine.CatId), default);
+                        new StockReference(StockReferenceKind.CustomerReturn, request.Id, orderLine.Id, order.OrderNumber), new StockParty(order.CustomerId), default);
 
                     if (!result.IsSuccess)
                         return Violation(result.ViolationCode ?? BusinessViolationCodes.ReturnReceiptExceedsApproved, result.PropertyName ?? "Lines", result.Message ?? "The goods could not be received into quarantine.", "Return");

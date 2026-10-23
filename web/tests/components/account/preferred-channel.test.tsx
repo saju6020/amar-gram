@@ -16,7 +16,7 @@ vi.mock('next/navigation', () => ({
 const cells: NotificationPreferences['cells'] = [
   {
     channel: 'SMS',
-    category: 'Appointments',
+    category: 'Orders',
     isGranted: true,
     isEditable: false,
     isAlwaysOn: true,
@@ -73,7 +73,7 @@ describe('PreferredChannelField — HO-NTF-002 §11.2', () => {
     expect(screen.getByRole('radio', { name: 'Text message (SMS)' })).toBeChecked();
     expect(
       screen.getByText(
-        'Password resets, reminders and updates are sent this way, and a copy always appears in your inbox.',
+        'Password resets, order updates and account messages are sent this way, and a copy always appears in your inbox.',
       ),
     ).toBeInTheDocument();
 

@@ -15,30 +15,15 @@ namespace CatEcommerce.Domain.Tests.Common;
 /// </summary>
 public sealed class FilePurposeAccessTests
 {
-    public static IEnumerable<object[]> EveryCanonicalPurposeExceptCatProfilePhoto()
+    public static IEnumerable<object[]> EveryCanonicalPurpose()
     {
-        yield return [FilePurpose.LabResult];
-        yield return [FilePurpose.ClinicalPhoto];
-        yield return [FilePurpose.ConsentForm];
-        yield return [FilePurpose.BoardingMedia];
-        yield return [FilePurpose.BoardingBelongings];
+        yield return [FilePurpose.ProductImage];
         yield return [FilePurpose.ReportExport];
     }
 
     public static IEnumerable<object[]> PurposesWithNoRegisteredOwner()
     {
         yield return [FilePurpose.ReportExport];
-    }
-
-    [Fact]
-    public void TryGetRequiredStaffAction_maps_the_clinical_purposes_to_their_EMR_actions()
-    {
-        Assert.True(FilePurposeAccess.TryGetRequiredStaffAction(FilePurpose.LabResult, out var lab));
-        Assert.Equal(Actions.Visits.WriteNote, lab);
-        Assert.True(FilePurposeAccess.TryGetRequiredStaffAction(FilePurpose.ClinicalPhoto, out var photo));
-        Assert.Equal(Actions.Visits.WriteNote, photo);
-        Assert.True(FilePurposeAccess.TryGetRequiredStaffAction(FilePurpose.ConsentForm, out var consent));
-        Assert.Equal(Actions.Consents.Record, consent);
     }
 
     [Theory]
@@ -52,24 +37,6 @@ public sealed class FilePurposeAccessTests
     }
 
     [Fact]
-    public void TryGetRequiredStaffAction_maps_the_boarding_purposes_to_their_Boarding_actions()
-    {
-        Assert.True(FilePurposeAccess.TryGetRequiredStaffAction(FilePurpose.BoardingMedia, out var media));
-        Assert.Equal(Actions.Boarding.RecordCare, media);
-        Assert.True(FilePurposeAccess.TryGetRequiredStaffAction(FilePurpose.BoardingBelongings, out var belongings));
-        Assert.Equal(Actions.Boarding.CheckInOut, belongings);
-    }
-
-    [Fact]
-    public void TryGetRequiredStaffAction_maps_CatProfilePhoto_to_CatsEditProfile()
-    {
-        var found = FilePurposeAccess.TryGetRequiredStaffAction(FilePurpose.CatProfilePhoto, out var action);
-
-        Assert.True(found);
-        Assert.Equal(Actions.Cats.EditProfile, action);
-    }
-
-    [Fact]
     public void TryGetRequiredStaffAction_maps_ProductImage_to_ShopProductsManage()
     {
         var found = FilePurposeAccess.TryGetRequiredStaffAction(FilePurpose.ProductImage, out var action);
@@ -78,22 +45,10 @@ public sealed class FilePurposeAccessTests
         Assert.Equal(Actions.Shop.ProductsManage, action);
     }
 
-    [Fact]
-    public void IsAllowedForCustomer_refuses_ProductImage()
-    {
-        Assert.False(FilePurposeAccess.IsAllowedForCustomer(FilePurpose.ProductImage));
-    }
-
     [Theory]
-    [MemberData(nameof(EveryCanonicalPurposeExceptCatProfilePhoto))]
-    public void IsAllowedForCustomer_refuses_every_purpose_except_CatProfilePhoto(FilePurpose purpose)
+    [MemberData(nameof(EveryCanonicalPurpose))]
+    public void IsAllowedForCustomer_refuses_every_purpose(FilePurpose purpose)
     {
         Assert.False(FilePurposeAccess.IsAllowedForCustomer(purpose));
-    }
-
-    [Fact]
-    public void IsAllowedForCustomer_allows_CatProfilePhoto()
-    {
-        Assert.True(FilePurposeAccess.IsAllowedForCustomer(FilePurpose.CatProfilePhoto));
     }
 }

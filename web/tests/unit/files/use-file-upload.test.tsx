@@ -63,7 +63,7 @@ describe('useFileUpload — HO-FIL-002 §3/§8, ADR-FE-149/150/151', () => {
     );
 
     act(() => {
-      result.current.addFiles([makeFile('flaky-scan-once-vaccine-card.png', 'image/png', 2048)]);
+      result.current.addFiles([makeFile('flaky-scan-once-product-photo.png', 'image/png', 2048)]);
     });
 
     await waitFor(() => expect(result.current.queue[0]?.status).toBe('error'));

@@ -101,7 +101,7 @@ public sealed class FakeStockPositionReader : IStockPositionReader
     public Task<IReadOnlyList<ReservationRemaining>> GetRemainingReservationsAsync(StockReferenceKind referenceKind, Guid referenceId, Guid? referenceLineId, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<ReservationRemaining>>([]);
 
-    public Task<bool> WasConsumedByPartyAsync(Guid batchId, Guid? customerId, Guid? catId, CancellationToken ct) => Task.FromResult(false);
+    public Task<bool> WasConsumedByPartyAsync(Guid batchId, Guid? customerId, CancellationToken ct) => Task.FromResult(false);
 
     public Task<IReadOnlyList<PurchaseOrderLineReceipt>> GetPurchaseOrderReceiptsAsync(Guid purchaseOrderId, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<PurchaseOrderLineReceipt>>(PurchaseOrderReceipts.ToList());

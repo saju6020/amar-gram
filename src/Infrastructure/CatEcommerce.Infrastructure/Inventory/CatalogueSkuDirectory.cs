@@ -15,7 +15,7 @@ namespace CatEcommerce.Infrastructure.Inventory;
 /// The field mapping (the "default if HO-SHP-001 lacks it" column of §8.2, because HO-SHP-001 publishes no item class, unit or
 /// fractional flag):
 /// <list type="bullet">
-/// <item><c>StockClass</c> = <c>Food</c> when the product's category is Cat Food, else <c>General</c> (clinical items are OQ-1).</item>
+/// <item><c>StockClass</c> = <c>Food</c> when the product is food, else <c>General</c>.</item>
 /// <item><c>ExpiryRequired</c> = the product's own <c>IsExpiryTracked</c> flag (D-2: a food product is always tracked).</item>
 /// <item><c>StockUnit</c> = <c>each</c>, <c>AllowsFractionalQuantity</c> = false (OQ-19).</item>
 /// <item><c>IsActive</c> = the SKU is <c>Active</c> and the product is a <c>Standard</c> one: a bundle's own SKU holds no stock -- its

@@ -12,7 +12,6 @@ public sealed class GetCatalogueQuery : Query<CatalogueResult>
     public string? Subcategory { get; init; }
     public IReadOnlyList<string> Brand { get; init; } = [];
     public IReadOnlyList<string> Origin { get; init; } = [];
-    public IReadOnlyList<string> LifeStage { get; init; } = [];
     public IReadOnlyList<string> Protein { get; init; } = [];
     public decimal? MinPrice { get; init; }
     public decimal? MaxPrice { get; init; }

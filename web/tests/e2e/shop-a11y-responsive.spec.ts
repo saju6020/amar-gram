@@ -5,8 +5,8 @@ import { test, expect, signInAsCustomer, signInAsStaff } from './fixtures';
 import { isMobile } from './shop-helpers';
 
 /**
- * HO-SHP-002 §16 E-X1 (axe on every §8.1 route, including the open filter sheet, the prescription
- * gate, the review form and the editor with errors) and E-X2 (every storefront route at
+ * HO-SHP-002 §16 E-X1 (axe on every §8.1 route, including the open filter sheet, the stock-alert
+ * confirmation, the review form and the editor with errors) and E-X2 (every storefront route at
  * 360 / 768 / 1024 / 1440 px without horizontal scroll), run against MSW.
  */
 
@@ -24,7 +24,7 @@ const ROUTES: RouteCase[] = [
   { path: '/shop/products', audience: 'none', heading: /all products/i },
   { path: '/shop/products?q=zzqqxx', audience: 'none', heading: /results for/i },
   {
-    path: '/shop/products?brand=Whiskas&availability=inStock&sort=price_asc',
+    path: '/shop/products?brand=Green%20Valley&availability=inStock&sort=price_asc',
     audience: 'none',
     heading: /all products/i,
   },
@@ -33,18 +33,15 @@ const ROUTES: RouteCase[] = [
   {
     path: `/shop/products/${p.multiVariantSlug}`,
     audience: 'none',
-    heading: /royal canin kitten/i,
+    heading: /organic rolled oats/i,
   },
   {
-    path: `/shop/products/${p.multiVariantSlug}?sku=${p.skuKitten4kg}`,
+    path: `/shop/products/${p.multiVariantSlug}?sku=${p.skuOats4kg}`,
     audience: 'none',
-    heading: /royal canin kitten/i,
+    heading: /organic rolled oats/i,
   },
-  { path: `/shop/products/${p.kitSlug}`, audience: 'none', heading: /kitten starter kit/i },
-  { path: `/shop/products/${p.rxNoAuthSlug}`, audience: 'none', heading: /urinary care/i },
-  { path: `/shop/products/${p.rxNoAuthSlug}`, audience: 'customer', heading: /urinary care/i },
-  { path: `/shop/products/${p.rxEligibleSlug}`, audience: 'customer', heading: /renal care/i },
-  { path: `/shop/products/${p.thaiKittenSlug}?lang=bn`, audience: 'none', heading: /হুইস্কাস/ },
+  { path: `/shop/products/${p.kitSlug}`, audience: 'none', heading: /breakfast starter kit/i },
+  { path: `/shop/products/${p.thaiRiceSlug}?lang=bn`, audience: 'none', heading: /থাই জেসমিন চাল/ },
   { path: '/portal/wishlist', audience: 'customer', heading: /your wishlist/i },
   { path: '/portal/reviews', audience: 'customer', heading: /my reviews/i },
   {
@@ -52,23 +49,18 @@ const ROUTES: RouteCase[] = [
     audience: 'customer',
     heading: /write a review/i,
   },
-  {
-    path: `/portal/cats/${p.catAllergy}/food`,
-    audience: 'customer',
-    heading: /food suggestions for whiskers/i,
-  },
   { path: '/staff/shop/products', audience: 'staff', heading: /^products$/i },
   { path: '/staff/shop/products/new', audience: 'staff', heading: /new product/i },
-  { path: EDITOR, audience: 'staff', heading: /royal canin kitten/i },
-  { path: `${EDITOR}/food`, audience: 'staff', heading: /royal canin kitten/i },
-  { path: `${EDITOR}/variants`, audience: 'staff', heading: /royal canin kitten/i },
-  { path: `${EDITOR}/images`, audience: 'staff', heading: /royal canin kitten/i },
-  { path: `${EDITOR}/related`, audience: 'staff', heading: /royal canin kitten/i },
-  { path: `${EDITOR}/translations`, audience: 'staff', heading: /royal canin kitten/i },
+  { path: EDITOR, audience: 'staff', heading: /organic rolled oats/i },
+  { path: `${EDITOR}/food`, audience: 'staff', heading: /organic rolled oats/i },
+  { path: `${EDITOR}/variants`, audience: 'staff', heading: /organic rolled oats/i },
+  { path: `${EDITOR}/images`, audience: 'staff', heading: /organic rolled oats/i },
+  { path: `${EDITOR}/related`, audience: 'staff', heading: /organic rolled oats/i },
+  { path: `${EDITOR}/translations`, audience: 'staff', heading: /organic rolled oats/i },
   {
     path: `/staff/shop/products/${p.kitProductId}/bundle`,
     audience: 'staff',
-    heading: /kitten starter kit/i,
+    heading: /breakfast starter kit/i,
   },
   { path: '/staff/shop/origins', audience: 'staff', heading: /sourcing origins/i },
   { path: '/staff/shop/reviews', audience: 'staff', heading: /review moderation/i },
@@ -103,7 +95,7 @@ test.describe('E-X1 — axe on every route (zero serious/critical)', () => {
   }
 
   test('open filter sheet (mobile) / filter panel with active chips', async ({ page }) => {
-    await page.goto('/shop/products?brand=Whiskas&origin=TH');
+    await page.goto('/shop/products?brand=Green%20Valley&origin=TH');
     // The chips are checked before the modal sheet opens (an open dialog hides the page behind it).
     await expect(page.getByRole('list', { name: 'Active filters' })).toBeVisible();
     if (isMobile(page)) {
@@ -113,14 +105,9 @@ test.describe('E-X1 — axe on every route (zero serious/critical)', () => {
     expect(await serious(page)).toEqual([]);
   });
 
-  test('prescription gate with eligible cats and the stock-alert confirmation', async ({
-    page,
-  }) => {
+  test('the stock-alert confirmation', async ({ page }) => {
     test.setTimeout(90_000);
     await signInAsCustomer(page);
-    await page.goto(`/shop/products/${p.rxEligibleSlug}`);
-    await expect(page.getByText('Authorised for Whiskers until 12 Dec 2026')).toBeVisible();
-    expect(await serious(page)).toEqual([]);
     await page.goto(`/shop/products/${p.noConsentSlug}`);
     await page.getByRole('button', { name: /Tell me when it.s back/ }).click();
     await expect(page.getByText(/haven.t agreed to receive offers/)).toBeVisible();

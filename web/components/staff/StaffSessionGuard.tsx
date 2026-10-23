@@ -12,7 +12,7 @@ import { useStaffLockState } from './IdleLockContext';
  * `CustomerSessionGuard`: pending → loading, never flashing staff content; `null` or a query
  * error (fail closed, not open — see that component's own comment) → redirect to
  * `/staff/sign-in?next=...`; present → render `children`. This is what replaces `lib/identity.ts`
- * for every existing HO-CAT-002 staff page (unchanged otherwise, ADR-FE-004).
+ * for every existing the scaffold handover staff page (unchanged otherwise, ADR-FE-004).
  *
  * ARCH gate HIGH 1 (first pass) — a `StaffSessionIdleTimeoutError` is the one query error this
  * guard does NOT treat as "no session": §8.4 requires the idle lock to take over, never a

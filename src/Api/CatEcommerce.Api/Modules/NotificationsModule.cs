@@ -36,6 +36,11 @@ public static class NotificationsModule
 {
     public static IServiceCollection AddNotificationsModule(this IServiceCollection services, IConfiguration configuration)
     {
+        // Owner decision, 2026-09-27 (ACCEPTANCE gate A22): the ONE shared public web address every notification link is built from.
+        // See PublicSiteOptions.cs for the full rationale. Registered here since HO-P1 retired the module that first owned it.
+        services.Configure<PublicSiteOptions>(configuration.GetSection(PublicSiteOptions.SectionName));
+        services.AddHostedService<CatEcommerce.Api.Hosting.PublicSiteStartupGuardHostedService>();
+
         // ── Options (§12.2) ─────────────────────────────────────────────────────────────────────
         services.AddOptions<NotificationOptions>()
             .Bind(configuration.GetSection(NotificationOptions.SectionName))
@@ -54,8 +59,6 @@ public static class NotificationsModule
         services.AddScoped<INotificationLinkBuilder, NotificationLinkBuilder>();
         services.AddScoped<IQuietHoursCalendar, QuietHoursCalendar>();
         services.AddScoped<INotificationDeliverySettings, NotificationDeliverySettings>();
-        services.AddScoped<INotificationSubjectGuard, CatVaccinationDueGuard>();
-        services.AddScoped<INotificationSubjectGuard, CatDewormingDueGuard>();
         services.AddScoped<ISubjectGuardResolver, SubjectGuardResolver>();
 
         services.AddSingleton<INotificationTemplateCatalogue>(new StaticNotificationTemplateCatalogue());
@@ -78,7 +81,6 @@ public static class NotificationsModule
 
         // ── Worker (§12.2, ADR-060/065) ──────────────────────────────────────────────────────────
         services.AddScoped<NotificationWorkQueue>();
-        services.AddScoped<CareReminderSweep>();
         services.AddScoped<NotificationWorkCycle>();
         services.AddHostedService<NotificationWorker>();
 
@@ -159,7 +161,6 @@ public static class NotificationsModule
         services.AddScoped<IQueryHandlerAsync<GetNotificationSummaryQuery, NotificationSummaryViewModel>, GetNotificationSummaryQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetInboxQuery, PagedResult<InboxItemViewModel>>, GetInboxQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetInboxUnreadCountQuery, int>, GetInboxUnreadCountQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<GetDueCareRemindersQuery, IReadOnlyList<DueCareReminderRow>>, GetDueCareRemindersQueryHandler>();
     }
 
     private static void RegisterDomainEventHandlers(IServiceCollection services)

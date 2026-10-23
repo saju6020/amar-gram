@@ -10,13 +10,13 @@ namespace CatEcommerce.Domain.Tests.Aggregates.Notification;
 /// <summary>HO-NTF-001 §15 U-A13.</summary>
 public sealed class NotificationTemplateAggregateTests
 {
-    private static readonly NotificationTemplateDefinition Definition = NotificationTemplateCatalogue.Find(NotificationTemplateCatalogue.VaccinationDue)!;
+    private static readonly NotificationTemplateDefinition Definition = NotificationTemplateCatalogue.Find(NotificationTemplateCatalogue.BillingInvoiceIssued)!;
 
     private static IReadOnlyList<TemplateContentInput> ValidContents(string suffix) =>
     [
-        new TemplateContentInput(NotificationChannel.Sms, null, null, $"{{{{catName}}}} {{{{vaccineName}}}} {{{{dueOn}}}} {{{{bookingLink}}}} {suffix}", null),
-        new TemplateContentInput(NotificationChannel.Email, "Subject", null, $"{{{{catName}}}} {{{{vaccineName}}}} {{{{dueOn}}}} {{{{bookingLink}}}} {suffix}", null),
-        new TemplateContentInput(NotificationChannel.InApp, null, "Title", $"{{{{catName}}}} {{{{vaccineName}}}} {{{{dueOn}}}} {suffix}", "{{bookingLink}}"),
+        new TemplateContentInput(NotificationChannel.Sms, null, null, $"{{{{invoiceNumber}}}} {{{{totalText}}}} {{{{dueOn}}}} {{{{invoiceLink}}}} {suffix}", null),
+        new TemplateContentInput(NotificationChannel.Email, "Subject", null, $"{{{{invoiceNumber}}}} {{{{totalText}}}} {{{{dueOn}}}} {{{{invoiceLink}}}} {suffix}", null),
+        new TemplateContentInput(NotificationChannel.InApp, null, "Title", $"{{{{invoiceNumber}}}} {{{{totalText}}}} {{{{dueOn}}}} {suffix}", "{{invoiceLink}}"),
     ];
 
     [Fact]

@@ -15,12 +15,11 @@ const TABS = [
   { segment: 'hours', label: 'Opening hours' },
   { segment: 'closures', label: 'Closures' },
   { segment: 'calendar', label: 'Calendar' },
-  { segment: 'rooms', label: 'Rooms' },
   { segment: 'roster', label: 'Roster' },
 ];
 
 /** `/staff/admin/branches/[branchId]` — HO-ADM-002 §8.1. Tabs: Details · Opening hours ·
- *  Closures · Rooms · Roster. */
+ *  Closures · Calendar · Roster. */
 export default function BranchDetailLayout({
   children,
   params,

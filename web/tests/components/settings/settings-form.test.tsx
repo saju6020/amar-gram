@@ -39,8 +39,8 @@ describe('SettingsForm — HO-ADM-002 §11.5, US-ADM-05', () => {
   it('U-E2/U-E3: branch scope shows the global value beside an override, "Use global value" clears it via the callback, and Save sends only changed keys with a from → to confirm', async () => {
     const definitions: SettingDefinitionView[] = [
       {
-        key: 'booking.slotHoldMinutes',
-        group: 'Booking',
+        key: 'inventory.expiryAlertDays',
+        group: 'Inventory',
         type: 'Integer',
         unit: 'minutes',
         min: 2,
@@ -84,11 +84,11 @@ describe('SettingsForm — HO-ADM-002 §11.5, US-ADM-05', () => {
     expect(screen.getByText(/cannot be overridden per branch/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /use global value/i }));
-    expect(onClearOverride).toHaveBeenCalledWith('booking.slotHoldMinutes');
+    expect(onClearOverride).toHaveBeenCalledWith('inventory.expiryAlertDays');
 
-    const slotHoldInput = screen.getByLabelText(/slot hold minutes/i);
-    await user.clear(slotHoldInput);
-    await user.type(slotHoldInput, '20');
+    const expiryInput = screen.getByLabelText(/expiry alert days/i);
+    await user.clear(expiryInput);
+    await user.type(expiryInput, '20');
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
     const dialog = await screen.findByRole('dialog');
@@ -98,6 +98,6 @@ describe('SettingsForm — HO-ADM-002 §11.5, US-ADM-05', () => {
     ).not.toBeInTheDocument();
 
     await user.click(within(dialog).getByRole('button', { name: /save changes/i }));
-    expect(onSave).toHaveBeenCalledWith([{ key: 'booking.slotHoldMinutes', value: '20' }]);
+    expect(onSave).toHaveBeenCalledWith([{ key: 'inventory.expiryAlertDays', value: '20' }]);
   });
 });

@@ -54,7 +54,7 @@ public abstract class OrderingShopTestBase(OrderingApiFactory factory) : Orderin
         var context = await CreateContextAsync();
         if (billingProfile) await SetBillingProfileAsync(context);
 
-        var food = await CreateSkuAsync(context, price: 850m, stock: stock, onStorefront: true, name: "Royal Canin Kitten 2 kg");
+        var food = await CreateSkuAsync(context, price: 850m, stock: stock, onStorefront: true, name: "Royal Basmati Rice 2 kg");
         var toy = await CreateSkuAsync(context, price: 120m, stock: stock, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Feather wand");
         var district = NewDistrict();
         var zoneId = await CreateZoneAsync(context, district, cod: cod, codMax: codMax, freeOver: freeOver, slotWindows: windows, leadTimeDays: lead);

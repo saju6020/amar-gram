@@ -268,9 +268,6 @@ export function effectiveReorderPoint(branchId: string, skuId: string, locationI
 
 const PURPOSE_MOVEMENT: Record<string, string> = {
   Sale: 'Sale',
-  Dispense: 'Dispense',
-  ClinicalUse: 'ClinicalUse',
-  BoardingUse: 'BoardingUse',
 };
 
 export const stockHandlers: HttpHandler[] = [

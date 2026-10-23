@@ -2,34 +2,10 @@ namespace CatEcommerce.Shared.Common.Constants;
 
 /// <summary>
 /// Administration and Configuration (HO-ADM-001 §12.3) action names, guarded by
-/// <c>[RequireAction(Actions.X.Y)]</c>. See ADR-341 for the per-area partial pattern. This file
-/// also carries the Cat Profile and Vaccine actions closing HO-ACC-001's authorization gap
-/// (§4.3 there, US-ADM-02 here) -- Cat Profiles and Vaccination are HO-CAT-001's own contexts, but
-/// the action-to-role mapping that guards them is this handover's to complete (§12.3), and there is
-/// only ever one <see cref="ActionRoles"/> table (never a second one per context).
+/// <c>[RequireAction(Actions.X.Y)]</c>. See ADR-341 for the per-area partial pattern.
 /// </summary>
 public static partial class Actions
 {
-    /// <summary>OQ-4: Appendix D gives two Cat Profile rows ("own", "any"); this is the
-    /// inference onto the API's nineteen actions, recorded in ADR-043.</summary>
-    public static class Cats
-    {
-        public const string View = "Cats.View";
-        public const string Register = "Cats.Register";
-        public const string EditProfile = "Cats.EditProfile";
-        public const string RecordClinical = "Cats.RecordClinical";
-        public const string ManageHighRiskFlag = "Cats.ManageHighRiskFlag";
-        public const string MarkDeceased = "Cats.MarkDeceased";
-        public const string TransferOwnership = "Cats.TransferOwnership";
-        public const string PrintCageCard = "Cats.PrintCageCard";
-    }
-
-    public static class Vaccines
-    {
-        public const string View = "Vaccines.View";
-        public const string Manage = "Vaccines.Manage";
-    }
-
     public static class Branches
     {
         public const string View = "Branches.View";
@@ -51,12 +27,6 @@ public static partial class Actions
     {
         public const string Request = "Leave.Request";
         public const string Decide = "Leave.Decide";
-    }
-
-    public static class Services
-    {
-        public const string View = "Services.View";
-        public const string Manage = "Services.Manage";
     }
 
     public static class TaxClasses

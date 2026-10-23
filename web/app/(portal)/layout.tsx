@@ -5,7 +5,7 @@ import { InboxBadge } from '@/components/inbox/InboxBadge';
 import { CartBadge } from '@/components/cart/CartBadge';
 import { AccountFrame } from '@/components/portal/AccountSidebar';
 
-// Owner-facing shell for every /portal/** route (HO-CAT-002 §8.3). `data-theme="customer"`
+// Customer-facing shell for every /portal/** route (section 8.3). `data-theme="customer"`
 // applies the warm customer design-token layer (app/globals.css) — this is the ONLY *layout* it is
 // applied on; it must never reach a staff layout or a shared component (a few HO-ACC-002 `(auth)`
 // pages also apply it directly, at the page level, for the customer-facing auth screens — see

@@ -43,9 +43,8 @@ function quote(overrides: Partial<CheckoutQuote> = {}): CheckoutQuote {
       {
         lineRef: 'q1',
         skuId: 's1',
-        productName: 'Royal Canin Kitten',
+        productName: 'Organic Rolled Oats',
         variantLabel: '2 kg',
-        cat: null,
         quantity: 2,
         unitPrice: money('2450.00'),
         lineSubtotal: money('4900.00'),
@@ -66,7 +65,7 @@ function quote(overrides: Partial<CheckoutQuote> = {}): CheckoutQuote {
       serviceLevels: [],
     },
     selectedServiceLevel: null,
-    pickupBranches: [{ id: 'br1', name: 'Main clinic', address: 'Road 1', phone: null }],
+    pickupBranches: [{ id: 'br1', name: 'Main shop', address: 'Road 1', phone: null }],
     paymentOptions: [
       { method: 'PayOnCollection', available: true, unavailableReason: null, message: null },
       { method: 'BankTransfer', available: true, unavailableReason: null, message: null },
@@ -89,18 +88,15 @@ const CART: Cart = {
       lineId: 'l1',
       skuId: 's1',
       productId: 'p1',
-      productName: 'Royal Canin Kitten',
+      productName: 'Organic Rolled Oats',
       variantLabel: '2 kg',
       imagePath: null,
       quantity: 2,
-      cat: null,
       unitPrice: money('2450.00'),
       priceWhenAdded: money('2450.00'),
       priceChanged: false,
       availability: 'InStock',
       availableQuantity: null,
-      requiresPrescription: false,
-      prescriptionStatus: null,
       lineSubtotal: money('4900.00'),
     },
   ],
@@ -129,9 +125,6 @@ function serveCheckout(next: (url: URL) => CheckoutQuote) {
     ),
     http.get('*/api/customers/me/addresses', () =>
       HttpResponse.json({ addresses: [], maxAddresses: 5 }),
-    ),
-    http.get('*/api/cats', () =>
-      HttpResponse.json({ items: [], pageNumber: 1, pageSize: 50, totalCount: 0, totalPages: 0 }),
     ),
     http.get('*/api/customers/me/checkout/quote', ({ request }) => {
       const url = new URL(request.url);
@@ -307,10 +300,10 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
   const change: CheckoutChange = {
     kind: 'PriceIncreased',
     lineRef: 'q1',
-    productName: 'Royal Canin Kitten',
+    productName: 'Organic Rolled Oats',
     before: '2400.00',
     after: '2450.00',
-    message: 'Royal Canin Kitten 2 kg now costs 2,450.00 (was 2,400.00).',
+    message: 'Organic Rolled Oats 2 kg now costs 2,450.00 (was 2,400.00).',
   };
 
   function Harness({ fingerprint }: { fingerprint: string }) {
@@ -321,7 +314,6 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
         fingerprint={fingerprint}
         acknowledgedFingerprint={ack}
         onAcknowledge={setAck}
-        bookHref="/book"
         settling={false}
       />
     );
@@ -348,7 +340,6 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
         fingerprint="F1"
         acknowledgedFingerprint={null}
         onAcknowledge={() => undefined}
-        bookHref="/book"
         settling
       />,
     );
@@ -360,7 +351,6 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
       quote: quote({ changes: [change] }),
       fulfilment: 'Pickup',
       settling: false,
-      rxPanel: null,
       changesPanel: null,
       policiesPanel: null,
       discountField: null,
@@ -384,7 +374,6 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
         quote={quote({ lines: [], canPlace: false })}
         fulfilment="Pickup"
         settling={false}
-        rxPanel={null}
         changesPanel={null}
         policiesPanel={null}
         discountField={<p>discount field</p>}
@@ -503,7 +492,7 @@ describe('Checkout choices live in the URL - U-B10', () => {
     expect(screen.getByText('WELCOME')).toBeInTheDocument();
     expect(
       within(screen.getByRole('region', { name: 'Collection' })).getByText(
-        /Collect from Main clinic/,
+        /Collect from Main shop/,
       ),
     ).toBeInTheDocument();
     expect(
@@ -525,10 +514,10 @@ describe('Placing an order - U-B11, U-B13', () => {
               {
                 kind: 'PriceIncreased',
                 lineRef: 'q1',
-                productName: 'Royal Canin Kitten',
+                productName: 'Organic Rolled Oats',
                 before: '2400.00',
                 after: '2450.00',
-                message: 'Royal Canin Kitten 2 kg now costs 2,450.00.',
+                message: 'Organic Rolled Oats 2 kg now costs 2,450.00.',
               },
             ],
           });
@@ -552,7 +541,7 @@ describe('Placing an order - U-B11, U-B13', () => {
       await screen.findAllByText('Something changed while you were checking out.'),
     ).toHaveLength(1);
     expect(
-      await screen.findByText('Royal Canin Kitten 2 kg now costs 2,450.00.'),
+      await screen.findByText('Organic Rolled Oats 2 kg now costs 2,450.00.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /reviewed these changes/ })).not.toBeChecked();
     await waitFor(() =>

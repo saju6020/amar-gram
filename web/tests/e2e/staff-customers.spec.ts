@@ -28,13 +28,9 @@ test('E-H1: walk-in with a new number creates Incomplete; an existing number off
   await expect(page.getByLabel(/full name/i)).toHaveValue('Duplicate Walk-in');
 });
 
-test('E-I1: merge a duplicate pair with a deceased cat — both cats end up on the survivor', async ({
-  page,
-}) => {
+test('E-I1: merge a duplicate pair — the chosen record survives', async ({ page }) => {
   await page.goto('/staff/customers/duplicates');
   await expect(page.getByText('Duplicate Alpha')).toBeVisible();
-  await expect(page.getByText('Late Cat')).toBeVisible();
-  await expect(page.getByText('Deceased')).toBeVisible();
 
   await page.getByRole('link', { name: 'Review merge' }).click();
   await expect(page).toHaveURL(/\/staff\/customers\/duplicates\/review\?ids=/);
@@ -49,5 +45,5 @@ test('E-I1: merge a duplicate pair with a deceased cat — both cats end up on t
 
   await expect(page.getByText(/the records have been merged/i)).toBeVisible();
   await page.getByRole('link', { name: 'View the surviving record' }).click();
-  await expect(page.getByText('2')).toBeVisible(); // cat count after the merge
+  await expect(page.getByText('Duplicate Alpha').first()).toBeVisible();
 });

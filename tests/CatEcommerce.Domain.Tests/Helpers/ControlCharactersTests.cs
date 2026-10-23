@@ -21,7 +21,7 @@ public sealed class ControlCharactersTests
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    [InlineData("Mitu's Rabies vaccine is due 12 Jan 2027")]
+    [InlineData("Your order ORD-1042 is due 12 Jan 2027")]
     [InlineData("+8801917190142")]
     [InlineData("A café's café")] // ordinary accented text must not be flagged
     public void ContainsPrivateUseOrFormat_AllowsOrdinaryText(string? value) =>

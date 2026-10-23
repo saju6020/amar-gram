@@ -100,7 +100,7 @@ export function RecallConsole({
           <Link href={`/staff/inventory/batches/${summary.batchId}`} className="font-semibold text-accent-ink">
             Write off or return this stock
           </Link>{' '}
-          <span className="text-ink-muted">— held stock cannot be sold, dispensed or fed, and must be dealt with before the recall can be closed.</span>
+          <span className="text-ink-muted">— held stock cannot be sold or used, and must be dealt with before the recall can be closed.</span>
         </p>
       </Panel>
 

@@ -23,11 +23,15 @@ import { sanitizeNextPath } from '@/lib/validation/nextPath';
 const REASONS = [
   { text: 'One account for everything you buy', tone: 'warm' as const, Icon: House },
   { text: 'Sign in with your mobile number or email', tone: 'teal' as const, Icon: Smartphone },
-  { text: 'Keep your addresses, orders and subscriptions together', tone: 'teal' as const, Icon: Check },
+  {
+    text: 'Keep your addresses, orders and subscriptions together',
+    tone: 'teal' as const,
+    Icon: Check,
+  },
 ];
 
 // ARCH gate HIGH 3 (first pass) — this page wires useCaptcha()/useRegisterCustomer(); RegisterForm
-// itself takes their results as props (HO-CAT-002 §8.2 rule 4, its own comment).
+// itself takes their results as props (the shell handover §8.2 rule 4, its own comment).
 export default function RegisterPage() {
   return (
     <Suspense fallback={null}>

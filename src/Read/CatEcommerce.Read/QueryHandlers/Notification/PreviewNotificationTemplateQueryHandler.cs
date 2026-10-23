@@ -41,8 +41,8 @@ public sealed class PreviewNotificationTemplateQueryHandler(INotificationTemplat
         var values = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [StandardTemplateVariables.RecipientName] = "Jane Doe",
-            [StandardTemplateVariables.ClinicName] = "Amar Gram Main Outlet",
-            [StandardTemplateVariables.ClinicPhone] = "+8801700000000"
+            [StandardTemplateVariables.OutletName] = "Amar Gram Main Outlet",
+            [StandardTemplateVariables.OutletPhone] = "+8801700000000"
         };
 
         foreach (var variable in definition.Variables)

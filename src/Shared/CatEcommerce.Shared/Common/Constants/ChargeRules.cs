@@ -12,15 +12,8 @@ public static class ChargeRules
     public const int MaxQuantityDecimals = 3;
     public const int MaxMoneyDecimals = 2;
 
-    /// <summary>§8.2: Appointment/Visit/Dispense/Surgery -> Clinic; Order -> Shop; BoardingStay (and
-    /// the daycare visit HO-BRD-001 adds) -> Boarding. <c>Manual</c> has no default -- the desk charge
-    /// is Clinic unless the caller names another line.</summary>
-    public static BusinessLine DefaultBusinessLine(ChargeSourceKind sourceKind)
-    {
-        if (sourceKind == ChargeSourceKind.Order) return BusinessLine.Shop;
-        if (sourceKind == ChargeSourceKind.BoardingStay || sourceKind == ChargeSourceKind.DaycareVisit) return BusinessLine.Boarding;
-        return BusinessLine.Clinic;
-    }
+    /// <summary>§8.2: every source defaults to Shop, the only business line (HO-P1).</summary>
+    public static BusinessLine DefaultBusinessLine(ChargeSourceKind sourceKind) => BusinessLine.Shop;
 
     /// <summary>§8.2: the default mapping is overridable only by <c>Manual</c>.</summary>
     public static bool MayOverrideBusinessLine(ChargeSourceKind sourceKind) => sourceKind == ChargeSourceKind.Manual;

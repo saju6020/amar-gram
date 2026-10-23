@@ -47,8 +47,6 @@ export interface CatalogueItem {
   subcategory: string | null;
   kind: ProductKind;
   countryOfOrigin: CountryRef | null;
-  lifeStage: string | null;
-  prescriptionRequired: boolean;
   fromPrice: Money | null;
   priceVaries: boolean;
   availability: Availability;
@@ -69,7 +67,6 @@ export interface CatalogueResult extends PagedResult<CatalogueItem> {
 export interface CatalogueFilters {
   brands: Array<{ name: string; count: number }>;
   origins: Array<{ code: string; name: string; count: number }>;
-  lifeStages: Array<{ value: string; count: number }>;
   proteinSources: Array<{ value: string; count: number }>;
   price: { min: number | null; max: number | null };
 }
@@ -96,7 +93,6 @@ export interface GuaranteedAnalysis {
 }
 export interface FoodDetail {
   manufacturer: string | null;
-  lifeStage: string | null;
   proteinSource: string | null;
   ingredientList: string | null;
   guaranteedAnalysis: GuaranteedAnalysis | null;
@@ -134,7 +130,6 @@ export interface ProductDetail {
   tags: string[];
   kind: ProductKind;
   countryOfOrigin: CountryRef | null;
-  prescriptionRequired: boolean;
   food: FoodDetail | null;
   images: ProductImageRef[];
   skus: DetailSku[];
@@ -157,11 +152,9 @@ export interface ProductReview {
   verifiedPurchase: boolean;
 }
 
-export type RecommendationBasis = 'YourCats' | 'Generic' | string;
 export interface Recommendations {
   frequentlyBoughtTogether: CatalogueItem[];
   upSell: CatalogueItem[];
-  lifeStage: { basis: RecommendationBasis; lifeStages: string[]; items: CatalogueItem[] };
 }
 
 export interface ShopLocales {

@@ -54,15 +54,6 @@ public sealed class FakeStockLedger : IStockLedger
         // command.
     }
 
-    public Task<StockResult<IReadOnlyList<StockMovementLine>>> AdjustAsync(StockAdjustment adjustment, StockReference reference, StockParty party, CancellationToken ct) =>
-        Task.FromResult(StockResult<IReadOnlyList<StockMovementLine>>.Failure(InsufficientStock, Message));
-
     public Task<StockResult<IReadOnlyList<BatchBalance>>> GetBranchBalancesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct) =>
         Task.FromResult(StockResult<IReadOnlyList<BatchBalance>>.Success(Array.Empty<BatchBalance>()));
-
-    public Task<StockResult<IReadOnlyList<DispensaryBatch>>> GetDispensaryBatchesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct) =>
-        Task.FromResult(StockResult<IReadOnlyList<DispensaryBatch>>.Success(Array.Empty<DispensaryBatch>()));
-
-    public Task<StockResult<DispensaryLocation>> GetClinicDispensaryAsync(Guid branchId, CancellationToken ct) =>
-        Task.FromResult(StockResult<DispensaryLocation>.Failure("DispensaryNotFound", "Inventory is not built yet -- HO-IMP-001. This branch has no clinic dispensary."));
 }

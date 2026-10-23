@@ -5,7 +5,5 @@ public sealed class StockLocationKind(int value, string displayName) : Enumerati
 {
     public static readonly StockLocationKind ShopFloor = new(1, nameof(ShopFloor));
     public static readonly StockLocationKind Warehouse = new(2, nameof(Warehouse));
-    public static readonly StockLocationKind ClinicDispensary = new(3, nameof(ClinicDispensary));
-    public static readonly StockLocationKind BoardingStore = new(4, nameof(BoardingStore));
     public static readonly StockLocationKind Quarantine = new(5, nameof(Quarantine));
 }

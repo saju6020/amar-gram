@@ -1,6 +1,5 @@
 import { apiFetch } from './client';
 import type { Money } from '../format/money';
-import type { CartCat } from './cart';
 
 /**
  * `lib/api/checkout.ts` — HO-ORD-002 §8.2. The checkout quote (`CheckoutQuoteViewModels.cs`) and
@@ -30,7 +29,6 @@ export interface QuoteLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  cat: CartCat | null;
   quantity: number;
   unitPrice: Money;
   lineSubtotal: Money;
@@ -45,18 +43,12 @@ export interface ExcludedLine {
   lineRef: string;
   skuId: string;
   productName: string;
-  cat: CartCat | null;
   quantity: number;
   reasonCode: string;
 }
 
 export type CheckoutChangeKind =
-  | 'PriceIncreased'
-  | 'PriceDecreased'
-  | 'QuantityReduced'
-  | 'NowUnavailable'
-  | 'PrescriptionAuthorisationExpired'
-  | 'PrescriptionCatRequired';
+  'PriceIncreased' | 'PriceDecreased' | 'QuantityReduced' | 'NowUnavailable';
 
 export interface CheckoutChange {
   kind: CheckoutChangeKind;

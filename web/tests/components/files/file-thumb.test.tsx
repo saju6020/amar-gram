@@ -6,9 +6,9 @@ import { buildStoredFileViewModel } from '@/mocks/handlers/files/fixtures';
 describe('<FileThumb> — HO-FIL-002 §3/§8.5, ADR-FE-154/155', () => {
   it('renders a real image at display size, lazy and async-decoded (no thumbnail derivative exists)', () => {
     const file = buildStoredFileViewModel({ contentType: 'image/png' });
-    render(<FileThumb file={file} alt="Photo of Whiskers" width={64} height={64} />);
+    render(<FileThumb file={file} alt="Photo of Organic rice" width={64} height={64} />);
 
-    const img = screen.getByRole('img', { name: 'Photo of Whiskers' });
+    const img = screen.getByRole('img', { name: 'Photo of Organic rice' });
     expect(img).toHaveAttribute('src', file.url);
     expect(img).toHaveAttribute('loading', 'lazy');
     expect(img).toHaveAttribute('decoding', 'async');
@@ -19,9 +19,9 @@ describe('<FileThumb> — HO-FIL-002 §3/§8.5, ADR-FE-154/155', () => {
   it('shows a type-appropriate label, never a broken-image icon, for a non-image file', () => {
     const file = buildStoredFileViewModel({
       contentType: 'application/pdf',
-      originalFileName: 'lab.pdf',
+      originalFileName: 'invoice.pdf',
     });
-    render(<FileThumb file={file} alt="Lab result" />);
+    render(<FileThumb file={file} alt="Invoice" />);
 
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     expect(screen.getByText('PDF')).toBeInTheDocument();

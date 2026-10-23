@@ -12,12 +12,12 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(ReportingViewSql.Load("rv_clinic_appointment.v1", ("HOLD_STATUSES", ReportingViewSql.List(AppointmentStatus.Held, AppointmentStatus.HoldExpired, AppointmentStatus.HoldReleased))));
+            migrationBuilder.Sql(ReportingViewSql.Load("rv_clinic_appointment.v1", ("HOLD_STATUSES", "1,2,3")));
             migrationBuilder.Sql(ReportingViewSql.Load("rv_cat_vaccination.v1"));
             migrationBuilder.Sql(ReportingViewSql.Load("rv_cat_parasite_treatment.v1"));
-            migrationBuilder.Sql(ReportingViewSql.Load("rv_cat_last_branch.v1", ("HOLD_STATUSES", ReportingViewSql.List(AppointmentStatus.Held, AppointmentStatus.HoldExpired, AppointmentStatus.HoldReleased))));
-            migrationBuilder.Sql(ReportingViewSql.Load("rv_care_reminder_sent.v1", ("CARE_KINDS", ReportingViewSql.List(NotificationSubjectKind.CatVaccinationDue, NotificationSubjectKind.CatDewormingDue)), ("SENT_STATUSES", ReportingViewSql.List(NotificationStatus.Sent, NotificationStatus.InboxDelivered))));
-            migrationBuilder.Sql(ReportingViewSql.Load("rv_surgery.v1", ("SURGERY_SOURCE", ControlledDrugSourceType.Surgery.Value.ToString())));
+            migrationBuilder.Sql(ReportingViewSql.Load("rv_cat_last_branch.v1", ("HOLD_STATUSES", "1,2,3")));
+            migrationBuilder.Sql(ReportingViewSql.Load("rv_care_reminder_sent.v1", ("CARE_KINDS", "1,2"), ("SENT_STATUSES", ReportingViewSql.List(NotificationStatus.Sent, NotificationStatus.InboxDelivered))));
+            migrationBuilder.Sql(ReportingViewSql.Load("rv_surgery.v1", ("SURGERY_SOURCE", "4")));
             migrationBuilder.Sql(ReportingViewSql.Load("rv_visit_open.v1"));
         }
 

@@ -1,20 +1,17 @@
 namespace CatEcommerce.Shared.Common.Constants;
 
 /// <summary>HO-ORD-001 §10.4 -- Ordering's own violation codes (ADR-341 per-area partial). Already declared elsewhere and reused, not
-/// redeclared: <c>CatNotOwnedByCaller</c> (Administration), <c>DeliveryAddressNotFound</c> (Accounts), <c>CancellationReasonRequired</c>
-/// (Appointments), <c>BatchExpired</c> (Inventory) and <c>RefundMethodNotAllowed</c> (Billing -- same value; the order refund path reuses it).</summary>
+/// redeclared: <c>DeliveryAddressNotFound</c> (Accounts), <c>CancellationReasonRequired</c>
+/// (the base file), <c>BatchExpired</c> (Inventory) and <c>RefundMethodNotAllowed</c> (Billing -- same value; the order refund path reuses it).</summary>
 public static partial class BusinessViolationCodes
 {
     // Cart
     public const string CartNotFound = nameof(CartNotFound);
     public const string CartFull = nameof(CartFull);
     public const string CartLineNotFound = nameof(CartLineNotFound);
-    public const string DuplicateCartLine = nameof(DuplicateCartLine);
     public const string SkuNotPurchasable = nameof(SkuNotPurchasable);
     public const string SkuUnavailable = nameof(SkuUnavailable);
     public const string QuantityOutOfRange = nameof(QuantityOutOfRange);
-    public const string PrescriptionCatRequired = nameof(PrescriptionCatRequired);
-    public const string PrescriptionNotAuthorised = nameof(PrescriptionNotAuthorised);
 
     // Checkout
     public const string CheckoutQuoteChanged = nameof(CheckoutQuoteChanged);

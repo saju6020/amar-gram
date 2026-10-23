@@ -1,5 +1,4 @@
 import { test, expect, signInAsStaff } from './fixtures';
-import { catProfilesFixtureIds } from '../../mocks/handlers/areas/cat-profiles';
 import { openSheetAt360 } from './staff-shell-sheet-helpers';
 
 // ARCH gate MEDIUM (first pass) — signs in as staff only (never both cookies at
@@ -9,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * HO-CAT-002 TEST gate, third pass, rewritten for the 7th pass's Radix-`Dialog` rebuild.
+ * Staff shell TEST gate, third pass, rewritten for the 7th pass's Radix-`Dialog` rebuild.
  *
  * Original finding: a manual "Expand menu" click below `sm` put the in-flow `<aside>` at its
  * `sm`-and-up width (240px) regardless of viewport, which — being in-flow — pushed
@@ -26,13 +25,12 @@ test.beforeEach(async ({ page }) => {
  * control introduce horizontal overflow below the 360px floor" — is checked against the sheet
  * instead, on the same representative `/staff/**` screens this file always has.
  */
-test.describe('StaffShell nav sheet — opening it at 360px overflows? (HO-CAT-002 TEST gate, 3rd pass, rebuilt 7th pass)', () => {
-  const catId = catProfilesFixtureIds.catWithAllergiesExactDob;
+test.describe('StaffShell nav sheet — opening it at 360px overflows? (staff shell TEST gate, 3rd pass, rebuilt 7th pass)', () => {
   const SCREENS = [
-    '/staff/cats',
-    `/staff/cats/${catId}`,
-    `/staff/cats/${catId}/medical`,
-    `/staff/cats/${catId}/weights`,
+    '/staff/orders',
+    '/staff/inventory',
+    '/staff/shop/products',
+    '/staff/customers/new',
   ];
 
   for (const path of SCREENS) {

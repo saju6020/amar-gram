@@ -2,21 +2,13 @@
 
 import Link from 'next/link';
 import type { AddToCart } from '@/lib/hooks/useAddToCart';
-import { PrescriptionCatDialog } from './PrescriptionCatDialog';
 
 /**
  * The text under an add-to-cart control, shared by `AddToCartButton` and `PurchaseRow`: the disabled
- * reason, the *Added* live region with its View cart link, the error, and (for a prescription SKU)
- * the which-cat dialog. Everything comes from `useAddToCart`.
+ * reason, the *Added* live region with its View cart link, and the error. Everything comes from `useAddToCart`.
  */
-export function AddToCartFeedback({
-  state,
-  requiresPrescription,
-}: {
-  state: AddToCart;
-  requiresPrescription: boolean;
-}) {
-  const { dialog, message, error } = state;
+export function AddToCartFeedback({ state }: { state: AddToCart }) {
+  const { message, error } = state;
   return (
     <>
       {state.showReason && (
@@ -35,12 +27,11 @@ export function AddToCartFeedback({
           </>
         )}
       </p>
-      {error && !dialog.open && (
+      {error && (
         <p role="alert" className="m-0 text-sm font-semibold text-danger-ink">
           {error}
         </p>
       )}
-      {requiresPrescription && <PrescriptionCatDialog {...dialog} />}
     </>
   );
 }

@@ -18,11 +18,11 @@ public sealed class CreateStaffAccountCommandHandlerTests
         var repository = new FakeAggregateRootRepository<StaffAccountAggregate>();
         var handler = new CreateStaffAccountCommandHandler(NullLogger<CreateStaffAccountCommandHandler>.Instance, repository, new FakePasswordHasher(), new FakeBreachedPasswordChecker());
 
-        var nonAdminContext = new UserContext(Guid.NewGuid(), Guid.NewGuid()) { Roles = ["Nurse"] };
+        var nonAdminContext = new UserContext(Guid.NewGuid(), Guid.NewGuid()) { Roles = ["Reception"] };
 
         var response = await handler.HandleAsync(new CreateStaffAccountCommand
         {
-            StaffAccountId = Guid.NewGuid(), FullName = "New Vet", MobileNumber = "01712345678", RoleIds = ["Vet"],
+            StaffAccountId = Guid.NewGuid(), FullName = "New Staff", MobileNumber = "01712345678", RoleIds = ["Inventory"],
             UserContext = nonAdminContext, CorrelationId = Guid.NewGuid()
         });
 
@@ -41,7 +41,7 @@ public sealed class CreateStaffAccountCommandHandlerTests
 
         var response = await handler.HandleAsync(new CreateStaffAccountCommand
         {
-            StaffAccountId = Guid.NewGuid(), FullName = "New Vet", MobileNumber = "01712345678", RoleIds = ["Vet"],
+            StaffAccountId = Guid.NewGuid(), FullName = "New Staff", MobileNumber = "01712345678", RoleIds = ["Inventory"],
             UserContext = adminContext, CorrelationId = Guid.NewGuid()
         });
 
@@ -55,7 +55,7 @@ public sealed class CreateStaffAccountCommandHandlerTests
         var repository = new FakeAggregateRootRepository<StaffAccountAggregate>();
         var existing = new StaffAccountAggregate(Guid.NewGuid());
         existing.Create(new Domain.Models.StaffAccountCreationDto(
-            "Existing", CatEcommerce.Domain.ValueObjects.MobileNumber.Create("01712345678"), null, ["Vet"],
+            "Existing", CatEcommerce.Domain.ValueObjects.MobileNumber.Create("01712345678"), null, ["Inventory"],
             TestUserContext.Create(), Guid.NewGuid()));
         repository.Seed(existing);
 
@@ -64,7 +64,7 @@ public sealed class CreateStaffAccountCommandHandlerTests
 
         var response = await handler.HandleAsync(new CreateStaffAccountCommand
         {
-            StaffAccountId = Guid.NewGuid(), FullName = "New Vet", MobileNumber = "01712345678", RoleIds = ["Nurse"],
+            StaffAccountId = Guid.NewGuid(), FullName = "New Staff", MobileNumber = "01712345678", RoleIds = ["Reception"],
             UserContext = adminContext, CorrelationId = Guid.NewGuid()
         });
 
@@ -83,7 +83,7 @@ public sealed class CreateStaffAccountCommandHandlerTests
 
         var response = await handler.HandleAsync(new CreateStaffAccountCommand
         {
-            StaffAccountId = Guid.NewGuid(), FullName = "New Vet", MobileNumber = "01712345678", RoleIds = ["Vet"],
+            StaffAccountId = Guid.NewGuid(), FullName = "New Staff", MobileNumber = "01712345678", RoleIds = ["Inventory"],
             InitialPassword = "a-long-shared-password", UserContext = adminContext, CorrelationId = Guid.NewGuid()
         });
 
@@ -102,7 +102,7 @@ public sealed class CreateStaffAccountCommandHandlerTests
 
         var response = await handler.HandleAsync(new CreateStaffAccountCommand
         {
-            StaffAccountId = Guid.NewGuid(), FullName = "New Vet", MobileNumber = "01712345678", RoleIds = ["Vet"],
+            StaffAccountId = Guid.NewGuid(), FullName = "New Staff", MobileNumber = "01712345678", RoleIds = ["Inventory"],
             InitialPassword = "password123456", UserContext = adminContext, CorrelationId = Guid.NewGuid()
         });
 
@@ -120,7 +120,7 @@ public sealed class CreateStaffAccountCommandHandlerTests
 
         var response = await handler.HandleAsync(new CreateStaffAccountCommand
         {
-            StaffAccountId = Guid.NewGuid(), FullName = "New Vet", MobileNumber = "01712345678", RoleIds = ["Vet"],
+            StaffAccountId = Guid.NewGuid(), FullName = "New Staff", MobileNumber = "01712345678", RoleIds = ["Inventory"],
             UserContext = adminContext, CorrelationId = Guid.NewGuid()
         });
 

@@ -4,7 +4,7 @@ using CatEcommerce.Shared.Common.Constants;
 namespace CatEcommerce.Application.Tests.TestSupport;
 
 /// <summary>Wraps the shipped catalogue plus any test-only additions, exactly like the real
-/// StaticNotificationTemplateCatalogue -- hand-written per HO-CAT-001 §13 (no mocking library).</summary>
+/// StaticNotificationTemplateCatalogue -- hand-written per the foundation handover §13 (no mocking library).</summary>
 public sealed class FakeNotificationTemplateCatalogue : INotificationTemplateCatalogue
 {
     private readonly List<NotificationTemplateDefinition> _all = [.. NotificationTemplateCatalogue.Definitions];

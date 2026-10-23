@@ -12,7 +12,7 @@ public sealed class ReportingExportTests
 {
     internal static ReportResult Result(IReadOnlyList<ReportColumn> columns, IReadOnlyList<ReportRow> rows, ReportRow? totals = null, IReadOnlyList<ReportNote>? notes = null, ReportCoverage? coverage = null) =>
         new("unit-report", "Unit test report", DateTimeOffset.Parse("2026-10-13T04:30:00+06:00"), "Test Admin",
-            new ReportFilters(new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 13), Guid.NewGuid(), "Gulshan Clinic", "Asia/Dhaka", null, new Dictionary<string, object> { ["mode"] = "Open" }),
+            new ReportFilters(new DateOnly(2026, 10, 1), new DateOnly(2026, 10, 13), Guid.NewGuid(), "Gulshan Outlet", "Asia/Dhaka", null, new Dictionary<string, object> { ["mode"] = "Open" }),
             columns, rows, totals, notes ?? [], coverage, 1, rows.Count, rows.Count);
 
     private static ReportRow Row(params (string Key, object? Value)[] cells)
@@ -95,7 +95,7 @@ public sealed class ReportingExportTests
         Assert.Equal("%PDF-", Encoding.ASCII.GetString(bytes, 0, 5));
         var text = PdfTextExtractor.Extract(bytes);
         Assert.Contains("Unit test report", text);
-        Assert.Contains("Gulshan Clinic", text);
+        Assert.Contains("Gulshan Outlet", text);
         Assert.Contains("2026-10-01", text);
         Assert.Contains("2026-10-13", text);
         Assert.Contains("Asia/Dhaka", text);

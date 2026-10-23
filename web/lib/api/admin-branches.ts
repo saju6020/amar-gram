@@ -1,7 +1,7 @@
 import { apiFetch } from './client';
 
 /**
- * `lib/api/admin-branches.ts` — HO-ADM-002 §8.2. Branches, opening hours, closures, rooms, staff
+ * `lib/api/admin-branches.ts` — HO-ADM-002 §8.2. Branches, opening hours, closures, staff
  * branch assignment and the active-branch feed (HO-ADM-001 §12.4).
  */
 
@@ -160,53 +160,6 @@ export async function cancelBranchClosure(branchId: string, closureId: string): 
   await apiFetch<void>(
     `/api/admin/branches/${encodeURIComponent(branchId)}/closures/${encodeURIComponent(closureId)}`,
     { method: 'DELETE' },
-  );
-}
-
-export type RoomKind = 'Consultation' | 'Treatment' | 'Theatre' | 'Grooming';
-export const ROOM_KINDS: RoomKind[] = ['Consultation', 'Treatment', 'Theatre', 'Grooming'];
-
-export interface Room {
-  id: string;
-  branchId: string;
-  name: string;
-  kind: RoomKind;
-  isActive: boolean;
-}
-
-export async function getBranchRooms(branchId: string): Promise<Room[]> {
-  return apiFetch<Room[]>(`/api/admin/branches/${encodeURIComponent(branchId)}/rooms`);
-}
-
-export interface CreateRoomRequest {
-  name: string;
-  kind: RoomKind;
-}
-
-export async function createRoom(
-  branchId: string,
-  request: CreateRoomRequest,
-): Promise<{ roomId: string }> {
-  return apiFetch<{ roomId: string }>(`/api/admin/branches/${encodeURIComponent(branchId)}/rooms`, {
-    method: 'POST',
-    body: request,
-  });
-}
-
-export interface UpdateRoomRequest {
-  name: string;
-  kind: RoomKind;
-  isActive: boolean;
-}
-
-export async function updateRoom(
-  branchId: string,
-  roomId: string,
-  request: UpdateRoomRequest,
-): Promise<void> {
-  await apiFetch<void>(
-    `/api/admin/branches/${encodeURIComponent(branchId)}/rooms/${encodeURIComponent(roomId)}`,
-    { method: 'PUT', body: request },
   );
 }
 

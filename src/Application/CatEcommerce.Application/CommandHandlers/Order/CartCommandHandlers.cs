@@ -1,5 +1,4 @@
 using CatEcommerce.Application.Commands.Order;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.Aggregates.Order;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Exceptions;
@@ -31,16 +30,13 @@ internal static class CartCaller
 
 /// <summary>
 /// HO-ORD-001 §11.4 C5 (US-ORD-01, US-SHP-10 AC2). Resolve the caller's cart (create it on the first line); the SKU must be purchasable
-/// (<c>SkuNotPurchasable</c>) and have stock to sell at the storefront branch (<c>SkuUnavailable</c> -- advisory: a cart reserves nothing); a
-/// prescription SKU needs the signed-in customer, a cat that is theirs and a live authorisation for that cat (<see cref="PrescriptionLineGuard"/>);
-/// then one mutation on the aggregate. A prescription line is keyed by cat; an ordinary SKU never carries one, so the same ordinary SKU is one line.
+/// (<c>SkuNotPurchasable</c>) and have stock to sell at the storefront branch (<c>SkuUnavailable</c> -- advisory: a cart reserves nothing);
+/// then one mutation on the aggregate. The same SKU is always one line.
 /// </summary>
 public sealed class AddCartLineCommandHandler(
     IAggregateRootRepository<CartAggregate> carts,
-    IAggregateRootRepository<CatAggregate> cats,
     ICatalogueLookup catalogue,
     ISkuAvailabilityReader availability,
-    IDietAuthorisationGate dietGate,
     IBusinessSettings settings,
     TimeProvider timeProvider)
     : ICommandHandlerAsync<AddCartLineCommand>
@@ -61,14 +57,6 @@ public sealed class AddCartLineCommandHandler(
         if (status.GetValueOrDefault(command.SkuId) != AvailabilityStatus.InStock)
             return Violation(BusinessViolationCodes.SkuUnavailable, nameof(command.SkuId), OrderMessages.SkuUnavailable);
 
-        Guid? catId = null;
-        if (sku.RequiresPrescription)
-        {
-            var refusal = await PrescriptionLineGuard.CheckAsync(customerId, command.CatId, command.SkuId, cats, dietGate);
-            if (refusal is not null) return refusal;
-            catId = command.CatId;
-        }
-
         var cart = await CartCaller.FindAsync(carts, command, command.GuestTokenHash);
         var isNew = cart is null;
         if (cart is null)
@@ -83,7 +71,7 @@ public sealed class AddCartLineCommandHandler(
         try
         {
             lineId = cart.AddLine(
-                command.SkuId, command.Quantity, catId, sku.CurrentPrice.Value, sku.CurrencyCode, now,
+                command.SkuId, command.Quantity, sku.CurrentPrice.Value, sku.CurrencyCode, now,
                 settings.GetInt(SettingKeys.OrdersMaxQuantityPerLine), settings.GetInt(SettingKeys.OrdersMaxCartLines));
         }
         catch (DomainRuleViolationException ex)
@@ -98,12 +86,9 @@ public sealed class AddCartLineCommandHandler(
     }
 }
 
-/// <summary>HO-ORD-001 §11.4 C6 -- change a line's quantity and/or cat on the caller's own cart. A cat change re-checks ownership and authorisation.</summary>
+/// <summary>HO-ORD-001 §11.4 C6 -- change a line's quantity on the caller's own cart.</summary>
 public sealed class UpdateCartLineCommandHandler(
     IAggregateRootRepository<CartAggregate> carts,
-    IAggregateRootRepository<CatAggregate> cats,
-    ICatalogueLookup catalogue,
-    IDietAuthorisationGate dietGate,
     IBusinessSettings settings,
     TimeProvider timeProvider)
     : ICommandHandlerAsync<UpdateCartLineCommand>
@@ -118,17 +103,6 @@ public sealed class UpdateCartLineCommandHandler(
 
         try
         {
-            if (command.CatId is { } newCat && newCat != line.CatId)
-            {
-                var skus = await catalogue.GetSkusAsync([line.SkuId], now, default);
-                if (skus.TryGetValue(line.SkuId, out var sku) && sku.RequiresPrescription)
-                {
-                    var refusal = await PrescriptionLineGuard.CheckAsync(CartCaller.CustomerId(command), newCat, line.SkuId, cats, dietGate);
-                    if (refusal is not null) return refusal;
-                    cart.SetLineCat(line.Id, newCat, now);
-                }
-            }
-
             if (command.Quantity is { } quantity)
                 cart.SetQuantity(line.Id, quantity, now, settings.GetInt(SettingKeys.OrdersMaxQuantityPerLine));
         }

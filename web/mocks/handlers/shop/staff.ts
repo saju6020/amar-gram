@@ -104,10 +104,10 @@ export function checklistFor(p: MockProduct) {
       {
         item: 'FoodDetails',
         isBlocking: true,
-        isMet: !!p.lifeStage,
-        message: p.lifeStage
+        isMet: !!p.ingredientList,
+        message: p.ingredientList
           ? 'Food details are set.'
-          : 'Add the food details, including the life stage.',
+          : 'Add the food details, including the ingredient list.',
       },
     );
   }
@@ -162,7 +162,6 @@ const skuLabelFor = (p: MockProduct, s: MockSku) => {
 function staffFood(p: MockProduct) {
   const any =
     p.manufacturer ||
-    p.lifeStage ||
     p.protein ||
     p.ingredientList ||
     p.analysis ||
@@ -171,7 +170,6 @@ function staffFood(p: MockProduct) {
   if (!any) return null;
   return {
     manufacturer: p.manufacturer,
-    lifeStage: p.lifeStage,
     proteinSource: p.protein,
     ingredientList: p.ingredientList,
     guaranteedAnalysis: p.analysis,
@@ -196,7 +194,6 @@ function staffDetail(p: MockProduct) {
     firstPublishedOn: p.firstPublishedOn,
     taxClassId: p.taxClassId,
     countryOfOriginCode: p.country,
-    prescriptionRequired: p.prescriptionRequired,
     isExpiryTracked: p.isExpiryTracked,
     listedOnStorefront: p.listed,
     skus: p.skus.map((s) => ({
@@ -358,9 +355,7 @@ export const staffHandlers: HttpHandler[] = [
       status: 'Draft',
       listed: true,
       country: null,
-      lifeStage: null,
       protein: null,
-      prescriptionRequired: false,
       tags: [],
       ingredientList: null,
       manufacturer: null,
@@ -467,26 +462,12 @@ export const staffHandlers: HttpHandler[] = [
       }
       Object.assign(p, {
         manufacturer: b.manufacturer ?? null,
-        lifeStage: b.lifeStage ?? null,
         protein: b.proteinSource ?? null,
         ingredientList: b.ingredientList ?? null,
         analysis: analysis ?? null,
         feedingGuide: b.feedingGuide ?? null,
         storageInstructions: b.storageInstructions ?? null,
       });
-    }),
-  ),
-
-  http.put('*/api/staff/shop/products/:productId/prescription', ({ params, request }) =>
-    write(String(params.productId), request, (p, b) => {
-      if (p.category !== 'CatFood') {
-        return badRequest(
-          'PrescriptionRequired',
-          'PrescriptionOnlyForFood',
-          'Only food can require a prescription.',
-        );
-      }
-      p.prescriptionRequired = Boolean(b.prescriptionRequired);
     }),
   ),
 
@@ -529,12 +510,6 @@ export const staffHandlers: HttpHandler[] = [
             'components',
             'InvalidBundleComponent',
             `SKU ${found.sku.code} is a bundle and cannot be a component.`,
-          );
-        if (found.product.prescriptionRequired)
-          return badRequest(
-            'components',
-            'InvalidBundleComponent',
-            `SKU ${found.sku.code} is a prescription product and cannot be bundled.`,
           );
         if (found.sku.status !== 'Active')
           return badRequest(

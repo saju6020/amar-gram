@@ -57,7 +57,7 @@ public sealed class StaffPosController(IInMemoryDispatcher dispatcher, IUserCont
 
         var response = await dispatcher.GetResultAsync(new GetCounterQuoteQuery
         {
-            BranchId = branchId, CustomerId = request.CustomerId, Lines = request.Lines.Select(l => new CounterQuoteLine(l.SkuId, l.Quantity, l.CatId)).ToList(),
+            BranchId = branchId, CustomerId = request.CustomerId, Lines = request.Lines.Select(l => new CounterQuoteLine(l.SkuId, l.Quantity)).ToList(),
             DiscountCode = request.DiscountCode, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
         });
 
@@ -82,7 +82,7 @@ public sealed class StaffPosController(IInMemoryDispatcher dispatcher, IUserCont
         var response = await dispatcher.SendAsync(new CompleteCounterSaleCommand
         {
             OrderId = Guid.NewGuid(), IdempotencyKey = key, BranchId = branchId, CustomerName = request.CustomerName ?? string.Empty, CustomerMobile = request.CustomerMobile ?? string.Empty,
-            Lines = request.Lines.Select(l => new CounterSaleLineInput(l.SkuId, l.Quantity, l.CatId)).ToList(), DiscountCode = request.DiscountCode, Tenders = tenders,
+            Lines = request.Lines.Select(l => new CounterSaleLineInput(l.SkuId, l.Quantity)).ToList(), DiscountCode = request.DiscountCode, Tenders = tenders,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         });
 

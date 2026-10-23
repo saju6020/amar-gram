@@ -95,7 +95,6 @@ function getList(url: URL) {
   const q = (sp.get('q') ?? '').trim();
   const brands = sp.getAll('brand').map((b) => b.toLowerCase());
   const origins = sp.getAll('origin').map((o) => o.toUpperCase());
-  const lifeStages = sp.getAll('lifeStage');
   const proteins = sp.getAll('protein');
   const minPrice = sp.get('minPrice');
   const maxPrice = sp.get('maxPrice');
@@ -107,11 +106,6 @@ function getList(url: URL) {
     if (sp.get('subcategory') && p.subcategory !== sp.get('subcategory')) return false;
     if (brands.length && !brands.includes(p.brand.toLowerCase())) return false;
     if (origins.length && !(p.country && origins.includes(p.country))) return false;
-    if (
-      lifeStages.length &&
-      !(p.lifeStage && (lifeStages.includes(p.lifeStage) || p.lifeStage === 'AllLifeStages'))
-    )
-      return false;
     if (proteins.length && !(p.protein && proteins.includes(p.protein))) return false;
     if (minPrice || maxPrice) {
       const ok = p.skus.some((s) => {
@@ -152,7 +146,6 @@ function getList(url: URL) {
       subcategory: sp.get('subcategory'),
       brand: brands.length ? sp.getAll('brand').join(',') : null,
       origin: origins.length ? origins.join(',') : null,
-      lifeStage: lifeStages.length ? lifeStages.join(',') : null,
       protein: proteins.length ? proteins.join(',') : null,
       minPrice: minPrice ? Number(minPrice).toFixed(2) : null,
       maxPrice: maxPrice ? Number(maxPrice).toFixed(2) : null,
@@ -221,7 +214,6 @@ export const catalogueHandlers: HttpHandler[] = [
         name: COUNTRY_NAMES[code] ?? code,
         count,
       })),
-      lifeStages: countBy(scope, (p) => p.lifeStage).map(([value, count]) => ({ value, count })),
       proteinSources: countBy(scope, (p) => p.protein).map(([value, count]) => ({ value, count })),
       price: {
         min: prices.length ? Math.min(...prices) : null,
@@ -301,27 +293,11 @@ export const catalogueHandlers: HttpHandler[] = [
         .map((r) => findBySlug(r.slug))
         .filter((p): p is MockProduct => !!p && isOnStorefront(p))
         .map(catalogueItem);
-    const sameStage = storefrontProducts()
-      .filter(
-        (p) =>
-          p.productId !== product.productId &&
-          p.lifeStage &&
-          p.lifeStage === product.lifeStage &&
-          p.category === product.category &&
-          !p.prescriptionRequired,
-      )
-      .slice(0, 4)
-      .map(catalogueItem);
     const personal = hasCustomerSession(request);
     return HttpResponse.json(
       {
         frequentlyBoughtTogether: linked('FrequentlyBoughtTogether'),
         upSell: linked('UpSell'),
-        lifeStage: {
-          basis: personal ? 'YourCats' : 'Generic',
-          lifeStages: product.lifeStage ? [product.lifeStage] : [],
-          items: product.lifeStage ? sameStage : [],
-        },
       },
       { headers: { 'Cache-Control': personal ? 'private, no-store' : 'public, max-age=60' } },
     );

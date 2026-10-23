@@ -55,11 +55,11 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
         using var client = CreateClient();
         await SignInWithCsrfAsync(client, mobile, password);
 
-        // Requested out of catalogue order (Vet, Reception) -- StaffRoles.All order is
-        // Reception, Nurse, Vet, ... so the stored/returned order must be Reception, Vet.
+        // Requested out of catalogue order (Inventory, Reception) -- StaffRoles.All order is
+        // Reception, Inventory, ... so the stored/returned order must be Reception, Inventory.
         var response = await client.PostAsJsonAsync("/api/staff-accounts", new
         {
-            fullName = "New Vet", mobileNumber = NewMobile(), roleIds = new[] { "Vet", "Reception" }
+            fullName = "New Inventory Clerk", mobileNumber = NewMobile(), roleIds = new[] { "Inventory", "Reception" }
         }, Json);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(Json);
@@ -70,7 +70,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
         var body = await get.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(Json);
 
         var roleIds = body.GetProperty("roleIds").EnumerateArray().Select(r => r.GetString()).ToList();
-        Assert.Equal(["Reception", "Vet"], roleIds);
+        Assert.Equal(["Reception", "Inventory"], roleIds);
         Assert.False(body.GetProperty("hasPassword").GetBoolean());
     }
 
@@ -85,7 +85,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
         var newMobile = NewMobile();
         var response = await client.PostAsJsonAsync("/api/staff-accounts", new
         {
-            fullName = "New Nurse", mobileNumber = newMobile, roleIds = new[] { "Nurse" }, password = "a-shared-starting-password"
+            fullName = "New Receptionist", mobileNumber = newMobile, roleIds = new[] { "Reception" }, password = "a-shared-starting-password"
         }, Json);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var newStaffId = (await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(Json)).GetProperty("staffAccountId").GetGuid();
@@ -103,7 +103,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
     public async Task Administrator_SetsAStaffPassword_OldSessionEnds_NewPasswordSignsIn()
     {
         var (administratorId, (administratorMobile, administratorPassword)) = await SeedStaffWithIdAsync("Administrator");
-        var (memberId, (memberMobile, memberPassword)) = await SeedStaffWithIdAsync("Nurse");
+        var (memberId, (memberMobile, memberPassword)) = await SeedStaffWithIdAsync("Reception");
 
         using var memberClient = CreateClient();
         Assert.Equal(HttpStatusCode.OK, (await memberClient.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = memberMobile, password = memberPassword }, Json)).StatusCode);
@@ -132,7 +132,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
     public async Task NonAdministrator_SettingAStaffPassword_Returns403()
     {
         var (receptionMobile, receptionPassword) = await SeedStaffAsync("Reception");
-        var (memberId, _) = await SeedStaffWithIdAsync("Nurse");
+        var (memberId, _) = await SeedStaffWithIdAsync("Reception");
         using var client = CreateClient();
         await SignInWithCsrfAsync(client, receptionMobile, receptionPassword);
 
@@ -144,7 +144,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
     public async Task SettingAPasswordForAnUnknownStaffAccount_Returns404_AndAShortOne_Returns400()
     {
         var (mobile, password) = await SeedStaffAsync("Administrator");
-        var (memberId, _) = await SeedStaffWithIdAsync("Nurse");
+        var (memberId, _) = await SeedStaffWithIdAsync("Reception");
         using var client = CreateClient();
         await SignInWithCsrfAsync(client, mobile, password);
 
@@ -157,20 +157,20 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
     public async Task Administrator_UpdatesStaffDetails_NewEmailSignsIn_AndIsAudited()
     {
         var (administratorId, (administratorMobile, administratorPassword)) = await SeedStaffWithIdAsync("Administrator");
-        var (memberId, (memberMobile, memberPassword)) = await SeedStaffWithIdAsync("Nurse");
+        var (memberId, (memberMobile, memberPassword)) = await SeedStaffWithIdAsync("Reception");
         using var client = CreateClient();
         await SignInWithCsrfAsync(client, administratorMobile, administratorPassword);
 
         var email = NewEmail();
-        var update = await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Renamed Nurse", mobileNumber = memberMobile, emailAddress = email }, Json);
+        var update = await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Renamed Receptionist", mobileNumber = memberMobile, emailAddress = email }, Json);
         Assert.Equal(HttpStatusCode.NoContent, update.StatusCode);
 
         var body = await (await client.GetAsync($"/api/staff-accounts/{memberId}")).Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(Json);
-        Assert.Equal("Renamed Nurse", body.GetProperty("fullName").GetString());
+        Assert.Equal("Renamed Receptionist", body.GetProperty("fullName").GetString());
         Assert.Equal(email, body.GetProperty("emailAddress").GetString());
 
         // Re-saving the same identifiers is not a duplicate of itself.
-        Assert.Equal(HttpStatusCode.NoContent, (await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Renamed Nurse", mobileNumber = memberMobile, emailAddress = email }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Renamed Receptionist", mobileNumber = memberMobile, emailAddress = email }, Json)).StatusCode);
 
         using var memberClient = CreateClient();
         Assert.Equal(HttpStatusCode.OK, (await memberClient.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = email, password = memberPassword }, Json)).StatusCode);
@@ -187,21 +187,21 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
     public async Task UpdatingStaffDetails_Duplicate400_Unknown404_NonAdministrator403()
     {
         var (adminMobile, adminPassword) = await SeedStaffAsync("Administrator");
-        var (memberId, _) = await SeedStaffWithIdAsync("Nurse");
-        var (_, (otherMobile, _)) = await SeedStaffWithIdAsync("Vet");
+        var (memberId, _) = await SeedStaffWithIdAsync("Reception");
+        var (_, (otherMobile, _)) = await SeedStaffWithIdAsync("Inventory");
         using var client = CreateClient();
         await SignInWithCsrfAsync(client, adminMobile, adminPassword);
 
-        var duplicate = await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Nurse", mobileNumber = otherMobile }, Json);
+        var duplicate = await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Receptionist", mobileNumber = otherMobile }, Json);
         Assert.Equal(HttpStatusCode.BadRequest, duplicate.StatusCode);
         Assert.Contains("MobileNumberAlreadyRegistered", await duplicate.Content.ReadAsStringAsync());
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Nurse" }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Receptionist" }, Json)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.PutAsJsonAsync($"/api/staff-accounts/{Guid.NewGuid()}", new { fullName = "Nobody", mobileNumber = NewMobile() }, Json)).StatusCode);
 
         var (receptionMobile, receptionPassword) = await SeedStaffAsync("Reception");
         using var reception = CreateClient();
         await SignInWithCsrfAsync(reception, receptionMobile, receptionPassword);
-        Assert.Equal(HttpStatusCode.Forbidden, (await reception.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Nurse", mobileNumber = NewMobile() }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await reception.PutAsJsonAsync($"/api/staff-accounts/{memberId}", new { fullName = "Receptionist", mobileNumber = NewMobile() }, Json)).StatusCode);
     }
 
     // I-F4
@@ -209,7 +209,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
     public async Task ChangeRoles_RotatesStamp_AffectedMembersExistingSessionIs401OnNextRequest()
     {
         var (administratorMobile, administratorPassword) = await SeedStaffAsync("Administrator");
-        var (memberId, (memberMobile, memberPassword)) = await SeedStaffWithIdAsync("Nurse");
+        var (memberId, (memberMobile, memberPassword)) = await SeedStaffWithIdAsync("Reception");
 
         // The affected member signs in first and keeps their own session/client.
         using var memberClient = CreateClient();
@@ -222,7 +222,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
         using var adminClient = CreateClient();
         await SignInWithCsrfAsync(adminClient, administratorMobile, administratorPassword);
 
-        var changeRoles = await adminClient.PutAsJsonAsync($"/api/staff-accounts/{memberId}/roles", new { roleIds = new[] { "Vet" } }, Json);
+        var changeRoles = await adminClient.PutAsJsonAsync($"/api/staff-accounts/{memberId}/roles", new { roleIds = new[] { "Inventory" } }, Json);
         Assert.Equal(HttpStatusCode.NoContent, changeRoles.StatusCode);
 
         var statusAfterChange = await memberClient.GetAsync("/api/staff/session");
@@ -241,7 +241,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
     [Fact]
     public async Task NonAdministrator_CallingCreateStaffAccount_Returns403AndAudits()
     {
-        var (mobile, password) = await SeedStaffAsync("Nurse");
+        var (mobile, password) = await SeedStaffAsync("Reception");
         using var client = CreateClient();
 
         var signIn = await client.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = mobile, password }, Json);
@@ -250,7 +250,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
 
         var response = await client.PostAsJsonAsync("/api/staff-accounts", new
         {
-            fullName = "New Vet", mobileNumber = NewMobile(), roleIds = new[] { "Vet" }
+            fullName = "New Inventory Clerk", mobileNumber = NewMobile(), roleIds = new[] { "Inventory" }
         }, Json);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -269,7 +269,7 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
 
         var response = await client.PostAsJsonAsync("/api/staff-accounts", new
         {
-            fullName = "New Vet", mobileNumber = NewMobile(), roleIds = new[] { "Vet" }
+            fullName = "New Inventory Clerk", mobileNumber = NewMobile(), roleIds = new[] { "Inventory" }
         }, Json);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);

@@ -77,14 +77,13 @@ public sealed class GetRecallQueryHandler(CatEcommerceDbContext db) : IQueryHand
 
 /// <summary>
 /// HO-IMP-001 section 8.12 (US-IMP-11 AC2, ADR-104) -- the recall trace, read from the immutable ledger. Customers are resolved through the merge chain AT READ
-/// TIME (at most five hops), cats show their CURRENT owner, anonymised customers show no contact details, and an entry that names a customer but no cat lists the
-/// customer's living cats as household cats. The sections: received, returned (netted per reference), unshipped with dispatch blocked (reservations still open),
+/// TIME (at most five hops) and anonymised customers show no contact details. The sections: received, returned (netted per reference), unshipped with dispatch blocked (reservations still open),
 /// unidentified sales, and stock held.
 /// </summary>
 public sealed class GetRecallTraceQueryHandler(CatEcommerceDbContext db) : IQueryHandlerAsync<GetRecallTraceQuery, RecallTraceViewModel?>
 {
     private const int MaxMergeHops = 5;
-    private static readonly MovementKind[] Consuming = [MovementKind.Sale, MovementKind.Dispense, MovementKind.ClinicalUse, MovementKind.BoardingUse];
+    private static readonly MovementKind[] Consuming = [MovementKind.Sale];
 
     private sealed record Account(Guid Id, string Name, string? Mobile, string? Email, Guid? MergedInto, CustomerAccountStatus Status);
 
@@ -99,41 +98,31 @@ public sealed class GetRecallTraceQueryHandler(CatEcommerceDbContext db) : IQuer
             join l in db.StockLocations.AsNoTracking() on e.LocationId equals l.Id
             where e.BatchId == batch.Id && (Consuming.Contains(e.Kind) || e.Kind == MovementKind.Return)
             orderby e.OccurredOn, e.Sequence
-            select new { e.OccurredOn, e.Kind, e.QuantityDelta, e.LocationId, LocationCode = l.Code, e.ReferenceKind, e.ReferenceId, e.ReferenceLabel, e.CustomerId, e.CatId }).ToListAsync();
+            select new { e.OccurredOn, e.Kind, e.QuantityDelta, e.LocationId, LocationCode = l.Code, e.ReferenceKind, e.ReferenceId, e.ReferenceLabel, e.CustomerId }).ToListAsync();
 
         // Open reservations are netted per (reference, line) before the party is looked at: a Release carries no party (see OpenReservations).
         var unshipped = await CatEcommerce.Infrastructure.Inventory.OpenReservations.ForBatchAsync(db, batch.Id);
 
-        var catIds = entries.Where(e => e.CatId != null).Select(e => e.CatId!.Value).Concat(unshipped.Where(u => u.CatId != null).Select(u => u.CatId!.Value)).Distinct().ToList();
-        var cats = await db.Cats.AsNoTracking().Where(c => catIds.Contains(c.Id)).Select(c => new { c.Id, c.Name, c.OwnerId }).ToDictionaryAsync(c => c.Id);
-
         var customerIds = entries.Where(e => e.CustomerId != null).Select(e => e.CustomerId!.Value)
-            .Concat(unshipped.Where(u => u.CustomerId != null).Select(u => u.CustomerId!.Value)).Concat(cats.Values.Select(c => c.OwnerId)).Distinct().ToList();
+            .Concat(unshipped.Where(u => u.CustomerId != null).Select(u => u.CustomerId!.Value)).Distinct().ToList();
         var accounts = await LoadChainAsync(customerIds);
         RecallTraceCustomerViewModel? Customer(Guid? id) => id is null ? null : Resolve(id.Value, accounts);
 
-        var household = new Dictionary<Guid, IReadOnlyList<string>>();
-        foreach (var customerId in entries.Where(e => e.CustomerId != null && e.CatId == null && Consuming.Contains(e.Kind)).Select(e => Resolve(e.CustomerId!.Value, accounts)).Where(c => !c.IsAnonymised).Select(c => c.CustomerId).Distinct())
-            household[customerId] = await db.Cats.AsNoTracking().Where(c => c.OwnerId == customerId && c.LifeStatus == CatLifeStatus.Alive).OrderBy(c => c.Name).Select(c => c.Name).ToListAsync();
-
-        RecallTraceCatViewModel? Cat(Guid? id) => id is { } cid && cats.TryGetValue(cid, out var c) ? new RecallTraceCatViewModel(cid, c.Name, Customer(c.OwnerId)) : null;
-
-        var received = entries.Where(e => Consuming.Contains(e.Kind) && (e.CustomerId != null || e.CatId != null)).Select(e =>
+        var received = entries.Where(e => Consuming.Contains(e.Kind) && e.CustomerId != null).Select(e =>
         {
             var customer = Customer(e.CustomerId);
             return new RecallTraceReceivedViewModel(
-                e.OccurredOn, e.Kind.DisplayName, InventoryViewFormat.Quantity(-e.QuantityDelta), e.LocationId, e.LocationCode, e.ReferenceLabel, customer, Cat(e.CatId),
-                e.CatId is null && customer is { IsAnonymised: false } ? household.GetValueOrDefault(customer.CustomerId) ?? [] : []);
+                e.OccurredOn, e.Kind.DisplayName, InventoryViewFormat.Quantity(-e.QuantityDelta), e.LocationId, e.LocationCode, e.ReferenceLabel, customer);
         }).ToList();
 
         var returned = entries.Where(e => e.Kind == MovementKind.Return).GroupBy(e => new { e.ReferenceKind, e.ReferenceId, e.CustomerId }).Select(g => new RecallTraceReturnedViewModel(
             g.Key.ReferenceKind.DisplayName, g.Key.ReferenceId, g.Select(e => e.ReferenceLabel).FirstOrDefault(l => l != null), InventoryViewFormat.Quantity(g.Sum(e => e.QuantityDelta)),
             Customer(g.Key.CustomerId))).ToList();
 
-        var unshippedRows = unshipped.GroupBy(u => new { u.ReferenceKind, u.ReferenceId, u.CustomerId, u.CatId }).Select(g => new RecallTraceUnshippedViewModel(
-            g.Key.ReferenceKind.DisplayName, g.Key.ReferenceId, InventoryViewFormat.Quantity(g.Sum(u => u.Remaining)), Customer(g.Key.CustomerId), Cat(g.Key.CatId))).ToList();
+        var unshippedRows = unshipped.GroupBy(u => new { u.ReferenceKind, u.ReferenceId, u.CustomerId }).Select(g => new RecallTraceUnshippedViewModel(
+            g.Key.ReferenceKind.DisplayName, g.Key.ReferenceId, InventoryViewFormat.Quantity(g.Sum(u => u.Remaining)), Customer(g.Key.CustomerId))).ToList();
 
-        var unidentified = entries.Where(e => Consuming.Contains(e.Kind) && e.CustomerId == null && e.CatId == null).ToList();
+        var unidentified = entries.Where(e => Consuming.Contains(e.Kind) && e.CustomerId == null).ToList();
 
         return new QueryResponse<RecallTraceViewModel?>
         {

@@ -8,7 +8,7 @@ import { Amount } from './Amount';
 
 /**
  * `components/billing/ChargePicker.tsx` — HO-BIL-002 §11.2 (US-BIL-02, ORD-17, AC-16): the unbilled
- * charges of one customer **grouped by business line** — Clinic, Shop, Boarding — each with its own
+ * charges of one customer **grouped by business line** (today only Shop), each with its own
  * *Select all in group*. A row the server has since put on another invoice is marked *"Already on
  * another invoice"*, is not selectable and is dropped from the selection. Nothing is totalled here:
  * the preview beside it is the server's.

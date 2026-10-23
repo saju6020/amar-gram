@@ -80,8 +80,6 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
             {
                 (InventorySeed.ShopLocationId, InventorySeed.ShopCode, "Shop floor", StockLocationKind.ShopFloor),
                 (InventorySeed.WarehouseLocationId, InventorySeed.WarehouseCode, "Warehouse", StockLocationKind.Warehouse),
-                (InventorySeed.DispensaryLocationId, InventorySeed.DispensaryCode, "Clinic dispensary", StockLocationKind.ClinicDispensary),
-                (InventorySeed.BoardingStoreLocationId, InventorySeed.BoardingStoreCode, "Boarding store", StockLocationKind.BoardingStore),
                 (InventorySeed.QuarantineLocationId, InventorySeed.QuarantineCode, "Quarantine", StockLocationKind.Quarantine),
             };
 

@@ -44,10 +44,10 @@ public sealed class ReportingGrowthEndpointTests(ReportingApiFactory factory) : 
         var firstMonthStart = MonthStart();
         await IssueSimpleInvoiceAsync(context, returning, 600m);
 
-        // Month 2: the returning customer buys again (clinic 400 through an appointment charge), and a new customer appears.
+        // Month 2: the returning customer buys again (a 400 fee through a manual charge), and a new customer appears.
         await NextMonthAsync(context);
-        var chargeId = await RecordChargeAsync(context, returning, 400m, 1m, itemKind: CatEcommerce.Shared.Common.Enums.ItemKind.Service,
-            sourceKind: CatEcommerce.Shared.Common.Enums.ChargeSourceKind.Appointment, taxClassId: context.ZeroTaxClassId, description: "Consultation");
+        var chargeId = await RecordChargeAsync(context, returning, 400m, 1m, itemKind: CatEcommerce.Shared.Common.Enums.ItemKind.Fee,
+            sourceKind: CatEcommerce.Shared.Common.Enums.ChargeSourceKind.Manual, taxClassId: context.ZeroTaxClassId, description: "Service fee");
         await IssueFromChargesAsync(context.Admin, returning, [chargeId]);
         await IssueSimpleInvoiceAsync(context, fresh, 250m);
         var secondMonth = Month(Today);
@@ -66,20 +66,16 @@ public sealed class ReportingGrowthEndpointTests(ReportingApiFactory factory) : 
             .Single(r => r.GetProperty("bucket").GetString() == firstMonth);
         Assert.Equal(1, firstMonthRow.GetProperty("newCustomers").GetInt64());
 
-        // I-F2 -- customers first seen in the second month: only the fresh one; their lifetime value is their invoices, and the line shares add up.
+        // I-F2 -- customers first seen in the second month: only the fresh one; their lifetime value is their invoices.
         var ltv = await RunReportAsync(context.Admin, ReportCatalogue.CustomerLifetimeValueKey, context, from: secondMonthStart, to: Today);
         var top = Rows(ltv).Single(r => r.GetProperty("section").GetString() == "Top 50");
         Assert.Equal("Fresh Owner", top.GetProperty("label").GetString());
         Assert.Equal(250m, Money(top.GetProperty("averageLtv")));
-        Assert.Equal("100.0", top.GetProperty("shopShare").GetString());
 
-        // ... and for the first month's customer, the value runs to the end of the range across both lines.
+        // ... and for the first month's customer, the value runs to the end of the range.
         var returningLtv = await RunReportAsync(context.Admin, ReportCatalogue.CustomerLifetimeValueKey, context, from: firstMonthStart, to: Today);
         var returningRow = Rows(returningLtv).Single(r => r.GetProperty("section").GetString() == "Top 50" && r.GetProperty("label").GetString() == "Returning Owner");
-        Assert.Equal(1000m, Money(returningRow.GetProperty("averageLtv"))); // 600 shop + 400 clinic
-        Assert.Equal("60.0", returningRow.GetProperty("shopShare").GetString());
-        Assert.Equal("40.0", returningRow.GetProperty("clinicShare").GetString());
-        Assert.Equal("Clinic, Shop", returningRow.GetProperty("linesUsed").GetString());
+        Assert.Equal(1000m, Money(returningRow.GetProperty("averageLtv"))); // 600 + 400
 
         // I-F3 -- the first month's cohort: the returning customer came back one month later.
         var cohorts = await RunReportAsync(context.Admin, ReportCatalogue.CohortRetentionKey, context, from: firstMonthStart, to: firstMonthStart.AddMonths(1).AddDays(-1));
@@ -88,10 +84,8 @@ public sealed class ReportingGrowthEndpointTests(ReportingApiFactory factory) : 
         Assert.Equal("100.0", cohort.GetProperty("month1").GetString());
         Assert.Equal(JsonValueKind.Null, cohort.GetProperty("month6").ValueKind); // not yet happened
 
-        var visits = await RunReportAsync(context.Admin, ReportCatalogue.CohortRetentionKey, context, "measure=RepeatVisit", firstMonthStart, firstMonthStart.AddMonths(1).AddDays(-1));
-        Assert.Equal("100.0", Rows(visits).Single().GetProperty("month1").GetString());   // the clinic invoice in month 2
         var purchases = await RunReportAsync(context.Admin, ReportCatalogue.CohortRetentionKey, context, "measure=RepeatPurchase", firstMonthStart, firstMonthStart.AddMonths(1).AddDays(-1));
-        Assert.Equal("0.0", Rows(purchases).Single().GetProperty("month1").GetString());  // no shop invoice in month 2
+        Assert.Equal("100.0", Rows(purchases).Single().GetProperty("month1").GetString());  // the month-2 fee is a shop-line invoice
     }
 
     // ── I-F7: a merged customer is counted once ──────────────────────────────────────────────────────────────
@@ -132,8 +126,7 @@ public sealed class ReportingGrowthEndpointTests(ReportingApiFactory factory) : 
         var keys = catalogue.EnumerateArray().Select(e => e.GetProperty("key").GetString()).ToList();
         Assert.Contains(ReportCatalogue.CohortRetentionKey, keys);
         Assert.DoesNotContain("subscription-health", keys);   // HO-SUB-001 is not merged
-        Assert.DoesNotContain("cross-line-conversion", keys); // needs the boarding line
+        Assert.DoesNotContain("cross-line-conversion", keys); // there is only one business line
         Assert.DoesNotContain("cart-abandonment", keys);      // HO-ORD-001 has not built the reminders
-        Assert.DoesNotContain(keys, k => k!.StartsWith("boarding-", StringComparison.Ordinal));
     }
 }

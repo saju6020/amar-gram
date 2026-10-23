@@ -24,8 +24,8 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            var finalised = VisitStatus.Finalised.Value;
-            var withdrawn = ConsentStatus.Withdrawn.Value;
+            var finalised = 2;
+            var withdrawn = 2;
 
             migrationBuilder.Sql($"""
                 -- visit: as before, plus the soft-delete flag can never be set (an open visit is not deletable either).
@@ -138,8 +138,8 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            var finalised = VisitStatus.Finalised.Value;
-            var withdrawn = ConsentStatus.Withdrawn.Value;
+            var finalised = 2;
+            var withdrawn = 2;
 
             migrationBuilder.Sql(BillingMigrationSql.DropNoTruncate());
 

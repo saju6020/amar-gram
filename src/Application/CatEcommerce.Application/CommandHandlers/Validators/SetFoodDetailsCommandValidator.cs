@@ -11,7 +11,6 @@ public sealed class SetFoodDetailsCommandValidator : AbstractValidator<SetFoodDe
     {
         RuleFor(x => x.ProductId).NotEmpty();
         RuleFor(x => x.Manufacturer).MaximumLength(ProductRules.ManufacturerMaxLength);
-        RuleFor(x => x.LifeStage).MustBeValidEnumeration<SetFoodDetailsCommand, LifeStage>();
         RuleFor(x => x.ProteinSource).MustBeValidEnumeration<SetFoodDetailsCommand, ProteinSource>();
         RuleFor(x => x.IngredientList).MaximumLength(ProductRules.IngredientListMaxLength);
         RuleFor(x => x.FeedingGuide).MaximumLength(ProductRules.FeedingGuideMaxLength);

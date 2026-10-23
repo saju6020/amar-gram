@@ -45,12 +45,6 @@ public class BillingApiFactory : CatEcommerceApiFactory
         settings["Notifications:Worker:Enabled"] = "false";
         settings["Notifications:Unsubscribe:PermitLimit"] = "100000";
         settings["Notifications:TemplatePreview:PermitLimit"] = "100000";
-
-        settings["Clinic:Worker:Enabled"] = "false";
-        settings["Clinic:Availability:PermitLimit"] = "100000";
-        settings["Clinic:Booking:PermitLimit"] = "100000";
-        settings["Clinic:Change:PermitLimit"] = "100000";
-        settings["Clinic:Performers:PermitLimit"] = "100000";
     }
 
     protected override void ConfigureAdditionalServices(IServiceCollection services)

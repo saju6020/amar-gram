@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using CatEcommerce.Application.Commands.Reporting;
 using CatEcommerce.Application.Commands.StoredFile;
-using CatEcommerce.Application.Commands.Visit;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Infrastructure.Reporting;
@@ -24,8 +23,7 @@ public sealed record ScheduledRunOutcome(Guid RunId, string Status, int RowCount
 /// restricted actions, ADR-288), dispatch the report in export mode with a <c>ReportAccess</c> built from them (never an unrestricted system identity), render with the same renderers as an interactive
 /// export, store the file as its OWN step (<c>IFileStore</c> then HO-FIL-001's <c>RegisterStoredFileCommand</c>, the two steps the upload endpoint takes), then record the run (C5, one aggregate, given
 /// the stored file's id) and -- for a scheduled slot -- advance the schedule (C7). A file whose run was not kept (a duplicate slot, a refused or failed save) is deleted in a further, separate step.
-/// A failure records a <c>Failed</c> run (C6); a slot with <c>MaxAttemptsPerSlot</c> failed runs, or a PDF that is too large, is advanced anyway so one bad slot never blocks the schedule. A
-/// Clinical-category report writes one clinical-access row per recipient first (NFR-SEC-8, fail closed). The worker's pass and the manual run-now endpoint both use it, so the two cannot drift.
+/// A failure records a <c>Failed</c> run (C6); a slot with <c>MaxAttemptsPerSlot</c> failed runs, or a PDF that is too large, is advanced anyway so one bad slot never blocks the schedule. The worker's pass and the manual run-now endpoint both use it, so the two cannot drift.
 /// </summary>
 public sealed class ScheduledReportRunner(
     IInMemoryDispatcher dispatcher,
@@ -37,7 +35,6 @@ public sealed class ScheduledReportRunner(
     ILogger<ScheduledReportRunner> logger)
 {
     public const string UnexpectedFailureCode = "ReportRunFailed";
-    public const string ClinicalAccessLogFailedCode = "ClinicalAccessLogFailed";
     private const long BytesPerMegabyte = 1024 * 1024;
 
     public async Task<ScheduledRunOutcome?> RunAsync(Guid scheduleId, DateTimeOffset dueOn, ReportRunTrigger trigger, UserContext userContext)
@@ -84,10 +81,6 @@ public sealed class ScheduledReportRunner(
             var result = outcome.Result!;
             var renderer = renderers.First(r => r.Format == format);
             var bytes = renderer.Render(result, new ReportRenderContext("Amar Gram"));
-
-            // NFR-SEC-8: the clinical text of a Clinical-category report is read by each recipient -- one access row each, before anything is stored or sent. Fail closed.
-            if (definition.Category == ReportCategory.Clinical && !await LogClinicalAccessAsync(plan, runId, userContext))
-                return await FailAsync(plan, runId, dueOn, trigger, ClinicalAccessLogFailedCode, from, to, userContext);
 
             var fileName = $"amargram-{result.ReportKey}-{from:yyyy-MM-dd}-to-{to:yyyy-MM-dd}.{renderer.Extension}";
             var contentType = renderer.ContentType.Split(';')[0].Trim();
@@ -225,30 +218,6 @@ public sealed class ScheduledReportRunner(
         {
             logger.LogWarning("A report file {FileId} that was not kept could not be deleted ({ExceptionType}); it expires with its retention date.", fileId, ex.GetType().Name);
         }
-    }
-
-    /// <summary>NFR-SEC-8 / ADR-129: one clinical-record access row per recipient of a scheduled Clinical-category report. False if any write fails.</summary>
-    private async Task<bool> LogClinicalAccessAsync(ReportSchedulePlanViewModel plan, Guid runId, UserContext systemContext)
-    {
-        foreach (var recipient in plan.Recipients)
-        {
-            try
-            {
-                var response = await dispatcher.SendAsync(new RecordClinicalRecordAccessCommand
-                {
-                    AuditEntryId = Guid.NewGuid(), Kind = ClinicalRecordKind.VisitList, RecordId = CatEcommerce.Application.CommandHandlers.Reporting.RecordReportExportCommandHandler.EntityIdFor(plan.ReportKey), Path = $"scheduled-report/{plan.ReportKey}/{plan.ScheduleId}/{runId}",
-                    UserContext = new UserContext(recipient.Id, Guid.Empty), CorrelationId = Guid.NewGuid(), ValidateCommand = true
-                });
-                if (!response.IsSuccess) return false;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                logger.LogError("The clinical-access row for a scheduled report recipient could not be written ({ExceptionType}).", ex.GetType().Name);
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /// <summary>The latest slot at or before <paramref name="now"/>, walking forward from the stored due time. A schedule that was never behind keeps its stored due time.</summary>

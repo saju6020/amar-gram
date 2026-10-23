@@ -9,9 +9,8 @@ using Xunit;
 namespace CatEcommerce.IntegrationTests.Endpoints;
 
 /// <summary>
-/// Gate fix 2026-09-26 (TEST gate seventh pass, item 1): A11 (I-D3/I-D4) had zero test coverage
-/// because <c>clinical.vaccinationDueSoonDays</c> and <c>security.staffIdleTimeoutMinutes</c> are
-/// both global, non-branch-overridable, shared state in the one <c>catecommerce_adm</c> database
+/// Gate fix 2026-09-26 (TEST gate seventh pass, item 1): A11 (I-D4) had zero test coverage
+/// because <c>security.staffIdleTimeoutMinutes</c> is global, non-branch-overridable, shared state in the one <c>catecommerce_adm</c> database
 /// every other integration test in this suite also uses -- a PERMANENT mutation risked a passing
 /// value leaking into a concurrently-running, unrelated test class that assumes the registry
 /// default (e.g. a test elsewhere in the suite relying on the default 30-minute idle timeout).
@@ -34,65 +33,6 @@ public sealed class AdministrationGlobalSettingsCollection
 [Collection(AdministrationGlobalSettingsCollection.Name)]
 public sealed class AdminGlobalSettingsLiveEffectEndpointTests(AdministrationApiFactory factory) : AdministrationIntegrationTestBase(factory)
 {
-    /// <summary>I-D3: changing <c>clinical.vaccinationDueSoonDays</c> changes a cat's vaccination
-    /// status on the very next read, with no restart. Checked against one item in the response's own
-    /// <c>vaccines</c> array (this test's own freshly-registered, unique-coded vaccine), not the
-    /// aggregated <c>overallStatus</c> -- the vaccine catalogue is itself shared, global data, and
-    /// any other already-registered core vaccine this cat has never received would otherwise also
-    /// drive <c>overallStatus</c> to <c>Overdue</c> regardless of this test's own setting change.
-    /// </summary>
-    [Fact]
-    public async Task ChangeVaccinationDueSoonDays_CatVaccinationStatus_ReflectsTheNewValueImmediately()
-    {
-        // HO-CAT-001 gate fix, SECURITY MEDIUM (2026-09-26): AdministeredByVetId must now resolve
-        // to a staff account holding the Vet role, so this admin also holds Vet -- it both signs
-        // in to change the global setting (Administrator) and is named as the administering vet.
-        var admin = await SeedStaffAsync(StaffRoles.Administrator, StaffRoles.Vet);
-        using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-
-        var originalValue = await GetEffectiveSettingValueAsync(client, SettingKeys.ClinicalVaccinationDueSoonDays);
-        try
-        {
-            var catId = await SeedCatAsync(Guid.NewGuid());
-
-            var vaccineCode = "V" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
-            var registerVaccine = await client.PostAsJsonAsync("/api/vaccines", new
-            {
-                code = vaccineCode, name = "Due-Soon Live-Effect Test Vaccine", isCore = true, validityMonths = 12
-            }, Json);
-            Assert.Equal(HttpStatusCode.Created, registerVaccine.StatusCode);
-            var vaccineId = (await registerVaccine.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("vaccineId").GetGuid();
-
-            // NextDueOn = AdministeredOn.AddMonths(12) (CatAggregate.RecordVaccination) -- administered
-            // a year and 20 days ago, so NextDueOn lands ~20 days from today.
-            var administeredOn = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-1).AddDays(20);
-            var recordVaccination = await client.PostAsJsonAsync($"/api/cats/{catId}/vaccinations", new
-            {
-                vaccineId,
-                batchReference = "BATCH-" + Guid.NewGuid().ToString("N")[..6],
-                batchExpiresOn = administeredOn.AddYears(2),
-                administeredOn,
-                administeredByVetId = admin.StaffAccountId
-            }, Json);
-            Assert.Equal(HttpStatusCode.Created, recordVaccination.StatusCode);
-
-            // A window comfortably wider than the ~20-day gap -> DueSoon.
-            await ChangeSettingAsync(client, SettingKeys.ClinicalVaccinationDueSoonDays, "25");
-            var wideWindowItem = await GetVaccineItemAsync(client, catId, vaccineId);
-            Assert.Equal("DueSoon", wideWindowItem.GetProperty("status").GetString());
-
-            // Same vaccination record, same query -- only the global setting changed in between, no
-            // restart -- a window narrower than the gap -> Current.
-            await ChangeSettingAsync(client, SettingKeys.ClinicalVaccinationDueSoonDays, "5");
-            var narrowWindowItem = await GetVaccineItemAsync(client, catId, vaccineId);
-            Assert.Equal("Current", narrowWindowItem.GetProperty("status").GetString());
-        }
-        finally
-        {
-            await ChangeSettingAsync(client, SettingKeys.ClinicalVaccinationDueSoonDays, originalValue);
-        }
-    }
-
     /// <summary>I-D4: changing <c>security.staffIdleTimeoutMinutes</c> changes when a session times
     /// out, with no restart. Uses a controllable <see cref="FakeTimeProvider"/> (the same technique
     /// <c>AccountsApiFactory.WithFakeTimeProvider()</c> already uses for its own idle-timeout tests)
@@ -150,18 +90,10 @@ public sealed class AdminGlobalSettingsLiveEffectEndpointTests(AdministrationApi
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
-    private static async Task<JsonElement> GetVaccineItemAsync(HttpClient client, Guid catId, Guid vaccineId)
-    {
-        var response = await client.GetAsync($"/api/cats/{catId}/vaccination-status");
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
-        return body.GetProperty("vaccines").EnumerateArray().First(v => v.GetProperty("vaccineId").GetGuid() == vaccineId);
-    }
-
     /// <summary>U-D5: resolution order is branch override -&gt; global value -&gt; the definition's
     /// own default, each winning in turn (<c>CachedBusinessSettings.Resolve</c> / the read side's
-    /// identically-shaped <c>GetSettingsQueryHandler</c>). Uses <c>SettingKeys.BookingSlotHoldMinutes</c>
-    /// (branch-overridable, bounds 2-30, registry default 10): the registry <c>default</c> the
+    /// identically-shaped <c>GetSettingsQueryHandler</c>). Uses <c>SettingKeys.OrdersPickupCollectionDays</c>
+    /// (branch-overridable, bounds 1-60, registry default 7): the registry <c>default</c> the
     /// response itself reports is a fixed constant, unaffected by any database mutation, so setting a
     /// global value distinct from it and observing <c>effectiveValue</c> follow is a direct proof of
     /// "global overrides default", not an assumption about ambient state; setting a branch override
@@ -173,7 +105,7 @@ public sealed class AdminGlobalSettingsLiveEffectEndpointTests(AdministrationApi
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
 
-        const string key = SettingKeys.BookingSlotHoldMinutes;
+        const string key = SettingKeys.OrdersPickupCollectionDays;
         const string globalValue = "18";
         const string branchValue = "25";
 
@@ -190,12 +122,12 @@ public sealed class AdminGlobalSettingsLiveEffectEndpointTests(AdministrationApi
             // A fresh branch has no override for any key -- its own effective value is exactly the
             // (still-ambient) global value, and the registry's own default is reported unchanged.
             var beforeAnyChange = await GetSettingRowAsync(client, key, branchId);
-            Assert.Equal("10", beforeAnyChange.GetProperty("default").GetString());
+            Assert.Equal("7", beforeAnyChange.GetProperty("default").GetString());
 
-            // (1) Global overrides default: set a global value distinct from the fixed default "10".
+            // (1) Global overrides default: set a global value distinct from the fixed default "7".
             await ChangeSettingAsync(client, key, globalValue);
             var afterGlobalChange = await GetSettingRowAsync(client, key, branchId);
-            Assert.Equal("10", afterGlobalChange.GetProperty("default").GetString());
+            Assert.Equal("7", afterGlobalChange.GetProperty("default").GetString());
             Assert.Equal(globalValue, afterGlobalChange.GetProperty("globalValue").GetString());
             Assert.Equal(globalValue, afterGlobalChange.GetProperty("effectiveValue").GetString());
             Assert.Null(afterGlobalChange.GetProperty("branchValue").GetString());
@@ -241,7 +173,7 @@ public sealed class AdminGlobalSettingsLiveEffectEndpointTests(AdministrationApi
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
 
-        const string key = SettingKeys.BookingSlotHoldMinutes;
+        const string key = SettingKeys.OrdersPickupCollectionDays;
         var originalValue = await GetEffectiveSettingValueAsync(client, key);
         var newValue = originalValue == "20" ? "21" : "20";
         try
@@ -291,7 +223,7 @@ public sealed class AdminGlobalSettingsLiveEffectEndpointTests(AdministrationApi
         Assert.Equal(HttpStatusCode.Created, branchCreate.StatusCode);
         var branchId = (await branchCreate.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("branchId").GetGuid();
 
-        const string key = SettingKeys.BookingSlotHoldMinutes;
+        const string key = SettingKeys.OrdersPickupCollectionDays;
         const string overrideValue = "22";
 
         var from = DateTimeOffset.UtcNow.AddMinutes(-5);

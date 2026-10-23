@@ -15,30 +15,18 @@ public sealed class PortalDashboardComposerTests
         public Task<T> ReadAsync(PortalCaller caller) => read(caller);
     }
 
-    private static readonly PortalCatsViewModel CatsData = new(true, false, []);
-    private static readonly PortalAppointmentsViewModel AppointmentsData = new([]);
     private static readonly PortalCustomerViewModel CustomerData = new("Nusrat Jahan");
-    private static readonly PortalVisitsViewModel VisitsData = new([]);
-    private static readonly PortalPrescriptionsViewModel PrescriptionsData = new([]);
     private static readonly PortalOrdersViewModel OrdersData = new([]);
     private static readonly PortalBalancesViewModel BalancesData = new(false, [], [], 0, null, [], "how");
 
     private static GetPortalDashboardQueryHandler Handler(
         CapturingLogger<PortalSectionComposer> logger,
         Func<PortalCaller, Task<PortalBalancesViewModel>>? balances = null,
-        Func<PortalCaller, Task<PortalCatsViewModel>>? cats = null,
-        Func<PortalCaller, Task<PortalAppointmentsViewModel>>? appointments = null,
-        Func<PortalCaller, Task<PortalVisitsViewModel>>? visits = null,
         Func<PortalCaller, Task<PortalCustomerViewModel>>? profile = null,
-        Func<PortalCaller, Task<PortalPrescriptionsViewModel>>? prescriptions = null,
         Func<PortalCaller, Task<PortalOrdersViewModel>>? orders = null) =>
         new(new PortalSectionComposer(logger),
-            new DelegateReader<PortalCatsViewModel>(cats ?? (_ => Task.FromResult(CatsData))),
-            new DelegateReader<PortalAppointmentsViewModel>(appointments ?? (_ => Task.FromResult(AppointmentsData))),
             new DelegateReader<PortalOrdersViewModel>(orders ?? (_ => Task.FromResult(OrdersData))),
             new DelegateReader<PortalBalancesViewModel>(balances ?? (_ => Task.FromResult(BalancesData))),
-            new DelegateReader<PortalVisitsViewModel>(visits ?? (_ => Task.FromResult(VisitsData))),
-            new DelegateReader<PortalPrescriptionsViewModel>(prescriptions ?? (_ => Task.FromResult(PrescriptionsData))),
             new DelegateReader<PortalCustomerViewModel>(profile ?? (_ => Task.FromResult(CustomerData))),
             new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 4, 30, 0, TimeSpan.Zero)));
 
@@ -56,9 +44,7 @@ public sealed class PortalDashboardComposerTests
 
         Assert.Equal("Unavailable", dashboard.Balances.State);
         Assert.Null(dashboard.Balances.Data);
-        Assert.Equal("Ready", dashboard.Cats.State);
-        Assert.Equal("Ready", dashboard.Appointments.State);
-        Assert.Equal("Ready", dashboard.Visits.State);
+        Assert.Equal("Ready", dashboard.Orders.State);
         Assert.Equal("Ready", dashboard.Customer.State);
 
         var entry = Assert.Single(logger.Entries);
@@ -72,7 +58,7 @@ public sealed class PortalDashboardComposerTests
     public async Task U_B1_TheLogLineCarriesNoCustomerDataOrUpstreamPayload()
     {
         var logger = new CapturingLogger<PortalSectionComposer>();
-        var handler = Handler(logger, cats: _ => throw new InvalidOperationException("upstream said"));
+        var handler = Handler(logger, orders: _ => throw new InvalidOperationException("upstream said"));
 
         await handler.HandleAsync(QueryFor(Guid.NewGuid(), Guid.NewGuid()));
 
@@ -85,40 +71,25 @@ public sealed class PortalDashboardComposerTests
     public async Task U_B2_ACancelledRead_Propagates_NoSectionResult()
     {
         var logger = new CapturingLogger<PortalSectionComposer>();
-        var handler = Handler(logger, visits: _ => throw new OperationCanceledException());
+        var handler = Handler(logger, profile: _ => throw new OperationCanceledException());
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => handler.HandleAsync(QueryFor(Guid.NewGuid(), Guid.NewGuid())));
         Assert.Empty(logger.Entries);
     }
 
     [Fact]
-    public async Task ThePrescriptionsAndOrdersReaders_FailOnTheirOwn_WithoutBlankingTheRest()
+    public async Task TheOrdersReader_FailsOnItsOwn_WithoutBlankingTheRest()
     {
         var logger = new CapturingLogger<PortalSectionComposer>();
-        var handler = Handler(logger, prescriptions: _ => throw new InvalidOperationException(), orders: _ => throw new InvalidOperationException());
+        var handler = Handler(logger, orders: _ => throw new InvalidOperationException());
 
         var dashboard = (await handler.HandleAsync(QueryFor(Guid.NewGuid(), Guid.NewGuid()))).Result;
 
-        Assert.Equal("Unavailable", dashboard.Prescriptions.State);
-        Assert.Null(dashboard.Prescriptions.Data);
         Assert.Equal("Unavailable", dashboard.Orders.State);
         Assert.Null(dashboard.Orders.Data);
-        Assert.Equal("Ready", dashboard.Cats.State);
+        Assert.Equal("Ready", dashboard.Customer.State);
         Assert.Equal("Ready", dashboard.Balances.State);
-        Assert.Equal(2, logger.Entries.Count);
-    }
-
-    [Fact]
-    public async Task U_B5_ACatsSectionThatIsUnavailable_HasNullData_SoHasCatsIsAbsent_NeverFalse()
-    {
-        var handler = Handler(new CapturingLogger<PortalSectionComposer>(), cats: _ => throw new InvalidOperationException());
-
-        var dashboard = (await handler.HandleAsync(QueryFor(Guid.NewGuid(), Guid.NewGuid()))).Result;
-
-        Assert.Equal("Unavailable", dashboard.Cats.State);
-        Assert.Null(dashboard.Cats.Data);
-        var json = System.Text.Json.JsonSerializer.Serialize(dashboard, new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
-        Assert.DoesNotContain("hasCats", json);
+        Assert.Single(logger.Entries);
     }
 
     [Fact]
@@ -129,14 +100,12 @@ public sealed class PortalDashboardComposerTests
         var seen = new List<PortalCaller>();
         Task<T> Spy<T>(T value, PortalCaller caller) { seen.Add(caller); return Task.FromResult(value); }
         var handler = Handler(new CapturingLogger<PortalSectionComposer>(),
-            cats: c => Spy(CatsData, c), appointments: c => Spy(AppointmentsData, c), balances: c => Spy(BalancesData, c),
-            visits: c => Spy(VisitsData, c), profile: c => Spy(CustomerData, c),
-            prescriptions: c => Spy(PrescriptionsData, c), orders: c => Spy(OrdersData, c));
+            balances: c => Spy(BalancesData, c), profile: c => Spy(CustomerData, c), orders: c => Spy(OrdersData, c));
 
         var query = QueryFor(customerId, correlationId);
         await handler.HandleAsync(query);
 
-        Assert.Equal(7, seen.Count);
+        Assert.Equal(3, seen.Count);
         Assert.All(seen, c =>
         {
             Assert.Equal(customerId, c.CustomerId);
@@ -152,14 +121,12 @@ public sealed class PortalDashboardComposerTests
         var order = new List<string>();
         Task<T> Run<T>(string name, T value) { order.Add(name); return overlap.RunAsync(value); }
         var handler = Handler(new CapturingLogger<PortalSectionComposer>(),
-            cats: _ => Run("cats", CatsData), appointments: _ => Run("appointments", AppointmentsData), balances: _ => Run("balances", BalancesData),
-            visits: _ => Run("visits", VisitsData), profile: _ => Run("customer", CustomerData),
-            prescriptions: _ => Run("prescriptions", PrescriptionsData), orders: _ => Run("orders", OrdersData));
+            balances: _ => Run("balances", BalancesData), profile: _ => Run("customer", CustomerData), orders: _ => Run("orders", OrdersData));
 
         await handler.HandleAsync(QueryFor(Guid.NewGuid(), Guid.NewGuid()));
 
         Assert.False(overlap.Overlapped);
-        Assert.Equal(["cats", "appointments", "orders", "balances", "visits", "prescriptions", "customer"], order);
+        Assert.Equal(["orders", "balances", "customer"], order);
     }
 
     [Fact]

@@ -135,6 +135,6 @@ public sealed class StockAlertGuardTests
             Options.Create(new PublicSiteOptions { WebBaseUrl = "https://portal.example.test/" }));
         var skuId = Guid.NewGuid();
 
-        Assert.Equal($"https://portal.example.test/shop/products/royal-canin-kitten?sku={skuId}", builder.ProductLink("royal-canin-kitten", skuId));
+        Assert.Equal($"https://portal.example.test/shop/products/organic-honey-500g?sku={skuId}", builder.ProductLink("organic-honey-500g", skuId));
     }
 }

@@ -29,7 +29,7 @@ vi.mock('next/navigation', () => ({
 
 const SKU = (over: Partial<StaffSku> = {}): StaffSku => ({
   skuId: 'sku-1',
-  code: 'RC-K-2KG',
+  code: 'OAT-2KG',
   barcode: '8900000000101',
   sizeOrWeight: '2 kg',
   flavour: null,
@@ -48,18 +48,17 @@ const PRODUCT = (over: Partial<StaffProductDetail> = {}): StaffProductDetail => 
   productId: 'p1',
   version: 3,
   kind: 'Standard',
-  name: 'Royal Canin Kitten',
-  brand: 'Royal Canin',
-  description: 'Food **for** kittens',
+  name: 'Organic Rolled Oats',
+  brand: 'Amar Gram Farms',
+  description: 'Food **for** breakfast',
   category: 'CatFood',
-  subcategory: 'Kitten',
-  tags: ['kitten'],
-  slug: 'royal-canin-kitten',
+  subcategory: 'Grains',
+  tags: ['oats'],
+  slug: 'organic-rolled-oats',
   status: 'Draft',
   firstPublishedOn: null,
   taxClassId: 't1',
   countryOfOriginCode: null,
-  prescriptionRequired: false,
   isExpiryTracked: true,
   listedOnStorefront: true,
   food: null,
@@ -108,7 +107,7 @@ describe('ProductEditorHeader — HO-SHP-002 §11.6, ADR-FE-034', () => {
 
     await user.click(publish);
     const dialog = await screen.findByRole('dialog', { name: 'Publish this product?' });
-    expect(dialog).toHaveTextContent('Publish Royal Canin Kitten? It will appear in the shop.');
+    expect(dialog).toHaveTextContent('Publish Organic Rolled Oats? It will appear in the shop.');
     await user.click(within(dialog).getByRole('button', { name: 'Publish' }));
     expect(onTransition).toHaveBeenCalledWith('publish');
 
@@ -138,7 +137,7 @@ describe('ProductEditorHeader — HO-SHP-002 §11.6, ADR-FE-034', () => {
     expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Archive' }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent('Archive Royal Canin Kitten?');
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Archive Organic Rolled Oats?');
   });
 
   it('a 409 shows the reload message with a Reload button', async () => {
@@ -159,7 +158,7 @@ describe('ProductEditorHeader — HO-SHP-002 §11.6, ADR-FE-034', () => {
 });
 
 describe('Food section — US-SHP-03', () => {
-  it('U-D2: Cat Food shows the food form with % units on the four analysis inputs', () => {
+  it('U-D2: Food shows the food form with % units on the four analysis inputs', () => {
     render(<FoodDetailsForm product={PRODUCT()} onSave={vi.fn()} onReload={() => {}} />);
     for (const name of ['Protein', 'Fat', 'Fibre', 'Moisture']) {
       const input = screen.getByLabelText(new RegExp(`^${name} [(]%[)]`));
@@ -184,15 +183,6 @@ describe('Food section — US-SHP-03', () => {
     expect(screen.queryByLabelText('Feeding guide')).not.toBeInTheDocument();
   });
 
-  it('prescription diet asks for confirmation naming the consequence', async () => {
-    const user = userEvent.setup();
-    render(<FoodDetailsForm product={PRODUCT()} onSave={vi.fn()} onReload={() => {}} />);
-    await user.click(screen.getByRole('checkbox', { name: /Prescription diet/ }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent(
-      /Customers will need a cat with a current vet authorisation/,
-    );
-  });
-
   it('requires all four analysis values or none', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
@@ -207,8 +197,7 @@ describe('Food section — US-SHP-03', () => {
 });
 
 const STORED_FOOD = {
-  manufacturer: 'Royal Canin SAS',
-  lifeStage: 'Kitten',
+  manufacturer: 'Amar Gram Farms Ltd',
   proteinSource: 'Chicken',
   ingredientList: 'Chicken meal, rice',
   guaranteedAnalysis: { proteinPercent: 34, fatPercent: 16, fibrePercent: 3.5, moisturePercent: 9 },
@@ -225,8 +214,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
         onReload={() => {}}
       />,
     );
-    expect(screen.getByLabelText('Manufacturer')).toHaveValue('Royal Canin SAS');
-    expect(screen.getByLabelText('Life stage')).toHaveValue('Kitten');
+    expect(screen.getByLabelText('Manufacturer')).toHaveValue('Amar Gram Farms Ltd');
     expect(screen.getByLabelText('Protein source')).toHaveValue('Chicken');
     expect(screen.getByLabelText('Ingredient list')).toHaveValue('Chicken meal, rice');
     expect(screen.getByLabelText(/^Protein [(]%[)]/)).toHaveValue(34);
@@ -326,7 +314,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
   it('VariantsTable shows the SKU label when no attribute is set (the product name)', () => {
     render(
       <VariantsTable
-        product={PRODUCT({ skus: [SKU({ sizeOrWeight: null, label: 'Royal Canin Kitten' })] })}
+        product={PRODUCT({ skus: [SKU({ sizeOrWeight: null, label: 'Organic Rolled Oats' })] })}
         onAddSku={vi.fn()}
         onUpdateSku={vi.fn()}
         onSetStatus={vi.fn()}
@@ -335,7 +323,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
         onSchedulePrice={vi.fn()}
       />,
     );
-    expect(screen.getByText('Royal Canin Kitten')).toBeInTheDocument();
+    expect(screen.getByText('Organic Rolled Oats')).toBeInTheDocument();
   });
 });
 
@@ -474,7 +462,7 @@ describe('VariantsTable — US-SHP-02, ADR-FE-032', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByLabelText('Amount (USD)')).toBeInTheDocument();
     expect(dialog).not.toHaveTextContent(/BDT/);
-    expect(dialog).not.toHaveTextContent(/Bookings and invoices/);
+    expect(dialog).not.toHaveTextContent(/Orders and invoices/);
     expect(dialog).toHaveTextContent(/Orders placed before then keep their price/);
     await user.type(within(dialog).getByLabelText('Amount (USD)'), '30');
     await user.click(within(dialog).getByRole('button', { name: /^schedule$/i }));
@@ -514,7 +502,7 @@ describe('Sections keep their values — NFR-USA-5', () => {
           {
             value: 'CatFood',
             productCount: 1,
-            subcategories: [{ value: 'Kitten', productCount: 1 }],
+            subcategories: [{ value: 'Grains', productCount: 1 }],
           },
         ]}
         taxClasses={[{ id: 't1', code: 'STD', name: 'Standard', isActive: true }]}
@@ -572,8 +560,8 @@ describe('Sections keep their values — NFR-USA-5', () => {
     );
     const tags = screen.getByLabelText('Tags');
     await user.clear(tags);
-    await user.type(tags, ' Grain-Free, kitten,GRAIN-FREE ');
-    expect(screen.getByText(/Saved as: grain-free, kitten/)).toBeInTheDocument();
+    await user.type(tags, ' Grain-Free, organic,GRAIN-FREE ');
+    expect(screen.getByText(/Saved as: grain-free, organic/)).toBeInTheDocument();
     // Food: expiry tracking is locked on; slug is editable before first publication.
     expect(screen.getByRole('checkbox', { name: /Track expiry/ })).toBeDisabled();
   });
@@ -610,7 +598,7 @@ describe('TranslationsEditor — US-SHP-14 AC3', () => {
       />,
     );
     expect(screen.getAllByRole('heading', { name: /Bangla \(bn\)/ })).toHaveLength(1);
-    expect(screen.getByText('Default: Royal Canin Kitten')).toBeInTheDocument();
+    expect(screen.getByText('Default: Organic Rolled Oats')).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveValue('বাংলা নাম');
     await user.click(screen.getByRole('button', { name: /Remove translation \(bn\)/ }));
     expect(await screen.findByRole('dialog')).toHaveTextContent(
@@ -641,7 +629,7 @@ describe('ReviewModerationQueue — US-SHP-09', () => {
   const ITEM: ModerationItem = {
     reviewId: 'r1',
     productId: 'p1',
-    productName: 'Royal Canin Kitten',
+    productName: 'Organic Rolled Oats',
     skuLabel: '2 kg',
     rating: 2,
     title: '<b>Too</b> small',
@@ -686,7 +674,7 @@ describe('ReviewModerationQueue — US-SHP-09', () => {
     );
     await user.click(screen.getAllByRole('button', { name: /Publish review of/ })[0]!);
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('It will appear on the Royal Canin Kitten page');
+    expect(dialog).toHaveTextContent('It will appear on the Organic Rolled Oats page');
     await act(async () => {
       await user.click(within(dialog).getByRole('button', { name: 'Publish' }));
     });
@@ -708,7 +696,7 @@ describe('BundleEditor — US-SHP-12', () => {
           {
             propertyName: 'components',
             errorCode: 'InvalidBundleComponent',
-            errorMessage: 'SKU HL-CD-1_5KG is a prescription product and cannot be bundled.',
+            errorMessage: 'SKU MO-1_5L is discontinued.',
             resourceName: 'Product',
           },
         ],
@@ -721,15 +709,15 @@ describe('BundleEditor — US-SHP-12', () => {
           bundleComponents: [
             {
               componentSkuId: 'a',
-              skuCode: 'RC-K-400G',
-              productName: 'Royal Canin Kitten',
+              skuCode: 'OAT-400G',
+              productName: 'Organic Rolled Oats',
               quantity: 1,
               isOnSale: true,
             },
             {
               componentSkuId: 'b',
-              skuCode: 'HL-CD-1_5KG',
-              productName: "Hill's c/d",
+              skuCode: 'MO-1_5L',
+              productName: 'Pure Mustard Oil',
               quantity: 1,
               isOnSale: true,
             },
@@ -741,8 +729,8 @@ describe('BundleEditor — US-SHP-12', () => {
       />,
     );
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    const alert = await screen.findByText(/prescription product and cannot be bundled/);
-    expect(alert.closest('li')).toHaveTextContent("Hill's c/d");
+    const alert = await screen.findByText(/MO-1_5L is discontinued/);
+    expect(alert.closest('li')).toHaveTextContent('Pure Mustard Oil');
     expect(rowNamedBy('SKU X is a bundle', [{ code: 'Y' }])).toBe(-1);
   });
 
@@ -763,7 +751,7 @@ describe('BundleEditor — US-SHP-12', () => {
         renderPicker={(onPick) => (
           <button
             type="button"
-            onClick={() => onPick({ skuId: 'sku-1', code: 'RC-1', label: 'Royal Canin (RC-1)' })}
+            onClick={() => onPick({ skuId: 'sku-1', code: 'RC-1', label: 'Rolled Oats (RC-1)' })}
           >
             Pick RC-1
           </button>

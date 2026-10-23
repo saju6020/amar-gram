@@ -1,13 +1,13 @@
 # CatEcommerce.IntegrationTests
 
 Real HTTP through `WebApplicationFactory<Program>`, against the shared local Postgres database —
-the same instance the Development profile uses (HO-CAT-001 §5.1). No Testcontainers, no in-memory
+the same instance the Development profile uses (the foundation handover §5.1). No Testcontainers, no in-memory
 EF provider.
 
 ## Adding a new area
 
 Every area's tests are built from two small classes, both deriving from a shared base extracted
-after wave A (HO-CAT-001, HO-ACC-001):
+after wave A (the foundation handover, HO-ACC-001):
 
 - `CatEcommerceApiFactory` (`CatEcommerceApiFactory.cs`) — the `WebApplicationFactory<Program>`
   base. Handles the Testing environment and the connection string for everyone.

@@ -11,7 +11,7 @@ namespace CatEcommerce.Read.QueryHandlers.Operations;
 
 /// <summary>
 /// HO-XCT-001 section 12.6 Q3. Built from <see cref="RecordClassification"/> and the current settings: no database read beyond settings, so lowering
-/// <c>retention.clinicalYears</c> shows immediately.
+/// <c>retention.financialYears</c> shows immediately.
 /// </summary>
 public sealed class GetRetentionScheduleQueryHandler(IBusinessSettings settings) : IQueryHandlerAsync<GetRetentionScheduleQuery, RetentionScheduleViewModel>
 {
@@ -35,16 +35,14 @@ public sealed class GetRetentionScheduleQueryHandler(IBusinessSettings settings)
         return Task.FromResult(new QueryResponse<RetentionScheduleViewModel> { Result = new RetentionScheduleViewModel(classes) });
     }
 
-    /// <summary>Period, its unit and the action when it ends (ADR-301: a clinical, financial, regulatory or audit record is never deleted at the end of its period).</summary>
+    /// <summary>Period, its unit and the action when it ends (ADR-301: a financial, regulatory or audit record is never deleted at the end of its period).</summary>
     private (int? Period, string? Unit, string Action) Describe(RecordClass recordClass)
     {
-        if (recordClass == RecordClass.Clinical) return (settings.GetInt(SettingKeys.RetentionClinicalYears), "years", "ReviewOnly");
         if (recordClass == RecordClass.Financial) return (settings.GetInt(SettingKeys.RetentionFinancialYears), "years", "ReviewOnly");
         // ADR-301: the end of a regulatory period is a review flag only; only HELD personal data inside it (an acceptance IP) is blanked when its hold ends.
         if (recordClass == RecordClass.Regulatory) return (settings.GetInt(SettingKeys.RetentionFinancialYears), "years", "ReviewOnly");
         if (recordClass == RecordClass.Notification) return (settings.GetInt(SettingKeys.RetentionNotificationContentMonths), "months", "Redact");
         if (recordClass == RecordClass.Security) return (settings.GetInt(SettingKeys.RetentionSecurityArtefactDays), "days", "Purge");
-        if (recordClass == RecordClass.Media) return (settings.GetInt(SettingKeys.RetentionBoardingMediaMonths), "months", "Purge");
         if (recordClass == RecordClass.Telemetry) return (settings.GetInt(SettingKeys.RetentionWebVitalsDays), "days", "Purge");
         if (recordClass == RecordClass.CustomerPersonal) return (null, null, "AnonymiseOnRequest");
         return (null, null, "Keep");

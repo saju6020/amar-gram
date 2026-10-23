@@ -58,16 +58,16 @@ public sealed class AdminLogCaptureEndpointTests(AdministrationApiFactory factor
         // Leave note + decision note -- a separate requester, so the admin deciding is not a
         // self-approval (which would be refused unless the admin were the sole Administrator in a
         // database this shared test suite cannot guarantee).
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = capturingFactory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
+        using var receptionClient = capturingFactory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("https://localhost/"), HandleCookies = true
         });
-        var nurseSignIn = await nurseClient.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = nurse.Mobile, password = nurse.Password }, Json);
-        Assert.Equal(HttpStatusCode.OK, nurseSignIn.StatusCode);
-        nurseClient.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(nurseSignIn, "pc_csrf"));
+        var receptionSignIn = await receptionClient.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = reception.Mobile, password = reception.Password }, Json);
+        Assert.Equal(HttpStatusCode.OK, receptionSignIn.StatusCode);
+        receptionClient.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(receptionSignIn, "pc_csrf"));
 
-        var requestLeave = await nurseClient.PostAsJsonAsync("/api/staff/leave-requests", new
+        var requestLeave = await receptionClient.PostAsJsonAsync("/api/staff/leave-requests", new
         {
             startsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(20), endsOn = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(21),
             kind = "Annual", note = leaveNoteMarker

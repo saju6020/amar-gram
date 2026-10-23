@@ -61,7 +61,7 @@ public sealed class OrderingBillingNumberingEndpointTests(OrderingApiFactory fac
         await using var scope = Factory.Services.CreateAsyncScope();
         var recorder = scope.ServiceProvider.GetRequiredService<IBillableChargeRecorder>();
         var id = await recorder.RecordAsync(new ChargeRequestDto(
-            customerId, context.BranchId, null, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "main", null, null, "Staff-issued item", 1m,
+            customerId, context.BranchId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "main", "Staff-issued item", 1m,
             new Money(100m, "BDT"), Money.Zero("BDT"), context.ZeroTaxClassId, DateOnly.FromDateTime(DateTime.UtcNow)));
         await scope.ServiceProvider.GetRequiredService<CatEcommerceDbContext>().SaveChangesAsync();
         return id;

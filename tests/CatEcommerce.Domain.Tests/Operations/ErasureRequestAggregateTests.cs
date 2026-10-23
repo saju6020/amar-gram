@@ -118,12 +118,12 @@ public sealed class ErasureRequestAggregateTests
         ledger.RecordScopeOutcome(Outcome("account", new ErasureOutcome.Completed()));
         Assert.Equal(ErasureRequestStatus.Completed, ledger.Status);
 
-        var changed = ledger.AddMissingScopes(new ErasureAddScopesDto(["account", "boarding"], TestUserContext.Create(), Guid.NewGuid()));
+        var changed = ledger.AddMissingScopes(new ErasureAddScopesDto(["account", "orders"], TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.True(changed);
         Assert.Equal(ErasureRequestStatus.Open, ledger.Status);
         Assert.Null(ledger.CompletedOn);
-        Assert.Equal(ErasureScopeStatus.Pending, ledger.Scopes.Single(s => s.ContextKey == "boarding").Status);
+        Assert.Equal(ErasureScopeStatus.Pending, ledger.Scopes.Single(s => s.ContextKey == "orders").Status);
         Assert.Equal(ErasureScopeStatus.Completed, ledger.Scopes.Single(s => s.ContextKey == "account").Status);
     }
 

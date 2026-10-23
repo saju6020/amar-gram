@@ -22,9 +22,9 @@ namespace CatEcommerce.Domain.Aggregates.StoredFile;
 /// consumer's handler. It is deliberately side-effect-free: a second-pass gate found that mutating
 /// this aggregate (the former <c>TryAttach</c>) forced "attach a file" into a two-aggregate command
 /// with no way to make it atomic, and an ordinary business refusal on the OTHER aggregate (e.g.
-/// Cat's own photo-limit check) left the file permanently, uselessly claimed. "One file, one
+/// consumer's own check) left the file permanently, uselessly claimed. "One file, one
 /// consumer" is instead enforced the same way every other natural-key uniqueness in this solution
-/// is -- a database unique index on the consumer's own table (<c>clinic.cat_photo.file_id</c>) --
+/// is -- a database unique index on the consumer's own table (a <c>file_id</c> column) --
 /// which is also naturally atomic under concurrency, unlike a check-then-set pair across two
 /// aggregates. <see cref="RedactUploaderPersonalData"/> (the erasure path) is the one remaining
 /// mutator beyond <see cref="Register"/>. See HO-FIL-001.md §1 Amended for the rationale in full.
@@ -118,7 +118,7 @@ public sealed class StoredFileAggregate : AggregateRoot
 
     /// <summary>
     /// Gate-fix 2026-09-27 (ARCHITECTURE HIGH, second pass): the attach-eligibility rule a
-    /// consuming area (Cat Profiles today; EMR/SHP/BRD when they attach files) needs before it may
+    /// consuming area (Shop's product images today) needs before it may
     /// reference this file from its own aggregate -- purpose match, uploaded by the same caller,
     /// and uploaded within <paramref name="attachWindow"/> of <paramref name="now"/>. Every input
     /// this method needs is this aggregate's own state, so the rule lives here rather than being
@@ -126,7 +126,7 @@ public sealed class StoredFileAggregate : AggregateRoot
     ///
     /// Deliberately side-effect-free -- it does not mark the file "claimed" and there is nothing to
     /// save. "One file, one consumer" is enforced instead by the consumer's own unique database
-    /// index on the file id (e.g. <c>clinic.cat_photo</c>'s unique index on <c>file_id</c>), which
+    /// index on the file id (a unique index on <c>file_id</c>), which
     /// is atomic under concurrency in a way a check here plus a separate save on this aggregate
     /// never could be, and which does not require this aggregate to be mutated (and therefore
     /// possibly saved) before the consumer's own aggregate has run its own invariants. One boolean,

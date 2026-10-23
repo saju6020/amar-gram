@@ -40,18 +40,18 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
     }
 
     /// <summary>
-    /// Probe P6c, reproduced end to end: an Administrator customises the deworming InApp title to
-    /// include placeholders (76 raw characters, well within the template's own 100-character raw
-    /// limit), a 100-character cat name pushes the RENDERED title past the column's 100-character
-    /// limit, `Worker:BatchSize=3`, three such reminders, then a password reset. Before this fix,
-    /// all three reminders stayed Pending forever (Postgres 22001 on every pass) and the reset,
+    /// Probe P6c, reproduced end to end: an Administrator customises the invoice-issued InApp title to
+    /// include placeholders (well within the template's own 100-character raw limit), a
+    /// 100-character invoice number pushes the RENDERED title past the column's 100-character
+    /// limit, `Worker:BatchSize=3`, three such notices, then a password reset. Before this fix,
+    /// all three notices stayed Pending forever (Postgres 22001 on every pass) and the reset,
     /// queued behind them, was never expanded either. Now the title is truncated with an ellipsis,
-    /// every reminder expands normally, and the reset is expanded too.
+    /// every notice expands normally, and the reset is expanded too.
     /// </summary>
     [Fact]
     public async Task P6c_OverlongCustomisedInAppTitle_TruncatedNotStuck_QueueNeverBlocked_ResetStillExpanded()
     {
-        const string key = NotificationTemplateCatalogue.DewormingDue;
+        const string key = NotificationTemplateCatalogue.BillingInvoiceIssued;
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
 
@@ -61,9 +61,9 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
             expectedContentVersion = version,
             contents = new object[]
             {
-                new { channel = "Sms", body = "{{catName}}'s {{treatmentName}} treatment is due on {{dueOn}}. Book here: {{bookingLink}}" },
-                new { channel = "Email", subject = "A parasite treatment is coming up", body = "Hello {{recipientName}},\n\n{{catName}}'s {{treatmentName}} treatment is due on {{dueOn}}. [Book now]({{bookingLink}})." },
-                new { channel = "InApp", title = "Time for {{catName}}'s {{treatmentName}} treatment - book now at the clinic", body = "A treatment reminder.", linkPath = "{{bookingLink}}" },
+                new { channel = "Sms", body = "Invoice {{invoiceNumber}} for {{totalText}} is due on {{dueOn}}. View it here: {{invoiceLink}}" },
+                new { channel = "Email", subject = "Your invoice is ready", body = "Hello {{recipientName}},\n\nInvoice {{invoiceNumber}} for {{totalText}} is due on {{dueOn}}. [View it now]({{invoiceLink}})." },
+                new { channel = "InApp", title = "Invoice {{invoiceNumber}} for {{totalText}} is ready - view it now in the portal", body = "An invoice notice.", linkPath = "{{invoiceLink}}" },
             }
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
@@ -75,13 +75,13 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
                 .ConfigureTestServices(services => services.AddSingleton<TimeProvider>(new FakeTimeProvider(SafeDaytimeInstant()))));
 
             var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
-            var longCatName = new string('M', 100);
+            var longInvoiceNumber = new string('M', 100);
 
             var reminderRequestIds = new List<Guid>();
             for (var i = 0; i < 3; i++)
             {
                 var command = await RequestNotificationAsync(daytimeFactory, key, NotificationRecipientKind.Customer, customerId,
-                    new Dictionary<string, string> { ["catName"] = longCatName, ["treatmentName"] = "Deworming", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://portal.example.test/x" },
+                    new Dictionary<string, string> { ["invoiceNumber"] = longInvoiceNumber, ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://portal.example.test/x" },
                     deduplicationKey: $"test:{Guid.NewGuid():N}");
                 reminderRequestIds.Add(command.RequestId);
             }
@@ -130,7 +130,7 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
     [Fact]
     public async Task FallbackEmailBodyOverflow_EndsUndeliverable_NeverStuckSending()
     {
-        const string key = NotificationTemplateCatalogue.VaccinationDue;
+        const string key = NotificationTemplateCatalogue.BillingInvoiceIssued;
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
 
@@ -140,15 +140,15 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
         // request variable may carry) catName substitution that pushes the RENDERED body over the
         // column's 10,000-character limit.
         var filler = new string('x', 8900);
-        var longCatName = new string('M', NotificationRequestRules.MaxVariableLength);
+        var longInvoiceNumber = new string('M', NotificationRequestRules.MaxVariableLength);
         var save = await adminClient.PutAsJsonAsync($"/api/admin/notification-templates/{key}", new
         {
             expectedContentVersion = version,
             contents = new object[]
             {
-                new { channel = "Sms", body = "{{catName}}'s {{vaccineName}} is due {{dueOn}} {{bookingLink}}" },
-                new { channel = "Email", subject = "Reminder", body = filler + " {{catName}} {{vaccineName}} {{dueOn}} [Book]({{bookingLink}})" },
-                new { channel = "InApp", title = "Reminder", body = "{{catName}}'s {{vaccineName}} is due {{dueOn}}", linkPath = "{{bookingLink}}" },
+                new { channel = "Sms", body = "{{invoiceNumber}}'s {{totalText}} is due {{dueOn}} {{invoiceLink}}" },
+                new { channel = "Email", subject = "Reminder", body = filler + " {{invoiceNumber}} {{totalText}} {{dueOn}} [Book]({{invoiceLink}})" },
+                new { channel = "InApp", title = "Reminder", body = "{{invoiceNumber}}'s {{totalText}} is due {{dueOn}}", linkPath = "{{invoiceLink}}" },
             }
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
@@ -165,7 +165,7 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
                 new SendOutcome(SendOutcomeKind.PermanentFailure, null, "rejected by carrier"));
 
             var command = await RequestNotificationAsync(daytimeFactory, key, NotificationRecipientKind.Customer, customerId,
-                new Dictionary<string, string> { ["catName"] = longCatName, ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://portal.example.test/x" },
+                new Dictionary<string, string> { ["invoiceNumber"] = longInvoiceNumber, ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://portal.example.test/x" },
                 deduplicationKey: $"test:{Guid.NewGuid():N}");
 
             await RunDeliveryPassAsync(daytimeFactory); // expand
@@ -202,7 +202,7 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
     [Fact]
     public async Task ResendCrossChannelBodyOverflow_FallsBackToOriginalFields_Returns201_Never500()
     {
-        const string key = NotificationTemplateCatalogue.VaccinationDue;
+        const string key = NotificationTemplateCatalogue.BillingInvoiceIssued;
 
         var daytimeFactory = Factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(new FakeTimeProvider(SafeDaytimeInstant()))));
@@ -218,9 +218,9 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
         // default, much shorter templates); only the SUBSEQUENT admin-initiated resend below
         // exercises the overflowing customised template, isolating C7's own re-render path from
         // C5's.
-        var longCatName = new string('M', NotificationRequestRules.MaxVariableLength);
+        var longInvoiceNumber = new string('M', NotificationRequestRules.MaxVariableLength);
         await RequestNotificationAsync(daytimeFactory, key, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = longCatName, ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://portal.example.test/x" },
+            new Dictionary<string, string> { ["invoiceNumber"] = longInvoiceNumber, ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://portal.example.test/x" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
         await RunDeliveryPassAsync(daytimeFactory);
@@ -239,9 +239,9 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
             expectedContentVersion = version,
             contents = new object[]
             {
-                new { channel = "Sms", body = "{{catName}}'s {{vaccineName}} is due {{dueOn}} {{bookingLink}}" },
-                new { channel = "Email", subject = "Reminder", body = filler + " {{catName}} {{vaccineName}} {{dueOn}} [Book]({{bookingLink}})" },
-                new { channel = "InApp", title = "Reminder", body = "{{catName}}'s {{vaccineName}} is due {{dueOn}}", linkPath = "{{bookingLink}}" },
+                new { channel = "Sms", body = "{{invoiceNumber}}'s {{totalText}} is due {{dueOn}} {{invoiceLink}}" },
+                new { channel = "Email", subject = "Reminder", body = filler + " {{invoiceNumber}} {{totalText}} {{dueOn}} [Book]({{invoiceLink}})" },
+                new { channel = "InApp", title = "Reminder", body = "{{invoiceNumber}}'s {{totalText}} is due {{dueOn}}", linkPath = "{{invoiceLink}}" },
             }
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
@@ -279,8 +279,8 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
     {
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        var olderFailedCommand = await RequestNotificationAsync(Factory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        var olderFailedCommand = await RequestNotificationAsync(Factory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await using (var scope = Factory.Services.CreateAsyncScope())
@@ -293,8 +293,8 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
 
         // Requested strictly AFTER the failed one, so a RequestedOn-only order would still put the
         // failed one first.
-        var neverAttemptedCommand = await RequestNotificationAsync(Factory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        var neverAttemptedCommand = await RequestNotificationAsync(Factory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await using var assertScope = Factory.Services.CreateAsyncScope();

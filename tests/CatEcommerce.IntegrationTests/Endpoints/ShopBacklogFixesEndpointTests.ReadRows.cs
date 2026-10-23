@@ -25,7 +25,7 @@ public sealed partial class ShopBacklogFixesEndpointTests
     // ── Row 15: a product with no SKUs, and the food block's presence check ─────────────────────
 
     [Fact]
-    public async Task Row15_ALiveProductWithNoSkus_IsNotA404ForPurchasabilityOrReviewEligibility()
+    public async Task Row15_ALiveProductWithNoSkus_IsNotA404ForReviewEligibility()
     {
         var staff = await SignInAsShopManagerAsync();
         var product = await CreateProductAsync(staff, NewBrand("NoSku"), "Skuless Toy");
@@ -33,10 +33,6 @@ public sealed partial class ShopBacklogFixesEndpointTests
         var holder = await CreateProductAsync(staff, NewBrand("NoSkuHolder"), "Sku Holder");
         await ExecuteSqlAsync($"UPDATE product.sku SET product_id = {holder.ProductId} WHERE product_id = {product.ProductId}");
         var (customer, _) = await RegisterAndSignInCustomerAsync();
-
-        var purchasability = await customer.GetAsync($"/api/customers/me/shop/products/{product.Slug}/purchasability");
-        Assert.Equal(HttpStatusCode.OK, purchasability.StatusCode);
-        Assert.Equal(0, (await JsonOkAsync(purchasability)).GetProperty("skus").GetArrayLength());
 
         var eligibility = await customer.GetAsync($"/api/customers/me/shop/products/{product.Slug}/review-eligibility");
         Assert.Equal(HttpStatusCode.OK, eligibility.StatusCode);
@@ -47,9 +43,9 @@ public sealed partial class ShopBacklogFixesEndpointTests
     public async Task Row15_FoodBlock_AppearsWhenOnlyAGuaranteedAnalysisColumnOtherThanProteinIsSet()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("FatOnly"), "Fat Only Food", "CatFood", lifeStage: "Adult");
+        var product = await CreateProductAsync(staff, NewBrand("FatOnly"), "Fat Only Food", "CatFood");
         // Every other food column cleared: only the fat figure remains (a state the old protein-only check missed).
-        await ExecuteSqlAsync($@"UPDATE product.product SET food_life_stage = NULL, food_protein_source = NULL, food_ingredient_list = NULL,
+        await ExecuteSqlAsync($@"UPDATE product.product SET food_protein_source = NULL, food_ingredient_list = NULL,
             food_manufacturer = NULL, food_feeding_guide = NULL, food_storage_instructions = NULL,
             food_analysis_protein_percent = NULL, food_analysis_fibre_percent = NULL, food_analysis_moisture_percent = NULL,
             food_analysis_fat_percent = 12.5 WHERE ""Id"" = {product.ProductId}");
@@ -83,7 +79,6 @@ public sealed partial class ShopBacklogFixesEndpointTests
     [InlineData("category=NotACategory", "category")]
     [InlineData("subcategory=NotASubcategory", "subcategory")]
     [InlineData("origin=ZZ9", "origin")]
-    [InlineData("lifeStage=Puppy", "lifeStage")]
     [InlineData("protein=Unicorn", "protein")]
     public async Task Row30_UnknownEnumeratedFilter_IsInvalidCatalogueFilter_NamingTheParameter(string filter, string parameter)
     {
@@ -98,7 +93,7 @@ public sealed partial class ShopBacklogFixesEndpointTests
     [Fact]
     public async Task Row30_KnownFilterValues_StillWork()
     {
-        var response = await CreateClient().GetAsync("/api/shop/products?category=CatFood&origin=DE&lifeStage=Adult");
+        var response = await CreateClient().GetAsync("/api/shop/products?category=CatFood&origin=DE");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

@@ -13,13 +13,13 @@ public sealed class SaveNotificationTemplateCommandHandlerTests
 {
     private static SaveNotificationTemplateCommand ValidCommand(int expectedVersion) => new()
     {
-        Key = NotificationTemplateCatalogue.VaccinationDue,
+        Key = NotificationTemplateCatalogue.InventoryBatchRecall,
         ExpectedContentVersion = expectedVersion,
         Contents =
         [
-            new NotificationTemplateContentItem { Channel = "Sms", Body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-            new NotificationTemplateContentItem { Channel = "Email", Subject = "Reminder", Body = "{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}" },
-            new NotificationTemplateContentItem { Channel = "InApp", Title = "Reminder", Body = "{{catName}} {{vaccineName}} {{dueOn}}", LinkPath = "{{bookingLink}}" },
+            new NotificationTemplateContentItem { Channel = "Sms", Body = "{{productName}} {{lotNumber}} {{expiresOn}}" },
+            new NotificationTemplateContentItem { Channel = "Email", Subject = "Recall", Body = "{{productName}} {{lotNumber}} {{expiresOn}} {{customerAdvice}}" },
+            new NotificationTemplateContentItem { Channel = "InApp", Title = "Recall", Body = "{{productName}} {{lotNumber}} {{customerAdvice}}" },
         ],
         UserContext = TestUserContext.Create(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
     };
@@ -62,7 +62,7 @@ public sealed class SaveNotificationTemplateCommandHandlerTests
 
         var command = ValidCommand(0);
         var badContents = command.Contents.Select(c => c.Channel == "Sms"
-            ? new NotificationTemplateContentItem { Channel = "Sms", Body = "{{catname}} due" }
+            ? new NotificationTemplateContentItem { Channel = "Sms", Body = "{{productname}} recalled" }
             : c).ToList();
         var badCommand = new SaveNotificationTemplateCommand { Key = command.Key, ExpectedContentVersion = 0, Contents = badContents, UserContext = command.UserContext, CorrelationId = Guid.NewGuid(), ValidateCommand = true };
 
@@ -71,7 +71,7 @@ public sealed class SaveNotificationTemplateCommandHandlerTests
         Assert.False(response.IsSuccess);
         var error = Assert.Single(response.ValidationResult!.Errors);
         Assert.Equal(BusinessViolationCodes.UnknownTemplatePlaceholder, error.ErrorCode);
-        Assert.Contains("{{catname}}", error.ErrorMessage);
+        Assert.Contains("{{productname}}", error.ErrorMessage);
     }
 
     [Fact]

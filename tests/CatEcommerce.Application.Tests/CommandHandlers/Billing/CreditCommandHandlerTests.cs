@@ -46,7 +46,7 @@ public sealed class CreditCommandHandlerTests
         var invoice = new InvoiceAggregate(Guid.NewGuid());
         invoice.CreateDraft(new DraftInvoiceDto(
             _branchId, _customerId, "BDT",
-            [new DraftInvoiceLineInput(Guid.NewGuid(), null, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), null, null, null, "Item", 1m, total, 0m, taxClass)],
+            [new DraftInvoiceLineInput(Guid.NewGuid(), null, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "Item", 1m, total, 0m, taxClass)],
             null, null, null, _time.GetUtcNow(), Actor));
         invoice.Issue(new InvoiceIssueDto(
             "INV-MAIN-2627-000001", "2026-27", 1, new Dictionary<Guid, TaxRateInfo> { [taxClass] = new(taxClass, "ZERO", 0m) },

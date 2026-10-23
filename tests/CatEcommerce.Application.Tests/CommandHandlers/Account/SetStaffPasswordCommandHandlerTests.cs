@@ -17,7 +17,7 @@ public sealed class SetStaffPasswordCommandHandlerTests
     {
         var staff = new StaffAccountAggregate(Guid.NewGuid());
         staff.Create(new Domain.Models.StaffAccountCreationDto(
-            "Existing Vet", CatEcommerce.Domain.ValueObjects.MobileNumber.Create("01712345678"), null, ["Vet"],
+            "Existing Staff", CatEcommerce.Domain.ValueObjects.MobileNumber.Create("01712345678"), null, ["Inventory"],
             TestUserContext.Create(), Guid.NewGuid()));
         repository.Seed(staff);
         return staff;

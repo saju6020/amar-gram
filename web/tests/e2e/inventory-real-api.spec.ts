@@ -4,8 +4,9 @@ import { dateIn, dialog, pickSku, wedgeScan } from './inventory-helpers';
 /**
  * HO-IMP-002 §5.1 / §16 - the E-cases re-run against the REAL API (no MSW). Opt-in only: it needs a
  * live API, `NEXT_PUBLIC_USE_MOCKS=false`, the e2e staff in `catecommerce_dev` and four SKUs created
- * through the staff shop API (E2E-FOOD-1, E2E-FOOD-2, E2E-LITTER-1, E2E-MED-1; every real SKU is
- * `each` and whole-only, OQ-19). Credentials come from `E2E_STAFF_*` (git-ignored `web/.env.e2e.local`).
+ * through the staff shop API (E2E-FOOD-1 "E2E Rice", E2E-FOOD-2 "E2E Organic rice 5 kg", E2E-BAG-1,
+ * E2E-CHILLED-1; every real SKU is `each` and whole-only, OQ-19), and stock locations named "Cold
+ * store" and "Back store". Credentials come from `E2E_STAFF_*` (git-ignored `web/.env.e2e.local`).
  *
  *   E2E_REAL_INVENTORY=1 E2E_API_URL=http://localhost:5006 PORT=3111 npx playwright test <this file> --workers=1
  */
@@ -83,7 +84,7 @@ async function closeStaleCounts(page: Page): Promise<void> {
 }
 
 let foodSkuId = '';
-let dispensaryLot = '';
+let coldStoreLot = '';
 
 test.beforeEach(async ({ page }) => {
   test.setTimeout(180_000);
@@ -103,9 +104,9 @@ test('R-A1: supplier, purchase order with decimal cost, partial receipt - 40 out
 
   await page.goto('/staff/procurement/purchase-orders/new');
   await selectByText(page.getByLabel(/^supplier\b/i), new RegExp(`Acme ${stamp}`));
-  await selectByText(page.getByLabel(/^deliver to/i), /dispensary/i);
+  await selectByText(page.getByLabel(/^deliver to/i), /cold store/i);
   await page.getByLabel(/^expected delivery/i).fill(dateIn(10));
-  await pickSku(page, /add an item/i, 'E2E Kitten', /e2e kitten/i);
+  await pickSku(page, /add an item/i, 'E2E Rice', /e2e rice/i);
   await page.getByLabel(/^quantity/i).fill('100');
   await page.getByLabel(/^unit cost/i).fill('450.50');
   await page.getByRole('button', { name: /save draft/i }).click();
@@ -133,13 +134,13 @@ test('R-A1: supplier, purchase order with decimal cost, partial receipt - 40 out
 });
 
 test('R-A2: a food SKU scanned by wedge needs an expiry date; adding it posts', async ({ page }) => {
-  dispensaryLot = lot('DIRECT');
+  coldStoreLot = lot('DIRECT');
   await page.goto('/staff/inventory/receipts/new');
   await page.getByLabel(/^direct/i).check();
   await wedgeScan(page, '9900000000011');
-  await expect(page.getByRole('listitem', { name: /line 1: e2e adult dry cat food/i })).toBeVisible();
-  await selectByText(page.getByLabel(/^receive into|^location/i).first(), /dispensary/i);
-  await page.getByLabel(/^lot number/i).fill(dispensaryLot);
+  await expect(page.getByRole('listitem', { name: /line 1: e2e organic rice 5 kg/i })).toBeVisible();
+  await selectByText(page.getByLabel(/^receive into|^location/i).first(), /cold store/i);
+  await page.getByLabel(/^lot number/i).fill(coldStoreLot);
   await page.getByLabel(/^accepted/i).fill('20');
   await page.getByLabel(/^unit cost/i).fill('1250.75');
   await page.getByRole('button', { name: /review and post/i }).click();
@@ -162,20 +163,20 @@ test('R-C1: stock matrix, FEFO preview and batch detail for the received lot', a
   const found = await page.request.get(`${API}/api/staff/inventory/skus?search=E2E-FOOD-1`);
   foodSkuId = (await found.json())[0].skuId;
   await page.goto(`/staff/inventory/stock/${foodSkuId}`);
-  await expect(page.locator('main')).toContainText(dispensaryLot);
+  await expect(page.locator('main')).toContainText(coldStoreLot);
   await page.getByLabel(/^quantity/i).fill('1');
   await page.getByRole('button', { name: /^preview$/i }).click();
   await expect(page.getByText('This is what would be picked next.')).toBeVisible();
-  await page.getByRole('link', { name: new RegExp(dispensaryLot) }).first().click();
-  await expect(page.locator('main')).toContainText(dispensaryLot);
+  await page.getByRole('link', { name: new RegExp(coldStoreLot) }).first().click();
+  await expect(page.locator('main')).toContainText(coldStoreLot);
 });
 
 test('R-C2: a transfer writes both ends to the ledger', async ({ page }) => {
   await page.goto('/staff/inventory/transfers/new');
-  await selectByText(page.getByLabel(/^from\b/i), /dispensary/i);
-  await selectByText(page.getByLabel(/^to\b/i), /boarding/i);
-  await pickSku(page, /or find an item/i, 'E2E Adult', /e2e adult/i);
-  await selectByText(page.getByLabel(/^batch/i), new RegExp(dispensaryLot));
+  await selectByText(page.getByLabel(/^from\b/i), /cold store/i);
+  await selectByText(page.getByLabel(/^to\b/i), /back store/i);
+  await pickSku(page, /or find an item/i, 'E2E Organic', /e2e organic rice/i);
+  await selectByText(page.getByLabel(/^batch/i), new RegExp(coldStoreLot));
   await page.getByLabel(/^quantity/i).fill('3');
   await page.getByRole('button', { name: /review and post/i }).click();
   await (await dialog(page)).getByRole('button', { name: /post transfer/i }).click();
@@ -187,11 +188,11 @@ test('R-C2: a transfer writes both ends to the ledger', async ({ page }) => {
 
 test('R-D1: a small adjustment posts; a decimal quantity for a whole-only item is refused in words', async ({ page }) => {
   await page.goto('/staff/inventory/adjustments/new');
-  await selectByText(page.getByLabel(/^location/i), /dispensary/i);
+  await selectByText(page.getByLabel(/^location/i), /cold store/i);
   await page.getByRole('radio', { name: /damaged|theft or loss|wastage/i }).first().check();
   await page.getByLabel(/^note/i).fill('Tin dented while shelving');
-  await pickSku(page, /or find an item/i, 'E2E Adult', /e2e adult/i);
-  await selectByText(page.getByLabel(/^batch/i), new RegExp(dispensaryLot));
+  await pickSku(page, /or find an item/i, 'E2E Organic', /e2e organic rice/i);
+  await selectByText(page.getByLabel(/^batch/i), new RegExp(coldStoreLot));
   await page.getByLabel(/^quantity/i).fill('1.5');
   await page.getByRole('button', { name: /review and request|review and post/i }).click();
   await expect(page.getByText(/whole|how many/i).first()).toBeVisible();
@@ -204,15 +205,15 @@ test('R-D1: a small adjustment posts; a decimal quantity for a whole-only item i
 test('R-D2: a blind count, a variance report, then commit', async ({ page }) => {
   await closeStaleCounts(page);
   await page.goto('/staff/inventory/counts/new');
-  await selectByText(page.getByLabel(/^location/i), /dispensary/i);
-  // Selected items only: a whole-location count would record every other dispensary line as zero, and a
+  await selectByText(page.getByLabel(/^location/i), /cold store/i);
+  // Selected items only: a whole-location count would record every other cold-store line as zero, and a
   // variance above the approval limit then waits for a second person.
   await page.getByRole('radio', { name: /selected items only/i }).check();
-  await pickSku(page, /add an item/i, 'E2E Adult', /e2e adult/i);
+  await pickSku(page, /add an item/i, 'E2E Organic', /e2e organic rice/i);
   await page.getByRole('button', { name: /open (the )?count|start/i }).click();
   await expect(page.getByText(/this count is blind/i)).toBeVisible();
-  await pickSku(page, /or find an item/i, 'E2E Adult', /e2e adult/i);
-  await selectByText(page.getByLabel(/which lot of/i), new RegExp(dispensaryLot));
+  await pickSku(page, /or find an item/i, 'E2E Organic', /e2e organic rice/i);
+  await selectByText(page.getByLabel(/which lot of/i), new RegExp(coldStoreLot));
   await page.getByRole('button', { name: /add to the sheet/i }).click();
   const counted = page.getByLabel(/counted \(each\)/i).last();
   await counted.fill('15');
@@ -257,12 +258,12 @@ test('R-E2: the alerts page and the reorder suggestions load', async ({ page }) 
 
 test('R-F1: declare a recall on the lot, read the trace, then withdraw it', async ({ page }) => {
   await page.goto(`/staff/inventory/stock/${foodSkuId}`);
-  await page.getByRole('link', { name: new RegExp(dispensaryLot) }).first().click();
+  await page.getByRole('link', { name: new RegExp(coldStoreLot) }).first().click();
   await page.getByRole('button', { name: /recall…/i }).click();
   const declare = await dialog(page);
   await declare.getByLabel(/reason \(internal\)/i).fill('E2E drill');
-  await declare.getByLabel(/advice to customers/i).fill('Stop feeding it and contact us.');
-  await declare.getByLabel(/type the lot number/i).fill(dispensaryLot);
+  await declare.getByLabel(/advice to customers/i).fill('Stop using it and contact us.');
+  await declare.getByLabel(/type the lot number/i).fill(coldStoreLot);
   await declare.getByRole('button', { name: /declare recall/i }).click();
   await expect(page.getByRole('heading', { name: /^recall RCL-/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /export trace as csv/i })).toBeVisible();
@@ -273,18 +274,18 @@ test('R-F1: declare a recall on the lot, read the trace, then withdraw it', asyn
   await expect(page.getByText('Withdrawn', { exact: true }).first()).toBeVisible();
 });
 
-test('R-G1: report a storage breach at the dispensary', async ({ page }) => {
+test('R-G1: report a storage breach at the cold store', async ({ page }) => {
   await page.goto('/staff/inventory/storage-breaches/new');
-  await selectByText(page.getByLabel('Where did it happen?'), /dispensary/i);
+  await selectByText(page.getByLabel('Where did it happen?'), /cold store/i);
   await page.getByLabel('What happened?').fill('Fridge door left open overnight (E2E)');
   await page.getByLabel('Temperature reached (°C)').fill('11.5');
   await page.getByRole('button', { name: /report the breach/i }).click();
   await expect(page.getByText(/batch(es)? (was|were) flagged|no batches/i).first()).toBeVisible();
 });
 
-test('R-X3: a nurse reads stock but gets the server permission state on receiving and suppliers', async ({ page }) => {
+test('R-X3: a stock-only staff member reads stock but gets the server permission state on receiving and suppliers', async ({ page }) => {
   await page.context().clearCookies();
-  await signIn(page, process.env.E2E_STAFF_NURSE ?? '');
+  await signIn(page, process.env.E2E_STAFF_STOCK_VIEWER ?? '');
   await page.goto('/staff/inventory/receipts/new');
   await expect(page.getByText(/you don.t have permission to do this/i)).toBeVisible();
   await page.goto('/staff/procurement/suppliers');

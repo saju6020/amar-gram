@@ -26,9 +26,9 @@ import { CouriersPage } from '@/components/ordering-admin/CouriersPage';
 import { PaymentSettingsPage } from '@/components/ordering-admin/PaymentSettingsPage';
 import { getStaffOrder } from '@/lib/api/staff-orders';
 import { STAFF_ORDER_POLL_MS } from '@/lib/hooks/useStaffOrders';
-import { setUrl } from '../booking/nav-mock';
+import { setUrl } from '../common/nav-mock';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });

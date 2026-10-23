@@ -39,9 +39,9 @@ describe('<FileList> — HO-FIL-002 §3', () => {
   it('calls onView with the file when its thumb is activated', async () => {
     const file = buildStoredFileViewModel({ originalFileName: 'a.png' });
     const onView = vi.fn();
-    render(<FileList files={[file]} onView={onView} getCaption={() => 'Photo of Whiskers'} />);
+    render(<FileList files={[file]} onView={onView} getCaption={() => 'Photo of Organic rice'} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Photo of Whiskers' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Photo of Organic rice' }));
     expect(onView).toHaveBeenCalledWith(file);
   });
 });

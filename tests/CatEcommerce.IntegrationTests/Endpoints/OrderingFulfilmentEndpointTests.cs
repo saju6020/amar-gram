@@ -128,11 +128,9 @@ public sealed class OrderingFulfilmentEndpointTests(OrderingApiFactory factory) 
         var all = await ReadAsync(await reception.GetAsync("/api/staff/fulfilment/pick-list"));
         Assert.Equal(2, all.GetProperty("groups").GetArrayLength());
 
-        // Inventory staff read it (Appendix D); a nurse may not
+        // Inventory staff read it (Appendix D)
         var (inventory, _) = await StaffClientAsync(shop.Context, StaffRoles.Inventory);
-        var (nurse, _) = await StaffClientAsync(shop.Context, StaffRoles.Nurse);
         Assert.Equal(HttpStatusCode.OK, (await inventory.GetAsync("/api/staff/fulfilment/pick-list")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync("/api/staff/fulfilment/pick-list")).StatusCode);
     }
 
     // ── I-F3 (US-ORD-10 AC2) ────────────────────────────────────────────────────────────────────────
@@ -152,7 +150,7 @@ public sealed class OrderingFulfilmentEndpointTests(OrderingApiFactory factory) 
         var lines = slip.GetProperty("lines").EnumerateArray().ToList();
         Assert.Equal(2, lines.Count);
         var foodLine = order.Lines.Single(l => l.SkuId == shop.Food.SkuId);
-        Assert.Equal(foodLine.Allocations[0].LotNumber, lines.Single(l => l.GetProperty("productName").GetString() == "Royal Canin Kitten 2 kg").GetProperty("batchNumbers")[0].GetString());
+        Assert.Equal(foodLine.Allocations[0].LotNumber, lines.Single(l => l.GetProperty("productName").GetString() == "Royal Basmati Rice 2 kg").GetProperty("batchNumbers")[0].GetString());
 
         var (elsewhere, _) = await StaffClientAsync(await CreateContextAsync(), StaffRoles.Reception);
         Assert.Equal(HttpStatusCode.NotFound, (await elsewhere.GetAsync($"/api/staff/orders/{orderId}/packing-slip")).StatusCode);
@@ -475,10 +473,7 @@ public sealed class OrderingFulfilmentEndpointTests(OrderingApiFactory factory) 
         var (inventory, _) = await StaffClientAsync(shop.Context, StaffRoles.Inventory);
         var inventoryView = await ReadAsync(await inventory.GetAsync($"/api/staff/orders/{orderId}"));
         Assert.DoesNotContain("Dispatch", inventoryView.GetProperty("allowedActions").EnumerateArray().Select(a => a.GetString()));
-
-        var (nurse, _) = await StaffClientAsync(shop.Context, StaffRoles.Nurse);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync($"/api/staff/orders/{orderId}")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync("/api/staff/orders")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await CreateClient().GetAsync($"/api/staff/orders/{orderId}")).StatusCode);
     }
 
     // ── I-X3 (the delivered variant) ────────────────────────────────────────────────────────────────

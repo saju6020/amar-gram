@@ -90,7 +90,6 @@ describe('PersonalDataExportCard — U-J1', () => {
           },
           addresses: [],
           notificationPreferences: [],
-          cats: [],
         }),
       ),
     );

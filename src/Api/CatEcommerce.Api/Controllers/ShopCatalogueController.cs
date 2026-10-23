@@ -25,7 +25,7 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
     [HttpGet("products")]
     public async Task<IActionResult> GetProducts(
         [FromQuery] string? q, [FromQuery] string? category, [FromQuery] string? subcategory,
-        [FromQuery] string[]? brand, [FromQuery] string[]? origin, [FromQuery] string[]? lifeStage, [FromQuery] string[]? protein,
+        [FromQuery] string[]? brand, [FromQuery] string[]? origin, [FromQuery] string[]? protein,
         [FromQuery] string? minPrice, [FromQuery] string? maxPrice, [FromQuery] string? availability, [FromQuery] int? minRating,
         [FromQuery] string? sort, [FromQuery] int? pageNumber, [FromQuery] int? pageSize, [FromQuery] string? locale)
     {
@@ -33,12 +33,10 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
 
         var brands = brand ?? [];
         var origins = origin ?? [];
-        var lifeStages = lifeStage ?? [];
         var proteins = protein ?? [];
 
         if (brands.Length > ShopSearchRules.MaxFilterValues) return InvalidFilter("brand", $"brand cannot have more than {ShopSearchRules.MaxFilterValues} values.");
         if (origins.Length > ShopSearchRules.MaxFilterValues) return InvalidFilter("origin", $"origin cannot have more than {ShopSearchRules.MaxFilterValues} values.");
-        if (lifeStages.Length > ShopSearchRules.MaxFilterValues) return InvalidFilter("lifeStage", $"lifeStage cannot have more than {ShopSearchRules.MaxFilterValues} values.");
         if (proteins.Length > ShopSearchRules.MaxFilterValues) return InvalidFilter("protein", $"protein cannot have more than {ShopSearchRules.MaxFilterValues} values.");
 
         // Row 30: every enumerated filter treats an unknown value the same way -- InvalidCatalogueFilter naming
@@ -51,9 +49,6 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
 
         foreach (var value in origins)
             if (!CountryCodes.IsValid(value)) return InvalidFilter("origin", $"'{value}' is not a known country code.");
-
-        foreach (var value in lifeStages)
-            if (!EnumerationParsing.TryParse<LifeStage>(value, out _)) return InvalidFilter("lifeStage", $"'{value}' is not a known life stage.");
 
         foreach (var value in proteins)
             if (!EnumerationParsing.TryParse<ProteinSource>(value, out _)) return InvalidFilter("protein", $"'{value}' is not a known protein source.");
@@ -81,7 +76,7 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
 
         var query = new GetCatalogueQuery
         {
-            Q = q, Category = category, Subcategory = subcategory, Brand = brands, Origin = origins, LifeStage = lifeStages, Protein = proteins,
+            Q = q, Category = category, Subcategory = subcategory, Brand = brands, Origin = origins, Protein = proteins,
             MinPrice = minPriceValue, MaxPrice = maxPriceValue, AvailabilityInStock = availability == "inStock" ? true : null, MinRating = minRating,
             Sort = sort, Locale = locale, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(),
             PageSize = pageSize is > 0 ? Math.Min(pageSize.Value, ShopSearchRules.MaxPageSize) : ShopSearchRules.DefaultPageSize

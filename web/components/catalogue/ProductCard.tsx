@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { resolveFileUrl } from '@/lib/api/files';
-import { Check, Globe, Heart, Package, ShieldAlert } from 'lucide-react';
+import { Check, Globe, Heart, Package } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ProductPackArt } from '@/components/hearth/ProductPackArt';
 import { PACK_BG, packToneForCategory } from '@/components/hearth/packTone';
@@ -142,10 +142,9 @@ function CardWishlistButton({
 }
 
 /**
- * The quick-add rule for a catalogue item (owner rule 2026-10-16). One size and no prescription
- * adds straight to the cart (the existing cart mutation); several sizes or a prescription diet go
- * to the product page, where the size choice and the cat picker already live. A card carries no
- * SKU id, so a product that might have one size is read first.
+ * The quick-add rule for a catalogue item (owner rule 2026-10-16). One size adds straight to the
+ * cart (the existing cart mutation); several sizes go to the product page, where the size choice
+ * already lives. A card carries no SKU id, so a product that might have one size is read first.
  */
 export function useQuickAdd(
   item: CatalogueItem,
@@ -156,9 +155,9 @@ export function useQuickAdd(
   const add = useAddCartLine();
   const loadSkus = useProductSkus();
   const [busy, setBusy] = React.useState(false);
-  // One card per size (owner, 2026-10-18): a card that is a size adds that size; only a prescription
-  // diet (the cat picker) or a row that is not a single size still goes to the product page.
-  const chooseOnPage = item.prescriptionRequired || (!item.skuId && item.priceVaries);
+  // One card per size (owner, 2026-10-18): a card that is a size adds that size; only a row that is
+  // not a single size still goes to the product page.
+  const chooseOnPage = !item.skuId && item.priceVaries;
 
   async function run() {
     if (busy) return;
@@ -292,12 +291,6 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
       <span key="kit" className="inline-flex items-center gap-1.5 text-warm-ink">
         <Package size={13} aria-hidden="true" />
         Kit
-      </span>
-    ),
-    item.prescriptionRequired && (
-      <span key="rx" className="inline-flex items-center gap-1.5 text-warning-ink">
-        <ShieldAlert size={13} aria-hidden="true" />
-        Vet authorisation needed
       </span>
     ),
   ].filter(Boolean);

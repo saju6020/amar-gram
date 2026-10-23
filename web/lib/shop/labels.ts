@@ -1,6 +1,6 @@
 /**
  * `lib/shop/labels.ts` — HO-SHP-002 §11. Display names for the API's enumeration values (which come
- * by name, e.g. `CatFood`, `AllLifeStages`). Labels are English-only chrome (C-8); product CONTENT is
+ * by name, e.g. `CatFood`, `PlantBased`). Labels are English-only chrome (C-8); product CONTENT is
  * what FR-SHP-15 translates. Unknown values fall back to a spaced version of the name.
  */
 
@@ -19,13 +19,6 @@ const SUBCATEGORY_LABELS: Record<string, string> = {
   StorageBags: 'Storage bags',
 };
 
-const LIFE_STAGE_LABELS: Record<string, string> = {
-  Kitten: 'Kitten',
-  Adult: 'Adult',
-  Senior: 'Senior',
-  AllLifeStages: 'All life stages',
-};
-
 const PROTEIN_LABELS: Record<string, string> = { PlantBased: 'Plant-based' };
 
 function spaced(value: string): string {
@@ -34,22 +27,7 @@ function spaced(value: string): string {
 
 export const categoryLabel = (value: string) => CATEGORY_LABELS[value] ?? spaced(value);
 export const subcategoryLabel = (value: string) => SUBCATEGORY_LABELS[value] ?? spaced(value);
-export const lifeStageLabel = (value: string) => LIFE_STAGE_LABELS[value] ?? spaced(value);
 export const proteinLabel = (value: string) => PROTEIN_LABELS[value] ?? spaced(value);
-
-/** "Recommended for kittens / adult cats / senior cats" (US-SHP-08). */
-export function lifeStageAudience(stages: string[]): string {
-  const names = stages.map((stage) =>
-    stage === 'Kitten'
-      ? 'kittens'
-      : stage === 'Senior'
-        ? 'senior cats'
-        : stage === 'Adult'
-          ? 'adult cats'
-          : 'cats of every age',
-  );
-  return names.length > 0 ? names.join(' and ') : 'cats';
-}
 
 export const SORT_LABELS = {
   relevance: 'Relevance',

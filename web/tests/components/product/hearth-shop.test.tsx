@@ -12,7 +12,7 @@ import { mockDetail, renderWithClient, signOutForTest } from './test-utils';
 const push = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn(), push }),
-  usePathname: () => '/shop/products/royal-canin-kitten',
+  usePathname: () => '/shop/products/organic-rolled-oats',
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -37,7 +37,7 @@ function purchase(skuId: string) {
 describe('Product page buy row — Hearth', () => {
   it('has a pill quantity stepper, Add to cart and the wishlist button; the quantity is sent', async () => {
     const user = userEvent.setup();
-    purchase(shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.skuOats2kg);
     const quantity = screen.getByRole('spinbutton', { name: 'Quantity' });
     expect(screen.getAllByLabelText('Quantity')).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'One more' }));
@@ -55,14 +55,14 @@ describe('Product page buy row — Hearth', () => {
     await user.type(quantity, '3');
     await user.click(screen.getByRole('button', { name: /add to cart/i }));
     expect(
-      await screen.findByText(/Added 3 × Royal Canin Kitten to your cart/),
+      await screen.findByText(/Added 3 × Organic Rolled Oats to your cart/),
     ).toBeInTheDocument();
     // The wishlist control is present (a guest gets the sign-in link).
     expect(await screen.findByRole('link', { name: 'Save' })).toBeInTheDocument();
   });
 
   it('an out-of-stock size disables the stepper and Add to cart, with the reason written out', () => {
-    purchase(shopFixtureIds.skuKitten4kg);
+    purchase(shopFixtureIds.skuOats4kg);
     expect(screen.getByRole('spinbutton', { name: 'Quantity' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'One more' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'One fewer' })).toBeDisabled();
@@ -72,7 +72,7 @@ describe('Product page buy row — Hearth', () => {
   });
 
   it('the size options are cards in one radio group with price and stock', () => {
-    purchase(shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.skuOats2kg);
     const group = screen.getByRole('group', { name: 'Choose a size' });
     expect(within(group).getAllByRole('radio')).toHaveLength(3);
     expect(within(group).getByRole('radio', { name: /2 kg/ })).toBeChecked();
@@ -112,21 +112,21 @@ describe('Often bought together', () => {
           makeItem({ productId: 'a', slug: shopFixtureIds.multiVariantSlug, priceVaries: true }),
           makeItem({
             productId: 'b',
-            slug: shopFixtureIds.thaiKittenSlug,
-            name: 'Whiskas Kitten Salmon',
+            slug: shopFixtureIds.thaiRiceSlug,
+            name: 'Thai Jasmine Rice',
           }),
         ]}
       />,
     );
     expect(screen.getByRole('heading', { name: 'Often bought together' })).toBeInTheDocument();
     await user.click(
-      screen.getByRole('button', { name: 'Add Royal Canin Kitten: choose options' }),
+      screen.getByRole('button', { name: 'Add Organic Rolled Oats: choose options' }),
     );
-    expect(push).toHaveBeenCalledWith('/shop/products/royal-canin-kitten');
-    const add = screen.getByRole('button', { name: 'Add Whiskas Kitten Salmon to cart' });
+    expect(push).toHaveBeenCalledWith('/shop/products/organic-rolled-oats');
+    const add = screen.getByRole('button', { name: 'Add Thai Jasmine Rice to cart' });
     expect(add).toHaveClass('size-11');
     await user.click(add);
-    expect(await screen.findByText(/Added Whiskas Kitten Salmon to your cart/)).toBeInTheDocument();
+    expect(await screen.findByText(/Added Thai Jasmine Rice to your cart/)).toBeInTheDocument();
   });
 });
 
@@ -136,23 +136,23 @@ describe('ShopHero — built from the banner, nothing invented', () => {
       <ShopHero
         banner={{
           slug: 'b',
-          title: 'Kitten season',
-          body: 'Everything a new kitten needs.',
+          title: 'Harvest season',
+          body: 'Everything a new kitchen needs.',
           placement: 'Home',
           linkUrl: '/shop/products?category=CatFood',
         }}
         featured={makeItem()}
       />,
     );
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Kitten season');
-    expect(screen.getByText('Everything a new kitten needs.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Harvest season');
+    expect(screen.getByText('Everything a new kitchen needs.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Find out more/ })).toHaveAttribute(
       'href',
       '/shop/products?category=CatFood',
     );
-    expect(screen.getByRole('link', { name: /Royal Canin Kitten/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Organic Rolled Oats/ })).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten',
+      '/shop/products/organic-rolled-oats',
     );
   });
 

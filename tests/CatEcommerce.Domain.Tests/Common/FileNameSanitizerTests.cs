@@ -44,7 +44,7 @@ public sealed class FileNameSanitizerTests
     [Fact]
     public void Ordinary_names_pass_through_unchanged()
     {
-        Assert.Equal("cat-photo.jpg", FileNameSanitizer.Sanitize("cat-photo.jpg"));
+        Assert.Equal("product-photo.jpg", FileNameSanitizer.Sanitize("product-photo.jpg"));
     }
 
     // Gate-fix 2026-09-27 (SECURITY MEDIUM, HO-FIL-001-SECURITY.md): Sanitize strips Unicode
@@ -80,7 +80,7 @@ public sealed class FileNameSanitizerTests
     // type -- SECURITY's own probe table (HO-FIL-001-SECURITY.md second pass), never persisted as
     // a unit test until this TEST gate.
     [Theory]
-    [InlineData("cat.hta", "image/png", "cat.png")]
+    [InlineData("photo.hta", "image/png", "photo.png")]
     [InlineData("a.exe", "application/zip", "a.zip")]
     [InlineData("scan.js", "application/dicom", "scan.dcm")]
     [InlineData("v.scr", "video/mp4", "v.mp4")]

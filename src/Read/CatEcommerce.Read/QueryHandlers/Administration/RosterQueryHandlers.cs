@@ -13,7 +13,7 @@ namespace CatEcommerce.Read.QueryHandlers.Administration;
 
 /// <summary>A raw, unformatted shift-slot row -- a named type (not an anonymous one) so it can
 /// cross the method boundary between the SQL-side projection and the in-memory formatting step.</summary>
-internal sealed record RawShiftSlot(DayOfWeek DayOfWeek, TimeOnly Starts, TimeOnly Ends, Guid? DefaultRoomId);
+internal sealed record RawShiftSlot(DayOfWeek DayOfWeek, TimeOnly Starts, TimeOnly Ends);
 
 public sealed class GetBranchRostersQueryHandler(CatEcommerceDbContext db) : IQueryHandlerAsync<GetBranchRostersQuery, IReadOnlyList<StaffRosterViewModel>>
 {
@@ -28,8 +28,8 @@ public sealed class GetBranchRostersQueryHandler(CatEcommerceDbContext db) : IQu
             .Select(r => new
             {
                 r.StaffAccountId, r.BranchId, r.NextPatternEffectiveFrom,
-                CurrentPattern = r.CurrentPattern.Select(s => new RawShiftSlot(s.DayOfWeek, s.Starts, s.Ends, s.DefaultRoomId)).ToList(),
-                NextPattern = r.NextPattern.Select(s => new RawShiftSlot(s.DayOfWeek, s.Starts, s.Ends, s.DefaultRoomId)).ToList()
+                CurrentPattern = r.CurrentPattern.Select(s => new RawShiftSlot(s.DayOfWeek, s.Starts, s.Ends)).ToList(),
+                NextPattern = r.NextPattern.Select(s => new RawShiftSlot(s.DayOfWeek, s.Starts, s.Ends)).ToList()
             })
             .ToListAsync();
 
@@ -41,7 +41,7 @@ public sealed class GetBranchRostersQueryHandler(CatEcommerceDbContext db) : IQu
     }
 
     private static IReadOnlyList<ShiftSlotViewModel> ToSlots(IEnumerable<RawShiftSlot> slots) =>
-        slots.Select(s => new ShiftSlotViewModel(s.DayOfWeek.ToString(), s.Starts.ToString("HH:mm"), s.Ends.ToString("HH:mm"), s.DefaultRoomId)).ToList();
+        slots.Select(s => new ShiftSlotViewModel(s.DayOfWeek.ToString(), s.Starts.ToString("HH:mm"), s.Ends.ToString("HH:mm"))).ToList();
 }
 
 public sealed class GetRosterExceptionsQueryHandler(CatEcommerceDbContext db) : IQueryHandlerAsync<GetRosterExceptionsQuery, IReadOnlyList<RosterExceptionViewModel>>
@@ -97,7 +97,7 @@ public sealed class GetStaffAvailabilityQueryHandler(CatEcommerceDbContext db, I
             var intervals = CatEcommerce.Domain.DomainServices.StaffAvailability.Intervals(
                 roster, exceptions, approvedLeave, openIntervals, timeZoneId, query.From, query.To, query.RestrictToOpeningHours);
 
-            result.AddRange(intervals.Select(i => new StaffAvailableIntervalViewModel(i.StaffAccountId, i.BranchId, i.Start, i.End, i.DefaultRoomId, i.OutsideOpeningHours)));
+            result.AddRange(intervals.Select(i => new StaffAvailableIntervalViewModel(i.StaffAccountId, i.BranchId, i.Start, i.End, i.OutsideOpeningHours)));
         }
 
         return new QueryResponse<IReadOnlyList<StaffAvailableIntervalViewModel>> { Result = result };

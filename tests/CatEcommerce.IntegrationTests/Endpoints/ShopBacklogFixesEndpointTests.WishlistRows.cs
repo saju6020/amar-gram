@@ -19,7 +19,7 @@ using Xunit;
 
 namespace CatEcommerce.IntegrationTests.Endpoints;
 
-/// <summary>Rows 18, 33, 34 -- wishlist visibility, due-alert starvation, notify-time diet gate.</summary>
+/// <summary>Rows 18, 33 -- wishlist visibility, due-alert starvation.</summary>
 public sealed partial class ShopBacklogFixesEndpointTests
 {
     // ── Row 18: the wishlist and draft / unlisted products ──────────────────────────────────────
@@ -154,44 +154,5 @@ public sealed partial class ShopBacklogFixesEndpointTests
         var response = await dispatcher.GetResultAsync(new GetDueStockAlertsQuery
         { Limit = limit, UserContext = new UserContext(Guid.NewGuid(), Guid.Empty), CorrelationId = Guid.NewGuid() });
         return (response.Result ?? []).ToList();
-    }
-
-    // ── Row 34: the notify pass re-checks the diet gate for a prescription product ──────────────
-
-    [Fact]
-    public async Task Row34_ALapsedAuthorisation_StopsTheBackInStockNotification_UntilItIsRenewed()
-    {
-        var (gateFactory, authorisations) = Factory.WithControllableDietGate();
-        var staff = await SignInAsShopManagerAsync();
-        var rx = await CreateProductAsync(staff, NewBrand("LapseRx"), "Lapsing Rx Diet", "CatFood", prescription: true);
-        await SetSkuOutOfStockAsync(rx.SkuId);
-
-        var (customer, customerId) = await RegisterAndSignInCustomerAsync(gateFactory);
-        var catId = await SeedCatAsync(customerId);
-        authorisations.Authorise(customerId, catId, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30));
-        Assert.Equal(HttpStatusCode.Created, (await customer.PostAsJsonAsync("/api/customers/me/stock-alerts", new { skuId = rx.SkuId }, Json)).StatusCode);
-
-        // The authorisation lapses (the gate's "today" moves past its end), THEN stock arrives.
-        authorisations.Today = () => DateOnly.FromDateTime(DateTime.UtcNow).AddDays(60);
-        await SetSkuInStockAsync(rx.SkuId);
-        await RunShopCycleAsync(gateFactory);
-
-        Assert.Equal(0, await CountBackInStockRequestsAsync(customerId));
-        Assert.Equal("Pending", (await JsonOkAsync(await customer.GetAsync("/api/customers/me/stock-alerts"))).EnumerateArray().Single().GetProperty("status").GetString());
-
-        // Renewed: the next pass notifies as normal.
-        authorisations.Today = () => DateOnly.FromDateTime(DateTime.UtcNow);
-        await RunShopCycleAsync(gateFactory);
-
-        Assert.Equal(1, await CountBackInStockRequestsAsync(customerId));
-        Assert.Equal("Notified", (await JsonOkAsync(await customer.GetAsync("/api/customers/me/stock-alerts"))).EnumerateArray().Single().GetProperty("status").GetString());
-    }
-
-    private async Task<int> CountBackInStockRequestsAsync(Guid customerId)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<CatEcommerceDbContext>();
-        return await db.Set<NotificationRequestAggregate>().AsNoTracking()
-            .CountAsync(r => r.RecipientId == customerId && r.TemplateKey == NotificationTemplateCatalogue.ShopBackInStock);
     }
 }

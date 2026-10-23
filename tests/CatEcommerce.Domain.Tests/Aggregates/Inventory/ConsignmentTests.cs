@@ -15,7 +15,7 @@ public sealed class ConsignmentTests
 
     private static ConsignmentDetailsDto Details(
         string? permit = "IP-1", string? certificate = "HC-1", string? declaration = "CD-1", IReadOnlyList<HsCodeDto>? hs = null, string country = "DE") =>
-        new(country, "BL-123456", [Guid.NewGuid()], hs ?? [new HsCodeDto("2309.10", "Cat food")], permit, certificate, declaration, new DateOnly(2026, 11, 1), Actor());
+        new(country, "BL-123456", [Guid.NewGuid()], hs ?? [new HsCodeDto("2309.10", "Animal feed")], permit, certificate, declaration, new DateOnly(2026, 11, 1), Actor());
 
     private static ConsignmentAggregate Planned(ConsignmentDetailsDto? details = null)
     {

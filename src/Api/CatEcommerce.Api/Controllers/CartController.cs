@@ -52,7 +52,7 @@ public sealed class CartController(
         var response = await dispatcher.SendAsync(new AddCartLineCommand
         {
             NewCartId = Guid.NewGuid(), GuestTokenHash = cookies.ReadHash(Request), NewGuestTokenHash = candidate?.Hash,
-            SkuId = request.SkuId, Quantity = request.Quantity, CatId = request.CatId,
+            SkuId = request.SkuId, Quantity = request.Quantity,
             UserContext = user, CorrelationId = Guid.NewGuid(), ValidateCommand = true
         });
 
@@ -72,7 +72,7 @@ public sealed class CartController(
     {
         var response = await dispatcher.SendAsync(new UpdateCartLineCommand
         {
-            LineId = lineId, GuestTokenHash = cookies.ReadHash(Request), Quantity = request.Quantity, CatId = request.CatId,
+            LineId = lineId, GuestTokenHash = cookies.ReadHash(Request), Quantity = request.Quantity,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         });
 

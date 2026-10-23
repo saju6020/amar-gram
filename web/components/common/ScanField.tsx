@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
  * person who types a barcode presses **Look up**, and the SKU picker beside this field always
  * remains available. No camera, no scanning library.
  *
- * `onScan` resolves to the text to announce for a match (*"Kitten food — FD-KDC-2KG"*), or `null`
+ * `onScan` resolves to the text to announce for a match (*"Organic rice — FD-RCE-5KG"*), or `null`
  * for no match — in which case the field announces *"No SKU has barcode {value}."* and keeps focus.
  * After a match the parent fills the SKU and moves focus to the quantity field.
  */

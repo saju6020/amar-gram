@@ -9,7 +9,7 @@ import { selectPortalScenario, signInEstablished } from './portal-helpers';
  */
 test.describe.configure({ timeout: 60_000 });
 
-const SCENARIOS = ['full', 'new', 'degraded', 'catsUnavailable', 'manyCats', 'ordersNotDelivered'];
+const SCENARIOS = ['full', 'new', 'degraded', 'ordersNotDelivered'];
 const VIEWPORTS = [
   { width: 360, height: 780 },
   { width: 768, height: 1024 },
@@ -21,7 +21,7 @@ async function openAs(page: Page, name: string) {
   await signInEstablished(page);
   await selectPortalScenario(page, name);
   await page.goto('/portal');
-  await expect(page.getByTestId('tile-cats')).toBeVisible();
+  await expect(page.getByTestId('tile-balances')).toBeVisible();
 }
 
 async function expectNoSeriousOrCritical(page: Page) {
@@ -59,7 +59,7 @@ test.describe('E-X1 axe', () => {
 
 test.describe('E-X2 responsive', () => {
   for (const viewport of VIEWPORTS) {
-    for (const name of ['full', 'new', 'manyCats']) {
+    for (const name of ['full', 'new']) {
       test(`/portal — ${name} at ${viewport.width}`, async ({ page }) => {
         await page.setViewportSize(viewport);
         await openAs(page, name);

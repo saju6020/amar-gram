@@ -21,7 +21,7 @@ export interface FileListProps {
    *  (ADR-FE-154) — forwarded to each row's `<FileThumb>`. */
   onRefresh?: (file: StoredFileViewModel) => Promise<StoredFileViewModel | null | undefined>;
   /** The caption/alt text for each row's thumb — receives the file so a caller can build
-   *  something like "Photo of Whiskers, added 2 Sept 2026". Defaults to the file's own name. */
+   *  something like "Photo of Organic rice 5 kg, added 2 Sept 2026". Defaults to the file's own name. */
   getCaption?: (file: StoredFileViewModel) => string;
   /** Shown instead of an empty `<ul>` when `files` is empty. Renders nothing if omitted — the
    *  host usually already has its own empty-state copy around this list. */

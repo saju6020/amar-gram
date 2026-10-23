@@ -59,12 +59,12 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
     // ── I-E5 (the filters half) ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task I_E5_Filters_OfferTheBrandsOriginsLifeStagesProteinsAndPriceBoundsOfActiveListedProducts()
+    public async Task I_E5_Filters_OfferTheBrandsOriginsProteinsAndPriceBoundsOfActiveListedProducts()
     {
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Facet");
-        await CreateProductAsync(staff, brand, "Facet Food", "CatFood", price: 777m, countryCode: "SE", lifeStage: "Senior", proteinSource: "Duck");
-        await CreateProductAsync(staff, brand, "Draft Food", "CatFood", countryCode: "NO", lifeStage: "Kitten", publish: false);
+        await CreateProductAsync(staff, brand, "Facet Food", "CatFood", price: 777m, countryCode: "SE", proteinSource: "Duck");
+        await CreateProductAsync(staff, brand, "Draft Food", "CatFood", countryCode: "NO", publish: false);
 
         var response = await CreateClient().GetAsync("/api/shop/filters?category=CatFood");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -74,7 +74,6 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
         Assert.True(brandFacet.ValueKind == JsonValueKind.Object, "The brand facet is missing (the facets are cached for 60 s; a fresh brand appears on the next window).");
         Assert.Equal(1, brandFacet.GetProperty("count").GetInt32());
         Assert.Contains(body.GetProperty("origins").EnumerateArray(), o => o.GetProperty("code").GetString() == "SE" && o.GetProperty("name").GetString() == "Sweden");
-        Assert.Contains(body.GetProperty("lifeStages").EnumerateArray(), l => l.GetProperty("value").GetString() == "Senior");
         Assert.Contains(body.GetProperty("proteinSources").EnumerateArray(), p => p.GetProperty("value").GetString() == "Duck");
         Assert.True(body.GetProperty("price").GetProperty("min").GetDecimal() <= 777m);
     }
@@ -111,7 +110,7 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
             Assert.True(response.Headers.CacheControl is { Public: true, MaxAge: { TotalSeconds: 60 } }, $"{url}: {response.Headers.CacheControl}");
         }
 
-        foreach (var url in new[] { $"/api/customers/me/shop/products/{product.Slug}/purchasability", "/api/customers/me/wishlist", "/api/customers/me/stock-alerts" })
+        foreach (var url in new[] { "/api/customers/me/wishlist", "/api/customers/me/stock-alerts" })
         {
             var response = await customer.GetAsync(url);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"{url}: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
@@ -151,7 +150,7 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
     // ── I-X1 / I-X2 ─────────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task I_X1_NoReviewTextAllergenTextCustomerNamesMobilesOrEmailsAreLogged_AndI_X2_NoReviewOrRecommendationBodyCarriesAnIdentity()
+    public async Task I_X1_NoReviewTextIngredientTextCustomerNamesMobilesOrEmailsAreLogged_AndI_X2_NoReviewOrRecommendationBodyCarriesAnIdentity()
     {
         var (capturedBase, logs) = Factory.WithCapturedLogs();
         var purchases = new ControllablePurchaseHistoryReader();
@@ -166,7 +165,7 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
 
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Logs");
-        var food = await CreateProductAsync(staff, brand, "Log Check Food", "CatFood", lifeStage: "Adult", ingredientList: $"salmon, {allergenMarker.ToLowerInvariant()}");
+        var food = await CreateProductAsync(staff, brand, "Log Check Food", "CatFood", ingredientList: $"salmon, {allergenMarker.ToLowerInvariant()}");
 
         var (customer, customerId) = await RegisterAndSignInCustomerAsync(capturedFactory, email);
         var mobile = await ReadMobileAsync(customer);
@@ -184,13 +183,6 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
         var rename = await customer.PutAsJsonAsync("/api/customers/me", new { fullName = nameMarker, emailAddress = email, additionalPhoneNumbers = Array.Empty<string>(), currentPassword = "correcthorsebattery" }, Json);
         Assert.Equal(HttpStatusCode.NoContent, rename.StatusCode);
 
-        // H: a recommendation for a cat that records an allergen the log must never see.
-        var catId = await SeedCatAsync(customerId, "Whiskers", DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-3));
-        await RecordCatFactsAsync(catId, allergens: [allergenMarker], conditions: [$"Cystitis {marker}"]);
-        var recommendations = await customer.GetAsync($"/api/customers/me/cats/{catId}/food-recommendations");
-        Assert.Equal(HttpStatusCode.OK, recommendations.StatusCode);
-        var recommendationsBody = await recommendations.Content.ReadAsStringAsync();
-
         // I-X2: no public review or recommendation body carries a customer id, mobile or email. (The
         // review author is rendered as a display name, "Rahim K." -- by design, section 12.6 -- so the
         // name itself is only checked against the LOGS below.)
@@ -205,14 +197,11 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
 
         using (var document = JsonDocument.Parse(publicReviews))
             AssertNoIdentityFields(document.RootElement);
-        using (var document = JsonDocument.Parse(recommendationsBody))
-            Assert.DoesNotContain(customerId.ToString(), recommendationsBody, StringComparison.OrdinalIgnoreCase);
 
         // I-X1: nothing free-text or personal appears at any log level.
         var allLogText = string.Join("\n", logs);
         Assert.DoesNotContain(reviewMarker, allLogText);
         Assert.DoesNotContain(allergenMarker, allLogText, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain($"Cystitis {marker}", allLogText);
         Assert.DoesNotContain(nameMarker, allLogText);
         Assert.DoesNotContain(email, allLogText);
         Assert.DoesNotContain(mobile, allLogText);

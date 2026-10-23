@@ -95,9 +95,6 @@ public static class SkuSellability
 
             if (!OnSale(row.SkuId)) continue;
 
-            // OQ-14 / BR-2: a bundle with a prescription component is never sellable.
-            if (components.Any(c => c.ProductId == row.ProductId && all.TryGetValue(c.ComponentSkuId, out var part) && part.PrescriptionRequired)) continue;
-
             var parts = components.Where(c => c.ProductId == row.ProductId)
                 .Select(c => (c.Quantity, WholeUnits(c.ComponentSkuId))).ToList();
             result[row.SkuId] = SkuAvailabilityRules.EvaluateBundle(parts);

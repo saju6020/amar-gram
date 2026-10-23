@@ -16,7 +16,7 @@ import type { BackupScenario, SnapshotScenario } from './state';
 
 export const xctFixtureIds = {
   staffAccountId: accountsFixtureIds.adminStaffId,
-  otherStaffAccountId: accountsFixtureIds.nurseStaffId,
+  otherStaffAccountId: accountsFixtureIds.stockStaffId,
   branchId: administrationFixtureIds.mainBranchId,
   erasedCustomerId: 'c0000000-0000-0000-0000-0000000e0001',
   mergedCustomerId: 'c0000000-0000-0000-0000-0000000e0002',
@@ -39,94 +39,16 @@ export function buildSnapshot(
   branchId: string,
   version: number,
 ): OfflineSnapshotBody {
+  void version; // the ETag carries the version; the body has no section that changes with it.
   const day = todayLocalDate();
-  const at = (hh: string) => `${day}T${hh}:00+06:00`;
-  const appointments = {
-    items: [
-      {
-        appointmentId: 'a0000000-0000-0000-0000-000000000002',
-        startsOn: at('11:30'),
-        endsOn: at('12:00'),
-        status: version > 1 ? 'InConsultation' : 'CheckedIn',
-        isWalkIn: false,
-        triagePriority: null,
-        catName: 'Mitu',
-        catIsHighRisk: true,
-        handlingNote: 'Bites when restrained. Use a towel wrap.',
-        customerName: 'Farhana Akter',
-        customerPhone: '+8801711000222',
-        serviceName: 'Vaccination',
-        performerName: 'Dr Rahman',
-        roomName: 'Consult 1',
-      },
-      {
-        appointmentId: 'a0000000-0000-0000-0000-000000000001',
-        startsOn: at('09:00'),
-        endsOn: at('09:30'),
-        status: 'Booked',
-        isWalkIn: false,
-        triagePriority: null,
-        catName: 'Luna',
-        catIsHighRisk: false,
-        handlingNote: null,
-        customerName: 'Imran Hossain',
-        customerPhone: '+8801711000111',
-        serviceName: 'Consultation',
-        performerName: 'Dr Rahman',
-        roomName: 'Consult 2',
-      },
-    ],
-  };
-  const boardingTasks = {
-    items: [
-      {
-        taskId: 'b0000000-0000-0000-0000-0000000000b2',
-        dueOn: at('18:00'),
-        taskType: 'Medication',
-        taskLabel: 'Evening medication',
-        unitName: 'Suite 3',
-        catName: 'Pixel',
-        catIsHighRisk: false,
-        handlingNote: null,
-        instructions: 'Half a tablet with food',
-        status: 'Open',
-        completedOn: null,
-        assigneeName: 'Nasrin',
-      },
-      {
-        taskId: 'b0000000-0000-0000-0000-0000000000b1',
-        dueOn: at('08:00'),
-        taskType: 'Feeding',
-        taskLabel: 'Morning feed',
-        unitName: 'Suite 3',
-        catName: 'Pixel',
-        catIsHighRisk: false,
-        handlingNote: null,
-        instructions: null,
-        status: 'Completed',
-        completedOn: at('08:10'),
-        assigneeName: 'Nasrin',
-      },
-    ],
-  };
-
-  const omitted: OfflineSnapshotBody['omittedSections'] = [];
+  // No offline section is defined in Amar Gram today, so the envelope carries no sections and no omissions.
   const sections: OfflineSnapshotBody['sections'] = {};
-  if (scenario === 'appointmentsNotPermitted') {
-    omitted.push({ section: 'appointments', reason: 'NotPermitted' });
-  } else {
-    sections.appointments = appointments;
-  }
-  if (scenario === 'boardingNotAvailable') {
-    omitted.push({ section: 'boardingTasks', reason: 'NotAvailable' });
-  } else {
-    sections.boardingTasks = boardingTasks;
-  }
+  const omitted: OfflineSnapshotBody['omittedSections'] = [];
 
   const expired = scenario === 'expired';
   return {
     schemaVersion: 1,
-    branch: { id: branchId, name: 'Main clinic', timeZoneId: 'Asia/Dhaka' },
+    branch: { id: branchId, name: 'Main outlet', timeZoneId: 'Asia/Dhaka' },
     localDate: day,
     generatedOn: new Date().toISOString(),
     validUntil: expired ? isoPlusHours(-3) : isoPlusHours(14),
@@ -146,16 +68,15 @@ export function snapshotEtag(scenario: SnapshotScenario, version: number): strin
 const CLASS_ROWS: Array<
   [string, number | null, 'years' | 'months' | 'days' | null, string, number, string]
 > = [
-  ['Clinical', 7, 'years', 'ReviewOnly', 41, 'Statutory clinical-record retention'],
   ['Financial', 10, 'years', 'ReviewOnly', 18, 'Statutory financial-record retention'],
-  ['Regulatory', 10, 'years', 'ReviewOnly', 6, 'Controlled-drug register'],
+  ['Regulatory', 10, 'years', 'ReviewOnly', 6, 'Tax and import registers'],
   ['Audit', null, null, 'ReviewOnly', 5, 'Audit trail'],
   ['CustomerPersonal', null, null, 'AnonymiseOnRequest', 12, 'Erased on request'],
   ['CurrentState', null, null, 'Keep', 30, 'Current state'],
   ['Operational', null, null, 'Keep', 22, 'Operational data'],
   ['Notification', 6, 'months', 'Redact', 3, 'Message contents'],
   ['Security', 30, 'days', 'Purge', 4, 'Sessions and reset tokens'],
-  ['Media', 12, 'months', 'Purge', 2, 'Boarding media'],
+  ['Media', 12, 'months', 'Purge', 2, 'Uploaded media'],
   ['Telemetry', 90, 'days', 'Purge', 2, 'Web vitals'],
 ];
 
@@ -184,11 +105,11 @@ export const retentionReviewWithRows = {
   asOf: todayLocalDate(),
   rows: [
     {
-      recordClass: 'Clinical',
-      recordKind: 'Closed visit notes',
+      recordClass: 'Operational',
+      recordKind: 'Closed stock counts',
       count: 14,
       oldestAnchor: '2019-02-11',
-      sourceKey: 'emr.visit',
+      sourceKey: 'inventory.stock-count',
     },
     {
       recordClass: 'Financial',
@@ -305,7 +226,7 @@ export const erasureRequests: ErasureRequest[] = [
         completedOn: null,
       },
       {
-        contextKey: 'Clinical',
+        contextKey: 'Ordering',
         status: 'Completed',
         heldUntil: null,
         basis: null,

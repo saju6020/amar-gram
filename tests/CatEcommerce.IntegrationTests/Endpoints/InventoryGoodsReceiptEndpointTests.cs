@@ -48,7 +48,6 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
             Assert.Equal("GoodsReceipt", r.GetProperty("referenceKind").GetString());
             Assert.Equal(branch.Admin.StaffAccountId, r.GetProperty("performedBy").GetGuid());
             Assert.False(r.TryGetProperty("customerId", out _));
-            Assert.False(r.TryGetProperty("catId", out _));
         });
 
         var detail = await JsonOkAsync(await branch.Admin.Client.GetAsync($"/api/staff/inventory/goods-receipts/{receipt.ReceiptId}"));
@@ -290,7 +289,7 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
 
         var batchA = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 30m, soon, "A-" + NewLot());
         var batchB = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.ShopId, 5m, later, "B-" + NewLot());
-        var batchC = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.DispensaryId, 2m, later, "C-" + NewLot());
+        var batchC = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.QuarantineId, 2m, later, "C-" + NewLot());
 
         var matrix = await JsonOkAsync(await branch.Admin.Client.GetAsync($"/api/staff/inventory/stock/{sku.SkuId}"));
         Assert.Equal("Asia/Dhaka", matrix.GetProperty("branchTimeZoneId").GetString());
@@ -314,13 +313,13 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
         var row = Assert.Single(summary.GetProperty("items").EnumerateArray());
         Assert.Equal("37", row.GetProperty("onHand").GetString());
         Assert.Equal("0", row.GetProperty("reserved").GetString());
-        Assert.Equal("37", row.GetProperty("usable").GetString());
-        Assert.Equal("35", row.GetProperty("sellable").GetString()); // the dispensary does not count toward retail
+        Assert.Equal("35", row.GetProperty("usable").GetString());   // stock in the quarantine location is held, not usable
+        Assert.Equal("35", row.GetProperty("sellable").GetString());
         Assert.Equal(soon.ToString("yyyy-MM-dd"), row.GetProperty("nextExpiresOn").GetString());
         Assert.Equal("each", row.GetProperty("stockUnit").GetString());
 
-        var onlyDispensary = await JsonOkAsync(await branch.Admin.Client.GetAsync($"/api/staff/inventory/stock?search={sku.SkuCode}&locationId={branch.DispensaryId}"));
-        Assert.Equal("2", Assert.Single(onlyDispensary.GetProperty("items").EnumerateArray()).GetProperty("onHand").GetString());
+        var onlyQuarantine = await JsonOkAsync(await branch.Admin.Client.GetAsync($"/api/staff/inventory/stock?search={sku.SkuCode}&locationId={branch.QuarantineId}"));
+        Assert.Equal("2", Assert.Single(onlyQuarantine.GetProperty("items").EnumerateArray()).GetProperty("onHand").GetString());
     }
 
     [Fact]
@@ -442,9 +441,10 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
         var refused = await branch.Admin.Client.PutAsJsonAsync($"/api/staff/inventory/locations/{branch.WarehouseId}/activation", new { isActive = false }, Json);
         await AssertErrorAsync(refused, BusinessViolationCodes.StockLocationHasStock);
 
-        var empty = await branch.Admin.Client.PutAsJsonAsync($"/api/staff/inventory/locations/{branch.BoardingId}/activation", new { isActive = false }, Json);
+        var spare = await CreateLocationAsync(branch.Admin.Client, "Warehouse");
+        var empty = await branch.Admin.Client.PutAsJsonAsync($"/api/staff/inventory/locations/{spare}/activation", new { isActive = false }, Json);
         Assert.Equal(HttpStatusCode.NoContent, empty.StatusCode);
-        var again = await branch.Admin.Client.PutAsJsonAsync($"/api/staff/inventory/locations/{branch.BoardingId}/activation", new { isActive = true }, Json);
+        var again = await branch.Admin.Client.PutAsJsonAsync($"/api/staff/inventory/locations/{spare}/activation", new { isActive = true }, Json);
         Assert.Equal(HttpStatusCode.NoContent, again.StatusCode);
     }
 }

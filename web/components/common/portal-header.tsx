@@ -14,7 +14,7 @@ import { ACCOUNT_LANDING } from '@/components/portal/account-nav';
 import { cn } from '@/lib/utils';
 
 /**
- * The customer header (HO-CAT-002 §8.3), as the owner approved it on 2026-10-17
+ * The customer header (the scaffold handover §8.3), as the owner approved it on 2026-10-17
  * (https://claude.ai/artifact/K3WKkwpv67BqLJJdSr3bUh): logo, product search, round cart and
  * messages buttons with orange counts (passed in as `sessionActions`), and the customer's initials
  * and first name with an arrow that opens a short menu ending in Sign out. The account's pages are

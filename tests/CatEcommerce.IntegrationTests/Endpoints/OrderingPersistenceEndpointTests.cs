@@ -20,7 +20,7 @@ public sealed class OrderingPersistenceEndpointTests(OrderingApiFactory factory)
     {
         var lines = new List<OrderLineDto>
         {
-            new(Guid.NewGuid(), 1, skuId, Guid.NewGuid(), "Food", "Food", null, ProductReturnClass.Food, false, null, 2, 850m, 1700m, 0m, 0m, Guid.NewGuid(), 15m, 255m, 1955m, []),
+            new(Guid.NewGuid(), 1, skuId, Guid.NewGuid(), "Food", "Food", null, ProductReturnClass.Food, false, 2, 850m, 1700m, 0m, 0m, Guid.NewGuid(), 15m, 255m, 1955m, []),
         };
         var order = new OrderAggregate(Guid.NewGuid());
         order.Place(new PlaceOrderDto(

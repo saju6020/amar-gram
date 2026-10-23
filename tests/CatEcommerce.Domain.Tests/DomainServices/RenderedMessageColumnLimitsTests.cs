@@ -39,9 +39,9 @@ public sealed class RenderedMessageColumnLimitsTests
     [Fact]
     public void OverlongTitle_IsTruncatedWithEllipsis_AtExactlyTheColumnLimit()
     {
-        // Probe P6c's exact shape: a 76-character title template plus a 100-character cat name
+        // Probe P6c's exact shape: a 76-character title template plus a 100-character customer name
         // pushes the rendered title well past its 100-character column.
-        var rendered = Message(title: "Time for " + new string('M', 100) + "'s treatment - book now at the clinic");
+        var rendered = Message(title: "Time for " + new string('M', 100) + "'s order - ready to collect at outlet");
 
         var enforced = RenderedMessageColumnLimits.Enforce(rendered);
 
@@ -58,9 +58,9 @@ public sealed class RenderedMessageColumnLimitsTests
         // (char.IsHighSurrogate(text[cutAt - 1])) never fired, and this test would still pass even
         // if that branch were deleted. 98 'a's, then the pair, then one more character makes
         // cutAt (99) land ON the high surrogate (text[98]), so the back-off actually executes.
-        // U+1F431 CAT FACE is a surrogate pair in UTF-16.
-        var cat = "\U0001F431"; // 2 UTF-16 code units
-        var title = new string('a', RenderedMessageColumnLimits.TitleMaxLength - 2) + cat + "a";
+        // U+1F33F HERB is a surrogate pair in UTF-16.
+        var herb = "\U0001F33F"; // 2 UTF-16 code units
+        var title = new string('a', RenderedMessageColumnLimits.TitleMaxLength - 2) + herb + "a";
 
         var enforced = RenderedMessageColumnLimits.Enforce(Message(title: title));
 

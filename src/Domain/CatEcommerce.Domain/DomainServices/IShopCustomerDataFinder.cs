@@ -5,7 +5,7 @@ namespace CatEcommerce.Domain.DomainServices;
 /// are binding on every context holding a customer id (ADR-039, ADR-041). The repository contract
 /// loads one aggregate by id; moving every alert and review of a customer needs "find every
 /// matching row" -- the same gap <see cref="IWaitlistEntryFinder"/> and
-/// <see cref="IFlaggableAppointmentFinder"/> exist for. Ids only; read-only.
+/// the other finders exist for. Ids only; read-only.
 /// </summary>
 public interface IShopCustomerDataFinder
 {

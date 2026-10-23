@@ -23,7 +23,7 @@ public sealed class ReportMathsFixtureTests
 
     // ── T-U3 ────────────────────────────────────────────────────────────────────────────────────────────
     // By hand: Shop = 100 + 40 invoiced, minus a 20 credit note = 120 net. Tax 15 + 6 - 3 = 18. Costed net = 100 - 20 = 80; cost of goods 60; margin 80 - 60 = 20; margin % = 20 / 80 = 25.0;
-    // coverage % = 80 / 120 = 66.7. Clinic = 200 net, 30 tax, nothing costed: margin is null, coverage 0.0.
+    // coverage % = 80 / 120 = 66.7. Counter = 200 net, 30 tax, nothing costed: margin is null, coverage 0.0.
     [Fact]
     public void T_U3_RevenueNetsTheCreditNote_MarginIsOnTheCostedNetOnly_AndAnUncostedLineHasNoMarginNotZero()
     {
@@ -31,7 +31,7 @@ public sealed class ReportMathsFixtureTests
         {
             Invoice("Shop", 100m, 15m, costed: true, cogs: 60m),
             Invoice("Shop", 40m, 6m, costed: false, cogs: 0m),
-            Invoice("Clinic", 200m, 30m, costed: false, cogs: 0m),
+            Invoice("Counter", 200m, 30m, costed: false, cogs: 0m),
             Credit("Shop", 20m, 3m, costed: true),
         };
 
@@ -47,12 +47,12 @@ public sealed class ReportMathsFixtureTests
         Assert.Equal(25.0m, shop.MarginPercent);
         Assert.Equal(66.7m, shop.CoveragePercent);
 
-        var clinic = aggregates.Single(a => a.Dimensions[0] == "Clinic");
-        Assert.Equal(200m, clinic.Net);
-        Assert.Equal(30m, clinic.Tax);
-        Assert.Null(clinic.Margin);                  // never zero: nothing of the clinic line is costed
-        Assert.Null(clinic.MarginPercent);
-        Assert.Equal(0.0m, clinic.CoveragePercent);
+        var counter = aggregates.Single(a => a.Dimensions[0] == "Counter");
+        Assert.Equal(200m, counter.Net);
+        Assert.Equal(30m, counter.Tax);
+        Assert.Null(counter.Margin);                 // never zero: nothing of the counter line is costed
+        Assert.Null(counter.MarginPercent);
+        Assert.Equal(0.0m, counter.CoveragePercent);
 
         // Across both lines the totals are the sums of the rows, not a recomputation: net 320, credit notes 20.
         Assert.Equal(320m, aggregates.Sum(a => a.Net));

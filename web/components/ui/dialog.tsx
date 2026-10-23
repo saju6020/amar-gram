@@ -6,11 +6,11 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * shadcn/ui-style Dialog — copied in and owned (HO-CAT-002 §3.1, §9), wrapping
+ * shadcn/ui-style Dialog — copied in and owned (the scaffold handover §3.1, §9), wrapping
  * `@radix-ui/react-dialog` so focus-trapping, `Escape`-to-close and focus-return-to-trigger come
- * for free (HO-CAT-002 §8.5 — "shadcn/ui's Radix primitives give this... hand-rolled dialogs do
+ * for free (the scaffold handover §8.5 — "shadcn/ui's Radix primitives give this... hand-rolled dialogs do
  * not"). `components/common/ConfirmDialog.tsx` is built on this; area-specific dialogs
- * (MarkDeceasedDialog, TransferOwnershipDialog, WitnessDialog, ...) should be too rather than a
+ * (ConfirmDialog, ScheduleChangeDialog, MergeConfirmDialog, ...) should be too rather than a
  * second hand-rolled modal.
  */
 export const Dialog = DialogPrimitive.Root;
@@ -32,7 +32,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 /**
  * Radix's own focus-return only re-focuses an actual `<DialogTrigger>` (it reads a `triggerRef`
- * that only that component sets internally) — HO-CAT-002 §8.5's "returns focus to its trigger"
+ * that only that component sets internally) — the scaffold handover §8.5's "returns focus to its trigger"
  * otherwise silently does nothing for the common case of a dialog opened from a plain button via
  * controlled `open` state (every `ConfirmDialog` caller; most area-specific dialogs). Call this
  * with the dialog's `open` prop and pass the returned ref to `<DialogContent returnFocusRef>`.
@@ -68,7 +68,7 @@ export const DialogContent = React.forwardRef<
     returnFocusRef?: React.RefObject<HTMLElement | null>;
     /** `'center'` (default) is the usual dialog, centred in the viewport. `'sheet-left'` docks
      *  Content to the left edge, full height, instead — StaffShell's below-`sm` nav sheet
-     *  (HO-CAT-002 TEST gate, 7th pass) is the only current user. Everything else (portal,
+     *  (the scaffold handover TEST gate, 7th pass) is the only current user. Everything else (portal,
      *  overlay, focus trap, `Escape`, focus return) is identical between the two; only position
      *  and sizing differ. */
     variant?: 'center' | 'sheet-left';

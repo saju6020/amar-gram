@@ -4,7 +4,6 @@ using CatEcommerce.Api.RateLimiting;
 using CatEcommerce.Application.CommandHandlers.Reporting;
 using CatEcommerce.Application.Commands.Account;
 using CatEcommerce.Application.Commands.Reporting;
-using CatEcommerce.Application.Commands.Visit;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Infrastructure.Hosting;
@@ -62,7 +61,6 @@ public sealed class StaffReportsController(
     {
         var outcome = await RunAsync(reportKey, exportFormat: null, pageNumber, pageSize);
         if (outcome.IsRefused) return await RefusalAsync(outcome);
-        if (!await TryLogClinicalAccessAsync(outcome.Result!)) return ClinicalAccessFailed();
 
         Response.Headers.CacheControl = "no-store";
         return Ok(ReportResultFormatter.ToJson(outcome.Result!));
@@ -84,7 +82,6 @@ public sealed class StaffReportsController(
         if (outcome.IsRefused) return await RefusalAsync(outcome);
 
         var result = outcome.Result!;
-        if (!await TryLogClinicalAccessAsync(result)) return ClinicalAccessFailed();
         var parameters = QueryParameters();
 
         // The audit comes BEFORE the first byte is streamed; a failed audit write fails the export (an unaudited financial export is worse than a retry).
@@ -165,32 +162,6 @@ public sealed class StaffReportsController(
 
         return BadRequest(body);
     }
-
-    /// <summary>
-    /// NFR-SEC-8 / ADR-129 (owner decision 2026-10-13): a Clinical-category report carries clinical text (R3's complications), so every view and every CSV or PDF export writes a clinical-access row,
-    /// the same mechanism as HO-SRG-001's surgical-report read. Fail closed: <c>false</c> means nothing is released and the caller answers a bare 500.
-    /// </summary>
-    private async Task<bool> TryLogClinicalAccessAsync(ReportResult result)
-    {
-        if (catalogue.Find(result.ReportKey)?.Category != ReportCategory.Clinical) return true;
-
-        try
-        {
-            var response = await dispatcher.SendAsync(new RecordClinicalRecordAccessCommand
-            {
-                AuditEntryId = Guid.NewGuid(), Kind = ClinicalRecordKind.VisitList, RecordId = RecordReportExportCommandHandler.EntityIdFor(result.ReportKey), Path = Request.Path.Value ?? "",
-                IpAddress = clientIpAccessor.GetClientIpAddress()?.ToString(), UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
-            });
-            return response.IsSuccess;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("The clinical-access row for report {ReportKey} could not be written ({ExceptionType}); the report was not released.", result.ReportKey, ex.GetType().Name);
-            return false;
-        }
-    }
-
-    private ObjectResult ClinicalAccessFailed() => StatusCode(500, new { error = "The request could not be completed." });
 
     /// <summary>The in-handler half of the access check audits its denial exactly as the fail-closed filter does (HO-ACC-001 C11).</summary>
     private async Task RecordDenialAsync(string? requiredAction)

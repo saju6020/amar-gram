@@ -16,7 +16,7 @@ namespace CatEcommerce.IntegrationTests;
 public sealed class ShopApiFactory : CatEcommerceApiFactory
 {
     // Product images are real uploads (U-A5b, I-A6): an isolated file store per factory, computed once
-    // so every WithWebHostBuilder-derived factory shares it, the same pattern CatApiFactory uses.
+    // so every WithWebHostBuilder-derived factory shares it.
     private readonly string _isolatedFileStoreRoot =
         Path.Combine(Path.GetTempPath(), "catecommerce-file-store-tests", Guid.NewGuid().ToString("N"));
 
@@ -37,8 +37,6 @@ public sealed class ShopApiFactory : CatEcommerceApiFactory
         // The catalogue rate limit (120/min/IP) would throttle the many tests sharing one TestServer
         // address; I-E10 lowers it for one test, I-E11 is unaffected.
         settings["Shop:Catalogue:PermitLimit"] = "100000";
-        // Same for the per-customer food-recommendations limit (backlog row 20); one test lowers it.
-        settings["Shop:FoodRecommendations:PermitLimit"] = "100000";
         // Notifications (HO-NTF-001): the real outbox and delivery pipeline run, with Capturing
         // senders and the worker loop off -- tests call NotificationWorkCycle passes directly, the
         // same way NotificationsApiFactory does. PublicSite:WebBaseUrl feeds INotificationLinkBuilder
@@ -49,20 +47,6 @@ public sealed class ShopApiFactory : CatEcommerceApiFactory
         settings["Notifications:Channels:Email:Sender"] = "Capturing";
         settings["Notifications:Worker:Enabled"] = "false";
         settings["Localisation:ContentLocales:0"] = "en";
-    }
-
-    /// <summary>§16.1 rule 4 -- a factory whose <see cref="IDietAuthorisationGate"/> is the
-    /// controllable stand-in for HO-PHM-001's real gate, for I-F1..I-F3 and I-F7. The shipped
-    /// fail-closed default (I-F8) is exercised by the base factory directly.</summary>
-    public (WebApplicationFactory<Program> Factory, ControllableDietAuthorisations Authorisations) WithControllableDietGate()
-    {
-        var authorisations = new ControllableDietAuthorisations();
-        var factory = WithWebHostBuilder(builder =>
-            builder.ConfigureTestServices(services =>
-                services.AddScoped<IDietAuthorisationGate>(sp =>
-                    new ControllableDietAuthorisationGate(authorisations, sp.GetRequiredService<CatEcommerce.Infrastructure.Persistence.CatEcommerceDbContext>()))));
-
-        return (factory, authorisations);
     }
 
     /// <summary>§16.1 rule 4 -- a second factory instance whose <see cref="IPurchaseHistoryReader"/>

@@ -133,12 +133,6 @@ public sealed class OrderingStaffCustomerOrdersEndpointTests(OrderingApiFactory 
             Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(Url(customerId))).StatusCode);
         }
 
-        foreach (var role in new[] { StaffRoles.Nurse, StaffRoles.Vet, StaffRoles.Caretaker })
-        {
-            var (client, _) = await StaffClientAsync(till.Shop.Context, role);
-            Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync(Url(customerId))).StatusCode);
-        }
-
         Assert.Equal(HttpStatusCode.Unauthorized, (await CreateClient().GetAsync(Url(customerId))).StatusCode);
     }
 }

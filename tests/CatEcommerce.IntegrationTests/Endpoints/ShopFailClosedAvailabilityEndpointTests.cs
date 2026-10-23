@@ -25,7 +25,7 @@ public sealed class ShopFailClosedAvailabilityEndpointTests(ShopApiFactory facto
         var failClosed = Factory;
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Closed");
-        var product = await CreateProductAsync(staff, brand, "Priced And Published Food", "CatFood", price: 1500m, lifeStage: "Adult", stock: 0m);
+        var product = await CreateProductAsync(staff, brand, "Priced And Published Food", "CatFood", price: 1500m, stock: 0m);
         var other = await CreateProductAsync(staff, brand, "Another Item", price: 200m, stock: 0m);
         var bundle = await CreateBundleAsync(staff, brand, "Closed Bundle", [(other.SkuId, 2)]);
         var (customer, _) = await RegisterAndSignInCustomerAsync(failClosed);
@@ -52,12 +52,6 @@ public sealed class ShopFailClosedAvailabilityEndpointTests(ShopApiFactory facto
         var inStockOnly = await (await anonymous.GetAsync($"/api/shop/products?brand={Uri.EscapeDataString(brand)}&availability=inStock")).Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal(0, inStockOnly.GetProperty("totalCount").GetInt32());
 
-        // Purchasability: not purchasable, and the reason is OutOfStock.
-        var purchasability = await (await customer.GetAsync($"/api/customers/me/shop/products/{product.Slug}/purchasability")).Content.ReadFromJsonAsync<JsonElement>(Json);
-        var sku = purchasability.GetProperty("skus")[0];
-        Assert.False(sku.GetProperty("purchasable").GetBoolean());
-        Assert.Equal("OutOfStock", sku.GetProperty("purchaseBlockReason").GetString());
-
         // Wishlist and alerts: out of stock; an alert can therefore be requested (and is never fired).
         await customer.PutAsync($"/api/customers/me/wishlist/items/{product.SkuId}", null);
         var wishlist = await (await customer.GetAsync("/api/customers/me/wishlist")).Content.ReadFromJsonAsync<JsonElement>(Json);
@@ -69,26 +63,12 @@ public sealed class ShopFailClosedAvailabilityEndpointTests(ShopApiFactory facto
         var alerts = await (await customer.GetAsync("/api/customers/me/stock-alerts")).Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal("Pending", alerts[0].GetProperty("status").GetString());
 
-        // Recommendations (a life-stage block needs in-stock candidates): none of this brand's.
+        // Recommendations need in-stock candidates: the product itself is in neither block.
         var recommendations = await (await anonymous.GetAsync($"/api/shop/products/{product.Slug}/recommendations")).Content.ReadFromJsonAsync<JsonElement>(Json);
-        Assert.DoesNotContain(recommendations.GetProperty("lifeStage").GetProperty("items").EnumerateArray(),
-            i => i.GetProperty("productId").GetGuid() == product.ProductId);
+        foreach (var block in new[] { "frequentlyBoughtTogether", "upSell" })
+            Assert.DoesNotContain(recommendations.GetProperty(block).EnumerateArray(), i => i.GetProperty("productId").GetGuid() == product.ProductId);
 
         // The staff back office still shows the catalogue (availability is not its concern).
         Assert.Equal(HttpStatusCode.OK, (await staff.GetAsync($"/api/staff/shop/products/{product.ProductId}")).StatusCode);
-    }
-
-    [Fact]
-    public async Task UnstockedFood_IsNeverRecommendedForACat()
-    {
-        var failClosed = Factory;
-        var staff = await SignInAsShopManagerAsync();
-        var unstocked = await CreateProductAsync(staff, NewBrand("ClosedRec"), "Adult Food", "CatFood", lifeStage: "Adult", stock: 0m);
-        var (customer, customerId) = await RegisterAndSignInCustomerAsync(failClosed);
-        var catId = await SeedCatAsync(customerId);
-
-        var body = await JsonOkAsync(await customer.GetAsync($"/api/customers/me/cats/{catId}/food-recommendations"));
-        Assert.DoesNotContain(body.GetProperty("items").EnumerateArray(),
-            i => i.GetProperty("item").GetProperty("productId").GetGuid() == unstocked.ProductId);
     }
 }

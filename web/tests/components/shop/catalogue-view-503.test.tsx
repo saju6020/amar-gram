@@ -33,7 +33,7 @@ describe('CatalogueView server rendering — HO-SHP-002 §8.2', () => {
         await CatalogueView({ params: EMPTY_CATALOGUE_PARAMS, basePath: '/shop/products' }),
       ),
     );
-    expect(html).toContain('href="/shop/products/royal-canin-kitten"');
+    expect(html).toContain('href="/shop/products/organic-rolled-oats"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('href="/shop/products?pageNumber=2"');
   });

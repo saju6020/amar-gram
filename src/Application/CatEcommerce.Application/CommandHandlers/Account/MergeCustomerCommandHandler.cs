@@ -12,8 +12,8 @@ using Platform.Infrastructure.Core.Validation;
 
 namespace CatEcommerce.Application.CommandHandlers.Account;
 
-/// <summary>HO-ACC-001 §11.4 (C16) / US-ACC-11 / ADR-039. Cats move in
-/// <c>ReassignCatsOnCustomerMergedHandler</c>, off <see cref="Domain.Events.Account.CustomerMergedEvent"/>.</summary>
+/// <summary>HO-ACC-001 §11.4 (C16) / US-ACC-11 / ADR-039. Other areas follow the merge off
+/// <see cref="Domain.Events.Account.CustomerMergedEvent"/>.</summary>
 public sealed class MergeCustomerCommandHandler(
     ILogger<MergeCustomerCommandHandler> logger,
     IAggregateRootRepository<CustomerAccountAggregate> customerRepository,

@@ -10,7 +10,7 @@ namespace CatEcommerce.Domain.Aggregates.Audit;
 /// <summary>
 /// Append-only leaf. Raises no domain event -- an event would be an audit of an audit
 /// (SRS D-5). Written by domain event handlers, never by a command handler directly --
-/// HO-CAT-001 section 8.4. Extended by HO-ACC-001 section 8.11 (US-ACC-12): IP, category and
+/// the foundation handover section 8.4. Extended by HO-ACC-001 section 8.11 (US-ACC-12): IP, category and
 /// correlation on every entry; <see cref="Record"/> becomes one-shot -- a wrong entry is answered
 /// by another entry (D-5), never edited. No other public mutator may exist -- no Correct, Amend,
 /// Redact or Void (U-A7).

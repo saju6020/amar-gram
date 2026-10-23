@@ -54,15 +54,13 @@ public sealed class FilesApiFactory : CatEcommerceApiFactory
     /// <summary>
     /// Gate-fix 2026-09-27 (SECURITY MEDIUM): <c>IFilePurposeAccessPolicy</c> now fails closed --
     /// a purpose with no registered staff action is refused, not implicitly allowed. §16's own
-    /// tests exercise several purposes (<c>ProductImage</c>, <c>LabResult</c>, <c>ReportExport</c>,
-    /// ...) chosen for their <c>FileRules</c> content-type/size shape (DICOM, zip, csv, …), not for
-    /// any consuming area's own authorisation -- none of those areas (SHP, EMR, RPT) has landed yet,
-    /// so none of their purposes has a real mapping in <c>FilePurposeAccess</c>. This test-only
+    /// tests exercise the purposes (<c>ProductImage</c>, <c>ReportExport</c>) chosen for their
+    /// <c>FileRules</c> content-type/size shape (image, zip, csv, …), not for any consuming area's
+    /// own authorisation. This test-only
     /// decorator falls back to <c>Actions.Files.Upload</c> (already granted to every staff role,
     /// <c>ActionRoles.FilesRows</c>) for any purpose the REAL policy does not already recognise, so
-    /// I1-I10 keep exercising the upload pipeline itself; a purpose the real policy DOES map
-    /// (<c>CatProfilePhoto</c>, gated to <c>Cats.EditProfile</c>) still goes through that real,
-    /// stricter check first. Never registered outside this test host (see
+    /// I1-I10 keep exercising the upload pipeline itself; a purpose the real policy DOES map still
+    /// goes through that real, stricter check first. Never registered outside this test host (see
     /// <see cref="IFilePurposeAccessPolicy"/>'s own doc comment).
     /// </summary>
     protected override void ConfigureAdditionalServices(IServiceCollection services)

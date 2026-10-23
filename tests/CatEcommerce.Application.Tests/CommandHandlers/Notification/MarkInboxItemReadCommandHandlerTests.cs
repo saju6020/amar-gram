@@ -17,7 +17,7 @@ public sealed class MarkInboxItemReadCommandHandlerTests
     {
         var notification = new NotificationAggregate(Guid.NewGuid());
         notification.CreateInbox(new NotificationCreateDto(
-            Guid.NewGuid(), "care.vaccination-due", 0, "en", NotificationCategory.Transactional, NotificationUrgency.Normal, false,
+            Guid.NewGuid(), "inventory.batch-recall", 0, "en", NotificationCategory.Transactional, NotificationUrgency.Normal, false,
             NotificationRecipientKind.Customer, recipientId, null, null, null, null, null, NotificationChannel.InApp, null,
             null, "Title", "Body", null, null, null, now, null, false, null, null, null, null, null));
         return notification;

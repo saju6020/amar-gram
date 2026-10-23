@@ -19,8 +19,8 @@ namespace CatEcommerce.IntegrationTests;
 
 /// <summary>
 /// HO-POR-001 §16.1 -- every test mints its own customers (registration with the CAPTCHA test answer) and signs in; the dashboard is
-/// asserted only for that customer; upstream data is arranged through the owning modules' own endpoints (customer sessions for cats and
-/// appointments, administrator sessions for branches, services and the deceased flag), never by inserting rows. No global count is asserted.
+/// asserted only for that customer; upstream data is arranged through the owning modules' own endpoints or ports (administrator sessions
+/// for branches, billing profiles and tax classes, Billing's charge port for invoices), never by inserting rows. No global count is asserted.
 /// Helpers take an optional <c>host</c> so a test that derived a factory with <c>WithWebHostBuilder</c> (a throwing fake, captured logs) can
 /// use the same arrangement code on it.
 /// </summary>
@@ -40,19 +40,6 @@ public abstract class PortalIntegrationTestBase(PortalApiFactory factory)
     protected static string NewCode() => "P" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
 
     protected DateTimeOffset Now => Factory.Clock.GetUtcNow();
-
-    /// <summary>
-    /// A bookable start that does not depend on the time of day the suite runs: 10:00 Asia/Dhaka (UTC+6, no DST) on the third branch-local day
-    /// after the clock's Dhaka date, as a UTC instant. 10:00 is on the 15-minute grid and a 30-minute service starting then ends well inside the
-    /// test clinic's 00:00-23:45 hours. (The earlier "now + 3 days, rounded down" choice landed on 23:30 Dhaka when the suite ran in the last
-    /// half hour of the Dhaka day, so the 30-minute service ended after closing and the hold failed with 409 SlotNoLongerAvailable.)
-    /// </summary>
-    protected DateTimeOffset BookableSlot(int daysAhead = 3)
-    {
-        var dhakaOffset = TimeSpan.FromHours(6);
-        var dhakaDate = DateOnly.FromDateTime(Now.ToOffset(dhakaOffset).DateTime).AddDays(daysAhead);
-        return new DateTimeOffset(dhakaDate.ToDateTime(new TimeOnly(10, 0)), dhakaOffset).ToUniversalTime();
-    }
 
     protected static string ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
@@ -92,18 +79,6 @@ public abstract class PortalIntegrationTestBase(PortalApiFactory factory)
 
     protected sealed record PortalCustomer(HttpClient Client, Guid CustomerId, string Mobile, string FullName);
 
-    /// <summary>A customer registers one of their own cats through the Cat Profiles endpoint (the owner id is required by the contract and forced to the caller).</summary>
-    protected static async Task<Guid> RegisterCatAsync(PortalCustomer customer, string name)
-    {
-        var response = await customer.Client.PostAsJsonAsync("/api/cats", new
-        {
-            ownerId = customer.CustomerId, name, species = "Cat", sex = "Female",
-            dateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2), dateOfBirthPrecision = "Exact",
-        }, Json);
-        await ExpectAsync(HttpStatusCode.Created, response);
-        return (await ReadAsync(response)).GetProperty("catId").GetGuid();
-    }
-
     // ── Staff ───────────────────────────────────────────────────────────────────────────────────────
     protected async Task<(Guid StaffAccountId, string Mobile, string Password)> SeedStaffAsync(params string[] roles)
     {
@@ -134,19 +109,11 @@ public abstract class PortalIntegrationTestBase(PortalApiFactory factory)
         return (client, staff.StaffAccountId);
     }
 
-    protected async Task MarkCatDeceasedAsync(Guid catId)
-    {
-        var (admin, _) = await SignInNewStaffAsync(StaffRoles.Administrator);
-        var response = await admin.PostAsJsonAsync($"/api/cats/{catId}/deceased", new { deceasedOn = DateOnly.FromDateTime(DateTime.UtcNow) }, Json);
-        await ExpectAsync(HttpStatusCode.OK, response);
-    }
-
-    // ── A bookable clinic branch (Appointments' own admin endpoints) ────────────────────────────────
+    // ── A branch (Administration's own admin endpoints) ─────────────────────────────────────────────
     /// <summary><see cref="Admin"/> is assigned to the branch and sends it as the active branch, so staff actions on it are allowed.</summary>
-    protected sealed record ClinicContext(
-        Guid BranchId, string BranchCode, Guid ServiceId, Guid VetStaffAccountId, string VetMobile, string VetPassword, HttpClient Admin, Guid AdminStaffId);
+    protected sealed record BranchContext(Guid BranchId, string BranchCode, HttpClient Admin, Guid AdminStaffId);
 
-    protected async Task<ClinicContext> SeedBookableBranchAsync()
+    protected async Task<BranchContext> SeedBranchAsync()
     {
         var adminAccount = await SeedStaffAsync(StaffRoles.Administrator);
         var admin = ClientOn(Factory);
@@ -163,34 +130,7 @@ public abstract class PortalIntegrationTestBase(PortalApiFactory factory)
             new { branchIds = new[] { branchId }, primaryBranchId = branchId }, Json));
         admin.DefaultRequestHeaders.Add(CatEcommerce.Api.Branches.HttpContextActiveBranchAccessor.BranchHeaderName, branchId.ToString());
 
-        var days = new[] { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-        await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/admin/branches/{branchId}/hours",
-            new { intervals = days.Select(d => new { dayOfWeek = d, opens = "00:00", closes = "23:45" }).ToArray() }, Json));
-        await ExpectAsync(HttpStatusCode.Created, await admin.PostAsJsonAsync($"/api/admin/branches/{branchId}/rooms",
-            new { name = "Room " + NewCode(), kind = "Consultation" }, Json));
-
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
-        await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches",
-            new { branchIds = new[] { branchId }, primaryBranchId = branchId }, Json));
-        await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/admin/branches/{branchId}/rosters/{vet.StaffAccountId}/pattern",
-            new { slots = days.Select(d => new { dayOfWeek = d, starts = "00:00", ends = "23:45" }).ToArray() }, Json));
-
-        var taxClass = await admin.PostAsJsonAsync("/api/admin/tax-classes", new { code = NewCode(), name = "Standard " + NewCode() }, Json);
-        await ExpectAsync(HttpStatusCode.Created, taxClass);
-        var taxClassId = (await ReadAsync(taxClass)).GetProperty("taxClassId").GetGuid();
-
-        var service = await admin.PostAsJsonAsync("/api/admin/services", new
-        {
-            code = NewCode(), name = "Vaccination " + NewCode(), description = "Portal test service", category = "Consultation",
-            durationMinutes = 30, qualifiedRoleIds = new[] { StaffRoles.Vet }, requiredRoomKind = "Consultation", taxClassId, isBookableOnline = true,
-        }, Json);
-        await ExpectAsync(HttpStatusCode.Created, service);
-        var serviceId = (await ReadAsync(service)).GetProperty("serviceId").GetGuid();
-
-        await ExpectAsync(HttpStatusCode.Created, await admin.PostAsJsonAsync($"/api/admin/services/{serviceId}/prices",
-            new { amount = "500.00", currencyCode = "BDT", effectiveFrom = Now }, Json));
-
-        return new ClinicContext(branchId, code, serviceId, vet.StaffAccountId, vet.Mobile, vet.Password, admin, adminAccount.StaffAccountId);
+        return new BranchContext(branchId, code, admin, adminAccount.StaffAccountId);
     }
 
     protected async Task<HttpClient> SignInStaffOnBranchAsync(string mobile, string password, Guid branchId)
@@ -203,67 +143,28 @@ public abstract class PortalIntegrationTestBase(PortalApiFactory factory)
         return client;
     }
 
-    protected async Task<HttpClient> AddStaffAsync(ClinicContext clinic, string role)
+    protected async Task<HttpClient> AddStaffAsync(BranchContext branch, string role)
     {
         var staff = await SeedStaffAsync(role);
-        await ExpectAsync(HttpStatusCode.NoContent, await clinic.Admin.PutAsJsonAsync($"/api/admin/staff/{staff.StaffAccountId}/branches",
-            new { branchIds = new[] { clinic.BranchId }, primaryBranchId = clinic.BranchId }, Json));
-        return await SignInStaffOnBranchAsync(staff.Mobile, staff.Password, clinic.BranchId);
-    }
-
-    // ── Visits (Consultation's own staff endpoints) ─────────────────────────────────────────────────
-    /// <summary>A walk-in checked in by the administrator and a visit opened by the nurse -- a DRAFT visit. Returns the visit id.</summary>
-    protected async Task<(Guid VisitId, HttpClient Vet)> OpenDraftVisitAsync(ClinicContext clinic, Guid customerId, Guid catId)
-    {
-        var nurse = await AddStaffAsync(clinic, StaffRoles.Nurse);
-        var vet = await SignInStaffOnBranchAsync(clinic.VetMobile, clinic.VetPassword, clinic.BranchId);
-
-        var walkIn = await clinic.Admin.PostAsJsonAsync("/api/staff/walk-ins", new { customerId, catId, serviceId = clinic.ServiceId, triagePriority = "Routine" }, Json);
-        await ExpectAsync(HttpStatusCode.Created, walkIn);
-        var appointmentId = (await ReadAsync(walkIn)).GetProperty("appointmentId").GetGuid();
-
-        var open = await nurse.PostAsJsonAsync("/api/staff/visits", new { appointmentId }, Json);
-        Assert.True(open.StatusCode is HttpStatusCode.Created or HttpStatusCode.OK, await open.Content.ReadAsStringAsync());
-        var visitId = (await ReadAsync(open)).GetProperty("visitId").GetGuid();
-        return (visitId, vet);
-    }
-
-    /// <summary>A visit the vet has written up and finalised.</summary>
-    protected async Task<Guid> FinaliseVisitAsync(ClinicContext clinic, Guid customerId, Guid catId, string dischargeInstructions = "Keep the ear dry.")
-    {
-        var (visitId, vet) = await OpenDraftVisitAsync(clinic, customerId, catId);
-
-        var code = "T-" + Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
-        var createCode = await vet.PostAsJsonAsync("/api/staff/diagnosis-codes", new { code, name = "Otitis externa " + code }, Json);
-        await ExpectAsync(HttpStatusCode.Created, createCode);
-        var codeId = (await ReadAsync(createCode)).GetProperty("diagnosisCodeId").GetGuid();
-
-        var version = (await ReadAsync(await vet.GetAsync($"/api/staff/visits/{visitId}"))).GetProperty("version").GetInt32();
-        await ExpectAsync(HttpStatusCode.OK, await vet.PutAsJsonAsync($"/api/staff/visits/{visitId}/note", new
-        {
-            expectedVersion = version, assessment = "Otitis externa", plan = "Ear drops", dischargeInstructions,
-            problems = new[] { new { diagnosisCodeId = codeId, certainty = "Confirmed" } },
-        }, Json));
-
-        version = (await ReadAsync(await vet.GetAsync($"/api/staff/visits/{visitId}"))).GetProperty("version").GetInt32();
-        await ExpectAsync(HttpStatusCode.NoContent, await vet.PostAsJsonAsync($"/api/staff/visits/{visitId}/finalise", new { expectedVersion = version }, Json));
-        return visitId;
+        await ExpectAsync(HttpStatusCode.NoContent, await branch.Admin.PutAsJsonAsync($"/api/admin/staff/{staff.StaffAccountId}/branches",
+            new { branchIds = new[] { branch.BranchId }, primaryBranchId = branch.BranchId }, Json));
+        return await SignInStaffOnBranchAsync(staff.Mobile, staff.Password, branch.BranchId);
     }
 
     // ── Billing (the owning module's port and staff endpoints) ──────────────────────────────────────
-    /// <summary>Gives the clinic's branch a billing profile and a zero-rated tax class (a rate effective now is seeded through the
+    /// <summary>Gives the branch a billing profile and a zero-rated tax class (a rate effective now is seeded through the
     /// repository: the admin API refuses back-dating).</summary>
-    protected async Task<Guid> PrepareBillingAsync(ClinicContext clinic)
+    protected async Task<Guid> PrepareBillingAsync(BranchContext branch)
     {
-        await ExpectAsync(HttpStatusCode.NoContent, await clinic.Admin.PutAsJsonAsync($"/api/admin/billing-profiles/{clinic.BranchId}", new
+        await ExpectAsync(HttpStatusCode.NoContent, await branch.Admin.PutAsJsonAsync($"/api/admin/billing-profiles/{branch.BranchId}", new
         {
-            legalName = "PurrCare Test Ltd " + clinic.BranchCode, taxRegistrationNumber = "BIN-" + clinic.BranchCode,
+            legalName = "PurrCare Test Ltd " + branch.BranchCode, taxRegistrationNumber = "BIN-" + branch.BranchCode,
             addressLines = new[] { "1 Test Road", "Dhaka 1212" }, phone = "01700000000", email = "billing@example.test",
             invoiceFooter = "Thank you",
             bankAccounts = new[] { new { bankName = "Test Bank", accountName = "PurrCare Ltd", accountNumber = "1234567890", branchName = "Gulshan", routingNumber = "012345678" } },
         }, Json));
 
-        var taxClass = await clinic.Admin.PostAsJsonAsync("/api/admin/tax-classes", new { code = NewCode(), name = "Zero " + NewCode() }, Json);
+        var taxClass = await branch.Admin.PostAsJsonAsync("/api/admin/tax-classes", new { code = NewCode(), name = "Zero " + NewCode() }, Json);
         await ExpectAsync(HttpStatusCode.Created, taxClass);
         var taxClassId = (await ReadAsync(taxClass)).GetProperty("taxClassId").GetGuid();
 
@@ -278,11 +179,11 @@ public abstract class PortalIntegrationTestBase(PortalApiFactory factory)
 
     /// <summary>Records one product charge through Billing's own port (what Orders will do) and issues it as an invoice through Billing's staff
     /// endpoint. Returns the invoice id.</summary>
-    protected async Task<Guid> IssueInvoiceAsync(ClinicContext clinic, Guid taxClassId, Guid customerId, decimal amount)
+    protected async Task<Guid> IssueInvoiceAsync(BranchContext branch, Guid taxClassId, Guid customerId, decimal amount)
     {
         var request = new CatEcommerce.Domain.Models.ChargeRequestDto(
-            customerId, clinic.BranchId, null, CatEcommerce.Shared.Common.Enums.BusinessLine.Shop,
-            CatEcommerce.Shared.Common.Enums.ItemKind.Product, CatEcommerce.Shared.Common.Enums.ChargeSourceKind.Order, Guid.NewGuid(), "main", null, null,
+            customerId, branch.BranchId, CatEcommerce.Shared.Common.Enums.BusinessLine.Shop,
+            CatEcommerce.Shared.Common.Enums.ItemKind.Product, CatEcommerce.Shared.Common.Enums.ChargeSourceKind.Order, Guid.NewGuid(), "main",
             "Portal test item", 1m, new Money(amount, "BDT"), new Money(0m, "BDT"), taxClassId, DateOnly.FromDateTime(Now.UtcDateTime));
 
         Guid chargeId;
@@ -292,21 +193,9 @@ public abstract class PortalIntegrationTestBase(PortalApiFactory factory)
             await scope.ServiceProvider.GetRequiredService<CatEcommerceDbContext>().SaveChangesAsync();
         }
 
-        var issue = await clinic.Admin.PostAsJsonAsync("/api/staff/billing/invoices/issue-from-charges", new { customerId, selector = new { chargeIds = new[] { chargeId } } }, Json);
+        var issue = await branch.Admin.PostAsJsonAsync("/api/staff/billing/invoices/issue-from-charges", new { customerId, selector = new { chargeIds = new[] { chargeId } } }, Json);
         await ExpectAsync(HttpStatusCode.Created, issue);
         return (await ReadAsync(issue)).GetProperty("invoiceId").GetGuid();
-    }
-
-    /// <summary>The customer holds and confirms a slot through the customer endpoints.</summary>
-    protected static async Task<Guid> BookConfirmedAppointmentAsync(HttpClient customerClient, ClinicContext clinic, Guid catId, DateTimeOffset startsOn)
-    {
-        var hold = await customerClient.PostAsJsonAsync("/api/customers/me/appointment-holds",
-            new { branchId = clinic.BranchId, serviceId = clinic.ServiceId, catId, startsOn, performerId = clinic.VetStaffAccountId }, Json);
-        await ExpectAsync(HttpStatusCode.Created, hold);
-        var appointmentId = (await ReadAsync(hold)).GetProperty("appointmentId").GetGuid();
-
-        await ExpectAsync(HttpStatusCode.OK, await customerClient.PostAsJsonAsync($"/api/customers/me/appointments/{appointmentId}/confirm", new { }, Json));
-        return appointmentId;
     }
 
     // ── The dashboard ───────────────────────────────────────────────────────────────────────────────

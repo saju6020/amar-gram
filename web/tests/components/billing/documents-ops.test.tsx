@@ -13,10 +13,10 @@ import { BankMatchView } from '@/components/billing/BankMatchView';
 import { StatementUpload } from '@/components/billing/StatementUpload';
 import { MyInvoiceDetail } from '@/components/billing/MyInvoiceDetail';
 import { ApiValidationError } from '@/lib/api/client';
-import { setUrl } from '../booking/nav-mock';
+import { setUrl } from '../common/nav-mock';
 import { todayInZone } from '@/lib/format/time';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({
@@ -34,19 +34,18 @@ describe('InvoiceComposer — U-A', () => {
   it('U-A1/U-A3: groups by business line, selects a group, shows the estimate banner and tax rate', async () => {
     const user = userEvent.setup();
     renderWithClient(<InvoiceComposer customerId={ids.customerId} />);
-    expect(await screen.findByRole('heading', { name: 'Clinic' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Shop' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Boarding' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Shop' })).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Organic rice/)).not.toBeChecked();
     await user.click(await screen.findByRole('button', { name: 'Select all in Shop' }));
-    expect(screen.getByLabelText(/Royal Canin/)).toBeChecked();
-    expect(screen.getByLabelText(/Consultation/)).not.toBeChecked();
+    expect(screen.getByLabelText(/Raw honey/)).toBeChecked();
+    expect(screen.getByLabelText(/Organic rice/)).toBeChecked();
     expect(await screen.findByText(/Estimate at today.s tax rates/)).toBeInTheDocument();
-    expect(await screen.findByText('15.00%')).toBeInTheDocument();
+    expect((await screen.findAllByText('15.00%')).length).toBeGreaterThan(0);
   });
 
   it('U-A5: the issue confirm names the customer and total and says it cannot change', async () => {
     const user = userEvent.setup();
-    renderWithClient(<InvoiceComposer customerId={ids.customerId} initialSelected={[ids.chargeConsultId]} />);
+    renderWithClient(<InvoiceComposer customerId={ids.customerId} initialSelected={[ids.chargeRiceId]} />);
     const issue = await screen.findByRole('button', { name: 'Issue invoice' });
     await waitFor(() => expect(issue).toBeEnabled());
     await user.click(issue);
@@ -60,7 +59,7 @@ describe('InvoiceComposer — U-A', () => {
     await waitFor(() => expect(save).toBeEnabled());
     await user.click(save);
     expect(await screen.findByText('Already on another invoice')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Nail trim/)).not.toBeChecked();
+    expect(screen.getByLabelText(/Gift wrapping/)).not.toBeChecked();
   });
 });
 
@@ -96,7 +95,7 @@ describe('CashUpScreen — U-D', () => {
     const d = new Date();
     d.setUTCDate(d.getUTCDate() - 1);
     setUrl(`/staff/billing/cash-up?date=${todayInZone('Asia/Dhaka').replace(/\d{2}$/, '')}`);
-    const { addDaysIso } = await import('@/lib/format/appointment');
+    const { addDaysIso } = await import('@/lib/format/time');
     setUrl(`/staff/billing/cash-up?date=${addDaysIso(todayInZone('Asia/Dhaka'), -1)}`);
     renderWithClient(<CashUpScreen />);
     expect(await screen.findByText(/closed and read-only/i)).toBeInTheDocument();
@@ -184,14 +183,14 @@ describe('InvoiceComposer retry and edits — code review HIGH', () => {
         return HttpResponse.json({ invoiceId: params.id, number: 'INV-MAIN-2627-000900' });
       }),
     );
-    renderWithClient(<InvoiceComposer customerId={ids.customerId} initialSelected={[ids.chargeConsultId]} />);
+    renderWithClient(<InvoiceComposer customerId={ids.customerId} initialSelected={[ids.chargeRiceId]} />);
     const issue = await screen.findByRole('button', { name: 'Issue invoice' });
     await waitFor(() => expect(issue).toBeEnabled());
     await user.click(issue);
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Issue invoice' }));
     await screen.findByRole('alert');
     // the selection changes after the failed issue
-    await user.click(await screen.findByLabelText(/Vaccination/));
+    await user.click(await screen.findByLabelText(/Mustard oil/));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Issue invoice' })).toBeEnabled());
     await user.click(screen.getByRole('button', { name: 'Issue invoice' }));
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Issue invoice' }));
@@ -201,7 +200,7 @@ describe('InvoiceComposer retry and edits — code review HIGH', () => {
     const puts = rec.calls.filter((c) => c.method === 'PUT' && c.path.endsWith('/charges'));
     expect(creates).toHaveLength(1);
     expect(puts).toHaveLength(1);
-    expect(JSON.parse(puts[0]!.body).chargeIds.sort()).toEqual([ids.chargeConsultId, ids.chargeVaccineId].sort());
+    expect(JSON.parse(puts[0]!.body).chargeIds.sort()).toEqual([ids.chargeRiceId, ids.chargeOilId].sort());
     const issueCalls = rec.calls.filter((c) => c.path.endsWith('/issue'));
     expect(JSON.parse(issueCalls[1]!.body).expectedVersion).toBe(2); // the version AFTER setCharges, not a guess
   });
@@ -210,13 +209,13 @@ describe('InvoiceComposer retry and edits — code review HIGH', () => {
     const user = userEvent.setup();
     const rec = record();
     renderWithClient(<InvoiceDetailScreen invoiceId={ids.draftInvoiceId} />);
-    await user.click(await screen.findByLabelText(/Consultation/));
+    await user.click(await screen.findByLabelText(/Organic rice/));
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() => expect(rec.calls.some((c) => c.method === 'PUT')).toBe(true));
     rec.stop();
     const put = rec.calls.find((c) => c.method === 'PUT')!;
-    expect(JSON.parse(put.body).chargeIds).toContain(ids.chargeConsultId);
-    expect(JSON.parse(put.body).chargeIds).toContain(ids.chargeDentalId);
+    expect(JSON.parse(put.body).chargeIds).toContain(ids.chargeRiceId);
+    expect(JSON.parse(put.body).chargeIds).toContain(ids.chargeGheeId);
   });
 });
 
@@ -228,9 +227,9 @@ describe('U-A2 / U-X2', () => {
       if (request.url.endsWith('/invoices/preview')) previews += 1;
     });
     renderWithClient(<InvoiceComposer customerId={ids.customerId} />);
-    await user.click(await screen.findByLabelText(/Consultation/));
-    await user.click(screen.getByLabelText(/Vaccination/));
-    await user.click(screen.getByLabelText(/Royal Canin/));
+    await user.click(await screen.findByLabelText(/Organic rice/));
+    await user.click(screen.getByLabelText(/Mustard oil/));
+    await user.click(screen.getByLabelText(/Raw honey/));
     expect(previews).toBe(0); // debounced: nothing sent while still ticking
     await screen.findByText(/Estimated total/, undefined, { timeout: 5000 });
     expect(previews).toBe(1);
@@ -241,7 +240,7 @@ describe('U-A2 / U-X2', () => {
   it('U-X2: a dirty composer asks before a link navigates away', async () => {
     const user = userEvent.setup();
     renderWithClient(<InvoiceComposer customerId={ids.customerId} />);
-    await user.click(await screen.findByLabelText(/Consultation/));
+    await user.click(await screen.findByLabelText(/Organic rice/));
     await user.click(screen.getByRole('link', { name: 'Back to the account' }));
     expect(await screen.findByText(/Leave this page\?/)).toBeInTheDocument();
   });
@@ -256,16 +255,16 @@ describe('InvoiceComposer — unsaved ticks survive a draft refetch (code review
         <InvoiceDetailScreen invoiceId={ids.draftInvoiceId} />
       </QueryClientProvider>,
     );
-    await user.click(await screen.findByLabelText(/Consultation/));
-    // someone else adds the vaccination to the draft
+    await user.click(await screen.findByLabelText(/Organic rice/));
+    // someone else adds the mustard oil to the draft
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/staff/billing/invoices/${ids.draftInvoiceId}`);
     const detail = await res.json();
-    const extra = { ...detail.lines[0], lineId: 'zz', chargeId: ids.chargeVaccineId, description: 'Vaccination (FVRCP) — Momo' };
+    const extra = { ...detail.lines[0], lineId: 'zz', chargeId: ids.chargeOilId, description: 'Mustard oil 1 L' };
     server.use(
       http.get('*/api/staff/billing/invoices/:id', () => HttpResponse.json({ ...detail, version: detail.version + 1, lines: [...detail.lines, extra] })),
     );
     await client.invalidateQueries({ queryKey: ['billing', 'invoice'] });
     expect(await screen.findByText(/Your unsaved selection is kept/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Consultation/)).toBeChecked();
+    expect(screen.getByLabelText(/Organic rice/)).toBeChecked();
   });
 });

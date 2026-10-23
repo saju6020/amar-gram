@@ -5,7 +5,7 @@ using CatEcommerce.Shared.Common.Enums;
 namespace CatEcommerce.Application.Tests.TestSupport;
 
 /// <summary>
-/// Hand-written per HO-CAT-001 §13 (no mocking library). Resolves whatever <see cref="RecipientProfile"/>
+/// Hand-written per the foundation handover §13 (no mocking library). Resolves whatever <see cref="RecipientProfile"/>
 /// was seeded for a given (kind, id) pair -- defaults to a profile with the SAME id (no merge), so a
 /// test only needs to seed an entry when it specifically wants to exercise the merged-to-survivor
 /// redirect (HO-NTF-001 CODE_REVIEW gate fix, 2026-09-27:

@@ -206,7 +206,7 @@ export function OrderTimeline({
  * `ExpiredOrderCard` — HO-ORD-002 §11.6, US-ORD-19 AC3. *"We couldn't confirm your transfer in time, so
  * the items were released."* with **Order again** (the re-order endpoint puts what is still available
  * back in the cart at today's prices) and, after the call, a list of what could not be added. Neutral
- * and warning colours only: an expired transfer is a problem, so no warm band and no cat.
+ * and warning colours only: an expired transfer is a problem, so no warm band and no illustration.
  */
 export function ExpiredOrderCard({
   canReorder,

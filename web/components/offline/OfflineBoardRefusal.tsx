@@ -28,7 +28,7 @@ export function OfflineBoardRefusal({
     },
     expired: {
       title: `The saved copy is from ${savedDate ?? 'an earlier day'} and is out of date.`,
-      body: "It isn't shown because today's appointments and tasks may be different. Once the connection returns, today's copy is saved automatically.",
+      body: "It isn't shown because today's lists may be different. Once the connection returns, today's copy is saved automatically.",
     },
     'other-person': {
       title: 'This copy was saved by someone else.',

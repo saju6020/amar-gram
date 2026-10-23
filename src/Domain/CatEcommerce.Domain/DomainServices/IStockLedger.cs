@@ -53,31 +53,8 @@ public interface IStockLedger
     void RecordShortfall(StockShortfall shortfall);
 
     /// <summary>
-    /// Added 2026-09-23, README C-2 follow-up (closes HO-PHM-001 OQ-17). A controlled-drug register
-    /// correction, never a routine stock edit.
-    /// </summary>
-    Task<StockResult<IReadOnlyList<StockMovementLine>>> AdjustAsync(StockAdjustment adjustment, StockReference reference, StockParty party, CancellationToken ct);
-
-    /// <summary>
     /// Added 2026-09-23, README C-2 follow-up (closes HO-PHM-001 OQ-16). Per-batch balances across
     /// every location of the branch. Read-only.
     /// </summary>
     Task<StockResult<IReadOnlyList<BatchBalance>>> GetBranchBalancesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct);
-
-    /// <summary>
-    /// Added 2026-10-09 (HO-PHM-001 architecture gate, owner decision A). Every batch held at the branch's ACTIVE clinic dispensary for the given SKUs
-    /// (on-hand or reserved above zero), with Inventory's batch status. Read-only; lets Pharmacy plan a dispensing without Inventory's internal position reader.
-    /// </summary>
-    Task<StockResult<IReadOnlyList<DispensaryBatch>>> GetDispensaryBatchesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct);
-
-    /// <summary>Added 2026-10-09 (owner decision A). The branch's active clinic dispensary location, or a <c>DispensaryNotFound</c> failure. Read-only.</summary>
-    Task<StockResult<DispensaryLocation>> GetClinicDispensaryAsync(Guid branchId, CancellationToken ct);
-
-    /// <summary>
-    /// Added 2026-10-13 (HO-EMR-001 Phase F gate fix, ARCH 41, owner-directed additive change; recorded in CONTRACTS.md). The distinct SKUs with stock on hand at the
-    /// branch's ACTIVE clinic dispensary, so a consumer lists dispensary items without reading Inventory's positions and locations itself. Read-only. A default
-    /// member (answers <c>NotSupported</c>) so no other implementer of the port has to change; <c>EfStockLedger</c> overrides it.
-    /// </summary>
-    Task<StockResult<IReadOnlyList<Guid>>> GetDispensarySkuIdsAsync(Guid branchId, CancellationToken ct) =>
-        Task.FromResult(StockResult<IReadOnlyList<Guid>>.Failure("NotSupported", "This ledger cannot list dispensary items.", nameof(branchId)));
 }

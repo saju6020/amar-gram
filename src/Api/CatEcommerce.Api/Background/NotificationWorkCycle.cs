@@ -15,8 +15,7 @@ namespace CatEcommerce.Api.Background;
 /// <summary>
 /// HO-NTF-001 §12.2 -- one pass. <see cref="RunDeliveryPassAsync"/>: for each id from the work
 /// queue, a fresh scope, dispatch C4/C5/C6; an exception is logged at <c>Error</c> with the id and
-/// swallowed so one bad row cannot stop the queue. <see cref="RunReminderSweepAsync"/> delegates to
-/// <see cref="CareReminderSweep"/> (§8.12). Scoped -- <see cref="NotificationWorker"/> creates one
+/// swallowed so one bad row cannot stop the queue. Scoped -- <see cref="NotificationWorker"/> creates one
 /// scope per poll and resolves this from it; the per-item fresh scopes below are created from the
 /// injected <see cref="IServiceScopeFactory"/>, not that outer one.
 /// </summary>
@@ -24,7 +23,6 @@ public sealed class NotificationWorkCycle(
     ILogger<NotificationWorkCycle> logger,
     IServiceScopeFactory scopeFactory,
     NotificationWorkQueue workQueue,
-    CareReminderSweep careReminderSweep,
     IOptions<NotificationOptions> options,
     TimeProvider timeProvider)
 {
@@ -67,8 +65,6 @@ public sealed class NotificationWorkCycle(
             }, notificationId, ct);
         }
     }
-
-    public Task RunReminderSweepAsync(CancellationToken ct = default) => careReminderSweep.RunAsync(ct);
 
     private async Task DispatchAsync<TCommand>(TCommand command, Guid id, CancellationToken ct) where TCommand : Command
     {

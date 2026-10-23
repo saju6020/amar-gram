@@ -146,7 +146,7 @@ function validate(body: PostGoodsReceiptRequest, branchId: string): Violation[] 
       add(
         `${prefix}.ExpiresOn`,
         'ExpiryDateRequired',
-        'Food and medicine must be received with an expiry date.',
+        'Food and other perishables must be received with an expiry date.',
       );
     }
     if (takes && line.expiresOn && line.expiresOn < todayDate()) {

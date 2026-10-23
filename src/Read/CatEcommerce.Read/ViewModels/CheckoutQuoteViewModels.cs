@@ -2,10 +2,10 @@ namespace CatEcommerce.Read.ViewModels;
 
 /// <summary>HO-ORD-001 §12.4 -- the checkout quote's lines, every component of the price its own field (US-ORD-04 AC1). <c>LineRef</c> is the cart line.</summary>
 public sealed record CheckoutQuoteLineViewModel(
-    Guid LineRef, Guid SkuId, string ProductName, string VariantLabel, CartCatViewModel? Cat, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineSubtotal,
+    Guid LineRef, Guid SkuId, string ProductName, string VariantLabel, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineSubtotal,
     MoneyViewModel LineDiscount, MoneyViewModel OrderDiscountShare, decimal TaxRatePercent, MoneyViewModel TaxAmount, MoneyViewModel LineTotal);
 
-public sealed record ExcludedLineViewModel(Guid LineRef, Guid SkuId, string ProductName, CartCatViewModel? Cat, int Quantity, string ReasonCode);
+public sealed record ExcludedLineViewModel(Guid LineRef, Guid SkuId, string ProductName, int Quantity, string ReasonCode);
 
 public sealed record CheckoutChangeViewModel(string Kind, Guid LineRef, string ProductName, string? Before, string? After, string Message);
 

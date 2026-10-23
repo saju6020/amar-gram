@@ -31,8 +31,8 @@ public sealed class StorageKeyFactoryTests
         var fileId = Guid.NewGuid();
         var uploadedOn = new DateTimeOffset(2026, 3, 7, 12, 0, 0, TimeSpan.Zero);
 
-        var key = StorageKeyFactory.Build(FilePurpose.ClinicalPhoto, fileId, uploadedOn);
+        var key = StorageKeyFactory.Build(FilePurpose.ReportExport, fileId, uploadedOn);
 
-        Assert.Equal($"ClinicalPhoto/2026/03/{fileId:N}", key);
+        Assert.Equal($"ReportExport/2026/03/{fileId:N}", key);
     }
 }

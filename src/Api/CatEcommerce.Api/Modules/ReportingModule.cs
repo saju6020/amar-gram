@@ -72,12 +72,6 @@ public static class ReportingModule
     /// <summary>One <c>IReportSource</c> per catalogue key (U-A2 enforces the 1:1). Each phase adds its sources here.</summary>
     private static void RegisterReportSources(IServiceCollection services)
     {
-        // Phase B -- clinic (US-RPT-01 AC1).
-        services.AddScoped<IReportSource, ClinicDailyScheduleSource>();
-        services.AddScoped<IReportSource, ClinicQueuePerformanceSource>();
-        services.AddScoped<IReportSource, SurgeryRegisterSource>();
-        services.AddScoped<IReportSource, VaccinationDueListSource>();
-
         // Phase C -- stock (US-RPT-02).
         services.AddScoped<IReportSource, StockPositionSource>();
         services.AddScoped<IReportSource, StockNearExpirySource>();
@@ -95,26 +89,20 @@ public static class ReportingModule
         services.AddScoped<IReportSource, RefundsCreditNotesSource>();
         services.AddScoped<IReportSource, TaxSummarySource>();
 
-        // Phase F -- growth (US-RPT-04). R21 (HO-SUB-001), R22 (needs the boarding line) and R23 (no cart reminders in HO-ORD-001) are not delivered yet.
+        // Phase F -- growth (US-RPT-04). R21 (HO-SUB-001) and R23 (no cart reminders in HO-ORD-001) are not delivered yet.
         services.AddScoped<IReportSource, CustomersNewVsReturningSource>();
         services.AddScoped<IReportSource, CustomerLifetimeValueSource>();
         services.AddScoped<IReportSource, CohortRetentionSource>();
 
-        // Phase H -- R27 only. R24-R26 read HO-BRD-001 (not merged) and are not delivered yet.
+        // Phase H -- R27.
         services.AddScoped<IReportSource, OrderFulfilmentSource>();
     }
 
-    /// <summary>One IDashboardTileSource per tile key of DashboardTiles (U-A2 enforces the 1:1). The three boarding tiles have no source: HO-BRD-001 is not merged, so they are absent.</summary>
+    /// <summary>One IDashboardTileSource per tile key of DashboardTiles (U-A2 enforces the 1:1).</summary>
     private static void RegisterDashboard(IServiceCollection services)
     {
         services.AddScoped<IQueryHandlerAsync<GetDashboardQuery, DashboardOutcome>, GetDashboardQueryHandler>();
 
-        services.AddScoped<IDashboardTileSource, AppointmentsTodayTile>();
-        services.AddScoped<IDashboardTileSource, QueueNowTile>();
-        services.AddScoped<IDashboardTileSource, MyAppointmentsTodayTile>();
-        services.AddScoped<IDashboardTileSource, VaccinationsDueTile>();
-        services.AddScoped<IDashboardTileSource, ConsultationsUnfinalisedTile>();
-        services.AddScoped<IDashboardTileSource, SurgeryTodayTile>();
         services.AddScoped<IDashboardTileSource, StockExpiryTile>();
         services.AddScoped<IDashboardTileSource, StockLowTile>();
         services.AddScoped<IDashboardTileSource, ConsignmentsOpenTile>();

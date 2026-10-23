@@ -36,10 +36,10 @@ function renderWithClient(children: React.ReactNode) {
 
 const account: StaffAccount = {
   id: 'staff-1',
-  fullName: 'Nadia Nurse',
+  fullName: 'Nadia Karim',
   mobileNumber: null,
   emailAddress: 'nadia@example.com',
-  roleIds: ['Nurse', 'Reception'],
+  roleIds: ['Inventory', 'Reception'],
   hasPassword: true,
 };
 
@@ -48,7 +48,7 @@ describe('StaffAccountDetail — US-ACC-07, UI-3', () => {
     server.use(
       http.get('*/api/staff-roles', () =>
         HttpResponse.json({
-          roleIds: ['Administrator', 'Reception', 'Nurse', 'Vet'],
+          roleIds: ['Administrator', 'Reception', 'Inventory', 'Accountant'],
           capabilities: [],
           cells: [],
         }),
@@ -72,8 +72,8 @@ describe('StaffAccountDetail — US-ACC-07, UI-3', () => {
     expect(within(dialog).getByText(/signed out/i)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: /^remove$/i }));
 
-    await screen.findByRole('checkbox', { name: 'Nurse' });
-    expect(capturedBody).toEqual({ roleIds: ['Nurse'] });
+    await screen.findByRole('checkbox', { name: 'Inventory' });
+    expect(capturedBody).toEqual({ roleIds: ['Inventory'] });
   });
 
   it('LastAdministratorCannotBeRemoved is shown as the server’s own message', async () => {

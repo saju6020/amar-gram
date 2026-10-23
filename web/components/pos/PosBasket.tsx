@@ -5,15 +5,13 @@ import { useState } from 'react';
 import { Amount } from '@/components/billing/Amount';
 import { Button } from '@/components/ui/button';
 import type { CounterQuote } from '@/lib/api/pos';
-import type { CatListItem } from '@/lib/api/cats';
 import { describeExcludedReason } from '@/lib/api/errors';
 import type { BasketLine } from './types';
 
 /**
  * `components/pos/PosBasket.tsx` — HO-ORD-002 §11.11. The basket rows: product, variant, the batch the
  * server says will be used, a quantity stepper with named buttons, remove, and the line total **from the
- * server's counter quote** (matched by SKU and cat). A prescription row asks for the customer's cat (the
- * cat list is the attached customer's); a line the quote leaves out says why in words.
+ * server's counter quote** (matched by SKU); a line the quote leaves out says why in words.
  */
 /**
  * The quantity box keeps what is being typed as text and commits a whole number >= 1 on blur or Enter, so a cashier
@@ -58,19 +56,13 @@ function QuantityInput({ name, quantity, onCommit }: { name: string; quantity: n
 export function PosBasket({
   lines,
   quote,
-  cats,
-  hasCustomer,
   onQuantity,
   onRemove,
-  onCat,
 }: {
   lines: BasketLine[];
   quote: CounterQuote | undefined;
-  cats: CatListItem[];
-  hasCustomer: boolean;
   onQuantity: (skuId: string, quantity: number) => void;
   onRemove: (skuId: string) => void;
-  onCat: (skuId: string, catId: string) => void;
 }) {
   if (lines.length === 0) {
     return <p className="rounded-[var(--radius-md)] border border-dashed border-border p-6 text-center text-sm text-ink-muted">The basket is empty. Scan an item to start the sale.</p>;
@@ -103,28 +95,6 @@ export function PosBasket({
               </div>
               <p className="w-24 text-right font-semibold">{priced ? <Amount money={priced.lineTotal} /> : <span className="text-ink-muted">…</span>}</p>
             </div>
-            {line.requiresPrescription && (
-              <div className="rounded-[var(--radius-sm)] bg-surface-sunken p-2 text-sm">
-                {hasCustomer ? (
-                  <>
-                    <label htmlFor={`pos-cat-${line.skuId}`} className="font-semibold">Which cat is {line.productName} for?</label>
-                    <select
-                      id={`pos-cat-${line.skuId}`}
-                      value={line.catId ?? ''}
-                      onChange={(e) => onCat(line.skuId, e.target.value)}
-                      className="mt-1 w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 py-1.5 text-sm"
-                    >
-                      <option value="">Choose a cat</option>
-                      {cats.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </>
-                ) : (
-                  <p>Prescription food. Attach an existing customer and choose their cat before the sale.</p>
-                )}
-              </div>
-            )}
           </li>
         );
       })}

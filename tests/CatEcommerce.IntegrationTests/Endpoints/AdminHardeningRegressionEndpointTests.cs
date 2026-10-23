@@ -10,7 +10,7 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 /// fixes: the API-wide <c>NulByteRejectionFilter</c>, request-body enum validation
 /// (<c>MustBeValidEnumeration</c>), the <c>SlugFormat</c>/<c>CodeFormat</c> <c>\A…\z</c> anchors,
 /// and the leave-requests <c>pageSize</c> cap. One dedicated file, since the cases cut across
-/// content, branches, rosters, leave and the service catalogue rather than any single existing
+/// content, branches, rosters and leave rather than any single existing
 /// endpoint test file.</summary>
 public sealed class AdminHardeningRegressionEndpointTests(AdministrationApiFactory factory) : AdministrationIntegrationTestBase(factory)
 {
@@ -29,13 +29,6 @@ public sealed class AdminHardeningRegressionEndpointTests(AdministrationApiFacto
         var create = await client.PostAsJsonAsync("/api/admin/branches", new { code = NewCode(), name = "Hardening Test Branch", timeZoneId = "Asia/Dhaka" }, Json);
         create.EnsureSuccessStatusCode();
         return (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("branchId").GetGuid();
-    }
-
-    private static async Task<Guid> CreateValidTaxClassAsync(HttpClient client)
-    {
-        var create = await client.PostAsJsonAsync("/api/admin/tax-classes", new { code = NewCode("TAX"), name = "Hardening Test Tax Class" }, Json);
-        create.EnsureSuccessStatusCode();
-        return (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("taxClassId").GetGuid();
     }
 
     // ---------- Item 1 (SEC LOW): one API-wide NUL guard, closing every remaining free-text field ----------
@@ -152,16 +145,6 @@ public sealed class AdminHardeningRegressionEndpointTests(AdministrationApiFacto
 
         yield return new object[]
         {
-            "room kind",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var branchId = await CreateValidBranchAsync(client);
-                return await client.PostAsJsonAsync($"/api/admin/branches/{branchId}/rooms", new { name = "Bad Kind Room", kind = "Nope" }, Json);
-            })
-        };
-
-        yield return new object[]
-        {
             "closure kind",
             (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
             {
@@ -170,20 +153,6 @@ public sealed class AdminHardeningRegressionEndpointTests(AdministrationApiFacto
                 {
                     startsOn = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)), endsOn = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)),
                     kind = "Nope", reason = "Bad kind"
-                }, Json);
-            })
-        };
-
-        yield return new object[]
-        {
-            "service category",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var taxClassId = await CreateValidTaxClassAsync(client);
-                return await client.PostAsJsonAsync("/api/admin/services", new
-                {
-                    code = NewCode("SVC"), name = "Bad Category", description = "Bad category test", category = "nope",
-                    durationMinutes = 30, qualifiedRoleIds = new[] { "Vet" }, requiredRoomKind = "Consultation", taxClassId, isBookableOnline = true
                 }, Json);
             })
         };
@@ -232,16 +201,6 @@ public sealed class AdminHardeningRegressionEndpointTests(AdministrationApiFacto
 
         yield return new object[]
         {
-            "room kind",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var branchId = await CreateValidBranchAsync(client);
-                return await client.PostAsJsonAsync($"/api/admin/branches/{branchId}/rooms", new { name = "Lower Kind Room", kind = "consultation" }, Json);
-            })
-        };
-
-        yield return new object[]
-        {
             "closure kind",
             (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
             {
@@ -250,20 +209,6 @@ public sealed class AdminHardeningRegressionEndpointTests(AdministrationApiFacto
                 {
                     startsOn = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(6)), endsOn = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(6)),
                     kind = "closure", reason = "Lower kind"
-                }, Json);
-            })
-        };
-
-        yield return new object[]
-        {
-            "service category",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var taxClassId = await CreateValidTaxClassAsync(client);
-                return await client.PostAsJsonAsync("/api/admin/services", new
-                {
-                    code = NewCode("SVC"), name = "Lower Category", description = "Lower category test", category = "consultation",
-                    durationMinutes = 30, qualifiedRoleIds = new[] { "Vet" }, requiredRoomKind = "consultation", taxClassId, isBookableOnline = true
                 }, Json);
             })
         };

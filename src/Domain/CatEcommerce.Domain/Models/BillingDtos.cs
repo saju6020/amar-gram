@@ -25,7 +25,7 @@ public sealed record ChargeRecordContext(string CurrencyCode, DateTimeOffset Now
 // ── Invoices (§8.6) ─────────────────────────────────────────────────────────────────────────────────
 public sealed record DraftInvoiceLineInput(
     Guid? ChargeId, Guid? CorrectsInvoiceLineId, BusinessLine BusinessLine, ItemKind ItemKind, ChargeSourceKind SourceKind,
-    Guid SourceId, BillingGroupKind? BillingGroupKind, Guid? BillingGroupId, Guid? CatId, string Description,
+    Guid SourceId, string Description,
     decimal Quantity, decimal UnitPrice, decimal LineDiscount, Guid TaxClassId);
 
 public sealed record DraftInvoiceDto(

@@ -100,12 +100,12 @@ describe('HearthLogo', () => {
     render(<HearthLogo />);
     const link = screen.getByRole('link', { name: 'Amar Gram Shop' });
     expect(link).toHaveAttribute('href', '/shop');
-    // Logo A · Cat badge (owner, 2026-10-18): the badge is decoration, hidden from assistive tech.
+    // Logo A · badge (owner, 2026-10-18): the badge is decoration, hidden from assistive tech.
     expect(link.querySelector('[aria-hidden="true"].bg-accent')).not.toBeNull();
   });
 
-  // Owner, 2026-10-19: the shop's cat-badge logo is the one logo everywhere; the portal variant only links home.
-  it('the portal variant is the same cat-badge logo, linking home', () => {
+  // Owner, 2026-10-19: the shop's badge logo is the one logo everywhere; the portal variant only links home.
+  it('the portal variant is the same badge logo, linking home', () => {
     render(<HearthLogo variant="portal" />);
     const link = screen.getByRole('link', { name: 'Amar Gram Shop' });
     expect(link).toHaveAttribute('href', '/');

@@ -2,7 +2,6 @@ import { apiFetch } from './client';
 import type { Money } from '../format/money';
 import { wireMoney } from '../money';
 import type { PagedResult } from './types';
-import type { CartCat } from './cart';
 import type { OrderTotals } from './checkout';
 import type {
   OrderFulfilment,
@@ -69,7 +68,6 @@ export interface StaffOrderLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  cat: CartCat | null;
   quantity: number;
   unitPrice: Money;
   lineTotal: Money;
@@ -371,7 +369,6 @@ export interface PackingSlipLine {
   productName: string;
   variantLabel: string;
   quantity: number;
-  catName: string | null;
   batchNumbers: string[];
 }
 

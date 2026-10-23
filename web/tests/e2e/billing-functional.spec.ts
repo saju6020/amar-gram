@@ -1,7 +1,6 @@
 import { test, expect, signInAsCustomer, signInAsStaff } from './fixtures';
 import { billingIds as ids } from '../../mocks/handlers/billing';
-import { addDaysIso } from '../../lib/format/appointment';
-import { todayInZone } from '../../lib/format/time';
+import { addDaysIso, todayInZone } from '../../lib/format/time';
 
 /**
  * HO-BIL-002 §16 E-series against MSW (the real-API re-run is `billing-real-api.spec.ts`). One
@@ -16,11 +15,9 @@ test.describe('staff — invoices and payments', () => {
     await signInAsStaff(page);
   });
 
-  test('E-A1: charges from three business lines combine into one numbered invoice', async ({ page }) => {
+  test('E-A1: several charges combine into one numbered invoice', async ({ page }) => {
     await page.goto(`/staff/billing/invoices/new?customerId=${C}`);
-    await page.getByLabel(/Consultation — Momo/).check();
     await page.getByRole('button', { name: 'Select all in Shop' }).click();
-    await page.getByRole('button', { name: 'Select all in Boarding' }).click();
     await expect(page.getByText(/Estimate at today.s tax rates/)).toBeVisible();
     const issue = page.getByRole('button', { name: 'Issue invoice' });
     await expect(issue).toBeEnabled();
@@ -29,9 +26,9 @@ test.describe('staff — invoices and payments', () => {
     await page.getByRole('dialog').getByRole('button', { name: 'Issue invoice' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/INV-MAIN-2627-\d{6}/, { timeout: 20_000 });
     const lines = page.getByLabel('Invoice lines').first();
-    await expect(lines).toContainText('Clinic');
     await expect(lines).toContainText('Shop');
-    await expect(lines).toContainText('Boarding');
+    await expect(lines).toContainText('Organic rice 5 kg');
+    await expect(lines).toContainText('Mustard oil 1 L');
   });
 
   test('E-A2: a draft issued elsewhere reads as already issued', async ({ page }) => {
@@ -107,7 +104,7 @@ test.describe('staff — invoices and payments', () => {
 
   test('E-C1/E-C2: credit note on a paid invoice releases credit; corrected re-issue links both ways', async ({ page }) => {
     await page.goto(`/staff/billing/invoices/${ids.paidInvoiceId}/credit`);
-    await page.getByRole('textbox', { name: 'Reason' }).fill('Wrong vaccine billed');
+    await page.getByRole('textbox', { name: 'Reason' }).fill('Wrong item billed');
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Issue credit note' }).click();

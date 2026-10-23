@@ -26,46 +26,6 @@ interface Definition {
 
 const REGISTRY: Definition[] = [
   {
-    key: 'booking.changeCutoffHours',
-    group: 'Booking',
-    type: 'Integer',
-    unit: 'hours',
-    min: 0,
-    max: 72,
-    default: '4',
-    branchOverridable: true,
-  },
-  {
-    key: 'booking.slotHoldMinutes',
-    group: 'Booking',
-    type: 'Integer',
-    unit: 'minutes',
-    min: 2,
-    max: 30,
-    default: '10',
-    branchOverridable: true,
-  },
-  {
-    key: 'booking.waitlistClaimMinutes',
-    group: 'Booking',
-    type: 'Integer',
-    unit: 'minutes',
-    min: 5,
-    max: 240,
-    default: '30',
-    branchOverridable: true,
-  },
-  {
-    key: 'boarding.depositPercent',
-    group: 'Boarding',
-    type: 'Decimal',
-    unit: '%',
-    min: 0,
-    max: 100,
-    default: '30.00',
-    branchOverridable: true,
-  },
-  {
     key: 'inventory.expiryAlertDays',
     group: 'Inventory',
     type: 'Integer',
@@ -84,26 +44,6 @@ const REGISTRY: Definition[] = [
     max: 100_000,
     default: '10',
     branchOverridable: true,
-  },
-  {
-    key: 'clinical.vaccinationDueSoonDays',
-    group: 'Clinical',
-    type: 'Integer',
-    unit: 'days',
-    min: 1,
-    max: 180,
-    default: '30',
-    branchOverridable: false,
-  },
-  {
-    key: 'clinical.defaultParasiteIntervalDays',
-    group: 'Clinical',
-    type: 'Integer',
-    unit: 'days',
-    min: 7,
-    max: 365,
-    default: '90',
-    branchOverridable: false,
   },
   {
     key: 'notifications.quietHours',
@@ -141,7 +81,7 @@ type ScopeId = 'global' | string; // string = branchId
 
 function seed(): Map<string, Map<string, string>> {
   const global = new Map(REGISTRY.map((d) => [d.key, d.default]));
-  const branchOverrides = new Map<string, string>([['booking.slotHoldMinutes', '15']]);
+  const branchOverrides = new Map<string, string>([['inventory.expiryAlertDays', '45']]);
   return new Map<ScopeId, Map<string, string>>([
     ['global', global],
     [administrationFixtureIds.mainBranchId, branchOverrides],

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using CatEcommerce.Domain.Aggregates.Account;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Domain.ValueObjects;
@@ -17,7 +16,7 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 /// <summary>
 /// HO-ACC-001 §16, Duplicates and merge (I). Regression guard for
 /// <c>GetDuplicateCustomerGroupsQueryHandler</c>'s rewrite (ARCHITECTURE gate, MEDIUM -- database
-/// candidate-narrowing plus a batched cats query instead of one query per group member) -- proves
+/// candidate-narrowing instead of one query per group member) -- proves
 /// two customers who share an additional phone number still land in the same duplicate group.
 /// </summary>
 public sealed class DuplicateCustomerGroupsEndpointTests(AccountsApiFactory factory) : AccountsIntegrationTestBase(factory)
@@ -99,8 +98,8 @@ public sealed class DuplicateCustomerGroupsEndpointTests(AccountsApiFactory fact
 
     // SECURITY gate LOW (second pass, HO-ACC-001 §1 Amended (18)): a pairing based only on an
     // unverified additional number must be labelled "Additional", not treated the same as a
-    // genuine shared primary mobile -- staff should confirm identity before merging or attaching
-    // cats from this pairing (mirrors Q-H2's own mobileMatchedOn label).
+    // genuine shared primary mobile -- staff should confirm identity before merging from this
+    // pairing (mirrors Q-H2's own mobileMatchedOn label).
     [Fact]
     public async Task TwoCustomers_SharingAnAdditionalNumber_AreBothLabelledAdditionalNotPrimary()
     {
@@ -253,55 +252,11 @@ public sealed class DuplicateCustomerGroupsEndpointTests(AccountsApiFactory fact
         return client;
     }
 
-    /// <summary>HO-ADM-001 §12.3 / ADR-043: <c>Cats.Register</c> now requires a signed-in staff or
-    /// customer caller -- registers through a fresh Reception session (which honours the explicit
-    /// <paramref name="ownerId"/>, unlike a customer caller) rather than the anonymous client this
-    /// took before.</summary>
-    private async Task<Guid> RegisterCatAsync(HttpClient anyClient, Guid ownerId)
-    {
-        using var receptionClient = await ReceptionClientAsync();
-
-        var response = await receptionClient.PostAsJsonAsync("/api/cats", new
-        {
-            ownerId, name = "Merge Test Cat", sex = "Female", dateOfBirthPrecision = "Estimated"
-        }, Json);
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
-        return body.GetProperty("catId").GetGuid();
-    }
-
-    /// <summary>
-    /// CODE_REVIEW gate, MEDIUM (2026-09-26, third pass): RegisterCatCommandHandler now requires
-    /// the owner to be an Active customer, so the HTTP registration endpoint can no longer be used
-    /// to put a cat on an already-Merged customer id -- correctly, for a real caller. This test's
-    /// own scenario needs exactly that state (a cat whose OwnerId is a customer that has already
-    /// been merged, to prove ADR-039's resend-recovery still sweeps it up), so it seeds the cat
-    /// directly through the repository instead, the same "SeedCatAsync" pattern
-    /// AdministrationIntegrationTestBase uses -- ReassignCatsOnCustomerMergedHandler only ever
-    /// queries CatAggregate.OwnerId, never the owning customer's Status, so this is a faithful
-    /// stand-in for "a cat the first merge's reassignment loop had not yet reached".
-    /// </summary>
-    private async Task<Guid> SeedCatOwnedByAsync(Guid ownerId, string name)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var cat = new CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, name, "Cat", CatSex.Female, null, DateOfBirthPrecision.Estimated, null, null,
-            DateOnly.FromDateTime(DateTime.UtcNow),
-            new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
-
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
-    }
-
-    // I-I2. §4.3: no orders, invoices or balances exist in any context, so this proves the one
-    // thing the merge itself is responsible for -- both cats move, the merge is audited via the
-    // ordinary change-capture path (ADR-040), and the duplicate's own session stops working
-    // (MergeInto rotates SecurityStamp, exactly like SetPassword/Anonymise).
+    // I-I2. This proves the thing the merge itself is responsible for -- the merge names the
+    // survivor, is audited via the ordinary change-capture path (ADR-040), and the duplicate's own
+    // session stops working (MergeInto rotates SecurityStamp, exactly like SetPassword/Anonymise).
     [Fact]
-    public async Task Merge_MovesBothCatsToTheSurvivorAndEndsTheDuplicatesSession()
+    public async Task Merge_NamesTheSurvivorAndEndsTheDuplicatesSession()
     {
         using var registerClient = CreateClient();
         var (survivorId, survivorMobile, survivorPassword) = await RegisterCustomerAsync(registerClient);
@@ -318,9 +273,6 @@ public sealed class DuplicateCustomerGroupsEndpointTests(AccountsApiFactory fact
         Assert.Equal(HttpStatusCode.OK, duplicateSignIn.StatusCode);
         duplicateClient.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(duplicateSignIn, "pc_csrf"));
 
-        var survivorCatId = await RegisterCatAsync(registerClient, survivorId);
-        var duplicateCatId = await RegisterCatAsync(registerClient, duplicateId);
-
         using var adminClient = await AdministratorClientAsync();
         var merge = await adminClient.PostAsJsonAsync($"/api/staff/customers/{duplicateId}/merge", new
         {
@@ -330,14 +282,6 @@ public sealed class DuplicateCustomerGroupsEndpointTests(AccountsApiFactory fact
         var mergeBody = await merge.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal(survivorId, mergeBody.GetProperty("survivingCustomerId").GetGuid());
         Assert.False(mergeBody.GetProperty("isReapplication").GetBoolean());
-
-        // HO-ADM-001 §12.3 / ADR-043: Cats.View now requires a signed-in caller -- the already
-        // signed-in admin client reads both, since staff bypass the ownership check entirely.
-        var survivorCat = await adminClient.GetAsync($"/api/cats/{survivorCatId}");
-        Assert.Equal(survivorId, (await survivorCat.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("ownerId").GetGuid());
-
-        var movedCat = await adminClient.GetAsync($"/api/cats/{duplicateCatId}");
-        Assert.Equal(survivorId, (await movedCat.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("ownerId").GetGuid());
 
         var duplicateStatus = await duplicateClient.GetAsync("/api/auth/session");
         Assert.Equal(HttpStatusCode.Unauthorized, duplicateStatus.StatusCode);
@@ -362,15 +306,6 @@ public sealed class DuplicateCustomerGroupsEndpointTests(AccountsApiFactory fact
         }, Json);
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
 
-        // A cat registered on the duplicate id AFTER the first merge -- the documented recovery
-        // path (ADR-039) is that re-sending the identical command moves whatever is left. Seeded
-        // directly through the repository (SeedCatOwnedByAsync): CODE_REVIEW gate MEDIUM (third
-        // pass) now makes the real HTTP registration endpoint reject a non-Active owner, so it can
-        // no longer stand in for "a cat the first merge's reassignment loop had not yet reached" --
-        // this now seeds that state directly instead, which is what the reassignment handler
-        // (OwnerId-only, never customer Status) actually looks for on resend.
-        var lateCatId = await SeedCatOwnedByAsync(duplicateId, "Merge Test Cat (Late)");
-
         var reSend = await adminClient.PostAsJsonAsync($"/api/staff/customers/{duplicateId}/merge", new
         {
             survivingCustomerId = survivorId, reason = "Re-sent, same pair"
@@ -378,9 +313,7 @@ public sealed class DuplicateCustomerGroupsEndpointTests(AccountsApiFactory fact
         Assert.Equal(HttpStatusCode.OK, reSend.StatusCode);
         var reSendBody = await reSend.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.True(reSendBody.GetProperty("isReapplication").GetBoolean());
-
-        var lateCat = await adminClient.GetAsync($"/api/cats/{lateCatId}");
-        Assert.Equal(survivorId, (await lateCat.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("ownerId").GetGuid());
+        Assert.Equal(survivorId, reSendBody.GetProperty("survivingCustomerId").GetGuid());
     }
 
     // I-I4

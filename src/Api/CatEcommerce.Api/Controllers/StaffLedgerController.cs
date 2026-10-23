@@ -12,7 +12,7 @@ namespace CatEcommerce.Api.Controllers;
 
 /// <summary>HO-IMP-001 §12.4 (US-IMP-15) -- the immutable stock ledger of the ACTIVE branch. <c>from</c> and <c>to</c> are REQUIRED and span at most
 /// <see cref="InventoryRules.LedgerQueryMaxRangeDays"/> days, so a search can never become a full-table scan. Rows carry SKU, batch, delta, location,
-/// reference and user -- and NO customer or cat (those are in the recall trace only, ADR-104).</summary>
+/// reference and user -- and NO customer (that is in the recall trace only, ADR-104).</summary>
 [ApiController]
 [Route("api/staff/inventory/ledger")]
 public sealed class StaffLedgerController(

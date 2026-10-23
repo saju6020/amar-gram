@@ -2,7 +2,7 @@ namespace CatEcommerce.Shared.Common.Constants;
 
 /// <summary>HO-BIL-001 §10.4 -- Billing's own violation codes (ADR-341 per-area partial).
 /// <c>CurrencyMismatch</c> (Shop), <c>TaxClassNotFound</c> (Administration), <c>ReasonRequired</c>
-/// (Cat), <c>CustomerNotFound</c>, <c>BranchNotFound</c> and <c>ServiceNotFound</c> already exist and
+/// (base), <c>CustomerNotFound</c> and <c>BranchNotFound</c> already exist and
 /// are reused, not redeclared.</summary>
 public static partial class BusinessViolationCodes
 {
@@ -79,8 +79,5 @@ public static partial class BusinessViolationCodes
     public const string DescriptionRequired = nameof(DescriptionRequired);
     public const string TooManyAllocations = nameof(TooManyAllocations);
     public const string InvoiceHasNoLines = nameof(InvoiceHasNoLines);
-    public const string SourceNotFound = nameof(SourceNotFound);
-    public const string SourceKindNotCapturable = nameof(SourceKindNotCapturable);
-    public const string ServiceNotPriced = nameof(ServiceNotPriced);
     public const string StaleVersion = nameof(StaleVersion);
 }

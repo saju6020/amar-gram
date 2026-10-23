@@ -48,7 +48,6 @@ public static class ShopModule
         // Ports and read helpers (section 8.7/11.6/12.2), each on its own line.
         services.AddScoped<ISkuAvailabilityReader, SkuAvailabilityReader>();
         services.AddScoped<IShopCustomerDataFinder, ShopCustomerDataFinder>();
-        services.AddScoped<IBundleMembershipReader, BundleMembershipReader>();
 
         // Content locales (section 8.14): the default is the first entry; validated on start.
         services.AddSingleton<IValidateOptions<LocalisationOptions>, LocalisationOptionsValidator>();
@@ -105,17 +104,6 @@ public static class ShopModule
                 return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
                 { PermitLimit = 30, Window = TimeSpan.FromHours(1), QueueLimit = 0 });
             });
-
-            // Row 20: the food recommendations read the candidate pool and the diet gate, so they are
-            // limited per signed-in customer (not per IP), the same partitioning as the policies above.
-            options.AddPolicy(ShopRateLimitPolicies.FoodRecommendations, context =>
-            {
-                var caller = context.Items[ResolvedCaller.HttpContextItemsKey] as ResolvedCaller;
-                var partitionKey = caller is { Kind: ResolvedCallerKind.Customer } ? $"customer:{caller.AccountId}" : $"ip:{context.Connection.RemoteIpAddress}";
-                var limits = context.RequestServices.GetRequiredService<IOptions<ShopOptions>>().Value.FoodRecommendations;
-                return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
-                { PermitLimit = limits.PermitLimit, Window = TimeSpan.FromMinutes(limits.WindowMinutes), QueueLimit = 0 });
-            });
         });
 
         return services;
@@ -162,8 +150,6 @@ public static class ShopModule
         services.AddScoped<ICommandHandlerAsync<SetFoodDetailsCommand>, SetFoodDetailsCommandHandler>();
         services.AddScoped<IValidator<SetFoodDetailsCommand>, SetFoodDetailsCommandValidator>();
 
-        services.AddScoped<ICommandHandlerAsync<SetPrescriptionRequiredCommand>, SetPrescriptionRequiredCommandHandler>();
-        services.AddScoped<IValidator<SetPrescriptionRequiredCommand>, SetPrescriptionRequiredCommandValidator>();
 
         services.AddScoped<ICommandHandlerAsync<CreateSourcingOriginCommand>, CreateSourcingOriginCommandHandler>();
         services.AddScoped<IValidator<CreateSourcingOriginCommand>, CreateSourcingOriginCommandValidator>();
@@ -246,9 +232,7 @@ public static class ShopModule
         services.AddScoped<IQueryHandlerAsync<GetOriginQuery, OriginViewModel?>, GetOriginQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetProductDetailQuery, ProductDetailViewModel?>, GetProductDetailQueryHandler>();
 
-        // ── Phase F: prescription gating, bundles, recommendations and the contract queries. ──
-        services.AddScoped<IQueryHandlerAsync<GetPurchasabilityQuery, PurchasabilityViewModel?>, GetPurchasabilityQueryHandler>();
-        services.AddScoped<IQueryHandlerAsync<CheckPrescriptionEligibilityQuery, PrescriptionEligibilityViewModel?>, CheckPrescriptionEligibilityQueryHandler>();
+        // ── Phase F: bundles, recommendations and the contract queries. ──
         services.AddScoped<IQueryHandlerAsync<GetBundleCompositionQuery, IReadOnlyList<BundleCompositionLineViewModel>?>, GetBundleCompositionQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetProductRecommendationsQuery, RecommendationsViewModel?>, GetProductRecommendationsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetSkuSaleFactsQuery, IReadOnlyList<SkuSaleFactViewModel>>, GetSkuSaleFactsQueryHandler>();
@@ -260,14 +244,12 @@ public static class ShopModule
         services.AddScoped<IQueryHandlerAsync<GetStockAlertDeliverabilityQuery, StockAlertDeliverabilityViewModel?>, GetStockAlertDeliverabilityQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetDueStockAlertsQuery, IReadOnlyList<Guid>>, GetDueStockAlertsQueryHandler>();
 
-        // ── Phase H: food recommendations for a cat and the enabled locales. ──
-        services.AddScoped<IQueryHandlerAsync<GetFoodRecommendationsQuery, FoodRecommendationsViewModel?>, GetFoodRecommendationsQueryHandler>();
+        // ── Phase H: the enabled locales. ──
         services.AddScoped<IQueryHandlerAsync<GetLocalesQuery, LocalesViewModel>, GetLocalesQueryHandler>();
     }
 
     private static void RegisterDomainEventHandlers(IServiceCollection services)
     {
-        services.AddScoped<IEventHandlerAsync<ProductPrescriptionRequirementChangedEvent>, AuditPrescriptionFlagHandler>();
 
         services.AddScoped<IEventHandlerAsync<ProductReviewPublishedEvent>, AuditReviewModerationHandler>();
         services.AddScoped<IEventHandlerAsync<ProductReviewRejectedEvent>, AuditReviewModerationHandler>();

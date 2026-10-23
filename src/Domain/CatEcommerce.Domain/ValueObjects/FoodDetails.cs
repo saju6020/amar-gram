@@ -13,7 +13,7 @@ namespace CatEcommerce.Domain.ValueObjects;
 /// optional owned type that itself contains another owned dependent ("an optional dependent using
 /// table sharing and containing other dependents without any required non-shared property to
 /// identify whether the entity exists") -- every field of <c>FoodDetails</c> is genuinely optional
-/// (a product may set only, say, <c>LifeStage</c>), so there is no non-null sentinel to add.
+/// (a product may set only, say, <c>Manufacturer</c>), so there is no non-null sentinel to add.
 /// <see cref="GuaranteedAnalysis"/> is exposed as a derived, unmapped property that reconstructs
 /// the validated value object from the four columns, so every other caller keeps working with the
 /// same type section 8.5 names.
@@ -21,7 +21,6 @@ namespace CatEcommerce.Domain.ValueObjects;
 public sealed record FoodDetails
 {
     public string? Manufacturer { get; private set; }
-    public LifeStage? LifeStage { get; private set; }
     public ProteinSource? ProteinSource { get; private set; }
     public string? IngredientList { get; private set; }
     public decimal? AnalysisProteinPercent { get; private set; }
@@ -42,7 +41,7 @@ public sealed record FoodDetails
     {
     }
 
-    public FoodDetails(string? manufacturer, LifeStage? lifeStage, ProteinSource? proteinSource,
+    public FoodDetails(string? manufacturer, ProteinSource? proteinSource,
         string? ingredientList, GuaranteedAnalysis? guaranteedAnalysis, string? feedingGuide, string? storageInstructions)
     {
         if (manufacturer is { Length: > ProductRules.ManufacturerMaxLength })
@@ -65,7 +64,6 @@ public sealed record FoodDetails
         }
 
         Manufacturer = Trim(manufacturer);
-        LifeStage = lifeStage;
         ProteinSource = proteinSource;
         IngredientList = Trim(ingredientList);
         AnalysisProteinPercent = guaranteedAnalysis?.ProteinPercent;

@@ -46,19 +46,6 @@ public sealed class CreateBranchClosureRequest
     public string? PartialTo { get; init; }
 }
 
-public sealed class CreateRoomRequest
-{
-    public string Name { get; init; } = default!;
-    public string Kind { get; init; } = default!;
-}
-
-public sealed class UpdateRoomRequest
-{
-    public string Name { get; init; } = default!;
-    public string Kind { get; init; } = default!;
-    public bool IsActive { get; init; }
-}
-
 public sealed class AssignStaffBranchesRequest
 {
     public IReadOnlyList<Guid> BranchIds { get; init; } = [];

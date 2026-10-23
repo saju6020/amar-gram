@@ -6,7 +6,6 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { administrationFixtureIds } from '@/mocks/handlers/admin';
 import TaxClassDetailPage from '@/app/(staff)/staff/admin/tax-classes/[taxClassId]/page';
-import ServiceDetailPage from '@/app/(staff)/staff/admin/services/[serviceId]/page';
 import BranchRosterPage from '@/app/(staff)/staff/admin/branches/[branchId]/roster/page';
 
 vi.mock('next/navigation', () => ({
@@ -72,30 +71,6 @@ describe('§18 A3 — detail pages render PermissionDeniedState on a server 403'
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
     expect(screen.queryByText(PERMISSION_TEXT)).not.toBeInTheDocument();
-  });
-
-  it('service detail: a 403 on the service', async () => {
-    server.use(http.get('*/api/admin/services/:serviceId', forbidden));
-    renderPage(
-      <ServiceDetailPage
-        params={resolvedParams({ serviceId: administrationFixtureIds.serviceConsultationId })}
-      />,
-    );
-    expect(await screen.findByText(PERMISSION_TEXT)).toBeInTheDocument();
-  });
-
-  it('service detail: a non-403 error shows the error state, not an endless spinner', async () => {
-    server.use(
-      http.get('*/api/admin/services/:serviceId', () => HttpResponse.json({}, { status: 500 })),
-    );
-    renderPage(
-      <ServiceDetailPage
-        params={resolvedParams({ serviceId: administrationFixtureIds.serviceConsultationId })}
-      />,
-    );
-    expect(
-      await screen.findByText(/couldn.t load this service/i, {}, RETRY_WAIT),
-    ).toBeInTheDocument();
   });
 
   it('roster: a 403 on rosters', async () => {

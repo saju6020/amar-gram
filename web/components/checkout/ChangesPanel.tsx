@@ -9,10 +9,6 @@ const GROUPS: Array<{ kinds: CheckoutChangeKind[]; heading: string }> = [
   { kinds: ['PriceIncreased', 'PriceDecreased'], heading: 'Price changes' },
   { kinds: ['QuantityReduced'], heading: 'Quantity changes' },
   { kinds: ['NowUnavailable'], heading: 'No longer available' },
-  {
-    kinds: ['PrescriptionAuthorisationExpired', 'PrescriptionCatRequired'],
-    heading: 'Prescription food',
-  },
 ];
 
 /**
@@ -28,14 +24,12 @@ export function ChangesPanel({
   fingerprint,
   acknowledgedFingerprint,
   onAcknowledge,
-  bookHref,
   settling,
 }: {
   changes: CheckoutChange[];
   fingerprint: string;
   acknowledgedFingerprint: string | null;
   onAcknowledge: (fingerprint: string | null) => void;
-  bookHref: string;
   /** The quote is being refreshed for the latest choices: the tick would be cleared on arrival. */
   settling: boolean;
 }) {
@@ -91,14 +85,6 @@ export function ChangesPanel({
                     className="mb-1.5 [overflow-wrap:anywhere]"
                   >
                     {change.message}
-                    {change.kind === 'PrescriptionAuthorisationExpired' && (
-                      <>
-                        {' '}
-                        <a href={bookHref} className="font-semibold text-accent-ink underline">
-                          Book a consultation
-                        </a>
-                      </>
-                    )}
                   </li>
                 ))}
               </ul>

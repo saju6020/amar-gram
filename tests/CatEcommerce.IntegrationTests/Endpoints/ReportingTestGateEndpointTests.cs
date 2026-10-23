@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using CatEcommerce.Api.Background;
 using CatEcommerce.Application.Commands.StoredFile;
-using CatEcommerce.Application.Commands.Visit;
 using CatEcommerce.Domain.Aggregates.Reporting;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
@@ -25,8 +24,8 @@ using Xunit;
 namespace CatEcommerce.IntegrationTests.Endpoints;
 
 /// <summary>
-/// HO-RPT-001 TEST gate (2026-10-13), T-I1 to T-I7 and T-I9 -- the fixes of the gate rounds, each proved by a case that FAILS when the fix is taken out (the mutation spot-checks are recorded in the
-/// sheet): projected schedule reads, the store-then-C5 flow and its failure paths with no orphan file, R3 clinical access on a scheduled run and on run-now (failing closed), the per-account run-now limit
+/// HO-RPT-001 TEST gate (2026-10-13), T-I1 to T-I3, T-I6, T-I7 and T-I9 -- the fixes of the gate rounds, each proved by a case that FAILS when the fix is taken out (the mutation spot-checks are recorded in the
+/// sheet): projected schedule reads, the store-then-C5 flow and its failure paths with no orphan file, the per-account run-now limit
 /// across an idle gap, the recipient re-check at send time for an all-branches schedule, and deferred sources that are absent rather than zero. In the schedule collection: the worker's pass runs over the
 /// shared database.
 /// </summary>
@@ -59,23 +58,6 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
         }
     }
 
-    private sealed class FailingClinicalAccessHandler : ICommandHandlerAsync<RecordClinicalRecordAccessCommand>
-    {
-        public Task<CommandResponse> HandleAsync(RecordClinicalRecordAccessCommand command) => throw new InvalidOperationException("The audit store is down.");
-    }
-
-    /// <summary>The access write is REFUSED rather than thrown: a failed command response (for example a validation failure).</summary>
-    private sealed class RefusedClinicalAccessHandler : ICommandHandlerAsync<RecordClinicalRecordAccessCommand>
-    {
-        public Task<CommandResponse> HandleAsync(RecordClinicalRecordAccessCommand command) => Task.FromResult(new CommandResponse { IsSuccess = false });
-    }
-
-    private static void WithClinicalAccessWrite(Microsoft.Extensions.DependencyInjection.IServiceCollection services, string shape)
-    {
-        if (shape == "throws") services.AddScoped<ICommandHandlerAsync<RecordClinicalRecordAccessCommand>, FailingClinicalAccessHandler>();
-        else services.AddScoped<ICommandHandlerAsync<RecordClinicalRecordAccessCommand>, RefusedClinicalAccessHandler>();
-    }
-
     private sealed class RegisterReturnsFailure : ICommandHandlerAsync<RegisterStoredFileCommand>
     {
         public Task<CommandResponse> HandleAsync(RegisterStoredFileCommand command) => Task.FromResult(new CommandResponse { IsSuccess = false });
@@ -100,8 +82,6 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
         await scope.ServiceProvider.GetRequiredService<ReportingWorkCycle>().RunAsync();
     }
 
-    private Task<int> ClinicalReadsAsync(Guid actorId) => AuditCountAsync("ClinicalRecordRead", actorId);
-
     /// <summary>True when the SQL reads <paramref name="column"/> of some table alias (EF writes `r.parameters`, or `AS "Parameters"` for a projection alias of a different name).</summary>
     private static bool SelectsColumn(string sql, string column) => System.Text.RegularExpressions.Regex.IsMatch(sql, $@"\.""?{System.Text.RegularExpressions.Regex.Escape(column)}""?(?![\w])");
 
@@ -113,7 +93,7 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
     public async Task T_I1_TheScheduleReads_SelectOnlyTheColumnsTheyNeed()
     {
         var context = await CreateBillingContextAsync();
-        var recipient = await SeedRecipientAsync(context, StaffRoles.Reception);
+        var recipient = await SeedRecipientAsync(context, StaffRoles.Inventory);
         var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [recipient.Id]));
         try
         {
@@ -175,8 +155,8 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var first = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var second = await SeedRecipientAsync(context, StaffRoles.Reception);
+        var first = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var second = await SeedRecipientAsync(context, StaffRoles.Inventory);
         var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [first.Id, second.Id]));
         try
         {
@@ -218,8 +198,8 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        var reception = await SeedRecipientAsync(context, StaffRoles.Reception);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [reception.Id]));
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
         try
         {
             using var failing = Factory.WithWebHostBuilder(b => b.ConfigureTestServices(s =>
@@ -242,106 +222,12 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
             Assert.Equal(registerRowsBefore, await ReportExportRowsAsync());
             Assert.Equal(blobsBefore, BlobsInTheFileStore());                                   // the object that was put is not left behind unregistered
             Assert.Empty(await RequestsForRunAsync(run.GetProperty("runId").GetGuid()));
-            Assert.Empty(EmailsTo(reception.Email));
+            Assert.Empty(EmailsTo(inventory.Email));
         }
         finally
         {
             await CancelAsync(context.Admin, created.ScheduleId);
         }
-    }
-
-    // ── T-I4: R3 on a scheduled run -- the clinical-access write fails, nothing is stored or sent ─────────────
-    [Theory]
-    [InlineData("throws")]
-    [InlineData("isRefused")]
-    public async Task T_I4_AScheduledR3_WhoseClinicalAccessRowCannotBeWritten_FailsClosed_NothingStoredNothingSent(string shape)
-    {
-        await RetireOtherSchedulesAsync();
-        var context = await CreateBillingContextAsync();
-        var vet = await SeedRecipientAsync(context, StaffRoles.Vet);
-        var administrator = await SeedRecipientAsync(context, StaffRoles.Administrator);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportCatalogue.SurgeryRegisterKey, "PreviousMonth", "10:00", [vet.Id, administrator.Id]));
-        try
-        {
-            using var failing = Factory.WithWebHostBuilder(b => b.ConfigureTestServices(s => WithClinicalAccessWrite(s, shape)));
-            var registerRowsBefore = await ReportExportRowsAsync();
-            var blobsBefore = BlobsInTheFileStore();
-
-            await AdvanceToAsync(created.NextRunOn!.Value);
-            await RunWorkerPassOnAsync(failing);
-
-            var admin = await FreshAdminAsync(context);
-            var run = Assert.Single(await RunsAsync(admin, created.ScheduleId));
-            Assert.Equal("Failed", run.GetProperty("status").GetString());
-            Assert.Equal(ScheduledReportRunner.ClinicalAccessLogFailedCode, run.GetProperty("failureCode").GetString());
-            Assert.Equal(registerRowsBefore, await ReportExportRowsAsync());
-            Assert.Equal(blobsBefore, BlobsInTheFileStore());
-            Assert.Empty(await RequestsForRunAsync(run.GetProperty("runId").GetGuid()));
-            Assert.Empty(EmailsTo(vet.Email));
-            Assert.Empty(EmailsTo(administrator.Email));
-        }
-        finally
-        {
-            await CancelAsync(context.Admin, created.ScheduleId);
-        }
-    }
-
-    // ── T-I5: R3 run-now (the manual trigger): one access row per recipient; fails closed ────────────────────
-    [Theory]
-    [InlineData("throws")]
-    [InlineData("isRefused")]
-    public async Task T_I5_RunNowOfR3_WritesOneClinicalAccessRowPerRecipient_AndFailsClosedWhenTheWriteFails(string shape)
-    {
-        await RetireOtherSchedulesAsync();
-        var context = await CreateBillingContextAsync();
-        var vet = await SeedRecipientAsync(context, StaffRoles.Vet);
-        var administrator = await SeedRecipientAsync(context, StaffRoles.Administrator);
-        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportCatalogue.SurgeryRegisterKey, "PreviousMonth", "10:00", [vet.Id, administrator.Id]));
-        try
-        {
-            var vetBefore = await ClinicalReadsAsync(vet.Id);
-            var adminBefore = await ClinicalReadsAsync(administrator.Id);
-
-            var ok = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await context.Admin.PostAsync($"/api/admin/report-schedules/{created.ScheduleId}/run-now", null)));
-            Assert.Equal("Generated", ok.GetProperty("status").GetString());
-            Assert.Equal(vetBefore + 1, await ClinicalReadsAsync(vet.Id));
-            Assert.Equal(adminBefore + 1, await ClinicalReadsAsync(administrator.Id));
-
-            // The same call on a host whose access write fails: a Failed outcome, nothing stored, no further row.
-            using var failing = Factory.WithWebHostBuilder(b => b.ConfigureTestServices(s => WithClinicalAccessWrite(s, shape)));
-            var (_, failingAdmin) = await ContextWithRoleAsync(StaffRoles.Administrator, failing);
-            var registerRowsBefore = await ReportExportRowsAsync();
-            var blobsBefore = BlobsInTheFileStore();
-
-            var failed = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await failingAdmin.PostAsync($"/api/admin/report-schedules/{created.ScheduleId}/run-now", null)));
-            Assert.Equal("Failed", failed.GetProperty("status").GetString());
-            Assert.Equal(ScheduledReportRunner.ClinicalAccessLogFailedCode, failed.GetProperty("failureCode").GetString());
-            Assert.Equal(registerRowsBefore, await ReportExportRowsAsync());
-            Assert.Equal(blobsBefore, BlobsInTheFileStore());
-            Assert.Equal(vetBefore + 1, await ClinicalReadsAsync(vet.Id));
-            Assert.Equal(adminBefore + 1, await ClinicalReadsAsync(administrator.Id));
-        }
-        finally
-        {
-            await CancelAsync(context.Admin, created.ScheduleId);
-        }
-    }
-
-    // ── T-I11: the interactive R3 view and exports when the access write is REFUSED (returns a failed response) rather than thrown ───────
-    [Fact]
-    public async Task T_I11_AnInteractiveR3_WhoseClinicalAccessWriteIsRefused_ReleasesNothing_AViewAndBothExportsAreABare500()
-    {
-        using var refusing = Factory.WithWebHostBuilder(b => b.ConfigureTestServices(s => WithClinicalAccessWrite(s, "isRefused")));
-        var (context, vet) = await ContextWithRoleAsync(StaffRoles.Vet, refusing);
-
-        foreach (var path in new[] { "", "/export.csv", "/export.pdf" })
-        {
-            var response = await vet.GetAsync($"/api/staff/reports/{ReportCatalogue.SurgeryRegisterKey}{path}" + Query(context, Today.AddDays(-30), Today));
-            Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
-            Assert.DoesNotContain("rows", await response.Content.ReadAsStringAsync());
-        }
-
-        await ExpectAsync(HttpStatusCode.OK, await vet.GetAsync($"/api/staff/reports/{ReportCatalogue.ClinicDailyScheduleKey}" + Query(context, Today, Today)));
     }
 
     // ── T-I6: run-now is limited per ACCOUNT, and the window survives an idle gap longer than the partition's 10 seconds ──
@@ -351,10 +237,10 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
         await RetireOtherSchedulesAsync();
         var contextA = await CreateBillingContextAsync();
         var contextB = await CreateBillingContextAsync();
-        var receptionA = await SeedRecipientAsync(contextA, StaffRoles.Reception);
-        var receptionB = await SeedRecipientAsync(contextB, StaffRoles.Reception);
-        var scheduleA = await CreateScheduleAsync(contextA.Admin, Body(contextA, ReportingFixtures.RowsKey, "Today", "10:00", [receptionA.Id], name: "Limit A"));
-        var scheduleB = await CreateScheduleAsync(contextB.Admin, Body(contextB, ReportingFixtures.RowsKey, "Today", "10:00", [receptionB.Id], name: "Limit B"));
+        var inventoryA = await SeedRecipientAsync(contextA, StaffRoles.Inventory);
+        var inventoryB = await SeedRecipientAsync(contextB, StaffRoles.Inventory);
+        var scheduleA = await CreateScheduleAsync(contextA.Admin, Body(contextA, ReportingFixtures.RowsKey, "Today", "10:00", [inventoryA.Id], name: "Limit A"));
+        var scheduleB = await CreateScheduleAsync(contextB.Admin, Body(contextB, ReportingFixtures.RowsKey, "Today", "10:00", [inventoryB.Id], name: "Limit B"));
         try
         {
             for (var call = 1; call <= 5; call++)
@@ -390,11 +276,11 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
     {
         await RetireOtherSchedulesAsync();
         var context = await CreateBillingContextAsync();
-        // An administrator who is also a vet: the clinic action comes from either role, the cross-branch right from the administrator role only. R1 has no restricted column, so the cross-branch right is the ONLY thing the role change takes away.
-        var both = await SeedStaffWithEmailAsync(StaffRoles.Administrator, StaffRoles.Vet);
+        // An administrator who is also an inventory clerk: the stock action comes from either role, the cross-branch right from the administrator role only. R7 has no restricted column, so the cross-branch right is the ONLY thing the role change takes away.
+        var both = await SeedStaffWithEmailAsync(StaffRoles.Administrator, StaffRoles.Inventory);
         var created = await CreateScheduleAsync(context.Admin, new
         {
-            name = "All branches clinic", reportKey = ReportCatalogue.ClinicDailyScheduleKey, branchId = (Guid?)null, period = "Today", format = "Csv", frequency = "Daily", sendAtLocal = "07:00",
+            name = "All branches stock", reportKey = ReportCatalogue.StockLowReorderKey, branchId = (Guid?)null, period = "Today", format = "Csv", frequency = "Daily", sendAtLocal = "07:00",
             recipientIds = new[] { both.Id }, parameters = new Dictionary<string, string>()
         });
         try
@@ -407,10 +293,10 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
             Assert.Equal("Generated", run.GetProperty("status").GetString());
             var runId = run.GetProperty("runId").GetGuid();
 
-            Assert.True(await GuardAsync(runId, both.Id));                         // still a cross-branch clinic recipient
+            Assert.True(await GuardAsync(runId, both.Id));                         // still a cross-branch stock recipient
 
-            // The administrator role is removed. The Vet role still holds the clinic action, so only the cross-branch right is gone.
-            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{both.Id}/roles", new { roleIds = new[] { StaffRoles.Vet } }, Json));
+            // The administrator role is removed. The Inventory role still holds the stock action, so only the cross-branch right is gone.
+            await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff-accounts/{both.Id}/roles", new { roleIds = new[] { StaffRoles.Inventory } }, Json));
             Assert.False(await GuardAsync(runId, both.Id));
 
             Factory.Clock.Advance(TimeSpan.FromHours(1));
@@ -429,7 +315,7 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
 
     // ── T-I9: deferred sources are ABSENT, not zero ─────────────────────────────────────────────────────────
     [Fact]
-    public async Task T_I9_TheDashboardAndTheCatalogue_HaveNoBoardingSubscriptionOrCartAbandonmentKeyAtAll()
+    public async Task T_I9_TheDashboardAndTheCatalogue_HaveNoSubscriptionOrCartAbandonmentKeyAtAll()
     {
         var (_, administrator) = await ContextWithRoleAsync(StaffRoles.Administrator);
 
@@ -440,7 +326,6 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
         var figureKeys = tiles.SelectMany(t => t.TryGetProperty("figures", out var figures) && figures.ValueKind == JsonValueKind.Array ? figures.EnumerateArray().Select(f => f.GetProperty("key").GetString()!) : []).ToList();
         foreach (var key in tileKeys.Concat(figureKeys))
         {
-            Assert.DoesNotContain("boarding", key, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("subscription", key, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("abandon", key, StringComparison.OrdinalIgnoreCase);
         }
@@ -448,14 +333,12 @@ public sealed class ReportingTestGateEndpointTests(ReportingApiFactory factory) 
         var catalogue = (await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await administrator.GetAsync("/api/staff/reports")))).EnumerateArray().Select(e => e.GetProperty("key").GetString()!).ToList();
         foreach (var key in catalogue)
         {
-            Assert.DoesNotContain("boarding", key, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("subscription", key, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("abandon", key, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("conversion", key, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("occupancy", key, StringComparison.OrdinalIgnoreCase);
         }
 
         // The static catalogue agrees: nothing in it is a deferred source.
-        Assert.DoesNotContain(ReportCatalogue.All, d => d.Key.Contains("boarding", StringComparison.OrdinalIgnoreCase) || d.Key.Contains("subscription", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(ReportCatalogue.All, d => d.Key.Contains("subscription", StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -1,6 +1,6 @@
 import { test, expect, signInAsStaff } from './fixtures';
 import { inventoryFixtureIds as ids } from '../../mocks/handlers/inventory';
-import { dialog, pickSku, signInAsNurse, warmRoutes } from './inventory-helpers';
+import { dialog, pickSku, signInAsStockViewer, warmRoutes } from './inventory-helpers';
 import { INVENTORY_ROUTES } from './inventory-routes';
 
 /**
@@ -38,7 +38,7 @@ test('E-C1: the FEFO preview changes to the next batch once the soonest-expiring
   await page.goto(`/staff/inventory/batches/${ids.batchFoodTodayId}`);
   await page.getByRole('button', { name: 'Quarantine', exact: true }).click();
   const confirm = await dialog(page);
-  await expect(confirm).toContainText('Quarantine lot L2406X of Kitten dry food');
+  await expect(confirm).toContainText('Quarantine lot L2406X of Organic rice 5 kg');
   await confirm.getByLabel(/reason/i).fill('Suspected spoilage');
   await confirm.getByRole('button', { name: /quarantine this batch/i }).click();
   await expect(page.getByText('Quarantined', { exact: true }).first()).toBeVisible();
@@ -57,7 +57,7 @@ test('E-C2: a transfer writes both ends to the ledger with its reference', async
   await page.goto('/staff/inventory/transfers/new');
   await page.getByLabel(/^from\b/i).selectOption(ids.warehouseId);
   await page.getByLabel(/^to\b/i).selectOption(ids.shopFloorId);
-  await pickSku(page, /or find an item/i, 'kitten', /kitten dry food/i);
+  await pickSku(page, /or find an item/i, 'rice', /organic rice 5 kg/i);
   await page.getByLabel(/^batch/i).selectOption(ids.batchFoodFarId);
   await page.getByLabel(/^quantity/i).fill('3');
   await page.getByRole('button', { name: /review and post/i }).click();
@@ -82,7 +82,7 @@ test('E-D1: an adjustment above the limit waits for approval; the requester cann
   await page.getByLabel(/^location/i).selectOption(ids.warehouseId);
   await page.getByRole('radio', { name: /theft or loss/i }).check();
   await page.getByLabel(/^note/i).fill('Pallet short at the monthly check');
-  await pickSku(page, /or find an item/i, 'kitten', /kitten dry food/i);
+  await pickSku(page, /or find an item/i, 'rice', /organic rice 5 kg/i);
   // 12 bags at 462.5 is above the approval limit; 10 would not be.
   await page.getByLabel(/^batch/i).selectOption(ids.batchFoodFarId);
   await page.getByLabel(/^quantity/i).fill('12');
@@ -100,7 +100,7 @@ test('E-D1: an adjustment above the limit waits for approval; the requester cann
   await expect(page.getByText('Someone else has to approve your request.')).toBeVisible();
   await page.keyboard.press('Escape');
 
-  // A request made by another person (the nurse, seeded) is approved and posted.
+  // A request made by another person (seeded) is approved and posted.
   await page.goto(`/staff/inventory/adjustments/${ids.adjustmentPendingId}`);
   await page.getByRole('button', { name: 'Approve' }).click();
   await (await dialog(page)).getByRole('button', { name: /approve and post/i }).click();
@@ -122,8 +122,8 @@ test('E-D2: a blind count — no book quantity while counting, a variance report
 }) => {
   await page.goto(`/staff/inventory/counts/${ids.countOpenId}`);
   await expect(page.getByText(/this count is blind/i)).toBeVisible();
-  await pickSku(page, /or find an item/i, 'litter', /cat litter/i);
-  await page.getByLabel(/which lot of cat litter/i).selectOption(ids.batchLitterId);
+  await pickSku(page, /or find an item/i, 'jute', /jute shopping bag/i);
+  await page.getByLabel(/which lot of jute shopping bag/i).selectOption(ids.batchBagId);
   await page.getByRole('button', { name: /add to the sheet/i }).click();
   await page
     .getByLabel(/counted \(bags\)/i)
@@ -191,7 +191,7 @@ test('E-F1: declare a recall, read the trace, export it, notify, then notify aga
     'All remaining stock of lot L2409E becomes unusable immediately, everywhere.',
   );
   await declare.getByLabel(/reason \(internal\)/i).fill('Supplier contamination notice');
-  await declare.getByLabel(/advice to customers/i).fill('Stop feeding it and contact us.');
+  await declare.getByLabel(/advice to customers/i).fill('Stop using it and contact us.');
   const button = declare.getByRole('button', { name: /declare recall/i });
   await declare.getByLabel(/type the lot number/i).fill('L2409');
   await expect(button).toBeDisabled();
@@ -203,8 +203,6 @@ test('E-F1: declare a recall, read the trace, export it, notify, then notify aga
   await expect(page.getByRole('heading', { name: /^recall RCL-/i })).toBeVisible();
   await expect(page.getByText(/declaring a recall messages no one/i)).toBeVisible();
   await expect(page.locator('main')).toContainText('Bought');
-  await expect(page.locator('main')).toContainText('Dispensed');
-  await expect(page.locator('main')).toContainText('Fed during boarding');
   await page.getByRole('tab', { name: /unshipped/i }).click();
   await expect(page.getByText(/must not be dispatched while the lot is recalled/i)).toBeVisible();
   await expect(page.getByRole('link', { name: /export trace as csv/i })).toHaveAttribute(
@@ -246,7 +244,7 @@ test('E-F2: withdrawing a recall quarantines the batch and says unsent messages 
 
 test('E-G1: report a storage breach, quarantine the affected stock, close it', async ({ page }) => {
   await page.goto('/staff/inventory/storage-breaches/new');
-  await page.getByLabel('Where did it happen?').selectOption(ids.dispensaryId);
+  await page.getByLabel('Where did it happen?').selectOption(ids.coldStoreId);
   await page.getByLabel('What happened?').fill('Fridge door left open overnight');
   await page.getByLabel('Temperature reached (°C)').fill('11.5');
   await page.getByRole('button', { name: /report the breach/i }).click();
@@ -260,7 +258,7 @@ test('E-G1: report a storage breach, quarantine the affected stock, close it', a
   await confirm.getByRole('button', { name: /^quarantine affected stock$/i }).click();
   await expect(page.getByText('Stock quarantined', { exact: true }).first()).toBeVisible();
 
-  await page.goto(`/staff/inventory/stock/${ids.vaccineSkuId}`);
+  await page.goto(`/staff/inventory/stock/${ids.chilledSkuId}`);
   await expect(page.locator('main')).toContainText('in quarantine location');
 
   await page.goto('/staff/inventory/storage-breaches');
@@ -276,11 +274,11 @@ test('E-G1: report a storage breach, quarantine the affected stock, close it', a
   await expect(page.getByText('Closed', { exact: true }).first()).toBeVisible();
 });
 
-test('E-X3: a nurse gets the server’s permission state on receiving and on suppliers', async ({
+test('E-X3: a stock-only staff member gets the server’s permission state on receiving and on suppliers', async ({
   page,
 }) => {
   await page.context().clearCookies();
-  await signInAsNurse(page);
+  await signInAsStockViewer(page);
   await page.goto('/staff/inventory/receipts/new');
   await expect(page.getByText(/you don.t have permission to do this/i)).toBeVisible();
   await page.goto('/staff/procurement/suppliers');

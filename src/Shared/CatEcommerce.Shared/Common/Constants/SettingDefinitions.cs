@@ -102,3 +102,10 @@ public static partial class SettingDefinitions
         return entries;
     }
 }
+
+/// <summary>Marker values a <see cref="SettingDefinition"/> may carry in <c>Min</c>/<c>Max</c> for a type whose bounds are not numeric.</summary>
+public static class SettingBounds
+{
+    /// <summary>A <see cref="SettingType.TimeRange"/> whose start must be earlier than its end (it may not wrap midnight).</summary>
+    public const string StartBeforeEnd = "start<end";
+}

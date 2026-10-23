@@ -15,7 +15,7 @@ const money = (amount: string) => ({ amount, currencyCode: 'BDT' });
 function payload(tiles: DashboardTile[], over: Partial<Dashboard> = {}): Dashboard {
   return {
     branchId: 'b1',
-    branchName: 'Main clinic',
+    branchName: 'Main outlet',
     localDate: '2026-10-14',
     timeZoneId: 'Asia/Dhaka',
     generatedOn: '2026-10-14T03:42:00+00:00',
@@ -25,15 +25,15 @@ function payload(tiles: DashboardTile[], over: Partial<Dashboard> = {}): Dashboa
   };
 }
 
-const appointments: DashboardTile = {
-  key: 'clinic.appointments-today',
-  title: 'Appointments today',
+const ordersToday: DashboardTile = {
+  key: 'orders.today',
+  title: 'Orders today',
   figures: [
-    { key: 'total', label: 'Booked', value: 11, type: 'Integer' },
-    { key: 'remaining', label: 'Remaining', value: 6, type: 'Integer' },
+    { key: 'placed', label: 'Placed today', value: 11, type: 'Integer' },
+    { key: 'toPack', label: 'To pack', value: 6, type: 'Integer' },
   ],
   drillDown: {
-    reportKey: 'clinic-daily-schedule',
+    reportKey: 'order-fulfilment',
     from: '2026-10-14',
     to: '2026-10-14',
     parameters: {},
@@ -42,14 +42,14 @@ const appointments: DashboardTile = {
 
 describe('DashboardView — U-A series', () => {
   it('U-A1: renders exactly the tiles sent, in the server order', () => {
-    const tiles = ['c', 'a', 'b'].map((k) => ({ ...appointments, key: k, title: `Tile ${k}` }));
+    const tiles = ['c', 'a', 'b'].map((k) => ({ ...ordersToday, key: k, title: `Tile ${k}` }));
     render(<DashboardView dashboard={payload(tiles)} updatedAt={1} />);
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
     expect(headings).toEqual(['Tile c', 'Tile a', 'Tile b']);
   });
 
-  it('U-A2: a clinic-only payload has no money, stock or sales tile and no placeholder', () => {
-    render(<DashboardView dashboard={payload([appointments])} updatedAt={1} />);
+  it('U-A2: an orders-only payload has no money, stock or sales tile and no placeholder', () => {
+    render(<DashboardView dashboard={payload([ordersToday])} updatedAt={1} />);
     expect(
       screen.queryByText(/revenue|payments|stock|receivables|cash-up/i),
     ).not.toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('DashboardView — U-A series', () => {
   it('U-A3: a null figure is a dash with Not recorded, never 0', () => {
     const tile: DashboardTile = {
       key: 'x',
-      title: 'Consultations',
+      title: 'Order age',
       figures: [{ key: 'oldestAge', label: 'Oldest', value: null, type: 'Integer', unit: 'h' }],
       drillDown: null,
     };
@@ -72,12 +72,12 @@ describe('DashboardView — U-A series', () => {
   });
 
   it('U-A4: no link without a drillDown, a link with one', () => {
-    const without = { ...appointments, key: 'n', title: 'No link', drillDown: null };
-    render(<DashboardView dashboard={payload([without, appointments])} updatedAt={1} />);
+    const without = { ...ordersToday, key: 'n', title: 'No link', drillDown: null };
+    render(<DashboardView dashboard={payload([without, ordersToday])} updatedAt={1} />);
     expect(screen.getAllByRole('link')).toHaveLength(1);
     expect(screen.getByRole('link', { name: /View report/ })).toHaveAttribute(
       'href',
-      '/staff/reports/clinic-daily-schedule?from=2026-10-14&to=2026-10-14',
+      '/staff/reports/order-fulfilment?from=2026-10-14&to=2026-10-14',
     );
   });
 
@@ -92,14 +92,14 @@ describe('DashboardView — U-A series', () => {
       <DashboardView
         dashboard={payload([tile], {
           localDate: '2026-10-13',
-          branchName: 'London clinic',
+          branchName: 'London outlet',
           timeZoneId: 'Europe/London',
         })}
         updatedAt={1}
       />,
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Today — 13 Oct 2026 · London clinic',
+      'Today — 13 Oct 2026 · London outlet',
     );
     expect(screen.getByText(/9,800\.00/)).toBeInTheDocument();
     expect(screen.getByText(/Updated 04:42 \(Europe\/London\)/)).toBeInTheDocument();
@@ -139,14 +139,14 @@ describe('DashboardView — U-A series', () => {
         />
       </>,
     );
-    // First poll: Booked = 11.
+    // First poll: Placed today = 11.
     await waitFor(() => expect(screen.getByText('11')).toBeInTheDocument());
     const cancel = screen.getByRole('button', { name: 'Cancel' });
     cancel.focus();
     expect(document.activeElement).toBe(cancel);
     expect(screen.queryByText('Dashboard updated')).not.toBeInTheDocument();
 
-    // The poll fires: the mock's second answer has Booked = 12.
+    // The poll fires: the mock's second answer has Placed today = 12.
     await act(async () => {
       await client.invalidateQueries({ queryKey: ['dashboard'] });
     });

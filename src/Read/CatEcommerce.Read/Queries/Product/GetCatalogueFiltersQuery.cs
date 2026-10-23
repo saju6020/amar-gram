@@ -12,7 +12,6 @@ public sealed record PriceBounds(decimal? Min, decimal? Max);
 public sealed record CatalogueFiltersViewModel(
     IReadOnlyList<BrandCount> Brands,
     IReadOnlyList<OriginCount> Origins,
-    IReadOnlyList<NamedCount> LifeStages,
     IReadOnlyList<NamedCount> ProteinSources,
     PriceBounds Price);
 

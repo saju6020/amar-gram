@@ -126,7 +126,7 @@ for (const [audience, routes] of [['staff', STAFF], ['customer', CUSTOMER]] as c
  * Routes that need a state to be set up first (E-X1 / E-X2, A30): the checkout review with the "what changed" panel,
  * the bank-transfer page of a placed order (with its countdown) and the POS with an item in the basket.
  */
-const KITTEN = `/shop/products/${shopIds.multiVariantSlug}?sku=${shopIds.skuKitten2kg}`;
+const OATS = `/shop/products/${shopIds.multiVariantSlug}?sku=${shopIds.skuOats2kg}`;
 const REVIEW = `/checkout?step=review&fulfilment=Pickup&pickupBranchId=${ids.mainBranchId}&paymentMethod=BankTransfer`;
 
 test.describe('flows that need set-up', () => {
@@ -134,10 +134,10 @@ test.describe('flows that need set-up', () => {
     await page.goto('/sign-in');
     await control(page, 'reset');
     await signInAsCustomer(page);
-    await page.goto(KITTEN);
+    await page.goto(OATS);
     await page.getByRole('button', { name: 'Add to cart' }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Royal Canin Kitten/ })).toBeVisible();
-    await control(page, 'setPrice', shopIds.skuKitten2kg, '3000.00');
+    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Organic Rolled Oats/ })).toBeVisible();
+    await control(page, 'setPrice', shopIds.skuOats2kg, '3000.00');
     await auditViewports(page, REVIEW, async () => {
       await expect(page.getByRole('region', { name: 'What changed since you added these items' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Place order' })).toBeVisible();
@@ -148,9 +148,9 @@ test.describe('flows that need set-up', () => {
     await page.goto('/sign-in');
     await control(page, 'reset');
     await signInAsCustomer(page);
-    await page.goto(KITTEN);
+    await page.goto(OATS);
     await page.getByRole('button', { name: 'Add to cart' }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Royal Canin Kitten/ })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Organic Rolled Oats/ })).toBeVisible();
     await page.goto(REVIEW);
     await page.getByRole('button', { name: 'Place order' }).click();
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();

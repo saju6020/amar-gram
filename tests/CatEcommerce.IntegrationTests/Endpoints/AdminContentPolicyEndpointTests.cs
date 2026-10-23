@@ -124,14 +124,14 @@ public sealed class AdminContentPolicyEndpointTests(AdministrationApiFactory fac
     /// <summary>Owner decision 2026-09-26 (round 4, supersedes the "reserved key" version of this
     /// test): every policy document's create AND publish is Administrator-only, for ANY key,
     /// regardless of RequiresAcceptance -- not just a hard-coded prefix set that never matched the
-    /// spec's real keys (the gate proved a Shop Manager could squat `terms`, `privacy`,
-    /// `boarding-terms` and every HO-EMR-001 `consent-*` key). Enforced by
+    /// spec's real keys (the gate proved a Shop Manager could squat `terms`, `privacy` and
+    /// every `consent-*` key). Enforced by
     /// `[RequireAction(Actions.Policies.Manage)]`, so a Shop Manager gets 403 on both, for every key
     /// tried, and an Administrator gets 201 on both.</summary>
     [Theory]
     [InlineData("terms")]
-    [InlineData("consent-surgery")]
-    [InlineData("boarding-terms")]
+    [InlineData("consent-marketing")]
+    [InlineData("privacy")]
     [InlineData("anything")]
     public async Task ShopManager_CannotCreateOrPublishAnyPolicyDocument_AdministratorCan(string keyPrefix)
     {
@@ -242,8 +242,7 @@ public sealed class AdminContentPolicyEndpointTests(AdministrationApiFactory fac
         };
 
         // Gate fix 2026-09-26 (SEC LOW, round 4): the remaining fields the third-pass gate proved
-        // still 500'd -- policy key, content slug, branch code/addressLine, room name, tax class
-        // code/name, clinic service code/name/description.
+        // still 500'd -- policy key, content slug, branch code/addressLine, tax class code/name.
 
         yield return new object[]
         {
@@ -279,16 +278,6 @@ public sealed class AdminContentPolicyEndpointTests(AdministrationApiFactory fac
 
         yield return new object[]
         {
-            "room name",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var branchId = await CreateValidBranchAsync(client);
-                return await client.PostAsJsonAsync($"/api/admin/branches/{branchId}/rooms", new { name = "Bad\0Room", kind = "Consultation" }, Json);
-            })
-        };
-
-        yield return new object[]
-        {
             "tax class code",
             (Func<HttpClient, Task<HttpResponseMessage>>)(client =>
                 client.PostAsJsonAsync("/api/admin/tax-classes", new { code = "Bad\0Code", name = "Valid Name" }, Json))
@@ -300,66 +289,9 @@ public sealed class AdminContentPolicyEndpointTests(AdministrationApiFactory fac
             (Func<HttpClient, Task<HttpResponseMessage>>)(client =>
                 client.PostAsJsonAsync("/api/admin/tax-classes", new { code = NewCode("TAX"), name = "Bad\0Name" }, Json))
         };
-
-        yield return new object[]
-        {
-            "clinic service code",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var taxClassId = await CreateValidTaxClassAsync(client);
-                return await client.PostAsJsonAsync("/api/admin/services", new
-                {
-                    code = "Bad\0Code", name = "Valid Service", description = "Valid description", category = "Consultation",
-                    durationMinutes = 30, qualifiedRoleIds = new[] { "Vet" }, requiredRoomKind = "Consultation", taxClassId, isBookableOnline = true
-                }, Json);
-            })
-        };
-
-        yield return new object[]
-        {
-            "clinic service name",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var taxClassId = await CreateValidTaxClassAsync(client);
-                return await client.PostAsJsonAsync("/api/admin/services", new
-                {
-                    code = NewCode("SVC"), name = "Bad\0Name", description = "Valid description", category = "Consultation",
-                    durationMinutes = 30, qualifiedRoleIds = new[] { "Vet" }, requiredRoomKind = "Consultation", taxClassId, isBookableOnline = true
-                }, Json);
-            })
-        };
-
-        yield return new object[]
-        {
-            "clinic service description",
-            (Func<HttpClient, Task<HttpResponseMessage>>)(async client =>
-            {
-                var taxClassId = await CreateValidTaxClassAsync(client);
-                return await client.PostAsJsonAsync("/api/admin/services", new
-                {
-                    code = NewCode("SVC"), name = "Valid Service", description = "Bad\0Description", category = "Consultation",
-                    durationMinutes = 30, qualifiedRoleIds = new[] { "Vet" }, requiredRoomKind = "Consultation", taxClassId, isBookableOnline = true
-                }, Json);
-            })
-        };
     }
 
     private static string NewCode(string prefix) => prefix + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
-
-    private static async Task<Guid> CreateValidBranchAsync(HttpClient client)
-    {
-        var code = "T" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
-        var create = await client.PostAsJsonAsync("/api/admin/branches", new { code, name = "NUL Test Branch", timeZoneId = "Asia/Dhaka" }, Json);
-        create.EnsureSuccessStatusCode();
-        return (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("branchId").GetGuid();
-    }
-
-    private static async Task<Guid> CreateValidTaxClassAsync(HttpClient client)
-    {
-        var create = await client.PostAsJsonAsync("/api/admin/tax-classes", new { code = NewCode("TAX"), name = "NUL Test Tax Class" }, Json);
-        create.EnsureSuccessStatusCode();
-        return (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("taxClassId").GetGuid();
-    }
 
     /// <summary>Gate fix 2026-09-26 (SEC LOW, round 4): the acceptance policyKey is
     /// **customer-reachable**, unlike every field above (all staff-only) -- a separate test because

@@ -82,7 +82,7 @@ public sealed class IssueOrderRefundCommandValidator : AbstractValidator<IssueRe
     }
 }
 
-/// <summary>HO-ORD-001 §11.2 C26 -- shape only. Whether the tenders cover the total, the stock and the prescription rules are the handler's and the pure services'.</summary>
+/// <summary>HO-ORD-001 §11.2 C26 -- shape only. Whether the tenders cover the total, the stock rules are the handler's and the pure services'.</summary>
 public sealed class CompleteCounterSaleCommandValidator : AbstractValidator<CompleteCounterSaleCommand>
 {
     public CompleteCounterSaleCommandValidator()
@@ -94,12 +94,11 @@ public sealed class CompleteCounterSaleCommandValidator : AbstractValidator<Comp
         RuleFor(x => x.CustomerMobile).NotEmpty().MaximumLength(30).NoControlCharacters();
         RuleFor(x => x.DiscountCode).MaximumLength(DiscountCodeRules.MaxCodeLength + 10).NoControlCharacters();
         RuleFor(x => x.Lines).NotEmpty().Must(l => l.Count <= OrderRules.MaxLines).WithMessage($"must have at most {OrderRules.MaxLines} lines.")
-            .Must(l => l.Select(x => (x.SkuId, x.CatId)).Distinct().Count() == l.Count).WithMessage("must name each item once; raise its quantity instead.");
+            .Must(l => l.Select(x => x.SkuId).Distinct().Count() == l.Count).WithMessage("must name each item once; raise its quantity instead.");
         RuleForEach(x => x.Lines).ChildRules(line =>
         {
             line.RuleFor(l => l.SkuId).NotEmpty();
             line.RuleFor(l => l.Quantity).InclusiveBetween(1, OrderRules.MaxQuantityPerLineHardCap);
-            line.RuleFor(l => l.CatId).Must(id => id is null || id != Guid.Empty).WithMessage("must not be empty.");
         });
         RuleFor(x => x.Tenders).NotEmpty().Must(t => t.Count <= TenderCalculator.MaxTenders).WithMessage($"must have at most {TenderCalculator.MaxTenders} payments.");
         RuleForEach(x => x.Tenders).ChildRules(tender =>

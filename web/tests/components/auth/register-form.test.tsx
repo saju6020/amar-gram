@@ -174,7 +174,7 @@ describe('RegisterForm — US-ACC-01', () => {
     const image = await screen.findByAltText(/security check: an image of 5 letters and numbers/i);
     expect(image.getAttribute('alt')).not.toMatch(/ABCDE/);
     expect(screen.getByRole('button', { name: /new code/i })).toBeInTheDocument();
-    expect(screen.getByText(/register in person at the clinic reception/i)).toBeInTheDocument();
+    expect(screen.getByText(/register in person at any Amar Gram outlet/i)).toBeInTheDocument();
   });
 
   it('U-B13: a CAPTCHA endpoint 500 shows the "couldn\'t load" state with a working retry', async () => {

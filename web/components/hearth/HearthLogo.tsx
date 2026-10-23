@@ -27,7 +27,7 @@ function Sprout() {
 }
 
 /**
- * The shop's logo (Amar Gram pivot, 2026-10-23; replaces the PurrCare cat badge): a tilted leaf-green badge
+ * The shop's logo (Amar Gram pivot, 2026-10-23; replaces the PurrCare badge): a tilted leaf-green badge
  * with the sprout, "Amar" in deep green and "Gram" in harvest turmeric, and a small "Shop" tag. Reads
  * "Amar Gram Shop".
  * Sized from the link's font size, so the header's `text-xl md:text-2xl` scales it.

@@ -84,10 +84,10 @@ test.describe('search (US-SHP-06)', () => {
     await page
       .getByRole('search', { name: 'Products' })
       .getByLabel('Search products')
-      .fill('royal canan');
+      .fill('greem valey');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
-    await expect(page).toHaveURL(/q=royal([+]|%20)canan/);
-    await expect(page.getByRole('heading', { level: 2, name: 'Royal Canin Kitten' })).toBeVisible();
+    await expect(page).toHaveURL(/q=greem([+]|%20)valey/);
+    await expect(page.getByRole('heading', { level: 2, name: 'Thai Jasmine Rice' })).toBeVisible();
 
     await page
       .getByRole('search', { name: 'Products' })
@@ -102,22 +102,20 @@ test.describe('search (US-SHP-06)', () => {
   test('E-A3: a typo in a search offers a Did you mean link that keeps the filters', async ({
     page,
   }) => {
-    await page.goto('/shop/products?q=royl%20canan&availability=inStock');
+    await page.goto('/shop/products?q=gren%20vally&availability=inStock');
     await expect(page.getByText(/No products match/)).toBeVisible();
-    const suggestion = page.getByRole('link', { name: 'royal canin' });
+    const suggestion = page.getByRole('link', { name: 'green valley' });
     await expect(suggestion).toBeVisible();
     await suggestion.click();
     await expect(page).toHaveURL(/availability=inStock/);
-    await expect(page.getByRole('heading', { level: 2, name: 'Royal Canin Kitten' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Thai Jasmine Rice' })).toBeVisible();
   });
 
   test('E-A4: an ingredient and a tag find matching products', async ({ page }) => {
-    await page.goto('/shop/products?q=salmon');
-    await expect(
-      page.getByRole('heading', { level: 2, name: 'Whiskas Kitten Salmon' }),
-    ).toBeVisible();
-    await page.goto('/shop/products?q=grain-free');
-    await expect(page.getByRole('heading', { level: 2, name: 'Royal Canin Kitten' })).toBeVisible();
+    await page.goto('/shop/products?q=sunflower');
+    await expect(page.getByRole('heading', { level: 2, name: 'Canned Tuna Chunks' })).toBeVisible();
+    await page.goto('/shop/products?q=long-grain');
+    await expect(page.getByRole('heading', { level: 2, name: 'Thai Jasmine Rice' })).toBeVisible();
   });
 });
 

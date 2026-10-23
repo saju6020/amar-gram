@@ -20,14 +20,8 @@ namespace CatEcommerce.Shared.Common.Constants;
 /// </summary>
 public static partial class SettingKeys
 {
-    public const string BookingChangeCutoffHours = "booking.changeCutoffHours";
-    public const string BookingSlotHoldMinutes = "booking.slotHoldMinutes";
-    public const string BookingWaitlistClaimMinutes = "booking.waitlistClaimMinutes";
-    public const string BoardingDepositPercent = "boarding.depositPercent";
     public const string InventoryExpiryAlertDays = "inventory.expiryAlertDays";
     public const string InventoryDefaultReorderPoint = "inventory.defaultReorderPoint";
-    public const string ClinicalVaccinationDueSoonDays = "clinical.vaccinationDueSoonDays";
-    public const string ClinicalDefaultParasiteIntervalDays = "clinical.defaultParasiteIntervalDays";
     public const string NotificationsQuietHours = "notifications.quietHours";
 
     public const string SecurityStaffIdleTimeoutMinutes = "security.staffIdleTimeoutMinutes";

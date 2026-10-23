@@ -62,25 +62,6 @@ public sealed class AdminBranchEndpointTests(AdministrationApiFactory factory) :
         Assert.Contains("BranchCodeAlreadyExists", await second.Content.ReadAsStringAsync());
     }
 
-    [Fact]
-    public async Task DuplicateRoomNameInSameBranch_Returns400_DifferentBranch_Returns201()
-    {
-        var admin = await SeedStaffAsync(StaffRoles.Administrator);
-        using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-
-        var branchAId = await CreateBranchAsync(client);
-        var branchBId = await CreateBranchAsync(client);
-
-        var room1 = await client.PostAsJsonAsync($"/api/admin/branches/{branchAId}/rooms", new { name = "Room 1", kind = "Consultation" }, Json);
-        Assert.Equal(HttpStatusCode.Created, room1.StatusCode);
-
-        var duplicate = await client.PostAsJsonAsync($"/api/admin/branches/{branchAId}/rooms", new { name = "Room 1", kind = "Treatment" }, Json);
-        Assert.Equal(HttpStatusCode.BadRequest, duplicate.StatusCode);
-
-        var otherBranch = await client.PostAsJsonAsync($"/api/admin/branches/{branchBId}/rooms", new { name = "Room 1", kind = "Treatment" }, Json);
-        Assert.Equal(HttpStatusCode.Created, otherBranch.StatusCode);
-    }
-
     // I-B4: "deactivate the only active branch" needs every OTHER active branch deactivated first,
     // which would mutate this shared, concurrently-tested database's global state (§16.1 rules 2/4
     // -- the same reason HO-ACC-001's I-F6, "sole administrator", is not automated here either).
@@ -131,7 +112,7 @@ public sealed class AdminBranchEndpointTests(AdministrationApiFactory factory) :
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var staffMember = await SeedStaffAsync(StaffRoles.Vet);
+        var staffMember = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchId = await CreateBranchAsync(client);
 
@@ -153,7 +134,7 @@ public sealed class AdminBranchEndpointTests(AdministrationApiFactory factory) :
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var client = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var staffMember = await SeedStaffAsync(StaffRoles.Vet);
+        var staffMember = await SeedStaffAsync(StaffRoles.Reception);
 
         var get = await client.GetAsync($"/api/admin/staff/{staffMember.StaffAccountId}/branches");
         Assert.Equal(HttpStatusCode.OK, get.StatusCode);

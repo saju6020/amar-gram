@@ -9,8 +9,8 @@ function row(over: Partial<NotificationLogItem> = {}): NotificationLogItem {
   return {
     id: 'n-1',
     createdOn: '2026-10-04T05:00:00Z',
-    templateKey: 'care.vaccination-due',
-    templateName: 'Vaccination due',
+    templateKey: 'order.dispatched',
+    templateName: 'Order dispatched',
     category: 'Transactional',
     channel: 'Sms',
     destinationMasked: '+88017•••••678',
@@ -102,7 +102,7 @@ describe('NotificationLogTable — HO-NTF-002 §11.5, UI-6', () => {
     expect(tableWrap.className).toContain('md:block');
     const cards = container.querySelector('ul')!;
     expect(cards.className).toContain('md:hidden');
-    expect(within(cards).getByText('Vaccination due')).toBeInTheDocument();
+    expect(within(cards).getByText('Order dispatched')).toBeInTheDocument();
     expect(within(cards).getByRole('link', { name: 'View details' })).toHaveAttribute(
       'href',
       '/staff/notifications/n-1',

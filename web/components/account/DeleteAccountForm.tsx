@@ -78,8 +78,8 @@ export function DeleteAccountForm({ onDelete, isPending, error }: DeleteAccountF
           <li>Remove your personal details, contact details and addresses.</li>
           <li>Sign you out — you will not be able to sign in again.</li>
           <li>
-            Keep clinical and billing records for the legally required period, with your name
-            replaced by &ldquo;Anonymised customer&rdquo;.
+            Keep order and billing records for the legally required period, with your name replaced
+            by &ldquo;Anonymised customer&rdquo;.
           </li>
           <li>This cannot be undone.</li>
         </ul>

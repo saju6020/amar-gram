@@ -88,7 +88,7 @@ public sealed class FilesMalformedMultipartEndpointTests(FilesApiFactory factory
         const string boundary = "test-boundary-truncated";
         var body = new StringBuilder()
             .Append($"--{boundary}\r\n")
-            .Append("Content-Disposition: form-data; name=\"file\"; filename=\"cat.png\"\r\n")
+            .Append("Content-Disposition: form-data; name=\"file\"; filename=\"product.png\"\r\n")
             .Append("Content-Type: image/png\r\n")
             .Append("\r\n")
             .Append("some partial file bytes\r\n")
@@ -127,7 +127,7 @@ public sealed class FilesMalformedMultipartEndpointTests(FilesApiFactory factory
 
         const string boundary = "test-boundary-too-many-headers";
         var partHeaders = new StringBuilder()
-            .Append("Content-Disposition: form-data; name=\"file\"; filename=\"cat.png\"\r\n")
+            .Append("Content-Disposition: form-data; name=\"file\"; filename=\"product.png\"\r\n")
             .Append("Content-Type: image/png\r\n");
         for (var i = 0; i < 20; i++) partHeaders.Append($"X-Extra-Header-{i}: value\r\n");
 
@@ -159,7 +159,7 @@ public sealed class FilesMalformedMultipartEndpointTests(FilesApiFactory factory
         var bigHeaderValue = new string('a', 20_000); // > MultipartReader.HeadersLengthLimit (16 KB)
         var body = new StringBuilder()
             .Append($"--{boundary}\r\n")
-            .Append("Content-Disposition: form-data; name=\"file\"; filename=\"cat.png\"\r\n")
+            .Append("Content-Disposition: form-data; name=\"file\"; filename=\"product.png\"\r\n")
             .Append("Content-Type: image/png\r\n")
             .Append($"X-Oversized-Header: {bigHeaderValue}\r\n")
             .Append("\r\n")

@@ -2,7 +2,6 @@
 
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { ApiForbiddenError, ApiNotFoundError } from '@/lib/api/client';
-import { getCats } from '@/lib/api/cats';
 import { findCustomers } from '@/lib/api/staff-customers';
 import {
   completeCounterSale,
@@ -85,14 +84,4 @@ export function useReceipt(orderId: string) {
 /** "Find an existing customer" by mobile number — runs only when the cashier asks. */
 export function usePosCustomerLookup() {
   return useMutation({ mutationFn: (mobile: string) => findCustomers({ mobile: mobile.trim() }), retry: false });
-}
-
-/** The attached customer's cats, for a prescription line's cat picker. Off until a customer is attached. */
-export function usePosCustomerCats(customerId: string | null) {
-  return useQuery({
-    queryKey: ['pos', 'customer-cats', customerId],
-    queryFn: () => getCats({ ownerId: customerId ?? undefined, pageSize: 50 }),
-    enabled: !!customerId,
-    retry: noRetryOnRefusal,
-  });
 }

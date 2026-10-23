@@ -10,7 +10,7 @@ using Platform.Infrastructure.Core.Events;
 
 namespace CatEcommerce.Application.Tests.QueryHandlers.Portal;
 
-/// <summary>HO-POR-001 §15 group A -- the boundary rules that fail the build rather than rely on review (ADR-257, 258, 259, 262), plus the
+/// <summary>HO-POR-001 §15 group A -- the boundary rules that fail the build rather than rely on review (ADR-257, 258, 259), plus the
 /// read-side ADR-012 guard the Billing area added as <c>BillingConventionTests.U_X6</c>.</summary>
 public sealed class PortalConventionTests
 {
@@ -19,8 +19,8 @@ public sealed class PortalConventionTests
         typeof(PortalSectionComposer).Assembly,                                  // Read
         typeof(CatEcommerceDbContext).Assembly,                                  // Infrastructure
         typeof(CatEcommerce.Shared.Common.Constants.PortalRules).Assembly,       // Shared
-        typeof(CatEcommerce.Domain.Aggregates.Cat.CatAggregate).Assembly,        // Domain
-        typeof(CatEcommerce.Application.Commands.Cat.RegisterCatCommand).Assembly, // Application
+        typeof(CatEcommerce.Domain.Aggregates.Order.OrderAggregate).Assembly,    // Domain
+        typeof(CatEcommerce.Application.Commands.Order.AddCartLineCommand).Assembly, // Application
     ];
 
     private static IEnumerable<Type> PortalTypes() =>
@@ -60,7 +60,7 @@ public sealed class PortalConventionTests
             .Where(t => t.Namespace is not null && t.Namespace.StartsWith("CatEcommerce.Read.QueryHandlers.Portal", StringComparison.Ordinal)
                         && !t.IsAbstract && !t.IsNested && !(t.Name.StartsWith('<')))
             .ToList();
-        Assert.True(types.Count >= 8, "Expected the composer, handler and readers; found " + types.Count);
+        Assert.True(types.Count >= 6, "Expected the composer, handler and readers; found " + types.Count);
 
         var offenders = new List<string>();
         foreach (var type in types)
@@ -88,7 +88,7 @@ public sealed class PortalConventionTests
         var portalViewModels = typeof(PortalSection<>).Assembly.GetTypes()
             .Where(t => t.Namespace == typeof(PortalSection<>).Namespace && t.Name.StartsWith("Portal", StringComparison.Ordinal))
             .ToList();
-        Assert.True(portalViewModels.Count >= 10);
+        Assert.True(portalViewModels.Count >= 8);
 
         var offenders = new List<string>();
         var seen = new HashSet<Type>();
@@ -131,29 +131,13 @@ public sealed class PortalConventionTests
         else yield return type;
     }
 
-    // ADR-262 -- no clinical vocabulary anywhere in a Portal ViewModel (U-A5 is the exact allow-list for the visits and, later, prescriptions types)
-    [Fact]
-    public void U_A5_NoPortalViewModelPropertyIsNamedLikeClinicalContent()
-    {
-        string[] forbidden =
-            ["Diagnosis", "Soap", "Dose", "Frequency", "Strength", "Instruction", "Allerg", "Condition", "Medication", "Medicine", "Handling", "Note", "Lab", "Treatment"];
-
-        var offenders = typeof(PortalSection<>).Assembly.GetTypes()
-            .Where(t => t.Namespace == typeof(PortalSection<>).Namespace && t.Name.StartsWith("Portal", StringComparison.Ordinal))
-            .SelectMany(t => t.GetProperties().Select(p => $"{t.Name}.{p.Name}"))
-            .Where(label => forbidden.Any(word => label.Contains(word, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
-
-        Assert.True(offenders.Count == 0, "Clinical content on the dashboard (ADR-262): " + string.Join(", ", offenders));
-    }
-
     // ADR-012 / BillingConventionTests.U_X6 -- the read side never rehydrates an aggregate; the portal read side touches no database at all
     [Fact]
     public void U_X6_ThePortalReadSide_TouchesNoDatabase_NeverLoadsAnAggregate_AndNeverFansOutInParallel()
     {
         var directory = Path.Combine(RepositoryRoot(), "src", "Read", "CatEcommerce.Read", "QueryHandlers", "Portal");
         var files = Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories).ToList();
-        Assert.True(files.Count >= 8);
+        Assert.True(files.Count >= 7);
 
         var wholeEntity = new Regex(@"AsNoTracking\(\)\s*\.\s*(FirstOrDefaultAsync|SingleOrDefaultAsync|SingleAsync|FirstAsync)\s*\(");
         string[] forbiddenText =
@@ -167,15 +151,15 @@ public sealed class PortalConventionTests
         Assert.True(offenders.Count == 0, "These Portal read files touch a database, rehydrate an aggregate or fan out: " + string.Join(", ", offenders));
     }
 
-    // ADR-260 -- the dashboard path has one catch site (plus the per-cat vaccination read the handover requires to degrade one cat)
+    // ADR-260 -- the dashboard path has one catch site
     [Fact]
-    public void ADR_260_OnlyTheComposerAndThePerCatVaccinationReadCatchExceptions()
+    public void ADR_260_OnlyTheComposerCatchesExceptions()
     {
         var directory = Path.Combine(RepositoryRoot(), "src", "Read", "CatEcommerce.Read", "QueryHandlers", "Portal");
         var catchers = Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories)
             .Where(f => Regex.IsMatch(File.ReadAllText(f), @"catch\s*\(\s*Exception")).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToList();
 
-        Assert.Equal(["CatsSectionReader.cs", "PortalSectionComposer.cs"], catchers);
+        Assert.Equal(["PortalSectionComposer.cs"], catchers);
     }
 
     [Fact]

@@ -19,17 +19,17 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { cn } from '@/lib/utils';
 
 /**
- * `components/common/DataTable.tsx` — HO-CAT-002 §11.7, UI-4: "Filter, sort, paginate.
+ * `components/common/DataTable.tsx` — the scaffold handover §11.7, UI-4: "Filter, sort, paginate.
  * URL-driven (§8.4). One implementation, used by every list." (Reused explicitly by HO-IMP-002
  * §5/§13.)
  *
  * DataTable owns exactly the state that is generic across every area's lists — a free-text
  * search box, one sortable-column sort, and pagination — and writes all three to the URL via
  * `useSearchParams` (component test U29), so a filtered/sorted/paged list is linkable and
- * survives reload (NFR-USA-5, E22). **Domain-specific filters** (species, status, category, …)
+ * survives reload (NFR-USA-5, E22). **Domain-specific filters** (status, category, brand, …)
  * are not generic enough to live here: render them above `<DataTable>` as your own filter form
- * and drive your own `useSearchParams` the same way — see HO-CAT-002 §8.4's query-key
- * convention (`['cats', filters]`) for how the resulting params should flow into your `lib/hooks`
+ * and drive your own `useSearchParams` the same way — see the scaffold handover §8.4's query-key
+ * convention (`['orders', filters]`) for how the resulting params should flow into your `lib/hooks`
  * query.
  *
  * DataTable is presentational plus URL-writing only — it never fetches. The caller's `lib/hooks`
@@ -51,15 +51,13 @@ export interface DataTableColumn<TRow> {
 
 /**
  * A discriminated union, not two independently-optional fields (ARCHITECTURE gate finding on
- * HO-CAT-002) — exactly one of `totalCount`/`hasNextPage` must be supplied, and TypeScript now
+ * the scaffold handover) — exactly one of `totalCount`/`hasNextPage` must be supplied, and TypeScript now
  * enforces that at every call site instead of only in a comment.
  *
  *  - `totalCount`: total row count across all pages (server-reported), not `rows.length`.
  *    Supply this when the endpoint behind the list reports a real total.
- *  - `hasNextPage`: for an endpoint that doesn't report a total — added for HO-CAT-002's cat/
- *    vaccine/weight lists, whose HO-CAT-001 endpoints return a bare array with no total-count
- *    header (a recorded finding against that contract, not invented here; see the doc comment
- *    on `PageOf<T>` in `lib/api/cats.ts`). The pager shows "Page N" and only enables Next while
+ *  - `hasNextPage`: for an endpoint that doesn't report a total (it returns a bare array with
+ *    no total-count header). The pager shows "Page N" and only enables Next while
  *    another page is known to exist — it never claims a total it wasn't told.
  */
 export type DataTablePagination =

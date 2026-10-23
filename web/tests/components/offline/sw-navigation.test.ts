@@ -47,7 +47,7 @@ describe('public/staff/sw.js navigation fallback', () => {
     vi.useFakeTimers();
     const live = { live: true };
     const navigate = load(() => new Promise((resolve) => setTimeout(() => resolve(live), 10_000)));
-    const answer = navigate('/staff/front-desk');
+    const answer = navigate('/staff/orders');
     expect(answer).toBeDefined();
     await vi.advanceTimersByTimeAsync(10_000);
     await expect(answer).resolves.toBe(live);
@@ -55,8 +55,8 @@ describe('public/staff/sw.js navigation fallback', () => {
 
   it('a rejected fetch on a staff page redirects to the offline board with the path', async () => {
     const navigate = load(() => Promise.reject(new TypeError('Failed to fetch')));
-    await expect(navigate('/staff/front-desk')).resolves.toEqual({
-      redirectTo: '/staff/offline?from=' + encodeURIComponent('/staff/front-desk'),
+    await expect(navigate('/staff/orders')).resolves.toEqual({
+      redirectTo: '/staff/offline?from=' + encodeURIComponent('/staff/orders'),
       status: 302,
     });
   });

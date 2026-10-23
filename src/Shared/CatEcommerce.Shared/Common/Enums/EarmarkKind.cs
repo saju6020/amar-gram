@@ -4,5 +4,4 @@ namespace CatEcommerce.Shared.Common.Enums;
 public sealed class EarmarkKind(int value, string displayName) : Enumeration(value, displayName)
 {
     public static readonly EarmarkKind Order = new(1, nameof(Order));
-    public static readonly EarmarkKind BoardingStay = new(2, nameof(BoardingStay));
 }

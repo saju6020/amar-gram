@@ -116,10 +116,10 @@ describe('ReorderButton — Orders’ endpoint (ADR-FE-120, ADR-FE-123)', () => 
 
     const list = within(dialog).getByRole('region', { name: /Not added \(5\)/ });
     expect(within(list).getAllByRole('listitem')).toHaveLength(5);
-    expect(within(list).getByText('Feliway Classic diffuser refill')).toBeVisible();
+    expect(within(list).getByText('Organic rice 5 kg')).toBeVisible();
     expect(within(list).getByText('Out of stock right now.')).toBeVisible();
     expect(within(list).getByText('No longer sold.')).toBeVisible();
-    expect(within(list).getByText(/Needs a prescription or vet authorisation/)).toBeVisible();
+    expect(within(list).getByText(/not allowed in one order/)).toBeVisible();
     expect(within(list).getByText(/already holds the most different items/)).toBeVisible();
   });
 
@@ -130,7 +130,6 @@ describe('ReorderButton — Orders’ endpoint (ADR-FE-120, ADR-FE-123)', () => 
     expect(within(dialog).getByText('Mystery item')).toBeVisible();
     expect(within(dialog).getByText('This could not be added to your basket.')).toBeVisible();
     expect(dialog.textContent).not.toContain('SomethingTheClientHasNeverHeardOf');
-    expect(dialog.textContent).not.toContain('PrescriptionNotAuthorised');
   });
 
   it('U-B3: nothing added is headed "Nothing could be added" and still offers View basket', async () => {

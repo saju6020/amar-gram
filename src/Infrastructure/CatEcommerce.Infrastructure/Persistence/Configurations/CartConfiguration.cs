@@ -31,7 +31,6 @@ public sealed class CartConfiguration : IEntityTypeConfiguration<CartAggregate>
             line.HasKey(l => l.Id);
             line.Property(l => l.Id).HasColumnName("id").ValueGeneratedNever();
             line.Property(l => l.SkuId).HasColumnName("sku_id").IsRequired();
-            line.Property(l => l.CatId).HasColumnName("cat_id");
             line.Property(l => l.Quantity).HasColumnName("quantity").IsRequired();
             line.Property(l => l.PriceWhenAdded).HasMoney("price_when_added").IsRequired();
             line.Property(l => l.CurrencyCode).HasColumnName("currency_code").HasColumnType("char(3)").IsRequired();

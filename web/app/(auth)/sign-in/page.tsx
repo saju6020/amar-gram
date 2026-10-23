@@ -76,10 +76,7 @@ function SignInPageContent() {
           // to save/alert/review returns to the same product and variant).
           // HO-ORD-002 ADR-FE-098: `/cart` and `/checkout` also survive sign-in (the cart's Checkout button sends a
           // signed-out visitor here with `?next=/checkout`; the guard stays closed for everything else).
-          // HO-APT-002 amendment (2026-09-22, before implementation): `/book` also survives sign-in
-          // so a booking link kept mid-flow lands correctly, alongside the default `/portal/**`.
-          // HO-BRD-002 §1 Amended (owner, 2026-10-14): `/boarding` also survives sign-in, so an interrupted
-          // boarding search comes back with its parameters.
+          // The default `/portal/**` survives sign-in too.
           const destination = sanitizeNextPath(
             searchParams.get('next'),
             CUSTOMER_RETURN_PREFIXES,

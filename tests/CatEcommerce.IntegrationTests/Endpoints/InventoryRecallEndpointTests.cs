@@ -19,7 +19,7 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 
 /// <summary>
 /// HO-IMP-001 section 16 phase I -- I-I1 ... I-I9: declaring a recall, the trace across every consumption path (merges followed at READ time), the notification
-/// requests, withdrawal, closing, who may do any of it, and the recall-versus-reservation race. Customers, cats and merges are seeded through the account
+/// requests, withdrawal, closing, who may do any of it, and the recall-versus-reservation race. Customers and merges are seeded through the account
 /// repositories, as the other areas' tests do.
 /// </summary>
 public sealed class InventoryRecallEndpointTests(InventoryApiFactory factory) : InventoryIntegrationTestBase(factory)
@@ -55,19 +55,12 @@ public sealed class InventoryRecallEndpointTests(InventoryApiFactory factory) : 
         await repository.UpdateAsync(customer, EventPublishOption.InMemoryPublishOnly);
     }
 
-    private static async Task<Guid> RegisterCatAsync(HttpClient admin, Guid ownerId, string name)
-    {
-        var response = await admin.PostAsJsonAsync("/api/cats", new
-        { ownerId, name, species = "Cat", sex = "Female", dateOfBirth = UtcToday.AddYears(-2), dateOfBirthPrecision = "Exact" }, Json);
-        return (await JsonOkAsync(response)).GetProperty("catId").GetGuid();
-    }
-
     private sealed record Scenario(
-        BranchContext Branch, StaffClient Keeper, SeededSku Sku, Guid BatchId, string Lot, Guid A, Guid ASurvivor, Guid B, Guid C, Guid D, Guid CatX, Guid CatY, Guid OrderD);
+        BranchContext Branch, StaffClient Keeper, SeededSku Sku, Guid BatchId, string Lot, Guid A, Guid ASurvivor, Guid B, Guid C, Guid D, Guid OrderD);
 
-    /// <summary>One batch of 100 at the warehouse (10 moved to the dispensary and 10 to the boarding store), then every way of consuming it: a sale to customer A
-    /// (later merged into A'), a dispense to cat X of owner B, a boarding use for cat Y of owner C, a counter sale with no customer, and a reservation for the order
-    /// of customer D. The recall is NOT yet declared.</summary>
+    /// <summary>One batch of 100 at the warehouse (10 moved to the shop floor), then every way of consuming it: a sale to customer A (later merged into A'),
+    /// a counter sale on the shop floor to customer B, an order sale to customer C, a counter sale with no customer, and a reservation for the order of
+    /// customer D. The recall is NOT yet declared.</summary>
     private async Task<Scenario> ConsumeAsync()
     {
         var branch = await SeedBranchAsync();
@@ -76,20 +69,15 @@ public sealed class InventoryRecallEndpointTests(InventoryApiFactory factory) : 
         var lot = NewLot();
         var batchId = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 100m, lot: lot);
 
-        foreach (var to in new[] { branch.DispensaryId, branch.BoardingId })
-        {
-            var transfer = await keeper.Client.PostAsJsonAsync("/api/staff/inventory/transfers", new
-            { fromLocationId = branch.WarehouseId, toLocationId = to, reason = "Stock the unit", lines = new[] { new { skuId = sku.SkuId, batchId, quantity = 10m } } }, Json);
-            Assert.Equal(HttpStatusCode.Created, transfer.StatusCode);
-        }
+        var transfer = await keeper.Client.PostAsJsonAsync("/api/staff/inventory/transfers", new
+        { fromLocationId = branch.WarehouseId, toLocationId = branch.ShopId, reason = "Stock the shelf", lines = new[] { new { skuId = sku.SkuId, batchId, quantity = 10m } } }, Json);
+        Assert.Equal(HttpStatusCode.Created, transfer.StatusCode);
 
         var (a, aMobile) = await SeedCustomerAsync("Customer A");
         var (aSurvivor, _) = await SeedCustomerAsync("Customer A Prime");
-        var (b, _) = await SeedCustomerAsync("Owner B");
-        var (c, _) = await SeedCustomerAsync("Owner C");
+        var (b, _) = await SeedCustomerAsync("Customer B");
+        var (c, _) = await SeedCustomerAsync("Customer C");
         var (d, _) = await SeedCustomerAsync("Customer D");
-        var catX = await RegisterCatAsync(branch.Admin.Client, b, "Xena");
-        var catY = await RegisterCatAsync(branch.Admin.Client, c, "Yuki");
         var orderD = Guid.NewGuid();
 
         async Task CommitAsync(Func<Port, Task<bool>> act)
@@ -100,16 +88,16 @@ public sealed class InventoryRecallEndpointTests(InventoryApiFactory factory) : 
         }
 
         await CommitAsync(async p => (await p.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 2m, MovementKind.Sale, locations: [branch.WarehouseId]), OrderReference(), Customer(a), default)).IsSuccess);
-        await CommitAsync(async p => (await p.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Dispense, locations: [branch.DispensaryId]),
-            OrderReference(kind: StockReferenceKind.Prescription), Customer(null, catX), default)).IsSuccess);
-        await CommitAsync(async p => (await p.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.BoardingUse, locations: [branch.BoardingId]),
-            OrderReference(kind: StockReferenceKind.BoardingStay), Customer(null, catY), default)).IsSuccess);
+        await CommitAsync(async p => (await p.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Sale, locations: [branch.ShopId]),
+            new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-B"), Customer(b), default)).IsSuccess);
+        await CommitAsync(async p => (await p.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Sale, locations: [branch.WarehouseId]),
+            OrderReference(), Customer(c), default)).IsSuccess);
         await CommitAsync(async p => (await p.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 3m, MovementKind.Sale, locations: [branch.WarehouseId]),
-            new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-7"), new StockParty(null, null), default)).IsSuccess);
+            new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-7"), new StockParty(null), default)).IsSuccess);
         await CommitAsync(async p => (await p.Ledger.ReserveAsync(Demand(branch.BranchId, sku.SkuId, 4m, locations: [branch.WarehouseId]), OrderReference(orderD), Customer(d), default)).IsSuccess);
 
         await MergeAsync(a, aSurvivor, aMobile);
-        return new Scenario(branch, keeper, sku, batchId, lot, a, aSurvivor, b, c, d, catX, catY, orderD);
+        return new Scenario(branch, keeper, sku, batchId, lot, a, aSurvivor, b, c, d, orderD);
     }
 
     private static Task<HttpResponseMessage> RecallAsync(HttpClient client, Guid batchId, string lot) =>
@@ -157,17 +145,13 @@ public sealed class InventoryRecallEndpointTests(InventoryApiFactory factory) : 
         var received = trace.GetProperty("received").EnumerateArray().ToList();
         Assert.Equal(3, received.Count); // the counter sale is "unidentified", not "received by"
 
-        var sale = received.Single(r => r.GetProperty("kind").GetString() == "Sale");
-        Assert.Equal(s.ASurvivor, sale.GetProperty("customer").GetProperty("customerId").GetGuid()); // A, merged into A', resolved at READ time
+        Assert.All(received, r => Assert.Equal("Sale", r.GetProperty("kind").GetString()));
+        var sale = received.Single(r => r.GetProperty("customer").GetProperty("customerId").GetGuid() == s.ASurvivor); // A, merged into A', resolved at READ time
         Assert.Equal(s.A, sale.GetProperty("customer").GetProperty("originalCustomerId").GetGuid());
         Assert.Equal("Customer A Prime", sale.GetProperty("customer").GetProperty("name").GetString());
 
-        var dispense = received.Single(r => r.GetProperty("kind").GetString() == "Dispense");
-        Assert.Equal("Xena", dispense.GetProperty("cat").GetProperty("name").GetString());
-        Assert.Equal(s.B, dispense.GetProperty("cat").GetProperty("currentOwner").GetProperty("customerId").GetGuid());
-
-        var boarding = received.Single(r => r.GetProperty("kind").GetString() == "BoardingUse");
-        Assert.Equal(s.C, boarding.GetProperty("cat").GetProperty("currentOwner").GetProperty("customerId").GetGuid());
+        Assert.Single(received, r => r.GetProperty("customer").GetProperty("customerId").GetGuid() == s.B); // the counter sale on the shop floor
+        Assert.Single(received, r => r.GetProperty("customer").GetProperty("customerId").GetGuid() == s.C); // the order sale
 
         var unidentified = trace.GetProperty("unidentified");
         Assert.Equal(1, unidentified.GetProperty("count").GetInt32());
@@ -178,7 +162,7 @@ public sealed class InventoryRecallEndpointTests(InventoryApiFactory factory) : 
         Assert.Equal(s.D, unshipped.GetProperty("customer").GetProperty("customerId").GetGuid());
         Assert.Equal("4", unshipped.GetProperty("quantity").GetString());
 
-        Assert.True(trace.GetProperty("stockHeld").GetArrayLength() >= 3); // warehouse, dispensary, boarding store
+        Assert.True(trace.GetProperty("stockHeld").GetArrayLength() >= 2); // warehouse, shop floor
     }
 
     [Fact]
@@ -437,13 +421,13 @@ public sealed class InventoryRecallEndpointTests(InventoryApiFactory factory) : 
     public async Task I_I8_OnlyRecallManagersMayRecallOrReadTheTrace()
     {
         var s = await ConsumeAsync();
-        var nurse = await StaffAsync(s.Branch, StaffRoles.Nurse);
+        var reception = await StaffAsync(s.Branch, StaffRoles.Reception);
         await RecallAsync(s.Keeper.Client, s.BatchId, s.Lot);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await RecallAsync(nurse.Client, s.BatchId, s.Lot)).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.Client.GetAsync($"/api/staff/inventory/recalls/{s.BatchId}/trace")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.Client.GetAsync($"/api/staff/inventory/recalls/{s.BatchId}/trace.csv")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.Client.PostAsync($"/api/staff/inventory/recalls/{s.BatchId}/notify", null)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await RecallAsync(reception.Client, s.BatchId, s.Lot)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await reception.Client.GetAsync($"/api/staff/inventory/recalls/{s.BatchId}/trace")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await reception.Client.GetAsync($"/api/staff/inventory/recalls/{s.BatchId}/trace.csv")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await reception.Client.PostAsync($"/api/staff/inventory/recalls/{s.BatchId}/notify", null)).StatusCode);
     }
 
     [Fact]

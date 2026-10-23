@@ -69,8 +69,7 @@ public static partial class TemplateRules
 
             // Deviation from §8.2 rule 4's literal "missing from that channel's body" wording: an
             // in-app notification's actionable link naturally lives in LinkPath, not repeated as
-            // inline body text (the shipped care.vaccination-due/care.deworming-due InApp content
-            // does exactly this) -- so a required Url variable also counts as present if it is the
+            // inline body text (the shipped InApp content does exactly this) -- so a required Url variable also counts as present if it is the
             // channel's LinkPath. Any other required variable is still checked against the body only.
             foreach (var required in requiredNames)
             {

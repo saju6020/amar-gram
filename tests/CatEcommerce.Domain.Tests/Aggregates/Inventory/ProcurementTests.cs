@@ -79,7 +79,7 @@ public sealed class ProcurementTests
 
     // ── purchase orders ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-    private static readonly SkuSnapshot Snapshot = new("SKU-1", "Kitten food 2 kg", "each", StockClass.Food);
+    private static readonly SkuSnapshot Snapshot = new("SKU-1", "Organic rice 2 kg", "each", StockClass.Food);
 
     private static PurchaseOrderLineDto Line(Guid? skuId = null, decimal quantity = 100m, decimal cost = 12.3456m, bool fractional = false) =>
         new(Guid.NewGuid(), skuId ?? Guid.NewGuid(), Snapshot, fractional, quantity, cost);

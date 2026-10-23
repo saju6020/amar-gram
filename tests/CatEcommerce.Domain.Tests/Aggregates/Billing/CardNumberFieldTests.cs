@@ -51,7 +51,7 @@ public sealed class CardNumberFieldTests
     [Fact]
     public void AnEarmarkReleaseReason_IsRefused()
     {
-        var payment = BillingTestData.Payment(BillingTestData.PaymentDto(earmark: new PaymentEarmark(EarmarkKind.BoardingStay, Guid.NewGuid(), "Stay deposit")));
+        var payment = BillingTestData.Payment(BillingTestData.PaymentDto(earmark: new PaymentEarmark(EarmarkKind.Order, Guid.NewGuid(), "Order deposit")));
 
         AssertRefused(() => payment.ReleaseEarmark(Pan, DateTimeOffset.UtcNow, BillingTestData.Actor()));
 
@@ -104,13 +104,13 @@ public sealed class CardNumberFieldTests
     }
 
     private static ChargeRequestDto ChargeRequest(string description) =>
-        new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), BusinessLine.Clinic, ItemKind.Service, ChargeSourceKind.Appointment, Guid.NewGuid(), "service", null, null,
+        new(Guid.NewGuid(), Guid.NewGuid(), BusinessLine.Shop, ItemKind.Fee, ChargeSourceKind.Manual, Guid.NewGuid(), "fee",
             description, 1m, new Money(100m, "BDT"), new Money(0m, "BDT"), Guid.NewGuid(), new DateOnly(2026, 10, 7));
 
     private static ChargeAggregate NewCharge()
     {
         var charge = new ChargeAggregate(Guid.NewGuid());
-        charge.Record(ChargeRequest("Consultation"), new ChargeRecordContext("BDT", DateTimeOffset.UtcNow, BillingTestData.Actor()));
+        charge.Record(ChargeRequest("Delivery fee"), new ChargeRecordContext("BDT", DateTimeOffset.UtcNow, BillingTestData.Actor()));
         return charge;
     }
 

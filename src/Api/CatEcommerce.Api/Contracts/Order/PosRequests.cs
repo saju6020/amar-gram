@@ -4,7 +4,6 @@ public sealed class PosLineRequest
 {
     public Guid SkuId { get; init; }
     public int Quantity { get; init; }
-    public Guid? CatId { get; init; }
 }
 
 public sealed class PosTenderRequest

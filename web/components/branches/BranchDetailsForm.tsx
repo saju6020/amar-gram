@@ -259,8 +259,8 @@ export function BranchDetailsForm({
           title={branch.isActive ? `Deactivate ${branch.name}?` : `Reactivate ${branch.name}?`}
           consequence={
             branch.isActive
-              ? `${branch.name} will stop appearing for new bookings and staff assignment. Existing records are kept.`
-              : `${branch.name} will be available again for bookings and staff assignment.`
+              ? `${branch.name} will stop appearing for new orders and staff assignment. Existing records are kept.`
+              : `${branch.name} will be available again for orders and staff assignment.`
           }
           confirmLabel={branch.isActive ? 'Deactivate' : 'Reactivate'}
           variant={branch.isActive ? 'destructive' : 'primary'}

@@ -10,7 +10,7 @@ import { usePackingSlip } from '@/lib/hooks/useStaffOrders';
 /**
  * `components/fulfilment/PackingSlipPage.tsx` — HO-ORD-002 §11.10, US-ORD-10 AC2. The slip that goes in
  * the parcel: order number and date, customer and recipient, address or pickup branch, slot, every line
- * with quantity, **batch numbers** and the cat's name, the delivery instructions, and — for cash on
+ * with quantity and **batch numbers**, the delivery instructions, and — for cash on
  * delivery — the amount the courier must collect, prominently. A4 `PrintSheet`: a real table with a
  * caption and headers, no navigation on paper.
  */
@@ -62,7 +62,6 @@ function Slip({ slip }: { slip: PackingSlip }) {
             <th scope="col" className="py-1 pr-2">Item</th>
             <th scope="col" className="py-1 pr-2 text-right">Qty</th>
             <th scope="col" className="py-1 pr-2">Batch</th>
-            <th scope="col" className="py-1">For</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +71,6 @@ function Slip({ slip }: { slip: PackingSlip }) {
               <td className="py-1.5 pr-2 [overflow-wrap:anywhere]">{`${line.productName} ${line.variantLabel}`.trim()}</td>
               <td className="py-1.5 pr-2 text-right font-semibold tabular-nums">{line.quantity}</td>
               <td className="py-1.5 pr-2 [overflow-wrap:anywhere]">{line.batchNumbers.join(', ') || '—'}</td>
-              <td className="py-1.5">{line.catName ?? '—'}</td>
             </tr>
           ))}
         </tbody>

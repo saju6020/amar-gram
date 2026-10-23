@@ -21,8 +21,8 @@ public sealed class RecordNotificationExpansionFailureCommandHandlerTests
     {
         var request = new NotificationRequestAggregate(Guid.NewGuid());
         request.Create(new NotificationRequestCreateDto(
-            "care.vaccination-due", NotificationRecipientKind.Customer, Guid.NewGuid(),
-            new Dictionary<string, string> { ["catName"] = "Mitu" },
+            "inventory.batch-recall", NotificationRecipientKind.Customer, Guid.NewGuid(),
+            new Dictionary<string, string> { ["productName"] = "Organic Mustard Oil" },
             null, null, null, null, null, null, null, null, false,
             DateTimeOffset.UtcNow, Guid.NewGuid(), TestUserContext.Create(), Guid.NewGuid()));
         return request;

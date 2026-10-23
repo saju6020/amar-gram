@@ -3,8 +3,8 @@ using CatEcommerce.Shared.Common.Enums;
 
 namespace CatEcommerce.Infrastructure.Reporting;
 
-/// <summary>The clinic name printed on the PDF header. Who generated the file is on the result itself.</summary>
-public sealed record ReportRenderContext(string ClinicName);
+/// <summary>The business name printed on the PDF header. Who generated the file is on the result itself.</summary>
+public sealed record ReportRenderContext(string OutletName);
 
 /// <summary>
 /// HO-RPT-001 section 8.12 / 8.13 (ADR-285) -- the CSV and PDF shapes of one <see cref="ReportResult"/>. The same code renders an interactive export and a scheduled one, so a scheduled

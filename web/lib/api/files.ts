@@ -11,20 +11,9 @@ import { getActiveBranchId } from '../branch';
  * here talks to `GET .../content` directly.
  *
  * `FilePurpose` mirrors `FilePurpose.cs` (`src/Shared/.../Enums/FilePurpose.cs`) — every member on
- * the backend today, `CatProfilePhoto` included (added there under integrator authorisation,
- * HO-FIL-001 §1 Amended 2026-09-26). Listing it here does not enable the Cat Profiles photo page
- * to consume this slice by itself — see this handover's own §1 Amended row on the cat-photo page
- * for what is and is not done.
+ * the backend today.
  */
-export type FilePurpose =
-  | 'LabResult'
-  | 'ClinicalPhoto'
-  | 'ConsentForm'
-  | 'ProductImage'
-  | 'BoardingMedia'
-  | 'BoardingBelongings'
-  | 'ReportExport'
-  | 'CatProfilePhoto';
+export type FilePurpose = 'ProductImage' | 'ReportExport';
 
 /**
  * `resolveFileUrl` -- the ONE place a signed file URL from an API response becomes something the
@@ -222,7 +211,7 @@ function readCookie(name: string): string | undefined {
 
 /**
  * `uploadFile` — ADR-FE-150's documented exception to `lib/api/client.ts`'s "the ONLY place in
- * the app that calls `fetch`" rule (HO-CAT-002 §8.2 rule 2): that rule is about `fetch`
+ * the app that calls `fetch`" rule: that rule is about `fetch`
  * specifically, and progress reporting during an upload has no `fetch` equivalent in any browser
  * this product targets (`fetch`'s `ReadableStream` request body has no standardised progress
  * event; `XMLHttpRequest.upload.onprogress` is the only platform primitive that has one). This

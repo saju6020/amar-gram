@@ -24,7 +24,7 @@ export function buildQuery(
 }
 
 export type StorageCondition = 'Ambient' | 'CoolDry' | 'Refrigerated' | 'Frozen';
-export type StockClass = 'Food' | 'Medicine' | 'Consumable' | 'General';
+export type StockClass = 'Food' | 'Consumable' | 'General';
 
 /** `StorageViewModel` — temperatures are JSON numbers on the wire (C# `decimal?`). */
 export interface Storage {
@@ -58,7 +58,7 @@ export async function lookupSkus(params: {
 }
 
 export type StockLocationKind =
-  'ShopFloor' | 'Warehouse' | 'ClinicDispensary' | 'BoardingStore' | 'Quarantine';
+  'ShopFloor' | 'Warehouse' | 'Quarantine';
 
 export interface StockLocation {
   id: string;

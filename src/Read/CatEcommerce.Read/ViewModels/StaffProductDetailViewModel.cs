@@ -38,7 +38,6 @@ public sealed record StaffProductDetailViewModel(
     DateTimeOffset? FirstPublishedOn,
     Guid TaxClassId,
     string? CountryOfOriginCode,
-    bool PrescriptionRequired,
     bool IsExpiryTracked,
     bool ListedOnStorefront,
     IReadOnlyList<StaffSkuViewModel> Skus,

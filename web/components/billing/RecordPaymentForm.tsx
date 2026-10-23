@@ -25,7 +25,7 @@ import { Amount } from './Amount';
 
 /**
  * `components/billing/RecordPaymentForm.tsx` — HO-BIL-002 §11.4 (US-BIL-11, 04, 03), ⭐. Public props
- * `{ customerId, invoiceIds?, earmark?, onRecorded? }` so HO-ORD-002 (POS) and HO-BRD-002 (deposits)
+ * `{ customerId, invoiceIds?, earmark?, onRecorded? }` so HO-ORD-002 (POS and order deposits)
  * reuse it. Method-driven (ADR-FE-082): the reference and collector fields come from the server's
  * flags and online methods are never offered; the reference runs the C-5 guard (ADR-FE-084); every
  * submit carries one idempotency key for the form's life, renewed only after a success (ADR-FE-081);
@@ -35,7 +35,7 @@ import { Amount } from './Amount';
 export interface RecordPaymentFormProps {
   customerId: string;
   invoiceIds?: string[];
-  earmark?: { kind: 'Order' | 'BoardingStay'; sourceId: string; label: string };
+  earmark?: { kind: 'Order'; sourceId: string; label: string };
   onRecorded?: (result: PaymentRecordResult) => void;
 }
 

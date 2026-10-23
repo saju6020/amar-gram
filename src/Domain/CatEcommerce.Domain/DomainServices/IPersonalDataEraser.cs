@@ -31,7 +31,7 @@ namespace CatEcommerce.Domain.DomainServices;
 public interface IPersonalDataEraser
 {
     /// <summary>Matches one <c>ErasureScope.ContextKey</c>, e.g. "account", "notification",
-    /// "administration", "boarding". Stable once chosen -- it is stored in the ledger.</summary>
+    /// "administration". Stable once chosen -- it is stored in the ledger.</summary>
     string ContextKey { get; }
 
     Task<ErasureOutcome> EraseAsync(

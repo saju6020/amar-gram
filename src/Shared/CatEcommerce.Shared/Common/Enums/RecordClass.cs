@@ -8,7 +8,6 @@ namespace CatEcommerce.Shared.Common.Enums;
 /// </summary>
 public sealed class RecordClass(int value, string displayName) : Enumeration(value, displayName)
 {
-    public static readonly RecordClass Clinical = new(1, nameof(Clinical));
     public static readonly RecordClass Financial = new(2, nameof(Financial));
     public static readonly RecordClass Regulatory = new(3, nameof(Regulatory));
     public static readonly RecordClass Audit = new(4, nameof(Audit));

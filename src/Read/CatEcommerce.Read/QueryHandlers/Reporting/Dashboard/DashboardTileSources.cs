@@ -9,120 +9,9 @@ namespace CatEcommerce.Read.QueryHandlers.Reporting.Dashboard;
 
 internal static class TileQueries
 {
-    public static IQueryable<RvClinicAppointmentRow> AppointmentsToday(DashboardContext c)
-    {
-        var (start, end) = c.Instants(c.Today, c.Today);
-        return c.Db.Set<RvClinicAppointmentRow>().AsNoTracking().Where(a => a.BranchId == c.BranchId && (a.StartsOn ?? a.CheckedInOn) >= start && (a.StartsOn ?? a.CheckedInOn) < end);
-    }
-
     public static long Count(IEnumerable<ReportRow> rows, string key, string value) => rows.Count(r => (string?)r[key] == value);
 
     public static ReportMoney? OneCurrency(IEnumerable<ReportMoney?> values) => RevenueBuilder.SumIfOneCurrency(values);
-}
-
-/// <summary>clinic.appointments-today -- the same rows as R1: booked, checked in, completed, no-show.</summary>
-public sealed class AppointmentsTodayTile : IDashboardTileSource
-{
-    public string Key => "clinic.appointments-today";
-
-    public async Task<DashboardTileResult> RunAsync(DashboardContext c, CancellationToken ct)
-    {
-        var request = c.Request(ReportCatalogue.ClinicDailyScheduleKey, c.Today, c.Today);
-        var rows = await new ClinicDailyScheduleSource().RunAsync(request, c.Db, ct);
-        return new DashboardTileResult(
-        [
-            DashboardFigure.Count("booked", "Booked", TileQueries.Count(rows.Rows, "status", "Booked")),
-            DashboardFigure.Count("checkedIn", "Checked in", TileQueries.Count(rows.Rows, "status", "CheckedIn") + TileQueries.Count(rows.Rows, "status", "InConsultation")),
-            DashboardFigure.Count("completed", "Completed", TileQueries.Count(rows.Rows, "status", "Completed")),
-            DashboardFigure.Count("noShow", "No-show", TileQueries.Count(rows.Rows, "status", "NoShow")),
-        ], DrillFrom: c.Today, DrillTo: c.Today);
-    }
-}
-
-/// <summary>clinic.queue-now -- cats waiting now (checked in, not started), the emergencies among them, and the longest wait.</summary>
-public sealed class QueueNowTile : IDashboardTileSource
-{
-    public string Key => "clinic.queue-now";
-
-    public async Task<DashboardTileResult> RunAsync(DashboardContext c, CancellationToken ct)
-    {
-        var waiting = await TileQueries.AppointmentsToday(c)
-            .Where(a => a.CheckedInOn != null && a.StartedOn == null && a.Status == AppointmentStatus.CheckedIn.Value).Select(a => new { a.TriagePriority, a.CheckedInOn }).ToListAsync(ct);
-
-        var longest = waiting.Count == 0 ? (long?)null : (long)Math.Round((c.Now - waiting.Min(w => w.CheckedInOn!.Value)).TotalMinutes, MidpointRounding.AwayFromZero);
-        return new DashboardTileResult(
-        [
-            DashboardFigure.Count("waiting", "Waiting now", waiting.Count),
-            DashboardFigure.Count("emergencies", "Emergencies waiting", waiting.Count(w => w.TriagePriority == TriagePriority.Emergency.Value)),
-            new DashboardFigure("longestWait", "Longest wait", longest, "Integer", "min"),
-        ], DrillFrom: c.Today, DrillTo: c.Today);
-    }
-}
-
-/// <summary>clinic.my-appointments-today -- the caller's own appointments today and how many remain.</summary>
-public sealed class MyAppointmentsTodayTile : IDashboardTileSource
-{
-    public string Key => "clinic.my-appointments-today";
-
-    public async Task<DashboardTileResult> RunAsync(DashboardContext c, CancellationToken ct)
-    {
-        var mine = await TileQueries.AppointmentsToday(c).Where(a => a.PerformerId == c.CallerId).Select(a => a.Status).ToListAsync(ct);
-        var remaining = new[] { AppointmentStatus.Booked.Value, AppointmentStatus.CheckedIn.Value, AppointmentStatus.InConsultation.Value };
-        return new DashboardTileResult(
-        [
-            DashboardFigure.Count("mine", "My appointments", mine.Count),
-            DashboardFigure.Count("remaining", "Remaining", mine.Count(s => remaining.Contains(s))),
-        ], DrillFrom: c.Today, DrillTo: c.Today);
-    }
-}
-
-/// <summary>clinic.vaccinations-due -- due in the next 7 days and overdue, from the same list as R4 (branch-attributed, ADR-292).</summary>
-public sealed class VaccinationsDueTile : IDashboardTileSource
-{
-    public string Key => "clinic.vaccinations-due";
-
-    public async Task<DashboardTileResult> RunAsync(DashboardContext c, CancellationToken ct)
-    {
-        var request = c.Request(ReportCatalogue.VaccinationDueListKey, c.Today, c.Today.AddDays(7),
-            ("includeOverdue", true), ("includeParasiteControl", false), ("includeUnattributed", false));
-        var result = await new VaccinationDueListSource().RunAsync(request, c.Db, ct);
-        return new DashboardTileResult(
-        [
-            DashboardFigure.Count("dueSoon", "Due in the next 7 days", TileQueries.Count(result.Rows, "status", "DueSoon")),
-            DashboardFigure.Count("overdue", "Overdue", TileQueries.Count(result.Rows, "status", "Overdue")),
-        ], DrillFrom: c.Today, DrillTo: c.Today.AddDays(7));
-    }
-}
-
-/// <summary>clinic.consultations-unfinalised -- the caller's visits whose appointment is complete but whose note is not finalised.</summary>
-public sealed class ConsultationsUnfinalisedTile : IDashboardTileSource
-{
-    public string Key => "clinic.consultations-unfinalised";
-
-    public async Task<DashboardTileResult> RunAsync(DashboardContext c, CancellationToken ct)
-    {
-        var open = VisitStatus.Open.Value;
-        var count = await c.Db.Set<RvVisitOpenRow>().AsNoTracking().CountAsync(v => v.BranchId == c.BranchId && v.VetId == c.CallerId && v.Status == open && v.CompletedOn != null, ct);
-        return new DashboardTileResult([DashboardFigure.Count("unfinalised", "Completed, not finalised", count)]);
-    }
-}
-
-/// <summary>surgery.today -- scheduled, in theatre and in recovery today.</summary>
-public sealed class SurgeryTodayTile : IDashboardTileSource
-{
-    public string Key => "surgery.today";
-
-    public async Task<DashboardTileResult> RunAsync(DashboardContext c, CancellationToken ct)
-    {
-        var (start, end) = c.Instants(c.Today, c.Today);
-        var statuses = await c.Db.Set<RvSurgeryRow>().AsNoTracking().Where(s => s.BranchId == c.BranchId && s.OccurredOn >= start && s.OccurredOn < end).Select(s => s.Status).ToListAsync(ct);
-        return new DashboardTileResult(
-        [
-            DashboardFigure.Count("scheduled", "Scheduled", statuses.Count(s => s == SurgeryStatus.Scheduled.Value || s == SurgeryStatus.PreOp.Value)),
-            DashboardFigure.Count("inTheatre", "In theatre", statuses.Count(s => s == SurgeryStatus.InTheatre.Value)),
-            DashboardFigure.Count("inRecovery", "In recovery", statuses.Count(s => s == SurgeryStatus.Recovery.Value)),
-        ], DrillFrom: c.Today, DrillTo: c.Today);
-    }
 }
 
 /// <summary>stock.expiry -- batches expiring within 30 days and their value at risk at cost (OQ-3).</summary>
@@ -301,7 +190,7 @@ public sealed class ReceivablesTile : IDashboardTileSource
     }
 }
 
-/// <summary>revenue.today-by-line -- net revenue today for clinic, shop and boarding.</summary>
+/// <summary>revenue.today-by-line -- net revenue today by sales channel (HO-P1: the split that replaced the retired business lines).</summary>
 public sealed class RevenueTodayByLineTile : IDashboardTileSource
 {
     public string Key => "revenue.today-by-line";
@@ -317,9 +206,9 @@ public sealed class RevenueTodayByLineTile : IDashboardTileSource
             return DashboardFigure.Amount(line.ToLowerInvariant(), label, parts.Count == 0 ? new ReportMoney(0m, c.CurrencyCode) : TileQueries.OneCurrency(parts));
         }
 
-        // Boarding is a deferred source (HO-BRD-001 is not merged): its figure is absent -- not zero -- until there is boarding revenue to report (handover U-E4).
-        var figures = new List<DashboardFigure> { For("Clinic", "Clinic"), For("Shop", "Shop") };
-        if (aggregates.Any(a => a.Dimensions[0] == "Boarding")) figures.Add(For("Boarding", "Boarding"));
+        // A line with no order behind it (a manual charge) is shown only when there is some.
+        var figures = new List<DashboardFigure> { For(nameof(OrderChannel.Online), "Online"), For(nameof(OrderChannel.Counter), "Counter") };
+        if (aggregates.Any(a => a.Dimensions[0] == RevenueFacts.OtherChannel)) figures.Add(For(RevenueFacts.OtherChannel, "Other"));
 
         return new DashboardTileResult(figures, DrillFrom: c.Today, DrillTo: c.Today);
     }

@@ -24,7 +24,7 @@ public sealed class ReportingConventionTests
     /// <summary>Reporting's own migrations. Each is read: nothing may touch a schema other than <c>report</c> (ADR-277), save the HO-NTF-001 amendment's four columns.</summary>
     private static readonly string[] ReportingMigrations =
     [
-        "AddReportingSchema", "AddClinicReportViews", "AddStockReportViews", "AddFinancialReportViews", "AddGrowthReportViews", "AddReportSchedules", "AddNotificationAttachments", "AddReorderViewsAndCustomerMergeChain", "AddOperationsReportViews",
+        "AddReportingSchema", "AddStockReportViews", "AddFinancialReportViews", "AddGrowthReportViews", "AddReportSchedules", "AddNotificationAttachments", "AddReorderViewsAndCustomerMergeChain", "AddOperationsReportViews",
     ];
 
     private static string RepositoryRoot()

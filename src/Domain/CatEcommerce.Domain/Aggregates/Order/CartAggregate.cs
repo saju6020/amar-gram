@@ -12,12 +12,11 @@ public sealed record CartMergeResult(int MergedLineCount, IReadOnlyList<Guid> Dr
 /// <summary>
 /// HO-ORD-001 §8.2 (ADR-199), US-ORD-01 -- a server-side cart. A <b>guest</b> cart is found by the SHA-256 of an opaque 32-byte cookie token; a
 /// <b>customer</b> cart is the customer's one <c>Active</c> cart (unique among active carts, so the cart follows the customer across devices).
-/// Merging a guest cart into the account cart is an explicit, idempotent act that takes the <b>larger</b> quantity per <c>(SKU, cat)</c> key
+/// Merging a guest cart into the account cart is an explicit, idempotent act that takes the <b>larger</b> quantity per SKU
 /// (OQ-3), never the sum, and marks the guest cart <c>Merged</c>. A cart reserves nothing and carries no price of its own. Carts raise no domain
 /// events: nothing subscribes, and the audit interceptor records the changes (OQ-18).
 ///
-/// The aggregate enforces what it can see of itself: quantity bounds, the line cap, a line key at most once. "The SKU is purchasable", "the cat is
-/// the caller's and authorised" and "stock exists" span other records and are the handler's checks.
+/// The aggregate enforces what it can see of itself: quantity bounds, the line cap, a line key at most once. "The SKU is purchasable" and "stock exists" span other records and are the handler's checks.
 /// </summary>
 public sealed class CartAggregate : AggregateRoot
 {
@@ -59,14 +58,14 @@ public sealed class CartAggregate : AggregateRoot
         UpdateVersion();
     }
 
-    /// <summary>Adds <paramref name="quantity"/> of a SKU (for a cat, when the SKU needs one). An existing key becomes <c>min(existing + quantity,
+    /// <summary>Adds <paramref name="quantity"/> of a SKU. An existing key becomes <c>min(existing + quantity,
     /// max)</c> and keeps its price-when-added; a new key is a new line priced at the SKU's current price (<c>CartFull</c> at the cap).</summary>
-    public Guid AddLine(Guid skuId, int quantity, Guid? catId, decimal currentPrice, string currencyCode, DateTimeOffset now, int maxQuantityPerLine, int maxLines)
+    public Guid AddLine(Guid skuId, int quantity, decimal currentPrice, string currencyCode, DateTimeOffset now, int maxQuantityPerLine, int maxLines)
     {
         EnsureActive();
         RequireQuantity(quantity, maxQuantityPerLine);
 
-        var existing = _lines.FirstOrDefault(l => l.HasKey(skuId, catId));
+        var existing = _lines.FirstOrDefault(l => l.HasKey(skuId));
         if (existing is not null)
         {
             existing.SetQuantity(Math.Min(existing.Quantity + quantity, maxQuantityPerLine), now);
@@ -77,7 +76,7 @@ public sealed class CartAggregate : AggregateRoot
         if (_lines.Count >= Math.Min(maxLines, CartRules.MaxLinesHardCap))
             throw new DomainRuleViolationException(BusinessViolationCodes.CartFull, OrderMessages.CartFull, nameof(Lines));
 
-        var line = new CartLine(Guid.NewGuid(), skuId, catId, quantity, currentPrice, currencyCode, now);
+        var line = new CartLine(Guid.NewGuid(), skuId, quantity, currentPrice, currencyCode, now);
         _lines.Add(line);
         Touch(now);
         return line.Id;
@@ -89,19 +88,6 @@ public sealed class CartAggregate : AggregateRoot
         EnsureActive();
         RequireQuantity(quantity, maxQuantityPerLine);
         Line(lineId).SetQuantity(quantity, now);
-        Touch(now);
-    }
-
-    /// <summary>Re-points a line at another cat. The new key must not collide with another line (<c>DuplicateCartLine</c>).</summary>
-    public void SetLineCat(Guid lineId, Guid? catId, DateTimeOffset now)
-    {
-        EnsureActive();
-        var line = Line(lineId);
-
-        if (_lines.Any(l => l.Id != lineId && l.HasKey(line.SkuId, catId)))
-            throw new DomainRuleViolationException(BusinessViolationCodes.DuplicateCartLine, OrderMessages.DuplicateCartLine, nameof(CartLine.CatId));
-
-        line.SetCat(catId, now);
         Touch(now);
     }
 
@@ -148,7 +134,7 @@ public sealed class CartAggregate : AggregateRoot
 
         foreach (var incoming in guest._lines)
         {
-            var existing = _lines.FirstOrDefault(l => l.HasKey(incoming.SkuId, incoming.CatId));
+            var existing = _lines.FirstOrDefault(l => l.HasKey(incoming.SkuId));
             if (existing is not null)
             {
                 var larger = Math.Min(Math.Max(existing.Quantity, incoming.Quantity), maxQuantityPerLine);
@@ -164,7 +150,7 @@ public sealed class CartAggregate : AggregateRoot
                 continue;
             }
 
-            _lines.Add(new CartLine(Guid.NewGuid(), incoming.SkuId, incoming.CatId, Math.Min(incoming.Quantity, maxQuantityPerLine), incoming.PriceWhenAdded, incoming.CurrencyCode, incoming.AddedOn));
+            _lines.Add(new CartLine(Guid.NewGuid(), incoming.SkuId, Math.Min(incoming.Quantity, maxQuantityPerLine), incoming.PriceWhenAdded, incoming.CurrencyCode, incoming.AddedOn));
             changed++;
         }
 

@@ -39,7 +39,7 @@ public static class ValidationRuleExtensions
 
     public static IRuleBuilderOptions<T, string?> MustBeSlugFormat<T>(this IRuleBuilder<T, string?> ruleBuilder) =>
         ruleBuilder.Must(value => string.IsNullOrEmpty(value) || SlugFormat.IsValid(value))
-            .WithMessage("must be lowercase letters, digits and hyphens only, e.g. 'boarding-terms'.");
+            .WithMessage("must be lowercase letters, digits and hyphens only, e.g. 'delivery-terms'.");
 
     public static IRuleBuilderOptions<T, string?> MustBeCodeFormat<T>(this IRuleBuilder<T, string?> ruleBuilder) =>
         ruleBuilder.Must(value => string.IsNullOrEmpty(value) || CodeFormat.IsValid(value))

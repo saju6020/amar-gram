@@ -6,7 +6,7 @@
  *
  * Hand-transcribed from the `:root{...}` rules in the approved design-canvas mockups, e.g.
  * docs/design/shop/StaffProductList.dc.html. These are consumed by name via Tailwind utilities
- * generated below (`@theme inline`) — components must not use hex literals (HO-CAT-002 §9).
+ * generated below (`@theme inline`) — components must not use hex literals (the scaffold handover §9).
  */
 :root {
   --surface-page: #f9f8f3;
@@ -28,8 +28,7 @@
   --radius-md: 10px;
 
   /* The system's one deliberate exception to "borders, not shadows" (docs/design/administration/
-     README.md, docs/design/billing/README.md, docs/design/boarding/README.md, docs/design/
-     portal/README.md) — used for dialogs only, never for cards or list rows. Value transcribed
+     README.md, docs/design/billing/README.md, docs/design/portal/README.md) — used for dialogs only, never for cards or list rows. Value transcribed
      from docs/design/administration/*.dc.html's `.dialog` rule. */
   --shadow-modal: 0 20px 60px rgba(20, 18, 10, 0.25);
 
@@ -43,7 +42,7 @@
 /*
  * Customer layer (docs/design/portal/Dashboard.dc.html) — applied via `data-theme="customer"`
  * on the (portal) route group's layout ONLY (web/app/(portal)/layout.tsx). Never apply this on
- * a staff layout or a shared component: `--warm` is a fill colour, never text (HO-CAT-002 §8.5 —
+ * a staff layout or a shared component: `--warm` is a fill colour, never text (the scaffold handover §8.5 —
  * check contrast specifically before using it).
  */
 [data-theme='customer'] {
@@ -111,7 +110,7 @@ body {
   }
 }
 
-/* Visible focus, everywhere — UI-6. Never `outline: none` without a replacement (HO-CAT-002 §8.5). */
+/* Visible focus, everywhere — UI-6. Never `outline: none` without a replacement (the scaffold handover §8.5). */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;

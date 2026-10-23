@@ -15,12 +15,11 @@ public sealed class CheckoutPricingTests
     private static readonly Guid ZoneId = Guid.NewGuid();
     private static readonly Guid AddressId = Guid.NewGuid();
 
-    private static OrderCatalogueSku Sku(string name, decimal price, bool prescription = false, bool purchasable = true, int category = 5, string currency = "BDT") =>
-        new(Guid.NewGuid(), Guid.NewGuid(), name, name, null, category, ProductReturnClass.Other, price, currency, Guid.NewGuid(), purchasable, prescription, null, false, []);
+    private static OrderCatalogueSku Sku(string name, decimal price, bool purchasable = true, int category = 5, string currency = "BDT") =>
+        new(Guid.NewGuid(), Guid.NewGuid(), name, name, null, category, ProductReturnClass.Other, price, currency, Guid.NewGuid(), purchasable, null, false, []);
 
-    private static CheckoutLineInput Line(OrderCatalogueSku sku, int quantity, decimal? rate = 0m, decimal? addedAt = null, decimal sellable = 100m, Guid? catId = null,
-        PrescriptionLineStatus rx = PrescriptionLineStatus.NotRequired) =>
-        new(Guid.NewGuid(), sku, catId, quantity, addedAt ?? sku.CurrentPrice ?? 0m, sellable, rate, rx);
+    private static CheckoutLineInput Line(OrderCatalogueSku sku, int quantity, decimal? rate = 0m, decimal? addedAt = null, decimal sellable = 100m) =>
+        new(Guid.NewGuid(), sku, quantity, addedAt ?? sku.CurrentPrice ?? 0m, sellable, rate);
 
     private static DeliveryZoneFacts Zone(decimal baseCharge = 60m, decimal? freeOver = null, bool cod = true, decimal? codMax = null, params SlotWindow[] windows) =>
         new(ZoneId, "Dhaka city", BranchId, cod, codMax,
@@ -257,37 +256,6 @@ public sealed class CheckoutPricingTests
         Assert.Equal(2, quote.ExcludedLines.Count);
         Assert.Single(quote.Lines);
         Assert.True(quote.CanPlace);
-    }
-
-    [Fact]
-    public void U_D2_ALapsedPrescriptionAuthorisation_ExcludesTheLine_WithABookingHint_ButDoesNotBlockTheRest()
-    {
-        var rx = Line(Sku("Renal diet", 900m, prescription: true), 1, catId: Guid.NewGuid(), rx: PrescriptionLineStatus.NotAuthorised);
-        var other = Line(Sku("Litter", 100m), 1);
-        var quote = CheckoutPricing.Quote(Inputs([rx, other]));
-
-        Assert.Equal(CheckoutChangeKind.PrescriptionAuthorisationExpired.DisplayName, Assert.Single(quote.ExcludedLines).ReasonCode);
-        var change = quote.Changes.Single(c => c.Kind == CheckoutChangeKind.PrescriptionAuthorisationExpired);
-        Assert.Contains("consultation", change.Message);
-        Assert.True(quote.CanPlace);
-        Assert.Single(quote.Lines);
-    }
-
-    [Fact]
-    public void U_D2_APrescriptionLineWithoutACat_MakesCanPlaceFalse_UntilTheCatIsSet()
-    {
-        var rx = Line(Sku("Renal diet", 900m, prescription: true), 1, rx: PrescriptionLineStatus.CatRequired);
-        var other = Line(Sku("Litter", 100m), 1);
-
-        var blocked = CheckoutPricing.Quote(Inputs([rx, other]));
-        Assert.False(blocked.CanPlace);
-        Assert.Contains("PrescriptionCatRequired", blocked.BlockingReasons);
-        Assert.Contains(blocked.Changes, c => c.Kind == CheckoutChangeKind.PrescriptionCatRequired);
-
-        var ready = CheckoutPricing.Quote(Inputs([Line(rx.Sku, 1, catId: Guid.NewGuid(), rx: PrescriptionLineStatus.Authorised), other]));
-        Assert.True(ready.CanPlace);
-        Assert.Equal(2, ready.Lines.Count);
-        Assert.NotNull(ready.Lines.Single(l => l.SkuId == rx.Sku.SkuId).CatId);
     }
 
     [Fact]

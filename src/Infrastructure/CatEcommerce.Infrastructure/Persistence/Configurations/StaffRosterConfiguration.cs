@@ -51,6 +51,5 @@ public sealed class StaffRosterConfiguration : IEntityTypeConfiguration<StaffRos
         w.Property(p => p.DayOfWeek).HasColumnName("day_of_week").IsRequired();
         w.Property(p => p.Starts).HasColumnName("starts").HasColumnType("time").IsRequired();
         w.Property(p => p.Ends).HasColumnName("ends").HasColumnType("time").IsRequired();
-        w.Property(p => p.DefaultRoomId).HasColumnName("default_room_id");
     }
 }

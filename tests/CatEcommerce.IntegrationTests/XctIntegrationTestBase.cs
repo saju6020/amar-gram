@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using CatEcommerce.Domain.Aggregates.Account;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Domain.ValueObjects;
@@ -122,19 +121,6 @@ public abstract class XctIntegrationTestBase(XctApiFactory factory) : CatEcommer
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
         return (client, customerId, mobile, password);
-    }
-
-    protected async Task<Guid> SeedCatAsync(Guid ownerId, string name = "Test Cat", WebApplicationFactory<Program>? factory = null)
-    {
-        await using var scope = (factory ?? Factory).Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var cat = new CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, name, "Cat", CatSex.Female, DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2),
-            DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby", DateOnly.FromDateTime(DateTime.UtcNow), AnyActor(), Guid.NewGuid()));
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
     }
 
     /// <summary>Runs <paramref name="action"/> with a database context from a fresh scope (reads and test seeding).</summary>

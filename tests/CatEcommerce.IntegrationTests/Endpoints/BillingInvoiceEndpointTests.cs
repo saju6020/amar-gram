@@ -33,23 +33,23 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
     }
 
     // ── I-C1 ────────────────────────────────────────────────────────────────────────────────────────
-    /// <summary>I-C1 -- a consultation, a shop product and three boarding nights for one customer on ONE invoice, each line
+    /// <summary>I-C1 -- a manual fee, a shop product and three zero-rated items for one customer on ONE invoice, each line
     /// attributed to its business line, with tax per line (US-BIL-02, AC-16, US-ORD-17 server half).</summary>
     [Fact]
-    public async Task I_C1_OneInvoice_CombinesClinicShopAndBoarding_WithTaxPerLine()
+    public async Task I_C1_OneInvoice_CombinesAFeeAndProducts_WithTaxPerLine()
     {
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
-        var stay = Guid.NewGuid();
+        var order = Guid.NewGuid();
 
-        var consult = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Service, sourceKind: ChargeSourceKind.Appointment, description: "Consultation");
-        var product = await RecordChargeAsync(context, customerId, 450m, 2m, itemKind: ItemKind.Product, sourceKind: ChargeSourceKind.Order, description: "Cat food 2kg");
-        var nights = new List<Guid>();
-        for (var night = 1; night <= 3; night++)
-            nights.Add(await RecordChargeAsync(context, customerId, 1000m, 1m, itemKind: ItemKind.BoardingNight, sourceKind: ChargeSourceKind.BoardingStay, sourceId: stay,
-                sourceLineRef: $"night-{night}", taxClassId: context.ZeroTaxClassId, groupKind: BillingGroupKind.BoardingStay, groupId: stay, description: $"Boarding night {night}"));
+        var fee = await RecordChargeAsync(context, customerId, 800m, 1m, itemKind: ItemKind.Fee, sourceKind: ChargeSourceKind.Manual, description: "Service fee");
+        var product = await RecordChargeAsync(context, customerId, 450m, 2m, itemKind: ItemKind.Product, sourceKind: ChargeSourceKind.Order, description: "Mustard oil 1 L");
+        var items = new List<Guid>();
+        for (var item = 1; item <= 3; item++)
+            items.Add(await RecordChargeAsync(context, customerId, 1000m, 1m, itemKind: ItemKind.Product, sourceKind: ChargeSourceKind.Order, sourceId: order,
+                sourceLineRef: $"item-{item}", taxClassId: context.ZeroTaxClassId, description: $"Zero-rated item {item}"));
 
-        var chargeIds = new[] { consult, product }.Concat(nights).ToArray();
+        var chargeIds = new[] { fee, product }.Concat(items).ToArray();
 
         var preview = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await context.Admin.PostAsJsonAsync("/api/staff/billing/invoices/preview", new { customerId, chargeIds }, Json)));
         Assert.True(preview.GetProperty("isEstimate").GetBoolean());
@@ -79,19 +79,19 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
         Assert.Equal(4955m, AmountOf(invoice.GetProperty("outstanding")));
 
         var lines = invoice.GetProperty("lines").EnumerateArray().ToList();
-        Assert.Equal(["Clinic", "Shop", "Boarding", "Boarding", "Boarding"], lines.OrderBy(l => l.GetProperty("sortOrder").GetInt32()).Select(l => l.GetProperty("businessLine").GetString()!).ToArray());
-        var consultLine = lines.Single(l => l.GetProperty("description").GetString() == "Consultation");
-        Assert.Equal("Service", consultLine.GetProperty("itemKind").GetString());
-        Assert.Equal("15.00", consultLine.GetProperty("taxRatePercent").GetString());
-        Assert.Equal(800m, AmountOf(consultLine.GetProperty("netAmount")));
-        Assert.Equal(120m, AmountOf(consultLine.GetProperty("taxAmount")));
-        Assert.Equal(920m, AmountOf(consultLine.GetProperty("grossAmount")));
-        var productLine = lines.Single(l => l.GetProperty("description").GetString() == "Cat food 2kg");
+        Assert.Equal(["Shop", "Shop", "Shop", "Shop", "Shop"], lines.OrderBy(l => l.GetProperty("sortOrder").GetInt32()).Select(l => l.GetProperty("businessLine").GetString()!).ToArray());
+        var feeLine = lines.Single(l => l.GetProperty("description").GetString() == "Service fee");
+        Assert.Equal("Fee", feeLine.GetProperty("itemKind").GetString());
+        Assert.Equal("15.00", feeLine.GetProperty("taxRatePercent").GetString());
+        Assert.Equal(800m, AmountOf(feeLine.GetProperty("netAmount")));
+        Assert.Equal(120m, AmountOf(feeLine.GetProperty("taxAmount")));
+        Assert.Equal(920m, AmountOf(feeLine.GetProperty("grossAmount")));
+        var productLine = lines.Single(l => l.GetProperty("description").GetString() == "Mustard oil 1 L");
         Assert.Equal("2.000", productLine.GetProperty("quantity").GetString());
         Assert.Equal(135m, AmountOf(productLine.GetProperty("taxAmount")));
-        var nightLine = lines.First(l => l.GetProperty("itemKind").GetString() == "BoardingNight");
-        Assert.Equal("0.00", nightLine.GetProperty("taxRatePercent").GetString());
-        Assert.False(string.IsNullOrWhiteSpace(nightLine.GetProperty("taxClassCode").GetString()));
+        var zeroRatedLine = lines.First(l => l.GetProperty("description").GetString()!.StartsWith("Zero-rated item", StringComparison.Ordinal));
+        Assert.Equal("0.00", zeroRatedLine.GetProperty("taxRatePercent").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(zeroRatedLine.GetProperty("taxClassCode").GetString()));
 
         Assert.Equal("BIN-" + context.BranchCode, invoice.GetProperty("seller").GetProperty("taxRegistrationNumber").GetString());
         Assert.StartsWith("Billing Customer", invoice.GetProperty("billTo").GetProperty("fullName").GetString());
@@ -382,23 +382,8 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
         Assert.Equal(2, sourceInvoice.GetProperty("lines").GetArrayLength());
         Assert.Equal(300m, AmountOf(sourceInvoice.GetProperty("totals").GetProperty("net")));
 
-        var stay = Guid.NewGuid();
-        foreach (var night in Enumerable.Range(0, 5))
-            await RecordChargeAsync(context, customerId, 1000m, itemKind: ItemKind.BoardingNight, sourceKind: ChargeSourceKind.BoardingStay, sourceId: stay, sourceLineRef: $"night-{night}",
-                groupKind: BillingGroupKind.BoardingStay, groupId: stay, serviceDate: Today.AddDays(night - 4));
-        var vetDuringStay = await RecordChargeAsync(context, customerId, 500m, sourceKind: ChargeSourceKind.Visit, groupKind: BillingGroupKind.BoardingStay, groupId: stay, serviceDate: Today.AddDays(-3));
-
-        var cutoff = Today.AddDays(-2);
-        var byGroup = await IssueFromChargesRawAsync(context.Admin, customerId, new { billingGroup = new { kind = "BoardingStay", id = stay, serviceDateTo = cutoff.ToString("yyyy-MM-dd") } });
-        var cycle = await GetInvoiceAsync(context.Admin, (await ReadAsync(await ExpectAsync(HttpStatusCode.Created, byGroup))).GetProperty("invoiceId").GetGuid());
-        // nights dated Today-4 .. Today-2 plus the vet visit of the stay (Today-3): four lines; the two later nights wait for the next cycle
-        Assert.Equal(4, cycle.GetProperty("lines").GetArrayLength());
-        Assert.Contains(cycle.GetProperty("lines").EnumerateArray(), l => l.GetProperty("chargeId").GetGuid() == vetDuringStay);
-        Assert.Equal("Clinic", cycle.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("chargeId").GetGuid() == vetDuringStay).GetProperty("businessLine").GetString());
-
         var unbilled = (await ReadAsync(await context.Admin.GetAsync($"/api/staff/billing/charges?customerId={customerId}&status=unbilled"))).GetProperty("items");
-        Assert.Equal(3, unbilled.GetArrayLength()); // the other order's charge and the two later nights
-        Assert.Contains(unbilled.EnumerateArray(), c => c.GetProperty("chargeId").GetGuid() == otherOrderCharge);
+        Assert.Equal(otherOrderCharge, Assert.Single(unbilled.EnumerateArray()).GetProperty("chargeId").GetGuid()); // only the other order's charge
 
         // Nothing matches -> the charge is not found; two forms at once -> refused.
         Assert.Equal(HttpStatusCode.BadRequest, (await IssueFromChargesRawAsync(context.Admin, customerId, new { source = new { kind = "Order", id = Guid.NewGuid() } })).StatusCode);
@@ -522,9 +507,9 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
     {
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context, "Rahim Uddin");
-        var consult = await RecordChargeAsync(context, customerId, 800m, itemKind: ItemKind.Service, sourceKind: ChargeSourceKind.Appointment, description: "Annual wellness consultation", taxClassId: context.TaxClassId);
-        var product = await RecordChargeAsync(context, customerId, 450m, 2m, description: "Premium kitten food", taxClassId: context.TaxClassId);
-        var (invoiceId, number) = await IssueFromChargesAsync(context.Admin, customerId, [consult, product]);
+        var fee = await RecordChargeAsync(context, customerId, 800m, itemKind: ItemKind.Fee, sourceKind: ChargeSourceKind.Manual, description: "Gift hamper packing fee", taxClassId: context.TaxClassId);
+        var product = await RecordChargeAsync(context, customerId, 450m, 2m, description: "Premium mustard oil", taxClassId: context.TaxClassId);
+        var (invoiceId, number) = await IssueFromChargesAsync(context.Admin, customerId, [fee, product]);
 
         var response = await ExpectAsync(HttpStatusCode.OK, await context.Admin.GetAsync($"/api/staff/billing/invoices/{invoiceId}.pdf"));
 
@@ -536,8 +521,8 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
         var text = PdfTextExtractor.Extract(pdf);
         Assert.Contains(number, text);
         Assert.Contains("BIN-" + context.BranchCode, text);
-        Assert.Contains("Annual wellness consultation", text);
-        Assert.Contains("Premium kitten food", text);
+        Assert.Contains("Gift hamper packing fee", text);
+        Assert.Contains("Premium mustard oil", text);
         Assert.Contains("Rahim Uddin", text);
         Assert.Contains("15%", text);
 
@@ -639,7 +624,7 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context, "=cmd|' /C calc'!A0");
         var (invoiceId, number, _) = await IssueSimpleInvoiceAsync(context, customerId, 500m);
-        var draftId = await CreateDraftAsync(context.Admin, customerId, [await RecordChargeAsync(context, customerId, sourceKind: ChargeSourceKind.BoardingStay, itemKind: ItemKind.BoardingNight)]);
+        var draftId = await CreateDraftAsync(context.Admin, customerId, [await RecordChargeAsync(context, customerId, sourceKind: ChargeSourceKind.Manual, itemKind: ItemKind.Fee)]);
 
         var issued = await ReadAsync(await context.Admin.GetAsync($"/api/staff/billing/invoices?customerId={customerId}&status=Issued"));
         Assert.Equal(invoiceId, Assert.Single(issued.GetProperty("items").EnumerateArray()).GetProperty("invoiceId").GetGuid());
@@ -650,8 +635,8 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
         var byNumber = await ReadAsync(await context.Admin.GetAsync($"/api/staff/billing/invoices?number={Uri.EscapeDataString(number[4..].ToLowerInvariant())}"));
         Assert.Contains(byNumber.GetProperty("items").EnumerateArray(), i => i.GetProperty("invoiceId").GetGuid() == invoiceId);
 
-        var boarding = await ReadAsync(await context.Admin.GetAsync($"/api/staff/billing/invoices?customerId={customerId}&businessLine=Boarding"));
-        Assert.Equal(draftId, Assert.Single(boarding.GetProperty("items").EnumerateArray()).GetProperty("invoiceId").GetGuid());
+        var shop = await ReadAsync(await context.Admin.GetAsync($"/api/staff/billing/invoices?customerId={customerId}&businessLine=Shop"));
+        Assert.Equal(new[] { invoiceId, draftId }.Order(), shop.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("invoiceId").GetGuid()).Order());
 
         var csv = await ExpectAsync(HttpStatusCode.OK, await context.Admin.GetAsync($"/api/staff/billing/invoices/export.csv?customerId={customerId}"));
         Assert.StartsWith("text/csv", csv.Content.Headers.ContentType!.MediaType);
@@ -673,8 +658,8 @@ public sealed class BillingInvoiceEndpointTests(BillingApiFactory factory) : Bil
         Assert.Equal(HttpStatusCode.NotFound, (await other.Admin.GetAsync($"/api/staff/billing/invoices/{invoiceId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await other.Admin.GetAsync($"/api/staff/billing/invoices/{invoiceId}.pdf")).StatusCode);
 
-        var (vet, _) = await StaffClientAsync(mine, StaffRoles.Vet);
-        Assert.Equal(HttpStatusCode.Forbidden, (await vet.GetAsync($"/api/staff/billing/invoices/{invoiceId}")).StatusCode);
+        var (inventory, _) = await StaffClientAsync(mine, StaffRoles.Inventory);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync($"/api/staff/billing/invoices/{invoiceId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await CreateClient().GetAsync($"/api/staff/billing/invoices/{invoiceId}")).StatusCode);
     }
 

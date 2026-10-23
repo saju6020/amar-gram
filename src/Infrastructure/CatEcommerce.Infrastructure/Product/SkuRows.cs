@@ -29,7 +29,6 @@ public sealed class SkuRow
     public ProductKind Kind { get; set; } = default!;
     public ProductStatus ProductStatus { get; set; } = default!;
     public bool ListedOnStorefront { get; set; }
-    public bool PrescriptionRequired { get; set; }
     public Guid TaxClassId { get; set; }
     public ProductCategory Category { get; set; } = default!;
     public bool IsExpiryTracked { get; set; }
@@ -71,31 +70,13 @@ public static class ProductProjections
             SkuId = s.Id, SkuCode = s.Code, Barcode = s.Barcode, SkuStatus = s.Status,
             SizeOrWeight = s.SizeOrWeight, Flavour = s.Flavour, Colour = s.Colour, PackQuantity = s.PackQuantity, ShippingWeightGrams = s.ShippingWeightGrams,
             ProductId = p.Id, ProductName = p.Name, Brand = p.Brand, ProductSlug = p.Slug, Kind = p.Kind, ProductStatus = p.Status,
-            ListedOnStorefront = p.ListedOnStorefront, PrescriptionRequired = p.PrescriptionRequired, TaxClassId = p.TaxClassId,
+            ListedOnStorefront = p.ListedOnStorefront, TaxClassId = p.TaxClassId,
             Category = p.Category, IsExpiryTracked = p.IsExpiryTracked, CountryOfOriginCode = p.CountryOfOriginCode
         });
 
     public static IQueryable<BundleComponentRow> BundleComponentRows(this CatEcommerceDbContext db) =>
         db.Products.AsNoTracking().SelectMany(p => p.BundleComponents, (p, c) => new BundleComponentRow
         { ProductId = p.Id, ComponentSkuId = c.ComponentSkuId, Quantity = c.Quantity });
-
-    /// <summary>
-    /// OQ-14 / BR-2 defence in depth (HO-SHP-001 section 1 Amended 2026-10-04): of the given bundle
-    /// products, those with ANY component whose product currently requires a prescription. A bundle
-    /// like that is never eligible, purchasable or in stock, whatever its own flag says (covers legacy
-    /// data and a race past the aggregate rule). A join of two projections, no aggregate.
-    /// </summary>
-    public static async Task<HashSet<Guid>> BundlesWithPrescriptionComponentAsync(
-        this CatEcommerceDbContext db, IReadOnlyCollection<Guid> bundleProductIds, CancellationToken ct = default)
-    {
-        var ids = bundleProductIds.ToList();
-        if (ids.Count == 0) return [];
-
-        var found = await db.BundleComponentRows().Where(c => ids.Contains(c.ProductId))
-            .Join(db.SkuRows().Where(s => s.PrescriptionRequired), c => c.ComponentSkuId, s => s.SkuId, (c, s) => c.ProductId)
-            .Distinct().ToListAsync(ct);
-        return found.ToHashSet();
-    }
 
     public static IQueryable<PriceRow> PriceRows(this CatEcommerceDbContext db) =>
         db.SkuPrices.AsNoTracking().Select(p => new PriceRow

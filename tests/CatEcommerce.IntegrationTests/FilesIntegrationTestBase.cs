@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using CatEcommerce.Domain.Aggregates.Account;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Domain.ValueObjects;
@@ -76,9 +75,7 @@ public abstract class FilesIntegrationTestBase(FilesApiFactory factory)
         return await SignInStaffAsync(mobile, password);
     }
 
-    /// <summary>Gate-fix 2026-09-27 (ARCHITECTURE MEDIUM, second pass): the customer
-    /// upload-then-attach-a-cat-photo path (§1 Amended (10)) needs a real customer and a real cat --
-    /// mirrors <c>AdministrationIntegrationTestBase</c>'s identical helpers.</summary>
+    /// <summary>Registers and signs in a fresh customer -- mirrors <c>AdministrationIntegrationTestBase</c>'s identical helper.</summary>
     protected async Task<(HttpClient Client, Guid CustomerId, string Mobile)> RegisterAndSignInCustomerAsync()
     {
         var client = CreateClient();
@@ -103,23 +100,6 @@ public abstract class FilesIntegrationTestBase(FilesApiFactory factory)
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
         return (client, customerId, mobile);
-    }
-
-    /// <summary>Seeds a cat directly through the repository, owned by <paramref name="ownerId"/>.</summary>
-    protected async Task<Guid> SeedCatAsync(Guid ownerId, string name = "Test Cat")
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatAggregate>>();
-
-        var cat = new CatAggregate(Guid.NewGuid());
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        cat.Register(new CatRegistrationDto(
-            ownerId, name, "Cat", CatSex.Female, today.AddYears(-2),
-            DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby", today,
-            new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
-
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
     }
 
     /// <summary>Builds a <c>multipart/form-data</c> request with one file part, matching what a

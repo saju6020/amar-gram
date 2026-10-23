@@ -76,17 +76,15 @@ public sealed class UpdateDiscountCodeRequest
     public bool IsActive { get; init; } = true;
 }
 
-/// <summary>HO-ORD-001 §12.4 -- <c>POST /api/cart/lines</c>. <c>CatId</c> is for a prescription SKU only; the caller is never in the body.</summary>
+/// <summary>HO-ORD-001 §12.4 -- <c>POST /api/cart/lines</c>. The caller is never in the body.</summary>
 public sealed class AddCartLineRequest
 {
     public Guid SkuId { get; init; }
     public int Quantity { get; init; } = 1;
-    public Guid? CatId { get; init; }
 }
 
 /// <summary>HO-ORD-001 §12.4 -- <c>PUT /api/cart/lines/{lineId}</c>.</summary>
 public sealed class UpdateCartLineRequest
 {
     public int? Quantity { get; init; }
-    public Guid? CatId { get; init; }
 }

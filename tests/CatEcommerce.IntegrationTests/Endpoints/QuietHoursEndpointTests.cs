@@ -36,8 +36,8 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         var (nightFactory, time) = NightFactory();
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        await RequestNotificationAsync(nightFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        await RequestNotificationAsync(nightFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await RunDeliveryPassAsync(nightFactory); // expand -> Queued, deferred to 08:00
@@ -51,7 +51,7 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         // Filtered by channel too: the always-on InApp inbox copy shares the same templateKey and
         // is never held by quiet hours, so it would otherwise ambiguously match first.
         var item = log.GetProperty("items").EnumerateArray().First(i =>
-            i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.VaccinationDue && i.GetProperty("channel").GetString() != "InApp");
+            i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.BillingInvoiceIssued && i.GetProperty("channel").GetString() != "InApp");
         Assert.Equal("Queued", item.GetProperty("status").GetString());
         Assert.True(item.TryGetProperty("deferredUntil", out var deferredUntil) && deferredUntil.ValueKind != JsonValueKind.Null);
 
@@ -82,8 +82,8 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         var factory = Factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(time)));
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        var command = await RequestNotificationAsync(factory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        var command = await RequestNotificationAsync(factory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}",
             notAfter: InsideQuietHours.AddMinutes(30)); // 23:00 Dhaka
 
@@ -98,7 +98,7 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         var to = InsideQuietHours.AddHours(20);
         var log = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         var external = log.GetProperty("items").EnumerateArray()
-            .Where(i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.VaccinationDue && i.GetProperty("channel").GetString() != "InApp")
+            .Where(i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.BillingInvoiceIssued && i.GetProperty("channel").GetString() != "InApp")
             .ToList();
         Assert.NotEmpty(external);
         Assert.All(external, item => Assert.Equal("Expired", item.GetProperty("status").GetString()));
@@ -134,8 +134,8 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         var (nightFactory, _) = NightFactory();
         var (client, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        await RequestNotificationAsync(nightFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        await RequestNotificationAsync(nightFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await RunDeliveryPassAsync(nightFactory);
@@ -182,8 +182,8 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         var branchFactory = Factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(time)));
 
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
-        await RequestNotificationAsync(branchFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        await RequestNotificationAsync(branchFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             branchId: branchId, deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await RunDeliveryPassAsync(branchFactory); // expand -- must be held by THIS branch's own override, not the shared default
@@ -193,7 +193,7 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         var log = await adminClient.GetFromJsonAsync<JsonElement>(
             $"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         var item = log.GetProperty("items").EnumerateArray().First(i =>
-            i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.VaccinationDue && i.GetProperty("channel").GetString() != "InApp");
+            i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.BillingInvoiceIssued && i.GetProperty("channel").GetString() != "InApp");
 
         Assert.Equal("Queued", item.GetProperty("status").GetString());
         Assert.True(item.TryGetProperty("deferredUntil", out var deferredUntil) && deferredUntil.ValueKind != JsonValueKind.Null);
@@ -215,8 +215,8 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         var (nightFactory, time) = NightFactory();
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        await RequestNotificationAsync(nightFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        await RequestNotificationAsync(nightFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(nightFactory); // expand -> Queued, deferred to 08:00
 
@@ -225,7 +225,7 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
         {
             var db = scope.ServiceProvider.GetRequiredService<CatEcommerceDbContext>();
             notificationId = await db.Set<NotificationAggregate>().AsNoTracking()
-                .Where(n => n.RecipientId == customerId && n.TemplateKey == NotificationTemplateCatalogue.VaccinationDue && n.Channel != NotificationChannel.InApp)
+                .Where(n => n.RecipientId == customerId && n.TemplateKey == NotificationTemplateCatalogue.BillingInvoiceIssued && n.Channel != NotificationChannel.InApp)
                 .Select(n => n.Id).FirstAsync();
         }
 
@@ -277,8 +277,8 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
 
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         // The DB failure surfaces from inside the command handler, propagates through the
@@ -333,8 +333,8 @@ public sealed class QuietHoursEndpointTests(NotificationsApiFactory factory) : N
 
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://x/y" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         for (var pass = 0; pass < NotificationRequestRules.MaxExpansionAttempts + 3; pass++)

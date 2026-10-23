@@ -7,8 +7,8 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * shadcn/ui-style Toast — copied in and owned (HO-CAT-002 §3.1, §9), wrapping
- * `@radix-ui/react-toast`. Root layout comment (HO-CAT-002 §8.3) names a Toaster; this is the
+ * shadcn/ui-style Toast — copied in and owned (the scaffold handover §3.1, §9), wrapping
+ * `@radix-ui/react-toast`. Root layout comment (the scaffold handover §8.3) names a Toaster; this is the
  * primitive it's built from. Consumed everywhere a mutation needs feedback that isn't a field
  * error (e.g. HO-APT-002's drag-move refusal, HO-ORD-002's undo-remove, HO-PHM-002's issue
  * confirmation) — via `components/ui/toaster.tsx` and `useToast()`, never a second toast

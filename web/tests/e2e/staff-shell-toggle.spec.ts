@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * HO-CAT-002 TEST gate, second pass, updated for the 7th pass's Radix-`Dialog` rebuild of the
+ * Staff shell TEST gate, second pass, updated for the 7th pass's Radix-`Dialog` rebuild of the
  * below-`sm` drawer.
  *
  * Original finding (`dbba453` era): the toggle's first click unmounted a two-button `<Fragment>`
@@ -23,11 +23,11 @@ test.beforeEach(async ({ page }) => {
  * keyboard focus to `<body>` — holds, and is if anything strengthened at 360px: Radix moves focus
  * into the sheet's own content rather than leaving it on the toggle or losing it altogether.
  */
-test.describe('StaffShell sidebar toggle — keyboard focus (HO-CAT-002 TEST gate, 2nd pass)', () => {
+test.describe('StaffShell sidebar toggle — keyboard focus (staff shell TEST gate, 2nd pass)', () => {
   for (const width of [360, 1440]) {
     test(`first activation of the toggle keeps keyboard focus @ ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto('/staff/cats');
+      await page.goto('/staff/orders');
       await page.waitForLoadState('networkidle');
 
       // Tab until focus reaches whichever toggle is visible/focusable at this width — CSS hides

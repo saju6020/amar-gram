@@ -15,16 +15,16 @@ function renderShell(children: React.ReactNode) {
 }
 
 // StaffShell watches `usePathname()` to close the below-sm sheet on any route change, including
-// the browser's own Back/Forward (CODE_REVIEW gate MEDIUM, HO-CAT-002 2nd pass) — see
+// the browser's own Back/Forward (CODE_REVIEW gate MEDIUM, the scaffold handover 2nd pass) — see
 // `staff-shell-sheet-closes-on-back-navigation.spec.ts` for the route-change regression itself.
 // This file's own tests never navigate, so a fixed pathname is all they need.
-const pathname = '/staff/cats';
+const pathname = '/staff/inventory';
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname,
 }));
 
 /**
- * Rewritten for the Radix `Dialog`-based below-`sm` sheet (HO-CAT-002 TEST gate, 7th pass) — the
+ * Rewritten for the Radix `Dialog`-based below-`sm` sheet (the scaffold handover TEST gate, 7th pass) — the
  * hand-rolled drawer this file used to cover (`override` tri-state, a `matchMedia`-driven `inert`
  * effect, a hand-rolled scrim, a manual `Escape` `keydown` listener) is gone. `StaffShell` now has
  * exactly two pieces of interactive state: `collapsed` (the sm+ in-flow toggle, unchanged in
@@ -121,8 +121,8 @@ describe('StaffShell — below-sm nav sheet (Radix Dialog)', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAccessibleName(/menu/i);
-    expect(screen.getByRole('link', { name: 'Cats' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Vaccine catalogue' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Inventory' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Procurement' })).toBeInTheDocument();
   });
 
   it('closes when a nav link inside it is clicked', async () => {
@@ -130,7 +130,7 @@ describe('StaffShell — below-sm nav sheet (Radix Dialog)', () => {
     renderShell(<StaffShell>content</StaffShell>);
     await user.click(mobileTrigger());
 
-    await user.click(screen.getByRole('link', { name: 'Cats' }));
+    await user.click(screen.getByRole('link', { name: 'Inventory' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
@@ -165,7 +165,7 @@ describe('StaffShell — below-sm nav sheet (Radix Dialog)', () => {
 });
 
 // Owner, 2026-10-16: groups open and close; only the current page's group starts open, so the
-// menu needs no scrollbar at first. (pathname is /staff/cats here, so Clinic is the open group.)
+// menu needs no scrollbar at first. (pathname is /staff/inventory here, so Stock is the open group.)
 describe('StaffShell — expandable menu groups', () => {
   function asideGroup(name: string) {
     return within(document.querySelector('aside')!).getByRole('button', { name });
@@ -173,26 +173,26 @@ describe('StaffShell — expandable menu groups', () => {
 
   it("opens only the current page's group", () => {
     renderShell(<StaffShell>content</StaffShell>);
-    expect(asideGroup('Clinic')).toHaveAttribute('aria-expanded', 'true');
-    for (const closed of ['Front desk', 'Pharmacy', 'Shop & orders', 'Team & settings'])
+    expect(asideGroup('Stock')).toHaveAttribute('aria-expanded', 'true');
+    for (const closed of ['Customers', 'Money & reports', 'Shop & orders', 'Team & settings'])
       expect(asideGroup(closed)).toHaveAttribute('aria-expanded', 'false');
     const current = document.querySelector('aside [aria-current="page"]');
-    expect(current).toHaveAttribute('aria-label', 'Cats');
+    expect(current).toHaveAttribute('aria-label', 'Inventory');
   });
 
   it('a group heading opens and closes its links, and says which list it controls', async () => {
     const user = userEvent.setup();
     renderShell(<StaffShell>content</StaffShell>);
-    const pharmacy = asideGroup('Pharmacy');
-    const list = document.getElementById(pharmacy.getAttribute('aria-controls')!)!;
+    const customers = asideGroup('Customers');
+    const list = document.getElementById(customers.getAttribute('aria-controls')!)!;
     expect(list).toHaveClass('sm:hidden');
 
-    await user.click(pharmacy);
-    expect(pharmacy).toHaveAttribute('aria-expanded', 'true');
+    await user.click(customers);
+    expect(customers).toHaveAttribute('aria-expanded', 'true');
     expect(list).not.toHaveClass('sm:hidden');
 
-    await user.click(pharmacy);
-    expect(pharmacy).toHaveAttribute('aria-expanded', 'false');
+    await user.click(customers);
+    expect(customers).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('in the phone sheet a closed group hides its links and opening it shows them', async () => {
@@ -207,9 +207,9 @@ describe('StaffShell — expandable menu groups', () => {
   });
 });
 
-// Owner, 2026-10-19: the staff area shows the same Amar Gram logo as the shop (cat badge + "Shop" tag), linking to /staff.
+// Owner, 2026-10-19: the staff area shows the same Amar Gram logo as the shop (badge + "Shop" tag), linking to /staff.
 describe('StaffShell — the Amar Gram logo', () => {
-  it('is the cat-badge logo, linking to the staff home', () => {
+  it('is the badge logo, linking to the staff home', () => {
     renderShell(<StaffShell>content</StaffShell>);
     const logo = screen.getByRole('link', { name: 'Amar Gram Shop' });
     expect(logo).toHaveAttribute('href', '/staff');

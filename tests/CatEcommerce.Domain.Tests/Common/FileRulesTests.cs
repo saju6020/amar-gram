@@ -8,14 +8,8 @@ public sealed class FileRulesTests
 {
     public static IEnumerable<object[]> EveryCanonicalPurpose()
     {
-        yield return [FilePurpose.LabResult];
-        yield return [FilePurpose.ClinicalPhoto];
-        yield return [FilePurpose.ConsentForm];
         yield return [FilePurpose.ProductImage];
-        yield return [FilePurpose.BoardingMedia];
-        yield return [FilePurpose.BoardingBelongings];
         yield return [FilePurpose.ReportExport];
-        yield return [FilePurpose.CatProfilePhoto];
     }
 
     // U1

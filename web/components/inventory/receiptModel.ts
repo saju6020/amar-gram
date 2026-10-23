@@ -111,7 +111,7 @@ export function validateReceipt(state: ReceiptFormState): DistributedErrors {
       if (problem) flag('quantityRejected', problem);
     }
     if (takes && line.lotNumber.trim() === '') flag('lotNumber', 'A lot number is required for accepted stock.');
-    if (takes && line.expiryRequired && line.expiresOn === '') flag('expiresOn', 'Food and medicine must be received with an expiry date.');
+    if (takes && line.expiryRequired && line.expiresOn === '') flag('expiresOn', 'Food and other perishables must be received with an expiry date.');
     if (rejects && line.rejectionReason === '') flag('rejectionReason', 'Say why the stock was rejected.');
     if (line.locationId === '') flag('locationId', 'Choose where it is going.');
     if (takes && !line.costFromPurchaseOrder) {

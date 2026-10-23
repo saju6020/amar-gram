@@ -25,7 +25,7 @@ function CategoryLinks({ categories }: { categories: CategoryNode[] }) {
 }
 
 /**
- * HO-SHP-002 §11.1 `ShopHeader`, restyled as the Hearth header (ADR-FE-173) - cat-disc logo, a
+ * HO-SHP-002 §11.1 `ShopHeader`, restyled as the Hearth header (ADR-FE-173) - leaf-badge logo, a
  * sunken pill `SearchBox`, the account links, the warm Cart pill, and the category pill chips (a
  * plain `<details>` disclosure on small screens, so it works without JavaScript). The
  * `useSearchParams` islands are suspended one by one, each with a server-rendered fallback, so the

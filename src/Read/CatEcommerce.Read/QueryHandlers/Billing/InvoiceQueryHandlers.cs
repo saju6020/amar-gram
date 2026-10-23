@@ -98,7 +98,7 @@ internal static class InvoiceDetailBuilder
             {
                 var e = estimate.Lines.Single(x => x.Input.Key == l.Id);
                 return new InvoiceLineViewModel(
-                    l.Id, l.ChargeId, l.BusinessLine.DisplayName, l.ItemKind.DisplayName, l.SourceKind.DisplayName, l.SourceId, l.CatId, l.Description,
+                    l.Id, l.ChargeId, l.BusinessLine.DisplayName, l.ItemKind.DisplayName, l.SourceKind.DisplayName, l.SourceId, l.Description,
                     BillingMoney.Quantity(l.Quantity), BillingMoney.Of(l.UnitPrice, currency), BillingMoney.Of(l.LineDiscount, currency),
                     BillingMoney.Of(e.Result.InvoiceDiscountShare, currency), l.TaxClassId, e.TaxClassCode,
                     (e.RatePercent ?? 0m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture), BillingMoney.Of(e.Result.NetAmount, currency),

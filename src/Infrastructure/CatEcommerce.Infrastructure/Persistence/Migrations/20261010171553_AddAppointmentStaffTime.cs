@@ -11,12 +11,12 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
     {
         // Written from the enumerations, never literals (U-X3): the occupying predicate is HO-APT-001 section 8.4's.
         private static readonly string OccupyingStatusList = string.Join(", ",
-            AppointmentStatus.Held.Value, AppointmentStatus.Booked.Value, AppointmentStatus.CheckedIn.Value, AppointmentStatus.InConsultation.Value);
+            1, 4, 5, 6);
 
         /// <summary>The backfill, public so I-A3 can run the very same statement over a table it has emptied.</summary>
         public static readonly string BackfillSql = $"""
             INSERT INTO clinic.appointment_staff_time (id, appointment_id, role, staff_account_id, starts_on, ends_on, occupies)
-            SELECT gen_random_uuid(), "Id", {StaffTimeRole.Performer.Value}, performer_id, starts_on, ends_on, TRUE
+            SELECT gen_random_uuid(), "Id", {1}, performer_id, starts_on, ends_on, TRUE
             FROM clinic.appointment
             WHERE performer_id IS NOT NULL AND starts_on IS NOT NULL AND ends_on IS NOT NULL
               AND status IN ({OccupyingStatusList}) AND NOT is_walk_in;

@@ -132,68 +132,7 @@ public sealed class GetAgeingQueryHandler(CatEcommerceDbContext db, IBusinessSet
     }
 }
 
-/// <summary>HO-BIL-001 §8.13 -- the published group summary (a boarding stay). Net line amounts (after line discounts, before tax).</summary>
-public sealed class GetBillingGroupSummaryQueryHandler(CatEcommerceDbContext db, IBusinessSettings settings)
-    : IQueryHandlerAsync<GetBillingGroupSummaryQuery, BillingGroupSummaryViewModel>
-{
-    public async Task<QueryResponse<BillingGroupSummaryViewModel>> HandleAsync(GetBillingGroupSummaryQuery query)
-    {
-        var currency = settings.GetString(SettingKeys.CommerceCurrencyCode);
-        var groupKind = EnumerationParsing.TryParse<BillingGroupKind>(query.Kind, out var parsed) && parsed is not null ? parsed : null;
-
-        var charges = groupKind is null ? [] : await db.Charges.AsNoTracking()
-            .Where(c => c.BillingGroupKind == groupKind && c.BillingGroupId == query.GroupId && c.Status == ChargeStatus.Active)
-            .Select(c => new
-            {
-                c.Id, c.BusinessLine, c.Quantity, c.UnitPriceAmount, c.LineDiscountAmount,
-                Billed = db.Set<InvoiceAggregate>().Any(i => i.Status != InvoiceStatus.Discarded && i.Lines.Any(l => l.ChargeId == c.Id)),
-            })
-            .ToListAsync();
-
-        decimal Net(decimal quantity, decimal price, decimal discount) => InvoiceCalculator.Round(quantity * price) - discount;
-
-        var byLine = charges.GroupBy(c => c.BusinessLine).OrderBy(g => g.Key.Value).Select(g => new BillingGroupLineViewModel(
-            g.Key.DisplayName, g.Count(),
-            BillingMoney.Of(g.Where(c => c.Billed).Sum(c => Net(c.Quantity, c.UnitPriceAmount, c.LineDiscountAmount)), currency),
-            BillingMoney.Of(g.Where(c => !c.Billed).Sum(c => Net(c.Quantity, c.UnitPriceAmount, c.LineDiscountAmount)), currency))).ToList();
-
-        var chargeIds = charges.Select(c => c.Id).ToList();
-        var invoices = await db.Set<InvoiceAggregate>().AsNoTracking()
-            .Where(i => i.Status != InvoiceStatus.Discarded && i.Lines.Any(l => l.ChargeId != null && chargeIds.Contains(l.ChargeId.Value)))
-            .Select(i => new { i.Id, i.Status, i.Total, i.PaidTotal, i.CreditedTotal })
-            .ToListAsync();
-
-        var earmarked = groupKind is null ? [] : await EarmarkedPaymentsAsync(db, EarmarkKind.BoardingStay, query.GroupId, currency);
-
-        var result = new BillingGroupSummaryViewModel(
-            byLine,
-            BillingMoney.Of(charges.Where(c => c.Billed).Sum(c => Net(c.Quantity, c.UnitPriceAmount, c.LineDiscountAmount)), currency),
-            BillingMoney.Of(charges.Where(c => !c.Billed).Sum(c => Net(c.Quantity, c.UnitPriceAmount, c.LineDiscountAmount)), currency),
-            BillingMoney.Of(invoices.Where(i => i.Status != InvoiceStatus.Draft).Sum(i => InvoiceStatusRules.Outstanding(i.Total, i.PaidTotal, i.CreditedTotal)), currency),
-            earmarked, invoices.Select(i => i.Id).ToList());
-
-        return new QueryResponse<BillingGroupSummaryViewModel> { Result = result };
-    }
-
-    internal static async Task<IReadOnlyList<EarmarkedCreditViewModel>> EarmarkedPaymentsAsync(CatEcommerceDbContext db, EarmarkKind kind, Guid sourceId, string currency)
-    {
-        var rows = await db.Set<PaymentAggregate>().AsNoTracking()
-            .Where(p => p.Status == PaymentStatus.Accepted && p.Earmark != null && p.Earmark.Kind == kind && p.Earmark.SourceId == sourceId)
-            .Select(p => new
-            {
-                p.Id, Label = p.Earmark!.Label,
-                Unallocated = p.Amount
-                    - p.Entries.Where(e => e.Kind == AllocationEntryKind.Allocate).Sum(e => e.Amount)
-                    + p.Entries.Where(e => e.Kind == AllocationEntryKind.Release).Sum(e => e.Amount)
-                    - p.RefundedTotal,
-            })
-            .ToListAsync();
-
-        return rows.Select(r => new EarmarkedCreditViewModel(r.Id, r.Label, BillingMoney.Of(r.Unallocated, currency))).ToList();
-    }
-}
-
-/// <summary>HO-BIL-001 §8.13 -- the published per-source status (an order, an appointment).</summary>
+/// <summary>HO-BIL-001 §8.13 -- the published per-source status (an order).</summary>
 public sealed class GetSourceBillingStatusQueryHandler(CatEcommerceDbContext db, IBusinessSettings settings)
     : IQueryHandlerAsync<GetSourceBillingStatusQuery, SourceBillingStatusViewModel>
 {

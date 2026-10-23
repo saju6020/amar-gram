@@ -11,9 +11,8 @@ public static partial class RecordClassification
         new TableClassification("product", "product", RecordClass.Operational, HardDeletePolicy.Forbidden, "Catalogue record; never deleted (ADR-095)"),
 
         // Operational, not CurrentState: individual SKUs are added/discontinued, never wholesale
-        // replaced, and other contexts (Inventory, Orders, Pharmacy) hold a SKU id for years
-        // (ADR-079) -- the same "referenced by other tables, permanent identifier" basis as
-        // clinic.vaccine.
+        // replaced, and other contexts (Inventory, Orders) hold a SKU id for years
+        // (ADR-079) -- a "referenced by other tables, permanent identifier" basis.
         new TableClassification("product", "sku", RecordClass.Operational, HardDeletePolicy.Forbidden, "ADR-079: other contexts hold SKU ids for years; never reused or deleted"),
 
         // CurrentState: ProductAggregate.SetImages wholesale-replaces the owned collection
@@ -22,7 +21,7 @@ public static partial class RecordClassification
 
         // Financial: "a price ... in force" (HO-XCT-001 §8.2's ordered rule), append-only and
         // effective-dated (ADR-080, HO-ADM-001 ADR-049 applied to goods) -- never edited or
-        // deleted, mirroring admin.tax_rate/admin.service_price.
+        // deleted, mirroring admin.tax_rate.
         new TableClassification("product", "sku_price", RecordClass.Financial, HardDeletePolicy.Forbidden, "D-9 (price in force); append-only (ADR-080)"),
 
         new TableClassification("product", "sourcing_origin", RecordClass.Operational, HardDeletePolicy.Forbidden, "Shop-by-Country reference data (US-SHP-05)"),
@@ -31,8 +30,7 @@ public static partial class RecordClassification
         // (ADR-082, narrowed) -- not history, the current 90-day figure only.
         new TableClassification("product", "product_sales_stats", RecordClass.CurrentState, HardDeletePolicy.AggregateOnly, "System-written copy, display only (ADR-082)"),
 
-        // CustomerPersonal: customer-authored content tied to an identity (the same basis as
-        // clinic.cat_photo) -- but never erased on anonymisation by explicit design (ADR-096: a
+        // CustomerPersonal: customer-authored content tied to an identity -- but never erased on anonymisation by explicit design (ADR-096: a
         // published review stays public, credited to "A verified buyer"; only the display name
         // changes, derived at read time from account.customer_account, never stored here).
         new TableClassification("product", "product_review", RecordClass.CustomerPersonal, HardDeletePolicy.Forbidden, "ADR-096: published reviews stay after anonymisation"),

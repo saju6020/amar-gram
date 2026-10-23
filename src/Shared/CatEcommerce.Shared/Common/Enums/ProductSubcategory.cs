@@ -10,10 +10,6 @@ public sealed class ProductSubcategory(int value, string displayName, ProductCat
     public static readonly ProductSubcategory Dry = new(1, nameof(Dry), ProductCategory.CatFood);
     public static readonly ProductSubcategory Wet = new(2, nameof(Wet), ProductCategory.CatFood);
     public static readonly ProductSubcategory Treats = new(3, nameof(Treats), ProductCategory.CatFood);
-    public static readonly ProductSubcategory Kitten = new(4, nameof(Kitten), ProductCategory.CatFood);
-    public static readonly ProductSubcategory Adult = new(5, nameof(Adult), ProductCategory.CatFood);
-    public static readonly ProductSubcategory Senior = new(6, nameof(Senior), ProductCategory.CatFood);
-    public static readonly ProductSubcategory Therapeutic = new(7, nameof(Therapeutic), ProductCategory.CatFood);
 
     public static readonly ProductSubcategory Clumping = new(8, nameof(Clumping), ProductCategory.Litter);
     public static readonly ProductSubcategory Silica = new(9, nameof(Silica), ProductCategory.Litter);

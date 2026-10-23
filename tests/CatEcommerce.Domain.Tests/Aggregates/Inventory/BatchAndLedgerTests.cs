@@ -135,7 +135,7 @@ public sealed class BatchAndLedgerTests
     {
         [MovementKind.Receipt] = +1, [MovementKind.TransferIn] = +1, [MovementKind.AdjustmentIn] = +1, [MovementKind.CountGain] = +1, [MovementKind.Return] = +1,
         [MovementKind.TransferOut] = -1, [MovementKind.AdjustmentOut] = -1, [MovementKind.CountLoss] = -1, [MovementKind.Wastage] = -1,
-        [MovementKind.Sale] = -1, [MovementKind.Dispense] = -1, [MovementKind.ClinicalUse] = -1, [MovementKind.BoardingUse] = -1,
+        [MovementKind.Sale] = -1,
     };
 
     public static IEnumerable<object[]> Kinds() => Enumeration.GetAll<MovementKind>().Select(k => new object[] { k });
@@ -151,17 +151,17 @@ public sealed class BatchAndLedgerTests
     }
 
     [Fact]
-    public void U_D8_EveryKindIsClassifiedExactlyOnce_AndTheConsumingKindsAreTheFour()
+    public void U_D8_EveryKindIsClassifiedExactlyOnce_AndTheOnlyConsumingKindIsSale()
     {
-        Assert.Equal(13, Enumeration.GetAll<MovementKind>().Count());
+        Assert.Equal(10, Enumeration.GetAll<MovementKind>().Count());
         Assert.Equal(MovementKindRules.Incoming.Count + MovementKindRules.Outgoing.Count, Enumeration.GetAll<MovementKind>().Count());
         Assert.Empty(MovementKindRules.Incoming.Intersect(MovementKindRules.Outgoing));
-        Assert.Equal([MovementKind.BoardingUse, MovementKind.ClinicalUse, MovementKind.Dispense, MovementKind.Sale], MovementKindRules.Consuming.OrderBy(k => k.DisplayName));
+        Assert.Equal([MovementKind.Sale], MovementKindRules.Consuming.OrderBy(k => k.DisplayName));
     }
 
     private static StockLedgerEntryDto Entry(MovementKind kind, decimal delta, bool consumes = false) =>
         new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), kind, delta, consumes, StockReferenceKind.GoodsReceipt, Guid.NewGuid(), null, "GRN-2026-000012",
-            null, null, false, null, Guid.NewGuid(), null, DateTimeOffset.UtcNow, TestUserContext.Create());
+            null, false, null, Guid.NewGuid(), null, DateTimeOffset.UtcNow, TestUserContext.Create());
 
     [Fact]
     public void U_D8_ALedgerEntryWithTheWrongSignForItsKindIsRefused()
@@ -178,7 +178,7 @@ public sealed class BatchAndLedgerTests
     [Fact]
     public void U_D8_OnlyASaleCanConsumeAReservation()
     {
-        Assert.Throws<DomainRuleViolationException>(() => StockLedgerEntryAggregate.Record(Entry(MovementKind.Dispense, -1m, consumes: true)));
+        Assert.Throws<DomainRuleViolationException>(() => StockLedgerEntryAggregate.Record(Entry(MovementKind.Wastage, -1m, consumes: true)));
     }
 
     // ── U-D9 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

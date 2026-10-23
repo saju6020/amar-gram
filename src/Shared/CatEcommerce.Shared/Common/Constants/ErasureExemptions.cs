@@ -17,7 +17,7 @@ namespace CatEcommerce.Shared.Common.Constants;
 ///
 /// This base file is not yet built by HO-XCT-001 itself (its own §13 names it) -- created early
 /// here because HO-APT-001's own gate fix (ARCHITECTURE HIGH #4, 2026-09-28) needs a registration
-/// point for its own exemption entry (§8.8/OQ-7 exempts Appointments from erasure). HO-XCT-001 may
+/// point for its own exemption entry. HO-XCT-001 may
 /// reshape this when it lands, per its own design.
 /// </summary>
 public static partial class ErasureExemptions

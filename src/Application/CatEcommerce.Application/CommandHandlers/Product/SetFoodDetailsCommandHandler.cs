@@ -28,13 +28,6 @@ public sealed class SetFoodDetailsCommandHandler(
         if (product.Version != command.ExpectedVersion)
             return Violation(BusinessViolationCodes.ProductVersionConflict, nameof(command.ExpectedVersion), $"Expected version {command.ExpectedVersion} but the product is at {product.Version}.");
 
-        LifeStage? lifeStage = null;
-        if (!string.IsNullOrWhiteSpace(command.LifeStage))
-        {
-            if (!EnumerationParsing.TryParse<LifeStage>(command.LifeStage, out lifeStage) || lifeStage is null)
-                return Violation(BusinessViolationCodes.InvalidProductCategory, nameof(command.LifeStage), $"'{command.LifeStage}' is not a known life stage.");
-        }
-
         ProteinSource? proteinSource = null;
         if (!string.IsNullOrWhiteSpace(command.ProteinSource))
         {
@@ -44,7 +37,7 @@ public sealed class SetFoodDetailsCommandHandler(
 
         try
         {
-            product.SetFoodDetails(command.ToDomainDto(lifeStage, proteinSource), command.UserContext, command.CorrelationId);
+            product.SetFoodDetails(command.ToDomainDto(proteinSource), command.UserContext, command.CorrelationId);
         }
         catch (DomainRuleViolationException ex)
         {

@@ -82,7 +82,7 @@ public sealed class AccountCommandValidatorsTests
     {
         var result = new CreateStaffAccountCommandValidator().Validate(new CreateStaffAccountCommand
         {
-            StaffAccountId = Guid.NewGuid(), FullName = "Vet", MobileNumber = "01712345678", RoleIds = [],
+            StaffAccountId = Guid.NewGuid(), FullName = "Inventory", MobileNumber = "01712345678", RoleIds = [],
             UserContext = TestUserContext.Create(), CorrelationId = Guid.NewGuid()
         });
 

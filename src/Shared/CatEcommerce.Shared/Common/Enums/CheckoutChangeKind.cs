@@ -7,6 +7,4 @@ public sealed class CheckoutChangeKind(int value, string displayName) : Enumerat
     public static readonly CheckoutChangeKind PriceDecreased = new(2, nameof(PriceDecreased));
     public static readonly CheckoutChangeKind QuantityReduced = new(3, nameof(QuantityReduced));
     public static readonly CheckoutChangeKind NowUnavailable = new(4, nameof(NowUnavailable));
-    public static readonly CheckoutChangeKind PrescriptionAuthorisationExpired = new(5, nameof(PrescriptionAuthorisationExpired));
-    public static readonly CheckoutChangeKind PrescriptionCatRequired = new(6, nameof(PrescriptionCatRequired));
 }

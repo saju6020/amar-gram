@@ -52,13 +52,13 @@ public static class OrderStockFulfilment
 
     /// <summary>
     /// The reservation becomes the sale (<c>ConsumeReservationAsync</c>, enlisted): dispatch for a delivery, collection for a pickup. One call per line so
-    /// each movement carries <b>that line's</b> cat in the party stamp (US-IMP-11 AC2). Null on success, else the refusal to answer with.
+    /// each movement carries the customer in the party stamp (US-IMP-11 AC2). Null on success, else the refusal to answer with.
     /// </summary>
     public static async Task<CommandResponse?> ConsumeAsync(IStockLedger ledger, OrderAggregate order)
     {
         foreach (var line in order.Lines)
         {
-            var result = await ledger.ConsumeReservationAsync(OrderStock.ReferenceFor(order, line.Id), OrderStock.PartyFor(order, line.CatId), default);
+            var result = await ledger.ConsumeReservationAsync(OrderStock.ReferenceFor(order, line.Id), OrderStock.PartyFor(order), default);
             if (!result.IsSuccess)
                 return Violation(result.ViolationCode ?? BusinessViolationCodes.OrderNotFullyAllocated, result.PropertyName ?? "Lines", result.Message ?? "The reservation could not be turned into a sale.");
         }
@@ -88,7 +88,7 @@ public static class OrderStockFulfilment
         foreach (var (skuId, quantity) in line.RequiredBySku().OrderBy(r => r.Key))
         {
             var reference = OrderStock.ReferenceFor(order, line.Id);
-            var party = OrderStock.PartyFor(order, line.CatId);
+            var party = OrderStock.PartyFor(order);
 
             var result = skuId == target.SkuId
                 ? await ledger.ReserveBatchAsync(new StockBatchDemand(order.BranchId, skuId, quantity, targetBatchId, reason), reference, party, default)

@@ -14,9 +14,7 @@ namespace CatEcommerce.Application.CommandHandlers.Product;
 
 /// <summary>
 /// HO-SHP-001 section 11.4 C15. The SKU must be on sale (an Active SKU of an Active, listed product)
-/// and its availability NOW must be <c>OutOfStock</c> (else <c>SkuAlreadyAvailable</c>); a
-/// prescription product needs an authorised cat for this customer (else <c>PurchaseNotPermitted</c>
-/// -- an alert for something the customer cannot buy would only tease them); one Pending alert per
+/// and its availability NOW must be <c>OutOfStock</c> (else <c>SkuAlreadyAvailable</c>); one Pending alert per
 /// customer per SKU, pre-checked here and backed by the filtered unique index (section 12.5). The
 /// controller dispatches <c>GetStockAlertDeliverabilityQuery</c> afterwards for the response.
 /// </summary>
@@ -25,7 +23,6 @@ public sealed class RequestStockAlertCommandHandler(
     IAggregateRootRepository<ProductAggregate> productRepository,
     IAggregateRootRepository<StockAlertAggregate> alertRepository,
     ISkuAvailabilityReader availabilityReader,
-    IDietAuthorisationGate dietGate,
     TimeProvider timeProvider)
     : ICommandHandlerAsync<RequestStockAlertCommand>
 {
@@ -46,13 +43,6 @@ public sealed class RequestStockAlertCommandHandler(
         var availability = await availabilityReader.GetAsync([command.SkuId]);
         if (availability.GetValueOrDefault(command.SkuId) == AvailabilityStatus.InStock)
             return Violation(BusinessViolationCodes.SkuAlreadyAvailable, nameof(command.SkuId), "This item is already available.");
-
-        if (product.PrescriptionRequired)
-        {
-            var cats = await dietGate.GetAuthorisedCatsAsync(customerId, command.SkuId, CancellationToken.None);
-            if (cats.Count == 0)
-                return Violation(BusinessViolationCodes.PurchaseNotPermitted, nameof(command.SkuId), "This item needs a vet's authorisation for your cat.");
-        }
 
         if (await alertRepository.ExistAsync(a => a.CustomerId == customerId && a.SkuId == command.SkuId && a.Status == StockAlertStatus.Pending))
             return Violation(BusinessViolationCodes.StockAlertAlreadyRequested, nameof(command.SkuId), ShopMessages.StockAlertAlreadyRequested);
@@ -116,7 +106,6 @@ public sealed class NotifyStockAlertCommandHandler(
     IAggregateRootRepository<StockAlertAggregate> alertRepository,
     IAggregateRootRepository<ProductAggregate> productRepository,
     ISkuAvailabilityReader availabilityReader,
-    IDietAuthorisationGate dietGate,
     INotificationOutbox outbox,
     INotificationLinkBuilder linkBuilder,
     TimeProvider timeProvider)
@@ -136,17 +125,6 @@ public sealed class NotifyStockAlertCommandHandler(
         if (product is null || product.Status != ProductStatus.Active || !product.ListedOnStorefront) return new CommandResponse { IsSuccess = true };
 
         var sku = product.Skus.First(s => s.Id == alert.SkuId);
-
-        // Row 34: the alert was only accepted because the customer had an authorised cat for a prescription
-        // product, and an authorisation can lapse before the stock arrives. Re-check at the moment of
-        // notifying: telling a customer "it is back" about food they may no longer buy is the same tease the
-        // request-time check exists to prevent. No write -- a later pass retries, and a renewed authorisation
-        // is notified as normal.
-        if (product.PrescriptionRequired)
-        {
-            var cats = await dietGate.GetAuthorisedCatsAsync(alert.CustomerId, alert.SkuId, CancellationToken.None);
-            if (cats.Count == 0) return new CommandResponse { IsSuccess = true };
-        }
 
         try
         {

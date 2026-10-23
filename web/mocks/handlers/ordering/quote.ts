@@ -1,10 +1,8 @@
 import {
-  CAT_NAMES,
   MAX_QUANTITY_PER_LINE,
   PICKUP_BRANCHES,
   ZONE,
   addDays,
-  authorisedCatsFor,
   db,
   formatCents,
   money,
@@ -26,7 +24,6 @@ export interface QuoteLineInput {
   lineId: string;
   skuId: string;
   quantity: number;
-  catId: string | null;
   priceWhenAddedCents: Cents;
 }
 
@@ -48,7 +45,6 @@ export interface PricedLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  catId: string | null;
   quantity: number;
   unitCents: Cents;
   subtotalCents: Cents;
@@ -78,9 +74,6 @@ export interface QuoteResult {
   level: string | null;
   discountApplied: boolean;
 }
-
-const catRef = (catId: string | null) =>
-  catId ? { id: catId, name: CAT_NAMES[catId] ?? 'Your cat' } : null;
 
 function hash(text: string): string {
   let h = 5381;
@@ -186,7 +179,6 @@ export function computeQuote(lines: QuoteLineInput[], choices: QuoteChoicesInput
         lineRef: line.lineId,
         skuId: line.skuId,
         productName: name,
-        cat: catRef(line.catId),
         quantity: line.quantity,
         reasonCode,
       });
@@ -194,19 +186,6 @@ export function computeQuote(lines: QuoteLineInput[], choices: QuoteChoicesInput
     };
     if (!info || !info.purchasable || info.priceCents === null) {
       exclude('NowUnavailable', 'NowUnavailable', `'${name}' is no longer available and has been left out of this order.`);
-      continue;
-    }
-    if (info.requiresPrescription && !line.catId) {
-      exclude('PrescriptionCatRequired', 'PrescriptionCatRequired', `Choose which cat '${name}' is for before you check out.`);
-      if (!blocking.includes('PrescriptionCatRequired')) blocking.push('PrescriptionCatRequired');
-      continue;
-    }
-    if (info.requiresPrescription && line.catId && !authorisedCatsFor(line.skuId).includes(line.catId)) {
-      exclude(
-        'PrescriptionAuthorisationExpired',
-        'PrescriptionAuthorisationExpired',
-        `'${name}' needs a current veterinary authorisation for ${CAT_NAMES[line.catId] ?? 'your cat'}, and it is no longer valid. Book a consultation to renew it.`,
-      );
       continue;
     }
     const sellable = stockOf(line.skuId);
@@ -241,7 +220,6 @@ export function computeQuote(lines: QuoteLineInput[], choices: QuoteChoicesInput
       skuId: line.skuId,
       productName: name,
       variantLabel: info.variantLabel,
-      catId: info.requiresPrescription ? line.catId : null,
       quantity,
       unitCents: info.priceCents,
       subtotalCents: info.priceCents * quantity,
@@ -255,7 +233,7 @@ export function computeQuote(lines: QuoteLineInput[], choices: QuoteChoicesInput
   }
 
   if (lines.length === 0) blocking.unshift('CartEmpty');
-  else if (priced.length === 0 && !blocking.includes('PrescriptionCatRequired')) blocking.unshift('NothingToPlace');
+  else if (priced.length === 0) blocking.unshift('NothingToPlace');
 
   const goods = priced.reduce((sum, l) => sum + l.subtotalCents, 0);
 
@@ -403,7 +381,7 @@ export function computeQuote(lines: QuoteLineInput[], choices: QuoteChoicesInput
       choices.pickupBranchId ?? null,
       choices.paymentMethod ?? null,
       discount?.applied ? discount.code : null,
-      priced.map((l) => [l.skuId, l.quantity, l.unitCents, l.catId]),
+      priced.map((l) => [l.skuId, l.quantity, l.unitCents]),
       totals,
     ]),
   );
@@ -413,7 +391,6 @@ export function computeQuote(lines: QuoteLineInput[], choices: QuoteChoicesInput
     skuId: l.skuId,
     productName: l.productName,
     variantLabel: l.variantLabel,
-    cat: catRef(l.catId),
     quantity: l.quantity,
     unitPrice: money(l.unitCents),
     lineSubtotal: money(l.subtotalCents),

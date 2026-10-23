@@ -31,7 +31,13 @@ describe('ActiveBranchPicker — HO-ADM-002 §11.2, ADR-FE-016', () => {
       ),
       http.get('*/api/admin/branches', () =>
         HttpResponse.json([
-          { id: 'b1', code: 'MAIN', name: 'Main clinic', timeZoneId: 'Asia/Dhaka', isActive: true },
+          {
+            id: 'b1',
+            code: 'MAIN',
+            name: 'Dhanmondi outlet',
+            timeZoneId: 'Asia/Dhaka',
+            isActive: true,
+          },
         ]),
       ),
     );
@@ -52,11 +58,17 @@ describe('ActiveBranchPicker — HO-ADM-002 §11.2, ADR-FE-016', () => {
       ),
       http.get('*/api/admin/branches', () =>
         HttpResponse.json([
-          { id: 'b1', code: 'MAIN', name: 'Main clinic', timeZoneId: 'Asia/Dhaka', isActive: true },
+          {
+            id: 'b1',
+            code: 'MAIN',
+            name: 'Dhanmondi outlet',
+            timeZoneId: 'Asia/Dhaka',
+            isActive: true,
+          },
           {
             id: 'b2',
             code: 'LDN',
-            name: 'London clinic',
+            name: 'London outlet',
             timeZoneId: 'Europe/London',
             isActive: true,
           },
@@ -74,7 +86,7 @@ describe('ActiveBranchPicker — HO-ADM-002 §11.2, ADR-FE-016', () => {
   });
 
   it('ADM-002-FU2: a long branch name is truncated by classes, not by data — full name in option text and title', async () => {
-    const longName = 'The Very Long Named Veterinary Branch Number Two'.padEnd(40, 'x');
+    const longName = 'The Very Long Named Organic Grocery Outlet Number Two'.padEnd(40, 'x');
     server.use(
       http.get('*/api/staff/branches/mine', () =>
         HttpResponse.json({
@@ -87,7 +99,13 @@ describe('ActiveBranchPicker — HO-ADM-002 §11.2, ADR-FE-016', () => {
       http.get('*/api/admin/branches', () =>
         HttpResponse.json([
           { id: 'b1', code: 'LONG', name: longName, timeZoneId: 'Asia/Dhaka', isActive: true },
-          { id: 'b2', code: 'MAIN', name: 'Main clinic', timeZoneId: 'Asia/Dhaka', isActive: true },
+          {
+            id: 'b2',
+            code: 'MAIN',
+            name: 'Dhanmondi outlet',
+            timeZoneId: 'Asia/Dhaka',
+            isActive: true,
+          },
         ]),
       ),
     );
@@ -103,6 +121,6 @@ describe('ActiveBranchPicker — HO-ADM-002 §11.2, ADR-FE-016', () => {
     // and the title follows the selection. (The real overflow guard is Playwright E-B3; jsdom has no layout.)
     await user.selectOptions(select, 'b2');
     expect(queryClient.getQueryData(ACTIVE_BRANCH_KEY)).toBe('b2');
-    await waitFor(() => expect(select).toHaveAttribute('title', 'Main clinic'));
+    await waitFor(() => expect(select).toHaveAttribute('title', 'Dhanmondi outlet'));
   });
 });

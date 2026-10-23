@@ -159,42 +159,25 @@ public sealed class ShopBacklogFixesDomainTests
 
     // Row 31
     [Fact]
-    public void UpdateDetails_DraftFoodProductMovedToAnotherCategory_ClearsPrescriptionFlagAndFoodDetails()
+    public void UpdateDetails_DraftFoodProductMovedToAnotherCategory_ClearsFoodDetails()
     {
         var product = NewProduct(ProductCategory.CatFood);
-        product.SetFoodDetails(new FoodDetails("Royal Canin", LifeStage.Adult, ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetPrescriptionRequired(true, TestUserContext.Create(), Guid.NewGuid());
-        Assert.True(product.PrescriptionRequired);
+        product.SetFoodDetails(new FoodDetails("Royal Canin", ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
         product.UpdateDetails(Details(product, ProductCategory.ToysAndFurniture));
 
-        Assert.False(product.PrescriptionRequired);
         Assert.Null(product.FoodDetails);
         Assert.DoesNotContain("chicken", product.SearchText);
     }
 
     [Fact]
-    public void UpdateDetails_LeavingFood_WithAPrescriptionFlag_RecordsTheFlagChange()
+    public void UpdateDetails_StayingInFood_KeepsFoodDetails()
     {
         var product = NewProduct(ProductCategory.CatFood);
-        product.SetPrescriptionRequired(true, TestUserContext.Create(), Guid.NewGuid());
-        var before = product.Events.Count;
-
-        product.UpdateDetails(Details(product, ProductCategory.ToysAndFurniture));
-
-        Assert.Contains(product.Events.Skip(before), e => e is CatEcommerce.Domain.Events.Product.ProductPrescriptionRequirementChangedEvent { PrescriptionRequired: false });
-    }
-
-    [Fact]
-    public void UpdateDetails_StayingInFood_KeepsFoodDetailsAndFlag()
-    {
-        var product = NewProduct(ProductCategory.CatFood);
-        product.SetFoodDetails(new FoodDetails("Royal Canin", LifeStage.Adult, ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetPrescriptionRequired(true, TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails("Royal Canin", ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
         product.UpdateDetails(Details(product, ProductCategory.CatFood));
 
-        Assert.True(product.PrescriptionRequired);
         Assert.NotNull(product.FoodDetails);
     }
 
@@ -295,7 +278,7 @@ public sealed class ShopBacklogFixesDomainTests
 
     [Theory]
     [InlineData("[home](/)")]
-    [InlineData("[cats](/shop/products?category=CatFood)")]
+    [InlineData("[food](/shop/products?category=CatFood)")]
     [InlineData("[ext](https://example.com/a)")]
     public void LimitedMarkup_AcceptsHttpsAndSiteRelativeLinks(string markup)
     {

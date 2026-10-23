@@ -168,13 +168,13 @@ public sealed class RetentionCommandHandlerTests
     public async Task APurgeSource_IsCalledWithTheCutoff_AndItsResultIsReturnedAndAudited()
     {
         var audit = new FakeAggregateRootRepository<AuditEntryAggregate>();
-        var source = new FakePurgeSource("boarding-media", new PurgeResult(5, 3, 1, 1));
+        var source = new FakePurgeSource("order-media", new PurgeResult(5, 3, 1, 1));
         var handler = new RunPurgeSourceCommandHandler([source], audit, new FakeClientIpAccessor(), new FakeTimeProvider(Now));
         var cutoff = Now.AddMonths(-12);
 
         var response = await handler.HandleAsync(new RunPurgeSourceCommand
         {
-            SourceKey = "boarding-media", Cutoff = cutoff, BatchSize = 500, UserContext = Admin, CorrelationId = Guid.NewGuid()
+            SourceKey = "order-media", Cutoff = cutoff, BatchSize = 500, UserContext = Admin, CorrelationId = Guid.NewGuid()
         });
 
         Assert.Equal(cutoff, source.LastCutoff);

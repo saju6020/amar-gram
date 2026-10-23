@@ -20,9 +20,6 @@ public sealed class InvoiceLine
     public ItemKind ItemKind { get; private set; } = default!;
     public ChargeSourceKind SourceKind { get; private set; } = default!;
     public Guid SourceId { get; private set; }
-    public BillingGroupKind? BillingGroupKind { get; private set; }
-    public Guid? BillingGroupId { get; private set; }
-    public Guid? CatId { get; private set; }
     public string Description { get; private set; } = default!;
     public decimal Quantity { get; private set; }
     public decimal UnitPrice { get; private set; }
@@ -49,9 +46,6 @@ public sealed class InvoiceLine
         ItemKind = input.ItemKind;
         SourceKind = input.SourceKind;
         SourceId = input.SourceId;
-        BillingGroupKind = input.BillingGroupKind;
-        BillingGroupId = input.BillingGroupId;
-        CatId = input.CatId;
         Description = input.Description;
         Quantity = input.Quantity;
         UnitPrice = input.UnitPrice;

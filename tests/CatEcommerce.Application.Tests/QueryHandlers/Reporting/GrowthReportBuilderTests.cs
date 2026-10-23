@@ -81,16 +81,14 @@ public sealed class GrowthReportBuilderTests
     {
         var a = Guid.NewGuid();
         var firstEver = new Dictionary<Guid, DateTimeOffset> { [a] = At(2026, 1, 10) };
-        var invoices = new[] { Invoice(a, At(2026, 1, 10), line: BusinessLine.Clinic.Value), Invoice(a, At(2026, 2, 10), line: BusinessLine.Shop.Value) };
+        var invoices = new[] { Invoice(a, At(2026, 1, 10), line: BusinessLine.Shop.Value), Invoice(a, At(2026, 2, 10), line: 99) }; // 99: a line that is not the shop
         var today = new DateOnly(2026, 3, 15);
 
         var any = CohortRetentionBuilder.Build(invoices, firstEver, "AnyLine", new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), today, Local).Single();
         var purchase = CohortRetentionBuilder.Build(invoices, firstEver, "RepeatPurchase", new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), today, Local).Single();
-        var visit = CohortRetentionBuilder.Build(invoices, firstEver, "RepeatVisit", new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), today, Local).Single();
 
         Assert.Equal(100.0m, any["month1"]);
-        Assert.Equal(100.0m, purchase["month1"]); // the shop invoice in February
-        Assert.Equal(0.0m, visit["month1"]);      // no clinic invoice in February
+        Assert.Equal(0.0m, purchase["month1"]);   // no shop invoice in February
         Assert.Equal(0.0m, any["month2"]);        // March exists (it is 15 March)
         Assert.Null(any["month3"]);               // April has not happened
         Assert.Null(any["month12"]);
@@ -98,13 +96,13 @@ public sealed class GrowthReportBuilderTests
 
     // ── Lifetime value ───────────────────────────────────────────────────────────────────────────────────
     [Fact]
-    public void TheLifetimeValue_IsInvoicesLessCreditNotes_AcrossLines_InBands_WithTheSharesPerLine_AndTheTopCustomers()
+    public void TheLifetimeValue_IsInvoicesLessCreditNotes_InBands_AndTheTopCustomers()
     {
         var big = Guid.NewGuid();
         var small = Guid.NewGuid();
         var events = new[]
         {
-            Invoice(big, At(2026, 10, 1), BusinessLine.Clinic.Value, 3000m), Invoice(big, At(2026, 10, 2), BusinessLine.Shop.Value, 1000m), new ActivityEvent(big, At(2026, 10, 3), BusinessLine.Shop.Value, -200m, true),
+            Invoice(big, At(2026, 10, 1), BusinessLine.Shop.Value, 3000m), Invoice(big, At(2026, 10, 2), BusinessLine.Shop.Value, 1000m), new ActivityEvent(big, At(2026, 10, 3), BusinessLine.Shop.Value, -200m, true),
             Invoice(small, At(2026, 10, 4), BusinessLine.Shop.Value, 400m),
         };
 
@@ -114,11 +112,10 @@ public sealed class GrowthReportBuilderTests
         Assert.Equal(["Under 1,000", "1,000 to 4,999"], bands.Select(r => (string)r["label"]!));
         var upper = bands[1];
         Assert.Equal(new ReportMoney(3800m, "BDT"), upper["averageLtv"]);
-        Assert.Equal(78.9m, upper["clinicShare"]);   // 3000 / 3800
-        Assert.Equal(21.1m, upper["shopShare"]);     // 800 / 3800
+        Assert.Equal(1L, upper["customers"]);
+        Assert.Equal(["section", "label", "customers", "averageLtv"], upper.Keys);
 
         var top = rows.Where(r => (string)r["section"]! == "Top 50").ToList();
         Assert.Equal(["Big Owner", "Small Owner"], top.Select(r => (string)r["label"]!));
-        Assert.Equal("Clinic, Shop", top[0]["linesUsed"]);
     }
 }

@@ -22,7 +22,7 @@ public sealed class FakeStockLedgerTests
         OverrideReason: null);
 
     private static readonly StockReference Reference = new(StockReferenceKind.CustomerOrder, Guid.NewGuid(), null, null);
-    private static readonly StockParty Party = new(Guid.NewGuid(), Guid.NewGuid());
+    private static readonly StockParty Party = new(Guid.NewGuid());
 
     [Fact]
     public async Task PlanAsync_fails_closed()
@@ -77,16 +77,6 @@ public sealed class FakeStockLedgerTests
     }
 
     [Fact]
-    public async Task AdjustAsync_fails_closed()
-    {
-        var adjustment = new StockAdjustment(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1m, "correction", null);
-
-        var result = await _sut.AdjustAsync(adjustment, Reference, Party, CancellationToken.None);
-
-        Assert.False(result.IsSuccess);
-    }
-
-    [Fact]
     public void RecordShortfall_does_not_throw()
     {
         var shortfall = new StockShortfall(Guid.NewGuid(), Guid.NewGuid(), 1m, Guid.NewGuid(), null);
@@ -103,23 +93,5 @@ public sealed class FakeStockLedgerTests
 
         Assert.True(result.IsSuccess);
         Assert.Empty(result.Value!);
-    }
-
-    [Fact]
-    public async Task GetDispensaryBatchesAsync_succeeds_with_no_batches()
-    {
-        var result = await _sut.GetDispensaryBatchesAsync(Guid.NewGuid(), [Guid.NewGuid()], CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Empty(result.Value!);
-    }
-
-    [Fact]
-    public async Task GetClinicDispensaryAsync_fails_closed_because_no_dispensary_exists_yet()
-    {
-        var result = await _sut.GetClinicDispensaryAsync(Guid.NewGuid(), CancellationToken.None);
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal("DispensaryNotFound", result.ViolationCode);
     }
 }

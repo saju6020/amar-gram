@@ -13,7 +13,7 @@ namespace CatEcommerce.Application.CommandHandlers.Product;
 
 /// <summary>
 /// HO-SHP-001 section 11.4 C13. The handler only gathers facts about the component SKUs' own
-/// products (is it a bundle, a prescription product, discontinued) -- the aggregate decides
+/// products (is it a bundle, discontinued) -- the aggregate decides
 /// (rule 20). A component SKU that exists nowhere gets no fact, which the aggregate refuses.
 /// </summary>
 public sealed class SetBundleComponentsCommandHandler(
@@ -41,7 +41,7 @@ public sealed class SetBundleComponentsCommandHandler(
 
             facts.Add(new BundleComponentFact(
                 sku.Id, sku.Code, sku.Status == SkuStatus.Active, owner.Status == ProductStatus.Active,
-                owner.Kind == ProductKind.Bundle, owner.PrescriptionRequired));
+                owner.Kind == ProductKind.Bundle));
         }
 
         var inputs = command.Components.Select(c => new BundleComponentInputDto(Guid.NewGuid(), c.ComponentSkuId, c.Quantity)).ToList();

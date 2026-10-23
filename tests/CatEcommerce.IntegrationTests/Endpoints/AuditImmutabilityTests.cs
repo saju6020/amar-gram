@@ -67,9 +67,6 @@ public sealed class AuditImmutabilityTests(AccountsApiFactory factory) : Account
     // I-A6, strengthened (ACCEPTANCE gate LOW): the fixed-IP factory is what makes the IP
     // assertion meaningful -- TestServer supplies no remote address otherwise, so
     // HttpContextClientIpAccessor would always report null and this assertion would be vacuous.
-    // Also registers a cat through the same request pipeline, proving the interceptor's IP
-    // capture and insert-shaped before/after both hold for a bounded context other than Accounts
-    // (the three shipped AuditCat*Handlers HO-ACC-001 §8.11 updates for Category/IP).
     [Fact]
     public async Task Registration_ProducesADataChangeAuditRowInTheSameTransactionWithIp()
     {
@@ -77,66 +74,13 @@ public sealed class AuditImmutabilityTests(AccountsApiFactory factory) : Account
         var fixedIpFactory = Factory.WithFixedRemoteIpAddress(ip);
         using var client = fixedIpFactory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost/") });
 
-        var (customerId, mobile, password) = await RegisterCustomerAsync(client);
+        var (customerId, _, _) = await RegisterCustomerAsync(client);
         var customerRow = await GetLatestAuditRowAsync(fixedIpFactory, customerId, "CustomerRegisteredEvent");
 
         Assert.Null(customerRow.Before);
         Assert.NotNull(customerRow.After);
         Assert.Contains("FullName", customerRow.After);
         Assert.Equal(IPAddress.Parse(ip), customerRow.IpAddress);
-
-        // HO-ADM-001 §12.3 / ADR-043: Cats.Register now requires a signed-in caller.
-        var signIn = await client.PostAsJsonAsync("/api/auth/sign-in", new { identifier = mobile, password }, Json);
-        Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
-        client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
-
-        var catResponse = await client.PostAsJsonAsync("/api/cats", new
-        {
-            ownerId = customerId, name = "Audit Test Cat", sex = "Female", dateOfBirthPrecision = "Estimated"
-        }, Json);
-        Assert.Equal(HttpStatusCode.Created, catResponse.StatusCode);
-        var catBody = await catResponse.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var catId = catBody.GetProperty("catId").GetGuid();
-
-        var catRow = await GetLatestAuditRowAsync(fixedIpFactory, catId, "CatRegisteredEvent");
-
-        Assert.Null(catRow.Before);
-        Assert.NotNull(catRow.After);
-        Assert.Equal(IPAddress.Parse(ip), catRow.IpAddress);
-    }
-
-    // ACCEPTANCE gate HIGH (A28): a modified CatAggregate scalar field. This case was already
-    // correct before the fix (root scalar changes never went through the buggy Added-owned path),
-    // but it is asserted here so the whole before/after contract for this file is exercised in one
-    // place, not just the parts that were broken.
-    [Fact]
-    public async Task CatProfileUpdate_ProducesABeforeAfterPairWithTheOldAndNewName()
-    {
-        // HO-ADM-001 §12.3 / ADR-043: Cats.Register/EditProfile now require a signed-in caller --
-        // a customer works here and their forced OwnerId (F19) is exactly what this test needs.
-        var (client, ownerId, _, _) = await RegisterAndSignInAsync();
-        using var _client = client;
-
-        var registerResponse = await client.PostAsJsonAsync("/api/cats", new
-        {
-            ownerId, name = "Original Cat Name", sex = "Male", dateOfBirthPrecision = "Estimated"
-        }, Json);
-        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
-        var catId = (await registerResponse.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("catId").GetGuid();
-
-        var updateResponse = await client.PutAsJsonAsync($"/api/cats/{catId}/profile", new
-        {
-            name = "Renamed Cat", sex = "Male", dateOfBirthPrecision = "Estimated"
-        }, Json);
-        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
-
-        var row = await GetLatestAuditRowAsync(Factory, catId, "CatProfileUpdatedEvent");
-
-        Assert.NotNull(row.Before);
-        Assert.NotNull(row.After);
-        Assert.Contains("\"Name\":\"Original Cat Name\"", row.Before);
-        Assert.DoesNotContain("Original Cat Name", row.After);
-        Assert.Contains("\"Name\":\"Renamed Cat\"", row.After);
     }
 
     // ACCEPTANCE gate HIGH (A28): setting an email from null. Before the fix, the newly-Added
@@ -204,8 +148,8 @@ public sealed class AuditImmutabilityTests(AccountsApiFactory factory) : Account
 
     // ACCEPTANCE gate HIGH (A28): an address ADDED to an EXISTING address book (the book's root
     // aggregate is Modified, not Added, so this exercises the owned-COLLECTION case, distinct
-    // from the whole-book-created-on-first-write insert case already covered by I-A6's cat/
-    // customer inserts).
+    // from the whole-book-created-on-first-write insert case already covered by I-A6's
+    // customer insert).
     [Fact]
     public async Task AddingASecondAddress_TheNewAddressAppearsOnlyInAfter()
     {

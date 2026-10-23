@@ -12,8 +12,8 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 /// the tree:
 ///
 /// 1. I-A3 (§16) says a disallowed call gets "one <c>AuthorizationDenied</c> audit row" -- every
-///    existing 403 test (<c>CatVaccineAuthorizationSecurityTests</c>,
-///    <c>AdminContentPolicyEndpointTests</c>'s Policies.Manage cases) asserts the status code and the
+///    existing 403 test (<c>AdminContentPolicyEndpointTests</c>'s Policies.Manage cases, among
+///    others) asserts the status code and the
 ///    response body's violation code, but none of them then searches the audit log to confirm
 ///    <c>RecordAuthorizationDenialCommandHandler</c> actually wrote the row §12.3/ADR-043 promises.
 ///
@@ -29,43 +29,6 @@ public sealed class AdminAuthorizationDenialAndNulFilterCrossAreaEndpointTests(A
     private static string NewCode(string prefix = "T") => prefix + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
 
     // ---------- I-A3: a disallowed call is refused AND leaves exactly one AuthorizationDenied row ----------
-
-    [Fact]
-    public async Task NurseMarksCatDeceased_Returns403_AndWritesOneAuthorizationDeniedAuditRow()
-    {
-        var ownerId = Guid.NewGuid();
-        var catId = await SeedCatAsync(ownerId);
-
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var client = await SignInStaffAsync(nurse.Mobile, nurse.Password);
-
-        var from = DateTimeOffset.UtcNow.AddMinutes(-5);
-
-        var response = await client.PostAsJsonAsync(
-            $"/api/cats/{catId}/deceased",
-            new { deceasedOn = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd") },
-            Json);
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-
-        var to = DateTimeOffset.UtcNow.AddMinutes(5);
-
-        var admin = await SeedStaffAsync(StaffRoles.Administrator);
-        using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
-
-        var search = await adminClient.GetAsync(
-            $"/api/admin/audit-entries?actorUserId={nurse.StaffAccountId}&entityType=Authorization&action=AuthorizationDenied" +
-            $"&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}");
-        Assert.Equal(HttpStatusCode.OK, search.StatusCode);
-
-        var body = await search.Content.ReadFromJsonAsync<JsonElement>(Json);
-        var items = body.GetProperty("items").EnumerateArray().ToList();
-
-        Assert.Single(items);
-        var row = items[0];
-        Assert.Equal(nurse.StaffAccountId, row.GetProperty("actorUserId").GetGuid());
-        Assert.Equal("AuthorizationDenied", row.GetProperty("action").GetString());
-        Assert.Equal(Actions.Cats.MarkDeceased, row.GetProperty("reason").GetString());
-    }
 
     [Fact]
     public async Task ShopManagerPublishesPolicyVersion_Returns403_AndWritesOneAuthorizationDeniedAuditRow()

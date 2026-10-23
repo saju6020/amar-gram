@@ -40,8 +40,8 @@ export default function RetentionPage() {
         </nav>
       </div>
       <p className="text-sm text-ink-muted">
-        Clinical, financial, regulatory and audit records are never deleted automatically. They are
-        counted for review when their period ends.
+        Financial, regulatory and audit records are never deleted automatically. They are counted
+        for review when their period ends.
       </p>
       {review.isLoading ? (
         <LoadingState rows={3} label="Loading records eligible for review…" />

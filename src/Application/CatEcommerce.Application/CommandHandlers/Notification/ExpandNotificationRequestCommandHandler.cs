@@ -76,8 +76,8 @@ public sealed class ExpandNotificationRequestCommandHandler(
         var standardValues = new Dictionary<string, string>(request.Variables, StringComparer.Ordinal)
         {
             [StandardTemplateVariables.RecipientName] = recipient.FullName,
-            [StandardTemplateVariables.ClinicName] = branch?.Name ?? "Amar Gram",
-            [StandardTemplateVariables.ClinicPhone] = branch?.PhoneNumber ?? ""
+            [StandardTemplateVariables.OutletName] = branch?.Name ?? "Amar Gram",
+            [StandardTemplateVariables.OutletPhone] = branch?.PhoneNumber ?? ""
         };
 
         var customisedTemplate = await templateRepository.GetByFilterAsync(t => t.Key == request.TemplateKey);

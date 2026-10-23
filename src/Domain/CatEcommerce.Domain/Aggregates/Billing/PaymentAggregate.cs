@@ -210,7 +210,7 @@ public sealed class PaymentAggregate : AggregateRoot
 
         if (Earmark is { IsReleased: false } && !dto.InvoiceMatchesEarmark)
             throw new DomainRuleViolationException(BusinessViolationCodes.EarmarkMismatch,
-                "This payment is set aside for a specific order or stay and can only be applied to its invoice, unless the earmark is released.", nameof(dto.InvoiceId));
+                "This payment is set aside for a specific order and can only be applied to its invoice, unless the earmark is released.", nameof(dto.InvoiceId));
 
         if (_entries.Count >= BillingRules.MaxAllocationEntries)
             throw new DomainRuleViolationException(BusinessViolationCodes.TooManyAllocations, "This payment has reached its limit of allocation entries.", nameof(dto.InvoiceId));

@@ -34,9 +34,8 @@ public sealed class GetProductDetailQueryHandler(
             .Where(p => p.Slug == query.Slug && p.Status == ProductStatus.Active && p.ListedOnStorefront)
             .Select(p => new
             {
-                p.Id, p.Slug, p.Name, p.Brand, p.Description, p.Category, p.Subcategory, p.Tags, p.Kind, p.CountryOfOriginCode, p.PrescriptionRequired,
+                p.Id, p.Slug, p.Name, p.Brand, p.Description, p.Category, p.Subcategory, p.Tags, p.Kind, p.CountryOfOriginCode,
                 Manufacturer = p.FoodDetails == null ? null : p.FoodDetails.Manufacturer,
-                FoodLifeStage = p.FoodDetails == null ? null : p.FoodDetails.LifeStage,
                 FoodProtein = p.FoodDetails == null ? null : p.FoodDetails.ProteinSource,
                 IngredientList = p.FoodDetails == null ? null : p.FoodDetails.IngredientList,
                 FeedingGuide = p.FoodDetails == null ? null : p.FoodDetails.FeedingGuide,
@@ -87,7 +86,7 @@ public sealed class GetProductDetailQueryHandler(
 
         FoodDetailViewModel? food = null;
         var isFood = product.Category == ProductCategory.CatFood;
-        var hasFoodDetails = product.Manufacturer is not null || product.FoodLifeStage is not null || product.FoodProtein is not null
+        var hasFoodDetails = product.Manufacturer is not null || product.FoodProtein is not null
             || product.IngredientList is not null || product.FeedingGuide is not null || product.StorageInstructions is not null
             || product.ProteinPercent is not null || product.FatPercent is not null
             || product.FibrePercent is not null || product.MoisturePercent is not null;
@@ -98,7 +97,7 @@ public sealed class GetProductDetailQueryHandler(
                 ? new GuaranteedAnalysisViewModel(protein, fat, fibre, moisture)
                 : null;
 
-            food = new FoodDetailViewModel(product.Manufacturer, product.FoodLifeStage?.DisplayName, product.FoodProtein?.DisplayName,
+            food = new FoodDetailViewModel(product.Manufacturer, product.FoodProtein?.DisplayName,
                 localised.IngredientList, analysis, localised.FeedingGuide, product.StorageInstructions);
         }
 
@@ -111,7 +110,7 @@ public sealed class GetProductDetailQueryHandler(
 
         var result = new ProductDetailViewModel(
             product.Id, product.Slug, localised.Name, product.Brand, localised.Description, product.Category.DisplayName,
-            product.Subcategory?.DisplayName, product.Tags, product.Kind.DisplayName, country, product.PrescriptionRequired,
+            product.Subcategory?.DisplayName, product.Tags, product.Kind.DisplayName, country,
             food, productImages, skuViewModels, new RatingSummary(rating?.RatingAverage, rating?.RatingCount ?? 0),
             businessSettings.GetBool(CatEcommerce.Shared.Common.Constants.SettingKeys.CommercePricesIncludeTax), localised.Locale, localised.FieldLocales,
             await BuildBundleAsync(product.Id, product.Kind));

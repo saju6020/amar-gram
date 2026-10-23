@@ -14,21 +14,21 @@ import { Button } from '@/components/ui/button';
 import { OFFLINE_CANT_SAVE_LABEL, useWriteEnabled } from '@/lib/hooks/useConnectivity';
 
 /**
- * `components/common/ConfirmDialog.tsx` — HO-CAT-002 §11.7, UI-3.
+ * `components/common/ConfirmDialog.tsx` — the scaffold handover §11.7, UI-3.
  *
  * "Takes an explicit consequence description. No generic 'Are you sure?'" — `consequence` is a
  * required prop for exactly that reason: it is a compile error to render this without stating
- * what the action does (MarkDeceasedDialog, TransferOwnershipDialog, the schedule-price dialog,
+ * what the action does (the archive-product dialog, the role-removal dialog, the schedule-price dialog,
  * the maintenance switch, …all build on this rather than a second confirm implementation).
  *
  * Built on `components/ui/dialog.tsx`'s Radix primitive: `Escape` closes for free, and focus
- * returns to whatever opened it via `useDialogReturnFocus` (HO-CAT-002 §8.5 — component test
+ * returns to whatever opened it via `useDialogReturnFocus` (the scaffold handover §8.5 — component test
  * U28).
  */
 export interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** The dialog's heading — the action being confirmed, e.g. "Mark Whiskers as deceased". */
+  /** The dialog's heading — the action being confirmed, e.g. "Archive Organic rice 5 kg". */
   title: string;
   /** The explicit, plain-language statement of what this action does. Required — UI-3. */
   consequence: React.ReactNode;
@@ -40,7 +40,7 @@ export interface ConfirmDialogProps {
   /** Shown on the confirm button while `onConfirm`'s promise is pending. */
   pendingLabel?: string;
   /** `destructive` for an action that removes access or reverses something (transfer ownership,
-   *  clear high-risk, cancel); the default `primary` styling otherwise (mark deceased, publish). */
+   *  clear high-risk, cancel); the default `primary` styling otherwise (archive, publish). */
   variant?: 'primary' | 'destructive';
 }
 

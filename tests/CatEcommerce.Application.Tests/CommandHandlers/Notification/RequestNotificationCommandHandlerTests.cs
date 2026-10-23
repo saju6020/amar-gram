@@ -20,10 +20,10 @@ public sealed class RequestNotificationCommandHandlerTests
     private static RequestNotificationCommand Command(string? dedupKey = null) => new()
     {
         RequestId = Guid.NewGuid(),
-        TemplateKey = NotificationTemplateCatalogue.VaccinationDue,
+        TemplateKey = NotificationTemplateCatalogue.InventoryBatchRecall,
         RecipientKind = NotificationRecipientKind.Customer.DisplayName,
         RecipientId = Guid.NewGuid(),
-        Variables = new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://x/y" },
+        Variables = new Dictionary<string, string> { ["productName"] = "Organic Mustard Oil 1 L", ["lotNumber"] = "L2406-17", ["expiresOn"] = "2027-03-31", ["customerAdvice"] = "Stop using it." },
         DeduplicationKey = dedupKey,
         UserContext = TestUserContext.Create(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
     };

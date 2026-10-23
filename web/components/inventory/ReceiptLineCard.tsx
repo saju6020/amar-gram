@@ -63,7 +63,7 @@ export function ReceiptLineCard({
           label="Expiry date"
           type="date"
           required={line.expiryRequired}
-          hint={line.expiryRequired ? 'Food and medicine must be received with an expiry date.' : 'Optional for this item.'}
+          hint={line.expiryRequired ? 'Food and other perishables must be received with an expiry date.' : 'Optional for this item.'}
           value={line.expiresOn}
           error={errors.expiresOn}
           onChange={(e) => onChange({ expiresOn: e.target.value })}

@@ -19,14 +19,11 @@ public sealed class ChargeAggregate : AggregateRoot
 {
     public Guid CustomerId { get; private set; }
     public Guid BranchId { get; private set; }
-    public Guid? CatId { get; private set; }
     public BusinessLine BusinessLine { get; private set; } = default!;
     public ItemKind ItemKind { get; private set; } = default!;
     public ChargeSourceKind SourceKind { get; private set; } = default!;
     public Guid SourceId { get; private set; }
     public string SourceLineRef { get; private set; } = default!;
-    public BillingGroupKind? BillingGroupKind { get; private set; }
-    public Guid? BillingGroupId { get; private set; }
     public string Description { get; private set; } = default!;
     public decimal Quantity { get; private set; }
     public decimal UnitPriceAmount { get; private set; }
@@ -76,22 +73,17 @@ public sealed class ChargeAggregate : AggregateRoot
             throw new DomainRuleViolationException(BusinessViolationCodes.InvalidTag, "The reporting tag is too long.", nameof(request.ReportingTag));
         BillingFreeText.RefuseCardNumber(request.ReportingTag, nameof(request.ReportingTag));
 
-        if ((request.BillingGroupKind is null) != (request.BillingGroupId is null))
-            throw new DomainRuleViolationException(BusinessViolationCodes.InvalidEnumValue, "A billing group needs both a kind and an id.", nameof(request.BillingGroupId));
 
         if (!ChargeRules.MayOverrideBusinessLine(request.SourceKind) && request.BusinessLine != ChargeRules.DefaultBusinessLine(request.SourceKind))
             throw new DomainRuleViolationException(BusinessViolationCodes.InvalidEnumValue, "The business line does not match the charge's source.", nameof(request.BusinessLine));
 
         CustomerId = request.CustomerId;
         BranchId = request.BranchId;
-        CatId = request.CatId;
         BusinessLine = request.BusinessLine;
         ItemKind = request.ItemKind;
         SourceKind = request.SourceKind;
         SourceId = request.SourceId;
         SourceLineRef = lineRef;
-        BillingGroupKind = request.BillingGroupKind;
-        BillingGroupId = request.BillingGroupId;
         Description = request.Description.Trim();
         Quantity = request.Quantity;
         UnitPriceAmount = request.UnitPrice.Amount;

@@ -112,7 +112,7 @@ public sealed class OrderAggregate : AggregateRoot
         PlacedOn = dto.PlacedOn;
 
         _lines.AddRange(dto.Lines.Select(l => new OrderLine(
-            l.LineId, l.LineNumber, l.SkuId, l.ProductId, l.ProductName, l.VariantLabel, l.Barcode, l.ReturnClass, l.IsBundle, l.CatId, l.Quantity, l.UnitPrice,
+            l.LineId, l.LineNumber, l.SkuId, l.ProductId, l.ProductName, l.VariantLabel, l.Barcode, l.ReturnClass, l.IsBundle, l.Quantity, l.UnitPrice,
             l.LineSubtotal, l.LineDiscount, l.OrderDiscountShare, l.TaxClassId, l.TaxRatePercent, l.TaxAmount, l.LineTotal, l.Components)));
 
         Status = OrderTransitionRules.InitialStatus(dto.PaymentMethod);

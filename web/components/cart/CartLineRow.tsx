@@ -5,7 +5,6 @@ import { Amount } from '@/components/billing/Amount';
 import { ProductPackArt, type PackTone } from '@/components/hearth/ProductPackArt';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CatChip } from '@/components/orders/OrderLines';
 import { resolveFileUrl } from '@/lib/api/files';
 import type { CartLine } from '@/lib/api/cart';
 import { formatMoney } from '@/lib/format/money';
@@ -14,8 +13,8 @@ import { QuantityStepper } from './QuantityStepper';
 
 /**
  * `components/cart/CartLineRow.tsx` — HO-ORD-002 §11.1, Hearth cart card (docs/design/orders/
- * Cart.dc.html `.icard`). One line: image (or a tinted pack tile), product and variant, the cat chip on
- * a prescription line, availability and price notes **as text** (never colour alone), the stepper and
+ * Cart.dc.html `.icard`). One line: image (or a tinted pack tile), product and variant,
+ * availability and price notes **as text** (never colour alone), the stepper and
  * Remove. An unavailable line is dimmed, cannot be changed, and offers removal. Every number is the
  * server's (`availability`, `availableQuantity`, `priceChanged`, `lineSubtotal`).
  */
@@ -76,7 +75,6 @@ export function CartLineRow({
                 <Amount money={line.unitPrice} /> each
               </>
             )}
-            {line.requiresPrescription ? ' · prescription food' : ''}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {line.availability === 'InStock' && (
@@ -99,12 +97,6 @@ export function CartLineRow({
                 icon={<TrendingUp size={12} aria-hidden="true" />}
               >
                 {`Price is now ${formatMoney(line.unitPrice)} (was ${formatMoney(line.priceWhenAdded)})`}
-              </Badge>
-            )}
-            {line.cat && <CatChip name={line.cat.name} appearance="hearth" />}
-            {line.prescriptionStatus === 'NotAuthorised' && (
-              <Badge variant="danger" className="whitespace-normal">
-                No current vet authorisation for this cat
               </Badge>
             )}
           </div>

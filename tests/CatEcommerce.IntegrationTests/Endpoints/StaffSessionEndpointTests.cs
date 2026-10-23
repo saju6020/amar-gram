@@ -35,7 +35,7 @@ public sealed class StaffSessionEndpointTests(AccountsApiFactory factory) : Acco
 
         var staff = new StaffAccountAggregate(Guid.NewGuid());
         staff.Create(new StaffAccountCreationDto(
-            "New Hire", MobileNumber.Create(mobile), null, ["Nurse"],
+            "New Hire", MobileNumber.Create(mobile), null, ["Reception"],
             new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
         await repository.SaveAsync(staff, EventPublishOption.InMemoryPublishOnly);
         return staff.Id;

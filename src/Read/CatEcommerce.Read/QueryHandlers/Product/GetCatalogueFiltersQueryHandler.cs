@@ -38,12 +38,6 @@ public sealed class GetCatalogueFiltersQueryHandler(CatEcommerceDbContext db, IM
         var origins = originGroups.Select(o => new OriginCount(o.Code, CountryCodes.FindName(o.Code) ?? o.Code, o.Count))
             .OrderBy(o => o.Name).ToList();
 
-        var lifeStageGroups = await entries.Where(e => e.LifeStage != null)
-            .GroupBy(e => e.LifeStage!.Value)
-            .Select(g => new { Value = g.Key, Count = g.Count() })
-            .ToListAsync();
-        var lifeStages = lifeStageGroups.Select(l => new NamedCount(Enumeration.FromValue<LifeStage>(l.Value).DisplayName, l.Count)).ToList();
-
         var proteinGroups = await entries.Where(e => e.ProteinSource != null)
             .GroupBy(e => e.ProteinSource!.Value)
             .Select(g => new { Value = g.Key, Count = g.Count() })
@@ -53,7 +47,7 @@ public sealed class GetCatalogueFiltersQueryHandler(CatEcommerceDbContext db, IM
         var minPrice = await entries.Where(e => e.MinPrice != null).Select(e => (decimal?)e.MinPrice!.Value).MinAsync();
         var maxPrice = await entries.Where(e => e.MaxPrice != null).Select(e => (decimal?)e.MaxPrice!.Value).MaxAsync();
 
-        var result = new CatalogueFiltersViewModel(brands, origins, lifeStages, proteins, new PriceBounds(minPrice, maxPrice));
+        var result = new CatalogueFiltersViewModel(brands, origins, proteins, new PriceBounds(minPrice, maxPrice));
         cache.Set(cacheKey, result, TimeSpan.FromSeconds(shopOptions.Value.Catalogue.FacetCacheSeconds));
 
         return new QueryResponse<CatalogueFiltersViewModel> { Result = result };

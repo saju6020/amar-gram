@@ -3,14 +3,14 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 /**
- * `components/common/ErrorState.tsx` — HO-CAT-002 §11.7, Definition of Done, and NFR-USA-4 ("the
+ * `components/common/ErrorState.tsx` — the scaffold handover §11.7, Definition of Done, and NFR-USA-4 ("the
  * message shown is ours, never the server's"). Matches `docs/design/portal/BalancesStates.dc.html`
  * / `CatTileStates.dc.html`'s "unavailable" pattern: an icon that isn't alarm-red (`--ink-muted`,
  * not `--danger-ink` — this is "couldn't load", not "something is wrong with your data"), a bold
  * one-line title, a reassuring caption, and a **Try again** button that refetches.
  *
  * Never pass `error.message` from an `ApiError` straight into `description` — map it to a
- * plain-language string first (HO-CAT-002 §11.8's "never render errorCode" rule applies to raw
+ * plain-language string first (the scaffold handover §11.8's "never render errorCode" rule applies to raw
  * server/error text generally, not only `errorCode`).
  */
 export interface ErrorStateProps {

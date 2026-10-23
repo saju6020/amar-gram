@@ -25,10 +25,10 @@ function seedEntries(): AuditEntry[] {
       occurredOn: '2027-01-05T10:15:00Z',
       actorUserId: administrationFixtureIds.adminStaffId,
       actorDisplayName: 'Ada Administrator',
-      action: 'ServicePriceSet',
+      action: 'ProductPriceSet',
       category: 'DataChange',
-      entityType: 'ServicePriceAggregate',
-      entityId: administrationFixtureIds.serviceConsultationId,
+      entityType: 'SkuPriceAggregate',
+      entityId: 'sku-0000-0000-0000-000000000401',
       // U-G2 — a formula-looking reason; the diff table renders it as plain text only.
       reason: '=HYPERLINK("https://example.com","click")',
       beforeValue: JSON.stringify({ amount: '1500.00' }),
@@ -125,7 +125,7 @@ export const adminAuditHandlers: HttpHandler[] = [
       headers: {
         'Content-Type': 'text/csv',
         // `Content-Disposition: attachment` — not the anchor's own `download` attribute, which the
-        // HTML spec ignores for a cross-origin URL (this export URL always is, HO-CAT-002 §12.2) —
+        // HTML spec ignores for a cross-origin URL (this export URL always is) —
         // is what actually forces a download here rather than a same-tab navigation to raw CSV text.
         'Content-Disposition': 'attachment; filename="audit-log.csv"',
         'Cache-Control': 'no-store',

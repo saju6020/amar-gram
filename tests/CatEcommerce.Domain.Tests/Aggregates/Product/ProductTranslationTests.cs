@@ -16,8 +16,8 @@ public sealed class ProductTranslationTests
     private static ProductAggregate NewProduct()
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Cat Tree", "PurrCare", ProductCategory.ToysAndFurniture, null,
-            Guid.NewGuid(), "cat-tree", null, null, TestUserContext.Create(), Guid.NewGuid()));
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Bamboo Shelf", "PurrCare", ProductCategory.ToysAndFurniture, null,
+            Guid.NewGuid(), "bamboo-shelf", null, null, TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }
 
@@ -27,7 +27,7 @@ public sealed class ProductTranslationTests
     [Fact]
     public void U_H7_TheDefaultLocale_IsNotTranslatable()
     {
-        var ex = Assert.Throws<DomainRuleViolationException>(() => Set(NewProduct(), "en", "Cat Tree"));
+        var ex = Assert.Throws<DomainRuleViolationException>(() => Set(NewProduct(), "en", "Bamboo Shelf"));
         Assert.Equal(BusinessViolationCodes.DefaultLocaleNotTranslatable, ex.ErrorCode);
     }
 

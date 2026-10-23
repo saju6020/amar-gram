@@ -77,10 +77,5 @@ public sealed class IssueInvoiceFromChargesCommandValidator : AbstractValidator<
             RuleFor(x => x.Selector.Source!.Kind).NotEmpty().MustBeValidEnumeration<IssueInvoiceFromChargesCommand, ChargeSourceKind>();
             RuleFor(x => x.Selector.Source!.Id).NotEmpty();
         });
-        When(x => x.Selector?.BillingGroup is not null, () =>
-        {
-            RuleFor(x => x.Selector.BillingGroup!.Kind).NotEmpty().MustBeValidEnumeration<IssueInvoiceFromChargesCommand, BillingGroupKind>();
-            RuleFor(x => x.Selector.BillingGroup!.Id).NotEmpty();
-        });
     }
 }

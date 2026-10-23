@@ -20,14 +20,11 @@ public sealed class ChargeConfiguration : IEntityTypeConfiguration<ChargeAggrega
 
         builder.Property(x => x.CustomerId).HasColumnName("customer_id").IsRequired();
         builder.Property(x => x.BranchId).HasColumnName("branch_id").IsRequired();
-        builder.Property(x => x.CatId).HasColumnName("cat_id");
         builder.Property(x => x.BusinessLine).HasColumnName("business_line").HasEnumerationConversion().IsRequired();
         builder.Property(x => x.ItemKind).HasColumnName("item_kind").HasEnumerationConversion().IsRequired();
         builder.Property(x => x.SourceKind).HasColumnName("source_kind").HasEnumerationConversion().IsRequired();
         builder.Property(x => x.SourceId).HasColumnName("source_id").IsRequired();
         builder.Property(x => x.SourceLineRef).HasColumnName("source_line_ref").HasMaxLength(100).IsRequired();
-        builder.Property(x => x.BillingGroupKind).HasColumnName("billing_group_kind").HasNullableEnumerationConversion();
-        builder.Property(x => x.BillingGroupId).HasColumnName("billing_group_id");
         builder.Property(x => x.Description).HasColumnName("description").HasMaxLength(300).IsRequired();
         builder.Property(x => x.Quantity).HasColumnName("quantity").HasColumnType("numeric(10,3)").IsRequired();
         builder.Property(x => x.UnitPriceAmount).HasColumnName("unit_price_amount").HasMoneyColumn().IsRequired();
@@ -48,7 +45,6 @@ public sealed class ChargeConfiguration : IEntityTypeConfiguration<ChargeAggrega
 
         builder.HasIndex(x => new { x.SourceKind, x.SourceId, x.SourceLineRef }).IsUnique().HasDatabaseName("ix_charge_source");
         builder.HasIndex(x => new { x.CustomerId, x.Status }).HasDatabaseName("ix_charge_customer_status");
-        builder.HasIndex(x => new { x.BillingGroupKind, x.BillingGroupId, x.ServiceDate }).HasDatabaseName("ix_charge_billing_group");
         builder.HasIndex(x => new { x.BranchId, x.ServiceDate }).HasDatabaseName("ix_charge_branch_service_date");
 
         builder.ConfigureRootTail();

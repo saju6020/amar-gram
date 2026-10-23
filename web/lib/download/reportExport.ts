@@ -22,7 +22,7 @@ import { saveBlob } from './saveBlob';
  * with `Retry-After` — arrives as a typed error the page can explain instead of a raw JSON page.
  *
  * Like `lib/api/inventory-download.ts` it uses `XMLHttpRequest`, so `client.ts` stays the only
- * `fetch` call site (HO-CAT-002 §8.2 rule 2); it sends the same identity headers `apiFetch` does
+ * `fetch` call site; it sends the same identity headers `apiFetch` does
  * (session cookie, `X-Branch-Id`). An export is a `GET`, so no CSRF header is needed (HO-RPT-001
  * §12.4).
  */

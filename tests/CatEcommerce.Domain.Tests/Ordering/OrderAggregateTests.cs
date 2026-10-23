@@ -27,8 +27,8 @@ public sealed class OrderAggregateTests
     {
         var lineList = new List<OrderLineDto>
         {
-            new(Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), "Food", "Food", null, ProductReturnClass.Food, false, null, 2, 850m, 1700m, 0m, 170m, Guid.NewGuid(), 15m, 229.50m, 1759.50m, []),
-            new(Guid.NewGuid(), 2, Guid.NewGuid(), Guid.NewGuid(), "Toy", "Toy", null, ProductReturnClass.Other, false, null, 1, 120m, 120m, 0m, 12m, Guid.NewGuid(), 0m, 0m, 108m, []),
+            new(Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), "Food", "Food", null, ProductReturnClass.Food, false, 2, 850m, 1700m, 0m, 170m, Guid.NewGuid(), 15m, 229.50m, 1759.50m, []),
+            new(Guid.NewGuid(), 2, Guid.NewGuid(), Guid.NewGuid(), "Toy", "Toy", null, ProductReturnClass.Other, false, 1, 120m, 120m, 0m, 12m, Guid.NewGuid(), 0m, 0m, 108m, []),
         };
         lines?.Invoke(lineList);
 
@@ -166,7 +166,7 @@ public sealed class OrderAggregateTests
     public void AnOrderHoldsAtMost50Lines()
     {
         var many = Enumerable.Range(1, 51).Select(n => new OrderLineDto(
-            Guid.NewGuid(), n, Guid.NewGuid(), Guid.NewGuid(), "P", "P", null, ProductReturnClass.Other, false, null, 1, 1m, 1m, 0m, 0m, Guid.NewGuid(), 0m, 0m, 1m, [])).ToList();
+            Guid.NewGuid(), n, Guid.NewGuid(), Guid.NewGuid(), "P", "P", null, ProductReturnClass.Other, false, 1, 1m, 1m, 0m, 0m, Guid.NewGuid(), 0m, 0m, 1m, [])).ToList();
         var dto = Dto() with { Lines = many, Totals = new OrderTotals(51m, 0m, 0m, 0m, 0m, 51m) };
 
         Assert.Throws<InvalidOperationException>(() => new OrderAggregate(Guid.NewGuid()).Place(dto));
@@ -418,7 +418,7 @@ public sealed class OrderAggregateTests
         var order = Placed(lines: l =>
         {
             l.Clear();
-            l.Add(new OrderLineDto(Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), "Starter kit", "Kit", null, ProductReturnClass.Other, true, null, 2, 100m, 200m, 0m, 0m,
+            l.Add(new OrderLineDto(Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), "Starter kit", "Kit", null, ProductReturnClass.Other, true, 2, 100m, 200m, 0m, 0m,
                 Guid.NewGuid(), 0m, 0m, 200m, [new OrderLineComponent(componentA, 1), new OrderLineComponent(componentB, 3)]));
         }, totals: new OrderTotals(200m, 0m, 0m, 60m, 0m, 260m));
 

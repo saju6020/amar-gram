@@ -5,7 +5,7 @@ namespace CatEcommerce.Infrastructure.Retention;
 
 /// <summary>
 /// HO-XCT-001 section 12.2 -- when the retention worker runs its passes, as pure functions of the main-branch clock (so they can be tested with a fake
-/// one). Calendar concepts are the clinic's, never UTC's and never <c>DateTime.Today</c>.
+/// one). Calendar concepts are the business's, never UTC's and never <c>DateTime.Today</c>.
 /// </summary>
 public static class RetentionSchedule
 {

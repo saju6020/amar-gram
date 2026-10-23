@@ -125,7 +125,7 @@ public static class ReportingFixtures
     public static System.Collections.Concurrent.ConcurrentDictionary<int, int> RowLimitByRows { get; } = new();
 
     public static readonly ReportDefinition Rows = new(
-        RowsKey, "Fixture rows", "Returns a chosen number of rows.", ReportCategory.ClinicOperations, ReportKind.Period, ReportRelativePeriod.Today, 366,
+        RowsKey, "Fixture rows", "Returns a chosen number of rows.", ReportCategory.Stock, ReportKind.Period, ReportRelativePeriod.Today, 366,
         [new ReportParameter("rows", "Rows", ReportParameterType.Integer, "3", Min: 0, Max: 100_000)],
         [
             new ReportColumn("name", "Name", ReportColumnType.Text),
@@ -136,12 +136,12 @@ public static class ReportingFixtures
         "name", true, false, ["fixture"]);
 
     public static readonly ReportDefinition Sleep = new(
-        SleepKey, "Fixture sleep", "Sleeps inside the read-only scope.", ReportCategory.ClinicOperations, ReportKind.Period, ReportRelativePeriod.Today, 366,
+        SleepKey, "Fixture sleep", "Sleeps inside the read-only scope.", ReportCategory.Stock, ReportKind.Period, ReportRelativePeriod.Today, 366,
         [new ReportParameter("seconds", "Seconds", ReportParameterType.Integer, "2", Min: 0, Max: 30)],
         [new ReportColumn("name", "Name", ReportColumnType.Text)], null, false, false, ["fixture"]);
 
     public static readonly ReportDefinition Write = new(
-        WriteKey, "Fixture write", "Tries to write inside the read-only scope.", ReportCategory.ClinicOperations, ReportKind.Period, ReportRelativePeriod.Today, 366,
+        WriteKey, "Fixture write", "Tries to write inside the read-only scope.", ReportCategory.Stock, ReportKind.Period, ReportRelativePeriod.Today, 366,
         [], [new ReportColumn("name", "Name", ReportColumnType.Text)], null, false, false, ["fixture"]);
 
     public static IReadOnlyList<ReportDefinition> All => [Rows, Sleep, Write];

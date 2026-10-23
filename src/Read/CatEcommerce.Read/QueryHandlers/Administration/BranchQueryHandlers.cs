@@ -113,18 +113,6 @@ public sealed class GetBranchClosuresQueryHandler(CatEcommerceDbContext db) : IQ
     }
 }
 
-public sealed class GetRoomsQueryHandler(CatEcommerceDbContext db) : IQueryHandlerAsync<GetRoomsQuery, IReadOnlyList<RoomViewModel>>
-{
-    public async Task<QueryResponse<IReadOnlyList<RoomViewModel>>> HandleAsync(GetRoomsQuery query)
-    {
-        var rooms = await db.Set<RoomAggregate>().AsNoTracking().Where(r => r.BranchId == query.BranchId).OrderBy(r => r.Name)
-            .Select(r => new RoomViewModel(r.Id, r.BranchId, r.Name, r.Kind.DisplayName, r.IsActive))
-            .ToListAsync();
-
-        return new QueryResponse<IReadOnlyList<RoomViewModel>> { Result = rooms };
-    }
-}
-
 public sealed class GetBranchCalendarQueryHandler(CatEcommerce.Domain.DomainServices.IBranchCalendar branchCalendar)
     : IQueryHandlerAsync<GetBranchCalendarQuery, IReadOnlyList<TimeIntervalViewModel>>
 {

@@ -95,7 +95,7 @@ public sealed class StockNearExpirySource : IReportSource
 /// </summary>
 public sealed class StockLowReorderSource : IReportSource
 {
-    private static readonly int[] Consuming = [MovementKind.Sale.Value, MovementKind.Dispense.Value, MovementKind.ClinicalUse.Value, MovementKind.BoardingUse.Value];
+    private static readonly int[] Consuming = [MovementKind.Sale.Value];
 
     public string Key => ReportCatalogue.StockLowReorderKey;
 

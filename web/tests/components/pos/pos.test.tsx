@@ -9,18 +9,18 @@ import { orderingIds as ids } from '../../../mocks/handlers/ordering/fixtures';
 import { resetOrderingMockData } from '../../../mocks/handlers/ordering/store';
 import { PosScreen } from '@/components/pos/PosScreen';
 import { ReceiptPage } from '@/components/pos/ReceiptPage';
-import { setUrl } from '../booking/nav-mock';
+import { setUrl } from '../common/nav-mock';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 }
 
-/** Barcodes of the shop mock: `89` + the SKU number padded to 11 digits. Whiskas Kitten 1 kg costs 780.00. */
-const WHISKAS = '8900000000201';
-const KITTEN_400 = '8900000000101';
+/** Barcodes of the shop mock: `89` + the SKU number padded to 11 digits. Thai Jasmine Rice 1 kg costs 780.00. */
+const JASMINE_RICE = '8900000000201';
+const OATS_400 = '8900000000101';
 
 beforeEach(() => {
   resetOrderingMockData();
@@ -57,7 +57,7 @@ describe('Tender, change and refusals - U-F4', () => {
   it('cash over the total: the change comes from the sale response', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     expect(await screen.findByRole('list', { name: 'Basket' })).toBeInTheDocument();
     await fillCustomer(user);
     await takePayment(user, 'Cash', '1000');
@@ -69,7 +69,7 @@ describe('Tender, change and refusals - U-F4', () => {
   it('a card charge above what is owed is refused with the server message and nothing is recorded', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await fillCustomer(user);
     await takePayment(user, 'InStoreCard', '1000', 'SLIP-1');
@@ -83,7 +83,7 @@ describe('Tender, change and refusals - U-F4', () => {
   it('cash short of the total is refused with the server message', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await fillCustomer(user);
     await takePayment(user, 'Cash', '100');
@@ -98,7 +98,7 @@ describe('Tender, change and refusals - U-F4', () => {
     });
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await takePayment(user, 'InStoreCard', '780');
     expect(await screen.findByText('Enter the card terminal slip reference.')).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe('Unsaved basket - U-X5', () => {
       return event.defaultPrevented;
     };
     expect(leave()).toBe(false);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await waitFor(() => expect(leave()).toBe(true));
   });
@@ -152,7 +152,7 @@ describe('Unsaved basket - U-X5', () => {
   it('voiding the basket clears it and stops guarding', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await user.click(screen.getByRole('button', { name: 'Void basket' }));
     const dialog = await screen.findByRole('dialog');
@@ -182,11 +182,11 @@ describe('Scanning faster than the lookups - gate fix', () => {
     renderWithClient(<PosScreen />);
     const field = screen.getByLabelText('Scan a barcode');
     await user.click(field);
-    await user.type(field, `${WHISKAS}{Enter}${KITTEN_400}{Enter}`);
+    await user.type(field, `${JASMINE_RICE}{Enter}${OATS_400}{Enter}`);
     const basket = await screen.findByRole('list', { name: 'Basket' });
     await waitFor(() => expect(within(basket).getAllByRole('listitem')).toHaveLength(2));
-    expect(within(basket).getByText(/Whiskas/)).toBeInTheDocument();
-    expect(within(basket).getByText(/Royal Canin Kitten/)).toBeInTheDocument();
+    expect(within(basket).getByText(/Thai Jasmine Rice/)).toBeInTheDocument();
+    expect(within(basket).getByText(/Organic Rolled Oats/)).toBeInTheDocument();
     expect(field).toHaveValue('');
   });
 
@@ -196,8 +196,8 @@ describe('Scanning faster than the lookups - gate fix', () => {
     renderWithClient(<PosScreen />);
     const field = screen.getByLabelText('Scan a barcode');
     await user.click(field);
-    await user.type(field, `${WHISKAS}{Enter}${WHISKAS}{Enter}`);
-    const qty = await screen.findByLabelText(/Quantity of Whiskas/);
+    await user.type(field, `${JASMINE_RICE}{Enter}${JASMINE_RICE}{Enter}`);
+    const qty = await screen.findByLabelText(/Quantity of Thai Jasmine Rice/);
     await waitFor(() => expect(qty).toHaveValue(2));
   });
 
@@ -214,8 +214,8 @@ describe('The quantity box - gate fix', () => {
   it('can be cleared and retyped without snapping back to 1', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, KITTEN_400);
-    const qty = await screen.findByLabelText(/Quantity of Royal Canin Kitten/);
+    await scan(user, OATS_400);
+    const qty = await screen.findByLabelText(/Quantity of Organic Rolled Oats/);
     await user.click(qty);
     await user.clear(qty);
     expect(qty).toHaveValue(null);
@@ -229,8 +229,8 @@ describe('The quantity box - gate fix', () => {
   it('an empty entry on blur keeps the old quantity', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, KITTEN_400);
-    const qty = await screen.findByLabelText(/Quantity of Royal Canin Kitten/);
+    await scan(user, OATS_400);
+    const qty = await screen.findByLabelText(/Quantity of Organic Rolled Oats/);
     await user.click(qty);
     await user.clear(qty);
     await user.tab();
@@ -242,7 +242,7 @@ describe('Review gating and keyboard path - gate fix', () => {
   it('Enter in the amount field does NOT open the review without a customer, and says what is missing', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await user.keyboard('{F2}');
     expect(screen.getByLabelText(/handed over/)).toHaveFocus();
@@ -255,7 +255,7 @@ describe('Review gating and keyboard path - gate fix', () => {
   it('with everything in place F2, the amount, Enter opens the review with Complete sale focused and the settled total', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await fillCustomer(user);
     await waitFor(() => expect(document.body.textContent).toMatch(/780\.00/));
@@ -263,17 +263,6 @@ describe('Review gating and keyboard path - gate fix', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('button', { name: 'Complete sale' })).toHaveFocus();
     expect(dialog).toHaveTextContent(/780\.00/);
-  });
-
-  it('a prescription line without a cat blocks the review', async () => {
-    const user = userEvent.setup();
-    renderWithClient(<PosScreen />);
-    await scan(user, '8900000000601');
-    await screen.findByRole('list', { name: 'Basket' });
-    await fillCustomer(user);
-    await user.keyboard('{F2}9999{Enter}');
-    expect(await screen.findByText(/Choose a cat for the prescription item/)).toBeInTheDocument();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('a quote that says the sale cannot be made blocks the review and lists why', async () => {
@@ -294,7 +283,7 @@ describe('Review gating and keyboard path - gate fix', () => {
     );
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await fillCustomer(user);
     const reasons = await screen.findByRole('list', { name: /Why this sale/ });
@@ -308,8 +297,8 @@ describe('Review gating and keyboard path - gate fix', () => {
   it('a basket of two items shows the server total of both', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
-    await scan(user, KITTEN_400);
+    await scan(user, JASMINE_RICE);
+    await scan(user, OATS_400);
     const summary = await screen.findByRole('region', { name: 'Sale total' });
     await waitFor(() => expect(within(summary).getAllByRole('definition').at(-1)).toHaveTextContent(/1,?430\.00/));
   });
@@ -328,7 +317,7 @@ describe('Completing the sale sends one request, one key - gate fix', () => {
     const keys = recordSales();
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await fillCustomer(user);
     await takePayment(user, 'Cash', '1000');
@@ -347,7 +336,7 @@ describe('Completing the sale sends one request, one key - gate fix', () => {
     const keys = recordSales();
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
-    await scan(user, WHISKAS);
+    await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
     await fillCustomer(user);
     await takePayment(user, 'Cash', '100'); // does not cover the total: refused
@@ -357,15 +346,5 @@ describe('Completing the sale sends one request, one key - gate fix', () => {
     await waitFor(() => expect(keys).toHaveLength(2));
     expect(keys[1]).not.toBe(keys[0]);
     server.events.removeAllListeners();
-  });
-});
-
-describe('POS cats of the attached customer - gate fix B4', () => {
-  it('the ordering-owned override answers for the accounts customer and lets every other owner through to cat-profiles', async () => {
-    const own = await fetch(`http://localhost/api/cats?ownerId=${ids.customerId}&pageSize=50`).then((r) => r.json());
-    expect(own.items.map((c: { name: string }) => c.name)).toEqual(['Whiskers', 'Mittens']);
-    const other = await fetch('http://localhost/api/cats?ownerId=10000000-0000-0000-0000-000000000001&pageSize=50').then((r) => r.json());
-    expect(other.items.length).toBeGreaterThan(0);
-    expect(other.items.every((c: { ownerId: string }) => c.ownerId === '10000000-0000-0000-0000-000000000001')).toBe(true);
   });
 });

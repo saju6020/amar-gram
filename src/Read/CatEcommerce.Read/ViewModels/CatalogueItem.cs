@@ -16,8 +16,6 @@ public sealed record CatalogueItem(
     string? Subcategory,
     string Kind,
     CountryRef? CountryOfOrigin,
-    string? LifeStage,
-    bool PrescriptionRequired,
     MoneyViewModel? FromPrice,
     bool PriceVaries,
     string Availability,

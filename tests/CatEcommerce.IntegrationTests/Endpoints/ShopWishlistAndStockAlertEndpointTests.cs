@@ -41,7 +41,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
     public async Task I_G1_Wishlist_AddListAddAgainRemove_IsIdempotent_AndShowsPriceAndAvailability()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("Wish"), "Cat Tree", price: 4500m);
+        var product = await CreateProductAsync(staff, NewBrand("Wish"), "Garden Bench", price: 4500m);
         var (customer, _) = await RegisterAndSignInCustomerAsync();
 
         Assert.Equal(HttpStatusCode.NoContent, (await customer.PutAsync($"/api/customers/me/wishlist/items/{product.SkuId}", null)).StatusCode);
@@ -174,28 +174,6 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
 
         Assert.Equal(HttpStatusCode.NotFound, (await other.DeleteAsync($"/api/customers/me/stock-alerts/{alertId}")).StatusCode);
         Assert.Empty((await BodyAsync(await other.GetAsync("/api/customers/me/stock-alerts"))).EnumerateArray());
-    }
-
-    [Fact]
-    public async Task I_G2_Alert_OnAPrescriptionProduct_NeedsAnAuthorisedCat()
-    {
-        var staff = await SignInAsShopManagerAsync();
-        var rx = await CreateProductAsync(staff, NewBrand("AlertRx"), "Renal Diet", "CatFood", prescription: true);
-        await SetSkuOutOfStockAsync(rx.SkuId);
-        var (customer, customerId) = await RegisterAndSignInCustomerAsync();
-        await SeedCatAsync(customerId);
-
-        // The shipped fail-closed gate authorises nobody (BR-2): no alert for something unbuyable.
-        var refused = await customer.PostAsJsonAsync("/api/customers/me/stock-alerts", new { skuId = rx.SkuId }, Json);
-        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
-        Assert.Contains("PurchaseNotPermitted", await refused.Content.ReadAsStringAsync());
-
-        var (gateFactory, authorisations) = Factory.WithControllableDietGate();
-        var (authorisedCustomer, authorisedId) = await RegisterAndSignInCustomerAsync(gateFactory);
-        var cat = await SeedCatAsync(authorisedId);
-        authorisations.Authorise(authorisedId, cat, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30));
-
-        Assert.Equal(HttpStatusCode.Created, (await authorisedCustomer.PostAsJsonAsync("/api/customers/me/stock-alerts", new { skuId = rx.SkuId }, Json)).StatusCode);
     }
 
     [Fact]
@@ -399,7 +377,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Merge");
 
-        var reviewed = await CreateProductAsync(staff, brand, "Reviewed Food", "CatFood", lifeStage: "Adult");
+        var reviewed = await CreateProductAsync(staff, brand, "Reviewed Food", "CatFood");
         var wished = await CreateProductAsync(staff, brand, "Wished Toy");
         var alerted = await CreateProductAsync(staff, brand, "Alerted Item");
         await SetSkuOutOfStockAsync(alerted.SkuId);
@@ -501,7 +479,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var (purchaseFactory, purchases) = Factory.WithControllablePurchaseHistory();
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Anon");
-        var reviewed = await CreateProductAsync(staff, brand, "Anon Reviewed Food", "CatFood", lifeStage: "Adult");
+        var reviewed = await CreateProductAsync(staff, brand, "Anon Reviewed Food", "CatFood");
         var wished = await CreateProductAsync(staff, brand, "Anon Wished Toy");
         var alerted = await CreateProductAsync(staff, brand, "Anon Alerted Item");
         await SetSkuOutOfStockAsync(alerted.SkuId);
@@ -509,12 +487,12 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var (customer, customerId) = await RegisterAndSignInCustomerAsync(purchaseFactory);
         purchases.SetPurchased(customerId, reviewed.SkuId);
 
-        var review = await customer.PostAsJsonAsync("/api/customers/me/reviews", new { productId = reviewed.ProductId, skuId = reviewed.SkuId, rating = 4, body = "Cats loved it" }, Json);
+        var review = await customer.PostAsJsonAsync("/api/customers/me/reviews", new { productId = reviewed.ProductId, skuId = reviewed.SkuId, rating = 4, body = "We loved it" }, Json);
         var reviewId = (await BodyAsync(review)).GetProperty("reviewId").GetGuid();
         Assert.Equal(HttpStatusCode.NoContent, (await staff.PostAsync($"/api/staff/shop/reviews/{reviewId}/publish", null)).StatusCode);
 
         // Row 21 / BSB1: a review still awaiting moderation when the customer is anonymised.
-        var pendingProduct = await CreateProductAsync(staff, brand, "Anon Pending Food", "CatFood", lifeStage: "Adult");
+        var pendingProduct = await CreateProductAsync(staff, brand, "Anon Pending Food", "CatFood");
         purchases.SetPurchased(customerId, pendingProduct.SkuId);
         var pendingResponse = await customer.PostAsJsonAsync("/api/customers/me/reviews",
             new { productId = pendingProduct.ProductId, skuId = pendingProduct.SkuId, rating = 2, title = "Private title", body = "Private words" }, Json);
@@ -550,7 +528,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var reviews = await (await CreateClient().GetAsync($"/api/shop/products/{reviewed.Slug}/reviews")).Content.ReadFromJsonAsync<JsonElement>(Json);
         var publicReview = Assert.Single(reviews.GetProperty("items").EnumerateArray());
         Assert.Equal("A verified buyer", publicReview.GetProperty("authorDisplayName").GetString());
-        Assert.Equal("Cats loved it", publicReview.GetProperty("body").GetString());
+        Assert.Equal("We loved it", publicReview.GetProperty("body").GetString());
     }
 
     // ── helpers ─────────────────────────────────────────────────────────────────────────────────

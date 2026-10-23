@@ -52,7 +52,7 @@ public sealed class InventoryAlertsAndReorderEndpointTests(InventoryApiFactory f
         await using var port = OpenPort();
         var result = await port.Ledger.DeductAsync(
             Demand(branch.BranchId, sku.SkuId, quantity, MovementKind.Sale, locations: [locationId]),
-            new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-" + Random.Shared.Next(1000, 9999)), new StockParty(null, null), default);
+            new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-" + Random.Shared.Next(1000, 9999)), new StockParty(null), default);
         Assert.True(result.IsSuccess, result.Message);
         await port.CommitAsync();
     }
@@ -293,7 +293,7 @@ public sealed class InventoryAlertsAndReorderEndpointTests(InventoryApiFactory f
 
         await using (var port = OpenPort())
         {
-            port.Ledger.RecordShortfall(new StockShortfall(sku.SkuId, branch.DispensaryId, 3m, Guid.NewGuid(), null));
+            port.Ledger.RecordShortfall(new StockShortfall(sku.SkuId, branch.WarehouseId, 3m, Guid.NewGuid(), null));
             Assert.Equal(1, port.Enlisted); // enlisted, not saved: the consumer's commit carries it
             await port.CommitAsync();
         }
@@ -301,7 +301,7 @@ public sealed class InventoryAlertsAndReorderEndpointTests(InventoryApiFactory f
         var alert = Assert.Single(await AlertsAsync(branch.Admin.Client, "&kind=Shortfall"));
         Assert.Equal("Open", alert.GetProperty("status").GetString());
         Assert.Equal(sku.SkuId, alert.GetProperty("skuId").GetGuid());
-        Assert.Equal(branch.DispensaryId, alert.GetProperty("locationId").GetGuid());
+        Assert.Equal(branch.WarehouseId, alert.GetProperty("locationId").GetGuid());
         Assert.Equal("3", alert.GetProperty("quantityAtRaise").GetString());
     }
 
@@ -313,7 +313,7 @@ public sealed class InventoryAlertsAndReorderEndpointTests(InventoryApiFactory f
 
         await using (var port = OpenPort())
         {
-            port.Ledger.RecordShortfall(new StockShortfall(sku.SkuId, branch.DispensaryId, 3m, Guid.NewGuid(), null));
+            port.Ledger.RecordShortfall(new StockShortfall(sku.SkuId, branch.WarehouseId, 3m, Guid.NewGuid(), null));
         }
 
         Assert.Empty(await AlertsAsync(branch.Admin.Client, "&kind=Shortfall"));
@@ -328,7 +328,7 @@ public sealed class InventoryAlertsAndReorderEndpointTests(InventoryApiFactory f
         var sku = await CreateSkuAsync(branch.Admin.Client);
         await using (var port = OpenPort())
         {
-            port.Ledger.RecordShortfall(new StockShortfall(sku.SkuId, branch.DispensaryId, 1m, Guid.NewGuid(), null));
+            port.Ledger.RecordShortfall(new StockShortfall(sku.SkuId, branch.WarehouseId, 1m, Guid.NewGuid(), null));
             await port.CommitAsync();
         }
 

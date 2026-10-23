@@ -3,28 +3,6 @@ using Platform.Infrastructure.Core.Queries;
 
 namespace CatEcommerce.Read.Queries.Product;
 
-/// <summary>HO-SHP-001 section 12.4 -- per-SKU purchasability for the signed-in customer. Null when
-/// the product is not on the storefront (404).</summary>
-public sealed class GetPurchasabilityQuery : Query<PurchasabilityViewModel?>
-{
-    public required Guid CustomerId { get; init; }
-    public required string Slug { get; init; }
-}
-
-/// <summary>
-/// HO-SHP-001 section 8.9 -- contract query, dispatched in-process by HO-ORD-001 at add-to-cart
-/// AND at checkout, so the two checks go through the same gate and cannot drift. Evaluated at the
-/// instant of the call: <c>IDietAuthorisationGate</c> computes "today" itself on every call
-/// (HO-PHM-001 ADR-149), so there is no <c>AsOf</c> (section 1 Amended, 2026-10-04). Null when the
-/// SKU is unknown.
-/// </summary>
-public sealed class CheckPrescriptionEligibilityQuery : Query<PrescriptionEligibilityViewModel?>
-{
-    public required Guid CustomerId { get; init; }
-    public required Guid SkuId { get; init; }
-    public required Guid CatId { get; init; }
-}
-
 /// <summary>HO-SHP-001 section 8.10 -- contract query; null for a non-bundle SKU.</summary>
 public sealed class GetBundleCompositionQuery : Query<IReadOnlyList<BundleCompositionLineViewModel>?>
 {

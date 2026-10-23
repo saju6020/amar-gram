@@ -38,8 +38,8 @@ const cell = (code: string, kind: string, onHand: string, reserved = '0') => ({
 
 const matrix: Matrix = {
   skuId: 'k1',
-  skuCode: 'FD-KDC-2KG',
-  displayName: 'Kitten dry food',
+  skuCode: 'FD-RCE-5KG',
+  displayName: 'Organic rice',
   stockUnit: 'bags',
   storage: null,
   branchTimeZoneId: 'Asia/Dhaka',
@@ -116,7 +116,7 @@ describe('U-D1 / U-D2 — SkuStockMatrix', () => {
     stubWidth(1024);
     render(<SkuStockMatrix matrix={matrix} />);
     const table = screen.getByRole('table', {
-      name: /stock of kitten dry food by batch and location/i,
+      name: /stock of organic rice by batch and location/i,
     });
     expect(
       within(table)
@@ -137,7 +137,7 @@ describe('U-D1 / U-D2 — SkuStockMatrix', () => {
     stubWidth(340);
     render(<SkuStockMatrix matrix={matrix} />);
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.getByRole('list', { name: /batches of kitten dry food/i })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: /batches of organic rice/i })).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(4);
   });
 
@@ -147,7 +147,7 @@ describe('U-D1 / U-D2 — SkuStockMatrix', () => {
     expect(screen.getAllByText(/expired 3 days ago/i).length).toBeGreaterThan(0);
     expect(screen.getByText('Quarantined')).toBeInTheDocument();
     expect(screen.getByText('Recalled — held')).toBeInTheDocument();
-    expect(screen.getAllByText(/cannot be sold, dispensed or fed/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/cannot be sold or used/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/in quarantine location/i)).toBeInTheDocument();
     // No action that would use an unusable batch is offered — the only controls are links to the batch.
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
@@ -224,7 +224,7 @@ describe('U-D3 — FefoPreviewPanel', () => {
           propertyName: 'locationId',
           errorCode: 'MovementNotPermittedAtLocation',
           errorMessage:
-            "Clinic dispensary is a ClinicDispensary — that movement isn't allowed there.",
+            "Quarantine shelf is a Quarantine location — that movement isn't allowed there.",
           resourceName: 'Inventory',
         },
       ],
@@ -278,8 +278,8 @@ function batch(overrides: Partial<BatchDetailData> = {}): BatchDetailData {
   return {
     id: 'b1',
     skuId: 'k1',
-    skuCode: 'FD-KDC-2KG',
-    displayName: 'Kitten dry food',
+    skuCode: 'FD-RCE-5KG',
+    displayName: 'Organic rice',
     stockUnit: 'bags',
     stockClass: 'Food',
     branchId: 'br',
@@ -355,9 +355,7 @@ describe('U-D4 / U-D5 — BatchDetail', () => {
         onDeclareRecall={noopAsync}
       />,
     );
-    expect(
-      screen.getAllByText(/expired — cannot be sold, dispensed or fed/i).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/expired — cannot be sold or used/i).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Write off']);
   });
 
@@ -376,9 +374,7 @@ describe('U-D4 / U-D5 — BatchDetail', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Quarantine' }));
     const dialog = await screen.findByRole('dialog');
-    expect(
-      within(dialog).getByText(/quarantine lot L2409E of Kitten dry food/i),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByText(/quarantine lot L2409E of Organic rice/i)).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText(/reason/i), 'Torn packaging');
     await user.click(within(dialog).getByRole('button', { name: /quarantine this batch/i }));
     await waitFor(() => expect(onQuarantine).toHaveBeenCalledWith('Torn packaging'));
@@ -412,7 +408,7 @@ describe('U-D6 — LedgerSearch', () => {
     batchId: 'b',
     lotNumber: 'L1',
     skuId: 'k',
-    skuCode: 'FD-KDC-2KG',
+    skuCode: 'FD-RCE-5KG',
     referenceKind: 'CustomerOrder',
     referenceId: 'o',
     referenceLabel: 'Order PC-001234',

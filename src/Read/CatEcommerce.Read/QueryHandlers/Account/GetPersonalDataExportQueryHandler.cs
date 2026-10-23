@@ -72,12 +72,7 @@ public sealed class GetPersonalDataExportQueryHandler(CatEcommerceDbContext db, 
             })
             .ToList();
 
-        var cats = await db.Cats.AsNoTracking()
-            .Where(c => c.OwnerId == query.CustomerId)
-            .Select(c => new PersonalDataExportCatViewModel(c.Id, c.Name, c.Species, c.Breed, c.Sex.DisplayName))
-            .ToListAsync();
-
-        var viewModel = new PersonalDataExportViewModel(1, timeProvider.GetUtcNow(), profile, addresses, preferences, cats);
+        var viewModel = new PersonalDataExportViewModel(1, timeProvider.GetUtcNow(), profile, addresses, preferences);
 
         return new QueryResponse<PersonalDataExportViewModel?> { Result = viewModel };
     }

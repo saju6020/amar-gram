@@ -47,11 +47,11 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : CatEcomm
     }
 
     /// <summary>Creates a product through the real staff endpoints, prices its first SKU now and
-    /// (by default) publishes it. Food products get a country of origin and life stage so they can
-    /// publish. §16.1 rule 1/2: every identifier is minted per call.</summary>
+    /// (by default) publishes it. Food products get a country of origin and food details so they
+    /// can publish. §16.1 rule 1/2: every identifier is minted per call.</summary>
     protected async Task<SeededProduct> CreateProductAsync(
         HttpClient staff, string brand, string name, string category = "HealthAndGrooming", decimal price = 1000m,
-        string? countryCode = null, string? lifeStage = null, bool prescription = false, string? ingredientList = null,
+        string? countryCode = null, string? ingredientList = null,
         string[]? healthFocus = null, string? proteinSource = null, bool publish = true, string? tag = null, string? subcategory = null, decimal stock = 100m)
     {
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
@@ -74,15 +74,8 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : CatEcomm
         if (isFood)
         {
             var food = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
-            { expectedVersion = await ProductVersionAsync(staff, productId), lifeStage = lifeStage ?? "Adult", ingredientList, proteinSource }, Json);
+            { expectedVersion = await ProductVersionAsync(staff, productId), ingredientList, proteinSource }, Json);
             Assert.Equal(HttpStatusCode.NoContent, food.StatusCode);
-        }
-
-        if (prescription)
-        {
-            var rx = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}/prescription",
-                new { expectedVersion = await ProductVersionAsync(staff, productId), prescriptionRequired = true }, Json);
-            Assert.Equal(HttpStatusCode.NoContent, rx.StatusCode);
         }
 
         var skuCode = UniqueCode("SKU");
@@ -317,72 +310,6 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : CatEcomm
         return detail.GetProperty("skus")[0].GetProperty("skuId").GetGuid();
     }
 
-    /// <summary>Seeds an alive cat owned by <paramref name="ownerId"/> directly through the
-    /// repository (HO-CAT-001's own aggregate, §16.1 rule 4 style).</summary>
-    protected async Task<Guid> SeedCatAsync(Guid ownerId, string name = "Mitu", DateOnly? dateOfBirth = null)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatEcommerce.Domain.Aggregates.Cat.CatAggregate>>();
-
-        var cat = new CatEcommerce.Domain.Aggregates.Cat.CatAggregate(Guid.NewGuid());
-        cat.Register(new CatRegistrationDto(
-            ownerId, name, "Cat", CatSex.Female, dateOfBirth ?? DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-2),
-            DateOfBirthPrecision.Exact, "Domestic Shorthair", "Tabby", DateOnly.FromDateTime(DateTime.UtcNow),
-            new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
-
-        await repository.SaveAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        return cat.Id;
-    }
-
-    /// <summary>Records the medical facts the food recommendation reads (allergies, chronic
-    /// conditions), the neuter status and a weight -- all through HO-CAT-001's own aggregates, the
-    /// same way <see cref="SeedCatAsync"/> seeds the cat. Any argument left null is not recorded.</summary>
-    protected async Task RecordCatFactsAsync(
-        Guid catId, string[]? allergens = null, string[]? conditions = null, bool? neutered = null, decimal? weightKg = null)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatEcommerce.Domain.Aggregates.Cat.CatAggregate>>();
-        var weights = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatEcommerce.Domain.Aggregates.Cat.CatWeightRecordAggregate>>();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var userContext = new UserContext(Guid.NewGuid(), Guid.NewGuid());
-
-        var cat = await repository.GetByIdAsync(catId);
-
-        if (allergens is not null || conditions is not null)
-        {
-            cat!.UpdateMedicalProfile(new CatMedicalProfileDto(
-                (allergens ?? []).Select(a => new CatEcommerce.Shared.SharedDto.Cat.AllergyInput(a, "Itching", AllergySeverity.Mild, today)).ToList(),
-                (conditions ?? []).Select(c => new CatEcommerce.Shared.SharedDto.Cat.ChronicConditionInput(c, null, null)).ToList(),
-                [], null, null, userContext, Guid.NewGuid()));
-            await repository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-            cat = await repository.GetByIdAsync(catId);
-        }
-
-        if (neutered is true)
-        {
-            cat!.RecordNeuterStatus(new CatNeuterStatusDto(NeuterStatus.Neutered, today.AddMonths(-6), today, userContext, Guid.NewGuid()));
-            await repository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-        }
-
-        if (weightKg is { } kilograms)
-        {
-            var record = new CatEcommerce.Domain.Aggregates.Cat.CatWeightRecordAggregate(Guid.NewGuid());
-            record.Record(new CatWeightRecordDto(catId, kilograms, today, Guid.NewGuid(), null, today, userContext, Guid.NewGuid()));
-            await weights.SaveAsync(record, EventPublishOption.InMemoryPublishOnly);
-        }
-    }
-
-    protected async Task MarkCatDeceasedAsync(Guid catId)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<CatEcommerce.Domain.Aggregates.Cat.CatAggregate>>();
-
-        var cat = await repository.GetByIdAsync(catId);
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        cat!.MarkDeceased(new CatDeceasedDto(today, null, today, new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
-        await repository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
-    }
-
     protected static string ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
         var setCookies = response.Headers.TryGetValues("Set-Cookie", out var cookies) ? cookies.ToList() : [];
@@ -435,7 +362,7 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : CatEcomm
     }
 
     /// <summary>Seeds an active tax class directly through the repository -- HO-ADM-001's own
-    /// aggregate, read here the same way HO-CAT-001's cat is seeded by other areas' bases.</summary>
+    /// aggregate, seeded through its repository (§16.1 rule 4 style).</summary>
     protected async Task<Guid> SeedActiveTaxClassAsync(string code)
     {
         await using var scope = Factory.Services.CreateAsyncScope();
@@ -560,7 +487,7 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : CatEcomm
     }
 
     /// <summary>
-    /// Bounded loop-until-own-row delivery (the AppointmentsIntegrationTestBase precedent, ACCEPTANCE
+    /// Bounded loop-until-own-row delivery (the shared-database polling precedent, ACCEPTANCE
     /// 2026-09-29): a single global pass is not reliable evidence on the shared, never-truncated
     /// database -- another class's leftover Pending rows can crowd this test's own row out of one
     /// pass's batch cap. Passes run until <paramref name="isDone"/> holds (or the test fails loudly),

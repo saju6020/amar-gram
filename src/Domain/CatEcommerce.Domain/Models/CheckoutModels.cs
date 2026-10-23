@@ -4,26 +4,10 @@ using CatEcommerce.Shared.Common.Helpers;
 
 namespace CatEcommerce.Domain.Models;
 
-/// <summary>The state of a prescription line at quote time (US-SHP-10 AC3, US-ORD-03 AC2).</summary>
-public enum PrescriptionLineStatus
-{
-    /// <summary>Not a prescription SKU.</summary>
-    NotRequired,
-
-    /// <summary>The gate says the cat is authorised today.</summary>
-    Authorised,
-
-    /// <summary>A cat is chosen but the authorisation is missing or lapsed.</summary>
-    NotAuthorised,
-
-    /// <summary>No cat is set on the line.</summary>
-    CatRequired,
-}
-
 /// <summary>One cart line with everything the pure pricing needs about its SKU: the catalogue snapshot, the quantity that can be sold at the
-/// fulfilling branch, the tax rate in force and the prescription status. Loaded by <c>ICheckoutInputsLoader</c>.</summary>
+/// fulfilling branch, and the tax rate in force. Loaded by <c>ICheckoutInputsLoader</c>.</summary>
 public sealed record CheckoutLineInput(
-    Guid LineId, OrderCatalogueSku Sku, Guid? CatId, int CartQuantity, decimal PriceWhenAdded, decimal Sellable, decimal? TaxRatePercent, PrescriptionLineStatus Prescription);
+    Guid LineId, OrderCatalogueSku Sku, int CartQuantity, decimal PriceWhenAdded, decimal Sellable, decimal? TaxRatePercent);
 
 /// <summary>What the customer chose on the checkout page. Everything is optional until it is needed: a quote can be asked for while the customer is
 /// still choosing.</summary>
@@ -76,12 +60,12 @@ public sealed record CheckoutInputs(
 
 /// <summary>A line of the quote -- and, once placed, of the order. Amounts are minor units (ADR-198).</summary>
 public sealed record QuoteLine(
-    Guid LineRef, Guid SkuId, Guid ProductId, string ProductName, string VariantLabel, string? Barcode, ProductReturnClass ReturnClass, bool IsBundle, Guid? CatId,
+    Guid LineRef, Guid SkuId, Guid ProductId, string ProductName, string VariantLabel, string? Barcode, ProductReturnClass ReturnClass, bool IsBundle,
     int Quantity, MinorUnits UnitPrice, MinorUnits Subtotal, MinorUnits LineDiscount, MinorUnits OrderDiscountShare, Guid TaxClassId, decimal TaxRatePercent,
     MinorUnits TaxAmount, MinorUnits LineTotal, IReadOnlyList<CatalogueBundlePart> BundleComponents);
 
-/// <summary>A cart line the quote leaves out (unavailable, or its prescription authorisation lapsed). It stays in the cart.</summary>
-public sealed record ExcludedLine(Guid LineRef, Guid SkuId, string ProductName, Guid? CatId, int CartQuantity, string ReasonCode);
+/// <summary>A cart line the quote leaves out (unavailable). It stays in the cart.</summary>
+public sealed record ExcludedLine(Guid LineRef, Guid SkuId, string ProductName, int CartQuantity, string ReasonCode);
 
 /// <summary>A difference since the item entered the cart, listed so the customer sees it before paying (US-ORD-02).</summary>
 public sealed record CheckoutChange(CheckoutChangeKind Kind, Guid LineRef, string ProductName, string? Before, string? After, string Message);

@@ -13,7 +13,7 @@ function clearCookies() {
 afterEach(() => clearCookies());
 
 /**
- * SECURITY gate LOW finding on HO-CAT-002 (fixed 241d310), regression test added at the TEST
+ * SECURITY gate LOW finding on the scaffold handover (fixed 241d310), regression test added at the TEST
  * gate — `identityHeaders` used to be spread before `...headers` in `apiFetch`'s request init, so
  * a caller-supplied header of the same name could silently overwrite the client's own
  * `X-CSRF-Token`. No caller does this today, but nothing stopped a future one from doing so by

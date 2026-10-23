@@ -25,8 +25,8 @@ namespace CatEcommerce.Application.CommandHandlers.Account;
 /// real number as one of their OWN additional numbers permanently block reception from ever
 /// registering that victim under their own, genuine primary number -- reception's only recourse
 /// (§11.4's own prescribed follow-up, GET /api/staff/customers?mobile=) would open the ATTACKER's
-/// record instead, and staff attaching the victim's cats to it, or merging the victim into it,
-/// would hand the attacker the victim's clinical history. Unlike squatting on a primary number
+/// record instead, and staff merging the victim into it would hand the
+/// attacker the victim's order and billing history. Unlike squatting on a primary number
 /// (recoverable via password reset), the victim has no recovery path at all, because every
 /// identifier on the attacker's account is the attacker's own.
 ///

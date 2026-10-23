@@ -23,9 +23,7 @@ public sealed class FinancialReportBuilderTests
     [Fact]
     public void U_D1_TheBusinessLine_IsTheOneBillingStoredOnTheLine_AndAnythingElseIsOther_NeverDropped()
     {
-        Assert.Equal("Clinic", BusinessLineRules.Classify(BusinessLine.Clinic.Value));
         Assert.Equal("Shop", BusinessLineRules.Classify(BusinessLine.Shop.Value));
-        Assert.Equal("Boarding", BusinessLineRules.Classify(BusinessLine.Boarding.Value));
         Assert.Equal("Other", BusinessLineRules.Classify(99)); // a line a later area adds
 
         Assert.All(Enumeration.GetAll<BusinessLine>(), b => Assert.NotEqual("Other", BusinessLineRules.Classify(b.Value)));
@@ -51,7 +49,7 @@ public sealed class FinancialReportBuilderTests
         var facts = new[]
         {
             Invoice(October, "Shop", 1000m, tax: 150m),
-            Invoice(October, "Clinic", 400m, tax: 60m),
+            Invoice(October, "Counter", 400m, tax: 60m),
             Credit(November, "Shop", 250m, tax: 37.5m),
         };
 
@@ -267,23 +265,26 @@ public sealed class FinancialReportBuilderTests
 
     // ── Dimensions ─────────────────────────────────────────────────────────────────────────────────────────
     [Fact]
-    public void AShopLineWithNoSku_IsDeliveryAndFees_WithNoOrigin_AndAProductGroupsByItsCategoryAndOrigin()
+    public void ALineWithNoSku_IsDeliveryAndFees_WithNoOrigin_AProductGroupsByItsCategoryAndOrigin_AndTheLineIsTheSalesChannel()
     {
         var food = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.CatFood.Value, SubCategory = null, CountryOfOrigin = "FR" };
         var litter = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.Litter.Value, CountryOfOrigin = null };
 
-        var delivery = RevenueFacts.Dimensions(BusinessLine.Shop.Value, ItemKind.Fee.Value, null, null);
-        var foodDims = RevenueFacts.Dimensions(BusinessLine.Shop.Value, ItemKind.Product.Value, null, food);
-        var litterDims = RevenueFacts.Dimensions(BusinessLine.Shop.Value, ItemKind.Product.Value, null, litter);
-        var clinic = RevenueFacts.Dimensions(BusinessLine.Clinic.Value, ItemKind.Service.Value, ServiceCategory.Vaccination.Value, null);
+        var delivery = RevenueFacts.Dimensions(OrderChannel.Online.Value, null);
+        var foodDims = RevenueFacts.Dimensions(OrderChannel.Online.Value, food);
+        var litterDims = RevenueFacts.Dimensions(OrderChannel.Counter.Value, litter);
+        var manual = RevenueFacts.Dimensions(null, null);
 
         Assert.Equal("Delivery and fees", delivery.Category);
         Assert.Equal("Not applicable", delivery.Origin);
         Assert.Equal("CatFood", foodDims.Category);
         Assert.Equal("FR", foodDims.Origin);
         Assert.Equal("Not applicable", litterDims.Origin);
-        Assert.Equal("Vaccination", clinic.ServiceGroup);
-        Assert.Equal("Clinic", clinic.Line);
+        Assert.Equal("CatFood", foodDims.ServiceGroup);
+        Assert.Equal("Online", foodDims.Line);
+        Assert.Equal("Counter", litterDims.Line);
+        Assert.Equal(RevenueFacts.OtherChannel, manual.Line);   // a line with no order behind it
+        Assert.Equal("Delivery and fees", manual.Category);
     }
 
     [Fact]

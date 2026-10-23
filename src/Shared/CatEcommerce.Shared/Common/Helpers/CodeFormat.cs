@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 namespace CatEcommerce.Shared.Common.Helpers;
 
 /// <summary>
-/// Gate fix 2026-09-26 (SEC LOW). Format for administrative codes (branch, tax class, clinic
+/// Gate fix 2026-09-26 (SEC LOW). Format for administrative codes (branch, tax class,
 /// service): ASCII letters and digits, with an optional internal hyphen or underscore separator --
 /// no leading, trailing or doubled separator, and no NUL byte, whitespace or Unicode lookalike.
 /// Checked in a FluentValidation rule, before any uniqueness pre-check query runs, for the same

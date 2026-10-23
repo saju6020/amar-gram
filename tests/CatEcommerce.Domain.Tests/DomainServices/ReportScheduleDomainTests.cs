@@ -228,14 +228,14 @@ public sealed class ReportScheduleDomainTests
     public void CanReceive_NeedsTheCategoryAction_AndAllBranchesNeedsACrossBranchRole_AndABranchNeedsTheAssignment()
     {
         var branch = Guid.NewGuid();
-        var definition = ReportCatalogue.Find(ReportCatalogue.ClinicDailyScheduleKey)!;
+        var definition = ReportCatalogue.Find(ReportCatalogue.StockNearExpiryKey)!;
 
-        Assert.True(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Reception], branch, [branch]));
-        Assert.False(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Reception], branch, [Guid.NewGuid()]));   // no longer assigned
-        Assert.False(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Reception], null, [branch]));              // all branches needs a cross-branch role
+        Assert.True(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Inventory], branch, [branch]));
+        Assert.False(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Inventory], branch, [Guid.NewGuid()]));   // no longer assigned
+        Assert.False(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Inventory], null, [branch]));              // all branches needs a cross-branch role
         Assert.True(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Administrator], null, []));
-        Assert.False(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Nurse], branch, [branch]));               // no category action
-        Assert.False(ReportAccessPolicy.CanReceive(ReportCatalogue.Find(ReportCatalogue.RevenueByBusinessLineKey)!, [StaffRoles.Reception], branch, [branch]));
+        Assert.False(ReportAccessPolicy.CanReceive(definition, [StaffRoles.Reception], branch, [branch]));            // no category action
+        Assert.False(ReportAccessPolicy.CanReceive(ReportCatalogue.Find(ReportCatalogue.RevenueByBusinessLineKey)!, [StaffRoles.Inventory], branch, [branch]));
     }
 
     private static bool IsForward(ReportRelativePeriod period) => period == ReportRelativePeriod.Next30Days || period == ReportRelativePeriod.Next90Days;

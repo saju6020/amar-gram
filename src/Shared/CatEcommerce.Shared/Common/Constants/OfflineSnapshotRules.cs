@@ -5,6 +5,4 @@ public static class OfflineSnapshotRules
 {
     public const int ValidityGraceHours = 2;
     public const int SchemaVersion = 1;
-    public const string AppointmentsSection = "appointments";
-    public const string BoardingTasksSection = "boardingTasks";
 }

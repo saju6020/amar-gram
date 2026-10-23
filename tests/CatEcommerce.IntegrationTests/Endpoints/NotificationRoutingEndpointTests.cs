@@ -28,9 +28,9 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
 {
     // 06:00 UTC = 12:00 in Asia/Dhaka (fixed UTC+6, no DST) -- safely outside 21:00-08:00.
 
-    private static Dictionary<string, string> VaccinationVariables(string catName = "Mitu") => new()
+    private static Dictionary<string, string> InvoiceVariables(string invoiceNumber = "Mitu") => new()
     {
-        ["catName"] = catName, ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://portal.example.test/portal/cats/x"
+        ["invoiceNumber"] = invoiceNumber, ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://portal.example.test/portal/billing/invoices/x"
     };
 
     private WebApplicationFactory<Program> DaytimeFactory(params NotificationTemplateDefinition[] extraDefinitions)
@@ -53,7 +53,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         var setPreferred = await client.PutAsJsonAsync("/api/customers/me/notification-preferences", new { preferredChannel = "Email" }, Json);
         Assert.Equal(HttpStatusCode.NoContent, setPreferred.StatusCode);
 
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId, VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId, InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
         await RunDeliveryPassAsync(daytimeFactory);
 
@@ -93,7 +93,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         NotificationsApiFactory.ScriptOutcome(daytimeFactory.Services, NotificationChannel.Sms, mobileNormalised,
             new SendOutcome(SendOutcomeKind.PermanentFailure, null, "rejected"));
 
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId, VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId, InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory); // expand -> Sms primary (mobile-only preference)
         await RunDeliveryPassAsync(daytimeFactory); // deliver Sms -> Undeliverable, enlist fallback
         await RunDeliveryPassAsync(daytimeFactory); // deliver the fallback (Email)
@@ -131,7 +131,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         NotificationsApiFactory.ScriptOutcome(daytimeFactory.Services, NotificationChannel.Email, email,
             new SendOutcome(SendOutcomeKind.PermanentFailure, null, "rejected"));
 
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId, VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId, InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory); // expand -> Sms primary (mobile-only preference)
         await RunDeliveryPassAsync(daytimeFactory); // deliver Sms -> Undeliverable, enlist Email fallback
         await RunDeliveryPassAsync(daytimeFactory); // deliver Email fallback -> Undeliverable, no further fallback (both tried)
@@ -146,7 +146,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         var to = SafeDaytimeInstant().AddMinutes(5);
         var log = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         var items = log.GetProperty("items").EnumerateArray()
-            .Where(i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.VaccinationDue && i.GetProperty("channel").GetString() != "InApp")
+            .Where(i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.BillingInvoiceIssued && i.GetProperty("channel").GetString() != "InApp")
             .ToList();
 
         Assert.Equal(2, items.Count); // exactly the original Sms and the one Email fallback -- never a third
@@ -172,7 +172,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
             }, Json);
         }
 
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId, VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId, InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
         await RunDeliveryPassAsync(daytimeFactory);
 
@@ -183,7 +183,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         var log = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         var items = log.GetProperty("items").EnumerateArray().ToList();
 
-        Assert.Contains(items, i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.VaccinationDue && i.GetProperty("status").GetString() == "Sent");
+        Assert.Contains(items, i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.BillingInvoiceIssued && i.GetProperty("status").GetString() == "Sent");
     }
 
     private static NotificationTemplateDefinition MarketingTestDefinition() => new(
@@ -212,7 +212,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         await client.PutAsJsonAsync("/api/customers/me/notification-preferences", new { changes = new[] { new { channel = "Email", category = "Marketing", isGranted = true } } }, Json);
 
         await RequestNotificationAsync(marketingFactory, definition.Key, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["productName"] = "Cat Food" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
+            new Dictionary<string, string> { ["productName"] = "Mustard Oil" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await RunDeliveryPassAsync(marketingFactory);
         await RunDeliveryPassAsync(marketingFactory);
@@ -224,7 +224,7 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         Assert.Equal("List-Unsubscribe=One-Click", sent.Headers["List-Unsubscribe-Post"]);
 
         var smsSender = NotificationsApiFactory.CapturingSender(marketingFactory.Services, NotificationChannel.Sms);
-        Assert.DoesNotContain(smsSender.Sent, m => m.TextBody.Contains("Cat Food"));
+        Assert.DoesNotContain(smsSender.Sent, m => m.TextBody.Contains("Mustard Oil"));
     }
 
     [Fact]
@@ -236,15 +236,15 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         var (client, customerId, _) = await RegisterAndSignInCustomerAsync();
 
         await RequestNotificationAsync(marketingFactory, definition.Key, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["productName"] = "Cat Food" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
+            new Dictionary<string, string> { ["productName"] = "Mustard Oil" }, deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await RunDeliveryPassAsync(marketingFactory);
 
         var emailSender = NotificationsApiFactory.CapturingSender(marketingFactory.Services, NotificationChannel.Email);
         var smsSender = NotificationsApiFactory.CapturingSender(marketingFactory.Services, NotificationChannel.Sms);
 
-        Assert.DoesNotContain(emailSender.Sent, m => m.TextBody.Contains("Cat Food"));
-        Assert.DoesNotContain(smsSender.Sent, m => m.TextBody.Contains("Cat Food"));
+        Assert.DoesNotContain(emailSender.Sent, m => m.TextBody.Contains("Mustard Oil"));
+        Assert.DoesNotContain(smsSender.Sent, m => m.TextBody.Contains("Mustard Oil"));
     }
 
     /// <summary>
@@ -261,8 +261,8 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         var daytimeFactory = DaytimeFactory();
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            new Dictionary<string, string> { ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "not-a-date", ["bookingLink"] = "https://portal.example.test/portal/cats/x" },
+        var command = await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "not-a-date", ["invoiceLink"] = "https://portal.example.test/portal/billing/invoices/x" },
             deduplicationKey: $"test:{Guid.NewGuid():N}");
 
         await RunDeliveryPassAsync(daytimeFactory);
@@ -284,6 +284,6 @@ public sealed class NotificationRoutingEndpointTests(NotificationsApiFactory fac
         var from = SafeDaytimeInstant().AddMinutes(-5);
         var to = SafeDaytimeInstant().AddMinutes(5);
         var log = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
-        Assert.DoesNotContain(log.GetProperty("items").EnumerateArray(), i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.VaccinationDue);
+        Assert.DoesNotContain(log.GetProperty("items").EnumerateArray(), i => i.GetProperty("templateKey").GetString() == NotificationTemplateCatalogue.BillingInvoiceIssued);
     }
 }

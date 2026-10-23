@@ -87,9 +87,7 @@ public sealed class OrderingPaymentEndpointTests(OrderingApiFactory factory) : O
 
         var (inventory, _) = await StaffClientAsync(shop.Context, StaffRoles.Inventory);
         Assert.Equal(HttpStatusCode.Forbidden, (await ConfirmTransferAsync(inventory, orderId, order.Version, 2135.00m)).StatusCode);
-        var (nurse, _) = await StaffClientAsync(shop.Context, StaffRoles.Nurse);
-        Assert.Equal(HttpStatusCode.Forbidden, (await ConfirmTransferAsync(nurse, orderId, order.Version, 2135.00m)).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync("/api/staff/orders/awaiting-payment")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync("/api/staff/orders/awaiting-payment")).StatusCode);
     }
 
     [Fact]
@@ -421,13 +419,13 @@ public sealed class OrderingPaymentEndpointTests(OrderingApiFactory factory) : O
 
     // ── reconciliation issues: the list and resolving (the failure itself is in the fault tests) ─────
     [Fact]
-    public async Task TheReconciliationIssueList_IsForAccountantsAndAdmins_AndNurseIsRefused()
+    public async Task TheReconciliationIssueList_IsForAccountantsAndAdmins_AndInventoryIsRefused()
     {
         var shop = await SetUpShopAsync(fillCart: false);
-        var (nurse, _) = await StaffClientAsync(shop.Context, StaffRoles.Nurse);
+        var (inventory, _) = await StaffClientAsync(shop.Context, StaffRoles.Inventory);
         var (accountant, _) = await StaffClientAsync(shop.Context, StaffRoles.Accountant);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync("/api/staff/orders/reconciliation-issues")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync("/api/staff/orders/reconciliation-issues")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await accountant.GetAsync("/api/staff/orders/reconciliation-issues?status=Open")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await accountant.GetAsync("/api/staff/orders/reconciliation-issues?status=Bogus")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await accountant.PostAsJsonAsync($"/api/staff/orders/reconciliation-issues/{Guid.NewGuid()}/resolve", new { note = "done" }, Json)).StatusCode);

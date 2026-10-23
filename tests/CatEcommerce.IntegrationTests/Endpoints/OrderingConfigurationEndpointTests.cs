@@ -290,9 +290,7 @@ public sealed class OrderingConfigurationEndpointTests(OrderingApiFactory factor
 
     // ── §12.3: who may configure ────────────────────────────────────────────────────────────────────
     [Theory]
-    [InlineData("Nurse")]
-    [InlineData("Vet")]
-    [InlineData("Caretaker")]
+    [InlineData("Reception")]
     [InlineData("Inventory")]
     public async Task TheConfigurationEndpoints_RefuseRolesAppendixDDoesNotGiveThem(string role)
     {

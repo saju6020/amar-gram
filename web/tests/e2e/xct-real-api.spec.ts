@@ -22,6 +22,8 @@ const API = process.env.E2E_API_BASE_URL ?? 'http://localhost:5113';
 const IDENTIFIER = process.env.E2E_STAFF_IDENTIFIER ?? '';
 const PASSWORD = process.env.E2E_STAFF_PASSWORD ?? '';
 const CAPTCHA_ANSWER = process.env.E2E_CAPTCHA_ANSWER ?? 'TEST1';
+/** Any ordinary staff page: the offline copy is kept from every page of the staff app. */
+const START = '/staff/orders';
 
 const IDENTIFIER_2 = process.env.E2E_STAFF2_IDENTIFIER ?? '';
 const PASSWORD_2 = process.env.E2E_STAFF2_PASSWORD ?? '';
@@ -118,7 +120,7 @@ test('E-A1/E-A4/E-A5/E-A6 the service worker serves the board on a reload while 
   await expect(page.getByText(/Offline copy turned on/)).toBeVisible();
 
   // A synced copy, a registered worker, and a warm offline shell.
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible({ timeout: 45_000 });
   await expect.poll(() => storedSnapshots(page), { timeout: 45_000 }).toBeGreaterThan(0);
   await expect
@@ -137,22 +139,22 @@ test('E-A1/E-A4/E-A5/E-A6 the service worker serves the board on a reload while 
   await page.reload();
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)), { timeout: 20_000 }).toBe(true);
 
-  // E-A5: offline, a direct visit to the front desk lands on the board with an explanation.
+  // E-A5: offline, a direct visit to a staff page lands on the board with an explanation.
   await context.setOffline(true);
-  await page.goto('/staff/front-desk').catch(() => undefined);
+  await page.goto(START).catch(() => undefined);
   await expect(page).toHaveURL(/\/staff\/offline\?from=/, { timeout: 30_000 });
-  await expect(page.getByRole('heading', { name: /Today.s appointments/ })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Offline · read-only')).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('main').getByRole('button')).toHaveCount(0);
 
   // E-A4: offline, RELOAD the board itself: the worker serves the shell, the data comes from IndexedDB.
   await page.reload();
-  await expect(page.getByRole('heading', { name: /Today.s appointments/ })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Offline · read-only')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(/Saved at \d\d:\d\d/)).toBeVisible();
 
   // E-A6: the connection returns and the board takes the person back by itself.
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await expect(page).toHaveURL(/\/staff\/front-desk/, { timeout: 45_000 });
+  await expect(page).toHaveURL(/\/staff\/orders/, { timeout: 45_000 });
 });
 
 test('E-A8/E-X3 after sign-out the store is wiped, no token is readable, and only the sanctioned database exists', async ({ page }) => {
@@ -165,7 +167,7 @@ test('E-A8/E-X3 after sign-out the store is wiped, no token is readable, and onl
     // The write to IndexedDB must finish before the next navigation can abort it.
     await expect(page.getByText(/Offline copy turned on/)).toBeVisible();
   }
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible({ timeout: 45_000 });
   await expect.poll(() => storedSnapshots(page), { timeout: 45_000 }).toBeGreaterThan(0);
 
@@ -186,7 +188,7 @@ test('E-A8/E-X3 after sign-out the store is wiped, no token is readable, and onl
   // At the board online, the server answers: it leaves for the staff app (signed out, so sign-in).
   await page.goto('/staff/offline');
   await expect(page).toHaveURL(/staff.sign-in/, { timeout: 30_000 });
-  await expect(page.getByText(/Today.s appointments/)).toHaveCount(0);
+  await expect(page.getByText('Offline · read-only')).toHaveCount(0);
 });
 
 test('E-C1/E-C2 an Administrator erases a real customer; the ledger lists it with no personal data', async ({ page, playwright }) => {
@@ -223,10 +225,10 @@ test('E-C1/E-C2 an Administrator erases a real customer; the ledger lists it wit
   expect(text).not.toContain(mobile);
 });
 
-test('E-C3/E-C4 run retention now, then the run detail; the schedule keeps clinical records review-only', async ({ page }) => {
+test('E-C3/E-C4 run retention now, then the run detail; the schedule keeps financial records review-only', async ({ page }) => {
   await signIn(page);
   await page.goto('/staff/admin/retention');
-  await expect(page.getByRole('row', { name: /Clinical records/ })).toContainText('Review only', { timeout: 45_000 });
+  await expect(page.getByRole('row', { name: /Financial records/ })).toContainText('Review only', { timeout: 45_000 });
   await page.getByRole('button', { name: 'Run retention now' }).click();
   // Wait for the run to be accepted before leaving the page: navigating away with the request in
   // flight can leave the list loaded before the run exists (a fresh database has no other run).
@@ -338,7 +340,7 @@ async function deviceRecord(page: Page): Promise<Record<string, unknown> | null>
   );
 }
 
-test('SECURITY a fresh load of the board while the server answers goes to the front desk', async ({ page }) => {
+test('SECURITY a fresh load of the board while the server answers goes back to the staff app', async ({ page }) => {
   await signIn(page);
   await page.goto('/staff/offline/settings');
   const toggle = page.getByLabel(/Keep an offline copy of today/);
@@ -348,12 +350,12 @@ test('SECURITY a fresh load of the board while the server answers goes to the fr
     // The write to IndexedDB must finish before the next navigation can abort it.
     await expect(page.getByText(/Offline copy turned on/)).toBeVisible();
   }
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible({ timeout: 45_000 });
   await expect.poll(() => storedSnapshots(page), { timeout: 45_000 }).toBeGreaterThan(0);
   await page.goto('/staff/offline');
-  await expect(page).toHaveURL(/\/staff\/front-desk/, { timeout: 30_000 });
-  await expect(page.getByText(/Today.s appointments/)).toHaveCount(0);
+  await expect(page).toHaveURL(/\/staff$/, { timeout: 30_000 });
+  await expect(page.getByText('Offline · read-only')).toHaveCount(0);
 });
 
 test('SECURITY lock, reload offline, still locked; signing in again lifts it', async ({ page, context }) => {
@@ -367,7 +369,7 @@ test('SECURITY lock, reload offline, still locked; signing in again lifts it', a
     // The write to IndexedDB must finish before the next navigation can abort it.
     await expect(page.getByText(/Offline copy turned on/)).toBeVisible();
   }
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible({ timeout: 45_000 });
   await expect.poll(() => storedSnapshots(page), { timeout: 45_000 }).toBeGreaterThan(0);
   await expect
@@ -379,21 +381,21 @@ test('SECURITY lock, reload offline, still locked; signing in again lifts it', a
   // The clock must be installed BEFORE the board loads, or its idle timer is a real one.
   await page.clock.install();
   await context.setOffline(true);
-  await page.goto('/staff/front-desk').catch(() => undefined);
+  await page.goto(START).catch(() => undefined);
   await expect(page).toHaveURL(/\/staff\/offline\?from=/, { timeout: 30_000 });
-  await expect(page.getByRole('heading', { name: /Today.s appointments/ })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('Offline · read-only')).toBeVisible({ timeout: 30_000 });
   await page.clock.fastForward('31:00');
   await expect(page.getByText('Locked. Sign in again when the connection returns.')).toBeVisible();
   await expect.poll(async () => (await deviceRecord(page))?.lockedForStaffAccountId, { timeout: 15_000 }).toBeTruthy();
 
   await page.reload(); // still offline
   await expect(page.getByText('Locked. Sign in again when the connection returns.')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText(/Today.s appointments/)).toHaveCount(0);
+  await expect(page.getByText('Offline · read-only')).toHaveCount(0);
 
   // Back online the staff app takes over; its first successful sync lifts the lock.
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await expect(page).toHaveURL(/\/staff\/front-desk/, { timeout: 45_000 });
+  await expect(page).toHaveURL(/\/staff\/orders/, { timeout: 45_000 });
   await expect.poll(async () => (await deviceRecord(page))?.lockedForStaffAccountId ?? null, { timeout: 45_000 }).toBeNull();
 });
 
@@ -425,7 +427,7 @@ test('E-A9 (real API) a different person signing in on the same device removes t
     await toggle.click();
     await expect(page.getByText(/Offline copy turned on/)).toBeVisible();
   }
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible({ timeout: 45_000 });
   await expect.poll(() => snapshotOwners(page), { timeout: 45_000 }).toHaveLength(1);
   const [first] = await snapshotOwners(page);
@@ -434,7 +436,7 @@ test('E-A9 (real API) a different person signing in on the same device removes t
   // same browser profile.
   await page.context().clearCookies();
   await signIn(page, { identifier: IDENTIFIER_2, password: PASSWORD_2 });
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible({ timeout: 45_000 });
   // The first person's copy is gone and, once the second person's is written, it is theirs alone.
   await expect

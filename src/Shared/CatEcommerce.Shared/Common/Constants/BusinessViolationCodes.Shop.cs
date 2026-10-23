@@ -41,7 +41,6 @@ public static partial class BusinessViolationCodes
     public const string InvalidCountryCode = nameof(InvalidCountryCode);
     public const string FoodDetailsOnlyForFood = nameof(FoodDetailsOnlyForFood);
     public const string InvalidGuaranteedAnalysis = nameof(InvalidGuaranteedAnalysis);
-    public const string PrescriptionOnlyForFood = nameof(PrescriptionOnlyForFood);
     public const string CountryOfOriginRequired = nameof(CountryOfOriginRequired);
     public const string ProductNotPublishable = nameof(ProductNotPublishable);
     public const string InvalidProductTransition = nameof(InvalidProductTransition);
@@ -75,5 +74,4 @@ public static partial class BusinessViolationCodes
     public const string InvalidBrand = nameof(InvalidBrand);
     public const string InvalidProductDescription = nameof(InvalidProductDescription);
     public const string InvalidSkuCode = nameof(InvalidSkuCode);
-    public const string PrescriptionProductInBundle = nameof(PrescriptionProductInBundle);
 }

@@ -24,7 +24,7 @@ public sealed record IdempotencyClaim(IdempotencyClaimOutcome Outcome, Idempoten
 /// <summary>
 /// HO-ORD-001 §8.13 (ADR-202) -- HTTP idempotency records, each operation committed <b>on its own</b> through a separate short-lived
 /// <c>DbContext</c> (never the request's scoped context), so a claim survives the request's own rollback and a concurrent duplicate sees it
-/// immediately. Reusable by Billing and Boarding. Implemented in Infrastructure.
+/// immediately. Reusable by Billing. Implemented in Infrastructure.
 /// </summary>
 public interface IIdempotencyStore
 {

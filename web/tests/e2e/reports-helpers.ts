@@ -2,16 +2,17 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 import { holdApiUntilMswReady } from './portal-helpers';
+import { secondStaff } from './fixtures';
 
 /**
  * Shared helpers for the Reporting e2e specs (HO-RPT-002 §16). Plain functions, not a spec.
- * The mock knows two staff logins (administrator and nurse), so every other role is the NURSE
- * account whose roles the administrator changes first (`PUT /api/staff-accounts/{id}/roles`) —
- * the same approach as `emr-helpers.ts`. Real-API runs sign in with seeded accounts instead
+ * The mock knows two staff logins (the administrator and a second staff account), so every other
+ * role is that second account, whose roles the administrator changes first
+ * (`PUT /api/staff-accounts/{id}/roles`). Real-API runs sign in with seeded accounts instead
  * (`REPORTS_SEED`, see `reports-real-api.spec.ts`).
  */
 export type ReportsRole =
-  'Administrator' | 'Nurse' | 'Reception' | 'Accountant' | 'ShopManager' | 'Inventory';
+  'Administrator' | 'Reception' | 'Accountant' | 'ShopManager' | 'Inventory';
 
 async function call(page: Page, method: string, path: string, body?: unknown) {
   return page.evaluate(
@@ -87,19 +88,14 @@ export async function signInAsReportsRole(page: Page, role: ReportsRole): Promis
     return;
   }
   {
-    // The nurse login is reused for every other role, so reset its roles each time (the mock keeps them for the tab).
+    // The second staff login is reused for every other role, so reset its roles each time (the mock keeps them for the tab).
     await signIn(page, accountsFixtureIds.adminIdentifier, accountsFixtureIds.adminPassword);
-    const status = await call(
-      page,
-      'PUT',
-      `/api/staff-accounts/${accountsFixtureIds.nurseStaffId}/roles`,
-      {
-        roleIds: [role],
-      },
-    );
-    if (status >= 300) throw new Error(`could not switch the nurse account to ${role}`);
+    const status = await call(page, 'PUT', `/api/staff-accounts/${secondStaff.staffId}/roles`, {
+      roleIds: [role],
+    });
+    if (status >= 300) throw new Error(`could not switch the second staff account to ${role}`);
   }
-  await signIn(page, accountsFixtureIds.nurseIdentifier, accountsFixtureIds.nursePassword);
+  await signIn(page, secondStaff.identifier, secondStaff.password);
 }
 
 /** Signs in as `role`, opens `path` and waits for the staff shell. One attempt: a failure is real. */

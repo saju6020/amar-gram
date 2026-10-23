@@ -31,7 +31,7 @@ beforeEach(() => {
 });
 
 describe('MaintenanceGate — HO-SHP-002 §11.1, US-ADM-08', () => {
-  it('U-F1: maintenance on — the notice replaces the page, with portal and booking links', () => {
+  it('U-F1: maintenance on — the notice replaces the page, with a portal link', () => {
     render(
       withClient(
         <MaintenanceGate initial={{ maintenanceMode: true, message: 'Back at 6pm.' }}>
@@ -48,7 +48,6 @@ describe('MaintenanceGate — HO-SHP-002 §11.1, US-ADM-08', () => {
       'href',
       '/portal',
     );
-    expect(screen.queryByRole('link', { name: /Book a clinic visit/ })).not.toBeInTheDocument();
   });
 
   it('U-F1: maintenance started after the page was rendered — the client watch swaps it', async () => {

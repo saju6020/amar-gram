@@ -1,5 +1,5 @@
 using CatEcommerce.Api.Authorization;
-using CatEcommerce.Domain.Aggregates.Cat;
+using CatEcommerce.Domain.Aggregates.Account;
 using CatEcommerce.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,13 +15,13 @@ namespace CatEcommerce.IntegrationTests;
 [Route("api/test-only/xct")]
 public sealed class XctTestOnlyController(CatEcommerceDbContext db) : ControllerBase
 {
-    [HttpPost("remove-cat/{catId:guid}")]
+    [HttpPost("remove-customer/{customerId:guid}")]
     [PublicEndpoint]
     [CsrfExempt]
-    public async Task<IActionResult> RemoveCat(Guid catId)
+    public async Task<IActionResult> RemoveCustomer(Guid customerId)
     {
-        var cat = await db.Set<CatAggregate>().FirstAsync(c => c.Id == catId);
-        db.Remove(cat);
+        var customer = await db.Set<CustomerAccountAggregate>().FirstAsync(c => c.Id == customerId);
+        db.Remove(customer);
         await db.SaveChangesAsync();
         return NoContent();
     }

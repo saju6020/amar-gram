@@ -3,6 +3,7 @@ using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Infrastructure.Persistence;
 using CatEcommerce.Shared.Common.Constants;
+using CatEcommerce.Shared.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Platform.Infrastructure.Common.Security;
@@ -28,11 +29,11 @@ public sealed class NotificationPersonalDataEraserTests(NotificationsApiFactory 
     public async Task EraseAsync_RedactsTheCustomersOwnNotificationAndRequest_ThenIsIdempotent()
     {
         var (_, customerId, _) = await RegisterAndSignInCustomerAsync();
-        var marker = $"CATNAME-{Guid.NewGuid():N}";
-        var catId = await SeedCatAsync(customerId, marker);
-        await SeedVaccinationDueInAsync(catId, dueInDays: 5);
+        var marker = $"INVOICE-{Guid.NewGuid():N}";
+        await RequestNotificationAsync(null, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            new Dictionary<string, string> { ["invoiceNumber"] = marker, ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://portal.example.test/portal/billing/invoices/x" },
+            deduplicationKey: $"test:{Guid.NewGuid():N}");
 
-        await RunReminderSweepAsync();
         await RunDeliveryPassAsync(); // expand
         await RunDeliveryPassAsync(); // deliver -- Sent, body still carries the marker; a Normal
                                        // (non-secret) template's variables are never auto-redacted
@@ -43,14 +44,14 @@ public sealed class NotificationPersonalDataEraserTests(NotificationsApiFactory 
             // Two rows share this templateKey (the external SMS/email AND the always-on InApp inbox
             // copy, §8.6) -- both belong to the same customer, so both must be redacted below.
             var beforeNotifications = await db.Set<NotificationAggregate>().AsNoTracking()
-                .Where(n => n.RecipientId == customerId && n.TemplateKey == NotificationTemplateCatalogue.VaccinationDue)
+                .Where(n => n.RecipientId == customerId && n.TemplateKey == NotificationTemplateCatalogue.BillingInvoiceIssued)
                 .ToListAsync();
             Assert.NotEmpty(beforeNotifications);
             Assert.All(beforeNotifications, n => Assert.Null(n.AnonymisedOn));
             Assert.Contains(beforeNotifications, n => n.Body.Contains(marker));
 
             var beforeRequest = await db.Set<NotificationRequestAggregate>().AsNoTracking()
-                .SingleAsync(r => r.RecipientId == customerId && r.TemplateKey == NotificationTemplateCatalogue.VaccinationDue);
+                .SingleAsync(r => r.RecipientId == customerId && r.TemplateKey == NotificationTemplateCatalogue.BillingInvoiceIssued);
             Assert.Null(beforeRequest.VariablesRedactedOn);
             Assert.Contains(beforeRequest.Variables.Values, v => v == marker);
         }
@@ -66,14 +67,14 @@ public sealed class NotificationPersonalDataEraserTests(NotificationsApiFactory 
         {
             var db = afterScope.ServiceProvider.GetRequiredService<CatEcommerceDbContext>();
             var afterNotifications = await db.Set<NotificationAggregate>().AsNoTracking()
-                .Where(n => n.RecipientId == customerId && n.TemplateKey == NotificationTemplateCatalogue.VaccinationDue)
+                .Where(n => n.RecipientId == customerId && n.TemplateKey == NotificationTemplateCatalogue.BillingInvoiceIssued)
                 .ToListAsync();
             Assert.NotEmpty(afterNotifications);
             Assert.All(afterNotifications, n => Assert.NotNull(n.AnonymisedOn));
             Assert.All(afterNotifications, n => Assert.DoesNotContain(marker, n.Body));
 
             var afterRequest = await db.Set<NotificationRequestAggregate>().AsNoTracking()
-                .SingleAsync(r => r.RecipientId == customerId && r.TemplateKey == NotificationTemplateCatalogue.VaccinationDue);
+                .SingleAsync(r => r.RecipientId == customerId && r.TemplateKey == NotificationTemplateCatalogue.BillingInvoiceIssued);
             Assert.NotNull(afterRequest.VariablesRedactedOn);
             Assert.DoesNotContain(afterRequest.Variables.Values, v => v == marker);
         }

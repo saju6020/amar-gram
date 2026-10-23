@@ -8,8 +8,8 @@ namespace CatEcommerce.Domain.Tests.DomainServices;
 /// <summary>HO-NTF-001 §15 U-A1..U-A8. Pure -- no database.</summary>
 public sealed class TemplateRulesTests
 {
-    private static readonly NotificationTemplateDefinition VaccinationDefinition =
-        NotificationTemplateCatalogue.Find(NotificationTemplateCatalogue.VaccinationDue)!;
+    private static readonly NotificationTemplateDefinition InvoiceDefinition =
+        NotificationTemplateCatalogue.Find(NotificationTemplateCatalogue.BillingInvoiceIssued)!;
 
     private static readonly NotificationTemplateDefinition ResetDefinition =
         NotificationTemplateCatalogue.Find(NotificationTemplateCatalogue.PasswordReset)!;
@@ -18,35 +18,35 @@ public sealed class TemplateRulesTests
     private static TemplateContentInput Email(string body, string subject = "Subject") => new(NotificationChannel.Email, subject, null, body, null);
     private static TemplateContentInput InApp(string body, string title = "Title", string? linkPath = null) => new(NotificationChannel.InApp, null, title, body, linkPath);
 
-    private static IReadOnlyList<TemplateContentInput> FullVaccinationContents(TemplateContentInput? overrideSms = null, TemplateContentInput? overrideEmail = null, TemplateContentInput? overrideInApp = null) =>
+    private static IReadOnlyList<TemplateContentInput> FullInvoiceContents(TemplateContentInput? overrideSms = null, TemplateContentInput? overrideEmail = null, TemplateContentInput? overrideInApp = null) =>
     [
-        overrideSms ?? Sms("{{catName}}'s {{vaccineName}} is due {{dueOn}} {{bookingLink}}"),
-        overrideEmail ?? Email("{{catName}}'s {{vaccineName}} is due {{dueOn}}. [Book]({{bookingLink}})"),
-        overrideInApp ?? InApp("{{catName}}'s {{vaccineName}} is due {{dueOn}}", linkPath: "{{bookingLink}}")
+        overrideSms ?? Sms("Invoice {{invoiceNumber}} for {{totalText}} is due {{dueOn}} {{invoiceLink}}"),
+        overrideEmail ?? Email("Invoice {{invoiceNumber}} for {{totalText}} is due {{dueOn}}. [View]({{invoiceLink}})"),
+        overrideInApp ?? InApp("Invoice {{invoiceNumber}} for {{totalText}} is due {{dueOn}}", linkPath: "{{invoiceLink}}")
     ];
 
     [Fact]
     public void UnknownPlaceholder_NamesTheVariableAndPropertyPath()
     {
-        var contents = FullVaccinationContents(overrideSms: Sms("{{catname}} is due"));
+        var contents = FullInvoiceContents(overrideSms: Sms("{{invoicenumber}} is due"));
 
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.UnknownTemplatePlaceholder, violation!.Code);
-        Assert.Contains("{{catname}}", violation.Message);
+        Assert.Contains("{{invoicenumber}}", violation.Message);
         Assert.StartsWith("Contents[0].Body", violation.PropertyName);
     }
 
     [Theory]
-    [InlineData("{{ catName }} is due")]
-    [InlineData("{catName} is due")]
-    [InlineData("{{catName is due")]
+    [InlineData("{{ invoiceNumber }} is due")]
+    [InlineData("{invoiceNumber} is due")]
+    [InlineData("{{invoiceNumber is due")]
     [InlineData("}} alone")]
     public void MalformedPlaceholder_IsRejected(string body)
     {
-        var contents = FullVaccinationContents(overrideSms: Sms(body));
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var contents = FullInvoiceContents(overrideSms: Sms(body));
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.MalformedTemplatePlaceholder, violation!.Code);
@@ -55,8 +55,8 @@ public sealed class TemplateRulesTests
     [Fact]
     public void MissingRequiredPlaceholder_IsRejected()
     {
-        var contents = FullVaccinationContents(overrideSms: Sms("{{catName}}'s vaccine is due {{dueOn}}"));
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var contents = FullInvoiceContents(overrideSms: Sms("Invoice {{invoiceNumber}} is due {{dueOn}}"));
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.RequiredTemplatePlaceholderMissing, violation!.Code);
@@ -85,8 +85,8 @@ public sealed class TemplateRulesTests
     [Fact]
     public void ChannelSetMismatch_MissingOne_IsRejected()
     {
-        var contents = new[] { Sms("{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}"), Email("Body {{bookingLink}}") };
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var contents = new[] { Sms("{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}"), Email("Body {{invoiceLink}}") };
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.TemplateChannelMismatch, violation!.Code);
@@ -95,8 +95,8 @@ public sealed class TemplateRulesTests
     [Fact]
     public void ChannelSetMismatch_ExtraChannel_IsRejected()
     {
-        var contents = FullVaccinationContents().Append(new TemplateContentInput(NotificationChannel.Push, null, "T", "body", null)).ToList();
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var contents = FullInvoiceContents().Append(new TemplateContentInput(NotificationChannel.Push, null, "T", "body", null)).ToList();
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.TemplateChannelMismatch, violation!.Code);
@@ -105,8 +105,8 @@ public sealed class TemplateRulesTests
     [Fact]
     public void EmailBodyWithHtmlTag_IsRejected()
     {
-        var contents = FullVaccinationContents(overrideEmail: Email("<b>{{catName}}</b> {{vaccineName}} {{dueOn}} {{bookingLink}}"));
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var contents = FullInvoiceContents(overrideEmail: Email("<b>{{invoiceNumber}}</b> {{totalText}} {{dueOn}} {{invoiceLink}}"));
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateText, violation!.Code);
@@ -115,8 +115,8 @@ public sealed class TemplateRulesTests
     [Fact]
     public void EmailLinkTarget_TextVariable_IsRejected()
     {
-        var contents = FullVaccinationContents(overrideEmail: Email("{{dueOn}} {{bookingLink}} [x]({{catName}})"));
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var contents = FullInvoiceContents(overrideEmail: Email("{{dueOn}} {{invoiceLink}} [x]({{invoiceNumber}})"));
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateLink, violation!.Code);
@@ -125,10 +125,10 @@ public sealed class TemplateRulesTests
     [Fact]
     public void SmsBodyWithAngleBracketOrLinkSyntax_IsRejected()
     {
-        var withAngle = TemplateRules.Validate(VaccinationDefinition, FullVaccinationContents(overrideSms: Sms("<{{catName}}> {{vaccineName}} {{dueOn}} {{bookingLink}}")));
+        var withAngle = TemplateRules.Validate(InvoiceDefinition, FullInvoiceContents(overrideSms: Sms("<{{invoiceNumber}}> {{totalText}} {{dueOn}} {{invoiceLink}}")));
         Assert.Equal(BusinessViolationCodes.InvalidTemplateText, withAngle!.Code);
 
-        var withLink = TemplateRules.Validate(VaccinationDefinition, FullVaccinationContents(overrideSms: Sms("[x](https://a) {{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}}")));
+        var withLink = TemplateRules.Validate(InvoiceDefinition, FullInvoiceContents(overrideSms: Sms("[x](https://a) {{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}}")));
         Assert.Equal(BusinessViolationCodes.InvalidTemplateText, withLink!.Code);
     }
 
@@ -160,9 +160,9 @@ public sealed class TemplateRulesTests
     [Fact]
     public void BodyContainingSentinelCharacter_IsRejected()
     {
-        var contents = FullVaccinationContents(overrideInApp: InApp("{{catName}} 99 due {{dueOn}}", linkPath: "{{bookingLink}}"));
+        var contents = FullInvoiceContents(overrideInApp: InApp("{{invoiceNumber}} 99 due {{dueOn}}", linkPath: "{{invoiceLink}}"));
 
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateText, violation!.Code);
@@ -172,9 +172,9 @@ public sealed class TemplateRulesTests
     [Fact]
     public void ZeroWidthSpaceInLinkPath_IsRejected()
     {
-        var contents = FullVaccinationContents(overrideInApp: InApp("{{catName}}'s {{vaccineName}} is due {{dueOn}}", linkPath: "/portal​/cats"));
+        var contents = FullInvoiceContents(overrideInApp: InApp("Invoice {{invoiceNumber}} for {{totalText}} is due {{dueOn}}", linkPath: "/portal​/billing"));
 
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateText, violation!.Code);
@@ -194,11 +194,11 @@ public sealed class TemplateRulesTests
     [Fact]
     public void InAppLinkPath_BackslashDisguisedAsSiteRelative_IsRejected()
     {
-        // {{bookingLink}} must still appear somewhere (body or LinkPath) to satisfy rule 4's
+        // {{invoiceLink}} must still appear somewhere (body or LinkPath) to satisfy rule 4's
         // required-placeholder check, so the malicious LinkPath's own rule is what fails this.
-        var contents = FullVaccinationContents(overrideInApp: InApp("{{catName}}'s {{vaccineName}} is due {{dueOn}} {{bookingLink}}", linkPath: @"/\evil.test"));
+        var contents = FullInvoiceContents(overrideInApp: InApp("Invoice {{invoiceNumber}} for {{totalText}} is due {{dueOn}} {{invoiceLink}}", linkPath: @"/\evil.test"));
 
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateLink, violation!.Code);
@@ -209,9 +209,9 @@ public sealed class TemplateRulesTests
     [Fact]
     public void EmailLinkTarget_BackslashDisguisedAsSiteRelative_IsRejected()
     {
-        var contents = FullVaccinationContents(overrideEmail: Email(@"{{catName}} {{vaccineName}} {{dueOn}} {{bookingLink}} [Book](/\evil.test)"));
+        var contents = FullInvoiceContents(overrideEmail: Email(@"{{invoiceNumber}} {{totalText}} {{dueOn}} {{invoiceLink}} [View](/\evil.test)"));
 
-        var violation = TemplateRules.Validate(VaccinationDefinition, contents);
+        var violation = TemplateRules.Validate(InvoiceDefinition, contents);
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateLink, violation!.Code);
@@ -220,7 +220,7 @@ public sealed class TemplateRulesTests
     [Fact]
     public void ValidateSampleOverride_RejectsOverlongValue()
     {
-        var violation = TemplateRules.ValidateSampleOverride("catName", TemplateVariableKind.Text, new string('a', 501), "SampleValues.catName");
+        var violation = TemplateRules.ValidateSampleOverride("invoiceNumber", TemplateVariableKind.Text, new string('a', 501), "SampleValues.invoiceNumber");
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateSampleValue, violation!.Code);
@@ -229,14 +229,14 @@ public sealed class TemplateRulesTests
     [Fact]
     public void ValidateSampleOverride_RejectsControlAndPrivateUseCharacters()
     {
-        Assert.NotNull(TemplateRules.ValidateSampleOverride("catName", TemplateVariableKind.Text, "Mitu\0", "SampleValues.catName"));
-        Assert.NotNull(TemplateRules.ValidateSampleOverride("catName", TemplateVariableKind.Text, "Mitu", "SampleValues.catName"));
+        Assert.NotNull(TemplateRules.ValidateSampleOverride("invoiceNumber", TemplateVariableKind.Text, "INV-1\0", "SampleValues.invoiceNumber"));
+        Assert.NotNull(TemplateRules.ValidateSampleOverride("invoiceNumber", TemplateVariableKind.Text, "INV-1", "SampleValues.invoiceNumber"));
     }
 
     [Fact]
     public void ValidateSampleOverride_RejectsNonHttpsUrl()
     {
-        var violation = TemplateRules.ValidateSampleOverride("bookingLink", TemplateVariableKind.Url, "javascript:alert(1)", "SampleValues.bookingLink");
+        var violation = TemplateRules.ValidateSampleOverride("invoiceLink", TemplateVariableKind.Url, "javascript:alert(1)", "SampleValues.invoiceLink");
 
         Assert.NotNull(violation);
         Assert.Equal(BusinessViolationCodes.InvalidTemplateSampleValue, violation!.Code);
@@ -254,8 +254,8 @@ public sealed class TemplateRulesTests
     [Fact]
     public void ValidateSampleOverride_AcceptsWellFormedValues()
     {
-        Assert.Null(TemplateRules.ValidateSampleOverride("bookingLink", TemplateVariableKind.Url, "https://app.example.com/x", "p"));
+        Assert.Null(TemplateRules.ValidateSampleOverride("invoiceLink", TemplateVariableKind.Url, "https://app.example.com/x", "p"));
         Assert.Null(TemplateRules.ValidateSampleOverride("dueOn", TemplateVariableKind.Date, "2027-01-12", "p"));
-        Assert.Null(TemplateRules.ValidateSampleOverride("catName", TemplateVariableKind.Text, "Mitu", "p"));
+        Assert.Null(TemplateRules.ValidateSampleOverride("invoiceNumber", TemplateVariableKind.Text, "INV-1", "p"));
     }
 }

@@ -15,7 +15,7 @@ const replace = vi.fn();
 let search = '';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace, push: vi.fn() }),
-  usePathname: () => '/shop/products/royal-canin-kitten',
+  usePathname: () => '/shop/products/organic-rolled-oats',
   useSearchParams: () => new URLSearchParams(search),
 }));
 
@@ -48,7 +48,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
 
     await user.click(screen.getByRole('radio', { name: /2 kg/ }));
     expect(replace).toHaveBeenCalledWith(
-      `/shop/products/royal-canin-kitten?sku=${shopFixtureIds.skuKitten2kg}`,
+      `/shop/products/organic-rolled-oats?sku=${shopFixtureIds.skuOats2kg}`,
       {
         scroll: false,
       },
@@ -58,7 +58,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
     await user.click(screen.getByRole('radio', { name: /4 kg/ }));
     expect(buyBox().getByText('৳4,400.00')).toBeInTheDocument();
     // The 4 kg variant has its own image, shown first.
-    expect(screen.getAllByRole('img')[0]).toHaveAccessibleName('Royal Canin Kitten 4 kg bag');
+    expect(screen.getAllByRole('img')[0]).toHaveAccessibleName('Organic Rolled Oats 4 kg bag');
   });
 
   it('U-B2: an out-of-stock variant offers the alert while the others still read In stock', async () => {
@@ -80,7 +80,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
   it('U-B2 (signed in): the alert is a button, and the request shows the channel', async () => {
     const user = userEvent.setup();
     signInForTest();
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten4kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats4kg);
     // The seeded session already has a PENDING alert for the 4 kg size.
     expect(await screen.findByText(/You.ll be told when it.s back/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel alert' }));
@@ -103,18 +103,18 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
   });
 
   it('U-B11: a guest clicking Save is sent to sign in with ?next= back to the same variant', async () => {
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats2kg);
     const link = await screen.findByRole('link', { name: 'Save' });
     expect(link).toHaveAttribute(
       'href',
-      `/sign-in?next=${encodeURIComponent(`/shop/products/royal-canin-kitten?sku=${shopFixtureIds.skuKitten2kg}`)}`,
+      `/sign-in?next=${encodeURIComponent(`/shop/products/organic-rolled-oats?sku=${shopFixtureIds.skuOats2kg}`)}`,
     );
   });
 
   it('a signed-in customer toggles Save / Saved (the label carries the state)', async () => {
     const user = userEvent.setup();
     signInForTest();
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats2kg);
     const button = await screen.findByRole('button', { name: 'Save' });
     // S15: the state is announced once, by the label, not also by aria-pressed.
     expect(button).not.toHaveAttribute('aria-pressed');
@@ -144,7 +144,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
         HttpResponse.json({ title: 'boom' }, { status: 500 }),
       ),
     );
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats2kg);
     await user.click(await screen.findByRole('button', { name: 'Save' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
 
@@ -153,12 +153,12 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
   });
 
   it('S8: Back to a URL without ?sku= returns to the default variant', () => {
-    search = `sku=${shopFixtureIds.skuKitten2kg}`;
+    search = `sku=${shopFixtureIds.skuOats2kg}`;
     const detail = mockDetail(shopFixtureIds.multiVariantSlug);
     const { rerender } = renderWithClient(
       <ProductPurchase
         detail={detail}
-        initialSkuId={shopFixtureIds.skuKitten2kg}
+        initialSkuId={shopFixtureIds.skuOats2kg}
         lang=""
         heading={<h1>{detail.name}</h1>}
       />,
@@ -170,7 +170,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
     rerender(
       <ProductPurchase
         detail={detail}
-        initialSkuId={shopFixtureIds.skuKitten2kg}
+        initialSkuId={shopFixtureIds.skuOats2kg}
         lang=""
         heading={<h1>{detail.name}</h1>}
       />,
@@ -224,7 +224,7 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Ingredients & analysis' }));
     const panel = screen.getByRole('tabpanel', { name: 'Ingredients & analysis' });
-    expect(within(panel).getByText(/Dehydrated poultry protein/)).toBeInTheDocument();
+    expect(within(panel).getByText(/Whole grain rolled oats/)).toBeInTheDocument();
     const table = within(panel).getByRole('table', { name: 'Guaranteed analysis' });
     const cells = within(table).getAllByRole('cell');
     expect(cells).toHaveLength(4);
@@ -272,7 +272,7 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
   });
 
   it('U-F3: a field that fell back to English carries lang="en"; the others lang="bn"', () => {
-    const detail = mockDetail(shopFixtureIds.thaiKittenSlug, 'bn');
+    const detail = mockDetail(shopFixtureIds.thaiRiceSlug, 'bn');
     expect(detail.locale).toBe('bn');
     expect(detail.fieldLocales.feedingGuide).toBe('en');
     const { container } = render(
@@ -306,13 +306,13 @@ describe('BundleContents — US-SHP-12', () => {
     render(<BundleContents components={detail.bundle!.components} />);
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(2);
-    expect(items[0]).toHaveTextContent('1 × Royal Canin Kitten (400 g)');
+    expect(items[0]).toHaveTextContent('1 × Organic Rolled Oats (400 g)');
     expect(within(items[0]!).getByText('In stock')).toBeInTheDocument();
-    expect(items[1]).toHaveTextContent('2 × Catnip Mouse Set');
+    expect(items[1]).toHaveTextContent('2 × Cotton Ball Set');
     expect(within(items[1]!).getByText('Out of stock')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Royal Canin Kitten' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Organic Rolled Oats' })).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten',
+      '/shop/products/organic-rolled-oats',
     );
   });
 });

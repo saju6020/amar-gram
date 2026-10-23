@@ -14,9 +14,9 @@ public sealed class NotificationRetentionRedactionTests
     {
         var notification = new NotificationAggregate(Guid.NewGuid());
         notification.CreateExternal(new NotificationCreateDto(
-            Guid.NewGuid(), "care.vaccination-due", 0, "en", NotificationCategory.Transactional, NotificationUrgency.Normal, false,
+            Guid.NewGuid(), "billing.invoice-issued", 0, "en", NotificationCategory.Transactional, NotificationUrgency.Normal, false,
             NotificationRecipientKind.Customer, recipientId, null, null, null, null, null, NotificationChannel.Sms, "+8801700000000",
-            "Subject", "Title", "Your cat Mitu is due", "<p>html</p>", "/inbox", null, Created, null, false, "tokenhash", "https://x/unsub", null, null, null, null, null));
+            "Subject", "Title", "Your invoice is due", "<p>html</p>", "/inbox", null, Created, null, false, "tokenhash", "https://x/unsub", null, null, null, null, null));
         notification.Cancel(NotificationCloseReason.RecipientOptedOut, Created);
         return notification;
     }
@@ -38,7 +38,7 @@ public sealed class NotificationRetentionRedactionTests
         Assert.Equal(Now, notification.RedactedOn);
         Assert.Null(notification.AnonymisedOn);                         // it is not an anonymisation
         Assert.Equal(recipient, notification.RecipientId);              // metadata kept
-        Assert.Equal("care.vaccination-due", notification.TemplateKey);
+        Assert.Equal("billing.invoice-issued", notification.TemplateKey);
         Assert.Equal(NotificationStatus.Cancelled, notification.Status);
     }
 

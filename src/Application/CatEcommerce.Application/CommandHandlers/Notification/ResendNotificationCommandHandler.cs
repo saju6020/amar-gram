@@ -139,8 +139,8 @@ public sealed class ResendNotificationCommandHandler(
         var values = new Dictionary<string, string>(request.Variables, StringComparer.Ordinal)
         {
             [StandardTemplateVariables.RecipientName] = recipient.FullName,
-            [StandardTemplateVariables.ClinicName] = branch?.Name ?? "Amar Gram",
-            [StandardTemplateVariables.ClinicPhone] = branch?.PhoneNumber ?? ""
+            [StandardTemplateVariables.OutletName] = branch?.Name ?? "Amar Gram",
+            [StandardTemplateVariables.OutletPhone] = branch?.PhoneNumber ?? ""
         };
 
         try

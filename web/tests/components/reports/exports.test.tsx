@@ -35,9 +35,9 @@ beforeEach(() => {
 function renderButtons() {
   return render(
     <ExportButtons
-      reportKey="clinic-daily-schedule"
-      query="from=2026-10-14&to=2026-10-14&pageNumber=3&pageSize=50&sort=cat"
-      fallbackBaseName="purrcare-x"
+      reportKey="order-fulfilment"
+      query="from=2026-10-14&to=2026-10-14&pageNumber=3&pageSize=50&sort=orderNumber"
+      fallbackBaseName="amargram-x"
     />,
   );
 }
@@ -48,8 +48,8 @@ describe('ExportButtons — U-D series (ADR-FE-132)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
     expect(download.calls).toHaveLength(1);
     expect(download.calls[0]).toEqual([
-      '/api/staff/reports/clinic-daily-schedule/export.csv?from=2026-10-14&to=2026-10-14&sort=cat',
-      'purrcare-x.csv',
+      '/api/staff/reports/order-fulfilment/export.csv?from=2026-10-14&to=2026-10-14&sort=orderNumber',
+      'amargram-x.csv',
     ]);
     expect(await screen.findByText('Downloaded.')).toBeInTheDocument();
   });

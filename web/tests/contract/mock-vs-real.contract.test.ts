@@ -205,7 +205,6 @@ const ENDPOINTS: Endpoint[] = [
   e('GET /api/customers/me/notification-preferences', 'customer'),
   e('GET /api/customers/me/policy-acceptances/pending', 'customer'),
   e('GET /api/cart', 'customer'),
-  e('GET /api/cats', 'customer', () => ['/api/cats?pageNumber=1&pageSize=10']),
   e('GET /api/customers/me/checkout/quote', 'customer', (c) => [c.quotePath]),
   e('GET /api/customers/me/orders', 'customer'),
   e('GET /api/customers/me/orders/{orderId}', 'customer', (c) =>

@@ -52,32 +52,16 @@ function tile(
 function tilesFor(roles: string[], poll: number): DashboardTile[] {
   const tiles: DashboardTile[] = [];
   const has = (...r: string[]) => r.some((x) => roles.includes(x));
-  if (has('Reception', 'Vet', 'Nurse', 'Administrator')) {
+  if (has('ShopManager', 'Administrator')) {
     tiles.push(
       tile(
-        'clinic.appointments-today',
-        'Appointments today',
-        [count('total', 'Booked', 11 + poll), count('remaining', 'Remaining', 6)],
-        'clinic-daily-schedule',
-      ),
-    );
-  }
-  if (has('Reception', 'Vet', 'Nurse')) {
-    tiles.push(
-      tile(
-        'clinic.queue-now',
-        'Queue now',
-        [count('waiting', 'Waiting', 3), count('longestWait', 'Longest wait', 14, 'min')],
-        null,
-      ),
-    );
-  }
-  if (has('Vet')) {
-    tiles.push(
-      tile(
-        'clinic.consultations-unfinalised',
-        'Consultations to finalise',
-        [count('open', 'Completed, not finalised', 3), count('oldestAge', 'Oldest', null, 'h')],
+        'orders.today',
+        'Orders today',
+        [
+          count('placed', 'Placed today', 11 + poll),
+          count('toPack', 'To pack', 6),
+          count('dispatched', 'Dispatched today', null),
+        ],
         null,
       ),
     );

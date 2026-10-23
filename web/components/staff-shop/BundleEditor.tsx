@@ -57,7 +57,7 @@ export function rowNamedBy(message: string | undefined, rows: Array<{ code: stri
 
 /**
  * HO-SHP-002 §11.6 `BundleEditor` — US-SHP-12, kits only. Component rows (SKU, quantity 1–20); the
- * server's `InvalidBundleComponent` (a kit, a prescription diet, a discontinued SKU…) is shown on the
+ * server's `InvalidBundleComponent` (a kit, a discontinued SKU…) is shown on the
  * ROW whose SKU it names, else on the form.
  */
 export function BundleEditor({ product, renderPicker, onSave, onReload }: BundleEditorProps) {
@@ -88,7 +88,7 @@ export function BundleEditor({ product, renderPicker, onSave, onReload }: Bundle
   return (
     <SectionFrame
       title="Kit components"
-      description="A kit needs at least 2 component units. Kits and prescription diets can't be components."
+      description="A kit needs at least 2 component units. Kits can't be components."
       errors={errors}
       isDirty={isDirty}
       isSubmitting={isSubmitting}

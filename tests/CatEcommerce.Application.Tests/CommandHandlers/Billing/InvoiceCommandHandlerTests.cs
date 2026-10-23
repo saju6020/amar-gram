@@ -38,8 +38,8 @@ public sealed class InvoiceCommandHandlerTests
         var charge = new ChargeAggregate(Guid.NewGuid());
         var actor = new BillingActor(TestUserContext.Create(), Guid.NewGuid());
         charge.Record(new ChargeRequestDto(
-            customerId ?? _customerId, branchId ?? _branchId, null, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "main", null, null,
-            "Cat food", 1m, new Money(100m, currency), new Money(0m, currency), _taxClassId, new DateOnly(2026, 10, 7)), new ChargeRecordContext(currency, _time.GetUtcNow(), actor));
+            customerId ?? _customerId, branchId ?? _branchId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "main",
+            "Rice", 1m, new Money(100m, currency), new Money(0m, currency), _taxClassId, new DateOnly(2026, 10, 7)), new ChargeRecordContext(currency, _time.GetUtcNow(), actor));
         if (voided) charge.Void("test", _time.GetUtcNow(), actor);
         _charges.Seed(charge);
         return charge;
@@ -179,12 +179,10 @@ public sealed class InvoiceCommandHandlerTests
 
         Assert.True(validator.Validate(With(new InvoiceChargeSelector(ChargeIds: [Guid.NewGuid()]))).IsValid);
         Assert.True(validator.Validate(With(new InvoiceChargeSelector(Source: new SourceChargeSelector("Order", Guid.NewGuid())))).IsValid);
-        Assert.True(validator.Validate(With(new InvoiceChargeSelector(BillingGroup: new BillingGroupChargeSelector("BoardingStay", Guid.NewGuid(), new DateOnly(2026, 10, 7))))).IsValid);
 
         Assert.False(validator.Validate(With(new InvoiceChargeSelector())).IsValid);
         Assert.False(validator.Validate(With(new InvoiceChargeSelector(ChargeIds: [Guid.NewGuid()], Source: new SourceChargeSelector("Order", Guid.NewGuid())))).IsValid);
         Assert.False(validator.Validate(With(new InvoiceChargeSelector(Source: new SourceChargeSelector("Nonsense", Guid.NewGuid())))).IsValid);
-        Assert.False(validator.Validate(With(new InvoiceChargeSelector(BillingGroup: new BillingGroupChargeSelector("Nope", Guid.NewGuid())))).IsValid);
         Assert.False(validator.Validate(With(new InvoiceChargeSelector(ChargeIds: []))).IsValid);
         Assert.False(validator.Validate(With(new InvoiceChargeSelector(ChargeIds: [Guid.NewGuid()]), key: new string('k', BillingRules.MaxIdempotencyKeyLength + 1))).IsValid);
     }

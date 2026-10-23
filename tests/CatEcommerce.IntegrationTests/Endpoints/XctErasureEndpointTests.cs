@@ -85,12 +85,11 @@ public sealed class XctErasureEndpointTests(XctApiFactory factory) : XctIntegrat
 
     // I-B2 + I-B3 + I-B4
     [Fact]
-    public async Task I_B2_B3_B4_ThePassErasesWhatItMay_HoldsAcceptanceEvidence_ReleasesItAtTheEndOfThePeriod_AndKeepsClinicalRecords()
+    public async Task I_B2_B3_B4_ThePassErasesWhatItMay_HoldsAcceptanceEvidence_ReleasesItAtTheEndOfThePeriod_AndShowsThePlaceholderName()
     {
         var withIp = Factory.WithFixedRemoteIpAddress(FixedIp);
         var (admin, _) = await SignedInStaffAsync(StaffRoles.Administrator, withIp);
         var (customer, customerId, _, password) = await RegisterAndSignInCustomerAsync(withIp);
-        var catId = await SeedCatAsync(customerId, "Held Cat");
         await AcceptAPolicyAsync(admin, customer);
         Assert.Equal(FixedIp, await AcceptanceIpAsync(customerId));
 
@@ -113,8 +112,7 @@ public sealed class XctErasureEndpointTests(XctApiFactory factory) : XctIntegrat
         Assert.Equal("Open", ledger.GetProperty("status").GetString());
         Assert.Equal(FixedIp, await AcceptanceIpAsync(customerId));
 
-        // I-B4: the cat (a clinical record) is untouched and its owner now shows the placeholder.
-        Assert.Equal(1, await ScalarAsync<int>("SELECT COUNT(*)::int FROM clinic.cat WHERE \"Id\" = @id", ("id", catId)));
+        // I-B4: the account now shows the placeholder.
         Assert.Equal(AnonymisationRules.PlaceholderFullName, await ScalarAsync<string>("SELECT full_name FROM account.customer_account WHERE \"Id\" = @id", ("id", customerId)));
 
         // I-B3: a clock past the hold -> the same pass releases it; the request completes and the proof point is audited.
@@ -127,7 +125,6 @@ public sealed class XctErasureEndpointTests(XctApiFactory factory) : XctIntegrat
         Assert.All(completed.GetProperty("scopes").EnumerateArray(), s => Assert.Equal("Completed", s.GetProperty("status").GetString()));
         Assert.Null(await AcceptanceIpAsync(customerId));
         Assert.Equal(1, await CountAuditAsync("ErasureRequestCompleted", customerId));
-        Assert.Equal(1, await ScalarAsync<int>("SELECT COUNT(*)::int FROM clinic.cat WHERE \"Id\" = @id", ("id", catId)));
     }
 
     // I-B5 + I-B6 + I-B7

@@ -111,11 +111,11 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
     public async Task U_B2_GuaranteedAnalysis_OverHttp_AcceptedSumBoundAndAllOrNone()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("Analysis"), "Analysis Food", category: "CatFood", countryCode: "DE", lifeStage: "Adult");
+        var product = await CreateProductAsync(staff, NewBrand("Analysis"), "Analysis Food", category: "CatFood", countryCode: "DE");
         var url = $"/api/staff/shop/products/{product.ProductId}/food";
 
         async Task<HttpResponseMessage> PutAsync(object analysis) => await staff.PutAsJsonAsync(url, new
-        { expectedVersion = await ProductVersionAsync(staff, product.ProductId), lifeStage = "Adult", guaranteedAnalysis = analysis }, Json);
+        { expectedVersion = await ProductVersionAsync(staff, product.ProductId), guaranteedAnalysis = analysis }, Json);
 
         async Task<JsonElement> StoredAnalysisAsync() =>
             (await BodyAsync(await AnonymousGetAsync($"/api/shop/products/{product.Slug}"))).GetProperty("food").GetProperty("guaranteedAnalysis");
@@ -153,7 +153,6 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         { "minPrice=500&maxPrice=100", "minPrice" },
         { "minPrice=abc", "minPrice" },
         { "maxPrice=abc", "maxPrice" },
-        { "lifeStage=Puppy", "lifeStage" },
         { "protein=Wombat", "protein" },
         { "minRating=6", "minRating" },
         { "minRating=0", "minRating" },
@@ -190,7 +189,6 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
 
     [Theory]
     [InlineData("origin")]
-    [InlineData("lifeStage")]
     [InlineData("protein")]
     public async Task U_E3_TwentyOneValuesOfAMultiValuedFilter_IsInvalidCatalogueFilter(string parameter)
     {
@@ -482,9 +480,9 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         var brand = NewBrand("Filters");
         var review = await ReviewerAsync(staff);
 
-        var p1 = await CreateProductAsync(staff, brand, "Kitten Dry " + Token(), category: "CatFood", subcategory: "Dry", countryCode: "FR", lifeStage: "Kitten", proteinSource: "Chicken", price: 1200m);
-        var p2 = await CreateProductAsync(staff, brand, "Adult Wet " + Token(), category: "CatFood", subcategory: "Wet", countryCode: "DE", lifeStage: "Adult", proteinSource: "Salmon", price: 3000m);
-        var p3 = await CreateProductAsync(staff, brand, "Adult Dry " + Token(), category: "CatFood", subcategory: "Dry", countryCode: "FR", lifeStage: "Adult", proteinSource: "Chicken", price: 2000m);
+        var p1 = await CreateProductAsync(staff, brand, "Small Dry " + Token(), category: "CatFood", subcategory: "Dry", countryCode: "FR", proteinSource: "Chicken", price: 1200m);
+        var p2 = await CreateProductAsync(staff, brand, "Adult Wet " + Token(), category: "CatFood", subcategory: "Wet", countryCode: "DE", proteinSource: "Salmon", price: 3000m);
+        var p3 = await CreateProductAsync(staff, brand, "Adult Dry " + Token(), category: "CatFood", subcategory: "Dry", countryCode: "FR", proteinSource: "Chicken", price: 2000m);
         var p4 = await CreateProductAsync(staff, brand, "Toy Mouse " + Token(), category: "ToysAndFurniture", price: 500m);
         var p5 = await CreateProductAsync(staff, brand, "Toy Ball " + Token(), category: "ToysAndFurniture", price: 700m);
         await MakeSkuUnpricedAsync(p5.SkuId); // no sellable price: not in stock
@@ -512,8 +510,6 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         await AssertFilterAsync("category=ToysAndFurniture", p4, p5);
         await AssertFilterAsync("category=CatFood&subcategory=Dry", p1, p3);
         await AssertFilterAsync("subcategory=Wet", p2);
-        await AssertFilterAsync("lifeStage=Adult", p2, p3);
-        await AssertFilterAsync("lifeStage=Kitten", p1);
         await AssertFilterAsync("protein=Chicken", p1, p3);
         await AssertFilterAsync("protein=Salmon", p2);
         await AssertFilterAsync("minPrice=1500&maxPrice=2500", p3);
@@ -524,7 +520,7 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         await AssertFilterAsync("minRating=2", p1, p2);
 
         // Three filters combined.
-        await AssertFilterAsync("origin=FR&lifeStage=Adult&protein=Chicken", p3);
+        await AssertFilterAsync("origin=FR&protein=Chicken&minPrice=1500", p3);
         await AssertFilterAsync("category=CatFood&minRating=2&maxPrice=2500", p1);
         await AssertFilterAsync("subcategory=Dry&availability=inStock&minPrice=1500", p3);
         await AssertFilterAsync("category=ToysAndFurniture&availability=inStock&maxPrice=600", p4);

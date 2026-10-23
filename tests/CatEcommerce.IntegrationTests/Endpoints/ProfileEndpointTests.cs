@@ -66,7 +66,7 @@ public sealed class ProfileEndpointTests(AccountsApiFactory factory) : AccountsI
         await AddAsync("Work");
         Assert.Equal(1, await CountDefaultsAsync());
 
-        var third = await AddAsync("Clinic Pickup");
+        var third = await AddAsync("Store Pickup");
         Assert.Equal(1, await CountDefaultsAsync());
 
         var setDefault = await client.PutAsync($"/api/customers/me/addresses/{third}/default", null);
@@ -404,7 +404,7 @@ public sealed class ProfileEndpointTests(AccountsApiFactory factory) : AccountsI
     }
 
     // ARCHITECTURE gate fifth pass, MEDIUM, follow-up (2026-09-25): customers behind shared NAT or
-    // clinic Wi-Fi must not block each other -- ProfileUpdate is partitioned by the signed-in
+    // shop Wi-Fi must not block each other -- ProfileUpdate is partitioned by the signed-in
     // customer id, not IP, unlike the old shared-with-AccountSensitive design.
     [Fact]
     public async Task UpdateProfile_TwoDifferentCustomersFromTheSameIp_DoNotShareTheProfileBucket()
@@ -527,7 +527,6 @@ public sealed class ProfileEndpointTests(AccountsApiFactory factory) : AccountsI
         Assert.True(body.TryGetProperty("profile", out _));
         Assert.Single(body.GetProperty("addresses").EnumerateArray());
         Assert.True(body.GetProperty("notificationPreferences").EnumerateArray().Any());
-        Assert.True(body.TryGetProperty("cats", out _));
     }
 
     // I-J2

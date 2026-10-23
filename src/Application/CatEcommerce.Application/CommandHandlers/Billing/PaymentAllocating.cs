@@ -15,7 +15,7 @@ namespace CatEcommerce.Application.CommandHandlers.Billing;
 public sealed record AppliedAllocation(Guid InvoiceId, string Number, decimal Amount, decimal OutstandingAfter);
 
 /// <summary>
-/// HO-BIL-001 §8.8 -- an earmarked payment (a deposit) allocates only to an invoice that contains a line of the order or stay it
+/// HO-BIL-001 §8.8 -- an earmarked payment (a deposit) allocates only to an invoice that contains a line of the order it
 /// is set aside for, unless the earmark was released (<c>EarmarkMismatch</c>, U-D9). Pure: it reads the invoice's own lines.
 /// </summary>
 public static class EarmarkMatching
@@ -25,10 +25,7 @@ public static class EarmarkMatching
         if (earmark is null || earmark.IsReleased) return true;
 
         return invoice.Lines.Any(line =>
-            (line.SourceKind == ChargeSourceKind.Order && earmark.Kind == EarmarkKind.Order && line.SourceId == earmark.SourceId) ||
-            (earmark.Kind == EarmarkKind.BoardingStay &&
-             ((line.SourceKind == ChargeSourceKind.BoardingStay && line.SourceId == earmark.SourceId) ||
-              (line.BillingGroupKind == BillingGroupKind.BoardingStay && line.BillingGroupId == earmark.SourceId))));
+            line.SourceKind == ChargeSourceKind.Order && earmark.Kind == EarmarkKind.Order && line.SourceId == earmark.SourceId);
     }
 }
 

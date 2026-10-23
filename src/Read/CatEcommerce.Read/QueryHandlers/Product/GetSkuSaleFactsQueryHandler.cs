@@ -22,14 +22,12 @@ public sealed class GetSkuSaleFactsQueryHandler(CatEcommerceDbContext db)
         var rows = await db.SkuRows().Where(r => skuIds.Contains(r.SkuId)).ToListAsync();
         var prices = await db.PriceRows().Where(p => skuIds.Contains(p.SkuId) && p.EffectiveFrom <= query.AsOf).ToListAsync();
 
-        var rxBundles = await db.BundlesWithPrescriptionComponentAsync(rows.Where(r => r.Kind == CatEcommerce.Shared.Common.Enums.ProductKind.Bundle).Select(r => r.ProductId).Distinct().ToList());
-
         IReadOnlyList<SkuSaleFactViewModel> facts = rows.Select(r =>
         {
             var price = SkuPricing.PriceAt(prices.Where(p => p.SkuId == r.SkuId), p => p.EffectiveFrom, query.AsOf);
             return new SkuSaleFactViewModel(
                 r.SkuId, r.ProductId, r.ProductName, r.Label, r.SkuCode, r.Kind.DisplayName, r.ProductStatus.DisplayName, r.SkuStatus.DisplayName,
-                r.ListedOnStorefront, r.PrescriptionRequired || rxBundles.Contains(r.ProductId), r.TaxClassId,
+                r.ListedOnStorefront, r.TaxClassId,
                 price is null ? null : new Money(price.Amount, price.CurrencyCode).ToViewModel(),
                 r.ShippingWeightGrams);
         }).ToList();

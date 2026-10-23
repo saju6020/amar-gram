@@ -4,7 +4,7 @@ import { test, expect as baseExpect, signInAsCustomer } from './fixtures';
 const expect = baseExpect.configure({ timeout: 20_000 });
 test.describe.configure({ timeout: 90_000 });
 
-/** HO-SHP-002 §16 E-D1, E-D3 and the review journey (US-SHP-09) — run against MSW. E-D2 needs the
+/** HO-SHP-002 §16 E-D1 and the review journey (US-SHP-09) — run against MSW. E-D2 needs the
  *  real API's workers and is recorded not runnable (TC-HO-SHP-002). */
 
 test.describe('wishlist and stock alerts (US-SHP-13)', () => {
@@ -13,7 +13,7 @@ test.describe('wishlist and stock alerts (US-SHP-13)', () => {
   }) => {
     await signInAsCustomer(page);
     await page.goto(
-      `/shop/products/${shopFixtureIds.multiVariantSlug}?sku=${shopFixtureIds.skuKitten2kg}`,
+      `/shop/products/${shopFixtureIds.multiVariantSlug}?sku=${shopFixtureIds.skuOats2kg}`,
     );
 
     const buyBox = page.getByRole('region', { name: 'Price and availability' });
@@ -45,46 +45,14 @@ test.describe('wishlist and stock alerts (US-SHP-13)', () => {
     // The wishlist shows the saved item, and the alerts show their status.
     await page.goto('/portal/wishlist');
     await expect(page.getByRole('heading', { level: 1, name: 'Your wishlist' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Royal Canin Kitten' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Organic Rolled Oats' }).first()).toBeVisible();
     await expect(page.getByText('No longer sold', { exact: true })).toBeVisible();
     await expect(page.getByText('Waiting').first()).toBeVisible();
     await expect(page.getByText(/Notified on 3 Oct 2026/)).toBeVisible();
-    await page.getByRole('button', { name: /Remove Royal Canin Kitten \(2 kg\)/ }).click();
+    await page.getByRole('button', { name: /Remove Organic Rolled Oats \(2 kg\)/ }).click();
     await expect(
-      page.getByRole('button', { name: /Remove Royal Canin Kitten \(2 kg\)/ }),
+      page.getByRole('button', { name: /Remove Organic Rolled Oats \(2 kg\)/ }),
     ).toHaveCount(0);
-  });
-});
-
-test.describe('food suggestions (US-SHP-11)', () => {
-  test('E-D3: a cat with a chicken allergy never sees chicken products and is told why', async ({
-    page,
-  }) => {
-    await signInAsCustomer(page);
-    await page.goto(`/portal/cats/${shopFixtureIds.catAllergy}/food`);
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Food suggestions for Whiskers' }),
-    ).toBeVisible();
-    await expect(
-      page.getByText(/We left out \d+ products? containing chicken \(recorded allergy\)\./),
-    ).toBeVisible();
-    const cards = page.getByRole('article');
-    await expect(cards.first()).toBeVisible();
-    await expect(page.getByText('Purina Pro Plan Adult Chicken')).toHaveCount(0);
-    await expect(page.getByText('Reflex Adult Chicken')).toHaveCount(0);
-    await expect(page.getByText('Suits adult cats').first()).toBeVisible();
-    await expect(page.getByText(/General guidance/)).toBeVisible();
-  });
-
-  test('E-D3: a cat with no date of birth gets the add-date hint; the profile links here', async ({
-    page,
-  }) => {
-    await signInAsCustomer(page);
-    await page.goto(`/portal/cats/${shopFixtureIds.catNoDob}/food`);
-    await expect(page.getByRole('link', { name: /Go to Mittens.s profile/ })).toBeVisible();
-    await page.goto(`/portal/cats/${shopFixtureIds.catNoDob}`);
-    await page.getByRole('link', { name: 'Food suggestions' }).click();
-    await expect(page).toHaveURL(/\/food$/);
   });
 });
 
@@ -95,10 +63,10 @@ test.describe('reviews (US-SHP-09)', () => {
     await signInAsCustomer(page);
     await page.goto(`/shop/products/${shopFixtureIds.reviewableSlug}`);
     await page.getByRole('link', { name: 'Write a review' }).click();
-    await expect(page).toHaveURL(/\/portal\/reviews\/new\?product=royal-canin-kitten/);
+    await expect(page).toHaveURL(/\/portal\/reviews\/new\?product=organic-rolled-oats/);
     await page.getByRole('radio', { name: '5 out of 5' }).check();
-    await page.getByLabel(/^Title/).fill('Shiny coat');
-    await page.getByLabel('Your review').fill('She eats it all. <b>Great</b>.');
+    await page.getByLabel(/^Title/).fill('Lovely breakfast');
+    await page.getByLabel('Your review').fill('We eat it every morning. <b>Great</b>.');
     await page.getByRole('button', { name: 'Send review' }).click();
 
     await expect(page).toHaveURL(/\/portal\/reviews\?submitted=1/);
@@ -106,14 +74,14 @@ test.describe('reviews (US-SHP-09)', () => {
       page.getByText("Thanks — your review will appear once it's approved."),
     ).toBeVisible();
     // Plain text: the markup is shown literally.
-    await expect(page.getByText('She eats it all. <b>Great</b>.')).toBeVisible();
+    await expect(page.getByText('We eat it every morning. <b>Great</b>.')).toBeVisible();
     await expect(page.getByText('Awaiting approval').first()).toBeVisible();
     await expect(page.getByText('Not published')).toBeVisible();
   });
 
   test('a product the customer has not bought says why it cannot be reviewed', async ({ page }) => {
     await signInAsCustomer(page);
-    await page.goto('/shop/products/animonda-carny-adult-beef');
+    await page.goto('/shop/products/canned-tuna-chunks');
     await expect(
       page.getByText('Only customers who bought this product can review it.'),
     ).toBeVisible();

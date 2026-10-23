@@ -178,7 +178,7 @@ public sealed class ReportingFoundationTests
     }
 
     [Fact]
-    public void U_A6_ThreeInTheMorningInDhaka_IsStillYesterdayInUtc_ButTodayForTheClinic()
+    public void U_A6_ThreeInTheMorningInDhaka_IsStillYesterdayInUtc_ButTodayForTheBranch()
     {
         var asOf = DateTimeOffset.Parse("2026-10-14T03:00:00+06:00"); // 2026-10-13T21:00Z
 
@@ -188,21 +188,14 @@ public sealed class ReportingFoundationTests
 
     // ── U-A7: who may open what, and for which branch ──────────────────────────────────────────────────────────
     [Theory]
-    [InlineData(StaffRoles.Reception, "ClinicOperations", true)]
     [InlineData(StaffRoles.Reception, "Financial", false)]
-    [InlineData(StaffRoles.Nurse, "ClinicOperations", false)]
-    [InlineData(StaffRoles.Nurse, "Clinical", false)]
-    [InlineData(StaffRoles.Nurse, "Stock", false)]
-    [InlineData(StaffRoles.Vet, "ClinicOperations", true)] // OQ-7
-    [InlineData(StaffRoles.Vet, "Clinical", true)]
-    [InlineData(StaffRoles.Vet, "Financial", false)]
+    [InlineData(StaffRoles.Reception, "Stock", false)]
     [InlineData(StaffRoles.Accountant, "Financial", true)]
-    [InlineData(StaffRoles.Accountant, "Clinical", false)]
+    [InlineData(StaffRoles.Accountant, "Stock", false)]
     [InlineData(StaffRoles.ShopManager, "Sales", true)]
     [InlineData(StaffRoles.Accountant, "Sales", true)] // owner decision 2026-10-13
     [InlineData(StaffRoles.ShopManager, "Financial", false)]
     [InlineData(StaffRoles.Inventory, "Stock", true)]
-    [InlineData(StaffRoles.Caretaker, "Boarding", true)]
     [InlineData(StaffRoles.Administrator, "Growth", true)]
     [InlineData(StaffRoles.Accountant, "Growth", false)]
     public void U_A7_TheCategoryAction_FollowsAppendixD(string role, string category, bool allowed)
@@ -213,11 +206,11 @@ public sealed class ReportingFoundationTests
     }
 
     [Fact]
-    public void U_A7_TheNurse_HoldsNoReportAction_AndTheMarkerIsEveryOtherStaffRole()
+    public void U_A7_Reception_HoldsNoReportAction_AndTheMarkerIsEveryOtherStaffRole()
     {
-        Assert.All(Enumeration.GetAll<ReportCategory>(), c => Assert.False(ReportAccessPolicy.CanOpen(c, [StaffRoles.Nurse])));
-        Assert.False(ReportAccessPolicy.Holds([StaffRoles.Nurse], Actions.Reports.Any));
-        Assert.All(StaffRoles.All.Where(r => r != StaffRoles.Nurse), r => Assert.True(ReportAccessPolicy.Holds([r], Actions.Reports.Any), r));
+        Assert.All(Enumeration.GetAll<ReportCategory>(), c => Assert.False(ReportAccessPolicy.CanOpen(c, [StaffRoles.Reception])));
+        Assert.False(ReportAccessPolicy.Holds([StaffRoles.Reception], Actions.Reports.Any));
+        Assert.All(StaffRoles.All.Where(r => r != StaffRoles.Reception), r => Assert.True(ReportAccessPolicy.Holds([r], Actions.Reports.Any), r));
         Assert.All(StaffRoles.All, r => Assert.True(ReportAccessPolicy.Holds([r], Actions.Dashboard.View), r));
         Assert.Equal([StaffRoles.Administrator], ActionRoles.TryGetRoles(Actions.Reports.Schedule, out var schedulers) ? schedulers : []);
     }
@@ -242,7 +235,7 @@ public sealed class ReportingFoundationTests
         Assert.True(ReportAccessPolicy.ResolveBranch("all", active, assigned, [StaffRoles.Accountant]).IsAllBranches);
         Assert.True(ReportAccessPolicy.ResolveBranch("ALL", active, assigned, [StaffRoles.Administrator]).IsAllBranches);
         Assert.Equal(BusinessViolationCodes.CrossBranchReportNotPermitted, ReportAccessPolicy.ResolveBranch("all", active, assigned, [StaffRoles.Reception]).RefusalCode);
-        Assert.Equal(BusinessViolationCodes.CrossBranchReportNotPermitted, ReportAccessPolicy.ResolveBranch("all", active, assigned, [StaffRoles.Reception, StaffRoles.Vet]).RefusalCode);
+        Assert.Equal(BusinessViolationCodes.CrossBranchReportNotPermitted, ReportAccessPolicy.ResolveBranch("all", active, assigned, [StaffRoles.Reception, StaffRoles.ShopManager]).RefusalCode);
     }
 
     // ── U-A8 / U-G4: a restricted column is removed, and a recipient list sees only the intersection ───────────

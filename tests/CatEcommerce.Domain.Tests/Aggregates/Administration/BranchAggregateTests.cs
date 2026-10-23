@@ -11,7 +11,7 @@ namespace CatEcommerce.Domain.Tests.Aggregates.Administration;
 public sealed class BranchAggregateTests
 {
     private static BranchCreateDto ValidCreate() => new(
-        "MAIN", "Main clinic", "Asia/Dhaka", null, null, null, TestUserContext.Create(), Guid.NewGuid());
+        "MAIN", "Main outlet", "Asia/Dhaka", null, null, null, TestUserContext.Create(), Guid.NewGuid());
 
     private static BranchAggregate CreatedBranch()
     {

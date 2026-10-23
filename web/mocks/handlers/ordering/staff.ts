@@ -32,7 +32,7 @@ import {
   type DbOrder,
   type DbReturn,
 } from './store';
-import { orderLineView, totalsView } from './customer';
+import { totalsView } from './customer';
 
 /**
  * `mocks/handlers/ordering/staff.ts` — HO-ORD-002 §12.1. The staff endpoints of HO-ORD-001 §12.4 as
@@ -123,7 +123,6 @@ function staffDetail(o: DbOrder) {
       skuId: l.skuId,
       productName: l.productName,
       variantLabel: l.variantLabel,
-      cat: orderLineView(l).cat,
       quantity: l.quantity,
       unitPrice: money(l.unitCents),
       lineTotal: money(l.totalCents),
@@ -424,7 +423,6 @@ export const staffOrderingHandlers: HttpHandler[] = [
         productName: l.productName,
         variantLabel: l.variantLabel,
         quantity: l.quantity,
-        catName: orderLineView(l).cat?.name ?? null,
         batchNumbers: l.allocations.map((a) => a.batchNumber),
       })),
       codAmountDue: order.paymentMethod === 'CashOnDelivery' ? money(order.grandTotalCents) : null,

@@ -8,7 +8,7 @@ let search = '';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
-  usePathname: () => '/staff/cats',
+  usePathname: () => '/staff/orders',
   useSearchParams: () => new URLSearchParams(search),
 }));
 
@@ -18,7 +18,7 @@ interface Row {
 }
 
 const rows: Row[] = [
-  { id: '1', name: 'Whiskers' },
+  { id: '1', name: 'Organic rice 5 kg' },
   { id: '2', name: 'Mittens' },
 ];
 
@@ -35,12 +35,12 @@ describe('DataTable', () => {
   it('renders a loading skeleton, not the table, while loading', () => {
     render(
       <DataTable
-        caption="Cats"
+        caption="Orders"
         columns={columns}
         rows={undefined}
         getRowId={(r) => r.id}
         isLoading
-        emptyState={{ title: 'No cats' }}
+        emptyState={{ title: 'No orders' }}
       />,
     );
     expect(screen.getByRole('status')).toBeInTheDocument();
@@ -51,13 +51,13 @@ describe('DataTable', () => {
     const onRetry = vi.fn();
     render(
       <DataTable
-        caption="Cats"
+        caption="Orders"
         columns={columns}
         rows={undefined}
         getRowId={(r) => r.id}
         isError
         onRetry={onRetry}
-        emptyState={{ title: 'No cats' }}
+        emptyState={{ title: 'No orders' }}
       />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
@@ -67,40 +67,40 @@ describe('DataTable', () => {
   it('renders EmptyState in words (e.g. "None recorded"-style text), not a blank table, when there are no rows', () => {
     render(
       <DataTable
-        caption="Cats"
+        caption="Orders"
         columns={columns}
         rows={[]}
         getRowId={(r) => r.id}
-        emptyState={{ title: 'No cats registered yet.' }}
+        emptyState={{ title: 'No orders placed yet.' }}
       />,
     );
-    expect(screen.getByText('No cats registered yet.')).toBeInTheDocument();
+    expect(screen.getByText('No orders placed yet.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
   it('renders every row when data is present', () => {
     render(
       <DataTable
-        caption="Cats"
+        caption="Orders"
         columns={columns}
         rows={rows}
         getRowId={(r) => r.id}
-        emptyState={{ title: 'No cats' }}
+        emptyState={{ title: 'No orders' }}
       />,
     );
-    expect(screen.getByRole('table', { name: 'Cats' })).toBeInTheDocument();
-    expect(screen.getByText('Whiskers')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Orders' })).toBeInTheDocument();
+    expect(screen.getByText('Organic rice 5 kg')).toBeInTheDocument();
     expect(screen.getByText('Mittens')).toBeInTheDocument();
   });
 
   it('writes a sort change to the URL — U29', async () => {
     render(
       <DataTable
-        caption="Cats"
+        caption="Orders"
         columns={columns}
         rows={rows}
         getRowId={(r) => r.id}
-        emptyState={{ title: 'No cats' }}
+        emptyState={{ title: 'No orders' }}
       />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Sort by Name' }));
@@ -114,12 +114,12 @@ describe('DataTable', () => {
   it('writes a page change to the URL — U29', async () => {
     render(
       <DataTable
-        caption="Cats"
+        caption="Orders"
         columns={columns}
         rows={rows}
         getRowId={(r) => r.id}
         pagination={{ totalCount: 30, pageSize: 10 }}
-        emptyState={{ title: 'No cats' }}
+        emptyState={{ title: 'No orders' }}
       />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
@@ -132,18 +132,18 @@ describe('DataTable', () => {
   it('writes a search submission to the URL — U29', async () => {
     render(
       <DataTable
-        caption="Cats"
+        caption="Orders"
         columns={columns}
         rows={rows}
         getRowId={(r) => r.id}
-        search={{ label: 'Search cats' }}
-        emptyState={{ title: 'No cats' }}
+        search={{ label: 'Search orders' }}
+        emptyState={{ title: 'No orders' }}
       />,
     );
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Search cats' }), 'royal');
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search orders' }), 'SO-2026');
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));
     expect(replace).toHaveBeenCalledWith(
-      expect.stringContaining('q=royal'),
+      expect.stringContaining('q=SO-2026'),
       expect.objectContaining({ scroll: false }),
     );
   });

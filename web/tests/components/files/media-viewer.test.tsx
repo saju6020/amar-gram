@@ -21,7 +21,7 @@ function Harness({
         open={open}
         onOpenChange={setOpen}
         file={file}
-        caption="Photo of Whiskers"
+        caption="Photo of Organic rice"
         onRefresh={onRefresh}
       />
     </div>
@@ -40,7 +40,7 @@ describe('<MediaViewer> — HO-FIL-002 §3/§8.3', () => {
 
     await userEvent.click(opener);
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveAccessibleName('Photo of Whiskers');
+    expect(dialog).toHaveAccessibleName('Photo of Organic rice');
 
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -50,14 +50,14 @@ describe('<MediaViewer> — HO-FIL-002 §3/§8.3', () => {
   it('shows the caption as the image alt text, per the consuming area (§8.3)', async () => {
     render(<Harness file={buildStoredFileViewModel({ contentType: 'image/png' })} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open viewer' }));
-    expect(await screen.findByRole('img', { name: 'Photo of Whiskers' })).toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: 'Photo of Organic rice' })).toBeInTheDocument();
   });
 
   it("renders a PDF via an <iframe> (the browser's own viewer), never inline HTML (ADR-FE-158)", async () => {
     render(<Harness file={buildStoredFileViewModel({ contentType: 'application/pdf' })} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open viewer' }));
 
-    const frame = await screen.findByTitle('Photo of Whiskers');
+    const frame = await screen.findByTitle('Photo of Organic rice');
     expect(frame.tagName).toBe('IFRAME');
   });
 
@@ -80,7 +80,7 @@ describe('<MediaViewer> — HO-FIL-002 §3/§8.3', () => {
     render(<Harness file={stale} onRefresh={onRefresh} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open viewer' }));
 
-    fireEvent.error(await screen.findByRole('img', { name: 'Photo of Whiskers' }));
+    fireEvent.error(await screen.findByRole('img', { name: 'Photo of Organic rice' }));
     await waitFor(() =>
       expect(
         screen.getByText('This file could not be loaded — refresh the page.'),
@@ -98,7 +98,7 @@ describe('<MediaViewer> — HO-FIL-002 §3/§8.3', () => {
 
     const { rerender } = render(<Harness file={original} onRefresh={onRefresh} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open viewer' }));
-    fireEvent.error(await screen.findByRole('img', { name: 'Photo of Whiskers' }));
+    fireEvent.error(await screen.findByRole('img', { name: 'Photo of Organic rice' }));
     await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
 
     // The host independently re-fetches its own record and passes a NEW url for the same file,
@@ -110,12 +110,12 @@ describe('<MediaViewer> — HO-FIL-002 §3/§8.3', () => {
     rerender(<Harness file={refetchedButStillBad} onRefresh={onRefresh} />);
 
     await waitFor(() =>
-      expect(screen.getByRole('img', { name: 'Photo of Whiskers' })).toHaveAttribute(
+      expect(screen.getByRole('img', { name: 'Photo of Organic rice' })).toHaveAttribute(
         'src',
         refetchedButStillBad.url,
       ),
     );
-    fireEvent.error(screen.getByRole('img', { name: 'Photo of Whiskers' }));
+    fireEvent.error(screen.getByRole('img', { name: 'Photo of Organic rice' }));
 
     await waitFor(() =>
       expect(
@@ -128,17 +128,17 @@ describe('<MediaViewer> — HO-FIL-002 §3/§8.3', () => {
   it('FIL 11 — a PDF iframe load failure uses the same refresh-once guard, then the plain message', async () => {
     const pdf = buildStoredFileViewModel({
       contentType: 'application/pdf',
-      url: 'https://example.test/lab.pdf',
+      url: 'https://example.test/invoice.pdf',
     });
     const onRefresh = vi.fn().mockResolvedValue(pdf);
     render(<Harness file={pdf} onRefresh={onRefresh} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open viewer' }));
 
-    fireEvent.error(await screen.findByTitle('Photo of Whiskers'));
+    fireEvent.error(await screen.findByTitle('Photo of Organic rice'));
     await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
 
     // The refreshed frame fails too — no second refresh, just the plain message.
-    fireEvent.error(await screen.findByTitle('Photo of Whiskers'));
+    fireEvent.error(await screen.findByTitle('Photo of Organic rice'));
     await waitFor(() =>
       expect(
         screen.getByText('This file could not be loaded — refresh the page.'),

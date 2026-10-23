@@ -154,43 +154,6 @@ public sealed class AdminBranchesController(IInMemoryDispatcher dispatcher, IUse
         return response.IsSuccess ? NoContent() : BadRequest(response.ValidationResult);
     }
 
-    [HttpGet("{branchId:guid}/rooms")]
-    [RequireAction(Actions.Branches.View)]
-    public async Task<IActionResult> GetRooms(Guid branchId)
-    {
-        var response = await dispatcher.GetResultAsync(new GetRoomsQuery { BranchId = branchId, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
-        return Ok(response.Result);
-    }
-
-    [HttpPost("{branchId:guid}/rooms")]
-    [RequireAction(Actions.Branches.Manage)]
-    public async Task<IActionResult> CreateRoom(Guid branchId, [FromBody] CreateRoomRequest request)
-    {
-        var roomId = Guid.NewGuid();
-        var command = new CreateRoomCommand
-        {
-            RoomId = roomId, BranchId = branchId, Name = request.Name, Kind = request.Kind,
-            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
-        };
-
-        var response = await dispatcher.SendAsync(command);
-        return response.IsSuccess ? StatusCode(201, new { roomId }) : BadRequest(response.ValidationResult);
-    }
-
-    [HttpPut("{branchId:guid}/rooms/{roomId:guid}")]
-    [RequireAction(Actions.Branches.Manage)]
-    public async Task<IActionResult> UpdateRoom(Guid branchId, Guid roomId, [FromBody] UpdateRoomRequest request)
-    {
-        var command = new UpdateRoomCommand
-        {
-            RoomId = roomId, BranchId = branchId, Name = request.Name, Kind = request.Kind, IsActive = request.IsActive,
-            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
-        };
-
-        var response = await dispatcher.SendAsync(command);
-        return response.IsSuccess ? NoContent() : BadRequest(response.ValidationResult);
-    }
-
     [HttpGet("{branchId:guid}/calendar")]
     [RequireAction(Actions.Branches.View)]
     public async Task<IActionResult> GetCalendar(Guid branchId, [FromQuery] DateOnly from, [FromQuery] DateOnly to)

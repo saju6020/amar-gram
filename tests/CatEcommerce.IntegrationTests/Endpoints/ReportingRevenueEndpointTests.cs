@@ -76,7 +76,7 @@ public sealed class ReportingRevenueEndpointTests(OrderingApiFactory factory) : 
         var shopNet = order.CostedNet + order.UncostedNet + order.DeliveryNet;
 
         var byLine = await ReportAsync(admin, ReportCatalogue.RevenueByBusinessLineKey, order.Shop.Context);
-        var shopRow = byLine.GetProperty("rows").EnumerateArray().Single(r => r.GetProperty("businessLine").GetString() == "Shop");
+        var shopRow = byLine.GetProperty("rows").EnumerateArray().Single(r => r.GetProperty("channel").GetString() == "Online"); // a cash-on-delivery order placed online
         Assert.Equal(shopNet, Money(shopRow.GetProperty("netRevenue")));
 
         // I-D3: 2 x 10.00 of cost on the costed line; the uncosted line (and the delivery charge, which has no stock) have none.

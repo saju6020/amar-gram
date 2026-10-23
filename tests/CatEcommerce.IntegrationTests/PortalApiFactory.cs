@@ -43,14 +43,8 @@ public class PortalApiFactory : CatEcommerceApiFactory
         settings["Notifications:Unsubscribe:PermitLimit"] = "100000";
         settings["Notifications:TemplatePreview:PermitLimit"] = "100000";
 
-        settings["Pharmacy:Worker:Enabled"] = "false";
         settings["Inventory:Worker:Enabled"] = "false";
         settings["Shop:Worker:Enabled"] = "false";
-        settings["Clinic:Worker:Enabled"] = "false";
-        settings["Clinic:Availability:PermitLimit"] = "100000";
-        settings["Clinic:Booking:PermitLimit"] = "100000";
-        settings["Clinic:Change:PermitLimit"] = "100000";
-        settings["Clinic:Performers:PermitLimit"] = "100000";
     }
 
     protected override void ConfigureAdditionalServices(IServiceCollection services)

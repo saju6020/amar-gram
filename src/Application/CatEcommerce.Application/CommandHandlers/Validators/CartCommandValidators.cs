@@ -21,7 +21,6 @@ public sealed class AddCartLineCommandValidator : AbstractValidator<AddCartLineC
         RuleFor(x => x.NewCartId).NotEmpty();
         RuleFor(x => x.SkuId).NotEmpty();
         RuleFor(x => x.Quantity).InclusiveBetween(1, OrderRules.MaxQuantityPerLineHardCap);
-        RuleFor(x => x.CatId).Must(id => id is null || id != Guid.Empty).WithMessage("must not be empty.");
         RuleFor(x => x.GuestTokenHash).Must(h => h is null || CartValidationRules.IsTokenHash(h)).WithMessage("is not a valid cart token hash.");
         RuleFor(x => x.NewGuestTokenHash).Must(h => h is null || CartValidationRules.IsTokenHash(h)).WithMessage("is not a valid cart token hash.");
     }
@@ -33,7 +32,6 @@ public sealed class UpdateCartLineCommandValidator : AbstractValidator<UpdateCar
     {
         RuleFor(x => x.LineId).NotEmpty();
         RuleFor(x => x.Quantity).Must(q => q is null || (q >= 1 && q <= OrderRules.MaxQuantityPerLineHardCap)).WithMessage("must be 1 to 999.");
-        RuleFor(x => x.CatId).Must(id => id is null || id != Guid.Empty).WithMessage("must not be empty.");
         RuleFor(x => x.GuestTokenHash).Must(h => h is null || CartValidationRules.IsTokenHash(h)).WithMessage("is not a valid cart token hash.");
     }
 }

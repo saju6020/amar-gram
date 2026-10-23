@@ -13,7 +13,7 @@ import { TrackingPanel } from '@/components/orders/OrderPanels';
 import type { CustomerOrderDetail } from '@/lib/api/my-orders';
 import { CARD_NUMBER_MESSAGE } from '@/lib/validation/cardNumberGuard';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({
@@ -47,9 +47,8 @@ function order(overrides: Partial<CustomerOrderDetail> = {}): CustomerOrderDetai
         lineId: 'ln1',
         lineNumber: 1,
         skuId: 's1',
-        productName: 'Whiskas Kitten',
+        productName: 'Thai Jasmine Rice',
         variantLabel: '1 kg',
-        cat: null,
         quantity: 2,
         unitPrice: money('500.00'),
         lineSubtotal: money('1000.00'),
@@ -374,7 +373,7 @@ describe('Return request - U-C7', () => {
     status: 'Delivered',
     canRequestReturn: true,
     lines: [
-      { ...order().lines[0]!, lineId: 'food', productName: 'Royal Canin Kitten' },
+      { ...order().lines[0]!, lineId: 'food', productName: 'Organic Rolled Oats' },
       { ...order().lines[0]!, lineId: 'litter', lineNumber: 2, productName: 'Tofu Litter' },
     ],
     returnableLines: [
@@ -420,7 +419,7 @@ describe('Return request - U-C7', () => {
     const message = await screen.findByText(
       'Opened food can only be returned for a quality problem.',
     );
-    expect(message.closest('fieldset')).toHaveTextContent('Royal Canin Kitten');
+    expect(message.closest('fieldset')).toHaveTextContent('Organic Rolled Oats');
     expect(message).toHaveAttribute('role', 'alert');
     expect(document.body.textContent).not.toMatch(/OpenedFoodNotReturnable/);
   });

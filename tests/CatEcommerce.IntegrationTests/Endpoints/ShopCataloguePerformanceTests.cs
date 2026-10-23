@@ -26,7 +26,7 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 /// for this one.
 ///
 /// <b>The fixture</b> (§16.1 rule 6): brand "zz Perf Fixture", 5,000 Active listed products x 4 SKUs =
-/// 20,000 SKUs, each priced now, across all six categories, 12 origins and every life stage and
+/// 20,000 SKUs, each priced now, across all six categories, 12 origins and every
 /// protein, created through the aggregates and their repositories (no raw SQL), seeded once and
 /// idempotently -- it resumes from however many already exist and is never deleted (OQ-15). "Stocked"
 /// is Inventory's: every fixture SKU without sellable stock in <c>inventory.v_sku_sellable</c> at the storefront (main) branch is received through
@@ -47,7 +47,6 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
 
     private static readonly string[] Origins = ["DE", "FR", "IT", "ES", "GB", "NL", "BE", "AT", "SE", "DK", "PL", "TH"];
     private static readonly ProductCategory[] Categories = [.. Enumeration.GetAll<ProductCategory>()];
-    private static readonly LifeStage[] LifeStages = [.. Enumeration.GetAll<LifeStage>()];
     private static readonly ProteinSource[] Proteins = [.. Enumeration.GetAll<ProteinSource>()];
     private static readonly string[] Flavours = ["Salmon", "Chicken", "Tuna", "Duck", "Beef", "Turkey"];
 
@@ -135,14 +134,13 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
             if (random.Next(3) > 0) parts.Add($"q={Uri.EscapeDataString(terms[random.Next(terms.Length)])}");
             for (var f = 0; f < filterCount; f++)
             {
-                switch (random.Next(7))
+                switch (random.Next(6))
                 {
                     case 0: parts.Add($"category={Categories[random.Next(Categories.Length)].DisplayName}"); break;
                     case 1: parts.Add($"origin={Origins[random.Next(Origins.Length)]}"); break;
-                    case 2: parts.Add($"lifeStage={LifeStages[random.Next(LifeStages.Length)].DisplayName}"); break;
-                    case 3: parts.Add($"protein={Proteins[random.Next(Proteins.Length)].DisplayName}"); break;
-                    case 4: parts.Add($"minPrice={random.Next(100, 900)}&maxPrice={random.Next(1000, 6000)}"); break;
-                    case 5: parts.Add("availability=inStock"); break;
+                    case 2: parts.Add($"protein={Proteins[random.Next(Proteins.Length)].DisplayName}"); break;
+                    case 3: parts.Add($"minPrice={random.Next(100, 900)}&maxPrice={random.Next(1000, 6000)}"); break;
+                    case 4: parts.Add("availability=inStock"); break;
                     default: parts.Add($"minRating={random.Next(1, 4)}"); break;
                 }
             }
@@ -196,7 +194,7 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
                     product.UpdateDetails(new ProductDetailsUpdateDto(
                         product.Name, FixtureBrand, "", category, null, [], taxClassId, Origins[index % Origins.Length], true, true, [], userContext, Guid.NewGuid()));
                     product.SetFoodDetails(new FoodDetails(
-                        "Perf Foods", LifeStages[index % LifeStages.Length], Proteins[index % Proteins.Length],
+                        "Perf Foods", Proteins[index % Proteins.Length],
                         $"{Flavours[index % Flavours.Length].ToLowerInvariant()}, rice", null, null, null), userContext, Guid.NewGuid());
                 }
                 else if (index % 3 == 0)

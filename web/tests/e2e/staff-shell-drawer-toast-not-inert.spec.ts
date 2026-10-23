@@ -1,5 +1,4 @@
 import { test, expect, signInAsStaff } from './fixtures';
-import { catProfilesFixtureIds } from '../../mocks/handlers/areas/cat-profiles';
 
 // ARCH gate MEDIUM (first pass) — signs in as staff only (never both cookies at
 // once, tests/e2e/fixtures.ts); every route this file visits is staff-audience.
@@ -8,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * HO-CAT-002 TEST gate, sixth pass — MEDIUM, now fixed by the 7th pass's Radix-`Dialog` rebuild.
+ * Staff shell TEST gate, sixth pass — MEDIUM, now fixed by the 7th pass's Radix-`Dialog` rebuild.
  *
  * Original finding: `bb24673`'s fix made the header/`<main>` column `inert` while the hand-rolled
  * drawer was open, but `<Toaster />` (`app/providers.tsx`) is rendered once at the root layout, a
@@ -30,20 +29,17 @@ test.beforeEach(async ({ page }) => {
  * portal) `aria-hidden="true"`, which a role query would correctly refuse to find — this is the fix
  * being verified, not a reason the setup check should time out.
  */
-test('a live toast is not reachable by Tab while the StaffShell nav sheet is open (HO-CAT-002 TEST gate, 6th pass, fixed 7th pass)', async ({
+test('a live toast is not reachable by Tab while the StaffShell nav sheet is open (staff shell TEST gate, 6th pass, fixed 7th pass)', async ({
   page,
 }) => {
-  const catId = catProfilesFixtureIds.catCurrentPlain;
   await page.setViewportSize({ width: 360, height: 900 });
-  await page.goto(`/staff/cats/${catId}/parasite-control`);
+  await page.goto('/staff/admin/retention');
   await page.waitForLoadState('networkidle');
 
-  await page.getByLabel('Product').fill('Broadline');
-  await page.getByLabel('Date given').fill('2026-09-20');
-  await page.getByLabel('Interval (days)').fill('90');
-  await page.getByLabel('Administered by').fill('Staff Member');
-  await page.getByRole('button', { name: 'Record treatment' }).click();
-  await expect(page.getByText('Treatment recorded').first()).toBeVisible();
+  // Any action that raises a toast will do; requesting a retention run is a one-click one.
+  await page.getByRole('button', { name: 'Run retention now' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Run retention' }).click();
+  await expect(page.getByText('Retention run requested').first()).toBeVisible();
 
   const trigger = page.getByRole('button', { name: 'Expand menu' });
   await trigger.focus();

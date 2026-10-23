@@ -17,7 +17,7 @@ public sealed class NotificationAggregateTests
     {
         var aggregate = new NotificationAggregate(Guid.NewGuid());
         aggregate.CreateExternal(new NotificationCreateDto(
-            Guid.NewGuid(), "care.vaccination-due", 0, "en", NotificationCategory.Transactional, NotificationUrgency.Normal, false,
+            Guid.NewGuid(), "billing.invoice-issued", 0, "en", NotificationCategory.Transactional, NotificationUrgency.Normal, false,
             NotificationRecipientKind.Customer, Guid.NewGuid(), null, null, null, null, null, channel, destination,
             null, null, "Body", null, null, null, createdOn, null, false, null, null, null, null, null));
         return aggregate;

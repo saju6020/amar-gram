@@ -9,7 +9,7 @@ public sealed class LeaveRequestedEvent : Event
 }
 
 /// <summary>ADR-048 -- an integration contract. HO-APT-001 and HO-BRD-001 subscribe to flag
-/// affected appointments/tasks. No note, no reason -- ids, dates only.</summary>
+/// affected work. No note, no reason -- ids, dates only.</summary>
 public sealed class StaffLeaveApprovedEvent : Event
 {
     public required Guid LeaveRequestId { get; init; }

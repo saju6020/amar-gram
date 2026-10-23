@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useMemo, useState } from 'react';
-import { useAdminBranch, useBranchRooms } from '@/lib/hooks/useAdminBranches';
+import { useAdminBranch } from '@/lib/hooks/useAdminBranches';
 import {
   useBranchRosters,
   useAvailability,
@@ -30,7 +30,6 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
   const { branchId } = use(params);
   const { data: branch } = useAdminBranch(branchId);
   const rosters = useBranchRosters(branchId);
-  const rooms = useBranchRooms(branchId);
   const staffAccounts = useStaffAccounts({ pageSize: 100 });
 
   const [anchor, setAnchor] = useState(todayIso());
@@ -57,7 +56,7 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
   }));
   const selectedRoster = (rosters.data ?? []).find((r) => r.staffAccountId === selectedStaffId);
   // Owner, 2026-10-22: anyone can be given a FIRST pattern here -- the list used to offer only staff who already had a
-  // roster, so with none yet nobody could be rostered and online booking had no times. The API refuses a staff
+  // roster, so with none yet nobody could be rostered and no shifts could be planned. The API refuses a staff
   // member not assigned to this branch, and the editor shows that message.
   const rosteredIds = new Set(rows.map((r) => r.staffAccountId));
   const patternOptions = [
@@ -149,7 +148,6 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
             currentPattern={selectedRoster?.currentPattern ?? []}
             nextPattern={selectedRoster?.nextPattern ?? null}
             nextPatternEffectiveFrom={selectedRoster?.nextPatternEffectiveFrom ?? null}
-            rooms={rooms.data ?? []}
             isPending={setPatternMutation.isPending || cancelPatternMutation.isPending}
             onSetPattern={(slots, effectiveFrom) =>
               setPatternMutation.mutateAsync({ slots, effectiveFrom })

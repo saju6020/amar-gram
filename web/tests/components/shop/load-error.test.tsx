@@ -27,14 +27,14 @@ describe('storefront pages render an error state when the API fails — S19', ()
     server.use(http.get('*/api/shop/products', down));
     render(
       await CatalogueView({
-        params: { ...EMPTY_CATALOGUE_PARAMS, q: 'kitten' },
+        params: { ...EMPTY_CATALOGUE_PARAMS, q: 'oats' },
         basePath: '/shop/products',
       }),
     );
     expect(screen.getByText(/couldn't load the shop/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Try again' })).toHaveAttribute(
       'href',
-      '/shop/products?q=kitten',
+      '/shop/products?q=oats',
     );
   });
 

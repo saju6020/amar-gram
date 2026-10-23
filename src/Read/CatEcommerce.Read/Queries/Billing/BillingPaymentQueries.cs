@@ -68,15 +68,7 @@ public sealed class GetAgeingQuery : Query<AgeingViewModel>
     public Guid? CustomerId { get; init; }
 }
 
-/// <summary>The published contract of §8.13: a stay's (or other group's) charges by business line, billed and unbilled, the invoiced
-/// outstanding and its earmarked payments -- HO-BRD-001's spending limit (BR-8) and dashboard read it.</summary>
-public sealed class GetBillingGroupSummaryQuery : Query<BillingGroupSummaryViewModel>
-{
-    public required string Kind { get; init; }
-    public required Guid GroupId { get; init; }
-}
-
-/// <summary>The published contract of §8.13: what Billing knows about one source (an order, an appointment).</summary>
+/// <summary>The published contract of §8.13: what Billing knows about one source (an order).</summary>
 public sealed class GetSourceBillingStatusQuery : Query<SourceBillingStatusViewModel>
 {
     public required string Kind { get; init; }

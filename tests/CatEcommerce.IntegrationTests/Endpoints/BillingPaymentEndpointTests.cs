@@ -392,28 +392,27 @@ public sealed class BillingPaymentEndpointTests(BillingApiFactory factory) : Bil
     }
 
     // ── I-D9 ────────────────────────────────────────────────────────────────────────────────────────
-    /// <summary>I-D9 -- a deposit earmarked to a stay: the stay's invoice is issued, the deposit allocates to it; any other invoice
+    /// <summary>I-D9 -- a deposit earmarked to an order: the order's invoice is issued, the deposit allocates to it; any other invoice
     /// refuses it (<c>EarmarkMismatch</c>) until the earmark is released.</summary>
     [Fact]
-    public async Task I_D9_ADeposit_AllocatesOnlyToItsStaysInvoice_UntilTheEarmarkIsReleased()
+    public async Task I_D9_ADeposit_AllocatesOnlyToItsOrdersInvoice_UntilTheEarmarkIsReleased()
     {
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
-        var stay = Guid.NewGuid();
+        var order = Guid.NewGuid();
 
-        var deposit = await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 1000m, earmark: new { kind = "BoardingStay", sourceId = stay, label = "Deposit — boarding 12–19 Oct" });
+        var deposit = await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 1000m, earmark: new { kind = "Order", sourceId = order, label = "Deposit — order #2077" });
         var depositId = deposit.GetProperty("paymentId").GetGuid();
         Assert.Equal(1000m, AmountOf(deposit.GetProperty("unallocated")));
 
         var summary = await GetSummaryAsync(context.Admin, customerId);
         Assert.Equal(0m, AmountOf(summary.GetProperty("freeCredit")));
         var earmarked = Assert.Single(summary.GetProperty("earmarkedCredit").EnumerateArray());
-        Assert.Equal("Deposit — boarding 12–19 Oct", earmarked.GetProperty("label").GetString());
+        Assert.Equal("Deposit — order #2077", earmarked.GetProperty("label").GetString());
         Assert.Equal(1000m, AmountOf(earmarked.GetProperty("amount")));
 
-        var nightCharge = await RecordChargeAsync(context, customerId, 700m, itemKind: ItemKind.BoardingNight, sourceKind: ChargeSourceKind.BoardingStay, sourceId: stay,
-            groupKind: BillingGroupKind.BoardingStay, groupId: stay, taxClassId: context.ZeroTaxClassId);
-        var (stayInvoice, _) = await IssueFromChargesAsync(context.Admin, customerId, [nightCharge]);
+        var orderCharge = await RecordChargeAsync(context, customerId, 700m, sourceKind: ChargeSourceKind.Order, sourceId: order, taxClassId: context.ZeroTaxClassId);
+        var (orderInvoice, _) = await IssueFromChargesAsync(context.Admin, customerId, [orderCharge]);
         var (otherInvoice, _, _) = await IssueSimpleInvoiceAsync(context, customerId, 400m);
 
         var mismatch = await context.Admin.PostAsJsonAsync($"/api/staff/billing/payments/{depositId}/allocations", new { allocations = new[] { new { invoiceId = otherInvoice, amount = 100 } } }, Json);
@@ -421,13 +420,13 @@ public sealed class BillingPaymentEndpointTests(BillingApiFactory factory) : Bil
         Assert.Contains(BusinessViolationCodes.EarmarkMismatch, await BodyAsync(mismatch));
 
         var allocated = await ReadAsync(await ExpectAsync(HttpStatusCode.OK,
-            await context.Admin.PostAsJsonAsync($"/api/staff/billing/payments/{depositId}/allocations", new { allocations = new[] { new { invoiceId = stayInvoice, amount = 700 } } }, Json)));
+            await context.Admin.PostAsJsonAsync($"/api/staff/billing/payments/{depositId}/allocations", new { allocations = new[] { new { invoiceId = orderInvoice, amount = 700 } } }, Json)));
         Assert.Equal(300m, AmountOf(allocated.GetProperty("unallocated")));
-        Assert.Equal("Paid", (await GetInvoiceAsync(context.Admin, stayInvoice)).GetProperty("status").GetString());
+        Assert.Equal("Paid", (await GetInvoiceAsync(context.Admin, orderInvoice)).GetProperty("status").GetString());
 
         // A released earmark is free credit: it may now go anywhere.
         Assert.Equal(HttpStatusCode.BadRequest, (await context.Admin.PostAsJsonAsync($"/api/staff/billing/payments/{depositId}/release-earmark", new { reason = "" }, Json)).StatusCode);
-        await ExpectAsync(HttpStatusCode.NoContent, await context.Admin.PostAsJsonAsync($"/api/staff/billing/payments/{depositId}/release-earmark", new { reason = "Stay shortened" }, Json));
+        await ExpectAsync(HttpStatusCode.NoContent, await context.Admin.PostAsJsonAsync($"/api/staff/billing/payments/{depositId}/release-earmark", new { reason = "Order changed" }, Json));
 
         var afterRelease = await GetSummaryAsync(context.Admin, customerId);
         Assert.Equal(300m, AmountOf(afterRelease.GetProperty("freeCredit")));

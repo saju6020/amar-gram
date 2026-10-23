@@ -44,7 +44,7 @@ export function useDuplicateCustomerGroups(params: GetDuplicateGroupsParams) {
 }
 
 /**
- * `MergeReview` (ADR-FE-011(c)) — "a fresh read of every record in the group and its cats on
+ * `MergeReview` (ADR-FE-011(c)) — "a fresh read of every record in the group on
  * arrival ... not the report row". Hitting `GET /api/staff/customers/{id}` per member (the same
  * detail endpoint the customer-detail screen uses) rather than reusing the duplicates report's
  * embedded `DuplicateCustomerMember` rows already satisfies "fresh, not the report row" — this is

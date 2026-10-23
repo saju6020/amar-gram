@@ -2,7 +2,7 @@ import { test as base, expect, type Page } from '@playwright/test';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 
 /**
- * Every Cat Profiles / Accounts e2e spec imports `test`/`expect` from here rather than
+ * Every e2e spec imports `test`/`expect` from here rather than
  * `@playwright/test` directly, because `page.goto` is wrapped to wait for MSW's browser worker to
  * be registered-and-controlling before returning.
  *
@@ -10,7 +10,7 @@ import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
  * is async and its effect fires after first paint, so a request made in the same tick as mount
  * can reach the real network (and fail — nothing listens on `NEXT_PUBLIC_API_BASE_URL` in this
  * dev setup) before MSW is ready to intercept it. TanStack Query's default `retry: 1` papers
- * over this for queries, but mutations (register, record weight, flag high-risk, …) don't retry
+ * over this for queries, but mutations (register, add to cart, save profile, …) don't retry
  * by default, so a fast-clicking test can lose the race outright. Documented here as a known
  * MSW/Next.js limitation (§5.1), not worked around by inventing a readiness field in app code —
  * `navigator.serviceWorker.controller` is the browser's own, standard signal for "a service
@@ -20,7 +20,7 @@ import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
  * customer, unconditionally, before every single test. Two problems with that, both from the
  * gate: (1) with both cookies set, the master session middleware resolves the staff cookie first
  * on every request, so a "customer" request would actually run as staff — this file's own
- * mixed-audience specs (`cat-a11y.spec.ts`, `accounts-a11y-responsive.spec.ts`) were silently
+ * mixed-audience specs (e.g. `accounts-a11y-responsive.spec.ts`) were silently
  * exercising the wrong identity for their `/portal/**` cases; (2) it used a RELATIVE `fetch(path)`,
  * which only resolves correctly against the Next.js origin in MSW mode — against the real API
  * (§5.1's own re-run) that relative path hits the wrong origin entirely and 404s, a failure this
@@ -60,6 +60,17 @@ async function signInViaPageFetch(
     );
   }
 }
+
+/**
+ * The mock's second, non-administrator staff login. Its roles give it `Stock.View` but not
+ * receiving, procurement, notifications or staff-account management, and the reports specs switch
+ * its roles before use. The only place the e2e suite names the underlying mock fixture keys.
+ */
+export const secondStaff = {
+  staffId: accountsFixtureIds.stockStaffId,
+  identifier: accountsFixtureIds.stockIdentifier,
+  password: accountsFixtureIds.stockPassword,
+} as const;
 
 /** Signs in as the seeded staff administrator (`accountsFixtureIds.adminIdentifier`). Call once,
  *  before navigating to the first `/staff/**` route a test needs to already be authenticated for.

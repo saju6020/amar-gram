@@ -102,15 +102,6 @@ public sealed class GetCatalogueQueryHandler(CatEcommerceDbContext db, IContentL
             source = source.Where(e => e.CountryOfOriginCode != null && origins.Contains(e.CountryOfOriginCode));
         }
 
-        if (query.LifeStage.Count > 0)
-        {
-            var lifeStageValues = query.LifeStage
-                .Select(l => EnumerationParsing.TryParse<LifeStage>(l, out var ls) ? ls : null)
-                .Where(ls => ls is not null).Select(ls => ls!.Value).ToList();
-            var allLifeStagesValue = LifeStage.AllLifeStages.Value;
-            source = source.Where(e => e.LifeStage != null && (lifeStageValues.Contains(e.LifeStage.Value) || e.LifeStage.Value == allLifeStagesValue));
-        }
-
         if (query.Protein.Count > 0)
         {
             var proteinValues = query.Protein
@@ -234,7 +225,6 @@ public sealed class GetCatalogueQueryHandler(CatEcommerceDbContext db, IContentL
             ["subcategory"] = query.Subcategory,
             ["brand"] = query.Brand.Count > 0 ? string.Join(",", query.Brand) : null,
             ["origin"] = query.Origin.Count > 0 ? string.Join(",", query.Origin) : null,
-            ["lifeStage"] = query.LifeStage.Count > 0 ? string.Join(",", query.LifeStage) : null,
             ["protein"] = query.Protein.Count > 0 ? string.Join(",", query.Protein) : null,
             ["minPrice"] = query.MinPrice?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
             ["maxPrice"] = query.MaxPrice?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
@@ -251,7 +241,6 @@ public sealed class GetCatalogueQueryHandler(CatEcommerceDbContext db, IContentL
         var category = Enumeration.FromValue<ProductCategory>(e.Category);
         var subcategory = e.Subcategory is null ? null : Enumeration.FromValue<ProductSubcategory>(e.Subcategory.Value).DisplayName;
         var kind = Enumeration.FromValue<ProductKind>(e.Kind);
-        var lifeStage = e.LifeStage is null ? null : Enumeration.FromValue<LifeStage>(e.LifeStage.Value).DisplayName;
         var country = e.CountryOfOriginCode is null ? null : new CountryRef(e.CountryOfOriginCode, CountryCodes.FindName(e.CountryOfOriginCode) ?? e.CountryOfOriginCode);
 
         // Row 37: the currency is the one STORED with the price (the view's currency_code); a price with no stored
@@ -263,8 +252,8 @@ public sealed class GetCatalogueQueryHandler(CatEcommerceDbContext db, IContentL
         ProductImageRef? primaryImage = e.PrimaryImageFileId is null ? null : new ProductImageRef(null, e.PrimaryImageAltText ?? "", true, null);
 
         return new CatalogueItem(
-            e.ProductId, e.Slug, e.Name, e.Brand, category.DisplayName, subcategory, kind.DisplayName, country, lifeStage,
-            e.PrescriptionRequired, fromPrice, priceVaries, inStock ? "InStock" : "OutOfStock",
+            e.ProductId, e.Slug, e.Name, e.Brand, category.DisplayName, subcategory, kind.DisplayName, country,
+            fromPrice, priceVaries, inStock ? "InStock" : "OutOfStock",
             new RatingSummary(e.RatingAverage, e.RatingCount), primaryImage);
     }
 }

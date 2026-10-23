@@ -17,7 +17,7 @@ const STAFF = [
   `/staff/billing/customers/${C}?tab=invoices`,
   `/staff/billing/customers/${C}?tab=payments`,
   '/staff/billing/invoices',
-  `/staff/billing/invoices/new?customerId=${C}&charges=${ids.chargeConsultId}`,
+  `/staff/billing/invoices/new?customerId=${C}&charges=${ids.chargeRiceId}`,
   `/staff/billing/invoices/${ids.draftInvoiceId}`,
   `/staff/billing/invoices/${ids.partPaidInvoiceId}`,
   `/staff/billing/invoices/${ids.correctedInvoiceId}`,

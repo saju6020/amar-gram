@@ -22,7 +22,7 @@ import {
 } from '@/lib/format/orders';
 import { useDeliveryAddresses, useCustomerProfile } from '@/lib/hooks/useAccount';
 import { useAddDeliveryAddress } from '@/lib/hooks/useAccountMutations';
-import { useCart, useCartCats, useUpdateCartLine } from '@/lib/hooks/useCart';
+import { useCart } from '@/lib/hooks/useCart';
 import { firstNameOf, useCustomerFirstName } from '@/lib/hooks/useCustomerFirstName';
 import {
   CHECKOUT_STEPS,
@@ -39,13 +39,12 @@ import { DiscountCodeField } from './DiscountCodeField';
 import { FulfilmentStep } from './FulfilmentStep';
 import { PaymentStep } from './PaymentStep';
 import { PendingPoliciesPanel } from './PendingPoliciesPanel';
-import { PrescriptionLinesPanel } from './PrescriptionLinesPanel';
 import { ReviewChoices } from './ReviewChoices';
 import { ReviewStep } from './ReviewStep';
 import { SlotStep, leadTimeText } from './SlotStep';
 import type { RenderSummary } from './StepLayout';
 
-/** Until the branches load (or if they cannot): the clinic's own zone. */
+/** Until the branches load (or if they cannot): the shop's own zone. */
 const FALLBACK_ZONE = 'Asia/Dhaka';
 /** How long Place order stays disabled after `409 RequestInProgress` before the customer may press it again. */
 const IN_PROGRESS_RECHECK_MS = 4000;
@@ -88,9 +87,7 @@ export function CheckoutScreen() {
   const addresses = useDeliveryAddresses();
   const profile = useCustomerProfile();
   const addAddress = useAddDeliveryAddress();
-  const cats = useCartCats(true);
   const acceptPolicy = useAcceptPolicyVersion();
-  const updateLine = useUpdateCartLine();
   const place = usePlaceOrder();
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const branches = usePublicBranches();
@@ -107,8 +104,6 @@ export function CheckoutScreen() {
   const [inProgress, setInProgress] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
   const [acceptingKey, setAcceptingKey] = useState<string | null>(null);
-  const [rxError, setRxError] = useState<string | null>(null);
-  const [rxPending, setRxPending] = useState<string | null>(null);
   const submitting = useRef(false);
 
   // 409 RequestInProgress: the first attempt is still running. Offer a way to its result (the link in the review
@@ -260,11 +255,6 @@ export function CheckoutScreen() {
       // The quote now lists the policies still to accept; without a refetch the panel to accept them is empty.
       void queryClient.invalidateQueries({ queryKey: ['checkout', 'quote'] });
       goTo('review');
-    } else if (codes.includes('PrescriptionCatRequired')) {
-      setRxError(message);
-      void queryClient.invalidateQueries({ queryKey: ['checkout', 'quote'] });
-      void queryClient.invalidateQueries({ queryKey: ['cart'] });
-      goTo('review');
     } else {
       setPlaceError(message);
     }
@@ -388,7 +378,6 @@ export function CheckoutScreen() {
         {footer}
       </section>
     );
-  const rxLines = cart.data?.lines ?? [];
   const needsAcknowledgement = (quote?.changes.length ?? 0) > 0;
 
   const steps: StepDescriptor[] = [
@@ -544,35 +533,12 @@ export function CheckoutScreen() {
           inProgress={inProgress}
           placeError={placeError}
           onPlace={() => void handlePlace()}
-          rxPanel={
-            <PrescriptionLinesPanel
-              lines={rxLines}
-              cats={(cats.data?.items ?? []).map((cat) => ({ id: cat.id, name: cat.name }))}
-              pendingLineId={rxPending}
-              error={rxError}
-              onChoose={(lineId, catId) => {
-                setRxError(null);
-                setRxPending(lineId);
-                updateLine.mutate(
-                  { lineId, catId },
-                  {
-                    onSuccess: () => {
-                      void queryClient.invalidateQueries({ queryKey: ['checkout', 'quote'] });
-                    },
-                    onError: (error) => setRxError(describeOrderingError(error)),
-                    onSettled: () => setRxPending(null),
-                  },
-                );
-              }}
-            />
-          }
           changesPanel={
             <ChangesPanel
               changes={quote.changes}
               fingerprint={quote.fingerprint}
               acknowledgedFingerprint={acknowledged}
               onAcknowledge={setAcknowledged}
-              bookHref="/book?category=Consultation"
               settling={settling}
             />
           }

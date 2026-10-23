@@ -103,8 +103,6 @@ builder.Services.AddDbContext<CatEcommerceDbContext>((sp, o) =>
         // tables they cover (audit entries, the controlled-drug register) and have no side effects. The retention guard runs next and BEFORE the
         // change-capture interceptor, so a refused delete is never audited as though it happened (it aborts the save).
         new AuditEntryImmutabilityInterceptor(),
-        // HO-PHM-001 §8.9 layer 2 (ADR-144): a modified or deleted controlled-drug register entry or seal is refused before SQL is sent.
-        new ControlledDrugRegisterImmutabilityInterceptor(),
         new CatEcommerce.Infrastructure.Retention.HardDeleteGuardInterceptor(),
         new AuditChangeCaptureInterceptor(
             sp.GetRequiredService<IClientIpAccessor>(),
@@ -127,19 +125,13 @@ builder.Services.AddHostPipelineServices(builder.Configuration);
 // module file changes, plus the one line adding it below the first time it is built.
 builder.Services
     .AddAccountsModule(builder.Configuration)
-    .AddCatProfilesModule(builder.Configuration)
     .AddAdministrationModule(builder.Configuration)
     .AddNotificationsModule(builder.Configuration)
-    .AddAppointmentsModule(builder.Configuration)
     .AddFileStorageModule(builder.Configuration)
     .AddShopModule(builder.Configuration)
     .AddInventoryModule(builder.Configuration)
-    .AddConsultationModule(builder.Configuration)
-    .AddPharmacyModule(builder.Configuration)
-    .AddSurgeryModule(builder.Configuration)
     .AddBillingModule(builder.Configuration)
     .AddOrdersModule(builder.Configuration)
-    .AddBoardingModule(builder.Configuration)
     .AddSubscriptionsModule(builder.Configuration)
     .AddPortalModule(builder.Configuration)
     .AddReportingModule(builder.Configuration)

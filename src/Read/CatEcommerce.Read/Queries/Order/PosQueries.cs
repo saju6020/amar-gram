@@ -18,7 +18,7 @@ public sealed class SearchPosSkusQuery : Query<IReadOnlyList<PosSkuViewModel>>
     public required string Text { get; init; }
 }
 
-public sealed record CounterQuoteLine(Guid SkuId, int Quantity, Guid? CatId);
+public sealed record CounterQuoteLine(Guid SkuId, int Quantity);
 
 /// <summary>The counter quote -- the sale priced exactly as completing it would price it, without any state change.</summary>
 public sealed class GetCounterQuoteQuery : Query<CounterQuoteViewModel>

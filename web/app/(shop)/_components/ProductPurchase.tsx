@@ -6,7 +6,6 @@ import { BuyBox } from '@/components/product/BuyBox';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { VariantSelector } from '@/components/product/VariantSelector';
 import { PurchaseRow } from '@/components/product/PurchaseRow';
-import { PrescriptionGate } from '@/components/prescription/PrescriptionGate';
 import { StockAlertButton } from '@/components/wishlist/StockAlertButton';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { ApiUnauthorizedError, ApiValidationError } from '@/lib/api/client';
@@ -16,7 +15,6 @@ import type { StockAlertDeliverability } from '@/lib/api/shop-customer';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import {
   useCancelStockAlert,
-  usePurchasability,
   useRequestStockAlert,
   useSetWishlistItem,
   useStockAlerts,
@@ -44,8 +42,7 @@ function messageFor(error: unknown): string {
 /**
  * HO-SHP-002 §11.3 — the product page's interactive island: gallery, variant selector and buy box
  * for the SELECTED variant (`?sku=`, ADR in §8.4). Price, availability and the best-before notice
- * come straight from the SKU the API sent; the personal parts (prescription gate, wishlist, stock
- * alert) load after the server-rendered page and never block it (§8.2).
+ * come straight from the SKU the API sent; the personal parts (wishlist, stock alert) load after the server-rendered page and never block it (§8.2).
  */
 export function ProductPurchase({
   detail,
@@ -74,7 +71,6 @@ export function ProductPurchase({
   const session = useCustomerSession();
   const signedIn = !!session.data;
   const sessionKnown = !session.isPending;
-  const purchasability = usePurchasability(detail.slug, signedIn && detail.prescriptionRequired);
   const wishlist = useWishlist(signedIn);
   const alerts = useStockAlerts(signedIn);
   const setWishlist = useSetWishlistItem();
@@ -141,35 +137,15 @@ export function ProductPurchase({
                 key={sku.skuId}
                 skuId={sku.skuId}
                 productName={detail.name}
-                requiresPrescription={detail.prescriptionRequired}
                 disabled={outOfStock || !sku.price}
                 disabledReason={
                   outOfStock ? 'This variant is out of stock.' : 'This variant has no price yet.'
                 }
-                signedIn={sessionKnown ? signedIn : undefined}
-                eligibleCatIds={
-                  purchasability.data?.skus
-                    .find((s) => s.skuId === sku.skuId)
-                    ?.eligibleCats.map((cat) => cat.catId) ?? []
-                }
-                signInHref={signInHref}
                 trailing={wishlistButton}
               />
             )
           }
           wishlist={actions ? wishlistButton : null}
-          gate={
-            detail.prescriptionRequired && sessionKnown ? (
-              <PrescriptionGate
-                audience={guest ? 'guest' : 'customer'}
-                isLoading={signedIn && purchasability.isPending}
-                isError={signedIn && purchasability.isError}
-                onRetry={() => void purchasability.refetch()}
-                purchasability={purchasability.data?.skus.find((s) => s.skuId === sku.skuId)}
-                signInHref={signInHref}
-              />
-            ) : null
-          }
           stockAlert={
             outOfStock && sessionKnown ? (
               <StockAlertButton

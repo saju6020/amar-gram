@@ -46,7 +46,7 @@ beforeEach(() => resetNotificationsMockData());
 describe('TemplateEditor — HO-NTF-002 §11.3', () => {
   it('shows the definition: channel tabs with the ARIA tabs pattern, counters, required badges', async () => {
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
 
     const tabs = await screen.findAllByRole('tab');
     expect(tabs.map((t) => t.textContent)).toEqual(['Email', 'Text message (SMS)', 'In-app']);
@@ -70,38 +70,38 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
     expect(screen.getByLabelText('Email subject')).not.toBeVisible();
   });
 
-  it('U-C1: clicking a placeholder inserts {{catName}} at the caret of the focused SMS body, caret after it', async () => {
+  it('U-C1: clicking a placeholder inserts {{orderNumber}} at the caret of the focused SMS body, caret after it', async () => {
     const user = userEvent.setup();
-    renderEditor(ids.dewormingKey);
+    renderEditor(ids.orderDeliveredKey);
     await openTab(user, 'Text message (SMS)');
     const body = screen.getByLabelText('SMS message') as HTMLTextAreaElement;
     fireEvent.change(body, { target: { value: 'Hello  there' } });
     await user.click(body);
     body.setSelectionRange(6, 6);
 
-    await user.click(screen.getByRole('button', { name: 'Insert {{catName}}' }));
+    await user.click(screen.getByRole('button', { name: 'Insert {{orderNumber}}' }));
 
-    expect(body.value).toBe('Hello {{catName}} there');
-    expect(body.selectionStart).toBe(6 + '{{catName}}'.length);
+    expect(body.value).toBe('Hello {{orderNumber}} there');
+    expect(body.selectionStart).toBe(6 + '{{orderNumber}}'.length);
     expect(body.selectionEnd).toBe(body.selectionStart);
     expect(body).toHaveFocus();
   });
 
   it('inserts into the last focused field of the active tab, and offers a Url variable as a link in the email body', async () => {
     const user = userEvent.setup();
-    renderEditor(ids.dewormingKey);
+    renderEditor(ids.orderDeliveredKey);
     await screen.findByLabelText('Email body');
     const body = screen.getByLabelText('Email body') as HTMLTextAreaElement;
     await user.click(body);
     body.setSelectionRange(0, 0);
-    await user.click(screen.getByRole('button', { name: 'Insert {{bookingLink}} as a link' }));
-    expect(body.value.startsWith('[Link text]({{bookingLink}})')).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Insert {{orderLink}} as a link' }));
+    expect(body.value.startsWith('[Link text]({{orderLink}})')).toBe(true);
 
     const subject = screen.getByLabelText('Email subject') as HTMLInputElement;
     await user.click(subject);
     subject.setSelectionRange(subject.value.length, subject.value.length);
-    await user.click(screen.getByRole('button', { name: 'Insert {{clinicName}}' }));
-    expect(subject.value.endsWith('{{clinicName}}')).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Insert {{outletName}}' }));
+    expect(subject.value.endsWith('{{outletName}}')).toBe(true);
   });
 
   it('U-C2: five keystrokes in 300 ms produce one preview request after 600 ms, and an earlier in-flight one is aborted', async () => {
@@ -126,7 +126,7 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
     });
 
     const user = userEvent.setup();
-    renderEditor(ids.dewormingKey);
+    renderEditor(ids.orderDeliveredKey);
     await openTab(user, 'Text message (SMS)');
     await waitFor(() => expect(posts.length).toBe(1)); // the initial preview
 
@@ -151,17 +151,17 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
 
   it('U-C3: a preview 400 names the variable in the panel and on the field, and typing is not blocked', async () => {
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await openTab(user, 'Text message (SMS)');
-    setValue('SMS message', 'Hello {{catname}}, see {{bookingLink}}');
+    setValue('SMS message', 'Hello {{ordernumber}}, see {{orderLink}}');
 
     const panelError = await screen.findByTestId('preview-error', undefined, { timeout: 3000 });
-    expect(panelError).toHaveTextContent('{{catname}} is not a variable of this template.');
-    expect(panelError).toHaveTextContent('Available: catName');
+    expect(panelError).toHaveTextContent('{{ordernumber}} is not a variable of this template.');
+    expect(panelError).toHaveTextContent('Available: orderNumber');
     const field = screen.getByLabelText('SMS message');
     await waitFor(() =>
       expect(field).toHaveAccessibleDescription(
-        /\{\{catname\}\} is not a variable of this template/,
+        /\{\{ordernumber\}\} is not a variable of this template/,
       ),
     );
     expect(field).toHaveAttribute('aria-invalid', 'true');
@@ -191,7 +191,7 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       ),
     );
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await openTab(user, 'Text message (SMS)');
     expect(await screen.findByText('105 characters · 2 SMS · Unicode')).toBeInTheDocument();
     expect(screen.getByText(/outside the standard SMS alphabet/)).toBeInTheDocument();
@@ -199,14 +199,14 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
 
   it('shows a GSM-7 SMS preview without the Unicode note', async () => {
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await openTab(user, 'Text message (SMS)');
     expect(await screen.findByText(/characters · 1 SMS · GSM-7/)).toBeInTheDocument();
     expect(screen.queryByText(/outside the standard SMS alphabet/)).not.toBeInTheDocument();
   });
 
   it('U-C5: the email preview is a fully sandboxed iframe, and the script in it never runs', async () => {
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await waitForFirstPreview();
     const frame = screen.getByTitle('Email preview') as HTMLIFrameElement;
     expect(frame.getAttribute('sandbox')).toBe('');
@@ -220,9 +220,9 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
 
   it('shows an in-app preview card', async () => {
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await openTab(user, 'In-app');
-    expect(await screen.findByText('Momo is due a vaccination')).toBeInTheDocument();
+    expect(await screen.findByText('Order SO-2026-00042 is on its way')).toBeInTheDocument();
   });
 
   it('sample values are sent with the preview and are not part of the save', async () => {
@@ -239,20 +239,23 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       }),
     );
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await screen.findByText('Sample values for the preview');
     await user.click(screen.getByText('Sample values for the preview'));
-    fireEvent.change(screen.getByLabelText('catName'), { target: { value: 'Pixel' } });
-    await waitFor(() => expect(previewBodies.at(-1)?.sampleValues).toEqual({ catName: 'Pixel' }), {
-      timeout: 3000,
-    });
+    fireEvent.change(screen.getByLabelText('orderNumber'), { target: { value: 'SO-9999' } });
+    await waitFor(
+      () => expect(previewBodies.at(-1)?.sampleValues).toEqual({ orderNumber: 'SO-9999' }),
+      {
+        timeout: 3000,
+      },
+    );
 
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     await user.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Save changes' }),
     );
     await waitFor(() => expect(putBodies.length).toBe(1));
-    expect(JSON.stringify(putBodies[0])).not.toContain('Pixel');
+    expect(JSON.stringify(putBodies[0])).not.toContain('SO-9999');
     expect(JSON.stringify(putBodies[0])).not.toContain('sampleValues');
   });
 
@@ -266,9 +269,9 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       }),
     );
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await screen.findByLabelText('Email subject');
-    setValue('Email subject', '{{catName}} needs a vaccination');
+    setValue('Email subject', '{{orderNumber}} needs attention');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     const dialog = await screen.findByRole('dialog');
@@ -294,9 +297,9 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       ),
     );
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await screen.findByLabelText('Email subject');
-    setValue('Email subject', 'My unsaved subject {{catName}}');
+    setValue('Email subject', 'My unsaved subject {{orderNumber}}');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     await user.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Save changes' }),
@@ -307,13 +310,13 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
     );
     expect(alert).toBeVisible();
     expect((screen.getByLabelText('Email subject') as HTMLInputElement).value).toBe(
-      'My unsaved subject {{catName}}',
+      'My unsaved subject {{orderNumber}}',
     );
 
     await user.click(screen.getByRole('button', { name: 'Reload' }));
     await waitFor(() =>
       expect((screen.getByLabelText('Email subject') as HTMLInputElement).value).toBe(
-        '{{catName}} is due a vaccination',
+        'Order {{orderNumber}} is on its way',
       ),
     );
     expect(
@@ -329,7 +332,7 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
     expect(screen.getByText('Ignores quiet hours')).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'In-app' })).not.toBeInTheDocument();
     unmount();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await screen.findByLabelText('Email subject');
     expect(screen.queryByTestId('secret-notice')).not.toBeInTheDocument();
   });
@@ -345,7 +348,7 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       ),
     );
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await openTab(user, 'Text message (SMS)');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     await user.click(
@@ -374,10 +377,10 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       ),
     );
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await screen.findByLabelText('Email subject');
-    setValue('Email subject', 'Typed subject {{catName}}');
-    setValue('SMS message', 'Typed sms {{x}} {{bookingLink}}');
+    setValue('Email subject', 'Typed subject {{orderNumber}}');
+    setValue('SMS message', 'Typed sms {{x}} {{orderLink}}');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     await user.click(
       within(await screen.findByRole('dialog')).getByRole('button', { name: 'Save changes' }),
@@ -386,10 +389,10 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       timeout: 3000,
     });
     expect((screen.getByLabelText('Email subject') as HTMLInputElement).value).toBe(
-      'Typed subject {{catName}}',
+      'Typed subject {{orderNumber}}',
     );
     expect((screen.getByLabelText('SMS message') as HTMLTextAreaElement).value).toBe(
-      'Typed sms {{x}} {{bookingLink}}',
+      'Typed sms {{x}} {{orderLink}}',
     );
   });
 
@@ -402,7 +405,7 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
       }),
     );
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await screen.findByLabelText('Email subject');
     setValue('Email subject', '');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
@@ -413,12 +416,12 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
 
   it('Reset to default exists only for a customised template; it confirms, then returns it to Default', async () => {
     const user = userEvent.setup();
-    const { unmount } = renderEditor(ids.dewormingKey);
+    const { unmount } = renderEditor(ids.orderDeliveredKey);
     await screen.findByLabelText('Email subject');
     expect(screen.queryByRole('button', { name: 'Reset to default' })).not.toBeInTheDocument();
     unmount();
 
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     await user.click(await screen.findByRole('button', { name: 'Reset to default' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(/Messages already sent keep theirs\./)).toBeInTheDocument();
@@ -430,7 +433,7 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
   });
 
   it('a view-only user sees read-only fields and no Save or Reset', async () => {
-    renderEditor(ids.vaccinationKey, false);
+    renderEditor(ids.orderDispatchedKey, false);
     const subject = await screen.findByLabelText('Email subject');
     expect(subject).toHaveAttribute('readonly');
     expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
@@ -439,10 +442,10 @@ describe('TemplateEditor — HO-NTF-002 §11.3', () => {
 
   it('U-X2: a dirty editor shows the unsaved-changes confirm on in-app navigation', async () => {
     const user = userEvent.setup();
-    renderEditor(ids.vaccinationKey);
+    renderEditor(ids.orderDispatchedKey);
     document.body.insertAdjacentHTML('beforeend', '<a id="away" href="/somewhere-else">Away</a>');
     await screen.findByLabelText('Email subject');
-    setValue('Email subject', 'changed {{catName}}');
+    setValue('Email subject', 'changed {{orderNumber}}');
     await user.click(document.getElementById('away')!);
     expect(
       await screen.findByText('You have unsaved changes. Leave this page without saving?'),

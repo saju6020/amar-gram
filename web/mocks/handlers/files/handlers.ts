@@ -4,8 +4,7 @@ import { fileStorageFixtureIds, onePixelPngBytes } from './fixtures';
 
 /**
  * File Storage MSW request handlers (HO-FIL-002 §12), derived from HO-FIL-001 §12.4 as verified
- * against `FilesController`/`RegisterStoredFileCommandHandler` in `src/` (never invented —
- * HO-CAT-002 §5.1, §20.2): `POST /api/staff/files`, `POST /api/customers/me/files` (`201` with the
+ * against `FilesController`/`RegisterStoredFileCommandHandler` in `src/` (never invented): `POST /api/staff/files`, `POST /api/customers/me/files` (`201` with the
  * signed-file shape, `400` with a `ValidationResponse` whose `errors[0].errorCode` is one of
  * HO-FIL-001 §10.2's codes, `403` for `FilePurposeNotAllowedForCaller`) and
  * `GET /api/files/{fileId}/content` (a real, tiny image so a genuine `<img>` in a Playwright

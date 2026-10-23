@@ -30,8 +30,8 @@ import { moneyFromWire, wireInteger, wireMoney, wireQuantity } from '@/lib/money
 
 export type { Money };
 
-export type BusinessLine = 'Clinic' | 'Shop' | 'Boarding';
-export const BUSINESS_LINES: BusinessLine[] = ['Clinic', 'Shop', 'Boarding'];
+export type BusinessLine = 'Shop';
+export const BUSINESS_LINES: BusinessLine[] = ['Shop'];
 
 export type InvoiceStatus = 'Draft' | 'Issued' | 'PartPaid' | 'Paid' | 'Credited' | 'Discarded';
 export type PaymentStatus = 'PendingApproval' | 'Accepted' | 'Rejected' | 'Reversed';
@@ -101,7 +101,6 @@ export interface Charge {
   customerId: string;
   customerName: string;
   branchId: string;
-  catId: string | null;
   businessLine: BusinessLine;
   itemKind: string;
   sourceKind: string;
@@ -136,8 +135,6 @@ export async function getCharges(params: ChargesParams): Promise<PagedResult<Cha
 
 export interface ManualChargeRequest {
   customerId: string;
-  catId?: string;
-  serviceId?: string;
   description?: string;
   unitPrice?: string;
   taxClassId?: string;
@@ -154,8 +151,6 @@ export async function recordManualCharge(
     method: 'POST',
     body: {
       customerId: request.customerId,
-      catId: request.catId,
-      serviceId: request.serviceId,
       description: request.description,
       unitPrice: request.unitPrice === undefined ? undefined : wireMoney(request.unitPrice),
       taxClassId: request.taxClassId,
@@ -279,7 +274,6 @@ export interface InvoiceLine {
   itemKind: string;
   sourceKind: string;
   sourceId: string;
-  catId: string | null;
   description: string;
   quantity: string;
   unitPrice: Money;
@@ -851,7 +845,7 @@ export interface RecordPaymentRequest {
     courierCode?: string;
     courierName?: string;
   };
-  earmark?: { kind: 'Order' | 'BoardingStay'; sourceId: string; label: string };
+  earmark?: { kind: 'Order'; sourceId: string; label: string };
   allocations: Array<{ invoiceId: string; amount: string }>;
   notes?: string;
 }

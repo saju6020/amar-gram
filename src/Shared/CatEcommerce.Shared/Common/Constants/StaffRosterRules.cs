@@ -5,7 +5,7 @@ public static class StaffRosterRules
 {
     public static readonly IReadOnlyList<string> RosterableRoles =
     [
-        StaffRoles.Vet, StaffRoles.Nurse, StaffRoles.Caretaker, StaffRoles.Reception
+        StaffRoles.Reception
     ];
 
     public const int MaxSlotsPerDay = 3;

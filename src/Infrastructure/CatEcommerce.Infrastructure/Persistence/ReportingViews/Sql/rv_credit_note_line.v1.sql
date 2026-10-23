@@ -22,7 +22,7 @@ SELECT
     il.source_line_id          AS source_line_id,
     il.sku_id                  AS sku_id,
     il.product_id              AS product_id,
-    il.service_category        AS service_category,
+    il.order_channel           AS order_channel,
     il.description             AS description,
     cn.currency_code           AS currency_code
 FROM billing.credit_note_line cl

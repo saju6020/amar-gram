@@ -5,7 +5,7 @@ public static partial class ActionRoles
 {
     private static readonly (string Action, string[] Roles)[] OperationsRows =
     [
-        (Actions.Offline.FrontDeskSnapshot, [StaffRoles.Reception, StaffRoles.Nurse, StaffRoles.Vet, StaffRoles.Caretaker, StaffRoles.Administrator]),
+        (Actions.Offline.FrontDeskSnapshot, [StaffRoles.Reception, StaffRoles.Administrator]),
         (Actions.Retention.View, [StaffRoles.Administrator, StaffRoles.Accountant]),
         (Actions.Retention.Run, [StaffRoles.Administrator]),
         (Actions.CustomerErasure.Erase, [StaffRoles.Administrator]),

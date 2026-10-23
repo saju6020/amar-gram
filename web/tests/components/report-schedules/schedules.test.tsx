@@ -21,7 +21,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 const reports = catalogueFor(['Administrator']).filter((r) => r.canSchedule);
-const branches = [{ id: 'b0000000-0000-0000-0000-00000000a001', name: 'Main clinic' }];
+const branches = [{ id: 'b0000000-0000-0000-0000-00000000a001', name: 'Main outlet' }];
 
 beforeEach(() => {
   vi.useRealTimers();
@@ -56,8 +56,8 @@ describe('ScheduleForm — U-E series', () => {
     renderForm({
       initial: {
         ...EMPTY_SCHEDULE_VALUES,
-        reportKey: 'vaccination-due-list',
-        period: 'Next30Days',
+        reportKey: 'stock-near-expiry',
+        period: 'Today',
         branchId: branches[0]!.id,
       },
     });
@@ -65,8 +65,8 @@ describe('ScheduleForm — U-E series', () => {
     const options = within(select)
       .getAllByRole('option')
       .map((o) => o.textContent);
-    expect(options).toEqual(['Choose a period', 'Next 30 days', 'Next 90 days']);
-    expect(screen.getByText('Looks ahead thirty days from the send time.')).toBeInTheDocument();
+    expect(options).toEqual(['Choose a period', 'Today']);
+    expect(screen.getByText('Covers the day the report is sent.')).toBeInTheDocument();
   });
 
   it('U-E2: a recipient without an email is unselectable, with the reason as text', async () => {

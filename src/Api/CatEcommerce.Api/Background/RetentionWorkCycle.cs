@@ -165,10 +165,10 @@ public sealed class RetentionWorkCycle(
         return new PassOutcome(kind, cutoff, purged, purged, 0, failed, codes, (int)watch.ElapsedMilliseconds);
     }
 
-    /// <summary>The cut-off of each scheduled purge source is its own setting. Only <c>boarding-media</c> (D-10, <c>retention.boardingMediaMonths</c>, HO-BRD-001's C-BRD-2) has a rule; every other key is not scheduled.</summary>
-    private DateTimeOffset? SourceCutoff(string sourceKey, DateTimeOffset now) => sourceKey switch
+    /// <summary>The cut-off of each scheduled purge source is its own setting. No registered source has a retention rule today (HO-P1 retired the only one), so
+    /// none is scheduled; a source gains a case here together with its setting.</summary>
+    private static DateTimeOffset? SourceCutoff(string sourceKey, DateTimeOffset now) => sourceKey switch
     {
-        "boarding-media" => now.AddMonths(-settings.GetInt(SettingKeys.RetentionBoardingMediaMonths)),
         _ => null,
     };
 
@@ -185,8 +185,8 @@ public sealed class RetentionWorkCycle(
 
         foreach (var key in keys)
         {
-            // A source with no retention rule in HO-XCT-001 is not scheduled -- never guessed at (ADR-301). In particular the stored-file:<purpose>
-            // sources HO-FIL-001 registers include clinical purposes (lab results, consent forms) that must never be purged automatically.
+            // A source with no retention rule in HO-XCT-001 is not scheduled -- never guessed at (ADR-301), in particular the stored-file:<purpose>
+            // sources HO-FIL-001 registers.
             if (SourceCutoff(key, now) is not { } cutoff) continue;
 
             for (var batch = 0; batch < RetentionRules.MaxBatchesPerPass && !ct.IsCancellationRequested; batch++)

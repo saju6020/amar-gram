@@ -8,7 +8,7 @@ namespace CatEcommerce.Api.Background;
 
 /// <summary>
 /// HO-SHP-001 section 12.2 -- the same shape and rules as HO-NTF-001's <c>NotificationWorker</c> and
-/// HO-APT-001's <c>ClinicWorker</c>: a scope per unit of work, never throws out of
+/// <c>NotificationWorker</c>: a scope per unit of work, never throws out of
 /// <c>ExecuteAsync</c>, disabled in <c>Testing</c> (<c>Shop:Worker:Enabled=false</c>); tests call
 /// <see cref="ShopWorkCycle"/> directly. One pass notifies every Pending stock alert whose SKU is
 /// available again (U-X2: a throwing pass is logged and the next one still runs).

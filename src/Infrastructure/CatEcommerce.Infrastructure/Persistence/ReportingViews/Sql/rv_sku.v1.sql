@@ -16,7 +16,6 @@ SELECT
       ORDER BY sp.effective_from DESC LIMIT 1)               AS current_price,
     (SELECT sp.currency_code FROM product.sku_price sp
       WHERE sp.sku_id = s."Id" AND sp.effective_from <= now()
-      ORDER BY sp.effective_from DESC LIMIT 1)               AS currency_code,
-    p.prescription_required                                  AS requires_vet_authorisation
+      ORDER BY sp.effective_from DESC LIMIT 1)               AS currency_code
 FROM product.sku s
 JOIN product.product p ON p."Id" = s.product_id;

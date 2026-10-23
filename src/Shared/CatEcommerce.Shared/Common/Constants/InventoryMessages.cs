@@ -14,13 +14,13 @@ public static class InventoryMessages
     public const string SupplierCodeAlreadyExists = "This supplier code is already in use.";
     public const string DuplicateReceiptLine = "The same SKU, lot and expiry cannot appear twice in one receipt.";
     public const string CountLocationBusy = "A stock count is already in progress at this location.";
-    public const string ExpiryDateRequired = "Food and medicine must be received with an expiry date.";
+    public const string ExpiryDateRequired = "Food must be received with an expiry date.";
 
     /// <summary>The generic (race-path) text: the trigger cannot name the lot.</summary>
-    public const string BatchExpiredGeneric = "That batch has expired and cannot be sold, dispensed or fed.";
+    public const string BatchExpiredGeneric = "That batch has expired and cannot be sold.";
 
     public static string BatchExpired(string lotNumber, DateOnly expiresOn) =>
-        $"Batch {lotNumber} expired on {expiresOn:yyyy-MM-dd} and cannot be sold, dispensed or fed.";
+        $"Batch {lotNumber} expired on {expiresOn:yyyy-MM-dd} and cannot be sold.";
 
     public static string InsufficientStockAvailable(decimal available) =>
         $"Only {available:0.###} is available. " + InsufficientStock;

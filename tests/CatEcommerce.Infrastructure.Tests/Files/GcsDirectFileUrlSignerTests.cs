@@ -34,8 +34,7 @@ public sealed class GcsDirectFileUrlSignerTests
     {
         var sut = CreateSut();
         Assert.True(sut.IsEnabledFor(FilePurpose.ProductImage));
-        Assert.False(sut.IsEnabledFor(FilePurpose.ClinicalPhoto));
-        Assert.False(sut.IsEnabledFor(FilePurpose.CatProfilePhoto));
+        Assert.False(sut.IsEnabledFor(FilePurpose.ReportExport));
     }
 
     [Theory]

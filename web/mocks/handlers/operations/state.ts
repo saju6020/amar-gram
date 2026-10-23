@@ -10,12 +10,10 @@
 
 import { loadPersisted, savePersisted } from '../admin/fixtures';
 
-const SNAPSHOT_STAFF_KEY = '__purrcare_xct_snapshot_staff__';
+const SNAPSHOT_STAFF_KEY = '__amargram_xct_snapshot_staff__';
 
 export type SnapshotScenario =
-  | 'both'
-  | 'appointmentsNotPermitted'
-  | 'boardingNotAvailable'
+  | 'current'
   | 'expired'
   | 'otherPerson'
   | 'forbidden';
@@ -38,7 +36,7 @@ export interface XctMockState {
 
 export const xctMock: XctMockState = {
   pingMode: 'ok',
-  snapshotScenario: 'both',
+  snapshotScenario: 'current',
   snapshotVersion: 1,
   // Survives a full page load in the tab (the person-change e2e signs in as someone else, then reloads).
   snapshotStaffAccountId: loadPersisted<string>(SNAPSHOT_STAFF_KEY),
@@ -51,7 +49,7 @@ export const xctMock: XctMockState = {
 
 export function resetXctMock(): void {
   xctMock.pingMode = 'ok';
-  xctMock.snapshotScenario = 'both';
+  xctMock.snapshotScenario = 'current';
   xctMock.snapshotVersion = 1;
   xctMock.snapshotStaffAccountId = null;
   xctMock.snapshotRequests = [];

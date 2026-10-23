@@ -83,15 +83,14 @@ describe('CheckoutFreeDelivery - the free-delivery card is fed only by the serve
 
 describe('the MSW quote computes the two new fields like the server', () => {
   it('threshold minus goods value, floored at zero, and null where a level has no threshold', () => {
-    const sku = skuInfo(orderingIds.skuKitten400)!;
+    const sku = skuInfo(orderingIds.skuOats400)!;
     const at = (quantity: number) =>
       computeQuote(
         [
           {
             lineId: 'a',
-            skuId: orderingIds.skuKitten400,
+            skuId: orderingIds.skuOats400,
             quantity,
-            catId: null,
             priceWhenAddedCents: sku.priceCents!,
           },
         ],

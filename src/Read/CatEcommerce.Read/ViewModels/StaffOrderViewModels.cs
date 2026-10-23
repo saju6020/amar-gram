@@ -12,7 +12,7 @@ public sealed record StaffOrderRowViewModel(
 public sealed record StaffAllocationViewModel(Guid BatchId, string BatchNumber, DateOnly? ExpiresOn, Guid LocationId, string LocationName, decimal Quantity);
 
 public sealed record StaffOrderLineViewModel(
-    Guid LineId, int LineNumber, Guid SkuId, string ProductName, string VariantLabel, CartCatViewModel? Cat, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineTotal,
+    Guid LineId, int LineNumber, Guid SkuId, string ProductName, string VariantLabel, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineTotal,
     int QuantityReturned, IReadOnlyList<StaffAllocationViewModel> Allocations);
 
 public sealed record StaffStatusChangeViewModel(string? From, string To, DateTimeOffset ChangedOn, Guid ChangedBy, string? ChangedByName, string? Note);
@@ -40,7 +40,7 @@ public sealed record PickListGroupViewModel(Guid LocationId, string LocationName
 
 public sealed record PickListViewModel(DateTimeOffset GeneratedOn, IReadOnlyList<PickListGroupViewModel> Groups);
 
-public sealed record PackingSlipLineViewModel(int LineNumber, string ProductName, string VariantLabel, int Quantity, string? CatName, IReadOnlyList<string> BatchNumbers);
+public sealed record PackingSlipLineViewModel(int LineNumber, string ProductName, string VariantLabel, int Quantity, IReadOnlyList<string> BatchNumbers);
 
 public sealed record PackingSlipViewModel(
     Guid OrderId, string OrderNumber, DateTimeOffset PlacedOn, string CustomerName, string RecipientName, string? RecipientPhone, string FulfilmentMethod,

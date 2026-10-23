@@ -2,7 +2,7 @@
  * U-A9 — fixed-height placeholders so tiles arriving do not shift the layout. Decorative
  * (`aria-hidden`); one `sr-only` line is the only thing a screen reader announces.
  */
-const TILE_HEIGHTS = ['h-56', 'h-44', 'h-44', 'h-60', 'h-40', 'h-40'] as const;
+const TILE_HEIGHTS = ['h-44', 'h-60'] as const;
 
 export function DashboardSkeleton() {
   return (
@@ -15,7 +15,7 @@ export function DashboardSkeleton() {
             <div
               key={index}
               className={`${height} rounded-[var(--radius-md)] border border-border bg-surface-sunken motion-safe:animate-pulse ${
-                index === 0 || index === 3 ? 'col-span-full' : ''
+                index === 1 ? 'col-span-full' : ''
               }`}
             />
           ))}

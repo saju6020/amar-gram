@@ -38,8 +38,8 @@ function useCatalogue(roles: string[]) {
 
 describe('catalogue — U-B1, U-B2', () => {
   it('U-B1: groups by plain-language category and omits what the payload omits', () => {
-    renderWithClient(<ReportCatalogue reports={catalogueFor(['Reception'])} />);
-    expect(screen.getByRole('heading', { name: 'Clinic operations' })).toBeInTheDocument();
+    renderWithClient(<ReportCatalogue reports={catalogueFor(shopManager)} />);
+    expect(screen.getByRole('heading', { name: 'Sales' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Financial' })).not.toBeInTheDocument();
     expect(screen.getByText('Covers up to 31 days')).toBeInTheDocument();
   });
@@ -48,7 +48,7 @@ describe('catalogue — U-B1, U-B2', () => {
     renderWithClient(<ReportCatalogue reports={catalogueFor(admin)} />);
     await userEvent.type(screen.getByLabelText('Search reports'), 'expiry');
     expect(screen.getByRole('link', { name: /Near expiry/ })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Daily schedule/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Order fulfilment/ })).not.toBeInTheDocument();
   });
 
   it('U-B2: a 403 renders PermissionDeniedState', () => {
@@ -87,16 +87,16 @@ describe('ReportViewer — U-C series', () => {
 
   it('U-C7: sorting writes the URL; a non-sortable header has no button', async () => {
     useCatalogue(admin);
-    renderWithClient(<ReportViewer reportKey="clinic-daily-schedule" />);
+    renderWithClient(<ReportViewer reportKey="order-fulfilment" />);
     await screen.findByRole('table');
-    expect(screen.queryByRole('button', { name: /^Service/ })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /^Cat/ }));
-    expect(nav.push).toHaveBeenCalledWith(expect.stringContaining('sort=cat'));
+    expect(screen.queryByRole('button', { name: /^Channel/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^Order/ }));
+    expect(nav.push).toHaveBeenCalledWith(expect.stringContaining('sort=orderNumber'));
   });
 
   it('U-C3: Apply writes the filters to the URL', async () => {
     useCatalogue(admin);
-    renderWithClient(<ReportViewer reportKey="clinic-daily-schedule" />);
+    renderWithClient(<ReportViewer reportKey="order-fulfilment" />);
     await screen.findByRole('table');
     const from = screen.getByLabelText(/From/);
     await userEvent.clear(from);
@@ -146,10 +146,10 @@ describe('ReportViewer — U-C series', () => {
   it('U-C10: the empty state names the period and branch and suggests widening', async () => {
     useCatalogue(admin);
     nav.search = 'from=2026-01-01&to=2026-01-01';
-    renderWithClient(<ReportViewer reportKey="clinic-daily-schedule" />);
+    renderWithClient(<ReportViewer reportKey="order-fulfilment" />);
     expect(
       await screen.findByText(
-        /No results for Daily schedule from 01 Jan 2026 to 01 Jan 2026 at Main clinic/,
+        /No results for Order fulfilment from 01 Jan 2026 to 01 Jan 2026 at Main outlet/,
         {},
         { timeout: 10_000 },
       ),
@@ -160,7 +160,7 @@ describe('ReportViewer — U-C series', () => {
   it('shows the range message on the To field and keeps the typed values', async () => {
     useCatalogue(admin);
     nav.search = 'from=2026-01-01&to=2026-12-31';
-    renderWithClient(<ReportViewer reportKey="clinic-daily-schedule" />);
+    renderWithClient(<ReportViewer reportKey="order-fulfilment" />);
     expect(await screen.findByText(/covers at most 31 days/)).toBeInTheDocument();
     expect(screen.getByLabelText(/^To/)).toHaveValue('2026-12-31');
     expect(screen.getByLabelText(/^To/)).toHaveAttribute('aria-invalid', 'true');
@@ -170,12 +170,12 @@ describe('ReportViewer — U-C series', () => {
   it('maps a timeout to a page banner with advice', async () => {
     useCatalogue(admin);
     nav.search = 'from=2020-01-01&to=2020-01-02';
-    renderWithClient(<ReportViewer reportKey="clinic-daily-schedule" />);
+    renderWithClient(<ReportViewer reportKey="order-fulfilment" />);
     expect(await screen.findByText(/took too long/)).toBeInTheDocument();
   });
 
   it('a key outside the caller catalogue shows the server 403', async () => {
-    useCatalogue(['Reception']);
+    useCatalogue(shopManager);
     renderWithClient(<ReportViewer reportKey="revenue-by-business-line" />);
     await waitFor(() => expect(screen.getByText(/have permission/i)).toBeInTheDocument());
   });

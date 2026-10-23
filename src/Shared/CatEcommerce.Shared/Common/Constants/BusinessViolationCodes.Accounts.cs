@@ -7,7 +7,7 @@ namespace CatEcommerce.Shared.Common.Constants;
 public static partial class BusinessViolationCodes
 {
     // Identifiers & registration
-    // NameRequired is already declared in BusinessViolationCodes.Cat.cs -- reused verbatim.
+    // NameRequired is declared in the base BusinessViolationCodes.cs -- reused verbatim.
     public const string IdentifierRequired = nameof(IdentifierRequired);
     public const string InvalidMobileNumber = nameof(InvalidMobileNumber);
     public const string InvalidEmailAddress = nameof(InvalidEmailAddress);
@@ -66,7 +66,7 @@ public static partial class BusinessViolationCodes
     public const string CustomerAlreadyMerged = nameof(CustomerAlreadyMerged);
     public const string CustomersNotDuplicates = nameof(CustomersNotDuplicates);
     public const string CatOwnerMismatch = nameof(CatOwnerMismatch);
-    // ReasonRequired is already declared in BusinessViolationCodes.Cat.cs -- reused verbatim,
+    // ReasonRequired is declared in the base BusinessViolationCodes.cs -- reused verbatim,
     // not redeclared (a partial static class cannot repeat a const member's name).
 
     // Deletion

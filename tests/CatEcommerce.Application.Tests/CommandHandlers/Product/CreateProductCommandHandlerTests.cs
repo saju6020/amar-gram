@@ -22,10 +22,10 @@ public sealed class CreateProductCommandHandlerTests
         return taxClass;
     }
 
-    private static CreateProductCommand ValidCommand(Guid taxClassId, string slug = "royal-canin-kitten") => new()
+    private static CreateProductCommand ValidCommand(Guid taxClassId, string slug = "organic-dry-mix") => new()
     {
-        ProductId = Guid.NewGuid(), Kind = "Standard", Name = "Royal Canin Kitten", Brand = "Royal Canin",
-        Category = "CatFood", Subcategory = "Kitten", TaxClassId = taxClassId, Slug = slug,
+        ProductId = Guid.NewGuid(), Kind = "Standard", Name = "Organic Dry Mix", Brand = "Amar Gram",
+        Category = "CatFood", Subcategory = "Dry", TaxClassId = taxClassId, Slug = slug,
         UserContext = ShopManagerContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
     };
 
@@ -54,7 +54,7 @@ public sealed class CreateProductCommandHandlerTests
 
         var existing = new ProductAggregate(Guid.NewGuid());
         existing.Create(new ProductCreateDto(CatEcommerce.Shared.Common.Enums.ProductKind.Standard, "Existing", "Brand",
-            CatEcommerce.Shared.Common.Enums.ProductCategory.ToysAndFurniture, null, taxClass.Id, "royal-canin-kitten",
+            CatEcommerce.Shared.Common.Enums.ProductCategory.ToysAndFurniture, null, taxClass.Id, "organic-dry-mix",
             null, null, ShopManagerContext(), Guid.NewGuid()));
         productRepository.Seed(existing);
 

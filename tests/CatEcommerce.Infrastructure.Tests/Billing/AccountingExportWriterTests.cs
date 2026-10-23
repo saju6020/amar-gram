@@ -11,11 +11,11 @@ public sealed class AccountingExportWriterTests
     private static readonly Guid Branch = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid Customer = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
-    private static AccountingExportContent Content(string customerName = "Jane Doe", string description = "Consultation", bool reverse = false)
+    private static AccountingExportContent Content(string customerName = "Jane Doe", string description = "Organic honey", bool reverse = false)
     {
         var invoiceA = new ExportInvoice(Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"), "INV-MAIN-2627-000001", "2026-27", Branch, Customer, customerName, Day, Day, "BDT", 100m, 0m, 15m, 115m, null);
         var invoiceB = new ExportInvoice(Guid.Parse("aaaaaaaa-0000-0000-0000-000000000002"), "INV-MAIN-2627-000002", "2026-27", Branch, Customer, customerName, Day.AddDays(1), null, "BDT", 200m, 0m, 0m, 200m, invoiceA.Id);
-        var lineA = new ExportInvoiceLine(Guid.Parse("bbbbbbbb-0000-0000-0000-000000000001"), invoiceA.Id, invoiceA.Number, 0, "Clinic", "Service", description, 1m, 100m, 0m, 0m, "STD", 15m, 100m, 15m, 115m);
+        var lineA = new ExportInvoiceLine(Guid.Parse("bbbbbbbb-0000-0000-0000-000000000001"), invoiceA.Id, invoiceA.Number, 0, "Shop", "Product", description, 1m, 100m, 0m, 0m, "STD", 15m, 100m, 15m, 115m);
         var payment = new ExportPayment("Payment", Guid.Parse("cccccccc-0000-0000-0000-000000000001"), 1, Branch, Customer, "CashInStore", 115m, "BDT", Day, Day, null, null);
         var reversal = payment with { RecordType = "PaymentReversal", Date = Day.AddDays(2) };
         var entry = new ExportAllocation(Guid.Parse("dddddddd-0000-0000-0000-000000000001"), payment.Id, invoiceA.Id, "Allocate", null, 115m, Day, new DateTimeOffset(2026, 10, 7, 4, 0, 0, TimeSpan.Zero));
@@ -52,7 +52,7 @@ public sealed class AccountingExportWriterTests
         // The order the facts arrive in never changes the output.
         Assert.Equal(first.Bytes, AccountingExportWriter.Write(Content(reverse: true)).Bytes);
         // A different fact does.
-        Assert.NotEqual(first.Sha256, AccountingExportWriter.Write(Content(description: "Vaccination")).Sha256);
+        Assert.NotEqual(first.Sha256, AccountingExportWriter.Write(Content(description: "Mustard oil")).Sha256);
     }
 
     [Fact]

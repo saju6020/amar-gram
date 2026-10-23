@@ -50,7 +50,7 @@ describe('U-X3 — no figure is computed in the browser', () => {
 describe('ADR-FE-129 — no per-report component', () => {
   it('names no report key in components/reports', () => {
     for (const { file, text } of sources('components/reports')) {
-      expect(code(text), file).not.toMatch(/['"](clinic-|stock-|revenue-|payment-|new-vs)/);
+      expect(code(text), file).not.toMatch(/['"](order-|stock-|revenue-|payment-|new-vs)/);
     }
   });
 });

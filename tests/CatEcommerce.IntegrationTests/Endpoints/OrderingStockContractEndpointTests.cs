@@ -49,10 +49,9 @@ public sealed class OrderingStockContractEndpointTests(OrderingApiFactory factor
         var sku = await CreateSkuAsync(context, stock: 5m);
         var orderId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
-        var catId = Guid.NewGuid();
 
         await using var port = OpenPort();
-        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 2m), OrderReference(orderId), new StockParty(customerId, catId), default);
+        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 2m), OrderReference(orderId), new StockParty(customerId), default);
 
         Assert.True(result.IsSuccess, result.Message);
         var line = Assert.Single(result.Value!.Lines);
@@ -67,9 +66,8 @@ public sealed class OrderingStockContractEndpointTests(OrderingApiFactory factor
 
         // the party and reference stamp is written on the entry (US-IMP-11 AC2, D-4)
         var entry = await WithDbAsync(db => db.StockReservationEntries.AsNoTracking().Where(e => e.ReferenceId == orderId)
-            .Select(e => new { e.CustomerId, e.CatId, e.BatchId, e.QuantityDelta, e.ReferenceKind }).SingleAsync());
+            .Select(e => new { e.CustomerId, e.BatchId, e.QuantityDelta, e.ReferenceKind }).SingleAsync());
         Assert.Equal(customerId, entry.CustomerId);
-        Assert.Equal(catId, entry.CatId);
         Assert.Equal(StockReferenceKind.CustomerOrder, entry.ReferenceKind);
         Assert.Equal(2m, entry.QuantityDelta);
     }
@@ -81,7 +79,7 @@ public sealed class OrderingStockContractEndpointTests(OrderingApiFactory factor
         var sku = await CreateSkuAsync(context, stock: 5m);
         var released = Guid.NewGuid();
         var consumed = Guid.NewGuid();
-        var party = new StockParty(Guid.NewGuid(), null);
+        var party = new StockParty(Guid.NewGuid());
 
         await using (var reserve = OpenPort())
         {
@@ -120,7 +118,7 @@ public sealed class OrderingStockContractEndpointTests(OrderingApiFactory factor
         var sooner = await ReceiveAsync(context.Admin, sku.SkuId, context.ShopLocationId, 3m, UtcToday.AddDays(100));
 
         await using var port = OpenPort();
-        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 4m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid(), null), default);
+        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 4m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid()), default);
 
         Assert.True(result.IsSuccess, result.Message);
         var lines = result.Value!.Lines;
@@ -137,7 +135,7 @@ public sealed class OrderingStockContractEndpointTests(OrderingApiFactory factor
         var sku = await CreateSkuAsync(context, stock: 5m);
 
         await using var port = OpenPort();
-        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 10m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid(), null), default);
+        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 10m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid()), default);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(BusinessViolationCodes.InsufficientStock, result.ViolationCode);
@@ -155,7 +153,7 @@ public sealed class OrderingStockContractEndpointTests(OrderingApiFactory factor
         async Task<string> TryAsync()
         {
             await using var port = OpenPort();
-            var plan = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 1m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid(), null), default);
+            var plan = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 1m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid()), default);
             if (!plan.IsSuccess) return plan.ViolationCode!;
 
             try
@@ -184,7 +182,7 @@ public sealed class OrderingStockContractEndpointTests(OrderingApiFactory factor
         var sku = await CreateSkuAsync(other, stock: 5m); // stock exists, but at another branch
 
         await using var port = OpenPort();
-        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 1m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid(), null), default);
+        var result = await port.Ledger.ReserveAsync(Demand(context.BranchId, sku.SkuId, 1m), OrderReference(Guid.NewGuid()), new StockParty(Guid.NewGuid()), default);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(BusinessViolationCodes.InsufficientStock, result.ViolationCode);

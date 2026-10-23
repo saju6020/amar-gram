@@ -9,8 +9,6 @@ import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState'
 import { LoadingState } from '@/components/common/LoadingState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { ApiForbiddenError, ApiNotFoundError } from '@/lib/api/client';
-import { AppointmentSummaryPanel } from '@/components/appointments/AppointmentSummaryPanel';
-import { useCustomerAppointmentSummary } from '@/lib/hooks/useStaffAppointments';
 import { BillingSummaryPanel } from '@/components/billing/BillingSummaryPanel';
 import { CustomerOrdersPanel } from '@/components/orders/CustomerOrdersPanel';
 import { ErasePersonalDataPanel } from '@/components/retention/ErasePersonalDataPanel';
@@ -24,7 +22,6 @@ export default function StaffCustomerDetailPage({
   const { customerId } = use(params);
   const { data: customer, isLoading, isError, error, refetch } = useStaffCustomer(customerId);
   const { data: session } = useStaffSession();
-  const appointments = useCustomerAppointmentSummary(customerId);
 
   if (isLoading) return <LoadingState variant="card" rows={5} label="Loading customer…" />;
   if (error instanceof ApiForbiddenError) return <PermissionDeniedState />;
@@ -56,14 +53,6 @@ export default function StaffCustomerDetailPage({
     <div className="flex flex-col gap-6">
       <CustomerDetail customer={customer} />
       <CustomerMessagesLink customerId={customer.id} roleIds={session?.roleIds ?? []} />
-      {/* HO-APT-002 §11.7 — the Appointments panel (US-CLN-08). */}
-      <AppointmentSummaryPanel
-        customerId={customerId}
-        summary={appointments.data}
-        isLoading={appointments.isLoading}
-        isError={appointments.isError}
-        onRetry={() => void appointments.refetch()}
-      />
       {/* HO-BIL-002 §11.1/§13 — the Billing panel (US-BIL-03): the money figures and a link to the account. */}
       <BillingSummaryPanel customerId={customerId} />
       {/* HO-ORD-002 §11.14/§13 — the Orders panel (mount only). */}

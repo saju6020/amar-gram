@@ -5,28 +5,26 @@ namespace CatEcommerce.Domain.Tests.Common;
 
 /// <summary>
 /// HO-XCT-001 §8.2/§10.3, ADR-298, ADR-341. Exercises the reflection-based aggregation across
-/// per-area partial files (currently only <c>RecordClassification.CatProfiles.cs</c>) and the
-/// classifications it contributes.
+/// per-area partial files (such as <c>RecordClassification.Shop.cs</c>) and the classifications they
+/// contribute.
 /// </summary>
 public sealed class RecordClassificationTests
 {
     [Fact]
-    public void All_IncludesEveryCatProfilesTable()
+    public void All_IncludesEveryShopTable()
     {
         var tables = RecordClassification.All
-            .Where(entry => entry.Schema == "clinic")
+            .Where(entry => entry.Schema == "product")
             .Select(entry => entry.Table)
             .ToList();
 
-        Assert.Contains("cat", tables);
-        Assert.Contains("cat_vaccination", tables);
-        Assert.Contains("cat_parasite_treatment", tables);
-        Assert.Contains("cat_weight_record", tables);
-        Assert.Contains("cat_allergy", tables);
-        Assert.Contains("cat_chronic_condition", tables);
-        Assert.Contains("cat_medication", tables);
-        Assert.Contains("cat_photo", tables);
-        Assert.Contains("vaccine", tables);
+        Assert.Contains("product", tables);
+        Assert.Contains("sku", tables);
+        Assert.Contains("product_image", tables);
+        Assert.Contains("sku_price", tables);
+        Assert.Contains("bundle_component", tables);
+        Assert.Contains("wishlist", tables);
+        Assert.Contains("stock_alert", tables);
     }
 
     [Fact]
@@ -43,18 +41,18 @@ public sealed class RecordClassificationTests
     [Fact]
     public void Find_KnownTable_ReturnsItsClassification()
     {
-        var classification = RecordClassification.Find("clinic", "cat");
+        var classification = RecordClassification.Find("product", "sku_price");
 
         Assert.NotNull(classification);
-        Assert.Equal(RecordClass.Clinical, classification!.RecordClass);
+        Assert.Equal(RecordClass.Financial, classification!.RecordClass);
         Assert.Equal(HardDeletePolicy.Forbidden, classification.HardDeletePolicy);
-        Assert.Equal("D-8", classification.Basis);
+        Assert.Equal("D-9 (price in force); append-only (ADR-080)", classification.Basis);
     }
 
     [Fact]
     public void Find_CurrentStateOwnedCollection_IsAggregateOnly()
     {
-        var classification = RecordClassification.Find("clinic", "cat_medication");
+        var classification = RecordClassification.Find("product", "product_image");
 
         Assert.NotNull(classification);
         Assert.Equal(RecordClass.CurrentState, classification!.RecordClass);
@@ -64,16 +62,15 @@ public sealed class RecordClassificationTests
     [Fact]
     public void Find_UnknownTable_ReturnsNull()
     {
-        Assert.Null(RecordClassification.Find("clinic", "does_not_exist"));
+        Assert.Null(RecordClassification.Find("product", "does_not_exist"));
     }
 
     [Fact]
     public void Find_AuditEntry_IsAnIntentionalGapUntilAccountsLands()
     {
-        // audit.audit_entry is mapped in the current EF model (Cat Profiles writes to it
-        // directly, and Accounts writes to it too), but it is an Accounts-context table
-        // (HO-XCT-001 §10.3) and is classified by RecordClassification.Accounts.cs, not by
-        // Cat Profiles (ADR-341). Accounts has now landed, so the gap is closed.
+        // audit.audit_entry is mapped in the current EF model (several contexts write to it),
+        // but it is an Accounts-context table (HO-XCT-001 §10.3) and is classified by
+        // RecordClassification.Accounts.cs (ADR-341). Accounts has now landed, so the gap is closed.
         var classification = RecordClassification.Find("audit", "audit_entry");
 
         Assert.NotNull(classification);

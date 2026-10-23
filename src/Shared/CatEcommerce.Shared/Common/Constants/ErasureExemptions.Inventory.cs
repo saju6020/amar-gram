@@ -10,6 +10,6 @@ public static partial class ErasureExemptions
 {
     private static readonly IReadOnlyList<(string ContextKey, string Reason)> InventoryEntries =
     [
-        ("inventory", "Ids only: ledger and reservation entries hold customer and cat ids as immutable recall-trace references, resolved (and shown as 'Anonymised customer') at read time (ADR-104); supplier contacts are business contacts."),
+        ("inventory", "Ids only: ledger and reservation entries hold customer ids as immutable recall-trace references, resolved (and shown as 'Anonymised customer') at read time (ADR-104); supplier contacts are business contacts."),
     ];
 }

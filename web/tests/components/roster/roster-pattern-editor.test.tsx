@@ -11,12 +11,11 @@ describe('RosterPatternEditor — HO-ADM-002 §11.4, US-ADM-03', () => {
     const user = userEvent.setup();
     render(
       <RosterPatternEditor
-        staffFullName="Nadia Nurse"
+        staffFullName="Nadia Karim"
         timeZoneId="Asia/Dhaka"
         currentPattern={[]}
         nextPattern={null}
         nextPatternEffectiveFrom={null}
-        rooms={[]}
         onSetPattern={onSetPattern}
         onCancelScheduled={vi.fn()}
         isPending={false}
@@ -37,12 +36,11 @@ describe('RosterPatternEditor — HO-ADM-002 §11.4, US-ADM-03', () => {
     const user = userEvent.setup();
     render(
       <RosterPatternEditor
-        staffFullName="Nadia Nurse"
+        staffFullName="Nadia Karim"
         timeZoneId="Asia/Dhaka"
         currentPattern={[]}
         nextPattern={null}
         nextPatternEffectiveFrom={null}
-        rooms={[]}
         onSetPattern={onSetPattern}
         onCancelScheduled={vi.fn()}
         isPending={false}
@@ -58,12 +56,11 @@ describe('RosterPatternEditor — HO-ADM-002 §11.4, US-ADM-03', () => {
     const user = userEvent.setup();
     render(
       <RosterPatternEditor
-        staffFullName="Nadia Nurse"
+        staffFullName="Nadia Karim"
         timeZoneId="Asia/Dhaka"
         currentPattern={[]}
-        nextPattern={[{ dayOfWeek: 'Monday', starts: '09:00', ends: '17:00', defaultRoomId: null }]}
+        nextPattern={[{ dayOfWeek: 'Monday', starts: '09:00', ends: '17:00' }]}
         nextPatternEffectiveFrom="2028-01-04"
-        rooms={[]}
         onSetPattern={vi.fn()}
         onCancelScheduled={onCancelScheduled}
         isPending={false}
@@ -72,7 +69,7 @@ describe('RosterPatternEditor — HO-ADM-002 §11.4, US-ADM-03', () => {
 
     await user.click(screen.getByRole('button', { name: /cancel scheduled pattern/i }));
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('Nadia Nurse');
+    expect(dialog).toHaveTextContent('Nadia Karim');
     expect(dialog).toHaveTextContent(/4 Jan 2028|Jan 2028/);
   });
 });

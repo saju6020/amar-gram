@@ -19,7 +19,7 @@ import { OFFLINE_CANT_SAVE_LABEL, useWriteEnabled } from '@/lib/hooks/useConnect
  * `components/orders/CancelOrderDialog.tsx` — HO-ORD-002 §11.6, UI-3 (docs/design/orders/CancelOrder.dc.html).
  * Names the order, says what happens ("Your reserved items are released.") and, when money has been
  * received, that the shop refunds it and how much was received. Neutral colours and a red confirm: a
- * cancellation is a consequence, so no warm band and no cat. Built like `ConfirmDialog` (offline switches
+ * cancellation is a consequence, so no warm band and no illustration. Built like `ConfirmDialog` (offline switches
  * the confirm off with a visible reason; the dialog stays open until the request settles) but with the
  * Hearth shapes; it portals out of the page, so it carries `data-theme="customer"` itself.
  */

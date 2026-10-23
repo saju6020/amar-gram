@@ -19,7 +19,7 @@ public sealed record OrderStockOutcome(IReadOnlyList<AllocationDto> Allocations,
 /// <summary>
 /// HO-ORD-001 §8.9 (ADR-208, D-4) -- Ordering's whole relationship with stock. <b>Ordering never picks a batch</b>: it states a demand per SKU and
 /// Inventory's <see cref="IStockLedger"/> answers with the FEFO batches, which are recorded on the order line. Every call carries the reference
-/// (<c>CustomerOrder</c>, order, line) and the party (customer, cat) that Inventory's recall trace reads back (US-IMP-11 AC2). The port enlists without
+/// (<c>CustomerOrder</c>, order, line) and the party (customer) that Inventory's recall trace reads back (US-IMP-11 AC2). The port enlists without
 /// saving; a business refusal is a result, not an exception.
 /// </summary>
 public static class OrderStock
@@ -27,12 +27,11 @@ public static class OrderStock
     public static StockReference ReferenceFor(OrderAggregate order, Guid? lineId = null) =>
         new(order.Channel == OrderChannel.Counter ? StockReferenceKind.PosSale : StockReferenceKind.CustomerOrder, order.Id, lineId, order.OrderNumber);
 
-    public static StockParty PartyFor(OrderAggregate order, Guid? catId) => new(order.CustomerId, catId);
+    public static StockParty PartyFor(OrderAggregate order) => new(order.CustomerId);
 
     /// <summary>
     /// Reserves every line (each component of a bundle) FEFO at the order's branch. Demands are issued in SKU order so concurrent placements take their
-    /// stock rows in one global sequence and queue instead of deadlocking. When two lines of one placement need the same SKU (a prescription food for two
-    /// cats), the enlisted rows are flushed in between so the second plan sees what the first took.
+    /// stock rows in one global sequence and queue instead of deadlocking. When two lines of one placement need the same SKU, the enlisted rows are flushed in between so the second plan sees what the first took.
     /// </summary>
     public static async Task<OrderStockOutcome> ReserveAsync(IStockLedger ledger, ITransactionalScope scope, OrderAggregate order, CancellationToken ct = default)
     {
@@ -49,7 +48,7 @@ public static class OrderStock
 
             var result = await ledger.ReserveAsync(
                 new StockDemand(order.BranchId, skuId, quantity, MovementKind.Sale, null, null, null),
-                ReferenceFor(order, line.Id), PartyFor(order, line.CatId), ct);
+                ReferenceFor(order, line.Id), PartyFor(order), ct);
 
             if (!result.IsSuccess)
             {
@@ -83,7 +82,7 @@ public static class OrderStock
 
             var result = await ledger.DeductAsync(
                 new StockDemand(order.BranchId, skuId, quantity, MovementKind.Sale, null, null, null),
-                ReferenceFor(order, line.Id), PartyFor(order, line.CatId), ct);
+                ReferenceFor(order, line.Id), PartyFor(order), ct);
 
             if (!result.IsSuccess)
             {

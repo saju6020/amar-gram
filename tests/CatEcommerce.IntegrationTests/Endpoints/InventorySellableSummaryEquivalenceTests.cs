@@ -67,12 +67,12 @@ public sealed class InventorySellableSummaryEquivalenceTests(InventoryApiFactory
         var food = await CreateSkuAsync(admin, food: true);
         var plain = await CreateSkuAsync(admin);
 
-        // Receipts: dated food at the shop floor and the warehouse, undated stock, plus stock that must NOT count (quarantine location, dispensary).
+        // Receipts: dated food at the shop floor and the warehouse, undated stock, plus stock that must NOT count (the quarantine location).
         var shopBatch = await ReceiveAsync(admin, food.SkuId, branch.ShopId, 10m, InDays(45), "LOTSHOP");
         var warehouseBatch = await ReceiveAsync(admin, food.SkuId, branch.WarehouseId, 6m, InDays(20), "LOTWH");
         var plainBatch = await ReceiveAsync(admin, plain.SkuId, branch.ShopId, 8m);
         await ReceiveAsync(admin, food.SkuId, branch.QuarantineId, 9m, InDays(80));
-        await ReceiveAsync(admin, plain.SkuId, branch.DispensaryId, 5m);
+        await ReceiveAsync(admin, plain.SkuId, branch.QuarantineId, 5m);
         await AssertEqualAsync(branch.BranchId, "receipts");
 
         // A reservation (on-hand unchanged, sellable down) and its release.
@@ -100,13 +100,13 @@ public sealed class InventorySellableSummaryEquivalenceTests(InventoryApiFactory
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsync($"/api/staff/inventory/batches/{warehouseBatch}/release", null)).StatusCode);
         await AssertEqualAsync(branch.BranchId, "release of the batch");
 
-        // A transfer out of sellable stock (shop floor -> dispensary) and back.
+        // A transfer out of sellable stock (shop floor -> quarantine location) and back.
         var out1 = await admin.PostAsJsonAsync("/api/staff/inventory/transfers", new
-        { fromLocationId = branch.ShopId, toLocationId = branch.DispensaryId, reason = "Restock", lines = new[] { new { skuId = food.SkuId, batchId = shopBatch, quantity = 4m } } }, Json);
+        { fromLocationId = branch.ShopId, toLocationId = branch.QuarantineId, reason = "Restock", lines = new[] { new { skuId = food.SkuId, batchId = shopBatch, quantity = 4m } } }, Json);
         await JsonOkAsync(out1);
-        await AssertEqualAsync(branch.BranchId, "transfer to the dispensary");
+        await AssertEqualAsync(branch.BranchId, "transfer to the quarantine location");
         var back = await admin.PostAsJsonAsync("/api/staff/inventory/transfers", new
-        { fromLocationId = branch.DispensaryId, toLocationId = branch.ShopId, reason = "Restock", lines = new[] { new { skuId = food.SkuId, batchId = shopBatch, quantity = 4m } } }, Json);
+        { fromLocationId = branch.QuarantineId, toLocationId = branch.ShopId, reason = "Restock", lines = new[] { new { skuId = food.SkuId, batchId = shopBatch, quantity = 4m } } }, Json);
         await JsonOkAsync(back);
         await AssertEqualAsync(branch.BranchId, "transfer back to the shop floor");
 

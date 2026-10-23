@@ -3,7 +3,7 @@ using CatEcommerce.Shared.Common.Enums;
 namespace CatEcommerce.Domain.ValueObjects;
 
 /// <summary>
-/// HO-BIL-001 §8.8 -- a deposit: money set aside for one order or boarding stay. Allocates only to an
+/// HO-BIL-001 §8.8 -- a deposit: money set aside for one order. Allocates only to an
 /// invoice that contains a matching line until released (<c>EarmarkMismatch</c>). <c>Release*</c> are
 /// set by <c>PaymentAggregate.ReleaseEarmark</c>; an earmark is replaced wholesale, never edited in
 /// place, so this is an immutable record.

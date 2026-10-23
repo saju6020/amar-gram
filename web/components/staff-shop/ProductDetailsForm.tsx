@@ -150,7 +150,7 @@ export function ProductDetailsForm({
         />
       </Field>
       <Field
-        id="pd-cat"
+        id="pd-category"
         label="Category"
         hint={
           product.status === 'Active'
@@ -159,7 +159,7 @@ export function ProductDetailsForm({
         }
       >
         <select
-          id="pd-cat"
+          id="pd-category"
           className={inputClass}
           disabled
           value={product.category}

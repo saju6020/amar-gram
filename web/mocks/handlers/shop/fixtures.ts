@@ -1,6 +1,5 @@
 import { HttpResponse } from 'msw';
 import { accountsFixtureIds } from '../areas/accounts';
-import { catProfilesFixtureIds } from '../areas/cat-profiles';
 import { administrationFixtureIds } from '../admin/fixtures';
 
 /**
@@ -19,45 +18,34 @@ export const shopFixtureIds = {
   customerId: accountsFixtureIds.customerId,
   /** The staff tax class every seeded product uses (HO-ADM-001 list). */
   taxClassId: administrationFixtureIds.taxClassStandardId,
-  catAllergy: catProfilesFixtureIds.catWithAllergiesExactDob, // Whiskers — chicken allergy
-  catEstimatedDob: catProfilesFixtureIds.catNoAllergiesEstimatedDob, // Biscuit — about adult
-  catNoDob: catProfilesFixtureIds.catCurrentPlain, // Mittens — AddDateOfBirth hint
 
   /** Three variants: 400 g and 2 kg in stock (2 kg carries an expiry notice), 4 kg out of stock. */
-  multiVariantSlug: 'royal-canin-kitten',
+  multiVariantSlug: 'organic-rolled-oats',
   multiVariantProductId: uuid('a', 1),
-  skuKitten400: uuid('b', 101),
-  skuKitten2kg: uuid('b', 102),
-  skuKitten4kg: uuid('b', 103),
-  /** Thai kitten food — the AC-5 path. */
-  thaiKittenSlug: 'whiskas-kitten-salmon',
-  thaiKittenProductId: uuid('a', 2),
-  skuWhiskasKitten: uuid('b', 201),
-  /** Prescription diet — the signed-in customer has NO authorisation. */
-  rxNoAuthSlug: 'hills-cd-urinary-care',
-  rxNoAuthProductId: uuid('a', 5),
-  skuRxNoAuth: uuid('b', 501),
-  /** Prescription diet — the customer has two eligible cats. */
-  rxEligibleSlug: 'hills-kd-renal-care',
-  rxEligibleProductId: uuid('a', 6),
-  skuRxEligible: uuid('b', 601),
+  skuOats400: uuid('b', 101),
+  skuOats2kg: uuid('b', 102),
+  skuOats4kg: uuid('b', 103),
+  /** Thai rice — the AC-5 path. */
+  thaiRiceSlug: 'thai-jasmine-rice',
+  thaiRiceProductId: uuid('a', 2),
+  skuJasmineRice: uuid('b', 201),
   /** Kit whose second component is out of stock. */
-  kitSlug: 'kitten-starter-kit',
+  kitSlug: 'breakfast-starter-kit',
   kitProductId: uuid('a', 7),
   skuKit: uuid('b', 701),
   /** A product the customer has bought and can review. */
-  reviewableSlug: 'royal-canin-kitten',
+  reviewableSlug: 'organic-rolled-oats',
   /** A product the customer already reviewed. */
-  alreadyReviewedSlug: 'whiskas-kitten-salmon',
+  alreadyReviewedSlug: 'thai-jasmine-rice',
   /** Standing in for "a customer who granted no marketing consent": an alert here says it will not
    *  be delivered (`willNotify: false`). The real flag is the routing policy's, not a SKU's. */
   skuAlertNoConsent: uuid('b', 801),
-  noConsentSlug: 'reflex-adult-chicken',
+  noConsentSlug: 'red-lentils-masoor',
   /** Out-of-stock SKU whose alert is delivered. */
   skuAlertDelivered: uuid('b', 103),
   /** A Draft product (404 on the storefront) and an Active one with an unmet checklist. */
   draftProductId: uuid('a', 90),
-  draftSlug: 'draft-hairball-gel',
+  draftSlug: 'draft-herbal-soap',
   unmetChecklistProductId: uuid('a', 91),
   pendingReviewId: uuid('d', 1),
   publishedReviewId: uuid('d', 2),
@@ -107,9 +95,7 @@ export interface MockProduct {
   status: 'Draft' | 'Active' | 'Archived';
   listed: boolean;
   country: string | null;
-  lifeStage: string | null;
   protein: string | null;
-  prescriptionRequired: boolean;
   tags: string[];
   ingredientList: string | null;
   manufacturer: string | null;
@@ -155,7 +141,7 @@ export const COUNTRY_NAMES: Record<string, string> = {
 };
 
 export const CATEGORY_TREE: Record<string, string[]> = {
-  CatFood: ['Dry', 'Wet', 'Treats', 'Kitten', 'Adult', 'Senior', 'Therapeutic'],
+  CatFood: ['Dry', 'Wet', 'Treats', 'Grains', 'Pulses', 'Oils'],
   Litter: ['Clumping', 'Silica', 'Tofu', 'Bentonite'],
   LitterPotsAndAccessories: ['Trays', 'HoodedBoxes', 'Scoops', 'Mats', 'Liners'],
   BagsAndCarriers: ['Carriers', 'Backpacks', 'TravelBags', 'StorageBags'],
@@ -166,20 +152,20 @@ export const CATEGORY_TREE: Record<string, string[]> = {
 export const MOCK_NOW = '2026-10-04T08:00:00Z';
 
 const DESCRIPTION = [
-  'A complete food made for **growing kittens**.',
+  'Wholesome food from **trusted farms**.',
   '',
-  '- Supports healthy growth',
-  '- Gentle on small tummies',
+  '- Naturally rich in fibre',
+  '- No artificial additives',
   '',
-  'Read the [feeding guide](/shop) before changing diets.',
+  'Read the [preparation guide](/shop) before cooking.',
 ].join('\n');
 
 const FEEDING_GUIDE = [
   '## Daily amounts',
   '',
-  'Feed **40 g** per day for a 1 kg kitten, spread across 3 meals.',
+  'Use **40 g** per serving, cooked in 250 ml of water.',
   '',
-  '- Always provide fresh water',
+  '- Rinse before cooking',
 ].join('\n');
 
 function sku(
@@ -220,9 +206,7 @@ function product(
     status: 'Active',
     listed: true,
     country: null,
-    lifeStage: null,
     protein: null,
-    prescriptionRequired: false,
     tags: [],
     ingredientList: null,
     manufacturer: null,
@@ -259,20 +243,20 @@ function food(extra: Partial<MockProduct>): Partial<MockProduct> {
 }
 
 const BRANDS: Array<{ brand: string; country: string; protein: string }> = [
-  { brand: 'Whiskas', country: 'TH', protein: 'Fish' },
-  { brand: 'Me-O', country: 'TH', protein: 'Tuna' },
-  { brand: 'Sheba', country: 'TH', protein: 'Salmon' },
-  { brand: 'Purina Pro Plan', country: 'US', protein: 'Chicken' },
-  { brand: "Hill's Science Diet", country: 'US', protein: 'Chicken' },
-  { brand: 'Animonda Carny', country: 'DE', protein: 'Beef' },
-  { brand: 'Reflex', country: 'TR', protein: 'Chicken' },
-  { brand: 'Pet Brand Cat', country: 'KR', protein: 'Salmon' },
-  { brand: 'Kit Cat', country: 'TH', protein: 'Tuna' },
-  { brand: 'Felix', country: 'FR', protein: 'Beef' },
-  { brand: 'Monge', country: 'IN', protein: 'Lamb' },
-  { brand: 'Brit Care', country: 'DE', protein: 'Turkey' },
+  { brand: 'Green Valley', country: 'TH', protein: 'Fish' },
+  { brand: 'Sunfield', country: 'TH', protein: 'Tuna' },
+  { brand: 'Riverbend', country: 'TH', protein: 'Salmon' },
+  { brand: 'Golden Harvest', country: 'US', protein: 'Chicken' },
+  { brand: 'Village Fresh', country: 'US', protein: 'Chicken' },
+  { brand: 'Nature Basket', country: 'DE', protein: 'Beef' },
+  { brand: 'Pure Earth', country: 'TR', protein: 'Chicken' },
+  { brand: 'Monsoon Farms', country: 'KR', protein: 'Salmon' },
+  { brand: 'Hill Orchard', country: 'TH', protein: 'Tuna' },
+  { brand: 'Delta Grains', country: 'FR', protein: 'Beef' },
+  { brand: 'Spice Route', country: 'IN', protein: 'Lamb' },
+  { brand: 'Sonar Bangla', country: 'DE', protein: 'Turkey' },
 ];
-const STAGES = ['Kitten', 'Adult', 'Senior'];
+const STAGES = ['Classic', 'Premium', 'Family'];
 const TEXTURES = ['Dry', 'Wet'];
 
 function seedGenerated(): MockProduct[] {
@@ -289,11 +273,10 @@ function seedGenerated(): MockProduct[] {
         product({
           productId: uuid('a', n),
           slug,
-          name: `${b.brand} ${stage} ${texture} Cat Food`,
+          name: `${b.brand} ${stage} ${texture} Mix`,
           brand: b.brand,
           subcategory: texture,
           country: b.country,
-          lifeStage: stage,
           protein: b.protein,
           tags: [
             texture.toLowerCase(),
@@ -324,18 +307,18 @@ function seedGenerated(): MockProduct[] {
     }
   }
   const others: Array<[string, string, string, string, string, string]> = [
-    ['Litter', 'Tofu', 'Pretty Cat Tofu Litter', 'Pretty Cat', 'JP', '1100.00'],
-    ['Litter', 'Clumping', 'Catsan Clumping Litter', 'Catsan', 'DE', '900.00'],
-    ['Litter', 'Silica', 'Crystal Silica Litter', 'Cat Lover', 'DE', '1350.00'],
+    ['Litter', 'Tofu', 'Tofu Litter', 'Pure Earth', 'JP', '1100.00'],
+    ['Litter', 'Clumping', 'Clumping Litter', 'Clean Home', 'DE', '900.00'],
+    ['Litter', 'Silica', 'Crystal Silica Litter', 'Clean Home', 'DE', '1350.00'],
     ['LitterPotsAndAccessories', 'Scoops', 'Steel Litter Scoop', 'Amar Gram', 'BD', '250.00'],
     ['LitterPotsAndAccessories', 'HoodedBoxes', 'Hooded Litter Box', 'Savic', 'FR', '3200.00'],
-    ['BagsAndCarriers', 'Carriers', 'Airline Cat Carrier', 'Ferplast', 'IN', '4500.00'],
+    ['BagsAndCarriers', 'Carriers', 'Jute Shopping Carrier', 'Ferplast', 'IN', '4500.00'],
     ['BagsAndCarriers', 'Backpacks', 'Bubble Backpack', 'PetPal', 'KR', '5200.00'],
     ['HealthAndGrooming', '', 'Slicker Brush', 'Hertzko', 'US', '650.00'],
-    ['HealthAndGrooming', '', 'Hairball Remedy Gel', 'Beaphar', 'FR', '780.00'],
-    ['ToysAndFurniture', '', 'Feather Wand Toy', 'KONG', 'US', '420.00'],
-    ['ToysAndFurniture', '', 'Sisal Scratching Post', 'Trixie', 'DE', '2400.00'],
-    ['ToysAndFurniture', '', 'Catnip Mouse Set', 'Petstages', 'US', '320.00'],
+    ['HealthAndGrooming', '', 'Herbal Hand Balm', 'Beaphar', 'FR', '780.00'],
+    ['ToysAndFurniture', '', 'Wooden Puzzle Toy', 'KONG', 'US', '420.00'],
+    ['ToysAndFurniture', '', 'Bamboo Plant Stand', 'Trixie', 'DE', '2400.00'],
+    ['ToysAndFurniture', '', 'Cotton Ball Set', 'Petstages', 'US', '320.00'],
   ];
   for (const [category, subcategory, name, brand, , price] of others) {
     n += 1;
@@ -363,57 +346,54 @@ export function seedProducts(): MockProduct[] {
     product({
       productId: shopFixtureIds.multiVariantProductId,
       slug: shopFixtureIds.multiVariantSlug,
-      name: 'Royal Canin Kitten',
-      brand: 'Royal Canin',
-      subcategory: 'Kitten',
+      name: 'Organic Rolled Oats',
+      brand: 'Amar Gram Farms',
+      subcategory: 'Grains',
       country: 'TH',
-      lifeStage: 'Kitten',
-      protein: 'Chicken',
-      tags: ['kitten', 'growth', 'grain-free'],
-      ingredientList:
-        'Dehydrated poultry protein, rice, animal fats, wheat flour, vegetable protein isolate',
+      protein: 'PlantBased',
+      tags: ['oats', 'breakfast', 'organic'],
+      ingredientList: 'Whole grain rolled oats (100%)',
       ratingAverage: 4.5,
       ratingCount: 23,
       sold: 240,
       createdAt: '2026-09-01T00:00:00Z',
       ...food({}),
       related: [
-        { slug: shopFixtureIds.thaiKittenSlug, kind: 'FrequentlyBoughtTogether', sortOrder: 1 },
-        { slug: 'hairball-remedy-gel', kind: 'UpSell', sortOrder: 1 },
+        { slug: shopFixtureIds.thaiRiceSlug, kind: 'FrequentlyBoughtTogether', sortOrder: 1 },
+        { slug: 'herbal-hand-balm', kind: 'UpSell', sortOrder: 1 },
       ],
       skus: [
-        sku(101, 'RC-K-400G', '400 g', '650.00', true),
-        sku(102, 'RC-K-2KG', '2 kg', '2450.00', true, {
+        sku(101, 'OAT-400G', '400 g', '650.00', true),
+        sku(102, 'OAT-2KG', '2 kg', '2450.00', true, {
           shippingWeightGrams: 2100,
           expiresOn: '2026-11-12',
           scheduledPrice: { amount: '2600.00', effectiveFrom: '2026-12-01T00:00:00Z' },
         }),
-        sku(103, 'RC-K-4KG', '4 kg', '4400.00', false),
+        sku(103, 'OAT-4KG', '4 kg', '4400.00', false),
       ],
     }),
     product({
-      productId: shopFixtureIds.thaiKittenProductId,
-      slug: shopFixtureIds.thaiKittenSlug,
-      name: 'Whiskas Kitten Salmon',
-      brand: 'Whiskas',
-      subcategory: 'Kitten',
+      productId: shopFixtureIds.thaiRiceProductId,
+      slug: shopFixtureIds.thaiRiceSlug,
+      name: 'Thai Jasmine Rice',
+      brand: 'Green Valley',
+      subcategory: 'Grains',
       country: 'TH',
-      lifeStage: 'Kitten',
-      protein: 'Salmon',
-      tags: ['kitten', 'salmon', 'complete'],
-      ingredientList: 'Salmon (14%), cereals, meat and animal derivatives, minerals',
+      protein: 'PlantBased',
+      tags: ['rice', 'jasmine', 'long-grain'],
+      ingredientList: 'Jasmine rice (100%)',
       ratingAverage: 4,
       ratingCount: 8,
       sold: 180,
       createdAt: '2026-08-01T00:00:00Z',
       ...food({}),
-      skus: [sku(201, 'WH-K-1KG', '1 kg', '780.00', true)],
+      skus: [sku(201, 'JR-1KG', '1 kg', '780.00', true)],
       translations: [
         {
           locale: 'bn',
-          name: 'হুইস্কাস কিটেন স্যামন',
-          description: 'বাড়ন্ত বিড়ালছানার জন্য সম্পূর্ণ খাবার।',
-          ingredientList: 'স্যামন (১৪%), শস্য, খনিজ',
+          name: 'থাই জেসমিন চাল',
+          description: 'সুগন্ধি লম্বা দানার চাল।',
+          ingredientList: 'জেসমিন চাল (১০০%)',
           // feeding guide intentionally missing: falls back to en (US-SHP-14 AC2)
           feedingGuide: null,
         },
@@ -421,156 +401,146 @@ export function seedProducts(): MockProduct[] {
     }),
     product({
       productId: uuid('a', 3),
-      slug: 'me-o-kitten-tuna',
-      name: 'Me-O Kitten Tuna',
-      brand: 'Me-O',
-      subcategory: 'Kitten',
+      slug: 'canned-tuna-chunks',
+      name: 'Canned Tuna Chunks',
+      brand: 'Sunfield',
+      subcategory: 'Wet',
       country: 'TH',
-      lifeStage: 'Kitten',
       protein: 'Tuna',
-      tags: ['kitten', 'tuna'],
-      ingredientList: 'Tuna, rice, fish oil, taurine',
+      tags: ['tuna', 'canned'],
+      ingredientList: 'Tuna, sunflower oil, salt',
       ratingAverage: 3.8,
       ratingCount: 12,
       sold: 150,
       createdAt: '2026-07-10T00:00:00Z',
       ...food({}),
-      skus: [sku(301, 'ME-K-1KG', '1 kg', '690.00', true)],
+      skus: [sku(301, 'TUNA-1KG', '1 kg', '690.00', true)],
     }),
     product({
       productId: uuid('a', 4),
-      slug: 'purina-pro-plan-adult-chicken',
-      name: 'Purina Pro Plan Adult Chicken',
-      brand: 'Purina Pro Plan',
-      subcategory: 'Adult',
+      slug: 'chicken-masala-mix',
+      name: 'Chicken Masala Mix',
+      brand: 'Spice Route',
+      subcategory: 'Dry',
       country: 'US',
-      lifeStage: 'Adult',
       protein: 'Chicken',
-      tags: ['adult', 'chicken', 'sensitive'],
-      ingredientList: 'Chicken, rice, corn gluten meal, chicken fat',
+      tags: ['spice', 'chicken', 'masala'],
+      ingredientList: 'Coriander, cumin, chilli, turmeric, dried chicken stock',
       ratingAverage: 4.7,
       ratingCount: 31,
       sold: 300,
       ...food({}),
       skus: [
-        sku(401, 'PP-AD-1KG', '1 kg', '1800.00', true),
-        sku(402, 'PP-AD-3KG', '3 kg', '4900.00', true),
+        sku(401, 'CMM-1KG', '1 kg', '1800.00', true),
+        sku(402, 'CMM-3KG', '3 kg', '4900.00', true),
       ],
     }),
     product({
-      productId: shopFixtureIds.rxNoAuthProductId,
-      slug: shopFixtureIds.rxNoAuthSlug,
-      name: "Hill's c/d Urinary Care",
-      brand: "Hill's Prescription Diet",
-      subcategory: 'Therapeutic',
+      productId: uuid('a', 5),
+      slug: 'pure-mustard-oil',
+      name: 'Pure Mustard Oil',
+      brand: 'Village Fresh',
+      subcategory: 'Oils',
       country: 'US',
-      lifeStage: 'Adult',
-      protein: 'Chicken',
-      prescriptionRequired: true,
-      tags: ['urinary', 'prescription'],
-      ingredientList: 'Rice, chicken, pork fat, dried beet pulp',
+      protein: 'PlantBased',
+      tags: ['oil', 'mustard', 'cold-pressed'],
+      ingredientList: 'Cold-pressed mustard seed oil (100%)',
       ratingAverage: 4.4,
       ratingCount: 6,
       sold: 90,
       ...food({}),
-      skus: [sku(501, 'HL-CD-1_5KG', '1.5 kg', '3800.00', true)],
+      skus: [sku(501, 'MO-1_5L', '1.5 L', '3800.00', true)],
     }),
     product({
-      productId: shopFixtureIds.rxEligibleProductId,
-      slug: shopFixtureIds.rxEligibleSlug,
-      name: "Hill's k/d Renal Care",
-      brand: "Hill's Prescription Diet",
-      subcategory: 'Therapeutic',
+      productId: uuid('a', 6),
+      slug: 'raw-forest-honey',
+      name: 'Raw Forest Honey',
+      brand: 'Hill Orchard',
+      subcategory: 'Treats',
       country: 'US',
-      lifeStage: 'Senior',
-      protein: 'Chicken',
-      prescriptionRequired: true,
-      tags: ['renal', 'prescription'],
-      ingredientList: 'Rice, chicken fat, pork liver, flaxseed',
+      protein: 'PlantBased',
+      tags: ['honey', 'raw'],
+      ingredientList: 'Raw honey (100%)',
       ratingAverage: 4.1,
       ratingCount: 3,
       sold: 40,
       ...food({}),
-      skus: [sku(601, 'HL-KD-1_5KG', '1.5 kg', '4100.00', true)],
+      skus: [sku(601, 'HONEY-500G', '500 g', '4100.00', true)],
     }),
     product({
       productId: shopFixtureIds.kitProductId,
       slug: shopFixtureIds.kitSlug,
-      name: 'Kitten Starter Kit',
+      name: 'Breakfast Starter Kit',
       brand: 'Amar Gram',
       kind: 'Bundle',
       category: 'CatFood',
-      subcategory: 'Kitten',
-      lifeStage: 'Kitten',
-      tags: ['kit', 'kitten'],
+      subcategory: 'Grains',
+      tags: ['kit', 'breakfast'],
       ratingAverage: null,
       ratingCount: 0,
       sold: 20,
-      skus: [sku(701, 'KIT-KITTEN', 'Starter kit', '1500.00', true)],
+      skus: [sku(701, 'KIT-BREAKFAST', 'Starter kit', '1500.00', true)],
       bundle: [
         {
           productSlug: shopFixtureIds.multiVariantSlug,
-          skuId: shopFixtureIds.skuKitten400,
+          skuId: shopFixtureIds.skuOats400,
           quantity: 1,
         },
-        { productSlug: 'catnip-mouse-set', skuId: uuid('b', 9999), quantity: 2 },
+        { productSlug: 'cotton-ball-set', skuId: uuid('b', 9999), quantity: 2 },
       ],
     }),
     product({
       productId: uuid('a', 8),
       slug: shopFixtureIds.noConsentSlug,
-      name: 'Reflex Adult Chicken',
-      brand: 'Reflex',
-      subcategory: 'Adult',
+      name: 'Red Lentils (Masoor Dal)',
+      brand: 'Pure Earth',
+      subcategory: 'Pulses',
       country: 'TR',
-      lifeStage: 'Adult',
-      protein: 'Chicken',
-      tags: ['adult', 'chicken'],
-      ingredientList: 'Chicken, rice, maize, chicken fat',
+      protein: 'PlantBased',
+      tags: ['lentils', 'dal'],
+      ingredientList: 'Split red lentils (100%)',
       ratingAverage: 3.9,
       ratingCount: 5,
       sold: 70,
       ...food({}),
-      skus: [sku(801, 'RF-AD-1KG', '1 kg', '1250.00', false)],
+      skus: [sku(801, 'RL-1KG', '1 kg', '1250.00', false)],
     }),
     product({
       productId: uuid('a', 9),
-      slug: 'animonda-carny-adult-beef',
-      name: 'Animonda Carny Adult Beef',
-      brand: 'Animonda Carny',
+      slug: 'slow-cooked-beef-curry',
+      name: 'Slow-cooked Beef Curry',
+      brand: 'Nature Basket',
       subcategory: 'Wet',
       country: 'DE',
-      lifeStage: 'Adult',
       protein: 'Beef',
-      tags: ['wet', 'beef', 'grain-free'],
-      ingredientList: 'Beef, beef heart, minerals',
+      tags: ['wet', 'beef', 'curry'],
+      ingredientList: 'Beef, onion, tomato, spices',
       ratingAverage: 4.6,
       ratingCount: 17,
       sold: 120,
       ...food({}),
-      skus: [sku(901, 'AN-CA-400G', '400 g', '520.00', true)],
+      skus: [sku(901, 'BC-400G', '400 g', '520.00', true)],
     }),
     product({
       productId: uuid('a', 10),
-      slug: 'pet-brand-cat-salmon',
-      name: 'Pet Brand Cat Salmon',
-      brand: 'Pet Brand Cat',
+      slug: 'smoked-salmon-flakes',
+      name: 'Smoked Salmon Flakes',
+      brand: 'Monsoon Farms',
       subcategory: 'Dry',
       country: 'KR',
-      lifeStage: 'AllLifeStages',
       protein: 'Salmon',
-      tags: ['salmon', 'all-life-stages'],
-      ingredientList: 'Salmon, sweet potato, flaxseed',
+      tags: ['salmon', 'smoked'],
+      ingredientList: 'Salmon, salt, natural smoke',
       ratingAverage: 4.3,
       ratingCount: 10,
       sold: 60,
       ...food({}),
-      skus: [sku(1001, 'PB-SA-1KG', '1 kg', '1650.00', true)],
+      skus: [sku(1001, 'SSF-1KG', '1 kg', '1650.00', true)],
     }),
     product({
       productId: shopFixtureIds.draftProductId,
       slug: shopFixtureIds.draftSlug,
-      name: 'Hairball Gel (draft)',
+      name: 'Herbal Soap (draft)',
       brand: 'Beaphar',
       category: 'HealthAndGrooming',
       subcategory: null,
@@ -581,19 +551,19 @@ export function seedProducts(): MockProduct[] {
     product({
       productId: shopFixtureIds.unmetChecklistProductId,
       slug: 'unmet-checklist-food',
-      name: 'Unfinished Kitten Food',
-      brand: 'Pet Brand Cat',
+      name: 'Unfinished Muesli',
+      brand: 'Monsoon Farms',
       status: 'Draft',
       firstPublishedOn: null,
       skus: [sku(9101, 'UNMET-1', '1 kg', null, false)],
     }),
   ];
-  // Make the kit's second component a real out-of-stock product (the catnip set).
+  // Make the kit's second component a real out-of-stock product (the cotton ball set).
   const generated = seedGenerated();
-  const catnip = generated.find((g) => g.slug === 'catnip-mouse-set');
-  if (catnip) {
-    catnip.skus[0]!.skuId = uuid('b', 9999);
-    catnip.skus[0]!.inStock = false;
+  const cottonBalls = generated.find((g) => g.slug === 'cotton-ball-set');
+  if (cottonBalls) {
+    cottonBalls.skus[0]!.skuId = uuid('b', 9999);
+    cottonBalls.skus[0]!.inStock = false;
   }
   return [...hand, ...generated];
 }
@@ -622,7 +592,7 @@ export function seedOrigins(): MockOrigin[] {
     },
     {
       code: 'US',
-      sourcingNotes: 'Veterinary and performance diets from established US brands.',
+      sourcingNotes: 'Whole grains and pantry staples from established US farms.',
       isFeatured: false,
       sortOrder: 3,
     },
@@ -651,8 +621,8 @@ export function seedReviews(): MockReview[] {
   const base = {
     productId: shopFixtureIds.multiVariantProductId,
     slug: shopFixtureIds.multiVariantSlug,
-    productName: 'Royal Canin Kitten',
-    skuId: shopFixtureIds.skuKitten2kg,
+    productName: 'Organic Rolled Oats',
+    skuId: shopFixtureIds.skuOats2kg,
     skuLabel: '2 kg',
   };
   return [
@@ -660,8 +630,8 @@ export function seedReviews(): MockReview[] {
       ...base,
       reviewId: shopFixtureIds.publishedReviewId,
       rating: 5,
-      title: 'My kitten loves it',
-      body: 'Eats every bite and the coat is shiny. Would buy again.',
+      title: 'Our family loves it',
+      body: 'Cooks evenly and tastes fresh. Would buy again.',
       status: 'Published',
       submittedOn: '2026-10-03T09:00:00Z',
       authorDisplayName: 'Rahim K.',
@@ -680,15 +650,15 @@ export function seedReviews(): MockReview[] {
     },
     {
       ...base,
-      productId: shopFixtureIds.thaiKittenProductId,
-      slug: shopFixtureIds.thaiKittenSlug,
-      productName: 'Whiskas Kitten Salmon',
-      skuId: shopFixtureIds.skuWhiskasKitten,
+      productId: shopFixtureIds.thaiRiceProductId,
+      slug: shopFixtureIds.thaiRiceSlug,
+      productName: 'Thai Jasmine Rice',
+      skuId: shopFixtureIds.skuJasmineRice,
       skuLabel: '1 kg',
       reviewId: shopFixtureIds.pendingReviewId,
       rating: 4,
-      title: 'Nice salmon smell',
-      body: 'My cat came running when I opened the bag.',
+      title: 'Lovely aroma',
+      body: 'The aroma filled the kitchen when I opened the bag.',
       status: 'PendingModeration',
       submittedOn: '2026-10-02T09:00:00Z',
       authorDisplayName: 'You',
@@ -697,8 +667,8 @@ export function seedReviews(): MockReview[] {
     {
       ...base,
       productId: uuid('a', 4),
-      slug: 'purina-pro-plan-adult-chicken',
-      productName: 'Purina Pro Plan Adult Chicken',
+      slug: 'chicken-masala-mix',
+      productName: 'Chicken Masala Mix',
       skuId: uuid('b', 401),
       skuLabel: '1 kg',
       reviewId: shopFixtureIds.rejectedReviewId,
@@ -713,8 +683,8 @@ export function seedReviews(): MockReview[] {
     {
       ...base,
       productId: uuid('a', 9),
-      slug: 'animonda-carny-adult-beef',
-      productName: 'Animonda Carny Adult Beef',
+      slug: 'slow-cooked-beef-curry',
+      productName: 'Slow-cooked Beef Curry',
       skuId: uuid('b', 901),
       skuLabel: '400 g',
       reviewId: shopFixtureIds.hiddenReviewId,

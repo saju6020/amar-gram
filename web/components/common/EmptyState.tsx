@@ -3,15 +3,15 @@ import { Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * The warm-customer-layer line-art cat, copied verbatim from `docs/design/portal/
- * DashboardNewCustomer.dc.html`'s `.empty-cat` (also used by `CatalogueNoResults.dc.html` and
- * `MySubscriptionsEmpty.dc.html` — at least three portal-facing areas beyond Cat Profiles, so it
- * lives here rather than being re-copied per area). Sits in a `--warm-soft` disc — only ever
+ * The warm-customer-layer line-art illustration, copied verbatim from `docs/design/portal/
+ * DashboardNewCustomer.dc.html` (also used by `CatalogueNoResults.dc.html` and
+ * `MySubscriptionsEmpty.dc.html` — several portal-facing areas, so it lives here rather than being
+ * re-copied per area). The artwork is replaced in the visual-theme phase. Sits in a `--warm-soft` disc — only ever
  * meaningful inside `[data-theme="customer"]` (app/(portal)/layout.tsx); never pass this as
- * `EmptyState`'s icon on a staff screen (HO-CAT-002 §8.5's `--warm` contrast note, and the
+ * `EmptyState`'s icon on a staff screen (the scaffold handover §8.5's `--warm` contrast note, and the
  * task's "staff empty states stay neutral" rule).
  */
-export function EmptyCatIllustration({ className }: { className?: string }) {
+export function EmptyWarmIllustration({ className }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
@@ -40,7 +40,7 @@ export function EmptyCatIllustration({ className }: { className?: string }) {
   );
 }
 
-/** The default neutral icon for a staff (or icon-less) empty state — never the warm cat art. */
+/** The default neutral icon for a staff (or icon-less) empty state — never the warm art. */
 function NeutralIllustration({ className }: { className?: string }) {
   return (
     <span
@@ -56,7 +56,7 @@ function NeutralIllustration({ className }: { className?: string }) {
 }
 
 /**
- * `components/common/EmptyState.tsx` — HO-CAT-002 §11.7, Definition of Done: "`EmptyState` says
+ * `components/common/EmptyState.tsx` — the scaffold handover §11.7, Definition of Done: "`EmptyState` says
  * what to do next, not 'No data'." Every prop that isn't the title is deliberately there to force
  * that: `description` for the plain-language "why", `action` for the next step.
  *
@@ -68,7 +68,7 @@ export interface EmptyStateProps {
   title: string;
   description?: React.ReactNode;
   action?: React.ReactNode;
-  /** Pass `<EmptyCatIllustration />` on a portal screen with nothing to show yet; pass `null` to
+  /** Pass `<EmptyWarmIllustration />` on a portal screen with nothing to show yet; pass `null` to
    *  render no icon at all. Defaults to a neutral icon — staff empty states stay neutral. */
   icon?: React.ReactNode | null;
   className?: string;

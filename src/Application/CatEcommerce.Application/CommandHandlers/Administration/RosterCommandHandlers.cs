@@ -12,7 +12,7 @@ using Platform.Infrastructure.Core.Domain;
 namespace CatEcommerce.Application.CommandHandlers.Administration;
 
 /// <summary>§11.4 (C5/C6): staff account exists, has a rosterable role, is assigned to the branch
-/// (or the sole-branch rule applies); every <c>DefaultRoomId</c> belongs to the branch;
+/// (or the sole-branch rule applies);
 /// <c>EffectiveFrom</c> strictly after today in branch time; load-or-create the roster by the
 /// unique pair. <see cref="StaffRosterAggregate.PromoteDuePattern"/> is called lazily on load
 /// (ADR-047) before any other mutation.</summary>
@@ -21,7 +21,6 @@ public sealed class SetRosterPatternCommandHandler(
     IAggregateRootRepository<StaffAccountAggregate> staffRepository,
     IAggregateRootRepository<BranchAggregate> branchRepository,
     IAggregateRootRepository<StaffBranchAssignmentAggregate> assignmentRepository,
-    IAggregateRootRepository<RoomAggregate> roomRepository,
     TimeProvider timeProvider)
     : ICommandHandlerAsync<SetRosterPatternCommand>
 {
@@ -36,13 +35,6 @@ public sealed class SetRosterPatternCommandHandler(
 
         var assignmentError = await CheckBranchAssignmentAsync(command.StaffAccountId, command.BranchId);
         if (assignmentError is not null) return assignmentError;
-
-        foreach (var roomId in command.Slots.Select(s => s.DefaultRoomId).Where(id => id is not null).Select(id => id!.Value).Distinct())
-        {
-            var room = await roomRepository.GetByIdAsync(roomId);
-            if (room is null || room.BranchId != command.BranchId)
-                return CreateBranchCommandHandler.Violation(BusinessViolationCodes.RoomNotInBranch, nameof(command.Slots), $"Room '{roomId}' does not belong to this branch.");
-        }
 
         var roster = await rosterRepository.GetByFilterAsync(r => r.StaffAccountId == command.StaffAccountId && r.BranchId == command.BranchId);
         var isNew = roster is null;

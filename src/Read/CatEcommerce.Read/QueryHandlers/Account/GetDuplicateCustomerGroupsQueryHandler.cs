@@ -123,21 +123,10 @@ public sealed class GetDuplicateCustomerGroupsQueryHandler(CatEcommerceDbContext
             .Skip(query.Skip).Take(query.Take)
             .ToList();
 
-        // One batched query for every cat owned by any member of the current page, instead of one
-        // query per member (ARCHITECTURE gate, MEDIUM N+1).
-        var pageMemberIds = groups.SelectMany(g => g.Select(c => c.Id)).ToList();
-        var catsByOwner = (await db.Cats.AsNoTracking()
-                .Where(cat => pageMemberIds.Contains(cat.OwnerId))
-                .Select(cat => new { cat.OwnerId, cat.Id, cat.Name, IsDeceased = cat.LifeStatus == CatLifeStatus.Deceased })
-                .ToListAsync())
-            .GroupBy(cat => cat.OwnerId)
-            .ToDictionary(g => g.Key, g => g.Select(cat => new DuplicateCustomerCatViewModel(cat.Id, cat.Name, cat.IsDeceased)).ToList());
-
         var result = groups
             .Select(group => new DuplicateCustomerGroupViewModel(group
                 .Select(c => new DuplicateCustomerMemberViewModel(
                     c.Id, c.FullName, c.MobileNumber, c.EmailAddress,
-                    catsByOwner.TryGetValue(c.Id, out var cats) ? cats : [],
                     MobileMatchedOn: MobileMatchType(byMobileOrAdditional, c.MobileNumber, c.AdditionalPhoneNumbers),
                     RecordStatus: CustomerRecordStatusRules.Derive(c.HasPassword).DisplayName,
                     RegistrationChannel: c.RegistrationChannel.DisplayName))

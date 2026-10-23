@@ -10,8 +10,7 @@ namespace CatEcommerce.IntegrationTests.Persistence;
 /// HO-ACC-001 §16, I-A3: every migration applied in order, from empty, produces the full `account`
 /// schema and the audit-trail additions -- not previously exercised by any committed test (the
 /// shared `catecommerce_dev` already has every migration applied, so nothing in the rest of this
-/// suite runs the migrations themselves). Runs against a real, disposable scratch database, exactly
-/// like <see cref="AddAccountsAuditBackfillTests"/>'s own pattern.
+/// suite runs the migrations themselves). Runs against a real, disposable scratch database.
 /// </summary>
 public sealed class MigrationsOnAnEmptyDatabaseTests : IAsyncLifetime
 {
@@ -33,7 +32,7 @@ public sealed class MigrationsOnAnEmptyDatabaseTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        // Unlike AddAccountsAuditBackfillTests, this test's own EF DbContext AND its separate raw
+        // This test's own EF DbContext AND its separate raw
         // Npgsql connection for the information_schema checks both return to Npgsql's client-side
         // connection pool on disposal rather than being physically closed immediately -- clearing
         // the pool first guarantees pg_terminate_backend below has an actual, still-open backend
@@ -102,15 +101,12 @@ public sealed class MigrationsOnAnEmptyDatabaseTests : IAsyncLifetime
             Assert.True(await TableExistsAsync("account", table), $"Expected table account.{table} to exist after migrating from empty.");
         }
 
-        // §12.1's audit-trail additions on the table Cat Profiles shipped first.
+        // §12.1's audit-trail additions on the audit table.
         foreach (var column in new[] { "category", "ip_address", "correlation_id", "is_recorded" })
         {
             Assert.True(await ColumnExistsAsync("audit", "audit_entry", column),
                 $"Expected audit.audit_entry.{column} to exist after migrating from empty.");
         }
-
-        // clinic.cat (HO-CAT-001) must be unaffected -- still present, unrelated to this schema.
-        Assert.True(await TableExistsAsync("clinic", "cat"));
 
         // The two immutability triggers (INSERT-only enforcement) named in §12.1.
         await using var triggerCommand = new NpgsqlCommand(

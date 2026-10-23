@@ -6,7 +6,7 @@ public sealed record PosFefoBatchViewModel(Guid BatchId, string LotNumber, DateO
 /// <summary>HO-ORD-001 §12.4 -- a SKU found at the till. <c>Sellable</c> is what the branch can sell now; <c>FefoBatches</c> is empty for a bundle (its components are
 /// picked individually) or a SKU with nothing to sell.</summary>
 public sealed record PosSkuViewModel(
-    Guid SkuId, Guid ProductId, string ProductName, string VariantLabel, string? Barcode, MoneyViewModel? UnitPrice, int Sellable, bool RequiresPrescription, bool IsBundle,
+    Guid SkuId, Guid ProductId, string ProductName, string VariantLabel, string? Barcode, MoneyViewModel? UnitPrice, int Sellable, bool IsBundle,
     IReadOnlyList<PosFefoBatchViewModel> FefoBatches);
 
 public sealed record CounterQuoteViewModel(

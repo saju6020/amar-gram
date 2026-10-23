@@ -57,9 +57,6 @@ function serveAccount() {
         registeredOn: '2026-03-02T00:00:00Z',
       }),
     ),
-    http.get('*/api/cats', () =>
-      HttpResponse.json({ items: [], totalCount: 2, pageNumber: 1, pageSize: 1 }),
-    ),
   );
 }
 
@@ -79,22 +76,22 @@ describe('account sidebar', () => {
   it('marks the current page: Overview only on /portal, the longest match elsewhere', () => {
     expect(activeAccountHref('/portal')).toBe('/portal');
     expect(activeAccountHref('/portal/orders/abc')).toBe('/portal/orders');
-    expect(activeAccountHref('/portal/cats/1/edit')).toBe('/portal/cats');
+    expect(activeAccountHref('/portal/reviews/1/edit')).toBe('/portal/reviews');
     expect(activeAccountHref('/portal/account/password')).toBe('/portal/account/profile');
-    expect(activeAccountHref('/portal/visits/1')).toBeNull();
+    expect(activeAccountHref('/portal/unknown/1')).toBeNull();
   });
 
-  it('shows the customer with "2 cats · member since 2026", the groups in order, and Sign out in Account', async () => {
+  it('shows the customer with "Member since 2026", the groups in order, and Sign out in Account', async () => {
     renderWithClient(<AccountSidebar />);
     expect(screen.getByText('Ayesha Rahman')).toBeInTheDocument();
-    expect(await screen.findByText('2 cats · member since 2026')).toBeInTheDocument();
+    expect(await screen.findByText('Member since 2026')).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(
       within(nav)
         .getAllByRole('link')
         .map((l) => l.textContent?.replace(/\(.*\)$/, '').replace(/\d+$/, '')),
     ).toEqual(ACCOUNT_GROUPS.flatMap((g) => g.links.map((l) => l.label)));
-    for (const heading of ['My cats & care', 'Shopping', 'Account'])
+    for (const heading of ['Shopping', 'Account'])
       expect(within(nav).getByText(heading)).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
@@ -119,7 +116,7 @@ describe('account sidebar', () => {
     unmount();
 
     for (const [path, inAccount] of [
-      ['/book', true],
+      ['/cart', true],
       ['/checkout', true],
       ['/portal', false],
     ] as const) {

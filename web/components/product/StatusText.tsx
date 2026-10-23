@@ -1,5 +1,4 @@
-import { Check, Globe, ShieldAlert, Star, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Check, Globe, Star, X } from 'lucide-react';
 import { countryFlag, formatRating } from '@/lib/format/shop';
 import { availabilityText } from '@/lib/shop/labels';
 import { cn } from '@/lib/utils';
@@ -58,17 +57,5 @@ export function OriginText({ country }: { country: CountryRef }) {
       )}
       {country.name}
     </span>
-  );
-}
-
-export function PrescriptionBadge() {
-  return (
-    <Badge
-      variant="warning"
-      className="max-w-full whitespace-normal"
-      icon={<ShieldAlert size={12} aria-hidden="true" />}
-    >
-      Vet authorisation needed
-    </Badge>
   );
 }

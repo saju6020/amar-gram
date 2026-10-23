@@ -15,7 +15,7 @@ namespace CatEcommerce.Api.Background;
 /// failure on one alert never loses or duplicates a message and never stops the pass. Scoped --
 /// <see cref="ShopWorker"/> creates one scope per poll; each alert is dispatched in a fresh scope
 /// from the injected <see cref="IServiceScopeFactory"/> (its own <c>DbContext</c>), exactly like
-/// <c>NotificationWorkCycle</c> and <c>ClinicWorkCycle</c>. Callable by tests.
+/// <c>NotificationWorkCycle</c>. Callable by tests.
 /// </summary>
 public sealed class ShopWorkCycle(ILogger<ShopWorkCycle> logger, IServiceScopeFactory scopeFactory, IInMemoryDispatcher dispatcher)
 {

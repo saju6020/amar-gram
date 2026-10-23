@@ -38,36 +38,4 @@ public sealed class BillingPricingInputs(CatEcommerceDbContext db) : IBillingPri
 
         return classes.ToDictionary(c => c.Id, c => new TaxRateInfo(c.Id, c.Code, latest.TryGetValue(c.Id, out var rate) ? rate : null));
     }
-
-    public async Task<ServicePriceInfo?> GetServicePriceAsync(Guid serviceId, DateTimeOffset at, CancellationToken ct = default)
-    {
-        var service = await db.Set<ClinicServiceAggregate>().AsNoTracking()
-            .Where(s => s.Id == serviceId)
-            .Select(s => new { s.Id, s.Name, s.IsActive, s.TaxClassId })
-            .FirstOrDefaultAsync(ct);
-        if (service is null) return null;
-
-        var price = await db.Set<ServicePriceAggregate>().AsNoTracking()
-            .Where(p => p.ClinicServiceId == serviceId && p.EffectiveFrom <= at)
-            .OrderByDescending(p => p.EffectiveFrom)
-            .Select(p => new { p.Amount.Amount, p.Amount.CurrencyCode })
-            .FirstOrDefaultAsync(ct);
-
-        return new ServicePriceInfo(service.Id, service.Name, service.IsActive, price is null ? null : new Money(price.Amount, price.CurrencyCode), service.TaxClassId);
-    }
-
-    public async Task<IReadOnlyDictionary<Guid, Guid>> GetSkuTaxClassIdsAsync(IReadOnlyCollection<Guid> skuIds, CancellationToken ct = default)
-    {
-        if (skuIds.Count == 0) return new Dictionary<Guid, Guid>();
-
-        var ids = skuIds.Distinct().ToList();
-        var rows = await db.SkuRows().Where(s => ids.Contains(s.SkuId)).Select(s => new { s.SkuId, s.TaxClassId }).ToListAsync(ct);
-        return rows.ToDictionary(r => r.SkuId, r => r.TaxClassId);
-    }
-
-    public async Task<Guid?> GetServiceTaxClassIdAsync(Guid serviceId, CancellationToken ct = default) =>
-        await db.Set<ClinicServiceAggregate>().AsNoTracking()
-            .Where(s => s.Id == serviceId)
-            .Select(s => (Guid?)s.TaxClassId)
-            .FirstOrDefaultAsync(ct);
 }

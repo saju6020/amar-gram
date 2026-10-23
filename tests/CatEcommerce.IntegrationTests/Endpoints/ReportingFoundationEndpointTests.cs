@@ -99,15 +99,15 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
 
     // ── I-A4 / NFR-PRF-7: a runaway report is cut off, and interactive work is unaffected ─────────────────
     [Fact]
-    public async Task I_A4_ASlowReport_TimesOut_AsAn400_WhileAnAppointmentEndpointAnswersNormally()
+    public async Task I_A4_ASlowReport_TimesOut_AsAn400_WhileAnotherEndpointAnswersNormally()
     {
         using var lowered = Factory.WithWebHostBuilder(b => b.ConfigureAppConfiguration((_, c) => c.AddInMemoryCollection(new Dictionary<string, string?> { ["Reporting:QueryTimeoutSeconds"] = "5" })));
         var (context, admin) = await ContextWithRoleAsync(StaffRoles.Administrator, lowered);
 
         var slow = admin.GetAsync($"/api/staff/reports/{ReportingFixtures.SleepKey}" + Query(context, Today, Today, "seconds=12"));
-        var appointments = await admin.GetAsync($"/api/staff/appointments/day?date={Today:yyyy-MM-dd}");
+        var charges = await admin.GetAsync("/api/staff/billing/charges");
 
-        Assert.Equal(HttpStatusCode.OK, appointments.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, charges.StatusCode);
         var response = await slow;
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains(BusinessViolationCodes.ReportTimedOut, await CodesAsync(response));
@@ -115,14 +115,14 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
 
     // ── I-A5: the catalogue is filtered to the caller ───────────────────────────────────────────────────────
     [Fact]
-    public async Task I_A5_EachRole_SeesExactlyItsCategories_ANurseIsRefused_AnAnonymousCallerIs401()
+    public async Task I_A5_EachRole_SeesExactlyItsCategories_AReceptionistIsRefused_AnAnonymousCallerIs401()
     {
         foreach (var role in StaffRoles.All)
         {
             var (_, client) = await ContextWithRoleAsync(role);
             var response = await client.GetAsync("/api/staff/reports");
 
-            if (role == StaffRoles.Nurse)
+            if (role == StaffRoles.Reception)
             {
                 Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
                 continue;
@@ -144,10 +144,10 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
     [Fact]
     public async Task I_A5_TheCatalogue_ResolvesTheDefaultRangeOnTheServer_AndHidesRestrictedColumns()
     {
-        var (_, reception) = await ContextWithRoleAsync(StaffRoles.Reception);
+        var (_, inventory) = await ContextWithRoleAsync(StaffRoles.Inventory);
         var (_, accountant) = await ContextWithRoleAsync(StaffRoles.Accountant);
 
-        var entry = (await ReadAsync(await reception.GetAsync("/api/staff/reports"))).EnumerateArray().Single(e => e.GetProperty("key").GetString() == ReportingFixtures.RowsKey);
+        var entry = (await ReadAsync(await inventory.GetAsync("/api/staff/reports"))).EnumerateArray().Single(e => e.GetProperty("key").GetString() == ReportingFixtures.RowsKey);
 
         Assert.Equal("Today", entry.GetProperty("defaultPeriod").GetString());
         Assert.Equal(entry.GetProperty("defaultRange").GetProperty("from").GetString(), entry.GetProperty("defaultRange").GetProperty("to").GetString());
@@ -156,7 +156,7 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
         Assert.DoesNotContain("secret", entry.GetProperty("columns").EnumerateArray().Select(c => c.GetProperty("key").GetString()));
         Assert.Equal(["Csv", "Pdf"], entry.GetProperty("formats").EnumerateArray().Select(f => f.GetString()));
 
-        // The accountant is not in ClinicOperations at all, so the fixture is not in their catalogue.
+        // The accountant is not in Stock at all, so the fixture is not in their catalogue.
         Assert.DoesNotContain(ReportingFixtures.RowsKey, (await ReadAsync(await accountant.GetAsync("/api/staff/reports"))).EnumerateArray().Select(e => e.GetProperty("key").GetString()));
     }
 
@@ -280,7 +280,7 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
 
     // ── I-A10: range and branch rules ─────────────────────────────────────────────────────────────────────
     [Fact]
-    public async Task I_A10_ARangeOf367Days_ABranchNotAssigned_AllAsReception_AllAsAccountant()
+    public async Task I_A10_ARangeOf367Days_ABranchNotAssigned_AllAsInventory_AllAsAccountant()
     {
         var (context, admin) = await ContextWithRoleAsync(StaffRoles.Administrator);
         var key = ReportingFixtures.RowsKey;
@@ -305,15 +305,15 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
         var unknownParameter = await admin.GetAsync($"/api/staff/reports/{key}" + Query(context, Today, Today, "mystery=1"));
         Assert.Contains(BusinessViolationCodes.UnknownReportParameter, await CodesAsync(unknownParameter));
 
-        var (receptionContext, reception) = await ContextWithRoleAsync(StaffRoles.Reception);
-        var all = await reception.GetAsync($"/api/staff/reports/{key}?from={Today:yyyy-MM-dd}&to={Today:yyyy-MM-dd}&branchId=all");
+        var (inventoryContext, inventory) = await ContextWithRoleAsync(StaffRoles.Inventory);
+        var all = await inventory.GetAsync($"/api/staff/reports/{key}?from={Today:yyyy-MM-dd}&to={Today:yyyy-MM-dd}&branchId=all");
         Assert.Equal(HttpStatusCode.Forbidden, all.StatusCode);
         Assert.Contains(BusinessViolationCodes.CrossBranchReportNotPermitted, await CodesAsync(all));
-        Assert.NotEqual(Guid.Empty, receptionContext.BranchId);
+        Assert.NotEqual(Guid.Empty, inventoryContext.BranchId);
 
         var (_, accountant) = await ContextWithRoleAsync(StaffRoles.Accountant);
         var accountantAll = await accountant.GetAsync($"/api/staff/reports/{ReportingFixtures.RowsKey}?from={Today:yyyy-MM-dd}&to={Today:yyyy-MM-dd}&branchId=all");
-        // The accountant holds no ClinicOperations action, so this is the category check, not the branch check.
+        // The accountant holds no Stock action, so this is the category check, not the branch check.
         Assert.Equal(HttpStatusCode.Forbidden, accountantAll.StatusCode);
 
         var adminAll = await admin.GetAsync($"/api/staff/reports/{key}?from={Today:yyyy-MM-dd}&to={Today:yyyy-MM-dd}&branchId=all");
@@ -352,10 +352,10 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
     [Fact]
     public async Task ARestrictedColumn_IsRemovedFromTheJson_TheTotals_AndTheCsv_NotBlanked()
     {
-        var (receptionContext, reception) = await ContextWithRoleAsync(StaffRoles.Reception);
+        var (inventoryContext, inventory) = await ContextWithRoleAsync(StaffRoles.Inventory);
         var (adminContext, admin) = await ContextWithRoleAsync(StaffRoles.Administrator);
 
-        var restricted = await RunReportAsync(reception, ReportingFixtures.RowsKey, receptionContext, "rows=2");
+        var restricted = await RunReportAsync(inventory, ReportingFixtures.RowsKey, inventoryContext, "rows=2");
         var full = await RunReportAsync(admin, ReportingFixtures.RowsKey, adminContext, "rows=2");
 
         Assert.DoesNotContain("secret", ColumnKeys(restricted));
@@ -364,7 +364,7 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
         Assert.Contains("secret", ColumnKeys(full));
         Assert.True(full.GetProperty("totals").TryGetProperty("secret", out _));
 
-        var csv = await reception.GetAsync($"/api/staff/reports/{ReportingFixtures.RowsKey}/export.csv" + Query(receptionContext, Today, Today, "rows=2"));
+        var csv = await inventory.GetAsync($"/api/staff/reports/{ReportingFixtures.RowsKey}/export.csv" + Query(inventoryContext, Today, Today, "rows=2"));
         var text = Encoding.UTF8.GetString(await csv.Content.ReadAsByteArrayAsync());
         Assert.DoesNotContain("Secret", text);
     }
@@ -387,10 +387,10 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
     [Fact]
     public async Task ASortOnAColumnTheCallerCannotSee_OrANonColumn_IsAnInvalidParameter()
     {
-        var (context, reception) = await ContextWithRoleAsync(StaffRoles.Reception);
+        var (context, inventory) = await ContextWithRoleAsync(StaffRoles.Inventory);
 
-        var hidden = await reception.GetAsync($"/api/staff/reports/{ReportingFixtures.RowsKey}" + Query(context, Today, Today, "sort=secret"));
-        var nonsense = await reception.GetAsync($"/api/staff/reports/{ReportingFixtures.RowsKey}" + Query(context, Today, Today, "sort=nope"));
+        var hidden = await inventory.GetAsync($"/api/staff/reports/{ReportingFixtures.RowsKey}" + Query(context, Today, Today, "sort=secret"));
+        var nonsense = await inventory.GetAsync($"/api/staff/reports/{ReportingFixtures.RowsKey}" + Query(context, Today, Today, "sort=nope"));
 
         Assert.Equal(HttpStatusCode.BadRequest, hidden.StatusCode);
         Assert.Contains(BusinessViolationCodes.InvalidReportParameter, await CodesAsync(hidden));
@@ -399,7 +399,7 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
 
     // ── I-A11: bounded concurrency (ADR-290) ──────────────────────────────────────────────────────────────
     [Fact]
-    public async Task I_A11_WithOneSlotAndNoQueue_TheSecondSlowReport_Is429WithRetryAfter_AndClinicEndpointsAreUnaffected()
+    public async Task I_A11_WithOneSlotAndNoQueue_TheSecondSlowReport_Is429WithRetryAfter_AndOtherEndpointsAreUnaffected()
     {
         using var narrowed = Factory.WithWebHostBuilder(b => b.ConfigureAppConfiguration((_, c) =>
             c.AddInMemoryCollection(new Dictionary<string, string?> { ["Reporting:MaxConcurrentReports"] = "1", ["Reporting:ConcurrencyQueueLimit"] = "0" })));
@@ -408,11 +408,11 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
         var first = admin.GetAsync($"/api/staff/reports/{ReportingFixtures.SleepKey}" + Query(context, Today, Today, "seconds=3"));
         await Task.Delay(700);
         var second = await admin.GetAsync($"/api/staff/reports/{ReportingFixtures.SleepKey}" + Query(context, Today, Today, "seconds=1"));
-        var clinic = await admin.GetAsync($"/api/staff/appointments/day?date={Today:yyyy-MM-dd}");
+        var charges = await admin.GetAsync("/api/staff/billing/charges");
 
         Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
         Assert.Equal("5", second.Headers.RetryAfter!.Delta!.Value.TotalSeconds.ToString());
-        Assert.Equal(HttpStatusCode.OK, clinic.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, charges.StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await first).StatusCode);
     }
 

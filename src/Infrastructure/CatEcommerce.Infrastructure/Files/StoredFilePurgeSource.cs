@@ -16,7 +16,7 @@ namespace CatEcommerce.Infrastructure.Files;
 /// Gate-fix 2026-09-27: one instance per <see cref="FilePurpose"/> is registered (see
 /// <c>FileStorageModule</c>), each with its own <see cref="SourceKey"/>, so a future retention
 /// worker can give each purpose its own cutoff rather than one shared cutoff applying to
-/// <c>CatProfilePhoto</c> and every clinical/financial purpose alike (CODE_REVIEW/ARCHITECTURE LOW
+/// every purpose alike (CODE_REVIEW/ARCHITECTURE LOW
 /// findings). The <c>LegalHold</c>/<c>RetainUntil</c> predicate is applied in the SQL query itself,
 /// before <c>Take(batchSize)</c> -- previously applied in memory afterwards, which meant a batch
 /// made up mostly of held rows could do no real purging work even when later, genuinely-eligible

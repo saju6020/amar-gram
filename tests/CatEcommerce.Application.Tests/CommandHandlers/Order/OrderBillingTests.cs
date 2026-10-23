@@ -19,7 +19,7 @@ public sealed class OrderBillingTests
     private static OrderAggregate OrderWithDelivery(decimal delivery)
     {
         var line = new OrderLineDto(
-            Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), "Food", "2 kg", null, ProductReturnClass.Food, false, null, 1, 100m, 100m, 0m, 0m, Guid.NewGuid(), 0m, 0m, 100m, []);
+            Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), "Food", "2 kg", null, ProductReturnClass.Food, false, 1, 100m, 100m, 0m, 0m, Guid.NewGuid(), 0m, 0m, 100m, []);
         var order = new OrderAggregate(Guid.NewGuid());
         order.Place(new PlaceOrderDto(
             "ORD-2026-000009", OrderChannel.Online, Customer.UserId, Guid.NewGuid(), FulfilmentMethod.Delivery, OrderPaymentMethod.CashOnDelivery, "BDT",

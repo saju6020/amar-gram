@@ -166,7 +166,7 @@ public sealed class InventoryTestGateEndpointTests(InventoryApiFactory factory, 
         await using (var port = OpenPort())
         {
             var sale = await port.Ledger.DeductAsync(Demand(t.SecondBranchId, t.Sku.SkuId, 1m, MovementKind.Sale, locations: [t.SecondWarehouseId]),
-                new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-2"), new StockParty(null, null), default);
+                new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-2"), new StockParty(null), default);
             Assert.False(sale.IsSuccess);
             Assert.True(sale.ViolationCode is BusinessViolationCodes.InsufficientStock or BusinessViolationCodes.BatchNotUsable, sale.ViolationCode);
         }

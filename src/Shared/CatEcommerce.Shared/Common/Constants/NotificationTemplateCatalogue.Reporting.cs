@@ -20,7 +20,7 @@ public static partial class NotificationTemplateCatalogue
             [
                 new NotificationTemplateVariableDefinition("reportTitle", "The report's title.", TemplateVariableKind.Text, "Revenue by business line", []),
                 new NotificationTemplateVariableDefinition("periodLabel", "The period the report covers.", TemplateVariableKind.Text, "1 Oct 2026 to 7 Oct 2026", []),
-                new NotificationTemplateVariableDefinition("branchName", "The branch, or All branches.", TemplateVariableKind.Text, "Gulshan Clinic", []),
+                new NotificationTemplateVariableDefinition("branchName", "The branch, or All branches.", TemplateVariableKind.Text, "Gulshan Outlet", []),
                 new NotificationTemplateVariableDefinition("generatedOnLocal", "When the report was generated, in the branch's local time.", TemplateVariableKind.Text, "Thu 8 Oct 2026, 07:00", []),
                 new NotificationTemplateVariableDefinition("rowCount", "The number of rows in the report.", TemplateVariableKind.Text, "42", []),
                 new NotificationTemplateVariableDefinition("attachmentNote", "Empty, or why the file is not attached.", TemplateVariableKind.Text, "", []),

@@ -5,19 +5,16 @@
  * `403` (U-A1), and hiding a link here never substitutes for the check the server already makes
  * (ADR-043/ADR-044, HO-ACC-002 ADR-FE-009).
  *
- * `STAFF_ROLE_IDS` is SRS Appendix D's eight staff roles, spelled the way `ActionRoles`/
+ * `STAFF_ROLE_IDS` is the staff roles, spelled the way `ActionRoles`/
  * `StaffRoles.All` spell them (verified against HO-ADM-001 §12.3's own role columns and the
  * existing `RoleAssignmentField`/staff-admin mock role ids). Only used here, for presentation —
  * the actual, authoritative role catalogue always comes from `GET /api/staff-roles`
  * (`useStaffRoleCatalogue`, HO-ACC-002 ADR-FE-009), which every checkbox list in this area
- * (`ServiceForm`'s qualified roles) reads from instead of this constant.
+ * reads from instead of this constant.
  */
 export const STAFF_ROLE_IDS = [
   'Administrator',
   'Reception',
-  'Nurse',
-  'Vet',
-  'Caretaker',
   'Inventory',
   'ShopManager',
   'Accountant',
@@ -33,7 +30,6 @@ export interface AdminNavItem {
 export const adminNavItems: AdminNavItem[] = [
   { label: 'Branches', href: '/staff/admin/branches', roles: STAFF_ROLE_IDS }, // Branches.View
   { label: 'Leave approvals', href: '/staff/admin/leave', roles: ['Administrator'] }, // Leave.Decide
-  { label: 'Services', href: '/staff/admin/services', roles: STAFF_ROLE_IDS }, // Services.View
   {
     label: 'Tax classes',
     href: '/staff/admin/tax-classes',
@@ -50,22 +46,12 @@ export const adminNavItems: AdminNavItem[] = [
     href: '/staff/admin/notification-templates',
     roles: ['Administrator', 'ShopManager'],
   }, // NotificationTemplates.View
-  // HO-EMR-002 §11.8/§13 — three entries only (ClinicalCatalogue.Manage: Vet and Administrator).
-  { label: 'Diagnosis codes', href: '/staff/admin/clinical/diagnosis-codes', roles: ['Administrator', 'Vet'] },
-  { label: 'Lab analytes', href: '/staff/admin/clinical/lab-analytes', roles: ['Administrator', 'Vet'] },
-  { label: 'Note templates', href: '/staff/admin/clinical/note-templates', roles: ['Administrator', 'Vet'] },
   // HO-BIL-002 §13 — one entry only. Billing.View reads it; BillingProfile.Manage (Administrator) saves.
   {
     label: 'Billing profile',
     href: '/staff/admin/billing-profile',
     roles: ['Administrator', 'Accountant'],
   }, // Billing.View
-  // HO-PHM-002 §13 — one entry only. Formulary.View reads the list; Formulary.Manage (Administrator) edits.
-  {
-    label: 'Formulary',
-    href: '/staff/admin/formulary',
-    roles: ['Administrator', 'Reception', 'Nurse', 'Vet', 'Inventory'],
-  }, // Formulary.View
   // HO-ORD-002 §12.2/§13 — four entries (roles per HO-ORD-001 §12.3: DeliveryZones.View, Couriers.Manage,
   // Discounts.View, Orders.ManagePaymentSettings).
   {

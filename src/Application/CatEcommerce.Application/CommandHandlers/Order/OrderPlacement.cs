@@ -53,7 +53,6 @@ public static class OrderPlacement
 
     private static string MessageFor(string code) => code switch
     {
-        BusinessViolationCodes.PrescriptionCatRequired => OrderMessages.PrescriptionCatRequired,
         BusinessViolationCodes.AddressOutsideServedZones => OrderMessages.AddressOutsideServedZones,
         BusinessViolationCodes.DeliveryTaxNotConfigured => OrderMessages.DeliveryTaxNotConfigured,
         BusinessViolationCodes.PaymentMethodUnavailable => OrderMessages.PaymentMethodUnavailable,

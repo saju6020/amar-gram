@@ -9,7 +9,7 @@ using Platform.Infrastructure.Core.Events;
 namespace CatEcommerce.Infrastructure.Repositories;
 
 /// <summary>
-/// Copied from .ai/persistence-ef-core.md section 2 exactly -- HO-CAT-001 section 12.1.
+/// Copied from .ai/persistence-ef-core.md section 2 exactly -- the foundation handover section 12.1.
 /// One generic implementation covers every aggregate.
 /// </summary>
 public sealed class EfAggregateRootRepository<TAggregate>(

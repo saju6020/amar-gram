@@ -20,7 +20,7 @@ import {
   useVoidCharge,
 } from '@/lib/hooks/billing/useBillingMutations';
 import { useActiveBranchZone } from '@/lib/hooks/billing/useActiveBranchZone';
-import { useTaxClasses, useAdminServices } from '@/lib/hooks/useAdminCatalogue';
+import { useTaxClasses } from '@/lib/hooks/useAdminCatalogue';
 import { useStaffCustomer } from '@/lib/hooks/useStaffCustomers';
 import { ApplyCreditDialog } from './ApplyCreditDialog';
 import { CustomerBillingSummary } from './CustomerBillingSummary';
@@ -55,7 +55,6 @@ export function CustomerBillingAccount({ customerId }: { customerId: string }) {
   const unbilled = useCustomerCharges(customerId, 'unbilled');
   const invoices = useCustomerInvoices(customerId);
   const payments = useCustomerPayments(customerId);
-  const services = useAdminServices();
   const taxClasses = useTaxClasses();
   const voidCharge = useVoidCharge(customerId);
   const applyCredit = useApplyCustomerCredit(customerId);
@@ -206,7 +205,6 @@ export function CustomerBillingAccount({ customerId }: { customerId: string }) {
         onOpenChange={setChargeOpen}
         customerId={customerId}
         defaultDate={todayInZone(zone)}
-        services={services.data}
         taxClasses={taxClasses.data}
         taxClassesUnavailable={taxClasses.isError}
         onSubmit={async (request) => {

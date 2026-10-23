@@ -104,7 +104,6 @@ public class OrderingApiFactory : CatEcommerceApiFactory
 
         settings["Shop:Worker:Enabled"] = "false";
         settings["Shop:Catalogue:PermitLimit"] = "100000";
-        settings["Clinic:Worker:Enabled"] = "false";
         settings["Inventory:Worker:Enabled"] = "false";
         settings["Orders:Worker:Enabled"] = "false";
         settings["Localisation:ContentLocales:0"] = "en";

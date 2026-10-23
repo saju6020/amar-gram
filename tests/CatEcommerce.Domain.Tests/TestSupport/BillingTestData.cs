@@ -15,8 +15,8 @@ internal static class BillingTestData
     public static DraftInvoiceLineInput Line(
         decimal quantity = 1m, decimal unitPrice = 100m, decimal discount = 0m, Guid? taxClassId = null, ItemKind? kind = null,
         Guid? chargeId = null, BusinessLine? line = null, ChargeSourceKind? source = null, string description = "Item") =>
-        new(chargeId ?? Guid.NewGuid(), null, line ?? BusinessLine.Clinic, kind ?? ItemKind.Service, source ?? ChargeSourceKind.Appointment,
-            Guid.NewGuid(), null, null, null, description, quantity, unitPrice, discount, taxClassId ?? Guid.NewGuid());
+        new(chargeId ?? Guid.NewGuid(), null, line ?? BusinessLine.Shop, kind ?? ItemKind.Product, source ?? ChargeSourceKind.Order,
+            Guid.NewGuid(), description, quantity, unitPrice, discount, taxClassId ?? Guid.NewGuid());
 
     public static InvoiceAggregate Draft(params DraftInvoiceLineInput[] lines)
     {

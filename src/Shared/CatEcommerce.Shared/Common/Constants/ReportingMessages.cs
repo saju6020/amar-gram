@@ -16,8 +16,6 @@ public static class ReportingMessages
     public const string ReportTimedOut = "This report took too long to run. Choose a shorter date range or a single branch.";
     public const string NotDeliveredYet = "This part of the report is not delivered yet.";
     public const string RowCeilingReached = "Only the first rows are shown. Narrow the filters or export a shorter range.";
-    public const string ClinicVisitChargesNotDelivered = "Charges for consultation notes, dispensed medicines and surgeries are not on invoices yet (Billing phase J), so clinic revenue covers appointment services and manual charges only.";
-    public const string ServicesHaveNoCost = "Services have no cost: clinic margin covers medicines and consumables only.";
     public const string ReportFormatNotSupported = "A schedule can send a CSV or a PDF.";
     public static string InvalidReportSchedulePeriod(string title) => $"That period does not suit '{title}'. Choose one of the periods offered for this report.";
     public const string ReportRecipientRequired = "Choose at least one recipient.";

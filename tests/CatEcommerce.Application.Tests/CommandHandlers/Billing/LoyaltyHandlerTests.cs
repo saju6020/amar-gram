@@ -59,7 +59,7 @@ public sealed class LoyaltyHandlerTests
         var invoice = new InvoiceAggregate(Guid.NewGuid());
         invoice.CreateDraft(new DraftInvoiceDto(
             _branchId, _customerId, "BDT",
-            [new DraftInvoiceLineInput(Guid.NewGuid(), null, BusinessLine.Shop, kind ?? ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), null, null, null, "Item", 1m, price, 0m, taxClass)],
+            [new DraftInvoiceLineInput(Guid.NewGuid(), null, BusinessLine.Shop, kind ?? ItemKind.Product, ChargeSourceKind.Order, Guid.NewGuid(), "Item", 1m, price, 0m, taxClass)],
             null, null, null, _time.GetUtcNow(), Actor));
 
         if (issue)
@@ -348,7 +348,7 @@ public sealed class LoyaltyHandlerTests
     {
         var older = SeedPayment(300m);
         var newer = SeedPayment(200m);
-        var deposit = SeedPayment(1000m, new PaymentEarmark(EarmarkKind.BoardingStay, Guid.NewGuid(), "Stay deposit"));
+        var deposit = SeedPayment(1000m, new PaymentEarmark(EarmarkKind.Order, Guid.NewGuid(), "Order deposit"));
         _finder.FreeCreditPaymentsOldestFirst.AddRange([older.Id, newer.Id]);
         var invoice = SeedInvoice(400m, issue: true);
 

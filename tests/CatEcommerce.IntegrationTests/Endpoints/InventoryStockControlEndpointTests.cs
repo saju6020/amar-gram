@@ -59,10 +59,10 @@ public sealed class InventoryStockControlEndpointTests(InventoryApiFactory facto
         var (branch, keeper, sku) = await SetupAsync();
         var batchA = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 10m);
         var batchB = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.ShopId, 7m);
-        await TransferAsync(keeper.Client, branch.WarehouseId, branch.DispensaryId, sku.SkuId, batchA, 3m);
+        await TransferAsync(keeper.Client, branch.WarehouseId, branch.QuarantineId, sku.SkuId, batchA, 3m);
 
         Assert.Equal((7m, 0m), await PositionAsync(batchA, branch.WarehouseId));
-        Assert.Equal((3m, 0m), await PositionAsync(batchA, branch.DispensaryId));
+        Assert.Equal((3m, 0m), await PositionAsync(batchA, branch.QuarantineId));
         Assert.Equal((0m, 0m), await PositionAsync(batchA, branch.ShopId));
         Assert.Equal((7m, 0m), await PositionAsync(batchB, branch.ShopId));
         Assert.Equal((0m, 0m), await PositionAsync(batchB, branch.WarehouseId));
@@ -96,7 +96,7 @@ public sealed class InventoryStockControlEndpointTests(InventoryApiFactory facto
         {
             var deducted = await pos.Ledger.DeductAsync(
                 Demand(branch.BranchId, sku.SkuId, 8m, MovementKind.Sale, locations: [branch.WarehouseId]),
-                new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-1"), new StockParty(null, null), default);
+                new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-1"), new StockParty(null), default);
             Assert.True(deducted.IsSuccess, deducted.Message);
             await pos.CommitAsync();
         }
@@ -188,7 +188,7 @@ public sealed class InventoryStockControlEndpointTests(InventoryApiFactory facto
         {
             Assert.True((await pos.Ledger.DeductAsync(
                 Demand(branch.BranchId, sku.SkuId, 70m, MovementKind.Sale, locations: [branch.ShopId]),
-                new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-9"), new StockParty(null, null), default)).IsSuccess);
+                new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-9"), new StockParty(null), default)).IsSuccess);
             await pos.CommitAsync();
         }
 

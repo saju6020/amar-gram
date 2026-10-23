@@ -9,8 +9,8 @@ using Platform.Infrastructure.Core.Domain;
 namespace CatEcommerce.Domain.Aggregates.Inventory;
 
 /// <summary>
-/// HO-IMP-001 §8.5 (US-IMP-03, US-IMP-05). An import consignment: origin, shipment reference, HS codes, permit, health /
-/// veterinary certificate, customs declaration, cost components, exchange rates and document METADATA (never bytes, ADR-113).
+/// HO-IMP-001 §8.5 (US-IMP-03, US-IMP-05). An import consignment: origin, shipment reference, HS codes, permit, health
+/// certificate, customs declaration, cost components, exchange rates and document METADATA (never bytes, ADR-113).
 /// <c>Planned -> InTransit -> AtCustoms -> Cleared</c>; any non-cleared status -> <c>Cancelled</c>. A cancelled consignment is
 /// kept, with its documents (NFR-LEG-2): there is no method that removes a document or a consignment.
 /// The "POs are Issued/Closed and of this branch" rule needs the POs, so the handler checks it.

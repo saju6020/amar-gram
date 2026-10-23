@@ -32,13 +32,13 @@ export const billingIds = {
   taxNoRate: 't0000000-0000-0000-0000-00000000a0c3',
 
   // charges (Sam, main branch)
-  chargeConsultId: 'ca000000-0000-0000-0000-000000000001',
-  chargeVaccineId: 'ca000000-0000-0000-0000-000000000002',
+  chargeRiceId: 'ca000000-0000-0000-0000-000000000001',
+  chargeOilId: 'ca000000-0000-0000-0000-000000000002',
   chargeFoodId: 'ca000000-0000-0000-0000-000000000003',
-  chargeBoardingId: 'ca000000-0000-0000-0000-000000000004',
+  chargeDeliveryId: 'ca000000-0000-0000-0000-000000000004',
   chargeRacyId: 'ca000000-0000-0000-0000-000000000005',
   chargeNoRateId: 'ca000000-0000-0000-0000-000000000006',
-  chargeDentalId: 'ca000000-0000-0000-0000-000000000007', // on the draft
+  chargeGheeId: 'ca000000-0000-0000-0000-000000000007', // on the draft
 
   // invoices
   draftInvoiceId: 'd1000000-0000-0000-0000-000000000001',

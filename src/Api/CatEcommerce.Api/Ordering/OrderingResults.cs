@@ -15,7 +15,7 @@ public static class OrderingResults
     [
         BusinessViolationCodes.DeliveryZoneNotFound, BusinessViolationCodes.CourierNotFound, BusinessViolationCodes.DiscountCodeNotFound,
         BusinessViolationCodes.OrderNotFound, BusinessViolationCodes.ReturnNotFound, BusinessViolationCodes.CartLineNotFound,
-        BusinessViolationCodes.ReconciliationIssueNotFound, BusinessViolationCodes.CatNotOwnedByCaller,
+        BusinessViolationCodes.ReconciliationIssueNotFound,
     ];
 
     private static readonly HashSet<string> ConflictCodes =

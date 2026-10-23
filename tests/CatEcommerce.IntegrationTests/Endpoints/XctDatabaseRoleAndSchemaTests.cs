@@ -245,19 +245,19 @@ public sealed class XctDatabaseRoleAndSchemaTests : IAsyncLifetime
         await using var connection = new NpgsqlConnection(appConnection);
         await connection.OpenAsync();
 
-        await using (var disable = new NpgsqlCommand("ALTER TABLE clinic.cat DISABLE TRIGGER ALL", connection))
+        await using (var disable = new NpgsqlCommand("ALTER TABLE account.customer_account DISABLE TRIGGER ALL", connection))
         {
             var refused = await Assert.ThrowsAsync<PostgresException>(() => disable.ExecuteNonQueryAsync());
             Assert.Equal("42501", refused.SqlState); // insufficient_privilege: must be owner
         }
 
-        await using (var truncate = new NpgsqlCommand("TRUNCATE clinic.cat CASCADE", connection))
+        await using (var truncate = new NpgsqlCommand("TRUNCATE account.customer_account CASCADE", connection))
         {
             var refused = await Assert.ThrowsAsync<PostgresException>(() => truncate.ExecuteNonQueryAsync());
             Assert.Equal("42501", refused.SqlState); // no TRUNCATE privilege
         }
 
-        await using (var create = new NpgsqlCommand("CREATE TABLE clinic.should_not_exist (x int)", connection))
+        await using (var create = new NpgsqlCommand("CREATE TABLE account.should_not_exist (x int)", connection))
         {
             var refused = await Assert.ThrowsAsync<PostgresException>(() => create.ExecuteNonQueryAsync());
             Assert.Equal("42501", refused.SqlState); // no DDL
@@ -274,7 +274,7 @@ public sealed class XctDatabaseRoleAndSchemaTests : IAsyncLifetime
         }
 
         // Ordinary application work is unaffected: reads, and writes to a table the app may change.
-        await using var read = new NpgsqlCommand("SELECT COUNT(*) FROM clinic.cat", connection);
+        await using var read = new NpgsqlCommand("SELECT COUNT(*) FROM account.customer_account", connection);
         Assert.NotNull(await read.ExecuteScalarAsync());
     }
 

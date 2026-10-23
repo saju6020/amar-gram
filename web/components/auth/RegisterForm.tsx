@@ -36,10 +36,9 @@ import type { RegisterCustomerRequest } from '@/lib/api/auth';
  */
 
 /**
- * ARCH gate HIGH 3 (first pass), HO-CAT-002 §8.2 rule 4 — takes `captcha`/`onRegister`/`isPending`/
+ * ARCH gate HIGH 3 (first pass), the shell handover §8.2 rule 4 — takes `captcha`/`onRegister`/`isPending`/
  * `rateLimitError` as props rather than calling `useCaptcha()`/`useRegisterCustomer()` itself; the
- * page (`app/(auth)/register/page.tsx`) wires those hooks and passes their results down, the same
- * pattern `components/cat/CatForm.tsx`'s own `onSubmit` prop already establishes.
+ * page (`app/(auth)/register/page.tsx`) wires those hooks and passes their results down.
  */
 // Hearth "Welcome home" register (owner-approved 2026-10-16): pill fields at least 48px high.
 const HEARTH_INPUT = cn(

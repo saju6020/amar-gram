@@ -52,9 +52,10 @@ export const accountsFixtureIds = {
   adminStaffId: 's0000000-0000-0000-0000-000000000001',
   adminIdentifier: 'admin@purrcare.test',
   adminPassword: 'AdminPass123!',
-  nurseStaffId: 's0000000-0000-0000-0000-000000000002',
-  nurseIdentifier: 'nurse@purrcare.test',
-  nursePassword: 'NursePass123!',
+  // A non-admin staff member with the Inventory role (key names kept for existing callers).
+  stockStaffId: 's0000000-0000-0000-0000-000000000002',
+  stockIdentifier: 'stock@purrcare.test',
+  stockPassword: 'StockPass123!',
   noPasswordStaffId: 's0000000-0000-0000-0000-000000000003',
 
   // Walk-in / duplicates.
@@ -63,7 +64,6 @@ export const accountsFixtureIds = {
 
   duplicateGroupCustomerA: 'd0000000-0000-0000-0000-00000000000a',
   duplicateGroupCustomerB: 'd0000000-0000-0000-0000-00000000000b',
-  duplicateCatDeceased: 'e0000000-0000-0000-0000-000000000001',
 
   mergeAlreadyMergedId: 'd0000000-0000-0000-0000-00000000000c',
   mergeNotDuplicatesId: 'd0000000-0000-0000-0000-00000000000d',
@@ -108,15 +108,6 @@ interface StoredCustomer {
   }>;
   /** HO-NTF-002 §11.2 — the channel chosen for important messages; absent/null until chosen. */
   preferredChannel?: 'Sms' | 'Email' | null;
-  catCount: number;
-  cats: Array<{
-    id: string;
-    name: string;
-    species: string;
-    breed: string | null;
-    sex: string;
-    isDeceased: boolean;
-  }>;
 }
 
 interface StoredStaffAccount {
@@ -170,14 +161,14 @@ function seedPreferences() {
   return [
     {
       channel: 'SMS',
-      category: 'Appointments',
+      category: 'Orders',
       isGranted: true,
       isEditable: false,
       isAlwaysOn: true,
     },
     {
       channel: 'Email',
-      category: 'Appointments',
+      category: 'Orders',
       isGranted: true,
       isEditable: false,
       isAlwaysOn: true,
@@ -216,17 +207,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 1,
-    cats: [
-      {
-        id: 'f0000000-0000-0000-0000-000000000001',
-        name: 'Momo',
-        species: 'Cat',
-        breed: null,
-        sex: 'Female',
-        isDeceased: false,
-      },
-    ],
   });
 
   const dupMobileNoEmailId = crypto.randomUUID();
@@ -244,8 +224,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   const dupMobileWithEmailId = crypto.randomUUID();
@@ -263,8 +241,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   const dupEmailOnlyId = crypto.randomUUID();
@@ -282,8 +258,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   const otherActiveCustomerId = crypto.randomUUID();
@@ -301,8 +275,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   // Walk-in duplicate fixtures: one hit only as a PRIMARY number, one only as an ADDITIONAL number
@@ -322,8 +294,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
   const additionalOnlyMatchId = crypto.randomUUID();
   customers.set(additionalOnlyMatchId, {
@@ -340,11 +310,9 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
-  // Duplicates report fixture: two members sharing a mobile number, one with a deceased cat.
+  // Duplicates report fixture: two members sharing a mobile number.
   customers.set(accountsFixtureIds.duplicateGroupCustomerA, {
     id: accountsFixtureIds.duplicateGroupCustomerA,
     fullName: 'Duplicate Alpha',
@@ -359,17 +327,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 1,
-    cats: [
-      {
-        id: accountsFixtureIds.duplicateCatDeceased,
-        name: 'Late Cat',
-        species: 'Cat',
-        breed: null,
-        sex: 'Male',
-        isDeceased: true,
-      },
-    ],
   });
   customers.set(accountsFixtureIds.duplicateGroupCustomerB, {
     id: accountsFixtureIds.duplicateGroupCustomerB,
@@ -385,17 +342,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 1,
-    cats: [
-      {
-        id: 'e0000000-0000-0000-0000-000000000002',
-        name: 'Live Cat',
-        species: 'Cat',
-        breed: null,
-        sex: 'Female',
-        isDeceased: false,
-      },
-    ],
   });
 
   // Merge-outcome fixtures.
@@ -413,8 +359,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: accountsFixtureIds.duplicateGroupCustomerA,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
   customers.set(accountsFixtureIds.mergeNotDuplicatesId, {
     id: accountsFixtureIds.mergeNotDuplicatesId,
@@ -430,8 +374,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
   customers.set(accountsFixtureIds.merge5xxId, {
     id: accountsFixtureIds.merge5xxId,
@@ -447,8 +389,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   return customers;
@@ -464,13 +404,13 @@ function seedStaffAccounts(): Map<string, StoredStaffAccount> {
     password: hashPassword(accountsFixtureIds.adminPassword),
     roleIds: ['Administrator'],
   });
-  staff.set(accountsFixtureIds.nurseStaffId, {
-    id: accountsFixtureIds.nurseStaffId,
-    fullName: 'Nadia Nurse',
+  staff.set(accountsFixtureIds.stockStaffId, {
+    id: accountsFixtureIds.stockStaffId,
+    fullName: 'Nadia Karim',
     mobileNumber: null,
-    emailAddress: accountsFixtureIds.nurseIdentifier,
-    password: hashPassword(accountsFixtureIds.nursePassword),
-    roleIds: ['Nurse'],
+    emailAddress: accountsFixtureIds.stockIdentifier,
+    password: hashPassword(accountsFixtureIds.stockPassword),
+    roleIds: ['Inventory'],
   });
   staff.set(accountsFixtureIds.noPasswordStaffId, {
     id: accountsFixtureIds.noPasswordStaffId,
@@ -751,7 +691,7 @@ function preferencesBody(customer: StoredCustomer) {
 /**
  * HO-NTF-002 mock hooks (additive, read-only for the rest of this file). The notifications mock
  * (`mocks/handlers/notifications/**`) needs two facts this module owns: which roles a staff cookie
- * carries (so `NotificationLog.*` can answer 403 for a nurse, E-E2) and a way to flip the seeded
+ * carries (so `NotificationLog.*` can answer 403 for an inventory clerk, E-E2) and a way to flip the seeded
  * customer's marketing consent when an unsubscribe link is used (E-D1). Returns `null` when the
  * request carries no staff session at all, which the notifications mock treats as "not modelled".
  */
@@ -853,13 +793,8 @@ function staffStatusBody(session: StaffSessionRecord, staff: StoredStaffAccount)
 }
 
 const ROLE_CATALOGUE = {
-  roleIds: ['Administrator', 'Reception', 'Nurse', 'Vet'],
-  capabilities: [
-    'Manage staff accounts',
-    'Register customers',
-    'View clinical records',
-    'Merge duplicate customers',
-  ],
+  roleIds: ['Administrator', 'Reception', 'Inventory'],
+  capabilities: ['Manage staff accounts', 'Register customers', 'Merge duplicate customers'],
   cells: [
     {
       capability: 'Manage staff accounts',
@@ -868,21 +803,10 @@ const ROLE_CATALOGUE = {
       qualifier: null,
     },
     { capability: 'Manage staff accounts', roleId: 'Reception', access: 'None', qualifier: null },
-    { capability: 'Manage staff accounts', roleId: 'Nurse', access: 'None', qualifier: null },
-    { capability: 'Manage staff accounts', roleId: 'Vet', access: 'None', qualifier: null },
+    { capability: 'Manage staff accounts', roleId: 'Inventory', access: 'None', qualifier: null },
     { capability: 'Register customers', roleId: 'Administrator', access: 'Full', qualifier: null },
     { capability: 'Register customers', roleId: 'Reception', access: 'Full', qualifier: null },
-    { capability: 'Register customers', roleId: 'Nurse', access: 'None', qualifier: null },
-    { capability: 'Register customers', roleId: 'Vet', access: 'None', qualifier: null },
-    {
-      capability: 'View clinical records',
-      roleId: 'Administrator',
-      access: 'Full',
-      qualifier: null,
-    },
-    { capability: 'View clinical records', roleId: 'Reception', access: 'None', qualifier: null },
-    { capability: 'View clinical records', roleId: 'Nurse', access: 'Full', qualifier: null },
-    { capability: 'View clinical records', roleId: 'Vet', access: 'Full', qualifier: null },
+    { capability: 'Register customers', roleId: 'Inventory', access: 'None', qualifier: null },
     {
       capability: 'Merge duplicate customers',
       roleId: 'Administrator',
@@ -895,8 +819,12 @@ const ROLE_CATALOGUE = {
       access: 'None',
       qualifier: null,
     },
-    { capability: 'Merge duplicate customers', roleId: 'Nurse', access: 'None', qualifier: null },
-    { capability: 'Merge duplicate customers', roleId: 'Vet', access: 'None', qualifier: null },
+    {
+      capability: 'Merge duplicate customers',
+      roleId: 'Inventory',
+      access: 'None',
+      qualifier: null,
+    },
   ],
 };
 
@@ -906,7 +834,7 @@ const ACTION_ROLES: Record<string, string[]> = {
   'StaffAccounts.ChangeRoles': ['Administrator'],
   'StaffAccounts.SetPassword': ['Administrator'],
   'StaffAccounts.UpdateDetails': ['Administrator'],
-  'Customers.View': ['Reception', 'Nurse', 'Vet', 'Administrator'],
+  'Customers.View': ['Reception', 'Administrator'],
   'Customers.RegisterWalkIn': ['Reception', 'Administrator'],
   'Customers.Merge': ['Administrator'],
 };
@@ -1037,8 +965,6 @@ export const accountsHandlers: HttpHandler[] = [
       mergedIntoCustomerId: null,
       addresses: [],
       preferences: seedPreferences(),
-      catCount: 0,
-      cats: [],
     });
     persistMockState();
     return HttpResponse.json({ customerId: id }, { status: 201 });
@@ -1379,13 +1305,6 @@ export const accountsHandlers: HttpHandler[] = [
         },
         addresses: customer.addresses,
         notificationPreferences: customer.preferences,
-        cats: customer.cats.map((c) => ({
-          id: c.id,
-          name: c.name,
-          species: c.species,
-          breed: c.breed,
-          sex: c.sex,
-        })),
       },
       {
         headers: {
@@ -1692,8 +1611,6 @@ export const accountsHandlers: HttpHandler[] = [
       mergedIntoCustomerId: null,
       addresses: [],
       preferences: seedPreferences(),
-      catCount: 0,
-      cats: [],
     });
     persistMockState();
     return HttpResponse.json({ customerId: id }, { status: 201 });
@@ -1750,7 +1667,6 @@ export const accountsHandlers: HttpHandler[] = [
       fullName: c.fullName,
       mobileNumber: c.mobileNumber,
       emailAddress: c.emailAddress,
-      cats: c.cats.map((cat) => ({ catId: cat.id, name: cat.name, isDeceased: cat.isDeceased })),
       mobileMatchedOn: 'Primary' as const,
       recordStatus: c.password ? ('Complete' as const) : ('Incomplete' as const),
       registrationChannel: c.registrationChannel,
@@ -1776,14 +1692,6 @@ export const accountsHandlers: HttpHandler[] = [
       emailAddress: customer.emailAddress,
       recordStatus: customer.password ? 'Complete' : 'Incomplete',
       registrationChannel: customer.registrationChannel,
-      catCount: customer.catCount,
-      // CR MEDIUM 2 (first-pass gate fix round, item 13) — the actual per-cat list, matching
-      // GetStaffCustomerQueryHandler's own extension; always in sync with catCount above.
-      cats: customer.cats.map((cat) => ({
-        catId: cat.id,
-        name: cat.name,
-        isDeceased: cat.isDeceased,
-      })),
       status: customer.status,
       mergedIntoCustomerId: customer.mergedIntoCustomerId,
     });
@@ -1829,10 +1737,6 @@ export const accountsHandlers: HttpHandler[] = [
     const alreadyApplied = duplicate.mergedIntoCustomerId === body.survivingCustomerId;
     duplicate.status = 'Merged';
     duplicate.mergedIntoCustomerId = body.survivingCustomerId;
-    survivor.cats.push(...duplicate.cats);
-    survivor.catCount += duplicate.cats.length;
-    duplicate.cats = [];
-    duplicate.catCount = 0;
     persistMockState();
 
     return HttpResponse.json({

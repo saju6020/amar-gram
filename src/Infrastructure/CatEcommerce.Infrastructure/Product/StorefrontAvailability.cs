@@ -76,7 +76,7 @@ public static class StorefrontAvailability
             || (e.Kind == KindBundle && bundleIds.Contains(e.ProductId)));
     }
 
-    /// <summary>Which of the given bundle products are sellable right now (own SKU on sale, no prescription component, every component
+    /// <summary>Which of the given bundle products are sellable right now (own SKU on sale, every component
     /// covered), settled through <see cref="SkuSellability.AvailabilityAsync"/>. <paramref name="candidateBundleProductIds"/> is a
     /// subquery of the bundles that passed the catalogue's other filters, so the per-SKU check never covers more bundles than the request needs.</summary>
     public static async Task<List<Guid>> SellableBundleProductIdsAsync(

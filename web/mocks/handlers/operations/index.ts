@@ -183,8 +183,6 @@ export const operationsAreaHandlers: HttpHandler[] = [
       emailAddress: null,
       recordStatus: 'Complete',
       registrationChannel: 'SelfService',
-      catCount: 0,
-      cats: [],
       status: 'Anonymised',
       mergedIntoCustomerId: null,
     });

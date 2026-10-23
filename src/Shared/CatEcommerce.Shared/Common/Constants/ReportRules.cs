@@ -22,16 +22,13 @@ public static class ReportRules
     /// <summary>The access action that opens a report of <paramref name="category"/> (section 8.8).</summary>
     public static string ActionFor(ReportCategory category)
     {
-        if (category == ReportCategory.ClinicOperations) return Actions.Reports.ClinicOperationsView;
-        if (category == ReportCategory.Clinical) return Actions.Reports.ClinicalView;
-        if (category == ReportCategory.Boarding) return Actions.Reports.BoardingView;
         if (category == ReportCategory.Stock) return Actions.Reports.StockView;
         if (category == ReportCategory.Sales) return Actions.Reports.SalesView;
         if (category == ReportCategory.Financial) return Actions.Reports.FinancialView;
         return Actions.Reports.GrowthView;
     }
 
-    /// <summary>The pattern of a report key: lowercase words joined by hyphens, e.g. <c>clinic-daily-schedule</c>.</summary>
+    /// <summary>The pattern of a report key: lowercase words joined by hyphens, e.g. <c>stock-near-expiry</c>.</summary>
     public static readonly Regex KeyPattern = new("^[a-z]+(-[a-z0-9]+)+$", RegexOptions.Compiled);
 
     /// <summary>The audit entry written for every export (never row data).</summary>

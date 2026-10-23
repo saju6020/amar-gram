@@ -28,7 +28,7 @@ export interface ScheduleChangeDialogProps {
   onSchedule: (value: string, effectiveFromIso: string) => Promise<unknown>;
   /**
    * The sentence under the title saying what scheduling changes, given the effective date as text.
-   * Defaults to the clinic wording (bookings and invoices); the shop passes its own (S16).
+   * Defaults to the generic wording (orders and invoices); the shop passes its own (S16).
    */
   consequence?: (effectiveDateLabel: string) => string;
   /** An area's own fallback sentences by error code; none by default. */
@@ -41,7 +41,7 @@ export function ScheduleChangeDialog({
   title,
   valueLabel,
   onSchedule,
-  consequence = (date) => `Bookings and invoices made before ${date} keep their price.`,
+  consequence = (date) => `Orders and invoices made before ${date} keep their price.`,
   codeMessages,
 }: ScheduleChangeDialogProps) {
   const [value, setValue] = useState('');

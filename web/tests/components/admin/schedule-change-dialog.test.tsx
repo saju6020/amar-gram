@@ -45,7 +45,7 @@ describe('ScheduleChangeDialog — HO-ADM-002 §11.3, ADR-FE-019', () => {
     );
 
     await user.type(screen.getByLabelText(/amount \(bdt\)/i), '1999.99');
-    expect(screen.getByText(/bookings and invoices made before/i)).toBeInTheDocument();
+    expect(screen.getByText(/orders and invoices made before/i)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /^schedule$/i }));
 
     expect(onSchedule).toHaveBeenCalledTimes(1);
@@ -83,9 +83,9 @@ describe('ScheduleChangeDialog — HO-ADM-002 §11.3, ADR-FE-019', () => {
 describe('ScheduleChangeDialog consequence sentence — S16', () => {
   const base = { open: true, onOpenChange: () => {}, valueLabel: 'Amount', onSchedule: vi.fn() };
 
-  it('keeps the clinic wording by default', () => {
+  it('keeps the generic wording by default', () => {
     render(<ScheduleChangeDialog {...base} title="Schedule a new price" />);
-    expect(screen.getByText(/Bookings and invoices made before/)).toBeInTheDocument();
+    expect(screen.getByText(/Orders and invoices made before/)).toBeInTheDocument();
   });
 
   it("shows the caller's sentence instead, given the effective date", () => {
@@ -96,7 +96,7 @@ describe('ScheduleChangeDialog consequence sentence — S16', () => {
         consequence={(date) => `Shop orders before ${date} keep their price.`}
       />,
     );
-    expect(screen.queryByText(/Bookings and invoices/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Orders and invoices/)).not.toBeInTheDocument();
     expect(screen.getByText(/^Shop orders before .+ keep their price\.$/)).toBeInTheDocument();
   });
 });

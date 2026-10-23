@@ -170,7 +170,7 @@ public static partial class NotificationTemplateCatalogue
             [OrderText("orderNumber", "The order number.", "ORD-2026-000123"), OrderLinkVariable()],
             "Order {{orderNumber}} has been delivered. Thank you! {{orderLink}}",
             "Order {{orderNumber}} has been delivered",
-            "Hello {{recipientName}},\n\nOrder {{orderNumber}} has been delivered. Thank you for shopping with {{clinicName}}. [View your order]({{orderLink}}).",
+            "Hello {{recipientName}},\n\nOrder {{orderNumber}} has been delivered. Thank you for shopping with {{outletName}}. [View your order]({{orderLink}}).",
             "Order delivered",
             "Order {{orderNumber}} has been delivered. Thank you!"),
 
@@ -178,11 +178,11 @@ public static partial class NotificationTemplateCatalogue
             OrderDeliveryFailed, "Delivery unsuccessful", "Sent when a parcel could not be delivered or a pickup was not collected (HO-ORD-001 §8.12).",
             NotificationUrgency.Normal,
             [OrderText("orderNumber", "The order number.", "ORD-2026-000123"), OrderLinkVariable()],
-            "We could not complete order {{orderNumber}}. Please call {{clinicPhone}}. {{orderLink}}",
+            "We could not complete order {{orderNumber}}. Please call {{outletPhone}}. {{orderLink}}",
             "Order {{orderNumber}} could not be completed",
-            "Hello {{recipientName}},\n\nWe could not complete order {{orderNumber}}. Please call {{clinicName}} on {{clinicPhone}}. [View your order]({{orderLink}}).",
+            "Hello {{recipientName}},\n\nWe could not complete order {{orderNumber}}. Please call {{outletName}} on {{outletPhone}}. [View your order]({{orderLink}}).",
             "Delivery unsuccessful",
-            "We could not complete order {{orderNumber}}. Please call {{clinicPhone}}."),
+            "We could not complete order {{orderNumber}}. Please call {{outletPhone}}."),
 
         OrderTemplate(
             OrderReturnDecided, "Return decided", "Sent when staff approve or reject a return request (HO-ORD-001 §8.12).",

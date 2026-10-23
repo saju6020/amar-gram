@@ -6,8 +6,8 @@ namespace CatEcommerce.Domain.DomainServices;
 
 /// <summary>
 /// HO-ADM-001 §8.5 / ADR-047. Pure function over pre-loaded roster, exceptions, approved leave and
-/// the branch's open intervals (from <see cref="BranchCalendar"/>) -- no I/O, so Appointments and
-/// Boarding can generate slots, and this can be tested, without a database. <paramref
+/// the branch's open intervals (from <see cref="BranchCalendar"/>) -- no I/O, so this can be
+/// tested without a database. <paramref
 /// name="timeZoneId"/> is the branch's own -- the inferred parameter this pure function needs to
 /// convert a shift's local <c>TimeOnly</c> into an instant (§20.7); not named as such in the prose
 /// signature but required by rule 1.
@@ -40,7 +40,7 @@ public static class StaffAvailability
 
             var daySlots = pattern
                 .Where(s => s.DayOfWeek == date.DayOfWeek)
-                .Select(s => (Starts: s.Starts, Ends: s.Ends, RoomId: s.DefaultRoomId))
+                .Select(s => (Starts: s.Starts, Ends: s.Ends))
                 .ToList();
 
             // Rule 4: ExtraShift adds; ShiftCancelled subtracts.
@@ -48,7 +48,7 @@ public static class StaffAvailability
             {
                 if (exception.Kind == RosterExceptionKind.ExtraShift)
                 {
-                    daySlots.Add((exception.Starts, exception.Ends, null));
+                    daySlots.Add((exception.Starts, exception.Ends));
                 }
                 else
                 {
@@ -70,13 +70,13 @@ public static class StaffAvailability
                         var overlapStart = instantStart > open.Start ? instantStart : open.Start;
                         var overlapEnd = instantEnd < open.End ? instantEnd : open.End;
                         if (overlapStart < overlapEnd)
-                            results.Add(new StaffAvailableInterval(roster.StaffAccountId, roster.BranchId, overlapStart, overlapEnd, slot.RoomId, false));
+                            results.Add(new StaffAvailableInterval(roster.StaffAccountId, roster.BranchId, overlapStart, overlapEnd, false));
                     }
                 }
                 else
                 {
                     var outsideOpeningHours = !branchOpenIntervals.Any(open => open.Start < instantEnd && instantStart < open.End);
-                    results.Add(new StaffAvailableInterval(roster.StaffAccountId, roster.BranchId, instantStart, instantEnd, slot.RoomId, outsideOpeningHours));
+                    results.Add(new StaffAvailableInterval(roster.StaffAccountId, roster.BranchId, instantStart, instantEnd, outsideOpeningHours));
                 }
             }
         }
@@ -84,8 +84,8 @@ public static class StaffAvailability
         return Merge(results);
     }
 
-    private static IEnumerable<(TimeOnly Starts, TimeOnly Ends, Guid? RoomId)> Subtract(
-        (TimeOnly Starts, TimeOnly Ends, Guid? RoomId) slot, TimeOnly cutFrom, TimeOnly cutTo)
+    private static IEnumerable<(TimeOnly Starts, TimeOnly Ends)> Subtract(
+        (TimeOnly Starts, TimeOnly Ends) slot, TimeOnly cutFrom, TimeOnly cutTo)
     {
         var overlapStart = slot.Starts > cutFrom ? slot.Starts : cutFrom;
         var overlapEnd = slot.Ends < cutTo ? slot.Ends : cutTo;
@@ -96,8 +96,8 @@ public static class StaffAvailability
             yield break;
         }
 
-        if (slot.Starts < overlapStart) yield return (slot.Starts, overlapStart, slot.RoomId);
-        if (overlapEnd < slot.Ends) yield return (overlapEnd, slot.Ends, slot.RoomId);
+        if (slot.Starts < overlapStart) yield return (slot.Starts, overlapStart);
+        if (overlapEnd < slot.Ends) yield return (overlapEnd, slot.Ends);
     }
 
     private static IReadOnlyList<StaffAvailableInterval> Merge(List<StaffAvailableInterval> intervals)
@@ -110,7 +110,7 @@ public static class StaffAvailability
         foreach (var next in ordered.Skip(1))
         {
             var last = merged[^1];
-            if (next.Start <= last.End && next.OutsideOpeningHours == last.OutsideOpeningHours && next.DefaultRoomId == last.DefaultRoomId)
+            if (next.Start <= last.End && next.OutsideOpeningHours == last.OutsideOpeningHours)
             {
                 if (next.End > last.End) merged[^1] = last with { End = next.End };
             }

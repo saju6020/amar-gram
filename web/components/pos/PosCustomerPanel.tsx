@@ -8,8 +8,7 @@ import type { PosCustomer } from './types';
 /**
  * `components/pos/PosCustomerPanel.tsx` — HO-ORD-002 §11.11, OQ-5, Amended (2) / ADR-216. A counter sale
  * needs the buyer's **name and mobile number** (the person is found by mobile or created). **Find an
- * existing customer** looks the mobile up and attaches the match, which a prescription line needs (the
- * customer must own the cat). Errors from the server for either field arrive on the screen's message.
+ * existing customer** looks the mobile up and attaches the match. Errors from the server for either field arrive on the screen's message.
  */
 export function PosCustomerPanel({
   customer,
@@ -23,7 +22,7 @@ export function PosCustomerPanel({
   const lookup = usePosCustomerLookup();
   const field = 'w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
   return (
-    <Section title="Customer" description="Needed for every sale. Attach an existing customer for prescription food.">
+    <Section title="Customer" description="Needed for every sale.">
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1">
           <label htmlFor="pos-cust-name" className="text-sm font-semibold">Customer name <span aria-hidden="true">*</span></label>

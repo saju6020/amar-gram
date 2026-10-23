@@ -10,15 +10,12 @@ public sealed class InMemoryBillableChargeRecorderTests
     private static ChargeRequestDto NewRequest(Guid sourceId) => new(
         CustomerId: Guid.NewGuid(),
         BranchId: Guid.NewGuid(),
-        CatId: null,
-        BusinessLine: BusinessLine.Clinic,
-        ItemKind: ItemKind.Service,
-        SourceKind: ChargeSourceKind.Appointment,
+        BusinessLine: BusinessLine.Shop,
+        ItemKind: ItemKind.Product,
+        SourceKind: ChargeSourceKind.Order,
         SourceId: sourceId,
         SourceLineRef: "main",
-        BillingGroupKind: null,
-        BillingGroupId: null,
-        Description: "Consultation",
+        Description: "Organic honey",
         Quantity: 1m,
         UnitPrice: new Money(500m, "BDT"),
         LineDiscount: Money.Zero("BDT"),
@@ -44,7 +41,7 @@ public sealed class InMemoryBillableChargeRecorderTests
         var sourceId = Guid.NewGuid();
 
         var first = await sut.RecordAsync(NewRequest(sourceId));
-        await sut.VoidAsync(new ChargeSourceKey(ChargeSourceKind.Appointment, sourceId), "cancelled");
+        await sut.VoidAsync(new ChargeSourceKey(ChargeSourceKind.Order, sourceId), "cancelled");
         var second = await sut.RecordAsync(NewRequest(sourceId));
 
         Assert.NotEqual(first, second);

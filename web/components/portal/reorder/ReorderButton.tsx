@@ -11,7 +11,7 @@ import { ReorderResultDialog } from './ReorderResultDialog';
  * `components/portal/reorder/ReorderButton.tsx` — HO-POR-002 U-B1, U-B7. One click, one request, a
  * result dialog. Whether the order may be re-ordered is the SERVER's flag (`canReorder` on the
  * order item, Orders' own `CustomerOrderRules.CanReorder`); this component adds no eligibility,
- * stock or prescription logic (ADR-FE-123, section 20.7).
+ * or stock logic (ADR-FE-123, section 20.7).
  *
  * While busy the button is `aria-disabled`, not `disabled`, so keyboard focus stays on it and the
  * dialog can return focus there; a ref guards the double click that lands before React re-renders.

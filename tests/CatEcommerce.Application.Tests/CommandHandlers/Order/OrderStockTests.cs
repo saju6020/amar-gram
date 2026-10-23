@@ -15,7 +15,7 @@ namespace CatEcommerce.Application.Tests.CommandHandlers.Order;
 
 /// <summary>
 /// HO-ORD-001 §8.9 (ADR-208), U-D11 -- Ordering's whole relationship with stock: every <c>IStockLedger</c> call carries the reference
-/// (<c>CustomerOrder</c>, order, line) and the party (customer, cat) that Inventory's recall trace reads back (US-IMP-11 AC2); demands go out in SKU
+/// (<c>CustomerOrder</c>, order, line) and the party (customer) that Inventory's recall trace reads back (US-IMP-11 AC2); demands go out in SKU
 /// order; a repeated SKU flushes between plans; Ordering never chooses a batch (it only records what the ledger returned).
 /// </summary>
 public sealed class OrderStockTests
@@ -47,10 +47,7 @@ public sealed class OrderStockTests
         public Task<StockResult<IReadOnlyList<BatchUsability>>> GetBatchUsabilityAsync(Guid branchId, IReadOnlyCollection<Guid> batchIds, CancellationToken ct) =>
             Task.FromResult(StockResult<IReadOnlyList<BatchUsability>>.Success(Usability(batchIds)));
         public void RecordShortfall(StockShortfall shortfall) => throw new NotSupportedException();
-        public Task<StockResult<IReadOnlyList<StockMovementLine>>> AdjustAsync(StockAdjustment adjustment, StockReference reference, StockParty party, CancellationToken ct) => throw new NotSupportedException();
         public Task<StockResult<IReadOnlyList<BatchBalance>>> GetBranchBalancesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct) => throw new NotSupportedException();
-        public Task<StockResult<IReadOnlyList<DispensaryBatch>>> GetDispensaryBatchesAsync(Guid branchId, IReadOnlyCollection<Guid> skuIds, CancellationToken ct) => throw new NotSupportedException();
-        public Task<StockResult<DispensaryLocation>> GetClinicDispensaryAsync(Guid branchId, CancellationToken ct) => throw new NotSupportedException();
     }
 
     private sealed class RecordingScope : ITransactionalScope
@@ -62,8 +59,8 @@ public sealed class OrderStockTests
 
     private static readonly UserContext Customer = new(Guid.NewGuid(), Guid.NewGuid()) { Roles = ["Customer"] };
 
-    private static OrderLineDto Line(int number, Guid skuId, int quantity, Guid? catId = null, bool bundle = false, IReadOnlyList<OrderLineComponent>? components = null, string name = "Product") =>
-        new(Guid.NewGuid(), number, skuId, Guid.NewGuid(), name, name, null, ProductReturnClass.Other, bundle, catId, quantity, 100m, 100m * quantity, 0m, 0m, Guid.NewGuid(), 0m, 0m, 100m * quantity, components ?? []);
+    private static OrderLineDto Line(int number, Guid skuId, int quantity, bool bundle = false, IReadOnlyList<OrderLineComponent>? components = null, string name = "Product") =>
+        new(Guid.NewGuid(), number, skuId, Guid.NewGuid(), name, name, null, ProductReturnClass.Other, bundle, quantity, 100m, 100m * quantity, 0m, 0m, Guid.NewGuid(), 0m, 0m, 100m * quantity, components ?? []);
 
     private static OrderAggregate Order(params OrderLineDto[] lines)
     {
@@ -79,8 +76,7 @@ public sealed class OrderStockTests
     [Fact]
     public async Task U_D11_EveryReserveCall_CarriesTheOrderReferenceAndThePartyStamp()
     {
-        var cat = Guid.NewGuid();
-        var order = Order(Line(1, Guid.NewGuid(), 2, cat), Line(2, Guid.NewGuid(), 1));
+        var order = Order(Line(1, Guid.NewGuid(), 2), Line(2, Guid.NewGuid(), 1));
         var ledger = new RecordingLedger();
 
         var outcome = await OrderStock.ReserveAsync(ledger, new RecordingScope(), order);
@@ -93,7 +89,6 @@ public sealed class OrderStockTests
             Assert.Equal(StockReferenceKind.CustomerOrder, reference.ReferenceKind);
             Assert.Equal(order.Id, reference.ReferenceId);
             Assert.Equal(Customer.UserId, party.CustomerId);
-            Assert.Equal(line.CatId, party.CatId);
             Assert.Equal(MovementKind.Sale, demand.Purpose);
             Assert.Equal(order.BranchId, demand.BranchId);
             Assert.Equal(line.Quantity, demand.Quantity);
@@ -138,7 +133,7 @@ public sealed class OrderStockTests
     public async Task TwoLinesOfOneSku_FlushBetweenThePlans_SoTheSecondPlanSeesTheFirst()
     {
         var sku = Guid.NewGuid();
-        var order = Order(Line(1, sku, 1, Guid.NewGuid()), Line(2, sku, 1, Guid.NewGuid()));
+        var order = Order(Line(1, sku, 1), Line(2, sku, 1));
         var scope = new RecordingScope();
 
         await OrderStock.ReserveAsync(new RecordingLedger(), scope, order);
@@ -149,14 +144,14 @@ public sealed class OrderStockTests
     [Fact]
     public async Task InsufficientStock_IsStockNoLongerAvailable_NamingTheProduct()
     {
-        var order = Order(Line(1, Guid.NewGuid(), 1, name: "Royal Canin Kitten 2 kg"));
+        var order = Order(Line(1, Guid.NewGuid(), 1, name: "Organic Rice 2 kg"));
         var ledger = new RecordingLedger(_ => StockResult<StockPlan>.Failure(BusinessViolationCodes.InsufficientStock, "Not enough stock.", "Quantity"));
 
         var outcome = await OrderStock.ReserveAsync(ledger, new RecordingScope(), order);
 
         Assert.False(outcome.IsSuccess);
         Assert.Equal(BusinessViolationCodes.StockNoLongerAvailable, outcome.ViolationCode);
-        Assert.Contains("Royal Canin Kitten 2 kg", outcome.Message);
+        Assert.Contains("Organic Rice 2 kg", outcome.Message);
     }
 
     [Fact]
@@ -187,7 +182,7 @@ public sealed class OrderStockTests
     private static (OrderAggregate Order, Guid LineId, Guid Sku, Guid Batch) AllocatedOrder()
     {
         var sku = Guid.NewGuid();
-        var order = Order(Line(1, sku, 2, name: "Royal Canin Kitten 2 kg"));
+        var order = Order(Line(1, sku, 2, name: "Organic Rice 2 kg"));
         var line = order.Lines[0];
         var batch = Guid.NewGuid();
         order.RecordAllocations([new AllocationDto(line.Id, sku, batch, "LOT-1", Guid.NewGuid(), 2m, null)]);
@@ -204,7 +199,7 @@ public sealed class OrderStockTests
 
         Assert.NotNull(refusal);
         Assert.Equal(BusinessViolationCodes.BatchRecalled, refusal!.ValidationResult!.Errors.Single().ErrorCode);
-        Assert.Contains("Royal Canin Kitten 2 kg", refusal.ValidationResult.Errors.Single().ErrorMessage);
+        Assert.Contains("Organic Rice 2 kg", refusal.ValidationResult.Errors.Single().ErrorMessage);
         Assert.NotEqual(Guid.Empty, batch);
     }
 

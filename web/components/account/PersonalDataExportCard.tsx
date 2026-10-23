@@ -45,8 +45,7 @@ export function PersonalDataExportCard({ onExport, isPending }: PersonalDataExpo
       <div>
         <h2 className="font-display text-lg font-semibold text-ink">Your data</h2>
         <p className="mt-1 text-sm text-ink-muted">
-          Download a copy of your profile, addresses, notification preferences and your cats&rsquo;
-          basic details, as a JSON file.
+          Download a copy of your profile, addresses and notification preferences, as a JSON file.
         </p>
       </div>
       {error && (

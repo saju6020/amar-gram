@@ -143,7 +143,6 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<OrderAggregate
             line.Property(l => l.Barcode).HasColumnName("barcode").HasMaxLength(32);
             line.Property(l => l.ReturnClass).HasEnumeration("return_class");
             line.Property(l => l.IsBundle).HasColumnName("is_bundle").IsRequired();
-            line.Property(l => l.CatId).HasColumnName("cat_id");
             line.Property(l => l.Quantity).HasColumnName("quantity").IsRequired();
             line.Property(l => l.UnitPrice).HasMoney("unit_price").IsRequired();
             line.Property(l => l.LineSubtotal).HasMoney("line_subtotal").IsRequired();

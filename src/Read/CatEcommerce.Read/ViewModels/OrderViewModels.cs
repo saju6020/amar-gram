@@ -10,7 +10,7 @@ public sealed record CustomerOrderSummaryViewModel(
     string? TrackingNumber, bool CanReorder);
 
 public sealed record OrderLineViewModel(
-    Guid LineId, int LineNumber, Guid SkuId, string ProductName, string VariantLabel, CartCatViewModel? Cat, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineSubtotal,
+    Guid LineId, int LineNumber, Guid SkuId, string ProductName, string VariantLabel, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineSubtotal,
     MoneyViewModel LineDiscount, MoneyViewModel OrderDiscountShare, decimal TaxRatePercent, MoneyViewModel TaxAmount, MoneyViewModel LineTotal,
     string? ImagePath = null);
 

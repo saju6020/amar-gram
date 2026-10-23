@@ -11,7 +11,7 @@ export interface HearthAuthReason {
 }
 
 export interface HearthAuthShellProps {
-  /** Small uppercase line above the headline ("Clinic · Boarding · Shop", "New here", …). */
+  /** Small uppercase line above the headline ("Fresh · Organic · Local", "New here", …). */
   eyebrow: string;
   /** The plain words of the headline, then the italic warm-ink word, then the full stop. */
   headline: string;

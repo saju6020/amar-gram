@@ -154,18 +154,6 @@ public sealed class OrderingConventionTests
         Assert.Equal(expectedRoles.OrderBy(r => r), roles.OrderBy(r => r));
     }
 
-    [Fact]
-    public void ANurse_HoldsNoOrderingAction()
-    {
-        // I-X4 at the table level: the nurse is none of the roles Appendix D gives orders.
-        var ordering = ActionRoles.BuildTable(typeof(ActionRoles)).Where(a => a.Key.StartsWith("Orders.") || a.Key.StartsWith("Returns.") || a.Key.StartsWith("Pos.")
-            || a.Key.StartsWith("DeliveryZones.") || a.Key.StartsWith("Couriers.") || a.Key.StartsWith("Discounts."));
-
-        Assert.All(ordering, a => Assert.DoesNotContain("Nurse", a.Value));
-        Assert.All(ordering, a => Assert.DoesNotContain("Vet", a.Value));
-        Assert.All(ordering, a => Assert.DoesNotContain("Caretaker", a.Value));
-    }
-
     // ── C-5: no card, wallet or token ───────────────────────────────────────────────────────────────
     [Fact]
     public void ThereIsNoGatewayCardWalletOrTokenType_OrMember_InTheOrderingDomain()
@@ -204,7 +192,7 @@ public sealed class OrderingConventionTests
         Has<ItemCondition>("Sealed", "Opened", "Used");
         Has<DiscountKind>("Percentage", "FixedAmount");
         Has<DiscountScope>("Order", "Products", "Categories");
-        Has<CheckoutChangeKind>("PriceIncreased", "PriceDecreased", "QuantityReduced", "NowUnavailable", "PrescriptionAuthorisationExpired", "PrescriptionCatRequired");
+        Has<CheckoutChangeKind>("PriceIncreased", "PriceDecreased", "QuantityReduced", "NowUnavailable");
         Has<ReconciliationIssueKind>("TransferConfirmationFailed", "PaymentApprovalFailed", "DeliveryPaymentFailed", "CounterSaleFailed", "RefundFailed");
         Has<ReconciliationIssueStatus>("Open", "Resolved");
     }
@@ -243,8 +231,8 @@ public sealed class OrderingConventionTests
     {
         string[] required =
         [
-            "CartNotFound", "CartFull", "CartLineNotFound", "DuplicateCartLine", "SkuNotPurchasable", "SkuUnavailable", "QuantityOutOfRange",
-            "PrescriptionCatRequired", "PrescriptionNotAuthorised", "CatNotOwnedByCaller", "CheckoutQuoteChanged", "CartEmpty", "NothingToPlace",
+            "CartNotFound", "CartFull", "CartLineNotFound", "SkuNotPurchasable", "SkuUnavailable", "QuantityOutOfRange",
+            "CheckoutQuoteChanged", "CartEmpty", "NothingToPlace",
             "PolicyAcceptanceRequired", "DeliveryAddressNotFound", "AddressOutsideServedZones", "ServiceLevelUnavailable", "DeliverySlotUnavailable",
             "PickupBranchUnavailable", "PaymentMethodUnavailable", "RecipientPhoneRequired", "StockNoLongerAvailable", "DuplicateSubmission",
             "IdempotencyKeyRequired", "IdempotencyKeyReused", "RequestInProgress", "DiscountCodeNotFound", "DiscountCodeInactive",

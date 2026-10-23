@@ -1,6 +1,6 @@
 namespace CatEcommerce.Shared.Common.Enums;
 
-/// <summary>HO-RPT-001 section 10.1, plus Next30Days and Next90Days for the forward windows of the vaccination due list and the near-expiry report (HO-RPT-001 section 1 Amended, 2026-10-13).</summary>
+/// <summary>HO-RPT-001 section 10.1, plus Next30Days and Next90Days for the forward window of the near-expiry report (HO-RPT-001 section 1 Amended, 2026-10-13).</summary>
 public sealed class ReportRelativePeriod(int value, string displayName) : Enumeration(value, displayName)
 {
     public static readonly ReportRelativePeriod Today = new(1, nameof(Today));

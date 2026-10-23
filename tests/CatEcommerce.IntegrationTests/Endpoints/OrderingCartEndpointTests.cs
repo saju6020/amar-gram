@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.Models;
 using CatEcommerce.Domain.ValueObjects;
 using CatEcommerce.Shared.Common.Enums;
@@ -15,15 +14,15 @@ namespace CatEcommerce.IntegrationTests;
 
 /// <summary>
 /// HO-ORD-001 Phase C -- the cart through real HTTP: I-C1 (guest cart and its cookie), I-C2 (merge on sign-in), I-C3 (the same cart on another
-/// device), I-C4 (prescription lines and their cat; the authorised-cat case runs against the real PHM gate), I-C5 (out of stock).
+/// device), I-C5 (out of stock).
 /// </summary>
 public sealed class OrderingCartEndpointTests(OrderingApiFactory factory) : OrderingIntegrationTestBase(factory)
 {
-    private async Task<OrderingSku> StockedSkuAsync(OrderingContext context, decimal price = 100m, bool prescription = false, string? name = null, bool food = false) =>
-        await CreateSkuAsync(context, price: price, stock: 25m, prescription: prescription, name: name, food: food || prescription, onStorefront: true);
+    private async Task<OrderingSku> StockedSkuAsync(OrderingContext context, decimal price = 100m, string? name = null, bool food = false) =>
+        await CreateSkuAsync(context, price: price, stock: 25m, name: name, food: food, onStorefront: true);
 
-    private static async Task<HttpResponseMessage> AddAsync(HttpClient client, Guid skuId, int quantity = 1, Guid? catId = null) =>
-        await client.PostAsJsonAsync("/api/cart/lines", new { skuId, quantity, catId }, Json);
+    private static async Task<HttpResponseMessage> AddAsync(HttpClient client, Guid skuId, int quantity = 1) =>
+        await client.PostAsJsonAsync("/api/cart/lines", new { skuId, quantity }, Json);
 
     private static IEnumerable<string> SetCookies(HttpResponseMessage response) =>
         response.Headers.TryGetValues("Set-Cookie", out var values) ? values : [];
@@ -336,71 +335,17 @@ public sealed class OrderingCartEndpointTests(OrderingApiFactory factory) : Orde
 
     // ── I-C4 ────────────────────────────────────────────────────────────────────────────────────────
     [Fact]
-    public async Task I_C4_APrescriptionSku_NeedsASignedInCustomerAndACat()
-    {
-        var context = await CreateContextAsync();
-        var rx = await StockedSkuAsync(context, 900m, prescription: true);
-
-        // a guest cannot add a prescription SKU at all
-        await AssertErrorAsync(await AddAsync(CreateClient(), rx.SkuId), "PrescriptionCatRequired");
-
-        // a customer must say which cat
-        var (customer, customerId, _) = await RegisterAndSignInCustomerAsync();
-        await AssertErrorAsync(await AddAsync(customer, rx.SkuId), "PrescriptionCatRequired");
-    }
-
-    [Fact]
-    public async Task I_C4_AnotherCustomersCat_IsA404_AndACatWithoutAnAuthorisation_Is400PrescriptionNotAuthorised()
-    {
-        var context = await CreateContextAsync();
-        var rx = await StockedSkuAsync(context, 900m, prescription: true);
-
-        var (customer, customerId, _) = await RegisterAndSignInCustomerAsync();
-        var (_, strangerId, _) = await RegisterAndSignInCustomerAsync();
-        var strangersCat = await SeedCatAsync(strangerId);
-        var ownCat = await SeedCatAsync(customerId);
-
-        // a cat that is not the caller's reads exactly like a cat that does not exist
-        Assert.Equal(HttpStatusCode.NotFound, (await AddAsync(customer, rx.SkuId, 1, strangersCat)).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await AddAsync(customer, rx.SkuId, 1, Guid.NewGuid())).StatusCode);
-
-        // the caller's own cat with no live authorisation: the gate (the real HO-PHM-001 gate) refuses
-        await AssertErrorAsync(await AddAsync(customer, rx.SkuId, 1, ownCat), "PrescriptionNotAuthorised");
-    }
-
-    [Fact]
-    public async Task I_C4_AnAuthorisedCat_AddsTheLine_AndTheCartShowsTheCat()
-    {
-        var context = await CreateContextAsync();
-        var rx = await StockedSkuAsync(context, 900m, prescription: true);
-        var (customer, customerId, _) = await RegisterAndSignInCustomerAsync();
-        var cat = await SeedCatAsync(customerId);
-
-        // a real HO-PHM-001 authorisation for (cat, the SKU's product), judged by the real IDietAuthorisationGate
-        await AuthoriseDietAsync(cat, customerId, rx.ProductId, rx.Name);
-        var add = await ExpectAsync(HttpStatusCode.Created, await AddAsync(customer, rx.SkuId, 1, cat));
-        Assert.NotEqual(Guid.Empty, (await ReadAsync(add)).GetProperty("lineId").GetGuid());
-
-        var line = (await CartAsync(customer)).GetProperty("lines")[0];
-        Assert.Equal(cat, line.GetProperty("cat").GetProperty("id").GetGuid());
-        Assert.Equal("Authorised", line.GetProperty("prescriptionStatus").GetString());
-    }
-
-    [Fact]
-    public async Task AnOrdinarySku_IgnoresACatId_SoTheSameSkuIsOneLine()
+    public async Task AddingTheSameSkuTwice_IsOneLine()
     {
         var context = await CreateContextAsync();
         var sku = await StockedSkuAsync(context);
-        var (customer, customerId, _) = await RegisterAndSignInCustomerAsync();
-        var mitu = await SeedCatAsync(customerId);
-        var luna = await SeedCatAsync(customerId);
+        var (customer, _, _) = await RegisterAndSignInCustomerAsync();
 
-        await ExpectAsync(HttpStatusCode.Created, await AddAsync(customer, sku.SkuId, 1, mitu));
-        await ExpectAsync(HttpStatusCode.Created, await AddAsync(customer, sku.SkuId, 1, luna));
+        await ExpectAsync(HttpStatusCode.Created, await AddAsync(customer, sku.SkuId, 1));
+        await ExpectAsync(HttpStatusCode.Created, await AddAsync(customer, sku.SkuId, 1));
 
         var cart = await CartAsync(customer);
         var line = Assert.Single(cart.GetProperty("lines").EnumerateArray());
         Assert.Equal(2, line.GetProperty("quantity").GetInt32());
-        Assert.Equal(JsonValueKind.Null, line.GetProperty("cat").ValueKind);
     }
 }

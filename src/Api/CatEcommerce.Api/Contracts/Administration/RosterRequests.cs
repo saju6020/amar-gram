@@ -5,7 +5,6 @@ public sealed class ShiftSlotRequest
     public string DayOfWeek { get; init; } = default!;
     public string Starts { get; init; } = default!;
     public string Ends { get; init; } = default!;
-    public Guid? DefaultRoomId { get; init; }
 }
 
 public sealed class SetRosterPatternRequest

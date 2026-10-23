@@ -130,6 +130,25 @@ export function formatDateOnly(dateIso: string): string {
   }).format(asUtc);
 }
 
+/** `yyyy-MM-dd` shifted by `days` calendar days. Pure date arithmetic on the branch-local date —
+ *  no zone conversion. */
+export function addDaysIso(dateIso: string, days: number): string {
+  const [year, month, day] = parseIntParts(dateIso, '-', 3) as [number, number, number];
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
+/** `yyyy-MM-dd` as `"Friday 24 October"` — a branch-local date, never zone-converted. */
+export function formatBranchDateLong(dateIso: string): string {
+  const [year, month, day] = parseIntParts(dateIso, '-', 3) as [number, number, number];
+  if ([year, month, day].some((n) => !Number.isFinite(n))) return dateIso;
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
 /** Today's date as `yyyy-MM-dd` in the given IANA zone — used to bound "must be in the future in
  *  branch time" inputs (closures, roster pattern effective dates, leave, price/rate scheduling)
  *  without ever comparing raw browser-local `Date` objects across zones. */

@@ -8,7 +8,7 @@ namespace CatEcommerce.Domain.Models;
 /// <summary>HO-ORD-001 §11.3 -- a line of an order as placement hands it to the aggregate: the priced <c>QuoteLine</c>, in decimals at the aggregate's edge.</summary>
 public sealed record OrderLineDto(
     Guid LineId, int LineNumber, Guid SkuId, Guid ProductId, string ProductName, string VariantLabel, string? Barcode, ProductReturnClass ReturnClass, bool IsBundle,
-    Guid? CatId, int Quantity, decimal UnitPrice, decimal LineSubtotal, decimal LineDiscount, decimal OrderDiscountShare, Guid TaxClassId, decimal TaxRatePercent,
+    int Quantity, decimal UnitPrice, decimal LineSubtotal, decimal LineDiscount, decimal OrderDiscountShare, Guid TaxClassId, decimal TaxRatePercent,
     decimal TaxAmount, decimal LineTotal, IReadOnlyList<OrderLineComponent> Components);
 
 /// <summary>Everything <c>OrderAggregate.Place</c> needs. The order number comes from the sequence (V1); the totals must re-sum from the lines. <c>DeliveryTaxAmount</c> (FU1 D3/ORD-56, stored on the order at placement) is the part of <c>Totals.TaxTotal</c> that is tax on the delivery charge rather than on a line; default 0.</summary>

@@ -8,8 +8,8 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { DEFAULT_CUSTOMER_LANDING } from '@/lib/routing/portal-links';
 
 /**
- * HO-ACC-002 §1 Amended (2026-09-26, owner decision) — supersedes HO-CAT-002 §8.3's unconditional
- * `redirect('/staff/cats')`, and this file's own prior "redirect to whichever area registered a
+ * HO-ACC-002 §1 Amended (2026-09-26, owner decision) — supersedes the scaffold handover §8.3's unconditional
+ * redirect to one staff list, and this file's own prior "redirect to whichever area registered a
  * nav item first" behaviour (`nav/index.ts`'s `navRegistry` order): neither asked who was actually
  * visiting. A signed-in customer belongs in their own portal; a signed-in staff member belongs in
  * the staff app; everyone else belongs at customer sign-in — never at staff sign-in, which would
@@ -34,11 +34,11 @@ import { DEFAULT_CUSTOMER_LANDING } from '@/lib/routing/portal-links';
  * account is still real, just locked, and belongs on `/staff` (the home dashboard, HO-RPT-002 ADR-FE-130) where `IdleLock` shows the lock
  * overlay) redirects anywhere else.
  *
- * `/portal/cats` and `/staff/cats` are not a new convention invented here — they are the exact same
- * defaults `(auth)/sign-in` and `(auth)/staff/sign-in` already `router.push()` to after a real
+ * `DEFAULT_CUSTOMER_LANDING` and `/staff` are not a new convention invented here — they are the
+ * same defaults `(auth)/sign-in` and `(auth)/staff/sign-in` already `router.push()` to after a real
  * sign-in (`lib/validation/nextPath.ts`'s `sanitizeNextPath` calls in both files).
  */
-/** HO-RPT-002 ADR-FE-130 — the staff landing route is the role home dashboard, not `/staff/cats` (which stays in the nav). */
+/** HO-RPT-002 ADR-FE-130 — the staff landing route is the role home dashboard. */
 const STAFF_HOME = '/staff';
 
 export default function HomePage() {

@@ -9,9 +9,6 @@ public static partial class Actions
 {
     public static class Reports
     {
-        public const string ClinicOperationsView = "Reports.ClinicOperations.View";
-        public const string ClinicalView = "Reports.Clinical.View";
-        public const string BoardingView = "Reports.Boarding.View";
         public const string StockView = "Reports.Stock.View";
         public const string SalesView = "Reports.Sales.View";
         public const string FinancialView = "Reports.Financial.View";

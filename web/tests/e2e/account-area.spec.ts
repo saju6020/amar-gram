@@ -74,7 +74,7 @@ test('E-E2: opt into SMS marketing, save, reload — persisted; transactional ce
 test('unsaved changes on the profile form: the browser Back button is intercepted, and confirming Leave completes it', async ({
   page,
 }) => {
-  await page.goto('/portal/cats');
+  await page.goto('/portal/orders');
   await page.goto('/portal/account/profile');
 
   // Not an anchored regex: the label's accessible name carries trailing content from its own
@@ -98,13 +98,13 @@ test('unsaved changes on the profile form: the browser Back button is intercepte
   await dialog.getByRole('button', { name: /^leave$/i }).click();
 
   // The ORIGINAL Back intent is replayed for real now — lands on the page visited before.
-  await expect(page).toHaveURL(/\/portal\/cats/);
+  await expect(page).toHaveURL(/\/portal\/orders/);
 });
 
 test('unsaved changes on the profile form: Cancel after a Back press keeps the draft and stays put', async ({
   page,
 }) => {
-  await page.goto('/portal/cats');
+  await page.goto('/portal/orders');
   await page.goto('/portal/account/profile');
 
   // See the sibling test above for why this is a plain string, not an anchored regex.
@@ -129,7 +129,7 @@ test('unsaved changes on the profile form: Cancel after a Back press keeps the d
 test('unsaved changes on the profile form: after a successful save, one Back press goes straight to the previous page', async ({
   page,
 }) => {
-  await page.goto('/portal/cats');
+  await page.goto('/portal/orders');
   await page.goto('/portal/account/profile');
 
   const fullNameField = page.getByLabel('Full name');
@@ -142,7 +142,7 @@ test('unsaved changes on the profile form: after a successful save, one Back pre
   // One press, straight through — no ConfirmDialog (the form is clean, nothing to guard) and no
   // stray sentinel left behind to absorb this press instead of actually leaving.
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page).toHaveURL(/\/portal\/cats/);
+  await expect(page).toHaveURL(/\/portal\/orders/);
 });
 
 // ARCHITECTURE gate third pass, LOW (a) — when the guarded page is the tab's very first history

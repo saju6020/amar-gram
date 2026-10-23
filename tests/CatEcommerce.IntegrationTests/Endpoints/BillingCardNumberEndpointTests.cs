@@ -42,9 +42,9 @@ public sealed class BillingCardNumberEndpointTests(BillingApiFactory factory) : 
         var cash = await RecordPaymentAsync(admin, customerId, "CashInStore", 100m);
         await AssertRefusedAsync(await admin.PostAsJsonAsync($"/api/staff/billing/payments/{cash.GetProperty("paymentId").GetGuid()}/reverse", new { reason = Plain }, Json));
 
-        var deposit = await RecordPaymentAsync(admin, customerId, "CashInStore", 500m, earmark: new { kind = "BoardingStay", sourceId = Guid.NewGuid(), label = "Stay deposit" });
+        var deposit = await RecordPaymentAsync(admin, customerId, "CashInStore", 500m, earmark: new { kind = "Order", sourceId = Guid.NewGuid(), label = "Order deposit" });
         await AssertRefusedAsync(await admin.PostAsJsonAsync($"/api/staff/billing/payments/{deposit.GetProperty("paymentId").GetGuid()}/release-earmark", new { reason = Plain }, Json));
-        await AssertRefusedAsync(await RecordPaymentRawAsync(admin, customerId, "CashInStore", 10m, earmark: new { kind = "BoardingStay", sourceId = Guid.NewGuid(), label = Plain }));
+        await AssertRefusedAsync(await RecordPaymentRawAsync(admin, customerId, "CashInStore", 10m, earmark: new { kind = "Order", sourceId = Guid.NewGuid(), label = Plain }));
 
         // Credit note reason; invoice note; corrected-draft line description.
         var (invoiceId, _, _) = await IssueSimpleInvoiceAsync(context, customerId, 400m);

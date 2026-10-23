@@ -42,7 +42,7 @@ public sealed class ReportingStockEndpointTests(InventoryApiFactory factory) : I
         await using var port = OpenPort();
         var result = await port.Ledger.DeductAsync(
             Demand(branch.BranchId, sku.SkuId, quantity, MovementKind.Sale, locations: [locationId]),
-            new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-" + Random.Shared.Next(1000, 9999)), new StockParty(null, null), default);
+            new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-" + Random.Shared.Next(1000, 9999)), new StockParty(null), default);
         Assert.True(result.IsSuccess, result.Message);
         await port.CommitAsync();
     }

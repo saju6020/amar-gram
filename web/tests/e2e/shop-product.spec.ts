@@ -1,4 +1,3 @@
-import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 import { shopFixtureIds } from '../../mocks/handlers/shop';
 import { test, expect as baseExpect } from './fixtures';
 import { withFilters } from './shop-helpers';
@@ -12,9 +11,7 @@ test.describe.configure({ timeout: 90_000 });
  */
 
 test.describe('Shop by Country to a product (AC-5)', () => {
-  test('E-A1: Shop by Country → Thailand → Kitten + In stock → open a product', async ({
-    page,
-  }) => {
+  test('E-A1: Shop by Country → Thailand → In stock → open a product', async ({ page }) => {
     const apiResponses: Array<{ url: string; ms: number }> = [];
     page.on('requestfinished', async (request) => {
       if (!request.url().includes('/api/shop/')) return;
@@ -34,15 +31,13 @@ test.describe('Shop by Country to a product (AC-5)', () => {
     await expect(page).toHaveURL(/\/shop\/countries\/TH/);
 
     await withFilters(page, async (scope) => {
-      await scope.getByRole('checkbox', { name: /^Kitten/ }).check();
       await scope.getByRole('checkbox', { name: /In stock only/ }).check();
     });
-    await expect(page).toHaveURL(/lifeStage=Kitten/);
     await expect(page).toHaveURL(/availability=inStock/);
     // The country is the page's, not a query parameter.
     await expect(page).not.toHaveURL(/origin=/);
 
-    // Only Thai kitten products: every card says Thailand.
+    // Only Thai products: every card says Thailand.
     const cards = page.getByRole('article');
     await expect(cards.first()).toBeVisible();
     const count = await cards.count();
@@ -72,12 +67,14 @@ test.describe('Shop by Country to a product (AC-5)', () => {
   });
 });
 
-test.describe('Variants, kits and the prescription gate', () => {
+test.describe('Variants and kits', () => {
   test('E-B1: an out-of-stock variant is marked while the others stay in stock', async ({
     page,
   }) => {
     await page.goto(`/shop/products/${shopFixtureIds.multiVariantSlug}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Royal Canin Kitten' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Organic Rolled Oats' }),
+    ).toBeVisible();
 
     const selector = page.getByRole('group', { name: 'Choose a size' });
     await expect(selector.getByRole('radio', { name: /4 kg/ })).toHaveAccessibleName(
@@ -87,7 +84,7 @@ test.describe('Variants, kits and the prescription gate', () => {
     await expect(selector.getByRole('radio', { name: /2 kg/ })).toHaveAccessibleName(/In stock/);
 
     await selector.getByRole('radio', { name: /4 kg/ }).check();
-    await expect(page).toHaveURL(new RegExp(`sku=${shopFixtureIds.skuKitten4kg}`));
+    await expect(page).toHaveURL(new RegExp(`sku=${shopFixtureIds.skuOats4kg}`));
     const buyBox = page.getByRole('region', { name: 'Price and availability' });
     await expect(buyBox.getByText('Out of stock')).toBeVisible();
     await expect(buyBox.getByRole('link', { name: /Tell me when it.s back/ })).toBeVisible();
@@ -98,64 +95,23 @@ test.describe('Variants, kits and the prescription gate', () => {
 
     // A deep link opens the chosen variant (and survives a reload).
     await page.goto(
-      `/shop/products/${shopFixtureIds.multiVariantSlug}?sku=${shopFixtureIds.skuKitten4kg}`,
+      `/shop/products/${shopFixtureIds.multiVariantSlug}?sku=${shopFixtureIds.skuOats4kg}`,
     );
     await expect(page.getByRole('radio', { name: /4 kg/ })).toBeChecked();
   });
 
   test('E-B3: a kit with one out-of-stock component is out of stock', async ({ page }) => {
     await page.goto(`/shop/products/${shopFixtureIds.kitSlug}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Kitten Starter Kit' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Breakfast Starter Kit' }),
+    ).toBeVisible();
     await expect(
       page.getByRole('region', { name: 'Price and availability' }).getByText('Out of stock'),
     ).toBeVisible();
     const contents = page.getByRole('region', { name: 'This kit contains' });
     await expect(contents.getByRole('listitem')).toHaveCount(2);
-    await expect(contents).toContainText('1 × Royal Canin Kitten');
+    await expect(contents).toContainText('1 × Organic Rolled Oats');
     await expect(contents).toContainText('Out of stock');
-  });
-
-  test('E-B2: a prescription diet as a guest → sign in → no authorisation → Book a consultation', async ({
-    page,
-  }) => {
-    await page.goto(`/shop/products/${shopFixtureIds.rxNoAuthSlug}`);
-    await expect(page.getByText(/This is a prescription diet/)).toBeVisible();
-    await page
-      .getByRole('link', { name: 'Sign in to check whether your cat is authorised' })
-      .click();
-    await expect(page).toHaveURL(/\/sign-in\?next=/);
-
-    await page.getByLabel(/mobile number or email/i).fill(accountsFixtureIds.customerEmail);
-    await page.getByLabel(/^password/i).fill(accountsFixtureIds.customerPassword);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-
-    // Back on the same product after sign-in (the allow-listed ?next=).
-    await expect(page).toHaveURL(new RegExp(`/shop/products/${shopFixtureIds.rxNoAuthSlug}`));
-    await expect(
-      page.getByText('None of your cats has a current authorisation for this food.'),
-    ).toBeVisible();
-    // The product stays visible; nothing clinical is shown.
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Urinary Care');
-
-    const consult = page.getByRole('link', { name: 'Book a consultation' });
-    await expect(consult).toHaveAttribute('href', '/book?category=Consultation');
-    await consult.click();
-    // /book is HO-APT-002's route (a sibling branch): this run asserts the destination URL only.
-    await expect(page).toHaveURL(/\/book\?category=Consultation/);
-  });
-
-  test('E-B2: with two authorised cats the gate lists them by name and end date', async ({
-    page,
-  }) => {
-    await page.goto('/sign-in');
-    await page.getByLabel(/mobile number or email/i).fill(accountsFixtureIds.customerEmail);
-    await page.getByLabel(/^password/i).fill(accountsFixtureIds.customerPassword);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await page.waitForURL(/\/portal/);
-    await page.goto(`/shop/products/${shopFixtureIds.rxEligibleSlug}`);
-    await expect(page.getByText('Authorised for Whiskers until 12 Dec 2026')).toBeVisible();
-    await expect(page.getByText('Authorised for Mittens until 5 Jan 2027')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Book a consultation' })).toHaveCount(0);
   });
 });
 
@@ -185,15 +141,17 @@ test.describe('Rendering structure (NFR-PRF-1, E-X3 structure)', () => {
     const context = await browser.newContext({ javaScriptEnabled: false, baseURL });
     const page = await context.newPage();
     await page.goto(`/shop/products/${shopFixtureIds.multiVariantSlug}`);
-    await expect(page.getByRole('heading', { level: 1, name: 'Royal Canin Kitten' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Organic Rolled Oats' }),
+    ).toBeVisible();
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       'href',
-      /\/shop\/products\/royal-canin-kitten$/,
+      /\/shop\/products\/organic-rolled-oats$/,
     );
     await page.goto('/shop/products');
-    await expect(page.getByRole('link', { name: 'Royal Canin Kitten' }).first()).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Organic Rolled Oats' }).first()).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten',
+      '/shop/products/organic-rolled-oats',
     );
     await context.close();
   });

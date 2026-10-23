@@ -10,7 +10,7 @@ namespace CatEcommerce.IntegrationTests.Endpoints;
 /// delivery pass at the same moment can otherwise "steal" or reorder each other's due items (an
 /// observed, reproducible flake, not a hypothetical one). Every Notification endpoint test class
 /// shares this one collection, disabling parallelism <b>between them</b> only -- they still run in
-/// parallel with unrelated areas' test classes (Accounts, Administration, Cat).
+/// parallel with unrelated areas' test classes (Accounts, Administration, Shop).
 /// </summary>
 [CollectionDefinition("Notifications", DisableParallelization = true)]
 public sealed class NotificationsTestCollection;

@@ -185,7 +185,7 @@ public sealed class BillingLoyaltyEndpointTests(BillingApiFactory factory) : Bil
         var context = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(context);
         var credit = (await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 1000m)).GetProperty("paymentId").GetGuid();
-        var deposit = (await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 5000m, earmark: new { kind = "BoardingStay", sourceId = Guid.NewGuid(), label = "Stay deposit" })).GetProperty("paymentId").GetGuid();
+        var deposit = (await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 5000m, earmark: new { kind = "Order", sourceId = Guid.NewGuid(), label = "Order deposit" })).GetProperty("paymentId").GetGuid();
         var (invoiceId, _, _) = await IssueSimpleInvoiceAsync(context, customerId, 400m);
 
         Assert.Equal(1000m, AmountOf((await GetSummaryAsync(context.Admin, customerId)).GetProperty("freeCredit")));
@@ -225,9 +225,9 @@ public sealed class BillingLoyaltyEndpointTests(BillingApiFactory factory) : Bil
         var stranger = await SeedCustomerAsync(mine);
         await RecordPaymentAsync(mine.Admin, customerId, "CashInStore", 500m);
         var (invoiceId, _, _) = await IssueSimpleInvoiceAsync(mine, stranger, 100m);
-        var (vet, _) = await StaffClientAsync(mine, StaffRoles.Vet);
+        var (inventory, _) = await StaffClientAsync(mine, StaffRoles.Inventory);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await vet.PostAsJsonAsync($"/api/staff/billing/customers/{customerId}/apply-credit", new { invoiceId }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.PostAsJsonAsync($"/api/staff/billing/customers/{customerId}/apply-credit", new { invoiceId }, Json)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await other.Admin.PostAsJsonAsync($"/api/staff/billing/customers/{customerId}/apply-credit", new { invoiceId }, Json)).StatusCode);
 
         var wrongOwner = await mine.Admin.PostAsJsonAsync($"/api/staff/billing/customers/{customerId}/apply-credit", new { invoiceId }, Json);

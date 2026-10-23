@@ -4,15 +4,13 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { FieldWithUnit } from '@/components/common/FieldWithUnit';
 import { LimitedMarkup } from '@/components/content/LimitedMarkup';
 import { submitSection } from '@/lib/shop/submitSection';
-import { lifeStageLabel, proteinLabel } from '@/lib/shop/labels';
+import { proteinLabel } from '@/lib/shop/labels';
 import type { StaffFoodDetail, StaffProductDetail } from '@/lib/api/staff-shop';
 import { Field, SectionFrame, inputClass } from './SectionFrame';
 
-const LIFE_STAGES = ['Kitten', 'Adult', 'Senior', 'AllLifeStages'];
 const PROTEINS = [
   'Chicken',
   'Turkey',
@@ -38,7 +36,6 @@ const percent = z
 const schema = z
   .object({
     manufacturer: z.string().trim().max(200),
-    lifeStage: z.string(),
     proteinSource: z.string(),
     ingredientList: z.string().max(4000),
     proteinPercent: percent,
@@ -47,7 +44,6 @@ const schema = z
     moisturePercent: percent,
     feedingGuide: z.string().max(5000),
     storageInstructions: z.string().max(1000),
-    prescriptionRequired: z.boolean(),
   })
   .superRefine((v, ctx) => {
     const values = [v.proteinPercent, v.fatPercent, v.fibrePercent, v.moisturePercent];
@@ -63,7 +59,6 @@ const schema = z
 export type FoodFormValues = z.infer<typeof schema>;
 const KNOWN = [
   'manufacturer',
-  'lifeStage',
   'proteinSource',
   'ingredientList',
   'proteinPercent',
@@ -72,14 +67,12 @@ const KNOWN = [
   'moisturePercent',
   'feedingGuide',
   'storageInstructions',
-  'prescriptionRequired',
 ] as const;
 
-function initial(food: StaffFoodDetail | null | undefined, rx: boolean): FoodFormValues {
+function initial(food: StaffFoodDetail | null | undefined): FoodFormValues {
   const a = food?.guaranteedAnalysis;
   return {
     manufacturer: food?.manufacturer ?? '',
-    lifeStage: food?.lifeStage ?? '',
     proteinSource: food?.proteinSource ?? '',
     ingredientList: food?.ingredientList ?? '',
     proteinPercent: a ? String(a.proteinPercent) : '',
@@ -88,7 +81,6 @@ function initial(food: StaffFoodDetail | null | undefined, rx: boolean): FoodFor
     moisturePercent: a ? String(a.moisturePercent) : '',
     feedingGuide: food?.feedingGuide ?? '',
     storageInstructions: food?.storageInstructions ?? '',
-    prescriptionRequired: rx,
   };
 }
 
@@ -99,28 +91,23 @@ export interface FoodDetailsFormProps {
 }
 
 /**
- * HO-SHP-002 §11.6 `FoodDetailsForm` — US-SHP-03, Cat Food only (the page does not offer it for any
+ * HO-SHP-002 §11.6 `FoodDetailsForm` — US-SHP-03, food only (the page does not offer it for any
  * other category). Guaranteed analysis is four inputs, each with a visible `%` unit; ingredient list
- * and storage are PLAIN TEXT, feeding guide is LimitedMarkup with a live preview. Ticking
- * **Prescription diet** asks for confirmation stating that customers will need an authorised cat.
- * The form starts from the stored labelling returned by the staff read (HO-SHP-001-FU1).
+ * and storage are PLAIN TEXT, feeding guide is LimitedMarkup with a live preview. The form starts from the stored labelling returned by the staff read (HO-SHP-001-FU1).
  */
 export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormProps) {
   const {
     register,
     handleSubmit,
     setError,
-    setValue,
     watch,
     reset,
     formState: { errors, isDirty, isSubmitting, isSubmitSuccessful },
   } = useForm<FoodFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: initial(product.food, product.prescriptionRequired),
+    defaultValues: initial(product.food),
   });
-  const [confirmRx, setConfirmRx] = React.useState(false);
   const feedingGuide = watch('feedingGuide');
-  const rx = watch('prescriptionRequired');
 
   return (
     <>
@@ -140,21 +127,6 @@ export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormPr
           <input id="fd-manufacturer" className={inputClass} {...register('manufacturer')} />
         </Field>
         <div className="grid gap-4 md:grid-cols-2">
-          <Field
-            id="fd-stage"
-            label="Life stage"
-            error={errors.lifeStage?.message}
-            hint="Needed to publish — it drives filtering and suggestions."
-          >
-            <select id="fd-stage" className={inputClass} {...register('lifeStage')}>
-              <option value="">Not set</option>
-              {LIFE_STAGES.map((s) => (
-                <option key={s} value={s}>
-                  {lifeStageLabel(s)}
-                </option>
-              ))}
-            </select>
-          </Field>
           <Field id="fd-protein" label="Protein source" error={errors.proteinSource?.message}>
             <select id="fd-protein" className={inputClass} {...register('proteinSource')}>
               <option value="">Not set</option>
@@ -254,30 +226,7 @@ export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormPr
             {...register('storageInstructions')}
           />
         </Field>
-        <label className="flex items-start gap-2 text-sm text-ink">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
-            checked={rx}
-            onChange={(event) => {
-              if (event.target.checked) setConfirmRx(true);
-              else setValue('prescriptionRequired', false, { shouldDirty: true });
-            }}
-          />
-          <span>Prescription diet — requires vet authorisation</span>
-        </label>
       </SectionFrame>
-      <ConfirmDialog
-        open={confirmRx}
-        onOpenChange={setConfirmRx}
-        title="Make this a prescription diet?"
-        consequence="Customers will need a cat with a current vet authorisation to buy this food. Bundles can't contain it."
-        confirmLabel="Require authorisation"
-        onConfirm={() => {
-          setValue('prescriptionRequired', true, { shouldDirty: true });
-          setConfirmRx(false);
-        }}
-      />
     </>
   );
 }

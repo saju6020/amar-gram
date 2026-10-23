@@ -11,13 +11,11 @@ import {
   violations,
 } from './fixtures';
 import {
-  CAT_NAMES,
   MAX_CART_LINES,
   MAX_QUANTITY_PER_LINE,
   PICKUP_BRANCHES,
   addDays,
   allocateOrder,
-  authorisedCatsFor,
   db,
   expireOverdueTransfers,
   findOrder,
@@ -84,14 +82,6 @@ function cartView(request: Request) {
     const stock = stockOf(l.skuId);
     const purchasable = !!info && info.purchasable && info.priceCents !== null && stock > 0;
     const unit = info?.priceCents ?? null;
-    let prescriptionStatus: string | null = null;
-    if (info?.requiresPrescription) {
-      prescriptionStatus = !l.catId
-        ? 'CatRequired'
-        : authorisedCatsFor(l.skuId).includes(l.catId)
-          ? 'Authorised'
-          : 'NotAuthorised';
-    }
     return {
       lineId: l.lineId,
       skuId: l.skuId,
@@ -100,14 +90,11 @@ function cartView(request: Request) {
       variantLabel: info?.variantLabel ?? '',
       imagePath: null,
       quantity: l.quantity,
-      cat: l.catId ? { id: l.catId, name: CAT_NAMES[l.catId] ?? 'Your cat' } : null,
       unitPrice: unit !== null ? money(unit) : null,
       priceWhenAdded: money(l.priceWhenAddedCents),
       priceChanged: unit !== null && unit !== l.priceWhenAddedCents,
       availability: !purchasable ? 'Unavailable' : stock < l.quantity ? 'Limited' : 'InStock',
       availableQuantity: purchasable && stock < l.quantity ? stock : null,
-      requiresPrescription: info?.requiresPrescription ?? false,
-      prescriptionStatus,
       lineSubtotal: purchasable && unit !== null ? money(unit * l.quantity) : null,
     };
   });
@@ -125,7 +112,7 @@ function cartView(request: Request) {
   };
 }
 
-function addToCart(lines: DbCartLine[], skuId: string, quantity: number, catId: string | null) {
+function addToCart(lines: DbCartLine[], skuId: string, quantity: number) {
   const info = skuInfo(skuId);
   if (!info || !info.purchasable || info.priceCents === null) {
     return violation('SkuId', 'SkuUnavailable', "This item isn't available right now.");
@@ -140,19 +127,7 @@ function addToCart(lines: DbCartLine[], skuId: string, quantity: number, catId: 
       `You can buy between 1 and ${MAX_QUANTITY_PER_LINE} of an item at a time.`,
     );
   }
-  if (info.requiresPrescription) {
-    if (!catId) {
-      return violation('CatId', 'PrescriptionCatRequired', `Choose which cat '${info.productName}' is for.`);
-    }
-    if (!authorisedCatsFor(skuId).includes(catId)) {
-      return violation(
-        'CatId',
-        'PrescriptionNotAuthorised',
-        `${CAT_NAMES[catId] ?? 'That cat'} has no current vet authorisation for '${info.productName}'.`,
-      );
-    }
-  }
-  const existing = lines.find((l) => l.skuId === skuId && l.catId === (info.requiresPrescription ? catId : null));
+  const existing = lines.find((l) => l.skuId === skuId);
   if (existing) {
     if (existing.quantity + quantity > MAX_QUANTITY_PER_LINE) {
       return violation('Quantity', 'QuantityOutOfRange', `You can buy at most ${MAX_QUANTITY_PER_LINE} of an item at a time.`);
@@ -168,7 +143,6 @@ function addToCart(lines: DbCartLine[], skuId: string, quantity: number, catId: 
     lineId: uuid(),
     skuId,
     quantity,
-    catId: info.requiresPrescription ? catId : null,
     priceWhenAddedCents: info.priceCents,
   };
   lines.push(line);
@@ -181,7 +155,6 @@ function quoteLines(request: Request): QuoteLineInput[] {
     lineId: l.lineId,
     skuId: l.skuId,
     quantity: l.quantity,
-    catId: l.catId,
     priceWhenAddedCents: l.priceWhenAddedCents,
   }));
 }
@@ -233,7 +206,6 @@ export function orderLineView(l: DbOrderLine) {
     skuId: l.skuId,
     productName: l.productName,
     variantLabel: l.variantLabel,
-    cat: l.catId ? { id: l.catId, name: CAT_NAMES[l.catId] ?? 'Your cat' } : null,
     quantity: l.quantity,
     unitPrice: money(l.unitCents),
     lineSubtotal: money(l.subtotalCents),
@@ -355,8 +327,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
   ),
 
   http.post(`${API}/cart/lines`, async ({ request }) => {
-    const body = (await request.json()) as { skuId: string; quantity?: number; catId?: string | null };
-    const result = addToCart(myLines(request), body.skuId, body.quantity ?? 1, body.catId ?? null);
+    const body = (await request.json()) as { skuId: string; quantity?: number };
+    const result = addToCart(myLines(request), body.skuId, body.quantity ?? 1);
     if (result instanceof Response) return result;
     return HttpResponse.json({ lineId: result.lineId, cartId: 'ca000000-0000-0000-0000-000000000001' }, { status: 201 });
   }),
@@ -364,18 +336,12 @@ export const customerOrderingHandlers: HttpHandler[] = [
   http.put(`${API}/cart/lines/:lineId`, async ({ request, params }) => {
     const line = myLines(request).find((l) => l.lineId === params.lineId);
     if (!line) return notFound();
-    const body = (await request.json()) as { quantity?: number | null; catId?: string | null };
+    const body = (await request.json()) as { quantity?: number | null };
     if (body.quantity !== undefined && body.quantity !== null) {
       if (!Number.isInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_QUANTITY_PER_LINE) {
         return violation('Quantity', 'QuantityOutOfRange', `You can buy between 1 and ${MAX_QUANTITY_PER_LINE} of an item at a time.`);
       }
       line.quantity = body.quantity;
-    }
-    if (body.catId) {
-      if (!authorisedCatsFor(line.skuId).includes(body.catId)) {
-        return violation('CatId', 'PrescriptionNotAuthorised', `${CAT_NAMES[body.catId] ?? 'That cat'} has no current vet authorisation for this food.`);
-      }
-      line.catId = body.catId;
     }
     persist();
     return noContent();
@@ -395,7 +361,7 @@ export const customerOrderingHandlers: HttpHandler[] = [
     const dropped: Array<{ productName: string; reason: string }> = [];
     let merged = 0;
     for (const guest of db.guestLines) {
-      const existing = db.customerLines.find((l) => l.skuId === guest.skuId && l.catId === guest.catId);
+      const existing = db.customerLines.find((l) => l.skuId === guest.skuId);
       if (existing) {
         existing.quantity = Math.min(existing.quantity + guest.quantity, MAX_QUANTITY_PER_LINE);
         merged += 1;
@@ -439,7 +405,7 @@ export const customerOrderingHandlers: HttpHandler[] = [
       return violation(
         'Lines',
         'StockNoLongerAvailable',
-        "Sorry — 'Royal Canin Kitten' has just sold out. It has been removed from your order; please review and place it again.",
+        "Sorry — 'Organic Rolled Oats' has just sold out. It has been removed from your order; please review and place it again.",
         409,
       );
     }
@@ -457,7 +423,7 @@ export const customerOrderingHandlers: HttpHandler[] = [
     if (!result.canPlace) {
       const code = result.blocking[0] ?? 'NothingToPlace';
       const property =
-        code === 'PaymentMethodUnavailable' ? 'PaymentMethod' : code === 'PolicyAcceptanceRequired' ? 'Policies' : code === 'PrescriptionCatRequired' ? 'Lines' : 'FulfilmentMethod';
+        code === 'PaymentMethodUnavailable' ? 'PaymentMethod' : code === 'PolicyAcceptanceRequired' ? 'Policies' : 'FulfilmentMethod';
       return violation(property, code, '');
     }
 
@@ -474,7 +440,6 @@ export const customerOrderingHandlers: HttpHandler[] = [
       skuId: p.skuId,
       productName: p.productName,
       variantLabel: p.variantLabel,
-      catId: p.catId,
       quantity: p.quantity,
       unitCents: p.unitCents,
       subtotalCents: p.subtotalCents,
@@ -636,10 +601,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
         unavailable.push({ productName: l.productName, reason: 'NotPurchasable' });
       } else if (stockOf(l.skuId) <= 0) {
         unavailable.push({ productName: l.productName, reason: 'OutOfStock' });
-      } else if (info.requiresPrescription && (!l.catId || !authorisedCatsFor(l.skuId).includes(l.catId))) {
-        unavailable.push({ productName: l.productName, reason: 'PrescriptionNotAuthorised' });
       } else {
-        const result = addToCart(db.customerLines, l.skuId, l.quantity, l.catId);
+        const result = addToCart(db.customerLines, l.skuId, l.quantity);
         if (result instanceof Response) unavailable.push({ productName: l.productName, reason: 'SkuUnavailable' });
         else added += 1;
       }

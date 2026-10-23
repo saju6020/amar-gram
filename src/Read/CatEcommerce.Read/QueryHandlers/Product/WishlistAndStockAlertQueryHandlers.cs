@@ -144,8 +144,7 @@ public sealed class GetDueStockAlertsQueryHandler(CatEcommerceDbContext db, Time
         var branchId = options.Value.EffectiveStorefrontBranchId;
         var bundleKind = ProductKind.Bundle;
 
-        // Row 33: the SQL prefilter cannot tell a bundle that is never available (a component is out of stock or
-        // needs a prescription) from one that is, so a plain Take(Limit) over it could be filled with such
+        // Row 33: the SQL prefilter cannot tell a bundle that is never available (a component is out of stock) from one that is, so a plain Take(Limit) over it could be filled with such
         // alerts and starve every genuinely due one behind them. Candidates are therefore read in keyset
         // pages (oldest first) and settled by the availability reader until Limit due alerts are found, the
         // candidates run out, or the page budget is spent.

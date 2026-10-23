@@ -20,7 +20,7 @@ public sealed class ReturnsAndRefundsTests
 
     private static ReturnLineEligibilityInput Line(
         ProductReturnClass? returnClass = null, ItemCondition? condition = null, ReturnReason? reason = null, int ordered = 3, int returned = 0, int open = 0, int requested = 1, bool recalled = false) =>
-        new(Guid.NewGuid(), "Kitten food", ordered, returned, open, returnClass ?? ProductReturnClass.Food, recalled, requested, reason ?? ReturnReason.ChangedMind, condition ?? ItemCondition.Sealed);
+        new(Guid.NewGuid(), "Organic rice", ordered, returned, open, returnClass ?? ProductReturnClass.Food, recalled, requested, reason ?? ReturnReason.ChangedMind, condition ?? ItemCondition.Sealed);
 
     private static ReturnLineVerdict Judge(ReturnLineEligibilityInput line, int today = 5, OrderStatus? status = null, DateOnly? delivered = null, int window = 7) =>
         Assert.Single(ReturnEligibilityPolicy.Evaluate(new ReturnEligibilityInput(status ?? OrderStatus.Delivered, delivered ?? Delivered, new DateOnly(2026, 10, today), window, [line])));

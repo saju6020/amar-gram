@@ -24,7 +24,7 @@ public sealed class StaffRecallsController(
     IInMemoryDispatcher dispatcher, IUserContextProvider userContextProvider, IClientIpAccessor clientIpAccessor) : ControllerBase
 {
     private static readonly IReadOnlyList<string> TraceHeaders =
-        ["Section", "Date", "Kind", "Quantity", "Location", "Reference", "Customer", "Mobile", "Email", "Anonymised", "Cat", "CatCurrentOwner", "HouseholdCats"];
+        ["Section", "Date", "Kind", "Quantity", "Location", "Reference", "Customer", "Mobile", "Email", "Anonymised"];
 
     [HttpPost("api/staff/inventory/batches/{batchId:guid}/recall")]
     [RequireAction(Actions.Recalls.Manage)]
@@ -117,24 +117,23 @@ public sealed class StaffRecallsController(
         foreach (var r in trace.Received)
             rows.Add(new object?[]
             {
-                "Received", r.OccurredOn, r.Kind, r.Quantity, r.LocationCode, r.ReferenceLabel, r.Customer?.Name, r.Customer?.MobileNumber, r.Customer?.Email, r.Customer?.IsAnonymised,
-                r.Cat?.Name, r.Cat?.CurrentOwner?.Name, string.Join("; ", r.HouseholdCats)
+                "Received", r.OccurredOn, r.Kind, r.Quantity, r.LocationCode, r.ReferenceLabel, r.Customer?.Name, r.Customer?.MobileNumber, r.Customer?.Email, r.Customer?.IsAnonymised
             });
 
         foreach (var r in trace.Returned)
-            rows.Add(new object?[] { "Returned", null, r.ReferenceKind, r.Quantity, null, r.ReferenceLabel, r.Customer?.Name, r.Customer?.MobileNumber, r.Customer?.Email, r.Customer?.IsAnonymised, null, null, null });
+            rows.Add(new object?[] { "Returned", null, r.ReferenceKind, r.Quantity, null, r.ReferenceLabel, r.Customer?.Name, r.Customer?.MobileNumber, r.Customer?.Email, r.Customer?.IsAnonymised });
 
         foreach (var r in trace.UnshippedDispatchBlocked)
             rows.Add(new object?[]
             {
                 "UnshippedDispatchBlocked", null, r.ReferenceKind, r.Quantity, null, r.ReferenceId.ToString(), r.Customer?.Name, r.Customer?.MobileNumber, r.Customer?.Email,
-                r.Customer?.IsAnonymised, r.Cat?.Name, r.Cat?.CurrentOwner?.Name, null
+                r.Customer?.IsAnonymised
             });
 
-        rows.Add(new object?[] { "Unidentified", null, null, trace.Unidentified.Quantity, null, $"{trace.Unidentified.Count} sale(s)", null, null, null, null, null, null, null });
+        rows.Add(new object?[] { "Unidentified", null, null, trace.Unidentified.Quantity, null, $"{trace.Unidentified.Count} sale(s)", null, null, null, null });
 
         foreach (var h in trace.StockHeld)
-            rows.Add(new object?[] { "StockHeld", null, null, h.OnHand, h.LocationCode, null, null, null, null, null, null, null, null });
+            rows.Add(new object?[] { "StockHeld", null, null, h.OnHand, h.LocationCode, null, null, null, null, null });
 
         return rows;
     }

@@ -13,7 +13,7 @@ import {
 const PERSIST_KEY = '__purrcare_admin_branches_mock_db__';
 
 /** `mocks/handlers/admin/branches.ts` — HO-ADM-002 §12, HO-ADM-001 §12.4. Branches, opening
- *  hours, closures, rooms, staff branch assignment and the active-branch feed. Two branches in
+ *  hours, closures, staff branch assignment and the active-branch feed. Two branches in
  *  different zones (Asia/Dhaka, Europe/London) so zone rendering is exercised (§12). */
 
 interface OpeningInterval {
@@ -46,14 +46,6 @@ interface Closure {
   isCancelled: boolean;
 }
 
-interface Room {
-  id: string;
-  branchId: string;
-  name: string;
-  kind: string;
-  isActive: boolean;
-}
-
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /** Date-string arithmetic at UTC noon, never via the browser's zone (HO-ADM-002-FU1 §12.2 (e)). */
@@ -75,7 +67,7 @@ function seedBranches(): Map<string, Branch> {
   const main: Branch = {
     id: administrationFixtureIds.mainBranchId,
     code: 'MAIN',
-    name: 'Main clinic',
+    name: 'Dhanmondi outlet',
     timeZoneId: 'Asia/Dhaka',
     addressLine: '12 Gulshan Avenue, Dhaka',
     phoneNumber: '+880212345678',
@@ -97,7 +89,7 @@ function seedBranches(): Map<string, Branch> {
   const london: Branch = {
     id: administrationFixtureIds.londonBranchId,
     code: 'LDN',
-    name: 'London clinic',
+    name: 'London outlet',
     timeZoneId: 'Europe/London',
     addressLine: '5 Baker Street, London',
     phoneNumber: '+442071234567',
@@ -146,33 +138,12 @@ function seedClosures(): Map<string, Closure> {
   ]);
 }
 
-function seedRooms(): Map<string, Room> {
-  const consultation: Room = {
-    id: administrationFixtureIds.consultationRoomId,
-    branchId: administrationFixtureIds.mainBranchId,
-    name: 'Consultation 1',
-    kind: 'Consultation',
-    isActive: true,
-  };
-  const theatre: Room = {
-    id: administrationFixtureIds.theatreRoomId,
-    branchId: administrationFixtureIds.mainBranchId,
-    name: 'Theatre 1',
-    kind: 'Theatre',
-    isActive: true,
-  };
-  return new Map([
-    [consultation.id, consultation],
-    [theatre.id, theatre],
-  ]);
-}
-
 type StaffBranchAssignment = { branchIds: string[]; primaryBranchId: string };
 
 function seedStaffBranchAssignments(): Map<string, StaffBranchAssignment> {
   return new Map([
     [
-      administrationFixtureIds.vetStaffId,
+      administrationFixtureIds.rosterStaffId,
       {
         branchIds: [administrationFixtureIds.mainBranchId],
         primaryBranchId: administrationFixtureIds.mainBranchId,
@@ -191,14 +162,12 @@ function seedStaffBranchAssignments(): Map<string, StaffBranchAssignment> {
 interface PersistedShape {
   branches: Array<[string, Branch]>;
   closures: Array<[string, Closure]>;
-  rooms: Array<[string, Room]>;
   staffBranchAssignments: Array<[string, StaffBranchAssignment]>;
 }
 const persisted = loadPersisted<PersistedShape>(PERSIST_KEY);
 
 let branches = persisted ? new Map(persisted.branches) : seedBranches();
 let closures = persisted ? new Map(persisted.closures) : seedClosures();
-let rooms = persisted ? new Map(persisted.rooms) : seedRooms();
 let staffBranchAssignments = persisted
   ? new Map(persisted.staffBranchAssignments)
   : seedStaffBranchAssignments();
@@ -207,7 +176,6 @@ function persist(): void {
   savePersisted(PERSIST_KEY, {
     branches: [...branches.entries()],
     closures: [...closures.entries()],
-    rooms: [...rooms.entries()],
     staffBranchAssignments: [...staffBranchAssignments.entries()],
   });
 }
@@ -215,7 +183,6 @@ function persist(): void {
 export function resetAdminBranchesMockData(): void {
   branches = seedBranches();
   closures = seedClosures();
-  rooms = seedRooms();
   staffBranchAssignments = seedStaffBranchAssignments();
   clearPersisted(PERSIST_KEY);
 }
@@ -398,36 +365,6 @@ export const adminBranchesHandlers: HttpHandler[] = [
       );
     }
     closure.isCancelled = true;
-    persist();
-    return noContent();
-  }),
-
-  http.get('*/api/admin/branches/:branchId/rooms', ({ params }) => {
-    const list = [...rooms.values()].filter((r) => r.branchId === params.branchId);
-    return HttpResponse.json(list);
-  }),
-
-  http.post('*/api/admin/branches/:branchId/rooms', async ({ request, params }) => {
-    const body = (await request.json()) as { name: string; kind: string };
-    const branchId = params.branchId as string;
-    if ([...rooms.values()].some((r) => r.branchId === branchId && r.name === body.name)) {
-      return validationError(
-        'Name',
-        'RoomNameAlreadyExists',
-        'A room with this name already exists at this branch.',
-      );
-    }
-    const id = crypto.randomUUID();
-    rooms.set(id, { id, branchId, name: body.name, kind: body.kind, isActive: true });
-    persist();
-    return HttpResponse.json({ roomId: id }, { status: 201 });
-  }),
-
-  http.put('*/api/admin/branches/:branchId/rooms/:roomId', async ({ request, params }) => {
-    const room = rooms.get(params.roomId as string);
-    if (!room) return notFound();
-    const body = (await request.json()) as { name: string; kind: string; isActive: boolean };
-    Object.assign(room, body);
     persist();
     return noContent();
   }),

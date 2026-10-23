@@ -31,12 +31,6 @@ public static class AdministrationMapper
     public static BranchClosureCreateDto ToDomainDto(this CreateBranchClosureCommand c) =>
         new(c.BranchId, c.StartsOn, c.EndsOn, ParseEnum<ClosureKind>(c.Kind), c.Reason, c.PartialFrom, c.PartialTo, c.UserContext!, c.CorrelationId);
 
-    public static RoomCreateDto ToDomainDto(this CreateRoomCommand c) =>
-        new(c.BranchId, c.Name, ParseEnum<RoomKind>(c.Kind), c.UserContext!, c.CorrelationId);
-
-    public static RoomUpdateDto ToDomainDto(this UpdateRoomCommand c) =>
-        new(c.Name, ParseEnum<RoomKind>(c.Kind), c.IsActive, c.UserContext!, c.CorrelationId);
-
     public static StaffBranchAssignDto ToDomainDto(this AssignStaffBranchesCommand c) =>
         new(c.BranchIds, c.PrimaryBranchId, c.UserContext!, c.CorrelationId);
 
@@ -51,22 +45,6 @@ public static class AdministrationMapper
 
     public static LeaveRequestCreateDto ToDomainDto(this RequestLeaveCommand c, Guid staffAccountId) =>
         new(staffAccountId, c.StartsOn, c.EndsOn, ParseEnum<LeaveKind>(c.Kind), c.Note, c.UserContext!, c.CorrelationId);
-
-    public static ClinicServiceCreateDto ToDomainDto(this CreateClinicServiceCommand c) =>
-        new(c.Code, c.Name, c.Description, ParseEnum<ServiceCategory>(c.Category), c.DurationMinutes,
-            c.QualifiedRoleIds, ParseEnum<RoomKind>(c.RequiredRoomKind), c.TaxClassId, c.IsBookableOnline,
-            c.UserContext!, c.CorrelationId);
-
-    public static ClinicServiceUpdateDto ToDomainDto(this UpdateClinicServiceCommand c) =>
-        new(c.Name, c.Description, ParseEnum<ServiceCategory>(c.Category), c.DurationMinutes,
-            c.QualifiedRoleIds, ParseEnum<RoomKind>(c.RequiredRoomKind), c.TaxClassId, c.IsBookableOnline,
-            c.UserContext!, c.CorrelationId);
-
-    public static ClinicServiceActivationDto ToDomainDto(this SetClinicServiceActivationCommand c) =>
-        new(c.IsActive, c.UserContext!, c.CorrelationId);
-
-    public static ServicePriceCreateDto ToDomainDto(this SetServicePriceCommand c, DateTimeOffset now) =>
-        new(c.ServiceId, new CatEcommerce.Domain.ValueObjects.Money(c.Amount, c.CurrencyCode), c.EffectiveFrom, c.UserContext.UserId, now, c.UserContext!, c.CorrelationId);
 
     public static TaxClassCreateDto ToDomainDto(this CreateTaxClassCommand c) => new(c.Code, c.Name, c.UserContext!, c.CorrelationId);
 

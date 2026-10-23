@@ -23,20 +23,20 @@ public sealed class ActiveBranchAccessEndpointTests(AdministrationApiFactory fac
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchA = await CreateBranchAsync(adminClient);
         var branchB = await CreateBranchAsync(adminClient);
-        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchA, branchB }, primaryBranchId = branchA
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
-        using var vetClient = await SignInStaffAsync(vet.Mobile, vet.Password);
-        vetClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, branchB.ToString());
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
+        receptionClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, branchB.ToString());
 
-        var mine = await vetClient.GetAsync("/api/staff/branches/mine");
+        var mine = await receptionClient.GetAsync("/api/staff/branches/mine");
         Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
         var body = await mine.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal(branchB, body.GetProperty("activeBranchId").GetGuid());
@@ -51,20 +51,20 @@ public sealed class ActiveBranchAccessEndpointTests(AdministrationApiFactory fac
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchA = await CreateBranchAsync(adminClient);
         var branchOutside = await CreateBranchAsync(adminClient);
-        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchA }, primaryBranchId = branchA
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
-        using var vetClient = await SignInStaffAsync(vet.Mobile, vet.Password);
-        vetClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, branchOutside.ToString());
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
+        receptionClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, branchOutside.ToString());
 
-        var mine = await vetClient.GetAsync("/api/staff/branches/mine");
+        var mine = await receptionClient.GetAsync("/api/staff/branches/mine");
         Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
         var body = await mine.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal(branchA, body.GetProperty("primaryBranchId").GetGuid());
@@ -77,19 +77,19 @@ public sealed class ActiveBranchAccessEndpointTests(AdministrationApiFactory fac
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchA = await CreateBranchAsync(adminClient);
-        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchA }, primaryBranchId = branchA
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
-        using var vetClient = await SignInStaffAsync(vet.Mobile, vet.Password);
-        vetClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, "not-a-guid");
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
+        receptionClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, "not-a-guid");
 
-        var mine = await vetClient.GetAsync("/api/staff/branches/mine");
+        var mine = await receptionClient.GetAsync("/api/staff/branches/mine");
         Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
         var body = await mine.Content.ReadFromJsonAsync<JsonElement>(Json);
         // Never silently falls back to the primary branch as "activeBranchId" -- the refusal is
@@ -104,19 +104,19 @@ public sealed class ActiveBranchAccessEndpointTests(AdministrationApiFactory fac
     {
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
-        var vet = await SeedStaffAsync(StaffRoles.Vet);
+        var reception = await SeedStaffAsync(StaffRoles.Reception);
 
         var branchA = await CreateBranchAsync(adminClient);
         var branchB = await CreateBranchAsync(adminClient);
-        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{vet.StaffAccountId}/branches", new
+        var assign = await adminClient.PutAsJsonAsync($"/api/admin/staff/{reception.StaffAccountId}/branches", new
         {
             branchIds = new[] { branchA, branchB }, primaryBranchId = branchA
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, assign.StatusCode);
 
-        using var vetClient = await SignInStaffAsync(vet.Mobile, vet.Password);
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
 
-        var mine = await vetClient.GetAsync("/api/staff/branches/mine");
+        var mine = await receptionClient.GetAsync("/api/staff/branches/mine");
         Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
         var body = await mine.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal(branchA, body.GetProperty("activeBranchId").GetGuid());
@@ -130,10 +130,10 @@ public sealed class ActiveBranchAccessEndpointTests(AdministrationApiFactory fac
         // Ensure at least two active branches exist (MAIN plus this one) -- see class doc comment.
         await CreateBranchAsync(adminClient);
 
-        var vet = await SeedStaffAsync(StaffRoles.Vet); // never assigned to any branch
+        var reception = await SeedStaffAsync(StaffRoles.Reception); // never assigned to any branch
 
-        using var vetClient = await SignInStaffAsync(vet.Mobile, vet.Password);
-        var mine = await vetClient.GetAsync("/api/staff/branches/mine");
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
+        var mine = await receptionClient.GetAsync("/api/staff/branches/mine");
 
         Assert.Equal(HttpStatusCode.OK, mine.StatusCode);
         var body = await mine.Content.ReadFromJsonAsync<JsonElement>(Json);
@@ -161,7 +161,7 @@ public sealed class ActiveBranchAccessEndpointTests(AdministrationApiFactory fac
         Assert.Equal(branchB, withHeader.GetProperty("activeBranchId").GetGuid());
 
         // A branch-scoped screen opens for the unassigned administrator.
-        Assert.Equal(HttpStatusCode.OK, (await adminClient.GetAsync("/api/staff/queue")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await adminClient.GetAsync("/api/staff/dashboard")).StatusCode);
     }
 
     [Fact]
@@ -171,11 +171,11 @@ public sealed class ActiveBranchAccessEndpointTests(AdministrationApiFactory fac
         using var adminClient = await SignInStaffAsync(admin.Mobile, admin.Password);
         var branchA = await CreateBranchAsync(adminClient);
         await CreateBranchAsync(adminClient);
-        var vet = await SeedStaffAsync(StaffRoles.Vet); // never assigned; more than one active branch exists
+        var reception = await SeedStaffAsync(StaffRoles.Reception); // never assigned; more than one active branch exists
 
-        using var vetClient = await SignInStaffAsync(vet.Mobile, vet.Password);
-        vetClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, branchA.ToString());
-        var body = await (await vetClient.GetAsync("/api/staff/branches/mine")).Content.ReadFromJsonAsync<JsonElement>(Json);
+        using var receptionClient = await SignInStaffAsync(reception.Mobile, reception.Password);
+        receptionClient.DefaultRequestHeaders.Add(HttpContextActiveBranchAccessor.BranchHeaderName, branchA.ToString());
+        var body = await (await receptionClient.GetAsync("/api/staff/branches/mine")).Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal("BranchNotAssigned", body.GetProperty("activeBranchRefusal").GetString());
     }
 

@@ -33,7 +33,7 @@ public sealed class AdminRostersController(IInMemoryDispatcher dispatcher, IUser
             if (!Enum.TryParse<DayOfWeek>(s.DayOfWeek, true, out var day)) return BadRequest(new { error = $"'{s.DayOfWeek}' is not a valid day." });
             if (!TimeOnly.TryParseExact(s.Starts, "HH:mm", out var starts)) return BadRequest(new { error = "Invalid starts." });
             if (!TimeOnly.TryParseExact(s.Ends, "HH:mm", out var ends)) return BadRequest(new { error = "Invalid ends." });
-            slots.Add(new ShiftSlotInput(day, starts, ends, s.DefaultRoomId));
+            slots.Add(new ShiftSlotInput(day, starts, ends));
         }
 
         var command = new SetRosterPatternCommand

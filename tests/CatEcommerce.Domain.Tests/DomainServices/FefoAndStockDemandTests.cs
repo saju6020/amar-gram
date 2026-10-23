@@ -137,7 +137,7 @@ public sealed class FefoAndStockDemandTests
     // ── planner fixtures ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
     private static SkuStockProfile SkuProfile(bool fractional = false, bool active = true) =>
-        new(Sku, Guid.NewGuid(), "SKU-1", "Kitten food", null, StockClass.Food, true, "each", fractional, null, active);
+        new(Sku, Guid.NewGuid(), "SKU-1", "Organic rice", null, StockClass.Food, true, "each", fractional, null, active);
 
     private static StockDemand Demand(
         decimal quantity, MovementKind? purpose = null, IReadOnlyList<(Guid, Guid, decimal)>? explicitLines = null, string? reason = null, IReadOnlyList<Guid>? locations = null) =>
@@ -145,7 +145,7 @@ public sealed class FefoAndStockDemandTests
 
     private static StockReference Reference(StockReferenceKind? kind = null) => new(kind ?? StockReferenceKind.CustomerOrder, Guid.NewGuid(), null, "Order PC-001234");
 
-    private static StockParty Party(bool customer = false, bool cat = false) => new(customer ? Guid.NewGuid() : null, cat ? Guid.NewGuid() : null);
+    private static StockParty Party(bool customer = false) => new(customer ? Guid.NewGuid() : null);
 
     private static StockCandidate Stock(
         DateOnly? expires, decimal onHand = 10m, decimal reserved = 0m, BatchStatus? status = null, StockLocationKind? kind = null, int receivedDay = 1) =>
@@ -156,7 +156,7 @@ public sealed class FefoAndStockDemandTests
         IReadOnlyList<StockCandidate> stock, IReadOnlyList<(Guid, Guid, decimal)> lines, string? reason = null, decimal? quantity = null, MovementKind? purpose = null)
     {
         var locations = stock.ToDictionary(s => s.LocationId, s => new StockLocationFact(s.LocationId, Branch, "L", s.LocationKind, true));
-        return Planner.Plan(Demand(quantity ?? lines.Sum(l => l.Item3), purpose, lines, reason), Reference(), Party(customer: true, cat: true), SkuProfile(), stock, locations, Today, allowShortfall: false);
+        return Planner.Plan(Demand(quantity ?? lines.Sum(l => l.Item3), purpose, lines, reason), Reference(), Party(customer: true), SkuProfile(), stock, locations, Today, allowShortfall: false);
     }
 
     // ── U-E6 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -236,26 +236,23 @@ public sealed class FefoAndStockDemandTests
     // ── U-E8 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public void U_E8_ASaleAtADispensary_AndADispenseAtTheShopFloor_AreNotPermittedAtThatLocation()
+    public void U_E8_ASaleAtQuarantine_IsNotPermittedAtThatLocation()
     {
-        var dispensary = new StockLocationFact(Guid.NewGuid(), Branch, "DISP", StockLocationKind.ClinicDispensary, true);
-        var shop = new StockLocationFact(Guid.NewGuid(), Branch, "SHOP", StockLocationKind.ShopFloor, true);
-        var locations = new Dictionary<Guid, StockLocationFact> { [dispensary.LocationId] = dispensary, [shop.LocationId] = shop };
+        var quarantine = new StockLocationFact(Guid.NewGuid(), Branch, "QUAR", StockLocationKind.Quarantine, true);
+        var locations = new Dictionary<Guid, StockLocationFact> { [quarantine.LocationId] = quarantine };
 
-        var sale = Planner.Plan(Demand(1m, MovementKind.Sale, locations: [dispensary.LocationId]), Reference(), Party(customer: true), SkuProfile(), [], locations, Today, false);
-        var dispense = Planner.Plan(Demand(1m, MovementKind.Dispense, locations: [shop.LocationId]), Reference(), Party(customer: true, cat: true), SkuProfile(), [], locations, Today, false);
+        var sale = Planner.Plan(Demand(1m, MovementKind.Sale, locations: [quarantine.LocationId]), Reference(), Party(customer: true), SkuProfile(), [], locations, Today, false);
 
         Assert.Equal(BusinessViolationCodes.MovementNotPermittedAtLocation, sale.ViolationCode);
-        Assert.Equal(BusinessViolationCodes.MovementNotPermittedAtLocation, dispense.ViolationCode);
     }
 
     [Fact]
     public void U_E8_WithNoLocationNamed_OnlyLocationsThatPermitThePurposeAreConsidered()
     {
-        var dispensaryStock = Stock(Today.AddDays(30), kind: StockLocationKind.ClinicDispensary);
+        var quarantineStock = Stock(Today.AddDays(30), kind: StockLocationKind.Quarantine);
         var shopStock = Stock(Today.AddDays(90), kind: StockLocationKind.ShopFloor);
 
-        var result = Planner.Plan(Demand(2m, MovementKind.Sale), Reference(), Party(customer: true), SkuProfile(), [dispensaryStock, shopStock], new Dictionary<Guid, StockLocationFact>(), Today, false);
+        var result = Planner.Plan(Demand(2m, MovementKind.Sale), Reference(), Party(customer: true), SkuProfile(), [quarantineStock, shopStock], new Dictionary<Guid, StockLocationFact>(), Today, false);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(shopStock.BatchId, Assert.Single(result.Value!.Plan.Lines).BatchId);
@@ -317,18 +314,12 @@ public sealed class FefoAndStockDemandTests
     // ── U-E10 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
     [Theory]
-    [InlineData("Dispense", "CustomerOrder", false, true, "StockPartyRequired")]   // Dispense without a cat
-    [InlineData("Dispense", "CustomerOrder", true, false, "StockPartyRequired")]   // Dispense without a customer
-    [InlineData("Sale", "CustomerOrder", false, false, "StockPartyRequired")]      // an order sale with no customer
-    [InlineData("Sale", "PosSale", false, false, null)]                            // an anonymous counter sale is allowed
-    [InlineData("Sale", "CustomerOrder", true, false, null)]
-    [InlineData("BoardingUse", "BoardingStay", true, false, "StockPartyRequired")]
-    [InlineData("BoardingUse", "BoardingStay", true, true, null)]
-    [InlineData("ClinicalUse", "Visit", false, false, "StockPartyRequired")]
-    [InlineData("ClinicalUse", "Visit", false, true, null)]
-    public void U_E10_ThePartyStampRules(string purpose, string referenceKind, bool customer, bool cat, string? expected)
+    [InlineData("Sale", "CustomerOrder", false, "StockPartyRequired")]      // an order sale with no customer
+    [InlineData("Sale", "PosSale", false, null)]                            // an anonymous counter sale is allowed
+    [InlineData("Sale", "CustomerOrder", true, null)]
+    public void U_E10_ThePartyStampRules(string purpose, string referenceKind, bool customer, string? expected)
     {
-        var refusal = StockDemandPlanner.PartyRefusal(Enumeration.FromDisplayName<MovementKind>(purpose), Enumeration.FromDisplayName<StockReferenceKind>(referenceKind), Party(customer, cat));
+        var refusal = StockDemandPlanner.PartyRefusal(Enumeration.FromDisplayName<MovementKind>(purpose), Enumeration.FromDisplayName<StockReferenceKind>(referenceKind), Party(customer));
 
         Assert.Equal(expected, refusal?.Code);
     }
@@ -338,7 +329,7 @@ public sealed class FefoAndStockDemandTests
     {
         var stock = new[] { Stock(Today.AddDays(30)) };
 
-        var result = Planner.Plan(Demand(1m, MovementKind.Dispense), Reference(StockReferenceKind.Prescription), Party(customer: true), SkuProfile(), stock, new Dictionary<Guid, StockLocationFact>(), Today, false);
+        var result = Planner.Plan(Demand(1m, MovementKind.Sale), Reference(StockReferenceKind.CustomerOrder), Party(customer: false), SkuProfile(), stock, new Dictionary<Guid, StockLocationFact>(), Today, false);
 
         Assert.Equal(BusinessViolationCodes.StockPartyRequired, result.ViolationCode);
     }
@@ -361,7 +352,7 @@ public sealed class FefoAndStockDemandTests
         var expired = StockDemandPlanner.UsabilityRefusal(BatchStatus.Available, new DateOnly(2026, 10, 1), "LOT-7", Today);
 
         Assert.Equal(BusinessViolationCodes.BatchExpired, expired?.Code);
-        Assert.Equal("Batch LOT-7 expired on 2026-10-01 and cannot be sold, dispensed or fed.", expired?.Message);
+        Assert.Equal("Batch LOT-7 expired on 2026-10-01 and cannot be sold.", expired?.Message);
         Assert.Null(StockDemandPlanner.UsabilityRefusal(BatchStatus.Available, Today, "LOT-7", Today));
         Assert.Null(StockDemandPlanner.UsabilityRefusal(BatchStatus.Available, null, "LOT-7", Today));
     }

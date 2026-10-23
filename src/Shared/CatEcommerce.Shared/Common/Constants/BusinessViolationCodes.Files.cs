@@ -15,7 +15,7 @@ public static partial class BusinessViolationCodes
     public const string FileLegallyHeld = nameof(FileLegallyHeld);
 
     // Gate-fix 2026-09-27 (CODE_REVIEW LOW): a Files-scoped name for an invalid FilePurpose query
-    // value, deliberately not the generic `InvalidEnumValue` name ho/CAT-001-gates independently
+    // value, deliberately not the generic `InvalidEnumValue` name another area independently
     // coins for the same defect in CatsController -- see HO-FIL-001.md §1 Amended and
     // FilesController.TryParseEnum's own doc comment.
     public const string FilesInvalidPurpose = nameof(FilesInvalidPurpose);

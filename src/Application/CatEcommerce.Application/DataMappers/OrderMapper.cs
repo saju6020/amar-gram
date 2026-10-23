@@ -10,7 +10,7 @@ namespace CatEcommerce.Application.DataMappers;
 public static class OrderMapper
 {
     public static OrderLineDto ToDomainDto(this QuoteLine line, int lineNumber) =>
-        new(Guid.NewGuid(), lineNumber, line.SkuId, line.ProductId, line.ProductName, line.VariantLabel, line.Barcode, line.ReturnClass, line.IsBundle, line.CatId,
+        new(Guid.NewGuid(), lineNumber, line.SkuId, line.ProductId, line.ProductName, line.VariantLabel, line.Barcode, line.ReturnClass, line.IsBundle,
             line.Quantity, line.UnitPrice.ToAmount(), line.Subtotal.ToAmount(), line.LineDiscount.ToAmount(), line.OrderDiscountShare.ToAmount(), line.TaxClassId,
             line.TaxRatePercent, line.TaxAmount.ToAmount(), line.LineTotal.ToAmount(),
             line.BundleComponents.Select(c => new OrderLineComponent(c.ComponentSkuId, c.Quantity)).ToList());

@@ -13,10 +13,10 @@ namespace CatEcommerce.Domain.Tests.Aggregates.Billing;
 public sealed class ChargeAggregateTests
 {
     private static ChargeRequestDto Request(
-        decimal quantity = 1m, decimal price = 800m, decimal discount = 0m, string description = "Consultation",
-        ChargeSourceKind? source = null, BusinessLine? line = null, string currency = "BDT", string sourceLineRef = "service") =>
-        new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), line ?? ChargeRules.DefaultBusinessLine(source ?? ChargeSourceKind.Appointment), ItemKind.Service,
-            source ?? ChargeSourceKind.Appointment, Guid.NewGuid(), sourceLineRef, null, null, description, quantity,
+        decimal quantity = 1m, decimal price = 800m, decimal discount = 0m, string description = "Delivery fee",
+        ChargeSourceKind? source = null, BusinessLine? line = null, string currency = "BDT", string sourceLineRef = "fee") =>
+        new(Guid.NewGuid(), Guid.NewGuid(), line ?? ChargeRules.DefaultBusinessLine(source ?? ChargeSourceKind.Manual), ItemKind.Fee,
+            source ?? ChargeSourceKind.Manual, Guid.NewGuid(), sourceLineRef, description, quantity,
             new Money(price, currency), new Money(discount, currency), Guid.NewGuid(), new DateOnly(2026, 10, 7));
 
     private static ChargeRecordContext Context(string currency = "BDT") => new(currency, DateTimeOffset.UtcNow, BillingTestData.Actor());
@@ -86,12 +86,8 @@ public sealed class ChargeAggregateTests
     }
 
     [Theory]
-    [InlineData("Appointment", "Clinic")]
-    [InlineData("Visit", "Clinic")]
-    [InlineData("Dispense", "Clinic")]
-    [InlineData("Surgery", "Clinic")]
     [InlineData("Order", "Shop")]
-    [InlineData("BoardingStay", "Boarding")]
+    [InlineData("Manual", "Shop")]
     public void U_B2_DefaultBusinessLinePerSource(string source, string expected)
     {
         Assert.Equal(expected, ChargeRules.DefaultBusinessLine(Enumeration.FromDisplayName<ChargeSourceKind>(source)).DisplayName);
@@ -100,7 +96,8 @@ public sealed class ChargeAggregateTests
     [Fact]
     public void U_B2_OnlyAManualChargeMayOverrideTheDefaultLine()
     {
-        Assert.Equal(BusinessViolationCodes.InvalidEnumValue, ErrorOf(() => Record(Request(source: ChargeSourceKind.Order, line: BusinessLine.Clinic))));
+        Assert.False(ChargeRules.MayOverrideBusinessLine(ChargeSourceKind.Order));
+        Assert.True(ChargeRules.MayOverrideBusinessLine(ChargeSourceKind.Manual));
         Record(Request(source: ChargeSourceKind.Manual, line: BusinessLine.Shop));
     }
 

@@ -29,11 +29,9 @@ public sealed class ReportingDashboardEndpointTests(ReportingApiFactory factory)
     public async Task I_E1_TheTiles_EqualTheMatchingReportFigures_ForToday()
     {
         var context = await CreateBillingContextAsync();
-        var clinic = await SeedClinicAsync(context);
         var customerId = await SeedCustomerAsync(context);
 
-        // Two walk-ins (checked in, waiting) and cash and card takings.
-        for (var i = 0; i < 2; i++) await RegisterWalkInAsync(context, clinic, customerId);
+        // Cash and bank-transfer takings.
         await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 500m);
         await RecordPaymentAsync(context.Admin, customerId, "BankTransfer", 300m, reference: "TRX-" + NewCode());
 
@@ -42,15 +40,6 @@ public sealed class ReportingDashboardEndpointTests(ReportingApiFactory factory)
         Assert.Equal(context.BranchId, admin.GetProperty("branchId").GetGuid());
         Assert.Equal(Today.ToString("yyyy-MM-dd"), admin.GetProperty("localDate").GetString());
         Assert.Equal(60, admin.GetProperty("refreshSeconds").GetInt32());
-
-        // clinic.appointments-today = R1's statuses; clinic.queue-now = the two waiting cats.
-        var schedule = await RunReportAsync(context.Admin, ReportCatalogue.ClinicDailyScheduleKey, context, from: Today, to: Today);
-        var rows = Rows(schedule);
-        var appointments = Tile(admin, "clinic.appointments-today");
-        Assert.Equal(rows.Count(r => r.GetProperty("status").GetString() == "CheckedIn"), Figure(appointments, "checkedIn").GetInt64());
-        Assert.Equal(rows.Count(r => r.GetProperty("status").GetString() == "Booked"), Figure(appointments, "booked").GetInt64());
-        var (reception, _) = await StaffClientAsync(context, StaffRoles.Reception);
-        Assert.Equal(2, Figure(Tile(await DashboardAsync(reception), "clinic.queue-now"), "waiting").GetInt64());
 
         // payments.today = what R13 expects per method.
         var payments = Tile(admin, "payments.today");
@@ -67,13 +56,13 @@ public sealed class ReportingDashboardEndpointTests(ReportingApiFactory factory)
 
     // ── I-E2 / U-E2: nothing the caller may not see is computed or sent ───────────────────────────────────────
     [Fact]
-    public async Task I_E2_ANurseGetsClinicTilesOnly_AShopManagerHasNoPaymentTile_AndAGatedTileIsNeverComputed()
+    public async Task I_E2_AnInventoryClerkGetsStockTilesOnly_AShopManagerHasNoPaymentTile_AndAGatedTileIsNeverComputed()
     {
-        var (nurseContext, nurse) = await ContextWithRoleAsync(StaffRoles.Nurse);
-        var nurseDashboard = await DashboardAsync(nurse);
-        Assert.NotEmpty(TileKeys(nurseDashboard));
-        Assert.All(TileKeys(nurseDashboard), k => Assert.True(k.StartsWith("clinic.", StringComparison.Ordinal) || k.StartsWith("surgery.", StringComparison.Ordinal), k));
-        Assert.Equal(HttpStatusCode.Forbidden, (await nurse.GetAsync($"/api/staff/reports/{ReportCatalogue.ClinicDailyScheduleKey}" + Query(nurseContext, Today, Today))).StatusCode);
+        var (inventoryContext, inventory) = await ContextWithRoleAsync(StaffRoles.Inventory);
+        var inventoryDashboard = await DashboardAsync(inventory);
+        Assert.NotEmpty(TileKeys(inventoryDashboard));
+        Assert.All(TileKeys(inventoryDashboard), k => Assert.True(k.StartsWith("stock.", StringComparison.Ordinal), k));
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync($"/api/staff/reports/{ReportCatalogue.PaymentReconciliationKey}" + Query(inventoryContext, Today, Today))).StatusCode);
 
         var (shopContext, shop) = await ContextWithRoleAsync(StaffRoles.ShopManager);
         var shopDashboard = await DashboardAsync(shop);
@@ -88,9 +77,9 @@ public sealed class ReportingDashboardEndpointTests(ReportingApiFactory factory)
         Assert.NotEqual(Guid.Empty, shopContext.BranchId);
 
         // U-E2: the gated tiles' sources were never invoked for these callers.
-        var nurseId = StaffIdOf(nurseContext, StaffRoles.Nurse);
+        var inventoryId = StaffIdOf(inventoryContext, StaffRoles.Inventory);
         var shopId = StaffIdOf(shopContext, StaffRoles.ShopManager);
-        Assert.DoesNotContain(ReportingFactory.ComputedTiles, c => c.CallerId == nurseId && !c.Key.StartsWith("clinic.", StringComparison.Ordinal) && !c.Key.StartsWith("surgery.", StringComparison.Ordinal));
+        Assert.DoesNotContain(ReportingFactory.ComputedTiles, c => c.CallerId == inventoryId && !c.Key.StartsWith("stock.", StringComparison.Ordinal));
         Assert.DoesNotContain(ReportingFactory.ComputedTiles, c => c.CallerId == shopId && (c.Key.StartsWith("payments.", StringComparison.Ordinal) || c.Key.StartsWith("billing.", StringComparison.Ordinal)));
         Assert.Contains(ReportingFactory.ComputedTiles, c => c.CallerId == shopId && c.Key == "revenue.shop-today");
     }

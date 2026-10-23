@@ -75,8 +75,8 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
     {
         var s = await StockThreeBatchesAsync();
 
-        var dispensary = await s.Branch.Admin.Client.GetAsync($"/api/staff/inventory/fefo-preview?skuId={s.Sku.SkuId}&quantity=1&purpose=Sale&locationId={s.Branch.DispensaryId}");
-        Assert.Equal(HttpStatusCode.BadRequest, dispensary.StatusCode);
+        var quarantine = await s.Branch.Admin.Client.GetAsync($"/api/staff/inventory/fefo-preview?skuId={s.Sku.SkuId}&quantity=1&purpose=Sale&locationId={s.Branch.QuarantineId}");
+        Assert.Equal(HttpStatusCode.BadRequest, quarantine.StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await s.Branch.Admin.Client.GetAsync($"/api/staff/inventory/fefo-preview?skuId={s.Sku.SkuId}&quantity=1&purpose=Receipt")).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await s.Branch.Admin.Client.GetAsync($"/api/staff/inventory/fefo-preview?skuId={s.Sku.SkuId}&quantity=0&purpose=Sale")).StatusCode);
     }
@@ -190,7 +190,7 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
         var outcomes = await RaceAsync(20, async port =>
         {
             var result = await port.Ledger.DeductAsync(
-                Demand(branch.BranchId, sku.SkuId, 1m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-1"), new StockParty(null, null), default);
+                Demand(branch.BranchId, sku.SkuId, 1m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-1"), new StockParty(null), default);
             Assert.True(result.IsSuccess, result.Message);
         });
 
@@ -213,7 +213,7 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
             if (Interlocked.Increment(ref claims) % 2 == 0)
                 Assert.True((await port.Ledger.ReserveAsync(Demand(branch.BranchId, sku.SkuId, 1m), OrderReference(), Customer(), default)).IsSuccess);
             else
-                Assert.True((await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS"), new StockParty(null, null), default)).IsSuccess);
+                Assert.True((await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS"), new StockParty(null), default)).IsSuccess);
         });
 
         Assert.Equal(1, outcomes.Count(o => o == "committed"));
@@ -232,7 +232,6 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
         var expired = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.ShopId, 6m, InDays(20));
         var quarantined = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 4m, InDays(80));
         await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.QuarantineId, 9m, InDays(80));
-        await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.DispensaryId, 5m, InDays(80));
 
         await SetBatchExpiryDirectlyAsync(expired, InDays(-2));
         Assert.Equal(HttpStatusCode.NoContent, (await branch.Admin.Client.PostAsJsonAsync($"/api/staff/inventory/batches/{quarantined}/quarantine", new { reason = "Torn bags." }, Json)).StatusCode);
@@ -265,7 +264,7 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
         var summary = await JsonOkAsync(await branch.Admin.Client.GetAsync($"/api/staff/inventory/stock?search={sku.SkuCode}"));
         var row = Assert.Single(summary.GetProperty("items").EnumerateArray());
         Assert.Equal("7", row.GetProperty("sellable").GetString());
-        Assert.Equal("12", row.GetProperty("usable").GetString()); // 7 at retail + 5 at the dispensary
+        Assert.Equal("7", row.GetProperty("usable").GetString()); // all of it at retail
         Assert.Equal("13", row.GetProperty("heldQuantity").GetString());
         Assert.Equal("6", row.GetProperty("expiredQuantity").GetString());
         Assert.Equal("3", row.GetProperty("reserved").GetString());
@@ -280,18 +279,13 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
         var sku = await CreateSkuAsync(branch.Admin.Client, food: true);
         // One batch per purpose, each at a location that permits it, so the only thing in the way of every use is the expiry.
         var warehouse = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.WarehouseId, 10m, InDays(30));
-        var dispensary = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.DispensaryId, 10m, InDays(30));
-        var boarding = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.BoardingId, 10m, InDays(30));
-        foreach (var batch in new[] { warehouse, dispensary, boarding }) await SetBatchExpiryDirectlyAsync(batch, InDays(-1));
+        await SetBatchExpiryDirectlyAsync(warehouse, InDays(-1));
 
-        var reason = "The vet says it is fine, I am sure of it.";
-        var party = Customer(catId: Guid.NewGuid());
+        var reason = "The supplier says it is fine, I am sure of it.";
+        var party = Customer();
         await using var port = OpenPort();
 
         AssertPort(await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Sale, [(warehouse, branch.WarehouseId, 1m)], reason), OrderReference(), party, default), BusinessViolationCodes.BatchExpired);
-        AssertPort(await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Dispense, [(dispensary, branch.DispensaryId, 1m)], reason), OrderReference(kind: StockReferenceKind.Prescription), party, default), BusinessViolationCodes.BatchExpired);
-        AssertPort(await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.ClinicalUse, [(dispensary, branch.DispensaryId, 1m)], reason), OrderReference(kind: StockReferenceKind.Visit), party, default), BusinessViolationCodes.BatchExpired);
-        AssertPort(await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.BoardingUse, [(boarding, branch.BoardingId, 1m)], reason), OrderReference(kind: StockReferenceKind.BoardingStay), party, default), BusinessViolationCodes.BatchExpired);
         AssertPort(await port.Ledger.ReserveAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Sale, [(warehouse, branch.WarehouseId, 1m)], reason), OrderReference(), party, default), BusinessViolationCodes.BatchExpired);
 
         Assert.Equal(0, port.Enlisted);
@@ -404,7 +398,7 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
 
         await using var port = OpenPort();
         var result = await port.Ledger.DeductAsync(
-            Demand(branch.BranchId, sku.SkuId, 3m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-2"), new StockParty(null, null), default);
+            Demand(branch.BranchId, sku.SkuId, 3m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS-2"), new StockParty(null), default);
 
         AssertPort(result, BusinessViolationCodes.InsufficientStock);
         Assert.Contains("2", result.Message);
@@ -415,17 +409,15 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
     // ── the party stamp, returns, corrections and balances ──────────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task I_E10_ASaleNeedsTheCustomerUnlessItIsACounterSale_AndADispenseNeedsTheCat()
+    public async Task I_E10_ASaleNeedsTheCustomerUnlessItIsACounterSale()
     {
         var branch = await SeedBranchAsync();
         var sku = await CreateSkuAsync(branch.Admin.Client);
         await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.ShopId, 5m);
-        await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.DispensaryId, 5m);
         await using var port = OpenPort();
 
-        AssertPort(await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m), OrderReference(), new StockParty(null, null), default), BusinessViolationCodes.StockPartyRequired);
-        AssertPort(await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m, MovementKind.Dispense), OrderReference(kind: StockReferenceKind.Prescription), new StockParty(Guid.NewGuid(), null), default), BusinessViolationCodes.StockPartyRequired);
-        Assert.True((await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS"), new StockParty(null, null), default)).IsSuccess);
+        AssertPort(await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m), OrderReference(), new StockParty(null), default), BusinessViolationCodes.StockPartyRequired);
+        Assert.True((await port.Ledger.DeductAsync(Demand(branch.BranchId, sku.SkuId, 1m), new StockReference(StockReferenceKind.PosSale, Guid.NewGuid(), null, "POS"), new StockParty(null), default)).IsSuccess);
         Assert.Equal(1, port.Enlisted);
     }
 
@@ -552,56 +544,5 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
         var usability = Assert.Single(result.Value!);
         Assert.True(usability.IsRecalled);
         Assert.Equal(BusinessViolationCodes.BatchRecalled, usability.RefusalCode);
-    }
-
-    [Fact]
-    public async Task DispensaryBatches_AreOnlyThoseHeldAtTheClinicDispensary_WithTheirBatchStatus_AndTheDispensaryLocationIsPublished()
-    {
-        var branch = await SeedBranchAsync();
-        var sku = await CreateSkuAsync(branch.Admin.Client);
-        var otherSku = await CreateSkuAsync(branch.Admin.Client);
-        var inDispensary = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.DispensaryId, 4m, lot: "DSP-A");
-        await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.ShopId, 9m, lot: "DSP-SHOP");
-        await ReceiveAsync(branch.Admin.Client, otherSku.SkuId, branch.DispensaryId, 3m, lot: "DSP-OTHER");
-
-        await using var port = OpenPort();
-        var batches = await port.Ledger.GetDispensaryBatchesAsync(branch.BranchId, [sku.SkuId], default);
-
-        var only = Assert.Single(batches.Value!);
-        Assert.Equal((sku.SkuId, inDispensary, "DSP-A", branch.DispensaryId, 4m, 0m, BatchStatus.Available), (only.SkuId, only.BatchId, only.LotNumber, only.LocationId, only.OnHand, only.Reserved, only.BatchStatus));
-        Assert.Equal(4m, only.Free);
-        Assert.Empty((await port.Ledger.GetDispensaryBatchesAsync(branch.BranchId, [], default)).Value!);
-
-        var location = await port.Ledger.GetClinicDispensaryAsync(branch.BranchId, default);
-        Assert.Equal(branch.DispensaryId, location.Value!.LocationId);
-
-        var missing = await port.Ledger.GetClinicDispensaryAsync(Guid.NewGuid(), default);
-        Assert.False(missing.IsSuccess);
-        Assert.Equal("DispensaryNotFound", missing.ViolationCode);
-        Assert.Equal(0, port.Enlisted);
-    }
-
-    [Fact]
-    public async Task Correction_AdjustAsyncMovesStockOnce_NeedsAReason_AndWritesOneBusinessEventAuditEntryNamingTheReference()
-    {
-        var branch = await SeedBranchAsync();
-        var sku = await CreateSkuAsync(branch.Admin.Client);
-        var batchId = await ReceiveAsync(branch.Admin.Client, sku.SkuId, branch.DispensaryId, 10m);
-        var reference = new StockReference(StockReferenceKind.ControlledDrugCorrection, Guid.NewGuid(), null, "CD-CORR-1");
-        await using var port = OpenPort();
-
-        AssertPort(await port.Ledger.AdjustAsync(new StockAdjustment(branch.BranchId, sku.SkuId, batchId, branch.DispensaryId, -1m, "no", null), reference, new StockParty(null, null), default),
-            BusinessViolationCodes.AdjustmentNoteRequired);
-
-        var done = await port.Ledger.AdjustAsync(new StockAdjustment(branch.BranchId, sku.SkuId, batchId, branch.DispensaryId, -1m, "Register counted one fewer ampoule.", null), reference, new StockParty(null, null), default);
-        Assert.True(done.IsSuccess, done.Message);
-        Assert.Equal(2, port.Enlisted);
-        await port.CommitAsync();
-
-        Assert.Equal(9m, (await PositionAsync(batchId, branch.DispensaryId)).OnHand);
-        await using var verify = OpenPort();
-        var audit = await verify.Db.AuditEntries.AsNoTracking().SingleAsync(a => a.EntityId == reference.ReferenceId && a.Action == "StockCorrectedThroughLedger");
-        Assert.Equal(AuditCategory.BusinessEvent, audit.Category);
-        Assert.Equal("Register counted one fewer ampoule.", audit.Reason);
     }
 }

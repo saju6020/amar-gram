@@ -16,7 +16,6 @@ public sealed class SetFoodDetailsCommand : Command
     public required Guid ProductId { get; init; }
     public required int ExpectedVersion { get; init; }
     public string? Manufacturer { get; init; }
-    public string? LifeStage { get; init; }
     public string? ProteinSource { get; init; }
     public string? IngredientList { get; init; }
     public GuaranteedAnalysisInput? GuaranteedAnalysis { get; init; }

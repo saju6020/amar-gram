@@ -74,7 +74,7 @@ public sealed class BillingAgeingEndpointTests(BillingApiFactory factory) : Bill
         var other = await CreateBillingContextAsync();
         var customerId = await SeedCustomerAsync(mine);
         await IssueSimpleInvoiceAsync(mine, customerId, 500m);
-        var (vet, _) = await StaffClientAsync(mine, StaffRoles.Vet);
+        var (inventory, _) = await StaffClientAsync(mine, StaffRoles.Inventory);
 
         var mineAgeing = (await ReadAsync(await mine.Admin.GetAsync($"/api/staff/billing/receivables/ageing?customerId={customerId}"))).GetProperty("totals");
         Assert.Equal(500m, AmountOf(Bucket(mineAgeing, "days1To30")) + AmountOf(Bucket(mineAgeing, "current")));
@@ -82,8 +82,8 @@ public sealed class BillingAgeingEndpointTests(BillingApiFactory factory) : Bill
         var otherAgeing = (await ReadAsync(await other.Admin.GetAsync($"/api/staff/billing/receivables/ageing?customerId={customerId}"))).GetProperty("totals");
         Assert.Equal(0m, AmountOf(Bucket(otherAgeing, "current")) + AmountOf(Bucket(otherAgeing, "days1To30")));
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await vet.GetAsync("/api/staff/billing/receivables/ageing")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await vet.GetAsync($"/api/staff/billing/customers/{customerId}/summary")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync("/api/staff/billing/receivables/ageing")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await inventory.GetAsync($"/api/staff/billing/customers/{customerId}/summary")).StatusCode);
     }
 
     private async Task<(Guid InvoiceId, string Number, Guid ChargeId)> IssueAtDayAsync(BillingContext context, Guid customerId, int daysAfterPrevious, decimal amount)

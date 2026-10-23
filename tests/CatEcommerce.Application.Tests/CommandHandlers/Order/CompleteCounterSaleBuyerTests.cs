@@ -65,7 +65,7 @@ public sealed class CompleteCounterSaleBuyerTests
     private static CompleteCounterSaleCommand Sale(string mobile = "01712345678") => new()
     {
         OrderId = Guid.NewGuid(), IdempotencyKey = Guid.NewGuid(), BranchId = BranchId, CustomerName = "Rina Akter", CustomerMobile = mobile,
-        Lines = [new CounterSaleLineInput(Guid.NewGuid(), 1, null)], Tenders = [new CounterTenderInput(TenderMethod.Cash, 100m, null)],
+        Lines = [new CounterSaleLineInput(Guid.NewGuid(), 1)], Tenders = [new CounterTenderInput(TenderMethod.Cash, 100m, null)],
         UserContext = Cashier, CorrelationId = Guid.NewGuid(),
     };
 

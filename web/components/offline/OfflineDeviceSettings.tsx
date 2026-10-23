@@ -59,13 +59,13 @@ export function OfflineDeviceSettings() {
     <div className="flex max-w-2xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-xl font-semibold text-ink">Offline copy on this device</h1>
-        <Link href="/staff/front-desk" className="text-sm font-semibold text-accent-ink hover:underline">
-          Back to the front desk
+        <Link href="/staff" className="text-sm font-semibold text-accent-ink hover:underline">
+          Back to the staff home
         </Link>
       </div>
       <p className="text-sm text-ink-muted">
-        If the internet drops, this device can still show today&rsquo;s appointments and boarding
-        tasks — read-only — from a copy it keeps. It is off unless someone turns it on, because the
+        If the internet drops, this device can still show today&rsquo;s lists — read-only — from a
+        copy it keeps. It is off unless someone turns it on, because the
         copy contains customers&rsquo; names.
       </p>
 
@@ -115,9 +115,8 @@ export function OfflineDeviceSettings() {
         <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="font-semibold text-ink">What</dt>
           <dd className="text-ink-muted">
-            Today&rsquo;s appointments (time, cat, customer name, service, vet, room,
-            status, handling notes for high-risk cats) and today&rsquo;s boarding tasks, for the
-            branch you&rsquo;re working in. Nothing else — no medical records, no passwords.
+            Today&rsquo;s lists for the branch you&rsquo;re working in. Nothing else — no
+            passwords.
           </dd>
           <dt className="font-semibold text-ink">Where</dt>
           <dd className="text-ink-muted">In this browser on this device only. It is never sent anywhere else.</dd>

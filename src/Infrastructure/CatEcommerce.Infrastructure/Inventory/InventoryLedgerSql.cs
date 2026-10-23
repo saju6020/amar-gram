@@ -138,7 +138,7 @@ public static class InventoryLedgerSql
 
                 branch_today := (now() AT TIME ZONE COALESCE(zone, 'UTC'))::date;
                 IF branch_today {BatchExpiryRules.SqlComparison} batch_expires THEN
-                    RAISE EXCEPTION 'That batch has expired and cannot be sold, dispensed or fed.'
+                    RAISE EXCEPTION 'That batch has expired and cannot be sold.'
                         USING ERRCODE = '23514', CONSTRAINT = 'tg_stock_batch_expired';
                 END IF;
             END IF;
@@ -228,7 +228,7 @@ public static class InventoryLedgerSql
     /// <summary>
     /// <c>inventory.v_sellable_stock</c> (ADR-116, US-IMP-08 AC1, US-SHP-07): per SKU per branch the quantity SELLABLE at retail -- on-hand minus
     /// reserved over <c>Available</c> batches that are not expired in the branch's local date, at active shop-floor and warehouse locations -- and
-    /// the FEFO-first expiry. Quarantined, recalled, written-off and expired stock, and stock at the dispensary, boarding store or quarantine
+    /// the FEFO-first expiry. Quarantined, recalled, written-off and expired stock, and stock at quarantine
     /// location, never counts. The expiry test is the SQL mirror of <c>BatchExpiryRules</c>.
     /// </summary>
     public static string CreateSellableStockView() => $"""

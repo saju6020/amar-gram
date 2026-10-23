@@ -5,10 +5,8 @@ import { IncompleteCustomerNotice } from './IncompleteCustomerNotice';
 import type { StaffCustomer } from '@/lib/api/staff-customers';
 
 /**
- * `components/customer/CustomerDetail.tsx` — US-ACC-10/11. HO-NTF-002 (a Messages link) and
- * HO-APT-002 (an `AppointmentSummaryPanel`) are Amended additions to THIS page owed by those
- * handovers' own builds (HO-ACC-002 §1) — not built here, and nothing below should need to change
- * for either to add its own section.
+ * `components/customer/CustomerDetail.tsx` — US-ACC-10/11. Other areas (Messages, Billing, Orders)
+ * add their own sections beside this one on the page; nothing below needs to change for them.
  */
 export function CustomerDetail({ customer }: { customer: StaffCustomer }) {
   return (
@@ -41,8 +39,6 @@ export function CustomerDetail({ customer }: { customer: StaffCustomer }) {
         <dd className="text-ink-muted">
           {customer.registrationChannel === 'Reception' ? 'Walk-in' : 'Self-service'}
         </dd>
-        <dt className="font-semibold text-ink">Cats</dt>
-        <dd className="text-ink-muted">{customer.catCount}</dd>
       </dl>
 
       {customer.recordStatus === 'Incomplete' && <IncompleteCustomerNotice />}

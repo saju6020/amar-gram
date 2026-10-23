@@ -45,7 +45,7 @@ public sealed class StaffRosterAggregate : AggregateRoot
 
         _currentPattern.Clear();
         foreach (var slot in dto.Slots)
-            _currentPattern.Add(new ShiftSlot(Guid.NewGuid(), slot.DayOfWeek, slot.Starts, slot.Ends, slot.DefaultRoomId));
+            _currentPattern.Add(new ShiftSlot(Guid.NewGuid(), slot.DayOfWeek, slot.Starts, slot.Ends));
 
         AddDomainEvent(new StaffRosterPatternChangedEvent
         {
@@ -65,7 +65,7 @@ public sealed class StaffRosterAggregate : AggregateRoot
 
         _nextPattern.Clear();
         foreach (var slot in dto.Slots)
-            _nextPattern.Add(new ShiftSlot(Guid.NewGuid(), slot.DayOfWeek, slot.Starts, slot.Ends, slot.DefaultRoomId));
+            _nextPattern.Add(new ShiftSlot(Guid.NewGuid(), slot.DayOfWeek, slot.Starts, slot.Ends));
         NextPatternEffectiveFrom = dto.EffectiveFrom;
 
         AddDomainEvent(new StaffRosterPatternChangedEvent
@@ -98,7 +98,7 @@ public sealed class StaffRosterAggregate : AggregateRoot
         if (NextPatternEffectiveFrom is null || NextPatternEffectiveFrom > dto.AsOf) return;
 
         _currentPattern.Clear();
-        _currentPattern.AddRange(_nextPattern.Select(s => new ShiftSlot(Guid.NewGuid(), s.DayOfWeek, s.Starts, s.Ends, s.DefaultRoomId)));
+        _currentPattern.AddRange(_nextPattern.Select(s => new ShiftSlot(Guid.NewGuid(), s.DayOfWeek, s.Starts, s.Ends)));
         _nextPattern.Clear();
         NextPatternEffectiveFrom = null;
 

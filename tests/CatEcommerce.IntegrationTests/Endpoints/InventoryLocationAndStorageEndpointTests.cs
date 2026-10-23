@@ -107,7 +107,7 @@ public sealed class InventoryLocationAndStorageEndpointTests(InventoryApiFactory
         var movements = warehouse.GetProperty("permittedMovements").EnumerateArray().Select(m => m.GetString()).ToList();
         Assert.Contains("Sale", movements);
         Assert.Contains("Receipt", movements);
-        Assert.DoesNotContain("Dispense", movements);
+        Assert.DoesNotContain("Return", movements);
     }
 
     [Fact]

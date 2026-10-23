@@ -1,6 +1,5 @@
 using System.Globalization;
 using CatEcommerce.Domain.Aggregates.Administration;
-using CatEcommerce.Domain.Aggregates.Cat;
 using CatEcommerce.Domain.Aggregates.Order;
 using CatEcommerce.Domain.DomainServices;
 using CatEcommerce.Infrastructure.Persistence;
@@ -82,7 +81,7 @@ public sealed class GetCustomerOrderDetailQueryHandler(CatEcommerceDbContext db,
                 Ship = o.Shipment == null ? null : new { o.Shipment.CourierName, o.Shipment.TrackingNumber, o.Shipment.TrackingUrl, o.Shipment.LastTrackingStatus },
                 Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new
                 {
-                    l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.CatId, l.Quantity, l.UnitPrice, l.LineSubtotal, l.LineDiscount, l.OrderDiscountShare, l.TaxRatePercent,
+                    l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.Quantity, l.UnitPrice, l.LineSubtotal, l.LineDiscount, l.OrderDiscountShare, l.TaxRatePercent,
                     l.TaxAmount, l.LineTotal, l.QuantityReturned, l.ReturnClass,
                 }).ToList(),
                 History = o.StatusHistory.OrderBy(h => h.ChangedOn).Select(h => new { h.To, h.ChangedOn }).ToList(),
@@ -95,11 +94,6 @@ public sealed class GetCustomerOrderDetailQueryHandler(CatEcommerceDbContext db,
         var timeZoneId = branch?.TimeZoneId ?? "UTC";
         string currency = head.CurrencyCode;
         MoneyViewModel Money(decimal amount) => OrderMoney.Of(amount, currency);
-
-        var catIds = head.Lines.Where(l => l.CatId != null).Select(l => l.CatId!.Value).Distinct().ToList();
-        var cats = catIds.Count == 0
-            ? new Dictionary<Guid, string>()
-            : await db.Set<CatAggregate>().AsNoTracking().Where(c => catIds.Contains(c.Id) && c.OwnerId == query.CustomerId).Select(c => new { c.Id, c.Name }).ToDictionaryAsync(c => c.Id, c => c.Name);
 
         string? pickupName = null;
         string? pickupAddress = null;
@@ -151,7 +145,7 @@ public sealed class GetCustomerOrderDetailQueryHandler(CatEcommerceDbContext db,
         var view = new CustomerOrderDetailViewModel(
             head.Id, head.OrderNumber, head.PlacedOn, head.Status.DisplayName, head.FulfilmentMethod.DisplayName, head.PaymentMethod.DisplayName, timeZoneId,
             head.Lines.Select(l => new OrderLineViewModel(
-                l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.CatId is { } c && cats.TryGetValue(c, out var catName) ? new CartCatViewModel(c, catName) : null,
+                l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel,
                 l.Quantity, Money(l.UnitPrice), Money(l.LineSubtotal), Money(l.LineDiscount), Money(l.OrderDiscountShare), l.TaxRatePercent, Money(l.TaxAmount), Money(l.LineTotal),
                 imageBySku.GetValueOrDefault(l.SkuId))).ToList(),
             new OrderTotalsViewModel(

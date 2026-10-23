@@ -22,7 +22,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            var finalised = VisitStatus.Finalised.Value;
+            var finalised = 2;
 
             migrationBuilder.Sql($"""
                 -- clinic.visit: a finalised visit never changes; no visit is ever deleted.

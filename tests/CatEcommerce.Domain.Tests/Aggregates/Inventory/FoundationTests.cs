@@ -24,8 +24,6 @@ public sealed class FoundationTests
     {
         [StockLocationKind.ShopFloor] = [MovementKind.Sale],
         [StockLocationKind.Warehouse] = [MovementKind.Sale],
-        [StockLocationKind.ClinicDispensary] = [MovementKind.Dispense, MovementKind.ClinicalUse],
-        [StockLocationKind.BoardingStore] = [MovementKind.BoardingUse],
         [StockLocationKind.Quarantine] = [MovementKind.Return],
     };
 
@@ -54,8 +52,6 @@ public sealed class FoundationTests
     {
         Assert.True(StockLocationRules.CountsTowardRetailSellable(StockLocationKind.ShopFloor));
         Assert.True(StockLocationRules.CountsTowardRetailSellable(StockLocationKind.Warehouse));
-        Assert.False(StockLocationRules.CountsTowardRetailSellable(StockLocationKind.ClinicDispensary));
-        Assert.False(StockLocationRules.CountsTowardRetailSellable(StockLocationKind.BoardingStore));
         Assert.False(StockLocationRules.CountsTowardRetailSellable(StockLocationKind.Quarantine));
 
         Assert.Equal(1, StockLocationRules.FefoPriority(StockLocationKind.Warehouse));
@@ -64,13 +60,13 @@ public sealed class FoundationTests
     }
 
     [Fact]
-    public void U_A1_TheFiveSeededLocationsHaveDistinctIdsAndCodes()
+    public void U_A1_TheThreeSeededLocationsHaveDistinctIdsAndCodes()
     {
-        Guid[] ids = [InventorySeed.ShopLocationId, InventorySeed.WarehouseLocationId, InventorySeed.DispensaryLocationId, InventorySeed.BoardingStoreLocationId, InventorySeed.QuarantineLocationId];
-        string[] codes = [InventorySeed.ShopCode, InventorySeed.WarehouseCode, InventorySeed.DispensaryCode, InventorySeed.BoardingStoreCode, InventorySeed.QuarantineCode];
+        Guid[] ids = [InventorySeed.ShopLocationId, InventorySeed.WarehouseLocationId, InventorySeed.QuarantineLocationId];
+        string[] codes = [InventorySeed.ShopCode, InventorySeed.WarehouseCode, InventorySeed.QuarantineCode];
 
-        Assert.Equal(5, ids.Distinct().Count());
-        Assert.Equal(5, codes.Distinct().Count());
+        Assert.Equal(3, ids.Distinct().Count());
+        Assert.Equal(3, codes.Distinct().Count());
     }
 
     // ── U-A2 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

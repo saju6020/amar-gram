@@ -267,10 +267,8 @@ public sealed class IssueInvoiceFromChargesCommandHandler(
         }
         else
         {
-            var criteria = command.Selector.Source is { } source
-                ? new UnbilledChargeCriteria(command.CustomerId, command.BranchId, BillingMapper.ParseEnum<ChargeSourceKind>(source.Kind), source.Id, null, null, null)
-                : new UnbilledChargeCriteria(command.CustomerId, command.BranchId, null, null,
-                    BillingMapper.ParseEnum<BillingGroupKind>(command.Selector.BillingGroup!.Kind), command.Selector.BillingGroup.Id, command.Selector.BillingGroup.ServiceDateTo);
+            var source = command.Selector.Source!;
+            var criteria = new UnbilledChargeCriteria(command.CustomerId, command.BranchId, BillingMapper.ParseEnum<ChargeSourceKind>(source.Kind), source.Id, null);
 
             chargeIds = await finder.FindUnbilledChargeIdsAsync(criteria);
         }

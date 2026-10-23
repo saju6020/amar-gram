@@ -61,7 +61,7 @@ public sealed class ReportingTestGateTests
     [Fact]
     public void T_U2_TheUtcDateLagsSixHours_SoTheSameInstantIsTwoDifferentDays()
     {
-        // 2026-10-31T18:00:00Z is 2026-11-01T00:00 in Dhaka: the UTC date is still October, the clinic's is November.
+        // 2026-10-31T18:00:00Z is 2026-11-01T00:00 in Dhaka: the UTC date is still October, the branch's is November.
         var instant = new DateTimeOffset(2026, 10, 31, 18, 0, 0, TimeSpan.Zero);
 
         Assert.Equal(new DateOnly(2026, 11, 1), ReportPeriodResolver.LocalDate(instant, Dhaka));

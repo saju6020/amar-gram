@@ -21,9 +21,9 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
     private WebApplicationFactory<Program> DaytimeFactory() =>
         Factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(new FakeTimeProvider(SafeDaytimeInstant()))));
 
-    private static Dictionary<string, string> VaccinationVariables() => new()
+    private static Dictionary<string, string> InvoiceVariables() => new()
     {
-        ["catName"] = "Mitu", ["vaccineName"] = "Rabies", ["dueOn"] = "2026-10-12", ["bookingLink"] = "https://portal.example.test/portal/cats/x"
+        ["invoiceNumber"] = "Mitu", ["totalText"] = "BDT 1,500.00", ["dueOn"] = "2026-10-12", ["invoiceLink"] = "https://portal.example.test/portal/billing/invoices/x"
     };
 
     /// <summary>Creates a customer whose SMS permanently fails, producing an Undeliverable SMS
@@ -36,8 +36,8 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
         NotificationsApiFactory.ScriptOutcome(daytimeFactory.Services, NotificationChannel.Sms, mobileNormalised,
             new SendOutcome(SendOutcomeKind.PermanentFailure, null, "rejected by carrier"));
 
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
         await RunDeliveryPassAsync(daytimeFactory);
         await RunDeliveryPassAsync(daytimeFactory);
@@ -66,7 +66,7 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
         var byRecipient = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         Assert.NotEmpty(byRecipient.GetProperty("items").EnumerateArray());
 
-        var byTemplate = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?templateKey={NotificationTemplateCatalogue.VaccinationDue}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
+        var byTemplate = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?templateKey={NotificationTemplateCatalogue.BillingInvoiceIssued}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         Assert.Contains(byTemplate.GetProperty("items").EnumerateArray(), i => i.GetProperty("recipientId").GetGuid() == customerId);
 
         var byStatus = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&status=Undeliverable&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
@@ -152,8 +152,8 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
 
         // An in-app inbox item is also never resendable.
         var (_, sameCustomerId, _) = (client, customerId, mobile);
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, sameCustomerId,
-            VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, sameCustomerId,
+            InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
 
         var log2 = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(SafeDaytimeInstant().AddMinutes(-5).ToString("O"))}&to={Uri.EscapeDataString(SafeDaytimeInstant().AddMinutes(5).ToString("O"))}", Json);
@@ -218,14 +218,14 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
     }
 
     [Fact]
-    public async Task NurseCannotViewLog()
+    public async Task InventoryCannotViewLog()
     {
-        var nurse = await SeedStaffAsync(StaffRoles.Nurse);
-        using var nurseClient = await SignInStaffAsync(nurse.Mobile, nurse.Password);
+        var inventory = await SeedStaffAsync(StaffRoles.Inventory);
+        using var inventoryClient = await SignInStaffAsync(inventory.Mobile, inventory.Password);
 
         var from = DateTimeOffset.UtcNow.AddMinutes(-5);
         var to = DateTimeOffset.UtcNow.AddMinutes(5);
-        var response = await nurseClient.GetAsync($"/api/admin/notifications?from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}");
+        var response = await inventoryClient.GetAsync($"/api/admin/notifications?from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
@@ -285,8 +285,8 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
         var daytimeFactory = DaytimeFactory();
         var (client, customerId, _) = await RegisterAndSignInCustomerAsync();
 
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerId,
-            VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerId,
+            InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
 
         var before = await client.GetFromJsonAsync<JsonElement>("/api/customers/me/inbox/unread-count", Json);
@@ -310,8 +310,8 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
     {
         var daytimeFactory = DaytimeFactory();
         var (_, customerAId, _) = await RegisterAndSignInCustomerAsync();
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, customerAId,
-            VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, customerAId,
+            InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
 
         var admin = await SeedStaffAsync(StaffRoles.Administrator);
@@ -341,8 +341,8 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
         await AddSharedAdditionalNumberAsync(duplicateClient, sharedNumber);
         await AddSharedAdditionalNumberAsync(survivorClient, sharedNumber);
 
-        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.VaccinationDue, NotificationRecipientKind.Customer, duplicateId,
-            VaccinationVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
+        await RequestNotificationAsync(daytimeFactory, NotificationTemplateCatalogue.BillingInvoiceIssued, NotificationRecipientKind.Customer, duplicateId,
+            InvoiceVariables(), deduplicationKey: $"test:{Guid.NewGuid():N}");
         await RunDeliveryPassAsync(daytimeFactory);
 
         var admin = await SeedStaffAsync(StaffRoles.Administrator);

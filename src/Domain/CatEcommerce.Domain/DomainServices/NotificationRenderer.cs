@@ -152,16 +152,16 @@ public static partial class NotificationRenderer
 
         FlushBullets();
 
-        var clinicName = Desentinel(values.GetValueOrDefault(StandardTemplateVariables.ClinicName, ""), resolved, encode: true);
-        var clinicPhone = Desentinel(values.GetValueOrDefault(StandardTemplateVariables.ClinicPhone, ""), resolved, encode: true);
+        var outletName = Desentinel(values.GetValueOrDefault(StandardTemplateVariables.OutletName, ""), resolved, encode: true);
+        var outletPhone = Desentinel(values.GetValueOrDefault(StandardTemplateVariables.OutletPhone, ""), resolved, encode: true);
         var unsubscribeLink = values.TryGetValue(StandardTemplateVariables.UnsubscribeLink, out var link) ? link : null;
 
         var shell = new StringBuilder();
         shell.Append("<div style=\"font-family:sans-serif;max-width:600px;margin:0 auto;\">");
-        shell.Append("<div style=\"padding:16px 0;border-bottom:1px solid #eee;font-weight:bold;\">").Append(WebUtility.HtmlEncode(clinicName)).Append("</div>");
+        shell.Append("<div style=\"padding:16px 0;border-bottom:1px solid #eee;font-weight:bold;\">").Append(WebUtility.HtmlEncode(outletName)).Append("</div>");
         shell.Append("<div style=\"padding:16px 0;\">").Append(Desentinel(body.ToString(), resolved, encode: true)).Append("</div>");
         shell.Append("<div style=\"padding:16px 0;border-top:1px solid #eee;font-size:12px;color:#666;\">");
-        shell.Append(WebUtility.HtmlEncode(clinicPhone));
+        shell.Append(WebUtility.HtmlEncode(outletPhone));
         if (!string.IsNullOrEmpty(unsubscribeLink))
             shell.Append(" &middot; <a href=\"").Append(WebUtility.HtmlEncode(unsubscribeLink)).Append("\">Unsubscribe</a>");
         shell.Append("</div></div>");

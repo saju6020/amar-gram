@@ -30,7 +30,6 @@ export interface PosSku {
   barcode: string | null;
   unitPrice: Money | null;
   sellable: number;
-  requiresPrescription: boolean;
   isBundle: boolean;
   fefoBatches: PosFefoBatch[];
 }
@@ -52,7 +51,6 @@ export function searchPosSkus(text: string): Promise<PosSku[]> {
 export interface PosLineInput {
   skuId: string;
   quantity: number;
-  catId?: string;
 }
 
 export interface CounterQuote {

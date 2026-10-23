@@ -3,7 +3,7 @@ import { isSafeInternalPath } from '@/lib/routing/isSafeInternalPath';
 
 // HO-NTF-002 U-A5 (the pure half) — ADR-FE-162.
 describe('isSafeInternalPath', () => {
-  it.each(['/portal/cats/1', '/book?catId=1&category=vaccination', '/portal/inbox#top', '/'])(
+  it.each(['/portal/orders/1', '/shop?category=rice&page=1', '/portal/inbox#top', '/'])(
     'accepts the site-relative path %s',
     (path) => {
       expect(isSafeInternalPath(path)).toBe(true);
@@ -18,7 +18,7 @@ describe('isSafeInternalPath', () => {
     ['tab hidden between slashes', '/\t/evil.example'],
     ['newline hidden between slashes', '/\n/evil.example'],
     ['javascript scheme', 'javascript:alert(1)'],
-    ['relative without a leading slash', 'portal/cats'],
+    ['relative without a leading slash', 'portal/orders'],
     ['empty string', ''],
     ['null', null],
     ['undefined', undefined],

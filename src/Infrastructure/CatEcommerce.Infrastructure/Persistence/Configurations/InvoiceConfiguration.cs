@@ -80,9 +80,6 @@ public sealed class InvoiceConfiguration : IEntityTypeConfiguration<InvoiceAggre
             line.Property(l => l.ItemKind).HasColumnName("item_kind").HasEnumerationConversion().IsRequired();
             line.Property(l => l.SourceKind).HasColumnName("source_kind").HasEnumerationConversion().IsRequired();
             line.Property(l => l.SourceId).HasColumnName("source_id").IsRequired();
-            line.Property(l => l.BillingGroupKind).HasColumnName("billing_group_kind").HasNullableEnumerationConversion();
-            line.Property(l => l.BillingGroupId).HasColumnName("billing_group_id");
-            line.Property(l => l.CatId).HasColumnName("cat_id");
             line.Property(l => l.Description).HasColumnName("description").HasMaxLength(300).IsRequired();
             line.Property(l => l.Quantity).HasColumnName("quantity").HasColumnType("numeric(10,3)").IsRequired();
             line.Property(l => l.UnitPrice).HasColumnName("unit_price").HasMoneyColumn().IsRequired();

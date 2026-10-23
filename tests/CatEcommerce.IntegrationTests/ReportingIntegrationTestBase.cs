@@ -10,7 +10,7 @@ namespace CatEcommerce.IntegrationTests;
 /// <summary>
 /// HO-RPT-001 section 16.1 -- every test creates its own branch (through HO-ADM-001's endpoints as an administrator), assigns its staff to it, and passes <c>branchId={that branch}</c> on every
 /// report call, so no assertion depends on other tests' data. Source data is created through the owning area's own endpoints or port, never by inserting into its tables. Builds on
-/// <see cref="BillingIntegrationTestBase"/> for the branch, staff, customer, clinic, charge, invoice and payment helpers; the fixture it adds is <see cref="ReportingApiFactory"/>.
+/// <see cref="BillingIntegrationTestBase"/> for the branch, staff, customer, charge, invoice and payment helpers; the fixture it adds is <see cref="ReportingApiFactory"/>.
 /// </summary>
 public abstract class ReportingIntegrationTestBase(ReportingApiFactory factory) : BillingIntegrationTestBase(factory), IClassFixture<ReportingApiFactory>
 {

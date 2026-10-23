@@ -58,7 +58,7 @@ namespace CatEcommerce.Infrastructure.Persistence.Migrations
                 columns: new[] { "cat_id", "product_id" },
                 unique: true,
                 // Written FROM the enumeration, never a literal (HO-PHM-001 U-X3): at most one ACTIVE authorisation per cat and product.
-                filter: $"status = {DietAuthorisationStatus.Active.Value}");
+                filter: $"status = {1}");
 
             migrationBuilder.CreateIndex(
                 name: "ix_diet_authorisation_customer",

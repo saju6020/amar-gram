@@ -35,7 +35,7 @@ internal static class PosSkuLookup
 
             views.Add(new PosSkuViewModel(
                 sku.SkuId, sku.ProductId, sku.ProductName, sku.VariantLabel, sku.Barcode,
-                sku.CurrentPrice is { } price ? OrderMoney.Of(price, sku.CurrencyCode ?? string.Empty) : null, quantity, sku.RequiresPrescription, sku.IsBundle, batches));
+                sku.CurrentPrice is { } price ? OrderMoney.Of(price, sku.CurrencyCode ?? string.Empty) : null, quantity, sku.IsBundle, batches));
         }
 
         return views;
@@ -71,16 +71,16 @@ public sealed class GetCounterQuoteQueryHandler(ICheckoutInputsLoader loader, Ti
     public async Task<QueryResponse<CounterQuoteViewModel>> HandleAsync(GetCounterQuoteQuery query)
     {
         var inputs = await loader.LoadCounterAsync(
-            query.BranchId, query.CustomerId, query.Lines.Select(l => new CounterLineRequest(l.SkuId, l.Quantity, l.CatId)).ToList(), query.DiscountCode, timeProvider.GetUtcNow(), default);
+            query.BranchId, query.CustomerId, query.Lines.Select(l => new CounterLineRequest(l.SkuId, l.Quantity)).ToList(), query.DiscountCode, timeProvider.GetUtcNow(), default);
         var quote = CheckoutPricing.Quote(inputs);
         var currency = quote.CurrencyCode;
         MoneyViewModel Money(MinorUnits amount) => OrderMoney.Of(amount.ToAmount(), currency);
 
         var view = new CounterQuoteViewModel(
             quote.Lines.Select(l => new CheckoutQuoteLineViewModel(
-                l.LineRef, l.SkuId, l.ProductName, l.VariantLabel, null, l.Quantity, Money(l.UnitPrice), Money(l.Subtotal), Money(l.LineDiscount), Money(l.OrderDiscountShare),
+                l.LineRef, l.SkuId, l.ProductName, l.VariantLabel, l.Quantity, Money(l.UnitPrice), Money(l.Subtotal), Money(l.LineDiscount), Money(l.OrderDiscountShare),
                 l.TaxRatePercent, Money(l.TaxAmount), Money(l.LineTotal))).ToList(),
-            quote.ExcludedLines.Select(l => new ExcludedLineViewModel(l.LineRef, l.SkuId, l.ProductName, null, l.CartQuantity, l.ReasonCode)).ToList(),
+            quote.ExcludedLines.Select(l => new ExcludedLineViewModel(l.LineRef, l.SkuId, l.ProductName, l.CartQuantity, l.ReasonCode)).ToList(),
             quote.Changes.Select(c => new CheckoutChangeViewModel(c.Kind.DisplayName, c.LineRef, c.ProductName, c.Before, c.After, c.Message)).ToList(),
             quote.Discount is null ? null : new QuoteDiscountViewModel(quote.Discount.Code, quote.Discount.Applied, quote.Discount.ReasonCode, quote.Discount.Message),
             new QuoteTotalsViewModel(

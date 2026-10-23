@@ -13,7 +13,7 @@ import type { CounterSale, PosSku } from '@/lib/api/pos';
 import { formatMoney } from '@/lib/format/money';
 import { tenderMethodLabel } from '@/lib/format/orders';
 import { useIdempotencyKey } from '@/lib/hooks/useIdempotencyKey';
-import { useCompleteCounterSale, useCounterQuote, usePosCustomerCats } from '@/lib/hooks/usePos';
+import { useCompleteCounterSale, useCounterQuote } from '@/lib/hooks/usePos';
 import { useStaffCustomer } from '@/lib/hooks/useStaffCustomers';
 import { PosBasket } from './PosBasket';
 import { PosCustomerPanel } from './PosCustomerPanel';
@@ -65,16 +65,14 @@ export function PosScreen() {
     }
   }, [preset.data, customer]);
 
-  const quoteLines = lines.map((l) => ({ skuId: l.skuId, quantity: l.quantity, catId: l.catId ?? undefined }));
+  const quoteLines = lines.map((l) => ({ skuId: l.skuId, quantity: l.quantity }));
   const quote = useCounterQuote({ customerId: customer.customerId ?? undefined, lines: quoteLines, discountCode: discountCode.trim() || undefined });
-  const cats = usePosCustomerCats(customer.customerId);
   const currency = quote.data?.currencyCode ?? 'BDT';
 
-  const missingCat = lines.some((l) => l.requiresPrescription && !l.catId);
   // Settled = the quote on screen is for the basket on screen (not the debounce window, not a refetch in flight,
   // not the previous basket's quote kept as placeholder data).
   const settled = !quote.isSettling && !quote.isFetching && !quote.isPlaceholderData;
-  const ready = lines.length > 0 && tenders.length > 0 && !!quote.data?.canSell && settled && !missingCat && customer.name.trim() !== '' && customer.mobile.trim() !== '';
+  const ready = lines.length > 0 && tenders.length > 0 && !!quote.data?.canSell && settled && customer.name.trim() !== '' && customer.mobile.trim() !== '';
   // Enter in the amount field adds the payment and asks for the review. The payment lands in state a render
   // later, so the request waits here until the quote has settled, then opens the review only if the sale is ready.
   const [reviewRequested, setReviewRequested] = useState(false);
@@ -182,11 +180,8 @@ export function PosScreen() {
             <PosBasket
               lines={lines}
               quote={quote.data}
-              cats={cats.data?.items ?? []}
-              hasCustomer={!!customer.customerId}
               onQuantity={(skuId, quantity) => setLines((cur) => cur.map((l) => (l.skuId === skuId ? { ...l, quantity } : l)))}
               onRemove={(skuId) => setLines((cur) => cur.filter((l) => l.skuId !== skuId))}
-              onCat={(skuId, catId) => setLines((cur) => cur.map((l) => (l.skuId === skuId ? { ...l, catId: catId || null } : l)))}
             />
           </Section>
           <PosCustomerPanel customer={customer} onChange={setCustomer} errors={fieldErrors} />
@@ -225,7 +220,6 @@ export function PosScreen() {
           </Button>
           {!ready && lines.length > 0 && (
             <p className="text-sm text-ink-muted">
-              {missingCat ? 'Choose a cat for the prescription item. ' : ''}
               {customer.name.trim() === '' || customer.mobile.trim() === '' ? 'Enter the customer’s name and mobile. ' : ''}
               {tenders.length === 0 ? 'Add a payment.' : ''}
             </p>
