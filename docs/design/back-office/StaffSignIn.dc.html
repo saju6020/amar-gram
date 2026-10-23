@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — Staff sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="min-height: 100vh; background: #2F5114; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.5; display: grid; place-items: center; padding: 32px 16px; box-sizing: border-box">
+  <main style="width: 100%; max-width: 440px; background: #FFFFFF; border-radius: 24px; padding: 36px; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="width: 44px; height: 44px; border-radius: 50% 50% 50% 8px; background: #3F6A1E; display: grid; place-items: center; color: #F4F8E8">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+      </span>
+      <span style="display: flex; flex-direction: column; line-height: 1.1"><span style="font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 700">Amar <span style="color: #557A1F">Gram</span></span><span style="font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #69553C">Back office</span></span>
+    </div>
+    <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 32px; font-weight: 700">Staff sign in</h1>
+    <p style="margin: 0; color: #69553C">Use your staff mobile number or email. Staff and customer accounts are separate.</p>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Mobile number or email
+      <input type="text" autocomplete="username" style="min-height: 50px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #E5DCC8; font: inherit; font-weight: 400">
+    </label>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Password
+      <input type="password" autocomplete="current-password" style="min-height: 50px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #E5DCC8; font: inherit; font-weight: 400">
+    </label>
+    <sc-if value="{{locked}}" hint-placeholder-val="{{ false }}">
+      <p role="alert" style="margin: 0; padding: 12px 14px; border-radius: 12px; background: #FCEBC7; color: #6E4700; font-size: 15px">Too many attempts. Try again in 15 minutes or ask an administrator to reset your password.</p>
+    </sc-if>
+    <a href="Dashboard.dc.html" style="min-height: 52px; display: grid; place-items: center; border-radius: 12px; background: #B4531A; color: #FFFAF0; text-decoration: none; font-weight: 600; font-size: 17px">Sign in</a>
+    <div style="display: flex; justify-content: space-between; font-size: 14px">
+      <a href="#" style="color: #B4531A; font-weight: 600">Forgot password?</a>
+      <button type="button" onClick="{{toggle}}" style="border: 0; background: transparent; font: inherit; color: #69553C; cursor: pointer; min-height: 32px">(show lock-out message)</button>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { locked: false }; }
+  renderVals() { return { locked: this.state.locked, toggle: () => this.setState({ locked: !this.state.locked }) }; }
+}
+</script>
+</body>
+</html>

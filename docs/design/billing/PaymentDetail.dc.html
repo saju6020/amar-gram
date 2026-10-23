@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -98,7 +98,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main hasdlg">
     <div class="titlerow">
       <div><h1 class="h1">Receipt R-000124 <span class="pill p-ok" style="vertical-align:middle"><span aria-hidden="true">✓</span> Accepted</span></h1><p class="sub">Farhana Yasmin · ৳3,000.00 · Card in store</p></div>
@@ -123,7 +123,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
         <h2 class="h2">Allocations</h2>
         <table>
           <thead><tr><th>When (Asia/Dhaka)</th><th>Entry</th><th>Invoice</th><th class="num">Amount</th></tr></thead>
-          <tbody><tr><td>23 Sep, 10:48</td><td>Allocated</td><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000418</a></td><td class="num">৳3,000.00</td></tr></tbody>
+          <tbody><tr><td>23 Sep, 10:48</td><td>Allocated</td><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000418</a></td><td class="num">৳3,000.00</td></tr></tbody>
         </table>
         <h2 class="h2" style="margin-top:18px">Refunds</h2>
         <p class="small muted" style="margin:0">None.</p>
@@ -133,11 +133,11 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
     <div class="scrim">
       <div class="dialog" role="alertdialog" aria-labelledby="rv-t" aria-describedby="rv-d">
         <h2 id="rv-t">Reverse this payment?</h2>
-        <p id="rv-d" style="font-size:14px;line-height:1.55;margin:0">Reverse receipt <b>R-000124, ৳3,000.00 card in store</b>? It will be removed from <b>INV-UTR-2627-000418</b> and the day's cash-up.</p>
-        <div class="consequence">The receipt stays on record as <b>Reversed</b> with your name and reason. INV-UTR-2627-000418 has this amount outstanding again. To correct a mistake, record the payment again the right way after reversing.</div>
+        <p id="rv-d" style="font-size:14px;line-height:1.55;margin:0">Reverse receipt <b>R-000124, ৳3,000.00 card in store</b>? It will be removed from <b>INV-DHN-2627-000418</b> and the day's cash-up.</p>
+        <div class="consequence">The receipt stays on record as <b>Reversed</b> with your name and reason. INV-DHN-2627-000418 has this amount outstanding again. To correct a mistake, record the payment again the right way after reversing.</div>
         <div class="field">
           <label for="rv-r">Reason <span class="req" aria-hidden="true">*</span></label>
-          <textarea id="rv-r">Recorded against the wrong invoice — should have paid INV-UTR-2627-000377 first.</textarea>
+          <textarea id="rv-r">Recorded against the wrong invoice — should have paid INV-DHN-2627-000377 first.</textarea>
         </div>
         <div class="dactions"><button class="btn btn-sec" type="button">Keep payment</button><button class="btn btn-danger-solid" type="button">Reverse ৳3,000.00</button></div>
       </div>

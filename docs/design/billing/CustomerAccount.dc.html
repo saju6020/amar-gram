@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -103,7 +103,7 @@ td.ck{width:34px}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main">
     <div class="titlerow">
       <div><h1 class="h1">Farhana Yasmin — billing account</h1><p class="sub">01712 345678 · farhana@example.com · <a href="#">Customer page</a></p></div>
@@ -117,8 +117,8 @@ td.ck{width:34px}
     <div class="summary" aria-label="Account summary">
       <div><span class="cap">Outstanding</span><b aria-label="BDT 1,150.00">৳1,150.00</b><span class="note">1 invoice</span></div>
       <div class="over"><span class="cap">Overdue</span><b aria-label="BDT 1,150.00">৳1,150.00</b><span class="note"><span aria-hidden="true">⚠</span> Overdue since 3 Sep</span></div>
-      <div><span class="cap">Free credit</span><b aria-label="BDT 690.00">৳690.00</b><span class="note">From CN-UTR-2627-000031</span></div>
-      <div><span class="cap">Earmarked deposits</span><b aria-label="BDT 2,000.00">৳2,000.00</b><span class="note">Deposit — boarding Milo, 2–6 Oct</span></div>
+      <div><span class="cap">Free credit</span><b aria-label="BDT 690.00">৳690.00</b><span class="note">From CN-DHN-2627-000031</span></div>
+      <div><span class="cap">Earmarked deposits</span><b aria-label="BDT 2,000.00">৳2,000.00</b><span class="note">Advance — bulk pre-order ORD-2026-000140, delivery 2–6 Oct</span></div>
       <div><span class="cap">Unbilled</span><b aria-label="BDT 10,890.00">৳10,890.00</b><span class="note">6 charges, before tax</span></div>
       <div><span class="cap">Loyalty points</span><b>1,240</b><span class="note">Redeem on a draft invoice</span></div>
     </div>
@@ -134,17 +134,17 @@ td.ck{width:34px}
       <div class="actions"><button class="btn btn-sec btn-sm" type="button">Export CSV</button><a class="btn btn-sm" href="InvoiceComposer.dc.html">Invoice 0 selected</a></div>
     </div>
     <table>
-      <thead><tr><th><span class="sr" style="position:absolute;left:-9999px">Select</span></th><th>Date</th><th>Business line</th><th>Kind</th><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Discount</th><th></th></tr></thead>
+      <thead><tr><th><span class="sr" style="position:absolute;left:-9999px">Select</span></th><th>Date</th><th>Channel</th><th>Kind</th><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Discount</th><th></th></tr></thead>
       <tbody>
-        <tr><td class="ck"><input type="checkbox" aria-label="Select Standard consultation"></td><td>21 Sep</td><td>Clinic</td><td>Service</td><td>Standard consultation — Luna</td><td class="num">1</td><td class="num">৳800.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
-        <tr><td class="ck"><input type="checkbox" aria-label="Select FVRCP booster"></td><td>21 Sep</td><td>Clinic</td><td>Service</td><td>Vaccination — FVRCP booster, Luna</td><td class="num">1</td><td class="num">৳1,200.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
-        <tr><td class="ck"><input type="checkbox" aria-label="Select Meloxicam"></td><td>21 Sep</td><td>Clinic</td><td>Medication</td><td>Meloxicam oral suspension 0.5 mg/ml, 10 ml</td><td class="num">1</td><td class="num">৳450.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
-        <tr><td class="ck"><input type="checkbox" aria-label="Select Royal Canin Indoor"></td><td>22 Sep</td><td>Shop</td><td>Product</td><td>Royal Canin Indoor 27, 2 kg</td><td class="num">1</td><td class="num">৳2,650.00</td><td class="num">৳150.00</td><td class="rowact"><span class="small muted" title="Shop charges from an order are voided by cancelling the order">Void via the order</span></td></tr>
-        <tr><td class="ck"><input type="checkbox" aria-label="Select clumping litter"></td><td>22 Sep</td><td>Shop</td><td>Product</td><td>Clumping cat litter, 10 L</td><td class="num">2</td><td class="num">৳720.00</td><td class="num muted">None</td><td class="rowact"><span class="small muted">Void via the order</span></td></tr>
-        <tr><td class="ck"><input type="checkbox" aria-label="Select boarding nights"></td><td>18–21 Sep</td><td>Boarding</td><td>Boarding night</td><td>Standard suite — Milo, 18–21 Sep</td><td class="num">3</td><td class="num">৳1,500.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
+        <tr><td class="ck"><input type="checkbox" aria-label="Select red lentils"></td><td>21 Sep</td><td>Counter (POS)</td><td>Product</td><td>Red lentils 1 kg</td><td class="num">5</td><td class="num">৳160.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
+        <tr><td class="ck"><input type="checkbox" aria-label="Select mustard oil"></td><td>21 Sep</td><td>Counter (POS)</td><td>Product</td><td>Cold-pressed mustard oil 1 L</td><td class="num">4</td><td class="num">৳300.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
+        <tr><td class="ck"><input type="checkbox" aria-label="Select turmeric powder"></td><td>21 Sep</td><td>Counter (POS)</td><td>Product</td><td>Turmeric powder 200 g</td><td class="num">3</td><td class="num">৳150.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
+        <tr><td class="ck"><input type="checkbox" aria-label="Select wild honey"></td><td>22 Sep</td><td>Online</td><td>Product</td><td>Sundarbans wild honey 2 kg jar</td><td class="num">1</td><td class="num">৳2,650.00</td><td class="num">৳150.00</td><td class="rowact"><span class="small muted" title="Online charges from an order are voided by cancelling the order">Void via the order</span></td></tr>
+        <tr><td class="ck"><input type="checkbox" aria-label="Select khejur gur"></td><td>22 Sep</td><td>Online</td><td>Product</td><td>Patali khejur gur 1 kg tin</td><td class="num">2</td><td class="num">৳720.00</td><td class="num muted">None</td><td class="rowact"><span class="small muted">Void via the order</span></td></tr>
+        <tr><td class="ck"><input type="checkbox" aria-label="Select veg box subscription"></td><td>7–21 Sep</td><td>Subscription</td><td>Product</td><td>Weekly organic veg box — weeks of 7, 14, 21 Sep</td><td class="num">3</td><td class="num">৳1,500.00</td><td class="num muted">None</td><td class="rowact"><button class="btn btn-danger btn-sm" type="button">Void</button></td></tr>
       </tbody>
     </table>
-    <div class="pager"><span>6 of 6 charges · Uttara</span><span>Amounts before tax. Tax is worked out by the server when you preview an invoice.</span></div>
+    <div class="pager"><span>6 of 6 charges · Dhanmondi outlet</span><span>Amounts before tax. Tax is worked out by the server when you preview an invoice.</span></div>
   </div>
 </div>
 </x-dc>

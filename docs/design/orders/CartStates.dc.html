@@ -8,10 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&amp;family=Public+Sans:wght@400;600;700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap">
 <style>
 /* Hearth customer layer — follows the owner-approved preview layout (2026-10-16) */
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--accent-tint:#e6f0ee;--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-md:14px;--radius-card:22px;--radius-band:32px;--radius-pill:999px}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--accent-tint:#E3EDC6;--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-md:14px;--radius-card:22px;--radius-band:32px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px;line-height:1.45}
 a{color:var(--accent-ink)}a:hover{color:var(--accent)}
@@ -61,8 +61,8 @@ p{margin:0}h1,h2,h3{margin:0}
 .card h2,.ch{font-size:16px;font-weight:700}
 .card.lg h2{font-family:var(--font-display);font-size:22px;font-weight:600}
 .card.flat{background:var(--surface-sunken);border-color:var(--surface-sunken)}
-.card.warn{border-color:#d9b26a;box-shadow:0 0 0 1px #ecd7ae}
-.card.bad{border-color:#e3aaa2;box-shadow:0 0 0 1px #f0c9c4}
+.card.warn{border-color:#d9b26a;box-shadow:0 0 0 1px #EFD49A}
+.card.bad{border-color:#e3aaa2;box-shadow:0 0 0 1px #F0C4B4}
 .stack>*+*{margin-top:12px}
 .row{display:flex;gap:10px;align-items:center}
 .between{display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -182,17 +182,16 @@ a.btn-sec:hover{background:#fff;color:var(--accent)}
 /* chips */
 .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;white-space:nowrap;border:1px solid transparent;line-height:1.5;vertical-align:middle}
 .chip svg{flex:none}
-.c-ok{background:var(--accent-tint);color:var(--accent-ink);border-color:rgba(21,96,90,.22)}
-.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#ecd7ae}
-.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#f0c9c4}
+.c-ok{background:var(--accent-tint);color:var(--accent-ink);border-color:rgba(180,83,26,.22)}
+.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#EFD49A}
+.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#F0C4B4}
 .c-neu{background:var(--surface-sunken);color:var(--ink-muted);border-color:var(--border)}
-.c-cat{background:#fff;color:var(--ink);border-color:var(--border-strong)}
 .c-warm{background:var(--warm-soft);color:var(--warm-ink);border-color:#f3c9a8}
 /* banners */
 .banner{border-radius:16px;padding:14px 18px;font-size:14px;border:1px solid var(--border);background:#fff;display:flex;gap:12px;align-items:flex-start}
-.b-info{background:var(--accent-tint);border-color:rgba(21,96,90,.22);color:var(--accent-ink)}
-.b-warn{background:var(--warning-bg);border-color:#ecd7ae;color:var(--warning-ink)}
-.b-bad{background:var(--danger-bg);border-color:#f0c9c4;color:var(--danger-ink)}
+.b-info{background:var(--accent-tint);border-color:rgba(180,83,26,.22);color:var(--accent-ink)}
+.b-warn{background:var(--warning-bg);border-color:#EFD49A;color:var(--warning-ink)}
+.b-bad{background:var(--danger-bg);border-color:#F0C4B4;color:var(--danger-ink)}
 /* acknowledgement */
 .ack{display:flex;gap:12px;align-items:center;min-height:48px;padding:10px 16px;border:1px solid var(--border-strong);border-radius:16px;background:#fff;font-weight:600;font-size:14px;cursor:pointer}
 .ack input{width:20px;height:20px;margin:0;accent-color:var(--accent);flex:none}
@@ -268,9 +267,9 @@ dl.kv dd{margin:0;line-height:1.5}
         <section class="phone" aria-labelledby="e-h">
           <div class="ph-h"><a class="iconbtn" href="#" aria-label="Back to shop"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><h2 id="e-h">Your cart</h2></div>
           <div class="ph-b" style="justify-content:center;align-items:center;text-align:center;gap:12px">
-            <span style="width:170px;height:170px;border-radius:999px;background:var(--warm-soft);color:var(--warm-ink);display:grid;place-items:center"><svg width="96" height="104" viewBox="0 0 120 132" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M34 30 L40 6 L54 24"/><path d="M86 30 L80 6 L66 24"/><path d="M30 44c0-14 13-22 30-22s30 8 30 22-13 24-30 24-30-10-30-24z"/><path d="M48 42h.01M72 42h.01"/><path d="M56 52l4 3 4-3"/><path d="M40 64c-10 10-14 26-12 44 1 12 10 18 32 18s31-6 32-18c2-18-2-34-12-44"/><path d="M92 108c10 0 16-6 14-14"/></svg></span>
+            <span style="width:170px;height:170px;border-radius:999px;background:var(--warm-soft);color:var(--warm-ink);display:grid;place-items:center"><svg width="96" height="104" viewBox="0 0 120 132" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M30 56c0-22 13-36 30-36s30 14 30 36"/><path d="M14 56h92l-10 56a8 8 0 0 1-8 6H32a8 8 0 0 1-8-6z"/><path d="M42 72v30M60 72v30M78 72v30"/><path d="M60 20c8-10 20-12 30-8-4 10-16 14-30 8z"/></svg></span>
             <h3 style="font-family:var(--font-display);font-size:26px;font-weight:600">Your cart is empty.</h3>
-            <p class="muted">Food, litter and care products for your cats are in the shop.</p>
+            <p class="muted">Rice, honey, oils and other village-fresh goods are in the shop.</p>
             <a class="place" href="#" style="width:auto;padding:0 32px;margin-top:6px">Browse the shop</a>
             <p class="anno" style="margin-top:12px">The header badge is hidden at 0. It says nothing rather than "0".</p>
           </div>
@@ -283,15 +282,15 @@ dl.kv dd{margin:0;line-height:1.5}
           <div class="ph-h"><a class="iconbtn" href="#" aria-label="Back to shop"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><h2 id="g-h">Your cart</h2><span class="countpill" style="margin-left:auto">2 items</span></div>
           <div class="ph-b">
             <div class="free ph"><span style="font-size:14px"><strong>Add ৳5,910 more</strong> for free delivery in Dhaka</span><div class="bar" role="progressbar" aria-label="Progress to free delivery" aria-valuenow="16" aria-valuemin="0" aria-valuemax="100"><div style="width:16%"></div></div></div>
-            <article class="icard" aria-label="Royal Canin Kitten 2 kg">
+            <article class="icard" aria-label="Pure cow ghee 400 g">
               <span class="tile tall w" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span>
-              <div class="bd"><span class="eyebrow">Royal Canin</span><span class="nm">Kitten 2 kg</span><span class="avail">In stock · arrives Thu</span>
-                <div class="foot"><span class="stepper" role="group" aria-label="Quantity of Royal Canin Kitten 2 kg"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity"><button type="button" aria-label="One more">+</button></span><strong class="price">৳850</strong></div></div>
+              <div class="bd"><span class="eyebrow">Bogura Dairy</span><span class="nm">Pure cow ghee 400 g</span><span class="avail">In stock · arrives Thu</span>
+                <div class="foot"><span class="stepper" role="group" aria-label="Quantity of Pure cow ghee 400 g"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity"><button type="button" aria-label="One more">+</button></span><strong class="price">৳850</strong></div></div>
             </article>
-            <article class="icard" aria-label="Whiskas Tuna 400 g">
+            <article class="icard" aria-label="Desi eggs 12 pcs">
               <span class="tile tall" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span>
-              <div class="bd"><span class="eyebrow">Whiskas</span><span class="nm">Tuna 400 g</span><span class="avail">In stock · arrives Thu</span>
-                <div class="foot"><span class="stepper" role="group" aria-label="Quantity of Whiskas Tuna 400 g"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity"><button type="button" aria-label="One more">+</button></span><strong class="price">৳240</strong></div></div>
+              <div class="bd"><span class="eyebrow">Amar Gram Farms</span><span class="nm">Desi eggs 12 pcs</span><span class="avail">In stock · arrives Thu</span>
+                <div class="foot"><span class="stepper" role="group" aria-label="Quantity of Desi eggs 12 pcs"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity"><button type="button" aria-label="One more">+</button></span><strong class="price">৳240</strong></div></div>
             </article>
             <p class="sm muted" style="text-align:center">A guest cart lives in this browser until you sign in.</p>
           </div>
@@ -307,18 +306,18 @@ dl.kv dd{margin:0;line-height:1.5}
       <div class="phwrap">
         <span class="tag">3 · Pieces the storefront mounts</span>
         <section class="phone" aria-label="Storefront pieces">
-          <div class="ph-h" style="justify-content:space-between"><span class="hh-logo"><span class="hh-disc" style="width:36px;height:36px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3l2.2 4.2M17 3l-2.2 4.2"/><path d="M5 13a7 6 0 0 0 14 0c0-3.3-3.1-6-7-6s-7 2.7-7 6z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/></svg></span><span class="hh-name" style="font-size:20px">PurrCare Shop</span></span><a class="hh-cart" href="Cart.dc.html" style="padding:0 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="hh-count" aria-label="3 items in your cart">3</span></a></div>
+          <div class="ph-h" style="justify-content:space-between"><span class="hh-logo"><span class="hh-disc" style="width:36px;height:36px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 14-14 0 9-6 14-14 14z"/><path d="M5 19l8-8"/></svg></span><span class="hh-name" style="font-size:20px">Amar Gram Shop</span></span><a class="hh-cart" href="Cart.dc.html" style="padding:0 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span class="hh-count" aria-label="3 items in your cart">3</span></a></div>
           <div class="ph-b" style="gap:10px">
             <span class="tag">CartBadge: count from the server's cart, links to /cart</span>
             <span class="tag" style="margin-top:6px">AddToCartButton</span>
-            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm w" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Royal Canin Kitten 2 kg</b><br><span class="sm muted">৳850.00 · idle</span></span><button class="btn" type="button">Add</button></div>
-            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm w" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Royal Canin Kitten 2 kg</b><br><span class="sm muted">Pending: can't be pressed twice</span></span><button class="btn" type="button" disabled aria-busy="true">Adding…</button></div>
-            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm w" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Royal Canin Kitten 2 kg</b><br><span class="sm muted">Added</span></span><button class="btn btn-sec" type="button"><span aria-hidden="true">✓</span>Added</button></div>
-            <span class="sr">Announced: "Royal Canin Kitten 2 kg added to your cart."</span>
-            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm t" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Whiskas Tuna 400 g</b><br><span id="wt-why" class="sm muted">Out of stock at every branch</span></span><button class="btn" type="button" disabled aria-describedby="wt-why">Add</button></div>
+            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm w" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Pure cow ghee 400 g</b><br><span class="sm muted">৳850.00 · idle</span></span><button class="btn" type="button">Add</button></div>
+            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm w" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Pure cow ghee 400 g</b><br><span class="sm muted">Pending: can't be pressed twice</span></span><button class="btn" type="button" disabled aria-busy="true">Adding…</button></div>
+            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm w" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Pure cow ghee 400 g</b><br><span class="sm muted">Added</span></span><button class="btn btn-sec" type="button"><span aria-hidden="true">✓</span>Added</button></div>
+            <span class="sr">Announced: "Pure cow ghee 400 g added to your cart."</span>
+            <div class="icard" style="align-items:center;padding:10px 12px"><span class="tile sm t" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><b>Desi eggs 12 pcs</b><br><span id="wt-why" class="sm muted">Out of stock at every branch</span></span><button class="btn" type="button" disabled aria-describedby="wt-why">Add</button></div>
             <p class="hint">Disabled always shows its reason, never silently greyed.</p>
             <span class="tag" style="margin-top:8px">CartBadge hidden at 0</span>
-            <div class="icard" style="justify-content:space-between;align-items:center;padding:8px 12px"><span class="hh-logo"><span class="hh-disc" style="width:36px;height:36px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3l2.2 4.2M17 3l-2.2 4.2"/><path d="M5 13a7 6 0 0 0 14 0c0-3.3-3.1-6-7-6s-7 2.7-7 6z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/></svg></span><span class="hh-name" style="font-size:20px">PurrCare Shop</span></span><a class="hh-cart" href="Cart.dc.html" aria-label="Cart" style="padding:0 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></a></div>
+            <div class="icard" style="justify-content:space-between;align-items:center;padding:8px 12px"><span class="hh-logo"><span class="hh-disc" style="width:36px;height:36px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 14-14 0 9-6 14-14 14z"/><path d="M5 19l8-8"/></svg></span><span class="hh-name" style="font-size:20px">Amar Gram Shop</span></span><a class="hh-cart" href="Cart.dc.html" aria-label="Cart" style="padding:0 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></a></div>
           </div>
         </section>
       </div>

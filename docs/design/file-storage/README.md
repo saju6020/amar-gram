@@ -1,8 +1,8 @@
 # File Storage — UX
 
-The design for backlog §17 **US-XCT-07** (safe uploads), built against
-[`HO-FIL-002`](../../handover/HO-FIL-002.md), the frontend handover. Fifth area, after
-[Cat Profiles](../cat-profile/README.md), [Accounts & Identity](../accounts-identity/README.md),
+The design for Amar Gram **US-XCT-07** (safe uploads), built against
+[`HO-FIL-002`](../../handover/HO-FIL-002.md), the frontend handover. Fourth area, after
+[Accounts & Identity](../accounts-identity/README.md),
 [Administration](../administration/README.md) and [Notifications](../notifications/README.md).
 
 ## Where to review it
@@ -21,7 +21,7 @@ screens' placeholder top bar for the shared sidebar and header.
 ## The screens
 
 Three rows, fifteen artboards. HO-FIL-002 owns **no page or route** (§14): it builds the one
-uploader, file list, thumbnail and viewer that Shop, Clinical records, Boarding and Reports import.
+uploader, file list, thumbnail and viewer that Shop, Supplier deliveries and Reports import.
 So these artboards are the components' states, each drawn inside an illustrative host page from a
 consuming handover so they're seen at real size and in real context. The host pages are not
 designs for those areas.
@@ -36,17 +36,17 @@ designs for those areas.
 | | `UploaderInterrupted.dc.html` | Interrupted & cancelled | "did not finish uploading" with Retry while the next file carries on; Cancel before and after, with the row removed and one announcement (C5, OQ-2) |
 | | `UploaderInForm.dc.html` | Uploads survive a failed save | E1: a product form refuses to save; the uploaded photos stay (ADR-FE-156) |
 | | `Mobile360.dc.html` | Uploader at 360px | Stacked rows, full-width buttons, truncated camera file names, no sideways scroll, also checked at 320px (C10) |
-| File list & thumbnails — `FileList`, `FileThumb` | `FileList.dc.html` | ⭐ File list | Open vs download-only (DICOM), a finalised visit's Remove disabled with its reason, the written-out empty state (ADR-FE-157) |
-| | `FileRemoveConfirm.dc.html` | Remove confirmation | Names the file and the consequence (off the order, out of the owner's portal); the safe button is focused first |
+| File list & thumbnails — `FileList`, `FileThumb` | `FileList.dc.html` | ⭐ File list | Open vs download-only (XLSX), a closed delivery's Remove disabled with its reason, the written-out empty state (ADR-FE-157) |
+| | `FileRemoveConfirm.dc.html` | Remove confirmation | Names the file and the consequence (off the delivery, off the product page); the safe button is focused first |
 | | `FileThumbStates.dc.html` | Thumbnail states | Loaded, loading at fixed size, video, PDF, download-only, unsafe type never rendered, could-not-load, missing caption (ADR-FE-155, 157, 158) |
 | Viewer & signed URLs — `MediaViewer` | `MediaViewerImage.dc.html` | Viewer — image | Modal dialog: the caption as alt text, focus on Close, `Esc`, focus back to the opening thumb (C7) |
 | | `MediaViewerPdf.dc.html` | Viewer — PDF | Paged in the browser's own PDF viewer inside the dialog, with the no-inline-PDF fallback beside it |
 | | `MediaViewerVideo.dc.html` | Viewer — video (portal) | Customer-facing: native `controls`, no autoplay |
-| | `ExpiredUrl.dc.html` | ⭐ Expired links (portal) | A diary left open past its 5-minute links: one silent re-fetch, then the plain message, and no retry loop (C8, A5, ADR-FE-154) |
+| | `ExpiredUrl.dc.html` | ⭐ Expired links (portal) | A harvest diary left open past its 5-minute links: one silent re-fetch, then the plain message, and no retry loop (C8, A5, ADR-FE-154) |
 
 ## The design system
 
-Built on the PurrCare design system, with **no new component**. The uploader's pieces are
+Built on the Amar Gram design system, with **no new component**. The uploader's pieces are
 put together from what the system already has: `Field` for labels and hints, `Button` in its
 small and danger forms, `Banner`'s shape for the scanner-outage line, `Dialog` for the viewer and
 the remove confirmation, and `Badge`'s icon-plus-word rule for every file status. One pattern is
@@ -69,8 +69,8 @@ loaded from one shared stylesheet.
 5. **Consequences are named before they happen.** Removing an attached file says what stops
    happening. Cancelling an unfinished upload doesn't ask for confirmation, because nothing has
    been saved yet, and the board says why.
-6. **Disabled controls explain themselves.** "Attach results" waits for uploads and says so. A
-   finalised visit's Remove says why it's locked and what to do instead.
+6. **Disabled controls explain themselves.** "Attach documents" waits for uploads and says so. A
+   closed delivery's Remove says why it's locked and what to do instead.
 7. **Missing data is written out.** "No files attached to this order.", "No caption recorded",
    "No preview frame". A tile is never blank and never shows a broken image.
 8. **Units sit next to numbers, and times name their zone.** "4.0 MB of 6.4 MB (62%)" and
@@ -81,8 +81,8 @@ loaded from one shared stylesheet.
 ## Known gaps, deliberately visible
 
 - **No live interaction.** As in the other areas, every state is its own artboard.
-- **Host pages are placeholders.** The product form, diagnostic order, photos panel and boarding
-  diary come from HO-SHP-002, HO-EMR-002 and HO-BRD-002, which will design them properly. Only the
+- **Host pages are placeholders.** The product form, supplier delivery, photos panel and harvest
+  diary come from HO-SHP-002, which will design them properly. Only the
   shared components here are specified.
 - **Remove confirmation wording is this design's suggestion.** HO-FIL-002 specifies Remove on
   `FileList` but not its confirmation. The consuming area owns what removal means (detach vs.

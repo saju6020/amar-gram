@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 :root{--overlay:rgba(28,26,23,.4);--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
@@ -66,7 +66,7 @@ tbody tr:last-child td{border-bottom:none}
 tfoot td{background:var(--surface-sunken);font-weight:700}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.dim td{color:var(--ink-faint)}
-tr.unusable td{background:#fdfbf8}
+tr.unusable td{background:#FFFAF0}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px}
 .grid2{display:flex;gap:18px;align-items:flex-start}
 .grid2 > *{flex:1;min-width:0}
@@ -108,36 +108,36 @@ tr.unusable td{background:#fdfbf8}
 </helmet>
 <div style="width:360px;height:1000px;background:var(--surface-page);overflow:auto;position:relative">
 <div style="padding:18px 14px">
-  <h1 class="h1m">FD-KDC-2KG</h1>
-  <p class="small muted" style="margin:0 0 4px">Kitten dry food, chicken 2 kg · Food · <span class="stor">Room temperature, dry</span></p>
+  <h1 class="h1m">RIC-CHG-5KG</h1>
+  <p class="small muted" style="margin:0 0 4px">Chinigura aromatic rice 5 kg · Food · <span class="stor">Room temperature, dry</span></p>
   <p class="small muted" style="margin:0 0 8px">Below 768px the batch × location table becomes one card per batch — same figures, no sideways scrolling.</p>
   <div class="figsm"><span><strong>50 bags</strong> on hand</span><span><strong>37 bags</strong> sellable</span><span>5 bags reserved</span><span>5 bags held</span><span>3 bags expired</span></div>
   <div class="bcard">
     <div class="top"><strong>Lot L2405C</strong><span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></div>
     <span class="b b-warn"><i aria-hidden="true">⚠</i> 23 Sep 2026 · expires today</span>
-    <dl><div><dt>UTR-SHOP · Sales floor</dt><dd>4 bags · 0 bags reserved</dd></div></dl>
+    <dl><div><dt>DHN-SHOP · Sales floor</dt><dd>4 bags · 0 bags reserved</dd></div></dl>
   </div>
   <div class="bcard">
     <div class="top"><strong>Lot L2407B</strong><span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></div>
     <span class="small">7 Nov 2026 · 45 days</span>
-    <dl><div><dt>UTR-WH · Warehouse</dt><dd>2 bags · 0 bags reserved</dd></div><div><dt>UTR-SHOP · Sales floor</dt><dd>8 bags · 3 bags reserved</dd></div></dl>
+    <dl><div><dt>DHN-WH · Warehouse</dt><dd>2 bags · 0 bags reserved</dd></div><div><dt>DHN-SHOP · Sales floor</dt><dd>8 bags · 3 bags reserved</dd></div></dl>
   </div>
   <div class="bcard">
     <div class="top"><strong>Lot L2406A</strong><span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></div>
     <span class="small">21 Jan 2027 · 120 days</span>
-    <dl><div><dt>UTR-WH · Warehouse</dt><dd>16 bags · 0 bags reserved</dd></div><div><dt>UTR-SHOP · Sales floor</dt><dd>12 bags · 2 bags reserved</dd></div></dl>
+    <dl><div><dt>DHN-WH · Warehouse</dt><dd>16 bags · 0 bags reserved</dd></div><div><dt>DHN-SHOP · Sales floor</dt><dd>12 bags · 2 bags reserved</dd></div></dl>
   </div>
   <div class="bcard unusable">
     <div class="top"><strong>Lot L2404D</strong><span class="b b-danger"><i aria-hidden="true">✕</i> Expired</span></div>
     <span class="b b-danger"><i aria-hidden="true">✕</i> 20 Sep 2026 · expired 3 days ago</span>
-    <div class="small" style="color:var(--danger-ink);font-weight:600;margin-top:4px">Cannot be sold, dispensed or fed.</div>
-    <dl><div><dt>UTR-SHOP · Sales floor</dt><dd>3 bags</dd></div></dl>
+    <div class="small" style="color:var(--danger-ink);font-weight:600;margin-top:4px">Cannot be sold or packed.</div>
+    <dl><div><dt>DHN-SHOP · Sales floor</dt><dd>3 bags</dd></div></dl>
   </div>
   <div class="bcard unusable">
     <div class="top"><strong>Lot L2403Q</strong><span class="b b-warn"><i aria-hidden="true">⏸</i> Quarantined</span></div>
     <span class="small">15 Dec 2026 · 83 days</span>
     <div class="small" style="color:var(--danger-ink);font-weight:600;margin-top:4px">Quarantined — damaged packaging, awaiting a decision.</div>
-    <dl><div><dt>UTR-QUAR · Quarantine</dt><dd>5 bags · in quarantine location</dd></div></dl>
+    <dl><div><dt>DHN-QUAR · Quarantine</dt><dd>5 bags · in quarantine location</dd></div></dl>
   </div>
 </div>
 </div>

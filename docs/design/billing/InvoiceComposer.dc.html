@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -110,14 +110,14 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:1000px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main">
     <div class="titlerow">
-      <div><h1 class="h1">Draft invoice — Farhana Yasmin</h1><p class="sub"><span class="pill p-neutral"><span aria-hidden="true">✎</span> Draft</span> &nbsp;No number yet — it gets the next Uttara number when issued · saved 23 Sep 2026, 10:12 (Asia/Dhaka)</p></div>
+      <div><h1 class="h1">Draft invoice — Farhana Yasmin</h1><p class="sub"><span class="pill p-neutral"><span aria-hidden="true">✎</span> Draft</span> &nbsp;No number yet — it gets the next Dhanmondi outlet number when issued · saved 23 Sep 2026, 10:12 (Asia/Dhaka)</p></div>
       <div class="actions"><button class="btn btn-danger" type="button">Discard draft</button><button class="btn btn-sec" type="button">Save draft</button><button class="btn" type="button">Issue invoice…</button></div>
     </div>
 
-    <div class="banner b-bad" role="alert"><span aria-hidden="true">⚠</span><span><b>1 charge was already invoiced.</b> Clumping cat litter, 10 L × 2 is on another invoice, so it has been taken off this draft. Everything else was saved.</span></div>
+    <div class="banner b-bad" role="alert"><span aria-hidden="true">⚠</span><span><b>1 charge was already invoiced.</b> Patali khejur gur 1 kg tin × 2 is on another invoice, so it has been taken off this draft. Everything else was saved.</span></div>
 
     <div class="comp">
       <div>
@@ -125,30 +125,30 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
           <span class="h2" style="margin:0">Unbilled charges</span>
           <button class="btn btn-sec btn-sm" type="button">+ Add manual charge</button>
         </div>
-        <div class="grouphead"><h3>Clinic</h3><button class="btn btn-sec btn-sm" type="button">Clear all in Clinic</button></div>
-        <label class="charge"><input type="checkbox" checked><span class="d">Standard consultation — Luna<br><span class="small muted">21 Sep · Service · qty 1</span></span><span class="a">৳800.00</span></label>
-        <label class="charge"><input type="checkbox" checked><span class="d">Vaccination — FVRCP booster, Luna<br><span class="small muted">21 Sep · Service · qty 1</span></span><span class="a">৳1,200.00</span></label>
-        <label class="charge"><input type="checkbox" checked><span class="d">Meloxicam oral suspension 0.5 mg/ml, 10 ml<br><span class="small muted">21 Sep · Medication · qty 1</span></span><span class="a">৳450.00</span></label>
+        <div class="grouphead"><h3>Counter (POS)</h3><button class="btn btn-sec btn-sm" type="button">Clear all in Counter (POS)</button></div>
+        <label class="charge"><input type="checkbox" checked><span class="d">Red lentils 1 kg<br><span class="small muted">21 Sep · Product · qty 5</span></span><span class="a">৳160.00 × 5</span></label>
+        <label class="charge"><input type="checkbox" checked><span class="d">Cold-pressed mustard oil 1 L<br><span class="small muted">21 Sep · Product · qty 4</span></span><span class="a">৳300.00 × 4</span></label>
+        <label class="charge"><input type="checkbox" checked><span class="d">Turmeric powder 200 g<br><span class="small muted">21 Sep · Product · qty 3</span></span><span class="a">৳150.00 × 3</span></label>
 
-        <div class="grouphead"><h3>Shop</h3><button class="btn btn-sec btn-sm" type="button">Select all in Shop</button></div>
-        <label class="charge"><input type="checkbox" checked><span class="d">Royal Canin Indoor 27, 2 kg<br><span class="small muted">22 Sep · Product · qty 1 · discount ৳150.00</span></span><span class="a">৳2,650.00</span></label>
-        <div class="charge blocked"><input type="checkbox" disabled aria-describedby="lit-why"><span class="d">Clumping cat litter, 10 L<br><span class="small" id="lit-why" style="color:var(--danger-ink)"><span aria-hidden="true">✕</span> Already on another invoice (INV-UTR-2627-000417)</span></span><span class="a">৳720.00 × 2</span></div>
+        <div class="grouphead"><h3>Online</h3><button class="btn btn-sec btn-sm" type="button">Select all in Online</button></div>
+        <label class="charge"><input type="checkbox" checked><span class="d">Sundarbans wild honey 2 kg jar<br><span class="small muted">22 Sep · Product · qty 1 · discount ৳150.00</span></span><span class="a">৳2,650.00</span></label>
+        <div class="charge blocked"><input type="checkbox" disabled aria-describedby="gur-why"><span class="d">Patali khejur gur 1 kg tin<br><span class="small" id="gur-why" style="color:var(--danger-ink)"><span aria-hidden="true">✕</span> Already on another invoice (INV-DHN-2627-000417)</span></span><span class="a">৳720.00 × 2</span></div>
 
-        <div class="grouphead"><h3>Boarding</h3><button class="btn btn-sec btn-sm" type="button">Clear all in Boarding</button></div>
-        <label class="charge"><input type="checkbox" checked><span class="d">Standard suite — Milo, 18–21 Sep<br><span class="small muted">Boarding night · qty 3</span></span><span class="a">৳1,500.00 × 3</span></label>
+        <div class="grouphead"><h3>Subscription</h3><button class="btn btn-sec btn-sm" type="button">Clear all in Subscription</button></div>
+        <label class="charge"><input type="checkbox" checked><span class="d">Weekly organic veg box — weeks of 7, 14, 21 Sep<br><span class="small muted">Product · qty 3</span></span><span class="a">৳1,500.00 × 3</span></label>
       </div>
 
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="h2" style="margin:0">Preview</span><span class="small muted">5 lines · 3 business lines</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="h2" style="margin:0">Preview</span><span class="small muted">5 lines · 3 channels</span></div>
         <div class="banner b-warn" style="margin-bottom:10px"><span aria-hidden="true">ⓘ</span><span>Estimate at today's tax rates. Rates are fixed when the invoice is issued.</span></div>
         <table class="pv">
           <thead><tr><th>Line</th><th>Tax class</th><th class="num">Rate</th><th class="num">Net</th><th class="num">Tax</th><th class="num">Gross</th></tr></thead>
           <tbody>
-            <tr><td>Standard consultation<br><span class="faint">Clinic</span></td><td>STD</td><td class="num">15%</td><td class="num">800.00</td><td class="num">120.00</td><td class="num">920.00</td></tr>
-            <tr><td>FVRCP booster<br><span class="faint">Clinic</span></td><td>STD</td><td class="num">15%</td><td class="num">1,200.00</td><td class="num">180.00</td><td class="num">1,380.00</td></tr>
-            <tr><td>Meloxicam 10 ml<br><span class="faint">Clinic</span></td><td>ZERO</td><td class="num">0%</td><td class="num">450.00</td><td class="num">0.00</td><td class="num">450.00</td></tr>
-            <tr><td>Royal Canin Indoor 27<br><span class="faint">Shop · less ৳150.00</span></td><td>STD</td><td class="num">15%</td><td class="num">2,500.00</td><td class="num">375.00</td><td class="num">2,875.00</td></tr>
-            <tr><td>Standard suite × 3<br><span class="faint">Boarding</span></td><td>STD</td><td class="num">15%</td><td class="num">4,500.00</td><td class="num">675.00</td><td class="num">5,175.00</td></tr>
+            <tr><td>Red lentils 1 kg × 5<br><span class="faint">Counter (POS)</span></td><td>STD</td><td class="num">15%</td><td class="num">800.00</td><td class="num">120.00</td><td class="num">920.00</td></tr>
+            <tr><td>Mustard oil 1 L × 4<br><span class="faint">Counter (POS)</span></td><td>STD</td><td class="num">15%</td><td class="num">1,200.00</td><td class="num">180.00</td><td class="num">1,380.00</td></tr>
+            <tr><td>Turmeric powder 200 g × 3<br><span class="faint">Counter (POS)</span></td><td>ZERO</td><td class="num">0%</td><td class="num">450.00</td><td class="num">0.00</td><td class="num">450.00</td></tr>
+            <tr><td>Wild honey 2 kg jar<br><span class="faint">Online · less ৳150.00</span></td><td>STD</td><td class="num">15%</td><td class="num">2,500.00</td><td class="num">375.00</td><td class="num">2,875.00</td></tr>
+            <tr><td>Veg box subscription × 3<br><span class="faint">Subscription</span></td><td>STD</td><td class="num">15%</td><td class="num">4,500.00</td><td class="num">675.00</td><td class="num">5,175.00</td></tr>
           </tbody>
         </table>
         <div class="totals" aria-live="polite" aria-label="Estimated totals">

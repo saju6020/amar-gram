@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border);background:#fff}
@@ -32,7 +32,7 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
 </style>
 </helmet>
 <div style="width:1280px;height:1000px;background:var(--surface-page);overflow:auto">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div style="padding:28px 32px">
     <h1 class="h1">Merge duplicate records</h1>
     <p class="muted" style="margin:0 0 20px">Nafisa Rahman — read fresh from both records just now</p>
@@ -41,25 +41,25 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
     <div class="grid">
       <div class="rcard picked">
         <label><input type="radio" name="survivor" checked> Nafisa Rahman — Online</label>
-        <div class="meta">nafisa@example.com<br>Registered online, complete record<br>1 cat: Luna</div>
+        <div class="meta">nafisa@example.com<br>Registered online, complete record<br>1 address: Home · Dhanmondi</div>
       </div>
       <div class="rcard">
         <label><input type="radio" name="survivor"> Nafisa Rahman — Walk-in</label>
-        <div class="meta">01911 223344<br>Walk-in, incomplete record<br>1 cat: Coco (deceased)</div>
+        <div class="meta">01911 223344<br>Walk-in, incomplete record<br>1 address: Old flat · Mirpur (archived)</div>
       </div>
     </div>
     <p class="muted" style="font-size:12.5px;margin:-10px 0 20px;max-width:920px">Nothing is pre-selected — this choice is made every time, deliberately.</p>
 
     <div class="field">
       <label for="mr-reason">Reason for merging</label>
-      <textarea id="mr-reason" rows="2">Same customer confirmed by mobile number and address at check-in.</textarea>
+      <textarea id="mr-reason" rows="2">Same customer confirmed by mobile number and address at the outlet counter.</textarea>
     </div>
 
     <div class="confirm" role="alertdialog" aria-label="Confirm merge">
       <strong>Merging keeps "Nafisa Rahman — Online" and retires "Nafisa Rahman — Walk-in".</strong>
-      <p style="margin:8px 0 4px">Cats that will move to the kept record:</p>
+      <p style="margin:8px 0 4px">Addresses that will move to the kept record:</p>
       <ul>
-        <li>Coco <em>(deceased — record kept)</em></li>
+        <li>Old flat · Mirpur <em>(archived — record kept)</em></li>
       </ul>
       <p style="margin:4px 0 0">Orders, invoices and balances aren't recorded in the system yet, so they can't be shown or moved. This cannot be undone.</p>
       <button type="button" class="btn">Merge these records</button>

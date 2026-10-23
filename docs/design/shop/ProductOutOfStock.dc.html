@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2;--accent-tint:#e6f0ee;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC;--accent-tint:#E3EDC6;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px}
 a{color:var(--accent-ink)}
@@ -212,8 +212,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
 <div style="width:1280px;min-height:1160px;background:var(--surface-page)">
   <header class="topnav">
     <div class="bar">
-      <a class="brand" href="ShopHome.dc.html"><span class="logo-disc" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3l2.2 4.2M17 3l-2.2 4.2"/><path d="M5 13a7 6 0 0 0 14 0c0-3.3-3.1-6-7-6s-7 2.7-7 6z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/><path d="M10.8 15.2l1.2.8 1.2-.8"/></svg></span>PurrCare Shop</a>
-      <form class="search" role="search" aria-label="Search products"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input aria-label="Search products" placeholder="Search food, litter, brands, ingredients"><button type="submit">Search</button></form>
+      <a class="brand" href="ShopHome.dc.html"><span class="logo-disc" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12C12 7.5 9 5 4 5c0 4.5 3 7 8 7z"/><path d="M12 14c0-3.5 2.6-6 7-6 0 3.8-2.6 6-7 6z"/></svg></span>Amar Gram Shop</a>
+      <form class="search" role="search" aria-label="Search products"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input aria-label="Search products" placeholder="Search rice, honey, oils, spices, origins"><button type="submit">Search</button></form>
       <div class="acct">
         <a href="Wishlist.dc.html">Wishlist</a>
         <a href="#">Farhana</a>
@@ -221,39 +221,40 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
       </div>
     </div>
     <nav class="catnav" aria-label="Categories">
-      <a class="on" href="Catalogue.dc.html" aria-current="true">Cat food</a><a href="#">Litter</a><a href="#">Litter pots &amp; accessories</a><a href="#">Bags &amp; carriers</a><a href="#">Health &amp; grooming</a><a href="#">Toys &amp; furniture</a><a href="ShopByCountry.dc.html">Shop by country</a>
+      <a class="on" href="Catalogue.dc.html" aria-current="true">Rice &amp; grains</a><a href="#">Honey &amp; gur</a><a href="#">Oils &amp; ghee</a><a href="#">Spices</a><a href="#">Pulses</a><a href="#">Tea</a><a href="#">Fresh produce</a><a href="#">Dates &amp; dry fruit</a><a href="ShopByCountry.dc.html">Shop by origin</a>
     </nav>
   </header>
 
   <main class="wrap">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="ShopHome.dc.html">Shop</a><span aria-hidden="true">/</span><a href="Catalogue.dc.html">Cat food</a><span aria-hidden="true">/</span><span aria-current="page">Royal Canin Kitten</span><span aria-hidden="true">·</span><span style="font-family:monospace">?sku=RC-K-4KG</span></nav>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="ShopHome.dc.html">Shop</a><span aria-hidden="true">/</span><a href="Catalogue.dc.html">Rice &amp; grains</a><span aria-hidden="true">/</span><span aria-current="page">Chinigura aromatic rice</span><span aria-hidden="true">·</span><span style="font-family:monospace">?sku=CHR-5KG</span></nav>
 
     <div class="top">
       <div class="gallery">
-        <div class="main-img" role="img" aria-label="Royal Canin Kitten 4 kg bag, front" style="height:460px"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="50" width="60" height="50" rx="9" fill="#fff" opacity=".95"/><path d="M40 70h40M40 82h26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+        <div class="main-img" role="img" aria-label="Chinigura aromatic rice 5 kg bag, front" style="height:460px"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="50" width="60" height="50" rx="9" fill="#fff" opacity=".95"/><path d="M40 70h40M40 82h26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
         <div class="thumbs">
-          <button type="button" aria-pressed="true" aria-label="Royal Canin Kitten 4 kg bag, front"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/></svg></button>
-          <button type="button" aria-pressed="false" aria-label="4 kg bag, back with the feeding table"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><path d="M40 60h40M40 74h40M40 88h40" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg></button>
-          <button type="button" aria-pressed="false" aria-label="Kibble close-up next to a coin for size"><svg viewBox="0 0 80 100" aria-hidden="true"><circle cx="30" cy="50" r="10" fill="currentColor"/><circle cx="52" cy="46" r="10" fill="currentColor"/><circle cx="42" cy="66" r="10" fill="currentColor"/></svg></button>
-          <button type="button" aria-pressed="false" aria-label="A kitten eating from a bowl"><svg viewBox="0 0 80 100" aria-hidden="true"><ellipse cx="40" cy="70" rx="26" ry="10" fill="currentColor"/><circle cx="40" cy="40" r="14" fill="currentColor" opacity=".6"/></svg></button>
+          <button type="button" aria-pressed="true" aria-label="Chinigura aromatic rice 5 kg bag, front"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/></svg></button>
+          <button type="button" aria-pressed="false" aria-label="5 kg bag, back with the label and harvest date"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><path d="M40 60h40M40 74h40M40 88h40" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg></button>
+          <button type="button" aria-pressed="false" aria-label="Close-up of the short, fine grains next to a coin for size"><svg viewBox="0 0 80 100" aria-hidden="true"><circle cx="30" cy="50" r="10" fill="currentColor"/><circle cx="52" cy="46" r="10" fill="currentColor"/><circle cx="42" cy="66" r="10" fill="currentColor"/></svg></button>
+          <button type="button" aria-pressed="false" aria-label="Cooked rice in a bowl"><svg viewBox="0 0 80 100" aria-hidden="true"><ellipse cx="40" cy="70" rx="26" ry="10" fill="currentColor"/><circle cx="40" cy="40" r="14" fill="currentColor" opacity=".6"/></svg></button>
         </div>
       </div>
 
       <div class="info">
         <div class="titleblock">
-          <span class="eyebrow">Royal Canin · Made in France</span>
-          <h1 class="h1">Royal Canin Kitten</h1>
-          <div class="sub"><a href="ProductReviewsAndRecs.dc.html#reviews"><span class="stars" aria-hidden="true">★★★★½</span>4.5 out of 5 (23 reviews)</a><span aria-hidden="true">·</span><span>Kitten food</span></div>
+          <span class="eyebrow">Dinajpur Farmers' Co-op · Dinajpur</span>
+          <h1 class="h1">Chinigura aromatic rice</h1>
+          <div class="sub"><a href="ProductReviewsAndRecs.dc.html#reviews"><span class="stars" aria-hidden="true">★★★★½</span>4.5 out of 5 (23 reviews)</a><span aria-hidden="true">·</span><span>Aromatic rice</span></div>
         </div>
 
-        <div class="pricerow"><strong>৳4,600.00</strong><span>+ VAT · 4 kg bag</span></div>
+        <div class="pricerow"><strong>৳850.00</strong><span>+ VAT · 5 kg bag</span></div>
 
         <fieldset>
           <legend>Choose a size</legend>
           <div class="variants" role="radiogroup" aria-label="Size">
-            <label class="variant"><span class="vtop"><input type="radio" name="sku"><strong>400 g</strong></span><span class="vline">৳650.00</span><span class="vstock in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span></label>
-            <label class="variant"><span class="vtop"><input type="radio" name="sku"><strong>2 kg</strong></span><span class="vline">৳2,450.00</span><span class="vstock in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span></label>
-            <label class="variant on"><span class="vtop"><input type="radio" name="sku" checked><strong>4 kg</strong></span><span class="vline">৳4,600.00</span><span class="vstock out"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>Out of stock</span></label>
+            <label class="variant"><span class="vtop"><input type="radio" name="sku"><strong>500 g</strong></span><span class="vline">৳95.00</span><span class="vstock in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span></label>
+            <label class="variant"><span class="vtop"><input type="radio" name="sku"><strong>1 kg</strong></span><span class="vline">৳180.00</span><span class="vstock in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span></label>
+            <label class="variant"><span class="vtop"><input type="radio" name="sku"><strong>2 kg</strong></span><span class="vline">৳350.00</span><span class="vstock in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span></label>
+            <label class="variant on"><span class="vtop"><input type="radio" name="sku" checked><strong>5 kg</strong></span><span class="vline">৳850.00</span><span class="vstock out"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>Out of stock</span></label>
           </div>
         </fieldset>
 
@@ -264,13 +265,13 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
             <button type="button" aria-label="One more" disabled><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M12 5v14M5 12h14"/></svg></button>
           </div>
           <button class="addcart" type="button" disabled aria-describedby="oos-reason"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Add to cart</button>
-          <button class="wishbig" type="button" aria-pressed="true" aria-label="Saved to wishlist: Royal Canin Kitten 4 kg"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
+          <button class="wishbig" type="button" aria-pressed="true" aria-label="Saved to wishlist: Chinigura aromatic rice 5 kg"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
         </div>
-        <p class="reason" id="oos-reason"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg><span><b style="color:var(--danger-ink)">The 4 kg size is out of stock</b>, so Add to cart is not offered for it. The 400 g and 2 kg sizes are in stock.</span></p>
+        <p class="reason" id="oos-reason"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg><span><b style="color:var(--danger-ink)">The 5 kg size is out of stock</b>, so Add to cart is not offered for it. The 500 g, 1 kg and 2 kg sizes are in stock.</span></p>
 
         <div class="alertcard">
           <span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
-          <span class="txt"><strong>Want the 4 kg bag?</strong><span>We'll send one message when it's back, then the alert closes.</span></span>
+          <span class="txt"><strong>Want the 5 kg bag?</strong><span>We'll send one message when it's back, then the alert closes.</span></span>
           <button class="btn" type="button">Tell me when it's back</button>
         </div>
       </div>
@@ -281,7 +282,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
         <div>
           <div class="statelabel">After “Tell me when it's back” · will be delivered</div>
           <div class="state">
-            <div class="msg ok" role="status"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>We'll tell you when the 4 kg bag is back.</b> We'll send one message by SMS and in-app.</span></div>
+            <div class="msg ok" role="status"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>We'll tell you when the 5 kg bag is back.</b> We'll send one message by SMS and in-app.</span></div>
           </div>
         </div>
         <div>
@@ -303,7 +304,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
           <div class="statelabel">Guest presses Save or Tell me when it's back</div>
           <div class="state">
             <p style="margin:0 0 8px;font-size:13.5px">Goes to sign-in, then straight back to this size:</p>
-            <code style="font-size:12px;background:var(--surface-sunken);padding:8px 10px;border-radius:10px;display:block">/sign-in?next=/shop/products/royal-canin-kitten?sku=RC-K-4KG</code>
+            <code style="font-size:12px;background:var(--surface-sunken);padding:8px 10px;border-radius:10px;display:block">/sign-in?next=/shop/products/chinigura-aromatic-rice?sku=CHR-5KG</code>
           </div>
         </div>
       </div>

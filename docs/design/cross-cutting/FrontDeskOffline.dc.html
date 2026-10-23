@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Front desk while offline — US-XCT-01</title>
+<title>Counter while offline — US-XCT-01</title>
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
-:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2b2823}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2A1F12}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -110,7 +110,7 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative;overflow:hidden">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Shormi Akter · Cashier</div></div>
   <div class="main">
     <div class="obanner" role="status" aria-live="polite">
       <svg class="ic18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2.3-1.7"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M10.7 5.1A15 15 0 0 1 22 8.8"/><path d="M12 20h.01"/></svg>
@@ -120,12 +120,12 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
 
     <div class="row" style="align-items:flex-start;margin-bottom:14px">
       <div>
-        <h1 class="h1">Front desk</h1>
-        <p class="sub" style="margin:0">Uttara · Wednesday 23 September 2026 · times in Asia/Dhaka · last loaded at 10:42 — live updates are paused while offline</p>
+        <h1 class="h1">Counter</h1>
+        <p class="sub" style="margin:0">Uttara outlet · Wednesday 23 September 2026 · times in Asia/Dhaka · last loaded at 10:42 — live updates are paused while offline</p>
       </div>
       <div class="spacer"></div>
       <div style="text-align:right">
-        <button type="button" class="btn" disabled aria-describedby="r-walkin">+ Register walk-in</button>
+        <button type="button" class="btn" disabled aria-describedby="r-walkin">+ New counter sale</button>
         <div class="reason" id="r-walkin" style="justify-content:flex-end"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2.3-1.7"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M10.7 5.1A15 15 0 0 1 22 8.8"/><path d="M12 20h.01"/></svg> Offline — can't save</div>
       </div>
     </div>
@@ -133,30 +133,30 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
     <div class="cols-main">
       <div>
         <table>
-          <thead><tr><th>Time</th><th>Cat</th><th>Customer</th><th>Service · vet</th><th>Room</th><th>Status</th><th>Action</th></tr></thead>
+          <thead><tr><th>Pickup</th><th>Order</th><th>Customer</th><th>Items · packed by</th><th>Shelf</th><th>Status</th><th>Action</th></tr></thead>
           <tbody>
-            <tr><td class="strong">09:30</td><td>Luna</td><td>Farhana Yasmin</td><td>Vaccination · Dr. Nusrat Jahan</td><td>Consult 1</td><td><span class="pill pill-ok"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> Completed</span></td><td><span class="muted small">No action</span></td></tr>
-            <tr><td class="strong">10:00</td><td>Mittens <span class="risk"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> High risk</span></td><td>Kamrul Hasan</td><td>Dental check · Dr. Nusrat Jahan</td><td>Consult 1</td><td><span class="pill pill-ok"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> In consultation</span></td><td><span class="muted small">No action</span></td></tr>
-            <tr style="background:var(--accent-soft)"><td class="strong">10:45</td><td>Biscuit</td><td>Nafisa Rahman</td><td>Consultation · Dr. Nusrat Jahan</td><td>Consult 2</td><td><span class="pill pill-neutral"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Booked</span></td><td><button type="button" class="btn btn-sm" disabled aria-describedby="r1">Check in</button><div class="reason" id="r1">Offline — can't save</div></td></tr>
-            <tr><td class="strong">11:15</td><td>Pumpkin <span class="pill pill-warn">Walk-in · Urgent</span></td><td>Tahmina Akter</td><td>Triage · not yet assigned</td><td>Not yet assigned</td><td><span class="pill pill-warn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Waiting</span></td><td><button type="button" class="btn btn-sm" disabled aria-describedby="r2">Assign vet</button><div class="reason" id="r2">Offline — can't save</div></td></tr>
-            <tr><td class="strong">11:30</td><td>Tom</td><td>Arif Hossain</td><td>Follow-up · Dr. Nusrat Jahan</td><td>Consult 2</td><td><span class="pill pill-neutral"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Booked</span></td><td><button type="button" class="btn btn-sm" disabled aria-describedby="r3">Check in</button><div class="reason" id="r3">Offline — can't save</div></td></tr>
-            <tr><td class="strong">12:00</td><td>Kitty</td><td>Farhana Yasmin</td><td>Nail trim · Tanvir Islam</td><td>Treatment</td><td><span class="pill pill-bad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg> Cancelled</span></td><td><span class="muted small">No action</span></td></tr>
+            <tr><td class="strong">09:30</td><td>AG-10412</td><td>Farhana Yasmin</td><td>Chinigura aromatic rice 1 kg ×2 · Tanvir Islam</td><td>Pickup A</td><td><span class="pill pill-ok"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> Collected</span></td><td><span class="muted small">No action</span></td></tr>
+            <tr><td class="strong">10:00</td><td>AG-10415 <span class="risk"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Keep chilled</span></td><td>Kamrul Hasan</td><td>Pure cow ghee 400 g, Sundarbans wild honey 500 g · Tanvir Islam</td><td>Chiller 1</td><td><span class="pill pill-ok"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> At the counter</span></td><td><span class="muted small">No action</span></td></tr>
+            <tr style="background:var(--accent-soft)"><td class="strong">10:45</td><td>AG-10418</td><td>Nafisa Rahman</td><td>Cold-pressed mustard oil 1 L, Red lentils 1 kg · Tanvir Islam</td><td>Pickup B</td><td><span class="pill pill-neutral"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Ready</span></td><td><button type="button" class="btn btn-sm" disabled aria-describedby="r1">Hand over</button><div class="reason" id="r1">Offline — can't save</div></td></tr>
+            <tr><td class="strong">11:15</td><td>AG-10421 <span class="pill pill-warn">Phone order · Urgent</span></td><td>Tahmina Akter</td><td>Khejur gur 500 g ×3 · not yet assigned</td><td>Not yet assigned</td><td><span class="pill pill-warn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Waiting</span></td><td><button type="button" class="btn btn-sm" disabled aria-describedby="r2">Assign packer</button><div class="reason" id="r2">Offline — can't save</div></td></tr>
+            <tr><td class="strong">11:30</td><td>AG-10424</td><td>Arif Hossain</td><td>Turmeric powder 200 g · Tanvir Islam</td><td>Pickup B</td><td><span class="pill pill-neutral"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Ready</span></td><td><button type="button" class="btn btn-sm" disabled aria-describedby="r3">Hand over</button><div class="reason" id="r3">Offline — can't save</div></td></tr>
+            <tr><td class="strong">12:00</td><td>AG-10427</td><td>Farhana Yasmin</td><td>Imported Medjool dates (Saudi Arabia) · Rafiq Uddin</td><td>Pickup A</td><td><span class="pill pill-bad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg> Cancelled</span></td><td><span class="muted small">No action</span></td></tr>
           </tbody>
         </table>
         <p class="small muted" style="margin:10px 0 0">This is the list as it was at 10:42. Actions come back by themselves when the connection returns — nothing you do while offline is queued or sent later.</p>
       </div>
 
       <aside class="card">
-        <p class="eyebrow">Check in · 10:45</p>
-        <h2 class="h2" style="font-size:16px">Biscuit — Nafisa Rahman</h2>
+        <p class="eyebrow">Counter sale · 10:51</p>
+        <h2 class="h2" style="font-size:16px">Walk-in customer</h2>
         <div class="banner banner-warn" role="alert" style="margin-bottom:14px;font-size:12.5px">
           <svg class="ic18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2.3-1.7"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M10.7 5.1A15 15 0 0 1 22 8.8"/><path d="M12 20h.01"/></svg>
           <span>You're offline, so this couldn't be saved. Your entries are still here — try again when the connection returns.</span>
         </div>
-        <div class="field"><label for="w">Arrival weight (kg)</label><input id="w" value="5.1"></div>
-        <div class="field"><label for="n">Reason for visit, as told at the desk</label><textarea id="n" rows="3">Eating less since Saturday; one episode of vomiting yesterday evening.</textarea></div>
-        <div class="field"><label for="rm">Room</label><select id="rm"><option>Consult 2</option></select></div>
-        <button type="button" class="btn" disabled aria-describedby="r-ci" style="width:100%;justify-content:center">Check in</button>
+        <div class="field"><label for="w">Customer phone (optional)</label><input id="w" value="01818 552233"></div>
+        <div class="field"><label for="n">Items, as scanned at the counter</label><textarea id="n" rows="3">Chinigura aromatic rice 1 kg ×1; Sundarbans wild honey 500 g ×1</textarea></div>
+        <div class="field"><label for="rm">Payment</label><select id="rm"><option>Cash</option></select></div>
+        <button type="button" class="btn" disabled aria-describedby="r-ci" style="width:100%;justify-content:center">Complete sale</button>
         <div class="reason" id="r-ci"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2.3-1.7"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M10.7 5.1A15 15 0 0 1 22 8.8"/><path d="M12 20h.01"/></svg> Offline — can't save. What you typed stays here until you can.</div>
       </aside>
     </div>

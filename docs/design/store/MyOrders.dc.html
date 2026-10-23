@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — My orders</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FBF3E2; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.5">
+
+  <header style="background: #FFFAF0; border-bottom: 1.5px solid #E6D3AE">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+      <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #2A1F12">
+        <span style="width: 40px; height: 40px; border-radius: 50% 50% 50% 8px; background: #3F6A1E; display: grid; place-items: center; color: #F4F8E8">
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+        </span>
+        <span style="font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 700">Amar <span style="color: #557A1F">Gram</span></span>
+      </a>
+      <nav aria-label="Account" style="display: flex; flex-wrap: wrap; gap: 4px">
+        <a href="Account.dc.html" style="padding: 10px 14px; color: #2A1F12; text-decoration: none">Overview</a>
+        <a href="MyOrders.dc.html" aria-current="page" style="padding: 10px 14px; border-radius: 999px; background: #3F6A1E; color: #F4F8E8; text-decoration: none; font-weight: 600">My orders</a>
+        <a href="MySubscriptions.dc.html" style="padding: 10px 14px; color: #2A1F12; text-decoration: none">Subscriptions</a>
+        <a href="Profile.dc.html" style="padding: 10px 14px; color: #2A1F12; text-decoration: none">Profile</a>
+      </nav>
+    </div>
+  </header>
+
+  <div style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.03em">My orders</h1>
+      <div role="tablist" aria-label="Filter orders" style="display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: #FFFAF0; border: 1.5px solid #E6D3AE">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+          <button type="button" role="tab" aria-selected="{{f.on}}" onClick="{{f.pick}}" style="min-height: 40px; padding: 0 16px; border-radius: 999px; border: 0; background: {{f.bg}}; color: {{f.ink}}; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer">{{f.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+      <ul aria-label="Orders" style="list-style: none; margin: 0; padding: 0; flex: 1 1 320px; max-width: 400px; display: flex; flex-direction: column; gap: 10px">
+        <sc-for list="{{orders}}" as="o" hint-placeholder-count="4">
+          <li>
+            <button type="button" onClick="{{o.pick}}" aria-pressed="{{o.on}}" style="width: 100%; padding: 16px; border-radius: 20px; border: {{o.border}}; background: {{o.bg}}; font: inherit; color: #2A1F12; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px">
+              <span style="display: flex; justify-content: space-between; gap: 8px"><strong>Order {{o.no}}</strong><span style="padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; background: {{o.pillBg}}; color: {{o.pillInk}}">{{o.status}}</span></span>
+              <span style="font-size: 14px; color: #69553C">{{o.date}} · {{o.items}} items · {{o.total}}</span>
+            </button>
+          </li>
+        </sc-for>
+      </ul>
+
+      <section aria-label="Order detail" style="flex: 999 1 520px; min-width: 0; background: #FFFAF0; border: 1.5px solid #E6D3AE; border-radius: 24px; padding: 28px; display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: baseline">
+          <h2 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 30px; font-weight: 700">Order {{sel.no}}</h2>
+          <span style="color: #69553C">Placed {{sel.date}} · {{sel.pay}}</span>
+        </div>
+        <ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{steps}}" as="st" hint-placeholder-count="4">
+            <li style="display: flex; flex-direction: column; gap: 6px"><span aria-hidden="true" style="height: 8px; border-radius: 999px; background: {{st.bar}}"></span><strong style="font-size: 14px; color: {{st.ink}}">{{st.label}}</strong></li>
+          </sc-for>
+        </ol>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid #F0E3C8">
+              <span role="img" aria-label="{{l.name}} photo placeholder" style="width: 56px; height: 56px; border-radius: 14px; background: {{l.tint}}; flex: none"></span>
+              <span style="flex: 1; display: flex; flex-direction: column; line-height: 1.3"><strong style="font-size: 15px">{{l.name}}</strong><span style="font-size: 13px; color: #69553C">{{l.qty}} × {{l.size}} · batch {{l.batch}}</span></span>
+              <strong>{{l.total}}</strong>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 15px; color: #69553C"><span>Delivery to [House, road], Dhanmondi</span><strong style="font-family: Fraunces, Georgia, serif; font-size: 24px; color: #2A1F12">{{sel.total}}</strong></div>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <a href="BasketPhone.dc.html" style="min-height: 48px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 999px; background: #B4531A; color: #FFFAF0; text-decoration: none; font-weight: 600">Order again</a>
+          <a href="#" style="min-height: 48px; display: inline-flex; align-items: center; padding: 0 20px; border-radius: 999px; border: 1.5px solid #2A1F12; color: #2A1F12; text-decoration: none; font-weight: 600">Download invoice</a>
+          <sc-if value="{{canReturn}}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{openReturn}}" style="min-height: 48px; padding: 0 20px; border-radius: 999px; border: 1.5px dashed #B4531A; background: transparent; color: #B4531A; font: inherit; font-weight: 600; cursor: pointer">Return an item</button>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{returnOpen}}" hint-placeholder-val="{{ false }}">
+          <form style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 18px; background: #E6EFC9">
+            <h3 style="margin: 0; font-size: 18px">Return an item</h3>
+            <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+              <label style="display: flex; align-items: center; gap: 10px; min-height: 40px"><input type="checkbox" style="width: 20px; height: 20px; accent-color: #3F6A1E">{{l.name}}</label>
+            </sc-for>
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Reason
+              <select style="min-height: 48px; padding: 0 12px; border-radius: 12px; border: 1.5px solid #CBD8AE; background: #FFFFFF; font: inherit; font-weight: 400"><option>Damaged in delivery</option><option>Not what I ordered</option><option>Quality not as expected</option><option>Past its expiry date</option></select>
+            </label>
+            <button type="button" onClick="{{submitReturn}}" style="align-self: flex-start; min-height: 48px; padding: 0 22px; border-radius: 999px; border: 0; background: #3F6A1E; color: #F4F8E8; font: inherit; font-weight: 600; cursor: pointer">Send return request</button>
+          </form>
+        </sc-if>
+        <sc-if value="{{returnSent}}" hint-placeholder-val="{{ false }}">
+          <p role="status" style="margin: 0; padding: 14px 16px; border-radius: 14px; background: #E3EDC6; color: #2F5114">Return request sent. We'll call you to arrange a pick-up and refund to your chosen method.</p>
+        </sc-if>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { filter: 0, sel: 0, ret: 'none' }; }
+  renderVals() {
+    const s = this.state;
+    const all = [
+      { no: '[1042]', date: 'today', status: 'Out for delivery', stage: 2, items: 4, total: '৳1,330', pay: 'Cash on delivery', active: true },
+      { no: '[1031]', date: '12 Oct', status: 'Delivered', stage: 3, items: 3, total: '৳870', pay: 'Cash on delivery', active: false },
+      { no: '[1018]', date: '28 Sep', status: 'Delivered', stage: 3, items: 5, total: '৳2,140', pay: 'Bank transfer', active: false },
+      { no: '[1003]', date: '9 Sep', status: 'Returned', stage: 3, items: 1, total: '৳650', pay: 'Cash on delivery', active: false }
+    ];
+    const shown = all.map((o, i) => ({ o, i })).filter(({ o }) => s.filter === 0 || (s.filter === 1 ? o.active : !o.active));
+    const pill = (o) => o.active ? ['#FCEBC7', '#6E4700'] : o.status === 'Returned' ? ['#F0E3C8', '#53432D'] : ['#E3EDC6', '#2F5114'];
+    const sel = all[s.sel];
+    return {
+      filters: ['All', 'Active', 'Past'].map((label, i) => ({ label, on: s.filter === i, bg: s.filter === i ? '#3F6A1E' : 'transparent', ink: s.filter === i ? '#F4F8E8' : '#2A1F12', pick: () => this.setState({ filter: i }) })),
+      orders: shown.map(({ o, i }) => { const [pb, pi] = pill(o); return { ...o, on: s.sel === i, border: s.sel === i ? '2px solid #3F6A1E' : '1.5px solid #E6D3AE', bg: s.sel === i ? '#FFFAF0' : '#FBF3E2', pillBg: pb, pillInk: pi, pick: () => this.setState({ sel: i, ret: 'none' }) }; }),
+      sel,
+      steps: ['Placed', 'Packed', 'On the way', 'Delivered'].map((label, i) => ({ label, bar: i <= sel.stage ? '#3F6A1E' : '#E6D3AE', ink: i <= sel.stage ? '#2F5114' : '#69553C' })),
+      lines: [['Chinigura aromatic rice', '1 kg', 2, '৳360', '#E3D3A8', 'B-0921'], ['Sundarbans wild honey', '500 g', 1, '৳650', '#F0CF7A', 'B-0877'], ['Cold-pressed mustard oil', '1 litre', 1, '৳320', '#E8DD8C', 'B-0903']].map(([name, size, qty, total, tint, batch]) => ({ name, size, qty, total, tint, batch })),
+      canReturn: sel.status === 'Delivered' && s.ret === 'none',
+      openReturn: () => this.setState({ ret: 'open' }),
+      returnOpen: s.ret === 'open', returnSent: s.ret === 'sent',
+      submitReturn: () => this.setState({ ret: 'sent' })
+    };
+  }
+}
+</script>
+</body>
+</html>

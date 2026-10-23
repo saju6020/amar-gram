@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .dialog h2{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 10px}
 .dialog p{font-size:13.5px;line-height:1.5;margin:0 0 10px}
 .dactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
-.sk{background:linear-gradient(90deg,var(--surface-sunken),#ebe7dd);border-radius:4px;height:10px}
+.sk{background:linear-gradient(90deg,var(--surface-sunken),#EDE4D1);border-radius:4px;height:10px}
 .rcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px}
 .rcard h3{font-size:14px;margin:0 0 8px}
 .rcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;font-size:12.5px}
@@ -127,29 +127,29 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .recip label:last-child{border-bottom:none}
 .recip .roles{font-size:12px;color:var(--ink-muted)}
 .recip label.dis{background:var(--surface-sunken);color:var(--ink-muted)}
-.cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
-.cat-card b{font-size:14px;color:var(--accent-ink)}
-.cat-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
-.cat-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
+.rep-card b{font-size:14px;color:var(--accent-ink)}
+.rep-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
+.rep-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
 .runs{list-style:none;margin:8px 0 12px;padding:0}.runs li{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13.5px;font-variant-numeric:tabular-nums}.runs li:last-child{border-bottom:none}.inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.inline select{width:auto}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active outlet"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="padding:22px 32px">
     <a class="back" href="ScheduleList.dc.html">← Report schedules</a>
     <div class="titlerow">
       <div>
         <h1 class="h1">New report schedule</h1>
-        <p class="sub">Filled in from "Revenue by business line" — the report, branch and grouping you were looking at.</p>
+        <p class="sub">Filled in from "Revenue by channel" — the report, outlet and grouping you were looking at.</p>
       </div>
     </div>
 
     <div class="grid g21">
       <form class="card form" aria-label="Schedule">
-        <div class="row"><label class="lab" for="nm">Name</label><input type="text" id="nm" value="Monthly revenue by line"><div class="hint">Up to 100 characters. Used as the email subject.</div></div>
-        <div class="row"><label class="lab" for="rp">Report</label><select id="rp"><option selected>Revenue by business line</option><option>Revenue by service</option><option>Near expiry</option><option>Vaccination due list</option></select></div>
-        <div class="row"><label class="lab" for="br">Branch</label><select id="br"><option selected>All branches</option><option>Uttara (primary)</option><option>Banani</option></select><div class="hint">Send time and periods use Asia/Dhaka, the main branch's zone.</div></div>
+        <div class="row"><label class="lab" for="nm">Name</label><input type="text" id="nm" value="Monthly revenue by channel"><div class="hint">Up to 100 characters. Used as the email subject.</div></div>
+        <div class="row"><label class="lab" for="rp">Report</label><select id="rp"><option selected>Revenue by channel</option><option>Revenue by product group</option><option>Near expiry</option><option>Low stock and reorder</option></select></div>
+        <div class="row"><label class="lab" for="br">Outlet</label><select id="br"><option selected>All outlets</option><option>Uttara (primary)</option><option>Banani</option></select><div class="hint">Send time and periods use Asia/Dhaka, head office's zone.</div></div>
         <div class="row"><label class="lab" for="pd">Period each run covers</label><select id="pd"><option>Previous day</option><option>Previous week (Mon–Sun)</option><option selected>Previous month</option><option>Month to date</option><option>Last 30 days</option></select><div class="hint">Covers the previous calendar month.</div></div>
         <div class="row"><label class="lab" for="gb">Group by</label><select id="gb" style="max-width:220px"><option>Day</option><option>Week</option><option selected>Month</option></select></div>
         <div class="row"><span class="lab">Format</span><div class="radios"><label><input type="radio" name="fmt"> CSV</label><label><input type="radio" name="fmt" checked> PDF</label></div></div>
@@ -161,9 +161,9 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
         <div class="row"><label class="lab" for="tm">Send time (Asia/Dhaka)</label><input type="time" id="tm" value="07:00" step="300" style="max-width:160px"><div class="hint">In 5-minute steps.</div></div>
         <div class="row"><span class="lab" id="rl">Recipients <span class="muted" style="font-weight:400">· 2 of up to 20 chosen</span></span>
           <div class="recip" role="group" aria-labelledby="rl">
-            <label><input type="checkbox" checked><span>Rezwan Ahmed<span class="roles"> · Administrator · rezwan@purrcare.example</span></span></label>
-            <label><input type="checkbox" checked><span>Mahmud Hasan<span class="roles"> · Accountant · mahmud@purrcare.example</span></span></label>
-            <label><input type="checkbox"><span>Farzana Rahman<span class="roles"> · Accountant · farzana@purrcare.example</span></span></label>
+            <label><input type="checkbox" checked><span>Rezwan Ahmed<span class="roles"> · Administrator · rezwan@amargram.example</span></span></label>
+            <label><input type="checkbox" checked><span>Mahmud Hasan<span class="roles"> · Accountant · mahmud@amargram.example</span></span></label>
+            <label><input type="checkbox"><span>Farzana Rahman<span class="roles"> · Accountant · farzana@amargram.example</span></span></label>
             <label class="dis"><input type="checkbox" disabled aria-describedby="noe"><span>Sabina Yasmin<span class="roles"> · Accountant</span><span id="noe" style="display:block;font-size:12px;margin-top:2px"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg> Can't be chosen: no email address on her staff account.</span></span></label>
           </div>
           <div class="hint">Only staff who can open this report are listed. Each person receives only the columns every recipient on the schedule can see.</div>
@@ -194,7 +194,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 
         <div class="state">
           <div class="statelabel">Server refused a recipient on save</div>
-          <div class="errtext" role="alert" style="margin:0 0 6px"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Dr. Nusrat Jahan can't open this report, so they can't receive it.</div>
+          <div class="errtext" role="alert" style="margin:0 0 6px"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Nusrat Jahan (Packer) can't open this report, so they can't receive it.</div>
           <p class="small muted" style="margin:0;line-height:1.5">Shown on the Recipients field. Everything else you entered stays as it was. Leaving with unsaved changes asks first.</p>
         </div>
       </div>

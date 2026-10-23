@@ -8,10 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
-:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2b2823}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2A1F12}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -111,15 +111,15 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
 </style>
 </helmet>
 <div style="width:1280px;height:1040px;background:var(--surface-page);position:relative;overflow:hidden">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="max-width:1040px">
     <p class="crumbs"><a href="BackupStatus.dc.html">Backup &amp; restore</a> / Restore test of 10 May 2026</p>
     <div class="row" style="margin-bottom:14px"><h1 class="h1" style="margin:0">Restore test of 10 May 2026</h1><span class="pill pill-bad"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg> Failed</span></div>
 
     <section class="banner banner-bad" role="status" style="display:block;margin-bottom:18px">
-      <div style="display:flex;gap:10px;align-items:flex-start"><svg class="ic18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg><div><strong>Recorded. PurrCare worked out that this test failed</strong> — the restore took longer than the 4-hour target, and one check didn't pass.</div></div>
+      <div style="display:flex;gap:10px;align-items:flex-start"><svg class="ic18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg><div><strong>Recorded. Amar Gram worked out that this test failed</strong> — the restore took longer than the 4-hour target, and one check didn't pass.</div></div>
       <div class="res">
-        <div><span class="eyebrow">Outcome</span><b>Failed</b><span class="small">Worked out by PurrCare</span></div>
+        <div><span class="eyebrow">Outcome</span><b>Failed</b><span class="small">Worked out by Amar Gram</span></div>
         <div><span class="eyebrow">Data loss (RPO)</span><b>9 min</b><span class="small">Target 15 min · <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg> within</span></div>
         <div><span class="eyebrow">Time to restore (RTO)</span><b>5 h 10 min</b><span class="small">Target 4 h · <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg> over by 1 h 10 min</span></div>
       </div>

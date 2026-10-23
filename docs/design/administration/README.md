@@ -1,14 +1,16 @@
 # Administration — UX
 
-The clickable design for backlog §14 *Administration and Configuration*, built against
-[`HO-ADM-002`](../../handover/HO-ADM-002.md), the frontend handover. Third area, after
-[Cat Profiles](../cat-profile/README.md) and [Accounts & Identity](../accounts-identity/README.md).
+The clickable design for Amar Gram *Administration and Configuration*, built against
+[`HO-ADM-002`](../../handover/HO-ADM-002.md), the frontend handover. Companion to
+[Accounts & Identity](../accounts-identity/README.md). Branches are the shop's outlets and
+warehouses; rosters and leave are for shop staff (Administrator, Manager, Cashier, Packer, Stock
+keeper, Rider).
 
 ## Where to review it
 
 **Clickable canvas:** <https://claude.ai/artifact/7NydGQg2myb7CroX3ykLdX>
 
-That is the version to look at — twenty-two artboards, six rows, matching HO-ADM-002 §3.2's screen
+That is the version to look at — nineteen artboards, six rows, matching HO-ADM-002 §3.2's screen
 table. It is private to the owner; others need it shared from the page's Share menu.
 
 If the link is ever lost: `/artifacts` in the Claude Code terminal lists artifacts you own (`o`
@@ -23,24 +25,21 @@ on the canvas.
 
 ## The screens
 
-Six rows, twenty-two artboards — the largest of the three areas designed so far, because this
-handover's admin surface (branches, rosters, pricing, content, audit) is genuinely the biggest.
+Six rows, nineteen artboards. The old service catalogue, service editor and branch
+rooms screens were removed in the Amar Gram pivot.
 
 | Row | File | Screen | Shows |
 |---|---|---|---|
-| Branches — US-ADM-01 | `BranchList.dc.html` | Branch list | The admin section shell (sidebar nav, active-branch picker) established here and reused everywhere below |
-| | `BranchDetails.dc.html` | Branch → Details | The `Tabs` component in its route-based form: Details · Opening hours · Closures · Rooms |
+| Branches — US-ADM-01 | `BranchList.dc.html` | Branch list | Outlets and warehouses with their kind; the admin section shell (sidebar nav, active-branch picker) established here and reused everywhere below |
+| | `BranchDetails.dc.html` | Branch → Details | The `Tabs` component in its route-based form: Details · Opening hours · Closures |
 | | `WeeklyHoursEditor.dc.html` | Branch → Opening hours | ⭐ seven day rows, "Closed" written out for a day with none, "Copy Monday to weekdays" |
 | | `Closures.dc.html` | Branch → Closures | Upcoming (cancellable) vs past (read-only), the add form beside it |
-| | `Rooms.dc.html` | Branch → Rooms | Name, kind, active — deliberately plain, nothing more is specified |
 | | `BranchPickerAndAssignment.dc.html` | Two supporting pieces | The header's active-branch picker (hidden with one branch) and the staff-account Branches panel with its primary radio |
-| Services, prices & tax — US-ADM-04 | `ServiceList.dc.html` | Service catalogue | The "Not priced" badge — such a service cannot be booked |
-| | `ServiceForm.dc.html` | Service editor | Qualified roles (≥1 required), required room kind, tax class |
-| | `EffectiveDatedHistory.dc.html` | Price history | ⭐ Scheduled / Current / Past, no edit control anywhere, the schedule-change dialog with its exact confirmation sentence |
+| Prices & tax — US-ADM-04 | `EffectiveDatedHistory.dc.html` | Price history | ⭐ a product's price (Chinigura rice 1 kg): Scheduled / Current / Past, no edit control anywhere, the schedule-change dialog with its exact confirmation sentence |
 | | `TaxClasses.dc.html` | Tax classes | The same `EffectiveDatedHistory` pattern applied to a rate instead of a price |
 | Rosters & leave — US-ADM-03 | `RosterWeekView.dc.html` | Roster week view | ⭐ a real `<table>`, shifts/leave/exceptions/"Outside opening hours" all in text, **and** the below-768px day list beside it — never a scrolling grid |
 | | `RosterPatternEditor.dc.html` | Roster pattern | Current pattern vs a scheduled next one with its effective date |
-| | `MyLeave.dc.html` | My leave | Every staff member's own request/list/cancel |
+| | `MyLeave.dc.html` | My leave | Every shop staff member's own request/list/cancel |
 | | `LeaveApprovals.dc.html` | Leave approvals | Admin-only; the sole-administrator self-approval case shown as a note, not a missing button |
 | Settings — US-ADM-05 | `SettingsForm.dc.html` | Settings | Global value beside a branch override, "Use global value" to clear one, a non-overridable setting read-only with a reason |
 | Content, policies & acceptance — US-ADM-07 | `ContentList.dc.html` | Content list | Filterable by kind/status |
@@ -53,13 +52,13 @@ handover's admin surface (branches, rosters, pricing, content, audit) is genuine
 
 ## The design system
 
-Built on the [PurrCare design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN), extended
+Built on the [Amar Gram design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN), extended
 in this session for exactly what this area needed and nothing more:
 
-- **`Table`** — every list screen here uses it: branches, services, tax classes, leave approvals,
+- **`Table`** — every list screen here uses it: branches, tax classes, leave approvals,
   the audit log.
 - **`Tabs`** — the branch detail tabs, matching the account tabs Accounts & Identity established.
-- **`Toggle`** — online-bookable, settings switches, maintenance mode.
+- **`Toggle`** — settings switches, maintenance mode.
 - **`Dialog`** — the schedule-price dialog, publish-new-version, the maintenance confirmation, the
   branch-removal confirmation. Its README also records the system's one deliberate exception to
   "borders, not shadows": a new `shadow-modal` token, used nowhere else.

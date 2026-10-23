@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>Imports &amp; Inventory — screens</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="./index.css">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="../index.html">&larr; All areas</a>
-  <div class="eyebrow">PurrCare · backlog &sect;9</div>
+  <div class="eyebrow">Amar Gram</div>
   <h1>Imports &amp; Inventory</h1>
   <p class="lede">Nine rows, thirty-three artboards &mdash; the largest area so far, because HO-IMP-002 covers sixteen stories across two staff sections, Procurement and Inventory. No live interaction; every state is its own artboard or a labelled side panel.</p>
 
@@ -37,11 +37,11 @@
 
   <div class="row-group">
     <h2>Goods receipt — US-IMP-04, US-IMP-16 AC1</h2>
-    <a class="screen-row" href="GoodsReceipt.dc.html"><span class="screen-name">⭐ Receive goods<span class="screen-file">GoodsReceipt.dc.html</span></span><span class="screen-desc">Scan field announcing what it added, lines pre-filled from the order, expiry marked required for food and medicine, rejection reason shown only when something is rejected, "Refrigerated 2–8 °C" beside the line, autosave status</span></a>
+    <a class="screen-row" href="GoodsReceipt.dc.html"><span class="screen-name">⭐ Receive goods<span class="screen-file">GoodsReceipt.dc.html</span></span><span class="screen-desc">Scan field announcing what it added, lines pre-filled from the order, expiry marked required for food, rejection reason shown only when something is rejected, "Refrigerated 2–8 °C" beside the line, autosave status</span></a>
     <a class="screen-row" href="GoodsReceiptErrors.dc.html"><span class="screen-name">Receive goods — errors<span class="screen-file">GoodsReceiptErrors.dc.html</span></span><span class="screen-desc">Four problems, each on its own field: more than outstanding, already expired, missing rejection reason, missing expiry date on food</span></a>
     <a class="screen-row" href="GoodsReceiptDialogs.dc.html"><span class="screen-name">Receive goods — dialogs<span class="screen-file">GoodsReceiptDialogs.dc.html</span></span><span class="screen-desc">Restore the draft, post (lines, quantities per unit, locations, permanence), discard the draft</span></a>
     <a class="screen-row" href="ReceiptDetail.dc.html"><span class="screen-name">Receipt detail<span class="screen-file">ReceiptDetail.dc.html</span></span><span class="screen-desc">Read-only: lines, the batches it created, the ledger entries it wrote, and why rejected stock has none</span></a>
-    <a class="screen-row" href="GoodsReceiptMobile360.dc.html"><span class="screen-name">Receive goods at 360px<span class="screen-file">GoodsReceiptMobile360.dc.html</span></span><span class="screen-desc">The line editor in one column at the pallet — scan field on top, fractional ml quantities, nothing sideways</span></a>
+    <a class="screen-row" href="GoodsReceiptMobile360.dc.html"><span class="screen-name">Receive goods at 360px<span class="screen-file">GoodsReceiptMobile360.dc.html</span></span><span class="screen-desc">The line editor in one column at the pallet — scan field on top, fractional pack quantities, nothing sideways</span></a>
   </div>
 
   <div class="row-group">
@@ -72,8 +72,8 @@
     <h2>Recall console — US-IMP-11</h2>
     <a class="screen-row" href="RecallList.dc.html"><span class="screen-name">Recalls<span class="screen-file">RecallList.dc.html</span></span><span class="screen-desc">Active, closed and withdrawn recalls with notified count and stock still held</span></a>
     <a class="screen-row" href="DeclareRecall.dc.html"><span class="screen-name">⭐ Declare a recall<span class="screen-file">DeclareRecall.dc.html</span></span><span class="screen-desc">Side by side: the lot typed wrongly (button disabled, mismatch error) and typed correctly, with the "unusable immediately, everywhere" sentence</span></a>
-    <a class="screen-row" href="RecallDetail.dc.html"><span class="screen-name">⭐ Recall console<span class="screen-file">RecallDetail.dc.html</span></span><span class="screen-desc">Three numbered steps: stock held, the trace (dispensed, bought, boarding, merged customer shown as the survivor) with CSV, and notify with the count</span></a>
-    <a class="screen-row" href="RecallDialogs.dc.html"><span class="screen-name">Notify, withdraw, close<span class="screen-file">RecallDialogs.dc.html</span></span><span class="screen-desc">Notify confirm with the count, first-run and repeat-run results with the log link, withdraw back to quarantine, close refused while 1,120 ml is held</span></a>
+    <a class="screen-row" href="RecallDetail.dc.html"><span class="screen-name">⭐ Recall console<span class="screen-file">RecallDetail.dc.html</span></span><span class="screen-desc">Three numbered steps: stock held, the trace to customers' orders (online, counter, subscription box, merged customer shown as the survivor) with CSV, and notify with the count</span></a>
+    <a class="screen-row" href="RecallDialogs.dc.html"><span class="screen-name">Notify, withdraw, close<span class="screen-file">RecallDialogs.dc.html</span></span><span class="screen-desc">Notify confirm with the count, first-run and repeat-run results with the log link, withdraw back to quarantine, close refused while 1,120 packs are held</span></a>
   </div>
 
   <div class="row-group">

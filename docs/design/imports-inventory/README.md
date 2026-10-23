@@ -1,8 +1,8 @@
 # Imports & Inventory — UX
 
-The clickable design for backlog §9 *Imports, Batches and Inventory*, built against
-[`HO-IMP-002`](../../handover/HO-IMP-002.md), the frontend handover. Fifth area, after
-[Cat Profiles](../cat-profile/README.md), [Accounts & Identity](../accounts-identity/README.md),
+The clickable design for the Amar Gram area *Imports, Batches and Inventory*, built against
+[`HO-IMP-002`](../../handover/HO-IMP-002.md), the frontend handover. Built after
+[Accounts & Identity](../accounts-identity/README.md),
 [Administration](../administration/README.md) and [Notifications](../notifications/README.md).
 
 ## Where to review it
@@ -38,7 +38,7 @@ physical tasks (receiving a pallet, counting a location) share one slice.
 | | `ConsignmentCosts.dc.html` | Costs, rates & landed cost | ⭐ the `409` conflict with edits kept, the stale banner, landed unit cost per batch to 4 dp, the allocate confirmation naming 3 batches |
 | | `InspectionPack.dc.html` | Inspection pack | One printable page with everything US-IMP-03 AC2 asks for |
 | Reorder — US-IMP-12 | `ReorderSuggestions.dc.html` | Reorder suggestions | ⭐ the formula in one sentence with a worked example; two suppliers selected make two draft POs |
-| Goods receipt — US-IMP-04, 16 AC1 | `GoodsReceipt.dc.html` | Receive goods | ⭐ the `ScanField` announcing what it added, expiry required for food and medicine, rejection reason only when rejected > 0, the storage requirement beside the line, autosave status |
+| Goods receipt — US-IMP-04, 16 AC1 | `GoodsReceipt.dc.html` | Receive goods | ⭐ the `ScanField` announcing what it added, expiry required for food, rejection reason only when rejected > 0, the storage requirement beside the line, autosave status |
 | | `GoodsReceiptErrors.dc.html` | Receive goods — errors | Four violations, each on its own field, with a linked summary |
 | | `GoodsReceiptDialogs.dc.html` | Receive goods — dialogs | Restore the draft, post (lines, quantities per unit, locations, permanence), discard |
 | | `ReceiptDetail.dc.html` | Receipt detail | Read-only lines, batches created, ledger entries written |
@@ -67,12 +67,12 @@ Inventory one carries the alert badge as text and a number ("Alerts 7 open").
 
 ## The design system
 
-Built on the [PurrCare design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN), using its
+Built on the [Amar Gram design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN), using its
 existing pieces: `Table`, `Tabs` (the section tab rows and the consignment tabs), `Dialog`, `Badge`,
 `Banner` and `Field`. This area needed a few patterns that are new, but each is made from those
 pieces, so none of them is a new component:
 
-- **Quantity with unit**: a `Field` with the stock unit as a fixed suffix ("bags", "ml", "doses").
+- **Quantity with unit**: a `Field` with the stock unit as a fixed suffix ("bags", "packs", "jars").
   This is how `QuantityInput`/`FieldWithUnit` looks. The same suffix is used for days, °C and hours.
 - **Storage chip**: a small accent-soft label ("Refrigerated 2–8 °C"). It is always text.
 - **Scan field**: a `Field` in a bordered band with a live-region line under it that says what the
@@ -88,12 +88,12 @@ live.
 
 1. **Every quantity carries its unit.** No bare number appears next to stock anywhere, including
    totals, variances, FEFO plans, alerts and confirmations (UI-8). Where one confirmation covers
-   several units, each is listed ("18 bags and 96 pouches … 500 ml and 40 doses"). Quantities in
+   several units, each is listed ("18 bags and 96 pouches … 500 packs and 40 jars"). Quantities in
    different units are never added together.
 2. **The server decides; the screen reports.** FEFO order, expiry, sellable figures, allowed batch
    actions, whether approval is needed, variances, suggested quantities and every total are labelled
    as the server's. No screen shows client arithmetic (ADR-FE-040, 041).
-3. **Unusable stock says why, in words.** "Expired — cannot be sold, dispensed or fed",
+3. **Unusable stock says why, in words.** "Expired — cannot be sold or packed",
    "Quarantined — damaged packaging", "Recalled — held", "In quarantine location". Colour is only
    added on top (ADR-FE-047).
 4. **Confirmations state the consequence.** Posting a receipt, closing short, allocating landed cost,
@@ -121,7 +121,7 @@ live.
   Rejected stock stays outstanding until it is replaced or the order is closed short.
 - **The alert badge** is drawn on the Inventory tab row inside the page, because the shared sidebar
   in `support.js` has no badge slot.
-- **Location permitted-movement wording** (for example "takes medicine only") is illustrative.
+- **Location permitted-movement wording** (for example "takes chilled stock only") is illustrative.
   HO-IMP-001 §8.3 holds the real rules, and the UI only shows the reason the server gives.
 
 ## Known gaps, deliberately visible

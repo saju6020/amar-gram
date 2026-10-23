@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — Phone shop home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FBF3E2; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="background: #3F6A1E; color: #F4F8E8; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <span style="font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 700">Amar <span style="color: #F7D87A">Gram</span></span>
+      <a href="BasketPhone.dc.html" aria-label="Basket, {{count}} items" style="position: relative; width: 44px; height: 44px; border-radius: 50%; background: #55823A; display: grid; place-items: center; color: #F4F8E8">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>
+        <span aria-hidden="true" style="position: absolute; top: -2px; right: -2px; min-width: 20px; height: 20px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center; padding: 0 5px">{{count}}</span>
+      </a>
+    </div>
+    <span style="font-size: 13px; color: #DCE8C3">Delivering to <strong style="color: #F4F8E8">Dhanmondi, Dhaka</strong> · change</span>
+    <form style="display: flex; align-items: center; gap: 8px; background: #FFFAF0; border-radius: 999px; padding: 0 14px; min-height: 46px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#69553C" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <label for="ph-q" class="sr">Search</label>
+      <input id="ph-q" type="search" placeholder="Search rice, honey, oil…" style="flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; color: #2A1F12; min-height: 44px">
+    </form>
+  </header>
+
+  <div style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px">
+    <a href="Catalogue.dc.html" style="display: flex; justify-content: space-between; gap: 12px; padding: 18px; border-radius: 22px; background: #E6EFC9; text-decoration: none; color: #2A1F12">
+      <span style="display: flex; flex-direction: column; gap: 4px">
+        <strong style="font-family: Fraunces, Georgia, serif; font-size: 22px; line-height: 1.15">Mango season<br>is here</strong>
+        <span style="font-size: 13px; color: #2F5114">Himsagar from Rajshahi · order now</span>
+      </span>
+      <span role="img" aria-label="Mango photo placeholder" style="width: 96px; height: 96px; border-radius: 50%; background: #EFCB86; flex: none"></span>
+    </a>
+
+    <nav aria-label="Categories" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px">
+      <sc-for list="{{cats}}" as="ct" hint-placeholder-count="5">
+        <a href="Catalogue.dc.html" style="flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; text-decoration: none; color: #2A1F12; font-size: 12px; font-weight: 600; text-align: center">
+          <span style="width: 56px; height: 56px; border-radius: 50%; background: {{ct.tint}}; display: grid; place-items: center; font-family: Fraunces, Georgia, serif; font-size: 20px">{{ct.initial}}</span>{{ct.name}}
+        </a>
+      </sc-for>
+    </nav>
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 22px; font-weight: 700">Fresh from the haat</h1>
+      <a href="Catalogue.dc.html" style="font-size: 14px; font-weight: 600; color: #B4531A">See all</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <sc-for list="{{products}}" as="p" hint-placeholder-count="4">
+        <article style="background: #FFFAF0; border-radius: 18px; overflow: hidden; display: flex; flex-direction: column">
+          <a href="Product.dc.html" role="img" aria-label="{{p.name}} photo placeholder" style="aspect-ratio: 1 / 1; background: {{p.tint}}"></a>
+          <div style="padding: 10px; display: flex; flex-direction: column; gap: 2px; flex: 1">
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #557A1F">{{p.district}}</span>
+            <strong style="font-size: 14px; line-height: 1.25">{{p.name}}</strong>
+            <span style="font-size: 12px; color: #69553C">{{p.size}}</span>
+            <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between">
+              <strong style="font-family: Fraunces, Georgia, serif; font-size: 17px">{{p.price}}</strong>
+              <sc-if value="{{p.none}}" hint-placeholder-val="{{ true }}">
+                <button type="button" onClick="{{p.inc}}" aria-label="Add {{p.name}}" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: #EDA73A; color: #2A1F12; font: inherit; font-size: 22px; font-weight: 600; cursor: pointer">+</button>
+              </sc-if>
+              <sc-if value="{{p.some}}" hint-placeholder-val="{{ false }}">
+                <div role="group" aria-label="Quantity of {{p.name}}" style="display: flex; align-items: center; background: #3F6A1E; border-radius: 999px; color: #F4F8E8">
+                  <button type="button" onClick="{{p.dec}}" aria-label="One less" style="width: 34px; height: 44px; border: 0; background: transparent; color: #F4F8E8; font: inherit; font-size: 18px; cursor: pointer">−</button>
+                  <span style="min-width: 14px; text-align: center; font-weight: 600">{{p.qty}}</span>
+                  <button type="button" onClick="{{p.inc}}" aria-label="One more" style="width: 34px; height: 44px; border: 0; background: transparent; color: #F4F8E8; font: inherit; font-size: 18px; cursor: pointer">+</button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </div>
+
+  <nav aria-label="Main" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #FFFAF0; border-top: 1.5px solid #E6D3AE; padding: 6px 0 18px">
+    <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="4">
+      <a href="{{tb.href}}" aria-current="{{tb.current}}" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; font-size: 12px; font-weight: 600; color: {{tb.ink}}">
+        <span aria-hidden="true" style="width: 28px; height: 4px; border-radius: 999px; background: {{tb.bar}}"></span>{{tb.label}}
+      </a>
+    </sc-for>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { qty: { 1: 1 } }; }
+  renderVals() {
+    const s = this.state;
+    const fmt = (n) => '৳' + n.toLocaleString('en-IN');
+    const items = [['Chinigura rice', 'Dinajpur', '1 kg', 180, '#E3D3A8'], ['Wild honey', 'Satkhira', '500 g', 650, '#F0CF7A'], ['Mustard oil', 'Sirajganj', '1 litre', 320, '#E8DD8C'], ['Khejur gur', 'Jashore', '500 g', 280, '#CFA98A']];
+    const change = (i, d) => () => { const q = { ...s.qty }; q[i] = Math.max(0, Math.min(20, (q[i] || 0) + d)); this.setState({ qty: q }); };
+    const count = Object.values(s.qty).reduce((a, b) => a + b, 0);
+    return {
+      count,
+      cats: [['Rice', '#E3D3A8'], ['Honey', '#F0CF7A'], ['Spices', '#E9B08A'], ['Oils', '#E8DD8C'], ['Fresh', '#CBD8AE'], ['Pulses', '#D9C9A0']].map(([name, tint]) => ({ name, tint, initial: name.charAt(0) })),
+      products: items.map(([name, district, size, price, tint], i) => { const q = s.qty[i] || 0; return { name, district, size, tint, price: fmt(price), qty: q, none: q === 0, some: q > 0, inc: change(i, 1), dec: change(i, -1) }; }),
+      tabs: [['Home', 'HomePhone.dc.html', true], ['Shop', 'Catalogue.dc.html', false], ['Basket', 'BasketPhone.dc.html', false], ['Account', 'Account.dc.html', false]].map(([label, href, on]) => ({ label, href, current: on ? 'page' : 'false', ink: on ? '#2F5114' : '#69553C', bar: on ? '#3F6A1E' : 'transparent' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

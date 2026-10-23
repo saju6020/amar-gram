@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .dialog h2{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 10px}
 .dialog p{font-size:13.5px;line-height:1.5;margin:0 0 10px}
 .dactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
-.sk{background:linear-gradient(90deg,var(--surface-sunken),#ebe7dd);border-radius:4px;height:10px}
+.sk{background:linear-gradient(90deg,var(--surface-sunken),#EDE4D1);border-radius:4px;height:10px}
 .rcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px}
 .rcard h3{font-size:14px;margin:0 0 8px}
 .rcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;font-size:12.5px}
@@ -127,20 +127,20 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .recip label:last-child{border-bottom:none}
 .recip .roles{font-size:12px;color:var(--ink-muted)}
 .recip label.dis{background:var(--surface-sunken);color:var(--ink-muted)}
-.cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
-.cat-card b{font-size:14px;color:var(--accent-ink)}
-.cat-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
-.cat-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
+.rep-card b{font-size:14px;color:var(--accent-ink)}
+.rep-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
+.rep-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
 
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active outlet"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Cashier</div></div>
   <div class="main" style="padding:26px 32px">
     <div class="titlerow">
       <div>
         <h1 class="h1">Today — Wed 23 Sep 2026 · Uttara</h1>
-        <p class="sub">Figures for the active branch, in Asia/Dhaka. Switch branch from the picker at the top.</p>
+        <p class="sub">Figures for the active outlet, in Asia/Dhaka. Switch outlet from the picker at the top.</p>
       </div>
       <div class="acts">
         <span class="updated"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg> Updated 09:42 (Asia/Dhaka) · refreshes every 60 s</span>
@@ -150,65 +150,65 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 
     <div class="grid g3">
       <section class="tile" aria-labelledby="t1">
-        <h2 id="t1">Appointments today</h2>
+        <h2 id="t1">Orders today</h2>
         <dl class="figs">
-          <div class="fig"><dt>Booked</dt><dd>38</dd></div>
-          <div class="fig"><dt>Checked in</dt><dd>21</dd></div>
-          <div class="fig"><dt>Completed</dt><dd>14</dd></div>
-          <div class="fig"><dt>No-show</dt><dd>2</dd></div>
+          <div class="fig"><dt>Placed</dt><dd>38</dd></div>
+          <div class="fig"><dt>Packed</dt><dd>21</dd></div>
+          <div class="fig"><dt>Delivered or collected</dt><dd>14</dd></div>
+          <div class="fig"><dt>Cancelled</dt><dd>2</dd></div>
         </dl>
         <a class="drill" href="ReportViewer.dc.html">View report →</a>
       </section>
 
       <section class="tile" aria-labelledby="t2">
-        <h2 id="t2">Queue now</h2>
+        <h2 id="t2">Packing queue now</h2>
         <dl class="figs">
-          <div class="fig"><dt>Waiting now</dt><dd>5 <span class="unit">cats</span></dd></div>
-          <div class="fig"><dt>Emergencies waiting</dt><dd>1 <span class="flag flag-danger"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Emergency</span></dd></div>
+          <div class="fig"><dt>Waiting to pack</dt><dd>5 <span class="unit">orders</span></dd></div>
+          <div class="fig"><dt>Same-day orders waiting</dt><dd>1 <span class="flag flag-danger"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Same day</span></dd></div>
           <div class="fig"><dt>Longest wait</dt><dd>34 <span class="unit">min</span></dd></div>
         </dl>
-        <p class="note">Waiting now is counted from check-in. The live, ordered queue is on the front desk screen.</p>
+        <p class="note">Waiting is counted from payment. The live, ordered packing list is on the packing screen.</p>
         <a class="drill" href="ReportViewer.dc.html">View report →</a>
       </section>
 
       <section class="tile" aria-labelledby="t3">
-        <h2 id="t3">Vaccinations due</h2>
+        <h2 id="t3">Low stock</h2>
         <dl class="figs">
-          <div class="fig"><dt>Due in the next 7 days</dt><dd>17 <span class="unit">cats</span></dd></div>
-          <div class="fig"><dt>Overdue</dt><dd>6 <span class="unit">cats</span></dd></div>
+          <div class="fig"><dt>Below reorder level</dt><dd>17 <span class="unit">products</span></dd></div>
+          <div class="fig"><dt>Out of stock</dt><dd>6 <span class="unit">products</span></dd></div>
         </dl>
-        <p class="note">Cats counted at the branch of their last visit.</p>
+        <p class="note">Counted at the active outlet only.</p>
         <a class="drill" href="ReportFilterBar.dc.html">View report →</a>
       </section>
 
       <section class="tile" aria-labelledby="t4">
-        <h2 id="t4">Surgery today</h2>
+        <h2 id="t4">Counter sales today</h2>
         <dl class="figs">
-          <div class="fig"><dt>Scheduled</dt><dd>3</dd></div>
-          <div class="fig"><dt>In theatre</dt><dd>1</dd></div>
-          <div class="fig"><dt>In recovery</dt><dd>1</dd></div>
+          <div class="fig"><dt>Sales</dt><dd>46</dd></div>
+          <div class="fig"><dt>Returns</dt><dd>1</dd></div>
+          <div class="fig"><dt>Open tills</dt><dd>2</dd></div>
         </dl>
       </section>
 
       <section class="tile" aria-labelledby="t5">
-        <h2 id="t5">Boarding occupancy</h2>
+        <h2 id="t5">Deliveries out</h2>
         <dl class="figs">
-          <div class="fig"><dt>Occupied units</dt><dd>14 <span class="unit">of 20</span></dd></div>
-          <div class="fig"><dt>Available units</dt><dd>6</dd></div>
-          <div class="fig"><dt>Cats in</dt><dd>17 <span class="unit">cats</span></dd></div>
+          <div class="fig"><dt>With riders</dt><dd>14 <span class="unit">of 20</span></dd></div>
+          <div class="fig"><dt>Waiting for a rider</dt><dd>6</dd></div>
+          <div class="fig"><dt>Failed attempts</dt><dd>1</dd></div>
         </dl>
       </section>
 
       <section class="tile" aria-labelledby="t6">
-        <h2 id="t6">Boarding arrivals &amp; departures</h2>
+        <h2 id="t6">Pickups &amp; returns</h2>
         <dl class="figs">
-          <div class="fig"><dt>Arrivals</dt><dd>3</dd></div>
-          <div class="fig"><dt>Departures</dt><dd>2</dd></div>
+          <div class="fig"><dt>Pickups ready</dt><dd>3</dd></div>
+          <div class="fig"><dt>Returns to check</dt><dd>2</dd></div>
         </dl>
       </section>
     </div>
 
-    <p class="annot"><b>Six tiles, in the order the server sent them</b> — none added by the page. Surgery and the two boarding tiles have no <b>View report →</b> because reception can't open those reports, so the server sent no drill-down (and links to screens in areas not built yet are omitted, OQ-4). Nothing marks what is missing. The page refreshes itself; while this browser tab is hidden it stops refreshing.</p>
+    <p class="annot"><b>Six tiles, in the order the server sent them</b> — none added by the page. Counter sales and the two delivery tiles have no <b>View report →</b> because store staff can't open those reports, so the server sent no drill-down (and links to screens in areas not built yet are omitted, OQ-4). Nothing marks what is missing. The page refreshes itself; while this browser tab is hidden it stops refreshing.</p>
   </div>
 </div>
 </x-dc>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — Customers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>
+</helmet>
+<div style="min-height: 100vh; background: #F7F4EC; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45; display: flex; flex-wrap: wrap; align-items: stretch">
+  <nav aria-label="Staff" style="width: 260px; min-height: 100vh; align-self: stretch; flex: none; box-sizing: border-box; background: #2F5114; color: #F4F8E8; font-family: 'Work Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; display: flex; flex-direction: column; gap: 14px; padding: 20px 14px">
+  <a href="Dashboard.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #F4F8E8; padding: 0 6px">
+    <span style="width: 38px; height: 38px; border-radius: 50% 50% 50% 7px; background: #F4F8E8; display: grid; place-items: center; color: #2F5114">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+    </span>
+    <span style="display: flex; flex-direction: column; line-height: 1.1"><span style="font-family: Fraunces, Georgia, serif; font-size: 20px; font-weight: 700">Amar <span style="color: #F7D87A">Gram</span></span><span style="font-size: 12px; color: #C9DBAE; letter-spacing: 0.1em; text-transform: uppercase">Back office</span></span>
+  </a>
+  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #C9DBAE; padding: 0 6px">Outlet
+    <select style="min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid #4F7A2C; background: #3F6A1E; color: #F4F8E8; font: inherit; font-size: 14px"><option>Dhanmondi outlet</option><option>Chattogram warehouse</option><option>All outlets</option></select>
+  </label>
+  <div style="display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto">
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Overview</span>
+<a href="Dashboard.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Dashboard</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Sales</span>
+<a href="Orders.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Orders</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">12</span></a>
+<a href="CounterSale.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Counter sale</span></a>
+<a href="Customers.dc.html" aria-current="page" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: #F4F8E8; color: #2F5114; font-weight: 600"><span>Customers</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Catalogue &amp; stock</span>
+<a href="Products.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Products</span></a>
+<a href="Inventory.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Inventory &amp; batches</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">3</span></a>
+<a href="Receiving.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Goods receiving</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Money</span>
+<a href="Billing.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Billing &amp; cash-up</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">2</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Insight &amp; admin</span>
+<a href="Reports.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Reports</span></a>
+<a href="Administration.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Administration</span></a>
+</div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 6px 0; border-top: 1px solid #4F7A2C">
+    <span style="width: 36px; height: 36px; border-radius: 50%; background: #EDA73A; color: #2A1F12; display: grid; place-items: center; font-weight: 700">FA</span>
+    <span style="flex: 1; display: flex; flex-direction: column; line-height: 1.25"><strong style="font-size: 14px">[Staff name]</strong><span style="font-size: 12px; color: #C9DBAE">Administrator</span></span>
+    <a href="StaffSignIn.dc.html" style="font-size: 13px; color: #F7D87A">Sign out</a>
+  </div>
+</nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 24px 28px 48px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 32px; font-weight: 700">Customers</h1>
+      <a href="#" style="min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px; border-radius: 10px; background: #B4531A; color: #FFFAF0; text-decoration: none; font-weight: 600">+ Add walk-in customer</a>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <section aria-label="Customer list" style="flex: 2 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+        <form style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 10px; padding: 0 12px; min-height: 44px">
+          <label for="cu-q" class="sr">Search customers</label>
+          <input id="cu-q" type="search" placeholder="Name, mobile or email" style="flex: 1; min-width: 0; border: 0; font: inherit; min-height: 40px">
+        </form>
+        <div role="tablist" aria-label="Filter" style="display: flex; gap: 4px; flex-wrap: wrap">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{f.on}}" onClick="{{f.pick}}" style="min-height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid #E5DCC8; background: {{f.bg}}; color: {{f.ink}}; font: inherit; font-weight: 600; cursor: pointer">{{f.label}}</button>
+          </sc-for>
+        </div>
+        <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+          <sc-for list="{{list}}" as="c" hint-placeholder-count="5">
+            <li><button type="button" onClick="{{c.pick}}" aria-pressed="{{c.on}}" style="width: 100%; min-height: 64px; padding: 10px 14px; border-radius: 12px; border: {{c.border}}; background: {{c.bg}}; font: inherit; color: #2A1F12; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 12px">
+              <span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 50%; background: #E3EDC6; color: #2F5114; display: grid; place-items: center; font-weight: 700">{{c.initial}}</span>
+              <span style="flex: 1; display: flex; flex-direction: column; line-height: 1.3"><strong>{{c.name}}</strong><span style="font-size: 13px; color: #69553C">{{c.phone}} · {{c.orders}} orders</span></span>
+              <sc-if value="{{c.hasTag}}" hint-placeholder-val="{{ false }}"><span style="padding: 2px 8px; border-radius: 999px; background: {{c.tagBg}}; color: {{c.tagInk}}; font-size: 12px; font-weight: 600">{{c.tag}}</span></sc-if>
+            </button></li>
+          </sc-for>
+        </ul>
+      </section>
+
+      <section aria-label="Customer profile" style="flex: 3 1 460px; min-width: 0; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start">
+          <div style="display: flex; flex-direction: column; gap: 2px"><h2 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 26px; font-weight: 700">{{sel.name}}</h2><span style="color: #53432D">{{sel.phone}} · {{sel.email}}</span><span style="font-size: 13px; color: #69553C">Customer since {{sel.since}} · {{sel.area}}</span></div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap"><a href="CounterSale.dc.html" style="min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; background: #B4531A; color: #FFFAF0; text-decoration: none; font-weight: 600; font-size: 14px">New order</a><a href="#" style="min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; border: 1px solid #2A1F12; color: #2A1F12; text-decoration: none; font-weight: 600; font-size: 14px">Send password reset</a></div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+          <div style="padding: 12px; border-radius: 12px; background: #F7F4EC"><span style="font-size: 13px; color: #69553C">Lifetime spend</span><br><strong style="font-family: Fraunces, Georgia, serif; font-size: 22px">{{sel.spend}}</strong></div>
+          <div style="padding: 12px; border-radius: 12px; background: #F7F4EC"><span style="font-size: 13px; color: #69553C">Orders</span><br><strong style="font-family: Fraunces, Georgia, serif; font-size: 22px">{{sel.orders}}</strong></div>
+          <div style="padding: 12px; border-radius: 12px; background: #F7F4EC"><span style="font-size: 13px; color: #69553C">Owes (unpaid)</span><br><strong style="font-family: Fraunces, Georgia, serif; font-size: 22px">{{sel.owes}}</strong></div>
+        </div>
+        <div role="tablist" aria-label="Profile sections" style="display: flex; gap: 2px; border-bottom: 1px solid #E5DCC8">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+            <button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="min-height: 44px; padding: 0 14px; border: 0; border-bottom: {{t.line}}; background: transparent; font: inherit; font-weight: 600; color: {{t.ink}}; cursor: pointer; margin-bottom: -1px">{{t.label}}</button>
+          </sc-for>
+        </div>
+        <sc-if value="{{tOrders}}" hint-placeholder-val="{{ true }}">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px">
+            <thead><tr style="text-align: left; color: #69553C"><th style="padding: 8px 6px; font-weight: 600">Order</th><th style="padding: 8px 6px; font-weight: 600">Date</th><th style="padding: 8px 6px; font-weight: 600">Status</th><th style="padding: 8px 6px; font-weight: 600; text-align: right">Total</th></tr></thead>
+            <tbody><sc-for list="{{orders}}" as="o" hint-placeholder-count="3"><tr style="border-top: 1px solid #F0E9DA"><td style="padding: 8px 6px"><a href="Orders.dc.html" style="color: #2A1F12; font-weight: 600">{{o.no}}</a></td><td style="padding: 8px 6px">{{o.date}}</td><td style="padding: 8px 6px">{{o.status}}</td><td style="padding: 8px 6px; text-align: right">{{o.total}}</td></tr></sc-for></tbody>
+          </table>
+        </sc-if>
+        <sc-if value="{{tSubs}}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 14px; border-radius: 12px; border: 1px solid #E5DCC8; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap"><span><strong>Monthly staples box</strong><br><span style="font-size: 14px; color: #69553C">Next order [DATE] · ৳1,000 · Cash on delivery</span></span><span style="padding: 3px 10px; border-radius: 999px; background: #E3EDC6; color: #2F5114; font-weight: 600; font-size: 13px; align-self: flex-start">Active</span></div>
+        </sc-if>
+        <sc-if value="{{tNotes}}" hint-placeholder-val="{{ false }}">
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+            <sc-for list="{{notes}}" as="n" hint-placeholder-count="2"><li style="padding: 10px 12px; border-radius: 10px; background: #F7F4EC; font-size: 14px">{{n}}</li></sc-for>
+          </ul>
+          <div style="display: flex; gap: 8px"><label for="cu-note" class="sr">New note</label><input id="cu-note" placeholder="Add a note for the team" style="flex: 1; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid #E5DCC8; font: inherit"><button type="button" onClick="{{addNote}}" style="min-height: 44px; padding: 0 16px; border-radius: 10px; border: 0; background: #3F6A1E; color: #F4F8E8; font: inherit; font-weight: 600; cursor: pointer">Add note</button></div>
+        </sc-if>
+        <div style="padding-top: 12px; border-top: 1px solid #F0E9DA; font-size: 14px; color: #69553C">Duplicate record? <a href="#" style="color: #B4531A; font-weight: 600">Merge with another customer</a></div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { filter: 0, sel: 0, tab: 0, notes: ['Prefers delivery after 5pm. Call the guard at the gate.'] }; }
+  renderVals() {
+    const s = this.state;
+    const all = [
+      ['[Customer A]', '01XXXXXXXX1', '[a@example.com]', 'Dhanmondi', '[2026]', 18, '৳24,300', '৳0', 'Subscriber'],
+      ['[Customer B]', '01XXXXXXXX2', '[b@example.com]', 'Dhanmondi', '[2026]', 6, '৳5,870', '৳870', ''],
+      ['[Customer C]', '01XXXXXXXX3', '—', 'Mohammadpur', '[2026]', 11, '৳13,050', '৳0', 'Subscriber'],
+      ['Walk-in (no password)', '01XXXXXXXX4', '—', 'Counter', '[2026]', 2, '৳920', '৳0', 'Incomplete'],
+      ['[Customer D]', '01XXXXXXXX5', '[d@example.com]', 'Gulshan', '[2026]', 3, '৳6,400', '৳2,140', '']
+    ];
+    const keep = [() => true, (c) => c[8] === 'Subscriber', (c) => c[8] === 'Incomplete'];
+    const tags = { Subscriber: ['#E3EDC6', '#2F5114'], Incomplete: ['#FCEBC7', '#6E4700'] };
+    const c = all[s.sel];
+    return {
+      filters: ['All', 'Subscribers', 'Incomplete'].map((label, i) => ({ label, on: s.filter === i, bg: s.filter === i ? '#2F5114' : '#FFFFFF', ink: s.filter === i ? '#F4F8E8' : '#2A1F12', pick: () => this.setState({ filter: i }) })),
+      list: all.map((x, i) => ({ x, i })).filter(({ x }) => keep[s.filter](x)).map(({ x, i }) => ({ name: x[0], phone: x[1], orders: x[5], initial: x[0].replace('[', '').charAt(0), tag: x[8], hasTag: !!x[8], tagBg: x[8] ? tags[x[8]][0] : '', tagInk: x[8] ? tags[x[8]][1] : '', on: s.sel === i, border: s.sel === i ? '2px solid #3F6A1E' : '1px solid #E5DCC8', bg: s.sel === i ? '#F4F8E8' : '#FFFFFF', pick: () => this.setState({ sel: i, tab: 0 }) })),
+      sel: { name: c[0], phone: c[1], email: c[2], area: c[3], since: c[4], orders: c[5], spend: c[6], owes: c[7] },
+      tabs: ['Orders', 'Subscriptions', 'Notes'].map((label, i) => ({ label, on: s.tab === i, line: s.tab === i ? '3px solid #3F6A1E' : '3px solid transparent', ink: s.tab === i ? '#2A1F12' : '#69553C', pick: () => this.setState({ tab: i }) })),
+      tOrders: s.tab === 0, tSubs: s.tab === 1, tNotes: s.tab === 2,
+      orders: [['[1042]', 'Today', 'Out for delivery', '৳1,330'], ['[1031]', '12 Oct', 'Delivered', '৳870'], ['[1018]', '28 Sep', 'Delivered', '৳2,140']].map(([no, date, status, total]) => ({ no, date, status, total })),
+      notes: s.notes,
+      addNote: () => this.setState({ notes: s.notes.concat(['[New note] · by [Staff name], just now']) })
+    };
+  }
+}
+</script>
+</body>
+</html>

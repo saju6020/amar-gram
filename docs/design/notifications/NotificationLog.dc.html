@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-pill:999px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -37,7 +37,7 @@ tr:hover td{background:var(--surface-sunken);cursor:pointer}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div style="font-size:13px">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div style="font-size:13px">Rezwan Ahmed · Administrator</div></div>
   <div class="main">
     <h1 class="h1">Notifications</h1>
     <div class="stats">
@@ -62,7 +62,7 @@ tr:hover td{background:var(--surface-sunken);cursor:pointer}
     <table>
       <thead><tr><th>Time</th><th>Template</th><th>Channel</th><th>Destination</th><th>Recipient</th><th>Status</th><th>Attempts</th></tr></thead>
       <tbody>
-        <tr><td>23 Sep 09:14</td><td>Vaccination due soon</td><td>SMS</td><td>017••••5678</td><td>Farhana Yasmin</td><td><span class="pill pill-held">Held until 08:00</span></td><td>0</td></tr>
+        <tr><td>23 Sep 09:14</td><td>Back in stock</td><td>SMS</td><td>017••••5678</td><td>Farhana Yasmin</td><td><span class="pill pill-held">Held until 08:00</span></td><td>0</td></tr>
         <tr><td>23 Sep 08:02</td><td>Order shipped</td><td>In-app</td><td>—</td><td>Kamrul Hasan</td><td><span class="pill pill-sent">Sent</span></td><td>1</td></tr>
         <tr><td>22 Sep 22:40</td><td>Password reset link</td><td>SMS</td><td>018••••2233</td><td>Nafisa Rahman</td><td><span class="pill pill-retry">Retrying</span></td><td>2</td></tr>
         <tr><td>22 Sep 16:02</td><td>Password reset link</td><td>Email</td><td>n••••@example.com</td><td>Nafisa Rahman</td><td><span class="pill pill-fail">Undeliverable</span></td><td>3</td></tr>

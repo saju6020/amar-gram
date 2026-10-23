@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px;line-height:1.45}
 .topnav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -53,11 +53,11 @@ td.r,th.r{text-align:right}
 caption{text-align:left;font-size:12px;color:var(--ink-muted);padding:0 0 6px}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid transparent;line-height:1.5}
 .chip i{font-style:normal;font-size:11px}
-.c-ok{background:var(--accent-soft);color:var(--accent-ink);border-color:rgba(21,96,90,.22)}
-.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#ecd7ae}
-.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#f0c9c4}
+.c-ok{background:var(--accent-soft);color:var(--accent-ink);border-color:rgba(180,83,26,.22)}
+.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#EFD49A}
+.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#F0C4B4}
 .c-neu{background:var(--surface-sunken);color:var(--ink-muted);border-color:var(--border)}
-.c-cat{background:#fff;color:var(--ink);border-color:var(--border-strong)}
+.c-tag{background:#fff;color:var(--ink);border-color:var(--border-strong)}
 .field{margin-bottom:14px}
 .field label,.flabel{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
 .field input,.field select,.field textarea,.inp{width:100%;font:inherit;font-size:14px;padding:8px 11px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--ink)}
@@ -68,9 +68,9 @@ caption{text-align:left;font-size:12px;color:var(--ink-muted);padding:0 0 6px}
 .hint{font-size:12px;color:var(--ink-muted);margin-top:4px}
 .err{font-size:12.5px;color:var(--danger-ink);margin-top:5px;font-weight:600}
 .banner{border:1px solid var(--border);border-left:4px solid var(--accent);background:#fff;border-radius:var(--radius-sm);padding:11px 14px;font-size:13.5px}
-.b-warn{background:var(--warning-bg);border-color:#ecd7ae;border-left-color:var(--warning-ink);color:var(--warning-ink)}
-.b-bad{background:var(--danger-bg);border-color:#f0c9c4;border-left-color:var(--danger-ink);color:var(--danger-ink)}
-.b-info{background:var(--accent-soft);border-color:rgba(21,96,90,.25);border-left-color:var(--accent);color:var(--accent-ink)}
+.b-warn{background:var(--warning-bg);border-color:#EFD49A;border-left-color:var(--warning-ink);color:var(--warning-ink)}
+.b-bad{background:var(--danger-bg);border-color:#F0C4B4;border-left-color:var(--danger-ink);color:var(--danger-ink)}
+.b-info{background:var(--accent-soft);border-color:rgba(180,83,26,.25);border-left-color:var(--accent);color:var(--accent-ink)}
 .scrim{position:absolute;inset:0;background:rgba(28,26,23,.4);display:flex;align-items:center;justify-content:center;z-index:5;padding:20px}
 .dialog{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(20,18,10,.25);width:470px;padding:24px}
 .dialog h2{margin:0 0 6px;font-size:18px;font-family:var(--font-display);font-weight:600}
@@ -119,7 +119,7 @@ dl.kv dd{margin:0}
 .copy:last-child{border-bottom:none}
 .sr{font-size:11px;color:var(--ink-faint);border:1px dashed var(--border-strong);border-radius:4px;padding:2px 6px;display:inline-block}
 td a.link,.nw{white-space:nowrap}
-.scan{display:flex;gap:10px;align-items:center;background:#fff;border:2px solid var(--accent);border-radius:10px;padding:10px 12px;outline:3px solid rgba(21,96,90,.25)}
+.scan{display:flex;gap:10px;align-items:center;background:#fff;border:2px solid var(--accent);border-radius:10px;padding:10px 12px;outline:3px solid rgba(180,83,26,.25)}
 .scan input{flex:1;border:none;font:inherit;font-size:17px;font-family:ui-monospace,Consolas,monospace;outline:none;background:transparent}
 .bk td{font-size:13px;vertical-align:middle}
 .tender{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff}
@@ -128,7 +128,7 @@ td a.link,.nw{white-space:nowrap}
 </style>
 </helmet>
 <div style="width:1280px;height:1080px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main">
     <div class="titlerow">
       <div><h1 class="h1">Counter sale</h1><div class="muted sm">Anonymous sale · <a class="link" href="#">Attach customer</a></div></div>
@@ -140,19 +140,19 @@ td a.link,.nw{white-space:nowrap}
           <label class="flabel" for="scan">Scan or type a barcode, then Enter</label>
           <div class="scan"><span aria-hidden="true">⌁</span><input id="scan" value="8901234500099" aria-describedby="scan-msg"><span class="xs muted">keyboard-wedge scanner</span></div>
           <div id="scan-msg" class="banner b-bad sm" role="alert" style="margin-top:8px">No product has barcode 8901234500099. It's still in the field — check it, or <a class="link" href="#">search by name</a>.</div>
-          <div class="sr" style="margin-top:6px">Announced: "No product has barcode 8901234500099." · earlier: "Added Royal Canin Kitten 2 kg, quantity 1"</div>
+          <div class="sr" style="margin-top:6px">Announced: "No product has barcode 8901234500099." · earlier: "Added Pure cow ghee 400 g, quantity 1"</div>
         </div>
         <table class="bk">
           <caption>Basket · 4 lines</caption>
           <thead><tr><th>Item · batch to use</th><th class="r">Unit</th><th>Qty</th><th class="r">Line</th><th></th></tr></thead>
           <tbody>
-            <tr><td><b>Royal Canin Kitten 2 kg</b><div class="xs muted"><span class="mono">RCK-2608-A</span> · expires 31 Mar 2027</div></td><td class="r">৳850.00</td><td><div class="qty"><button aria-label="Decrease quantity of Royal Canin Kitten 2 kg">−</button><input value="2" aria-label="Quantity of Royal Canin Kitten 2 kg"><button aria-label="Increase quantity of Royal Canin Kitten 2 kg">+</button></div></td><td class="r">৳1,700.00</td><td><button class="btn btn-ghost btn-sm" aria-label="Remove Royal Canin Kitten 2 kg">✕</button></td></tr>
-            <tr><td><b>Cat Litter Clumping 10 L</b><div class="xs muted"><span class="mono">LIT-2606-A</span> · no expiry</div></td><td class="r">৳620.00</td><td><div class="qty"><button aria-label="Decrease quantity of Cat Litter 10 L">−</button><input value="1" aria-label="Quantity of Cat Litter 10 L"><button aria-label="Increase quantity of Cat Litter 10 L">+</button></div></td><td class="r">৳620.00</td><td><button class="btn btn-ghost btn-sm" aria-label="Remove Cat Litter 10 L">✕</button></td></tr>
-            <tr><td><b>Whisker Wand toy</b><div class="xs muted">Not batch-tracked</div></td><td class="r">৳350.00</td><td><div class="qty"><button aria-label="Decrease quantity of Whisker Wand toy">−</button><input value="1" aria-label="Quantity of Whisker Wand toy"><button aria-label="Increase quantity of Whisker Wand toy">+</button></div></td><td class="r">৳350.00</td><td><button class="btn btn-ghost btn-sm" aria-label="Remove Whisker Wand toy">✕</button></td></tr>
+            <tr><td><b>Pure cow ghee 400 g</b><div class="xs muted"><span class="mono">GHE-2608-A</span> · expires 31 Mar 2027</div></td><td class="r">৳850.00</td><td><div class="qty"><button aria-label="Decrease quantity of Pure cow ghee 400 g">−</button><input value="2" aria-label="Quantity of Pure cow ghee 400 g"><button aria-label="Increase quantity of Pure cow ghee 400 g">+</button></div></td><td class="r">৳1,700.00</td><td><button class="btn btn-ghost btn-sm" aria-label="Remove Pure cow ghee 400 g">✕</button></td></tr>
+            <tr><td><b>Sundarbans wild honey 500 g</b><div class="xs muted"><span class="mono">HNY-2606-A</span> · no expiry</div></td><td class="r">৳620.00</td><td><div class="qty"><button aria-label="Decrease quantity of Sundarbans wild honey 500 g">−</button><input value="1" aria-label="Quantity of Sundarbans wild honey 500 g"><button aria-label="Increase quantity of Sundarbans wild honey 500 g">+</button></div></td><td class="r">৳620.00</td><td><button class="btn btn-ghost btn-sm" aria-label="Remove Sundarbans wild honey 500 g">✕</button></td></tr>
+            <tr><td><b>Jute shopping bag</b><div class="xs muted">Not batch-tracked</div></td><td class="r">৳350.00</td><td><div class="qty"><button aria-label="Decrease quantity of Jute shopping bag">−</button><input value="1" aria-label="Quantity of Jute shopping bag"><button aria-label="Increase quantity of Jute shopping bag">+</button></div></td><td class="r">৳350.00</td><td><button class="btn btn-ghost btn-sm" aria-label="Remove Jute shopping bag">✕</button></td></tr>
             <tr style="background:#fffaf9"><td colspan="5">
-              <div class="between"><div><b>Hill's Prescription Diet k/d 2 kg</b> <span class="sm mono muted">HKD-2605-C · 30 Nov 2026</span>
-                <div class="err" style="margin-top:3px">⚠ Prescription food can only be sold to a customer for a cat with a current authorisation. Attach the customer and choose the cat.</div></div>
-                <div class="row"><button class="btn btn-sm">Attach customer</button><button class="btn btn-ghost btn-sm">Remove</button></div></div>
+              <div class="between"><div><b>Village pantry box</b> <span class="sm mono muted">PTB-2605-C · 30 Nov 2026</span>
+                <div class="err" style="margin-top:3px">⚠ Batch PTB-2605-C has been recalled and can't be sold. Choose another batch, or remove the line.</div></div>
+                <div class="row"><button class="btn btn-sm">Choose another batch</button><button class="btn btn-ghost btn-sm">Remove</button></div></div>
             </td></tr>
           </tbody>
         </table>
@@ -169,7 +169,7 @@ td a.link,.nw{white-space:nowrap}
             <div><dt>Tax</dt><dd>৳133.50</dd></div>
             <div class="tot"><dt>Total</dt><dd>৳2,803.50</dd></div>
           </dl>
-          <p class="xs muted" style="margin:6px 0 0">Excludes the Hill's line until a customer and cat are attached. Recalculated by the server as the basket changes.</p>
+          <p class="xs muted" style="margin:6px 0 0">Excludes the khejur gur line until another batch is chosen. Recalculated by the server as the basket changes.</p>
         </div>
         <div class="card">
           <h2 class="h2">Tender</h2>

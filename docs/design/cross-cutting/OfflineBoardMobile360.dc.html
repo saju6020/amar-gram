@@ -8,10 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
-:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2b2823}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2A1F12}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -107,14 +107,14 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
 .section-h h2{font-family:var(--font-display);font-weight:600;font-size:19px;margin:0}
 .caption{color:#fff;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:0 0 8px}
 @media (max-width:900px){.cols-2,.cols-3,.cols-main,.cols-side{grid-template-columns:minmax(0,1fr)}.kv{grid-template-columns:minmax(0,1fr)}.kv dt{margin-top:6px}}
-.obar{padding:10px 14px;gap:8px}.omain{padding:14px}.appt{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 13px;margin-bottom:10px}.appt .t{display:flex;justify-content:space-between;gap:8px;font-size:13px}.appt .cat{font-weight:700;font-size:15px;margin:4px 0 2px}.appt .d{font-size:12.5px;color:var(--ink-muted);line-height:1.5}.appt a{display:inline-flex;align-items:center;gap:5px;min-height:44px;font-size:14px;font-weight:600}.omit{border:1px dashed var(--border-strong);border-radius:8px;padding:12px;font-size:13px;line-height:1.5;background:#fff}
+.obar{padding:10px 14px;gap:8px}.omain{padding:14px}.ocard{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 13px;margin-bottom:10px}.ocard .t{display:flex;justify-content:space-between;gap:8px;font-size:13px}.ocard .oname{font-weight:700;font-size:15px;margin:4px 0 2px}.ocard .d{font-size:12.5px;color:var(--ink-muted);line-height:1.5}.ocard a{display:inline-flex;align-items:center;gap:5px;min-height:44px;font-size:14px;font-weight:600}.omit{border:1px dashed var(--border-strong);border-radius:8px;padding:12px;font-size:13px;line-height:1.5;background:#fff}
 </style>
 </helmet>
 <div style="width:360px;height:1260px;background:var(--surface-page);position:relative;overflow:hidden">
   <header class="obar">
-    <span class="logo" style="font-size:17px">PurrCare</span>
+    <span class="logo" style="font-size:17px">Amar Gram</span>
     <span class="chip-off" style="margin-left:auto"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2.3-1.7"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M10.7 5.1A15 15 0 0 1 22 8.8"/><path d="M12 20h.01"/></svg> Offline · read-only</span>
-    <div class="meta" style="width:100%;font-size:12px"><strong style="color:var(--ink)">Uttara</strong> · Wed 23 Sep 2026 · saved 10:42 (Asia/Dhaka), 18 min ago</div>
+    <div class="meta" style="width:100%;font-size:12px"><strong style="color:var(--ink)">Uttara outlet</strong> · Wed 23 Sep 2026 · saved 10:42 (Asia/Dhaka), 18 min ago</div>
   </header>
   <main class="omain">
     <div class="banner banner-info" role="status" aria-live="polite" style="font-size:12.5px;margin-bottom:14px;padding:10px 12px">
@@ -122,52 +122,52 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
       <div>You're offline. This list was last updated at 10:42. Changes are switched off until the connection returns.</div>
     </div>
 
-    <div class="section-h"><h2 style="font-size:17px">Today's appointments</h2><span class="muted small">6</span></div>
-    <div class="appt">
-      <div class="t"><strong>09:30–09:50</strong><span>Completed</span></div>
-      <div class="cat">Luna</div>
-      <div class="d">Vaccination · Dr. Nusrat Jahan · Consult 1</div>
+    <div class="section-h"><h2 style="font-size:17px">Today's pickup orders</h2><span class="muted small">6</span></div>
+    <div class="ocard">
+      <div class="t"><strong>09:30–09:50</strong><span>Collected</span></div>
+      <div class="oname">AG-10412</div>
+      <div class="d">Chinigura aromatic rice 1 kg ×2 · Tanvir Islam · Pickup A</div>
       <div class="d">Farhana Yasmin</div>
       <a href="tel:+8801711223344"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg> 01711 223344</a>
     </div>
-    <div class="appt">
-      <div class="t"><strong>10:00–10:30</strong><span>In consultation</span></div>
-      <div class="cat">Mittens</div>
-      <span class="risk"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> High risk</span>
-      <div class="small" style="color:var(--danger-ink);font-weight:600;margin:4px 0">Bites when restrained. Two handlers and a towel wrap.</div>
-      <div class="d">Dental check · Dr. Nusrat Jahan · Consult 1</div>
+    <div class="ocard">
+      <div class="t"><strong>10:00–10:30</strong><span>At the counter</span></div>
+      <div class="oname">AG-10415</div>
+      <span class="risk"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Keep chilled</span>
+      <div class="small" style="color:var(--danger-ink);font-weight:600;margin:4px 0">Ghee and honey in Chiller 1. Hand over in an insulated bag.</div>
+      <div class="d">Pure cow ghee 400 g, Sundarbans wild honey 500 g · Tanvir Islam · Chiller 1</div>
       <div class="d">Kamrul Hasan</div>
       <a href="tel:+8801712900112"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg> 01712 900112</a>
     </div>
-    <div class="appt">
-      <div class="t"><strong>10:45–11:05</strong><span>Booked</span></div>
-      <div class="cat">Biscuit</div>
-      <div class="d">Consultation · Dr. Nusrat Jahan · Consult 2</div>
+    <div class="ocard">
+      <div class="t"><strong>10:45–11:05</strong><span>Ready</span></div>
+      <div class="oname">AG-10418</div>
+      <div class="d">Cold-pressed mustard oil 1 L, Red lentils 1 kg · Tanvir Islam · Pickup B</div>
       <div class="d">Nafisa Rahman</div>
       <a href="tel:+8801818552233"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg> 01818 552233</a>
     </div>
-    <div class="appt">
+    <div class="ocard">
       <div class="t"><strong>11:15</strong><span>Waiting</span></div>
-      <div class="cat">Pumpkin</div>
-      <div class="d">Walk-in · triage: Urgent · vet not yet assigned</div>
+      <div class="oname">AG-10421</div>
+      <div class="d">Phone order · Urgent · Khejur gur 500 g ×3 · packer not yet assigned</div>
       <div class="d">Tahmina Akter · no phone on file</div>
     </div>
-    <div class="appt">
-      <div class="t"><strong>11:30–11:50</strong><span>Booked</span></div>
-      <div class="cat">Tom</div>
-      <div class="d">Follow-up · Dr. Nusrat Jahan · Consult 2</div>
+    <div class="ocard">
+      <div class="t"><strong>11:30–11:50</strong><span>Ready</span></div>
+      <div class="oname">AG-10424</div>
+      <div class="d">Turmeric powder 200 g · Tanvir Islam · Pickup B</div>
       <div class="d">Arif Hossain</div>
       <a href="tel:+8801911445566"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg> 01911 445566</a>
     </div>
-    <div class="appt" style="margin-bottom:18px">
+    <div class="ocard" style="margin-bottom:18px">
       <div class="t"><strong>12:00–12:15</strong><span>Cancelled</span></div>
-      <div class="cat">Kitty</div>
-      <div class="d">Nail trim · Tanvir Islam · Treatment</div>
+      <div class="oname">AG-10427</div>
+      <div class="d">Imported Medjool dates (Saudi Arabia) · Rafiq Uddin · Pickup A</div>
       <div class="d">Farhana Yasmin</div>
     </div>
 
-    <div class="section-h"><h2 style="font-size:17px">Today's boarding tasks</h2></div>
-    <div class="omit"><strong>Boarding tasks weren't included in this copy.</strong><br>The boarding task list isn't available in PurrCare yet, so there was nothing to save.</div>
+    <div class="section-h"><h2 style="font-size:17px">Today's packing list</h2></div>
+    <div class="omit"><strong>The packing list wasn't included in this copy.</strong><br>Your role doesn't include the packing list, so it isn't saved on this device.</div>
   </main>
 </div>
 </x-dc>

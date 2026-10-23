@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — Staff dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="min-height: 100vh; background: #F7F4EC; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45; display: flex; flex-wrap: wrap; align-items: stretch">
+  <nav aria-label="Staff" style="width: 260px; min-height: 100vh; align-self: stretch; flex: none; box-sizing: border-box; background: #2F5114; color: #F4F8E8; font-family: 'Work Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; display: flex; flex-direction: column; gap: 14px; padding: 20px 14px">
+  <a href="Dashboard.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #F4F8E8; padding: 0 6px">
+    <span style="width: 38px; height: 38px; border-radius: 50% 50% 50% 7px; background: #F4F8E8; display: grid; place-items: center; color: #2F5114">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+    </span>
+    <span style="display: flex; flex-direction: column; line-height: 1.1"><span style="font-family: Fraunces, Georgia, serif; font-size: 20px; font-weight: 700">Amar <span style="color: #F7D87A">Gram</span></span><span style="font-size: 12px; color: #C9DBAE; letter-spacing: 0.1em; text-transform: uppercase">Back office</span></span>
+  </a>
+  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #C9DBAE; padding: 0 6px">Outlet
+    <select style="min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid #4F7A2C; background: #3F6A1E; color: #F4F8E8; font: inherit; font-size: 14px"><option>Dhanmondi outlet</option><option>Chattogram warehouse</option><option>All outlets</option></select>
+  </label>
+  <div style="display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto">
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Overview</span>
+<a href="Dashboard.dc.html" aria-current="page" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: #F4F8E8; color: #2F5114; font-weight: 600"><span>Dashboard</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Sales</span>
+<a href="Orders.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Orders</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">12</span></a>
+<a href="CounterSale.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Counter sale</span></a>
+<a href="Customers.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Customers</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Catalogue &amp; stock</span>
+<a href="Products.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Products</span></a>
+<a href="Inventory.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Inventory &amp; batches</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">3</span></a>
+<a href="Receiving.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Goods receiving</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Money</span>
+<a href="Billing.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Billing &amp; cash-up</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">2</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Insight &amp; admin</span>
+<a href="Reports.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Reports</span></a>
+<a href="Administration.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Administration</span></a>
+</div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 6px 0; border-top: 1px solid #4F7A2C">
+    <span style="width: 36px; height: 36px; border-radius: 50%; background: #EDA73A; color: #2A1F12; display: grid; place-items: center; font-weight: 700">FA</span>
+    <span style="flex: 1; display: flex; flex-direction: column; line-height: 1.25"><strong style="font-size: 14px">[Staff name]</strong><span style="font-size: 12px; color: #C9DBAE">Administrator</span></span>
+    <a href="StaffSignIn.dc.html" style="font-size: 13px; color: #F7D87A">Sign out</a>
+  </div>
+</nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 24px 28px 48px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+      <div>
+        <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 32px; font-weight: 700">Good morning, [name]</h1>
+        <span style="color: #69553C">Dhanmondi outlet · Saturday · <span style="padding: 2px 8px; border-radius: 6px; background: #F0E9DA; font-size: 13px">Sample data</span></span>
+      </div>
+      <div style="display: flex; gap: 8px">
+        <a href="CounterSale.dc.html" style="min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px; border-radius: 10px; border: 1.5px solid #2A1F12; color: #2A1F12; text-decoration: none; font-weight: 600">New counter sale</a>
+        <a href="Receiving.dc.html" style="min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px; border-radius: 10px; background: #B4531A; color: #FFFAF0; text-decoration: none; font-weight: 600">Receive goods</a>
+      </div>
+    </div>
+
+    <section aria-label="Today at a glance" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+      <sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+        <a href="{{t.href}}" style="background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: #2A1F12">
+          <span style="font-size: 14px; color: #69553C">{{t.label}}</span>
+          <strong style="font-family: Fraunces, Georgia, serif; font-size: 34px; line-height: 1.1">{{t.value}}</strong>
+          <span style="font-size: 13px; color: {{t.noteInk}}">{{t.note}}</span>
+        </a>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch">
+      <section aria-labelledby="dash-sales" style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap">
+          <h2 id="dash-sales" style="margin: 0; font-size: 17px; font-weight: 600">Sales, last 14 days (৳)</h2>
+          <span aria-live="polite" style="font-size: 14px; color: #53432D; min-height: 20px">{{hoverText}}</span>
+        </div>
+        <div role="group" aria-label="Daily sales bars" style="position: relative; height: 220px; display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid #E5DCC8; padding-top: 8px">
+          <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 33%; border-top: 1px dashed #EFE8D8"></div>
+          <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 66%; border-top: 1px dashed #EFE8D8"></div>
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="14">
+            <button type="button" aria-label="{{b.aria}}" onMouseEnter="{{b.show}}" onFocus="{{b.show}}" onMouseLeave="{{clearHover}}" style="flex: 1; height: 100%; border: 0; padding: 0 2px; background: transparent; cursor: pointer; display: flex; align-items: flex-end">
+              <span style="display: block; width: 100%; height: {{b.h}}; background: {{b.fill}}; border-radius: 4px 4px 0 0"></span>
+            </button>
+          </sc-for>
+        </div>
+        <div aria-hidden="true" style="display: flex; justify-content: space-between; font-size: 12px; color: #69553C"><span>11 Oct</span><span>17 Oct</span><span>Today</span></div>
+        <details style="font-size: 14px"><summary style="cursor: pointer; color: #B4531A; font-weight: 600; min-height: 32px">Show as table</summary>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 8px"><thead><tr><th style="text-align: left; padding: 4px; color: #69553C">Day</th><th style="text-align: right; padding: 4px; color: #69553C">Sales</th></tr></thead>
+            <tbody><sc-for list="{{bars}}" as="b" hint-placeholder-count="3"><tr><td style="padding: 4px; border-top: 1px solid #F0E9DA">{{b.day}}</td><td style="padding: 4px; text-align: right; border-top: 1px solid #F0E9DA">{{b.label}}</td></tr></sc-for></tbody></table>
+        </details>
+      </section>
+
+      <section aria-labelledby="dash-pipe" style="flex: 1 1 280px; min-width: 0; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <h2 id="dash-pipe" style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Orders in progress</h2>
+        <sc-for list="{{pipeline}}" as="p" hint-placeholder-count="5">
+          <a href="Orders.dc.html" style="display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: #2A1F12">
+            <span style="display: flex; justify-content: space-between"><span>{{p.label}}</span><strong>{{p.count}}</strong></span>
+            <span aria-hidden="true" style="height: 8px; border-radius: 4px; background: #F0E9DA; overflow: hidden"><span style="display: block; height: 100%; width: {{p.w}}; background: #557A1F; border-radius: 4px"></span></span>
+          </a>
+        </sc-for>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <section aria-labelledby="dash-alerts" style="flex: 1 1 320px; min-width: 0; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <h2 id="dash-alerts" style="margin: 0 0 4px; font-size: 17px; font-weight: 600">Needs attention</h2>
+        <sc-for list="{{alerts}}" as="a" hint-placeholder-count="4">
+          <a href="{{a.href}}" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: {{a.bg}}; color: {{a.ink}}; text-decoration: none">
+            <span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid currentColor; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none">{{a.icon}}</span>
+            <span style="flex: 1">{{a.text}}</span><strong>{{a.count}}</strong>
+          </a>
+        </sc-for>
+      </section>
+      <section aria-labelledby="dash-recent" style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between"><h2 id="dash-recent" style="margin: 0; font-size: 17px; font-weight: 600">Latest orders</h2><a href="Orders.dc.html" style="color: #B4531A; font-weight: 600">All orders</a></div>
+        <div style="overflow-x: auto">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px">
+            <thead><tr style="color: #69553C; text-align: left"><th style="padding: 8px 6px; font-weight: 600">Order</th><th style="padding: 8px 6px; font-weight: 600">Customer</th><th style="padding: 8px 6px; font-weight: 600">Channel</th><th style="padding: 8px 6px; font-weight: 600">Status</th><th style="padding: 8px 6px; font-weight: 600; text-align: right">Total</th></tr></thead>
+            <tbody>
+              <sc-for list="{{recent}}" as="r" hint-placeholder-count="5">
+                <tr style="border-top: 1px solid #F0E9DA"><td style="padding: 10px 6px"><a href="Orders.dc.html" style="color: #2A1F12; font-weight: 600">{{r.no}}</a></td><td style="padding: 10px 6px">{{r.customer}}</td><td style="padding: 10px 6px">{{r.channel}}</td><td style="padding: 10px 6px"><span style="padding: 3px 10px; border-radius: 999px; background: {{r.bg}}; color: {{r.ink}}; font-weight: 600; font-size: 13px">{{r.status}}</span></td><td style="padding: 10px 6px; text-align: right">{{r.total}}</td></tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { hover: -1 }; }
+  renderVals() {
+    const fmt = (n) => '৳' + n.toLocaleString('en-IN');
+    const sales = [38200, 41500, 36900, 45200, 52800, 61300, 48700, 44100, 47600, 50200, 55900, 63400, 58100, 42700];
+    const days = ['11 Oct', '12 Oct', '13 Oct', '14 Oct', '15 Oct', '16 Oct', '17 Oct', '18 Oct', '19 Oct', '20 Oct', '21 Oct', '22 Oct', '23 Oct', 'Today'];
+    const max = Math.max(...sales);
+    const h = this.state.hover;
+    const status = { 'To pack': ['#FCEBC7', '#6E4700'], 'Packed': ['#E3EDC6', '#2F5114'], 'Out for delivery': ['#E3EDC6', '#2F5114'], 'Awaiting payment': ['#FBE3DA', '#8A2814'], 'Completed': ['#F0E9DA', '#53432D'] };
+    const pipe = [['Awaiting payment confirmation', 2], ['To pack', 12], ['Packed, waiting for rider', 7], ['Out for delivery', 9], ['Return requests', 1]];
+    const pmax = Math.max(...pipe.map((p) => p[1]));
+    return {
+      tiles: [
+        { label: 'Sales today', value: fmt(42700), note: '▲ 8% vs last Saturday', noteInk: '#2F5114', href: 'Reports.dc.html' },
+        { label: 'Orders today', value: '38', note: '29 online · 9 counter', noteInk: '#69553C', href: 'Orders.dc.html' },
+        { label: 'To pack now', value: '12', note: 'Oldest waiting 2h 10m', noteInk: '#6E4700', href: 'Orders.dc.html' },
+        { label: 'Cash on delivery out', value: fmt(18450), note: 'With 4 riders', noteInk: '#69553C', href: 'Billing.dc.html' }
+      ],
+      bars: sales.map((v, i) => ({ day: days[i], label: fmt(v), aria: days[i] + ': ' + fmt(v), h: Math.round(v / max * 100) + '%', fill: h === i ? '#B4531A' : '#557A1F', show: () => this.setState({ hover: i }) })),
+      hoverText: h >= 0 ? days[h] + ' · ' + fmt(sales[h]) : 'Hover or focus a bar for the day’s total',
+      clearHover: () => this.setState({ hover: -1 }),
+      pipeline: pipe.map(([label, count]) => ({ label, count, w: Math.round(count / pmax * 100) + '%' })),
+      alerts: [
+        { icon: '!', text: 'Batches expiring within 30 days', count: '2', bg: '#FBE3DA', ink: '#8A2814', href: 'Inventory.dc.html' },
+        { icon: '↓', text: 'Products below reorder level', count: '3', bg: '#FCEBC7', ink: '#6E4700', href: 'Inventory.dc.html' },
+        { icon: '৳', text: 'Bank transfers to approve', count: '2', bg: '#FCEBC7', ink: '#6E4700', href: 'Billing.dc.html' },
+        { icon: '↻', text: 'Subscription orders due tomorrow', count: '8', bg: '#E3EDC6', ink: '#2F5114', href: 'Orders.dc.html' }
+      ],
+      recent: [['[1042]', '[Customer A]', 'Online', 'Out for delivery', 1330], ['[1043]', '[Customer B]', 'Online', 'To pack', 870], ['[1044]', 'Walk-in', 'Counter', 'Completed', 460], ['[1045]', '[Customer C]', 'Subscription', 'To pack', 1530], ['[1046]', '[Customer D]', 'Online', 'Awaiting payment', 2140]].map(([no, customer, channel, st, total]) => ({ no, customer, channel, status: st, bg: status[st][0], ink: status[st][1], total: fmt(total) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

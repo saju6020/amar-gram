@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -95,10 +95,10 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main">
     <div class="titlerow">
-      <div><h1 class="h1">Invoices</h1><p class="sub">Uttara · issued invoices and drafts. Filters are kept in the address, so a filtered list can be shared.</p></div>
+      <div><h1 class="h1">Invoices</h1><p class="sub">Dhanmondi outlet · issued invoices and drafts. Filters are kept in the address, so a filtered list can be shared.</p></div>
       <div class="actions"><button class="btn btn-sec" type="button">Export CSV</button><a class="btn" href="CustomerAccount.dc.html">New invoice</a></div>
     </div>
     <div class="toolbar">
@@ -106,21 +106,21 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <input aria-label="Customer" placeholder="Customer" style="width:160px">
       <input aria-label="Invoice number" placeholder="Invoice number" style="width:170px">
       <select aria-label="Status"><option>All statuses</option><option>Draft</option><option>Issued</option><option>Part-paid</option><option>Paid</option><option>Credited</option></select>
-      <select aria-label="Business line"><option>All business lines</option><option>Clinic</option><option>Shop</option><option>Boarding</option></select>
+      <select aria-label="Channel"><option>All channels</option><option>Online</option><option>Counter (POS)</option><option>Subscription</option></select>
       <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox"> Overdue only</label>
     </div>
     <table>
-      <thead><tr><th>Number</th><th><span class="sort">Issued <span aria-hidden="true">▼</span></span></th><th>Customer</th><th>Business lines</th><th>Due</th><th class="num">Total</th><th class="num">Outstanding</th><th>Status</th></tr></thead>
+      <thead><tr><th>Number</th><th><span class="sort">Issued <span aria-hidden="true">▼</span></span></th><th>Customer</th><th>Channels</th><th>Due</th><th class="num">Total</th><th class="num">Outstanding</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000421</a></td><td>23 Sep</td><td>Rahima Akter</td><td>Clinic</td><td>7 Oct</td><td class="num">৳1,000.00</td><td class="num">৳0.00</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> Paid</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000418</a></td><td>23 Sep</td><td>Farhana Yasmin</td><td>Clinic · Shop · Boarding</td><td>7 Oct</td><td class="num">৳10,228.57</td><td class="num">৳3,228.57</td><td><span class="pill p-warn"><span aria-hidden="true">◐</span> Part-paid</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000417</a></td><td>22 Sep</td><td>Farhana Yasmin</td><td>Shop</td><td>6 Oct</td><td class="num">৳1,656.00</td><td class="num">৳0.00</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> Paid</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000414</a></td><td>21 Sep</td><td>Mahmud Karim</td><td>Boarding</td><td>5 Oct</td><td class="num">৳52,500.00</td><td class="num">৳52,500.00</td><td><span class="pill p-neutral"><span aria-hidden="true">●</span> Issued</span> <span class="small muted">payment awaiting approval</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000409</a></td><td>18 Sep</td><td>Tanjila Hossain</td><td>Clinic</td><td>2 Oct</td><td class="num">৳58,400.00</td><td class="num">৳58,400.00</td><td><span class="pill p-neutral"><span aria-hidden="true">●</span> Issued</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000410</a></td><td>16 Sep</td><td>Nafisa Rahman</td><td>Shop</td><td>30 Sep</td><td class="num">৳3,783.50</td><td class="num">৳3,783.50</td><td><span class="pill p-neutral"><span aria-hidden="true">●</span> Issued</span> <span class="small muted">corrects 000405</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000405</a></td><td>16 Sep</td><td>Nafisa Rahman</td><td>Shop</td><td>30 Sep</td><td class="num">৳4,611.50</td><td class="num">৳0.00</td><td><span class="pill p-neutral"><span aria-hidden="true">↺</span> Credited</span> <span class="small muted">corrected by 000410</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000389</a></td><td>10 Sep</td><td>Farhana Yasmin</td><td>Clinic</td><td>24 Sep</td><td class="num">৳3,450.00</td><td class="num">৳0.00</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> Paid</span> <span class="small muted">1 credit note</span></td></tr>
-        <tr><td><a href="InvoiceDetail.dc.html">INV-UTR-2627-000377</a></td><td>20 Aug</td><td>Farhana Yasmin</td><td>Clinic</td><td>3 Sep</td><td class="num">৳1,150.00</td><td class="num">৳1,150.00</td><td><span class="pill p-bad"><span aria-hidden="true">⚠</span> Overdue</span> <span class="small muted">Issued</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000421</a></td><td>23 Sep</td><td>Rahima Akter</td><td>Counter (POS)</td><td>7 Oct</td><td class="num">৳1,000.00</td><td class="num">৳0.00</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> Paid</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000418</a></td><td>23 Sep</td><td>Farhana Yasmin</td><td>Counter (POS) · Online · Subscription</td><td>7 Oct</td><td class="num">৳10,228.57</td><td class="num">৳3,228.57</td><td><span class="pill p-warn"><span aria-hidden="true">◐</span> Part-paid</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000417</a></td><td>22 Sep</td><td>Farhana Yasmin</td><td>Online</td><td>6 Oct</td><td class="num">৳1,656.00</td><td class="num">৳0.00</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> Paid</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000414</a></td><td>21 Sep</td><td>Mahmud Karim</td><td>Subscription</td><td>5 Oct</td><td class="num">৳52,500.00</td><td class="num">৳52,500.00</td><td><span class="pill p-neutral"><span aria-hidden="true">●</span> Issued</span> <span class="small muted">payment awaiting approval</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000409</a></td><td>18 Sep</td><td>Tanjila Hossain</td><td>Online</td><td>2 Oct</td><td class="num">৳58,400.00</td><td class="num">৳58,400.00</td><td><span class="pill p-neutral"><span aria-hidden="true">●</span> Issued</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000410</a></td><td>16 Sep</td><td>Nafisa Rahman</td><td>Online</td><td>30 Sep</td><td class="num">৳3,783.50</td><td class="num">৳3,783.50</td><td><span class="pill p-neutral"><span aria-hidden="true">●</span> Issued</span> <span class="small muted">corrects 000405</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000405</a></td><td>16 Sep</td><td>Nafisa Rahman</td><td>Online</td><td>30 Sep</td><td class="num">৳4,611.50</td><td class="num">৳0.00</td><td><span class="pill p-neutral"><span aria-hidden="true">↺</span> Credited</span> <span class="small muted">corrected by 000410</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000389</a></td><td>10 Sep</td><td>Farhana Yasmin</td><td>Counter (POS)</td><td>24 Sep</td><td class="num">৳3,450.00</td><td class="num">৳0.00</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> Paid</span> <span class="small muted">1 credit note</span></td></tr>
+        <tr><td><a href="InvoiceDetail.dc.html">INV-DHN-2627-000377</a></td><td>20 Aug</td><td>Farhana Yasmin</td><td>Counter (POS)</td><td>3 Sep</td><td class="num">৳1,150.00</td><td class="num">৳1,150.00</td><td><span class="pill p-bad"><span aria-hidden="true">⚠</span> Overdue</span> <span class="small muted">Issued</span></td></tr>
       </tbody>
     </table>
     <div class="pager"><span>Showing 1–9 of 142 · 25 per page</span><span class="actions"><button class="btn btn-sec btn-sm" type="button" disabled>Previous</button><button class="btn btn-sec btn-sm" type="button">Next</button></span></div>

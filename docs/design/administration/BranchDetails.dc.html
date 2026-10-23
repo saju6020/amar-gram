@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -35,10 +35,10 @@ select.branchpick{font:inherit;font-size:13px;padding:5px 8px;border:1px solid v
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="shell">
     <div class="sidebar">
-      <a class="active" aria-current="page">Branches</a><a>Services &amp; pricing</a><a>Rosters &amp; leave</a><a>Settings</a><a>Content</a><a>Policies</a><a>Audit log</a><a>System</a>
+      <a class="active" aria-current="page">Branches</a><a>Pricing &amp; tax</a><a>Rosters &amp; leave</a><a>Settings</a><a>Content</a><a>Policies</a><a>Audit log</a><a>System</a>
     </div>
     <div class="main">
       <h1 class="h1">Uttara</h1>
@@ -46,13 +46,13 @@ select.branchpick{font:inherit;font-size:13px;padding:5px 8px;border:1px solid v
         <a href="#" class="active" aria-current="page">Details</a>
         <a href="WeeklyHoursEditor.dc.html">Opening hours</a>
         <a href="Closures.dc.html">Closures</a>
-        <a href="Rooms.dc.html">Rooms</a>
       </nav>
       <div class="field"><label for="bd-name">Name</label><input id="bd-name" value="Uttara"></div>
       <div class="field"><label for="bd-code">Code</label><input id="bd-code" value="UTR" readonly aria-describedby="bd-code-hint"><span id="bd-code-hint" class="hint" style="font-size:12px;color:var(--ink-muted)">Set once, at creation.</span></div>
+      <div class="field"><label for="bd-kind">Kind</label><select id="bd-kind"><option selected>Outlet</option><option>Warehouse</option></select></div>
       <div class="field"><label for="bd-addr">Address</label><input id="bd-addr" value="Sector 7, Uttara, Dhaka"></div>
       <div class="field"><label for="bd-phone">Phone</label><input id="bd-phone" value="09611 223344"></div>
-      <div class="field"><label for="bd-email">Email</label><input id="bd-email" value="uttara@purrcare.example"></div>
+      <div class="field"><label for="bd-email">Email</label><input id="bd-email" value="uttara@amargram.example"></div>
       <div class="field">
         <label for="bd-zone">Time zone</label>
         <select id="bd-zone"><option>Asia/Dhaka</option><option>Asia/Kolkata</option></select>

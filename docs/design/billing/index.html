@@ -3,26 +3,26 @@
 <head>
 <meta charset="utf-8">
 <title>Billing — screens</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="./index.css">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="../index.html">&larr; All areas</a>
-  <div class="eyebrow">PurrCare · backlog &sect;12</div>
+  <div class="eyebrow">Amar Gram · HO-BIL-002</div>
   <h1>Billing &amp; Payments</h1>
   <p class="lede">Seven rows, thirty artboards &mdash; the largest area so far, because HO-BIL-002 covers twenty-one routes across two apps. No live interaction; every state is its own artboard. No payment gateway: cash, card on the terminal, bank transfer and cash on delivery only.</p>
 
   <div class="row-group">
     <h2>Billing home &amp; customer account — US-BIL-03, 08</h2>
     <a class="screen-row" href="BillingHome.dc.html"><span class="screen-name">Billing home<span class="screen-file">BillingHome.dc.html</span></span><span class="screen-desc">Pending approvals, drafts, today's payments and uncaptured charges, with the result of Capture: captured vs skipped with its reason</span></a>
-    <a class="screen-row" href="CustomerAccount.dc.html"><span class="screen-name">⭐ Customer billing account<span class="screen-file">CustomerAccount.dc.html</span></span><span class="screen-desc">Outstanding, overdue with its date, free credit, earmarked deposit, unbilled and loyalty; the Unbilled charges tab with Void only where it is allowed</span></a>
+    <a class="screen-row" href="CustomerAccount.dc.html"><span class="screen-name">⭐ Customer billing account<span class="screen-file">CustomerAccount.dc.html</span></span><span class="screen-desc">Outstanding, overdue with its date, free credit, earmarked pre-order advance, unbilled and loyalty; the Unbilled charges tab with Void only where it is allowed</span></a>
     <a class="screen-row" href="ApplyCreditAndVoid.dc.html"><span class="screen-name">Apply credit &amp; void<span class="screen-file">ApplyCreditAndVoid.dc.html</span></span><span class="screen-desc">Apply-credit form, its result with the free credit remaining, and the void confirmation with its required reason</span></a>
   </div>
 
   <div class="row-group">
     <h2>Invoices — US-BIL-01, 02, 07, 10</h2>
-    <a class="screen-row" href="InvoiceComposer.dc.html"><span class="screen-name">⭐ Invoice composer<span class="screen-file">InvoiceComposer.dc.html</span></span><span class="screen-desc">Charges grouped Clinic / Shop / Boarding, a row marked "Already on another invoice", the server preview with a rate per line and the estimate banner, loyalty redemption</span></a>
+    <a class="screen-row" href="InvoiceComposer.dc.html"><span class="screen-name">⭐ Invoice composer<span class="screen-file">InvoiceComposer.dc.html</span></span><span class="screen-desc">Charges grouped by channel (Online / Counter (POS) / Subscription), a row marked "Already on another invoice", the server preview with a rate per line and the estimate banner, loyalty redemption</span></a>
     <a class="screen-row" href="ComposerDialogs.dc.html"><span class="screen-name">Composer dialogs<span class="screen-file">ComposerDialogs.dc.html</span></span><span class="screen-desc">Manual charge, the issue confirmation naming customer and total, the in-flight state, and discard naming the charges that go back</span></a>
     <a class="screen-row" href="ComposerErrors.dc.html"><span class="screen-name">Composer states<span class="screen-file">ComposerErrors.dc.html</span></span><span class="screen-desc">Draft changed elsewhere (409), no tax rate for a class, branch without a billing profile, and nothing to invoice</span></a>
     <a class="screen-row" href="InvoiceList.dc.html"><span class="screen-name">Invoice list<span class="screen-file">InvoiceList.dc.html</span></span><span class="screen-desc">Filters, sort, CSV and pages; every status in words; the corrected pair linked both ways</span></a>
@@ -32,7 +32,7 @@
   <div class="row-group">
     <h2>Payments &amp; approvals — US-BIL-11, 04, 03</h2>
     <a class="screen-row" href="RecordPayment.dc.html"><span class="screen-name">⭐ Record payment<span class="screen-file">RecordPayment.dc.html</span></span><span class="screen-desc">Card on the terminal: the slip-number field refusing a card number before anything is sent; "Pay the rest"; apply to invoices</span></a>
-    <a class="screen-row" href="PaymentMethodVariants.dc.html"><span class="screen-name">Form by method<span class="screen-file">PaymentMethodVariants.dc.html</span></span><span class="screen-desc">Cash, bank transfer, cash on delivery and a deposit, each drawn from the method's flags, with the validation and server errors each one can hit</span></a>
+    <a class="screen-row" href="PaymentMethodVariants.dc.html"><span class="screen-name">Form by method<span class="screen-file">PaymentMethodVariants.dc.html</span></span><span class="screen-desc">Cash, bank transfer, cash on delivery and a pre-order advance, each drawn from the method's flags, with the validation and server errors each one can hit</span></a>
     <a class="screen-row" href="SplitTender.dc.html"><span class="screen-name">⭐ Split tender<span class="screen-file">SplitTender.dc.html</span></span><span class="screen-desc">৳1,000.00 paid 400 → 350 → 250 with three receipts until "Invoice paid", and a pending-approval result that ends the loop</span></a>
     <a class="screen-row" href="PaymentList.dc.html"><span class="screen-name">Payment list<span class="screen-file">PaymentList.dc.html</span></span><span class="screen-desc">Accepted, pending approval, reversed and rejected, each with its reason in words</span></a>
     <a class="screen-row" href="PaymentDetail.dc.html"><span class="screen-name">Payment detail &amp; reversal<span class="screen-file">PaymentDetail.dc.html</span></span><span class="screen-desc">The allocation trail, and the reverse confirmation naming the receipt, amount, invoice and the cash-up</span></a>

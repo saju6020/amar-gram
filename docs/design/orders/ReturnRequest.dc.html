@@ -8,10 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&amp;family=Public+Sans:wght@400;600;700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&amp;family=Work+Sans:wght@400;500;600;700&amp;display=swap">
 <style>
 /* Hearth customer layer — follows the owner-approved preview layout (2026-10-16) */
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--accent-tint:#e6f0ee;--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-md:14px;--radius-card:22px;--radius-band:32px;--radius-pill:999px}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--accent-tint:#E3EDC6;--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-md:14px;--radius-card:22px;--radius-band:32px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px;line-height:1.45}
 a{color:var(--accent-ink)}a:hover{color:var(--accent)}
@@ -61,8 +61,8 @@ p{margin:0}h1,h2,h3{margin:0}
 .card h2,.ch{font-size:16px;font-weight:700}
 .card.lg h2{font-family:var(--font-display);font-size:22px;font-weight:600}
 .card.flat{background:var(--surface-sunken);border-color:var(--surface-sunken)}
-.card.warn{border-color:#d9b26a;box-shadow:0 0 0 1px #ecd7ae}
-.card.bad{border-color:#e3aaa2;box-shadow:0 0 0 1px #f0c9c4}
+.card.warn{border-color:#d9b26a;box-shadow:0 0 0 1px #EFD49A}
+.card.bad{border-color:#e3aaa2;box-shadow:0 0 0 1px #F0C4B4}
 .stack>*+*{margin-top:12px}
 .row{display:flex;gap:10px;align-items:center}
 .between{display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -182,17 +182,17 @@ a.btn-sec:hover{background:#fff;color:var(--accent)}
 /* chips */
 .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;white-space:nowrap;border:1px solid transparent;line-height:1.5;vertical-align:middle}
 .chip svg{flex:none}
-.c-ok{background:var(--accent-tint);color:var(--accent-ink);border-color:rgba(21,96,90,.22)}
-.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#ecd7ae}
-.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#f0c9c4}
+.c-ok{background:var(--accent-tint);color:var(--accent-ink);border-color:rgba(180,83,26,.22)}
+.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#EFD49A}
+.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#F0C4B4}
 .c-neu{background:var(--surface-sunken);color:var(--ink-muted);border-color:var(--border)}
-.c-cat{background:#fff;color:var(--ink);border-color:var(--border-strong)}
+.c-tag{background:#fff;color:var(--ink);border-color:var(--border-strong)}
 .c-warm{background:var(--warm-soft);color:var(--warm-ink);border-color:#f3c9a8}
 /* banners */
 .banner{border-radius:16px;padding:14px 18px;font-size:14px;border:1px solid var(--border);background:#fff;display:flex;gap:12px;align-items:flex-start}
-.b-info{background:var(--accent-tint);border-color:rgba(21,96,90,.22);color:var(--accent-ink)}
-.b-warn{background:var(--warning-bg);border-color:#ecd7ae;color:var(--warning-ink)}
-.b-bad{background:var(--danger-bg);border-color:#f0c9c4;color:var(--danger-ink)}
+.b-info{background:var(--accent-tint);border-color:rgba(180,83,26,.22);color:var(--accent-ink)}
+.b-warn{background:var(--warning-bg);border-color:#EFD49A;color:var(--warning-ink)}
+.b-bad{background:var(--danger-bg);border-color:#F0C4B4;color:var(--danger-ink)}
 /* acknowledgement */
 .ack{display:flex;gap:12px;align-items:center;min-height:48px;padding:10px 16px;border:1px solid var(--border-strong);border-radius:16px;background:#fff;font-weight:600;font-size:14px;cursor:pointer}
 .ack input{width:20px;height:20px;margin:0;accent-color:var(--accent);flex:none}
@@ -259,7 +259,7 @@ dl.kv dd{margin:0;line-height:1.5}
 </style>
 </helmet>
 <div class="art" style="width:1280px;min-height:1400px">
-  <header class="hh"><div class="hh-in"><a class="hh-logo" href="#"><span class="hh-disc"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3l2.2 4.2M17 3l-2.2 4.2"/><path d="M5 13a7 6 0 0 0 14 0c0-3.3-3.1-6-7-6s-7 2.7-7 6z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/></svg></span><span class="hh-name">PurrCare</span></a><nav class="hh-nav" aria-label="Portal"><a href="#">Shop</a><a href="#">My cats</a><a href="#">Appointments</a><a href="MyOrders.dc.html" aria-current="page">Orders</a></nav><div class="hh-right"><a class="hh-cart" href="Cart.dc.html"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Cart</a><span>Farhana Yasmin</span></div></div></header>
+  <header class="hh"><div class="hh-in"><a class="hh-logo" href="#"><span class="hh-disc"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 5-14 14-14 0 9-6 14-14 14z"/><path d="M5 19l8-8"/></svg></span><span class="hh-name">Amar Gram</span></a><nav class="hh-nav" aria-label="Portal"><a href="#">Shop</a><a href="MyOrders.dc.html" aria-current="page">Orders</a></nav><div class="hh-right"><a class="hh-cart" href="Cart.dc.html"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Cart</a><span>Farhana Yasmin</span></div></div></header>
   <main class="main" style="padding-top:20px;gap:22px">
     <a class="back" href="MyOrders.dc.html">← Order ORD-2026-000087</a>
     <div class="greet" style="margin-top:-10px"><h1>Request a return</h1><p>Only items you can still return are listed.</p></div>
@@ -268,17 +268,17 @@ dl.kv dd{margin:0;line-height:1.5}
     <div class="two od">
       <div class="col">
         <section class="card" aria-labelledby="l1-h" style="display:flex;flex-direction:column;gap:14px">
-          <div class="row" style="gap:16px"><span class="tile sm" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><strong id="l1-h" style="font-size:15px">Cat Litter Clumping 10 L</strong><br><span class="sm muted">Bought 2 · you can return up to 2</span></span>
-            <span class="field"><span class="flabel" id="q1-l">Quantity</span><span class="stepper" role="group" aria-labelledby="q1-l"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity to return of Cat Litter 10 L"><button type="button" aria-label="One more">+</button></span></span></div>
+          <div class="row" style="gap:16px"><span class="tile sm" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><strong id="l1-h" style="font-size:15px">Sundarbans wild honey 500 g</strong><br><span class="sm muted">Bought 2 · you can return up to 2</span></span>
+            <span class="field"><span class="flabel" id="q1-l">Quantity</span><span class="stepper" role="group" aria-labelledby="q1-l"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity to return of Sundarbans wild honey 500 g"><button type="button" aria-label="One more">+</button></span></span></div>
           <fieldset style="border:0;margin:0;padding:0"><legend class="flabel" style="margin-bottom:8px">Why are you returning it?</legend><div class="chips" role="radiogroup"><span class="win" role="radio" aria-checked="false" tabindex="-1">Changed my mind</span><span class="win on" role="radio" aria-checked="true" tabindex="0">Damaged on arrival</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Wrong item sent</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Quality problem</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Product recall</span></div></fieldset>
           <fieldset style="border:0;margin:0;padding:0"><legend class="flabel" style="margin-bottom:8px">Condition</legend><div class="chips" role="radiogroup"><span class="win on" role="radio" aria-checked="true" tabindex="0">Sealed / unopened</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Opened</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Used</span></div></fieldset>
-          <p class="sm" style="background:var(--surface-sunken);border-radius:14px;padding:10px 14px">Opened litter can only be returned if there's a quality problem or a recall.</p>
-          <div class="field"><label for="n1">Note <span class="muted" style="font-weight:400">(optional)</span></label><textarea id="n1">The bag was split at the bottom when it arrived.</textarea></div>
+          <p class="sm" style="background:var(--surface-sunken);border-radius:14px;padding:10px 14px">Opened honey can only be returned if there's a quality problem or a recall.</p>
+          <div class="field"><label for="n1">Note <span class="muted" style="font-weight:400">(optional)</span></label><textarea id="n1">The jar lid was cracked when it arrived.</textarea></div>
         </section>
 
         <section class="card bad" aria-labelledby="l2-h" style="display:flex;flex-direction:column;gap:14px">
-          <div class="row" style="gap:16px"><span class="tile sm" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><strong id="l2-h" style="font-size:15px">Royal Canin Kitten 2 kg</strong><br><span class="sm muted">Bought 2 · you can return up to 2</span></span>
-            <span class="field"><span class="flabel" id="q2-l">Quantity</span><span class="stepper" role="group" aria-labelledby="q2-l"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity to return of Royal Canin Kitten 2 kg"><button type="button" aria-label="One more">+</button></span></span></div>
+          <div class="row" style="gap:16px"><span class="tile sm" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z"/></svg></span><span style="flex:1"><strong id="l2-h" style="font-size:15px">Pure cow ghee 400 g</strong><br><span class="sm muted">Bought 2 · you can return up to 2</span></span>
+            <span class="field"><span class="flabel" id="q2-l">Quantity</span><span class="stepper" role="group" aria-labelledby="q2-l"><button type="button" aria-label="One fewer">−</button><input value="1" aria-label="Quantity to return of Pure cow ghee 400 g"><button type="button" aria-label="One more">+</button></span></span></div>
           <fieldset style="border:0;margin:0;padding:0"><legend class="flabel" style="margin-bottom:8px">Why are you returning it?</legend><div class="chips" role="radiogroup" aria-describedby="l2-err"><span class="win on" role="radio" aria-checked="true" aria-invalid="true" tabindex="0" style="background:var(--danger-bg);border-color:var(--danger-ink);box-shadow:0 0 0 1px var(--danger-ink);color:var(--danger-ink)">Changed my mind</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Damaged on arrival</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Wrong item sent</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Quality problem</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Product recall</span></div></fieldset>
           <fieldset style="border:0;margin:0;padding:0"><legend class="flabel" style="margin-bottom:8px">Condition</legend><div class="chips" role="radiogroup"><span class="win" role="radio" aria-checked="false" tabindex="-1">Sealed / unopened</span><span class="win on" role="radio" aria-checked="true" tabindex="0">Opened</span><span class="win" role="radio" aria-checked="false" tabindex="-1">Used</span></div></fieldset>
           <p class="sm" style="background:var(--surface-sunken);border-radius:14px;padding:10px 14px">Opened food can only be returned if there's a quality problem or a recall.</p>
@@ -297,7 +297,7 @@ dl.kv dd{margin:0;line-height:1.5}
         </section>
         <section class="card flat" aria-labelledby="nl-h">
           <h2 id="nl-h">Not listed</h2>
-          <p class="sm" style="margin-top:6px"><b>Hill's Prescription Diet k/d 2 kg</b>: the shop can't take it back. Contact Uttara if there's a problem with it.</p>
+          <p class="sm" style="margin-top:6px"><b>Village pantry box</b>: it contains fresh produce, so the shop can't take it back. Contact the Dhanmondi outlet if there's a problem with it.</p>
         </section>
         <aside class="sum" aria-label="Send the request" style="gap:12px">
           <p class="sm muted">2 items selected. A refund, if due, is decided after we receive them.</p>

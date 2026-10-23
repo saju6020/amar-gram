@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 :root{--overlay:rgba(28,26,23,.4);--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
@@ -66,7 +66,7 @@ tbody tr:last-child td{border-bottom:none}
 tfoot td{background:var(--surface-sunken);font-weight:700}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.dim td{color:var(--ink-faint)}
-tr.unusable td{background:#fdfbf8}
+tr.unusable td{background:#FFFAF0}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px}
 .grid2{display:flex;gap:18px;align-items:flex-start}
 .grid2 > *{flex:1;min-width:0}
@@ -104,10 +104,10 @@ tr.unusable td{background:#fdfbf8}
 </style>
 </helmet>
 <div style="width:1280px;height:1180px;background:var(--surface-page);overflow:auto;position:relative">
-<div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+<div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
 <div class="main">
   <nav class="secnav" aria-label="Procurement"><a href="Suppliers.dc.html">Suppliers</a><a href="PurchaseOrderList.dc.html">Purchase orders</a><a href="ConsignmentList.dc.html" class="active" aria-current="page">Consignments</a><a href="ReorderSuggestions.dc.html">Reorder</a></nav>
-  <div class="titlerow"><div><h1 class="h1">CN-UTR-2026-011</h1><p class="sub" style="margin:4px 0 0">Kanto Veterinary Trading · from Thailand · <span class="b b-ok"><i aria-hidden="true">✓</i> Cleared</span> · base currency BDT</p></div><a class="btn btn-sec" style="text-decoration:none" href="InspectionPack.dc.html">Inspection pack</a></div>
+  <div class="titlerow"><div><h1 class="h1">CN-DHN-2026-011</h1><p class="sub" style="margin:4px 0 0">Al-Qassim Dates Trading · from Saudi Arabia · <span class="b b-ok"><i aria-hidden="true">✓</i> Cleared</span> · base currency BDT</p></div><a class="btn btn-sec" style="text-decoration:none" href="InspectionPack.dc.html">Inspection pack</a></div>
   <nav class="tabnav" aria-label="Consignment sections"><a href="ConsignmentDetails.dc.html">Details</a><a href="ConsignmentDocuments.dc.html">Documents</a><a href="#" class="active" aria-current="page">Costs &amp; rates</a><a href="#batches">Batches</a></nav>
   <div class="split">
     <div class="left">
@@ -116,7 +116,7 @@ tr.unusable td{background:#fdfbf8}
       <table class="ed">
         <thead><tr><th>Kind</th><th style="width:130px">Amount</th><th style="width:90px">Currency</th><th>Note</th></tr></thead>
         <tbody>
-          <tr><td><select aria-label="Kind"><option>Goods (supplier invoice)</option></select></td><td><input value="1,180.00" aria-label="Amount"></td><td><select aria-label="Currency"><option>USD</option></select></td><td><input value="Invoice KVT-2026-0412" aria-label="Note"></td></tr>
+          <tr><td><select aria-label="Kind"><option>Goods (supplier invoice)</option></select></td><td><input value="1,180.00" aria-label="Amount"></td><td><select aria-label="Currency"><option>USD</option></select></td><td><input value="Invoice AQD-2026-0412" aria-label="Note"></td></tr>
           <tr><td><select aria-label="Kind"><option>Freight</option></select></td><td><input value="210.00" aria-label="Amount"></td><td><select aria-label="Currency"><option>USD</option></select></td><td><input value="Sea freight, reefer" aria-label="Note"></td></tr>
           <tr><td><select aria-label="Kind"><option>Insurance</option></select></td><td><input value="18.50" aria-label="Amount"></td><td><select aria-label="Currency"><option>USD</option></select></td><td><input value="" aria-label="Note"></td></tr>
           <tr><td><select aria-label="Kind"><option>Customs duty</option></select></td><td><input value="26,150.00" aria-label="Amount" style="border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)"></td><td><select aria-label="Currency"><option>BDT</option></select></td><td><input value="Revised assessment 20 Sep" aria-label="Note"></td></tr>
@@ -148,9 +148,9 @@ tr.unusable td{background:#fdfbf8}
   <table>
     <thead><tr><th>Batch · lot</th><th>SKU</th><th>Expiry</th><th>Location</th><th class="num">Quantity</th><th class="num">Purchase cost</th><th class="num">Allocated cost</th><th class="num">Landed unit cost</th></tr></thead>
     <tbody>
-      <tr><td><a class="link" href="BatchDetail.dc.html">AMX-5521</a> <span class="b b-danger"><i aria-hidden="true">⊘</i> Recalled — held</span></td><td>MED-AMX-50 · Amoxicillin oral suspension 50 mg/ml</td><td>31 Mar 2027</td><td>UTR-DISP, UTR-QUAR</td><td class="num">1,500 ml</td><td class="num">৳69,226.50</td><td class="num">৳36,358.20</td><td class="num strong">৳70.3898 / ml</td></tr>
-      <tr><td><a class="link" href="BatchDetail.dc.html">AMX-5530</a> <span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></td><td>MED-AMX-50 · Amoxicillin oral suspension 50 mg/ml</td><td>30 Apr 2027</td><td>UTR-FRIDGE</td><td class="num">1,000 ml</td><td class="num">৳46,151.00</td><td class="num">৳24,238.80</td><td class="num strong">৳70.3898 / ml</td></tr>
-      <tr><td><a class="link" href="BatchDetail.dc.html">FVX-2291</a> <span class="b b-warn"><i aria-hidden="true">⏸</i> Quarantined</span></td><td>MED-FVX-TRI · Feline tricat vaccine</td><td>12 Jan 2027</td><td>UTR-QUAR</td><td class="num">60 doses</td><td class="num">৳27,933.50</td><td class="num">৳1,454.33</td><td class="num strong">৳489.7972 / dose</td></tr>
+      <tr><td><a class="link" href="BatchDetail.dc.html">MDJ-5521</a> <span class="b b-danger"><i aria-hidden="true">⊘</i> Recalled — held</span></td><td>DAT-MDJ-PK · Medjool dates snack pack, 100 g</td><td>31 Mar 2027</td><td>DHN-PACK, DHN-QUAR</td><td class="num">1,500 packs</td><td class="num">৳69,226.50</td><td class="num">৳36,358.20</td><td class="num strong">৳70.3898 / pack</td></tr>
+      <tr><td><a class="link" href="BatchDetail.dc.html">MDJ-5530</a> <span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></td><td>DAT-MDJ-PK · Medjool dates snack pack, 100 g</td><td>30 Apr 2027</td><td>DHN-FRIDGE</td><td class="num">1,000 packs</td><td class="num">৳46,151.00</td><td class="num">৳24,238.80</td><td class="num strong">৳70.3898 / pack</td></tr>
+      <tr><td><a class="link" href="BatchDetail.dc.html">AJW-2291</a> <span class="b b-warn"><i aria-hidden="true">⏸</i> Quarantined</span></td><td>DAT-AJW-250 · Ajwa dates 250 g box</td><td>12 Jan 2027</td><td>DHN-QUAR</td><td class="num">60 boxes</td><td class="num">৳27,933.50</td><td class="num">৳1,454.33</td><td class="num strong">৳489.7972 / box</td></tr>
     </tbody>
     <tfoot><tr><td colspan="5">Totals (from the server)</td><td class="num">৳143,311.00</td><td class="num">৳62,051.33</td><td></td></tr></tfoot>
   </table>

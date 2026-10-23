@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2;--accent-tint:#e6f0ee;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC;--accent-tint:#E3EDC6;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px}
 a{color:var(--accent-ink)}
@@ -65,13 +65,13 @@ section{display:flex;flex-direction:column;gap:20px}
 .float span span{display:block;font-size:13px;color:var(--ink-muted);margin-top:2px}
 .notice{display:flex;gap:10px;align-items:center;background:var(--warning-bg);color:var(--warning-ink);border-radius:var(--radius-pill);padding:12px 20px;font-size:14px;margin-top:-34px}
 /* category tiles */
-.cats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
-.cat{background:#fff;border:1px solid var(--border);border-radius:22px;padding:22px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;text-decoration:none;color:var(--ink)}
-.cat:hover{border-color:var(--accent);color:var(--ink)}
-.cat .disc{width:64px;height:64px;border-radius:var(--radius-pill);background:var(--warm-soft);color:var(--warm-ink);display:grid;place-items:center}
-.cat .disc svg{width:28px;height:28px;stroke-width:1.8}
-.cat strong{font-size:15px}
-.cat span:last-child{font-size:13px;color:var(--ink-muted);line-height:1.4}
+.ctiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.ctile{background:#fff;border:1px solid var(--border);border-radius:22px;padding:22px 14px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;text-decoration:none;color:var(--ink)}
+.ctile:hover{border-color:var(--accent);color:var(--ink)}
+.ctile .disc{width:64px;height:64px;border-radius:var(--radius-pill);background:var(--warm-soft);color:var(--warm-ink);display:grid;place-items:center}
+.ctile .disc svg{width:28px;height:28px;stroke-width:1.8}
+.ctile strong{font-size:15px}
+.ctile span:last-child{font-size:13px;color:var(--ink-muted);line-height:1.4}
 /* featured origins */
 .origins{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .origin{background:#fff;border:1px solid var(--border);border-radius:var(--radius-card);padding:20px;display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--ink)}
@@ -139,8 +139,8 @@ section{display:flex;flex-direction:column;gap:20px}
 <div style="width:1280px;min-height:1980px;background:var(--surface-page);display:flex;flex-direction:column">
   <header class="topnav">
     <div class="bar">
-      <a class="brand" href="ShopHome.dc.html"><span class="logo-disc" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3l2.2 4.2M17 3l-2.2 4.2"/><path d="M5 13a7 6 0 0 0 14 0c0-3.3-3.1-6-7-6s-7 2.7-7 6z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/><path d="M10.8 15.2l1.2.8 1.2-.8"/></svg></span>PurrCare Shop</a>
-      <form class="search" role="search" aria-label="Search products"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input aria-label="Search products" placeholder="Search food, litter, brands, ingredients"><button type="submit">Search</button></form>
+      <a class="brand" href="ShopHome.dc.html"><span class="logo-disc" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12C12 7.5 9 5 4 5c0 4.5 3 7 8 7z"/><path d="M12 14c0-3.5 2.6-6 7-6 0 3.8-2.6 6-7 6z"/></svg></span>Amar Gram Shop</a>
+      <form class="search" role="search" aria-label="Search products"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input aria-label="Search products" placeholder="Search rice, honey, oils, spices, origins"><button type="submit">Search</button></form>
       <label class="lang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span class="sr">Product language</span><select aria-label="Product content language"><option selected>English</option><option>বাংলা (Bangla)</option></select></label>
       <div class="acct">
         <a href="../accounts-identity/SignIn.dc.html">Sign in</a>
@@ -148,7 +148,8 @@ section{display:flex;flex-direction:column;gap:20px}
       </div>
     </div>
     <nav class="catnav" aria-label="Categories">
-      <a href="Catalogue.dc.html">Cat food</a><a href="#">Litter</a><a href="#">Litter pots &amp; accessories</a><a href="#">Bags &amp; carriers</a><a href="#">Health &amp; grooming</a><a href="#">Toys &amp; furniture</a><a href="ShopByCountry.dc.html">Shop by country</a>
+      <a href="Catalogue.dc.html">Rice &amp; grains</a><a href="#">Honey &amp; gur</a><a href="#">Oils &amp; ghee</a><a href="#">Spices</a><a href="#">Pulses</a><a href="#">Tea</a><a href="#">Fresh produce</a><a href="#">Dates &amp; dry fruit</a><a href="ShopByCountry.dc.html">Shop by origin</a>
+
     </nav>
   </header>
 
@@ -156,50 +157,50 @@ section{display:flex;flex-direction:column;gap:20px}
     <section class="hero" aria-labelledby="hero-title" aria-roledescription="announcement">
       <div class="hero-copy">
         <span class="eyepill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px;stroke-width:2.2"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg>Free delivery in Dhaka over ৳3,000.00 until 31 Oct</span>
-        <h1 id="hero-title">Kitten season <em>at PurrCare</em></h1>
-        <p>Everything a new kitten needs, from starter kits to first-vaccination bookings.</p>
+        <h1 id="hero-title">Harvest season <em>at Amar Gram</em></h1>
+        <p>New-crop chinigura rice, Sundarbans honey and khejur gur, straight from the districts that grow them.</p>
         <div class="hero-actions">
-          <a class="btn" href="Catalogue.dc.html">Shop kitten food<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-          <a class="btn2" href="ShopByCountry.dc.html">Shop by country</a>
+          <a class="btn" href="Catalogue.dc.html">Shop rice &amp; grains<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px;stroke-width:2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn2" href="ShopByCountry.dc.html">Shop by origin</a>
         </div>
       </div>
       <div class="hero-art">
         <div class="hero-disc">
           <svg width="190" height="210" viewBox="0 0 120 132" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M34 30 L40 6 L54 24"/><path d="M86 30 L80 6 L66 24"/>
-            <path d="M30 44c0-14 13-22 30-22s30 8 30 22-13 24-30 24-30-10-30-24z"/>
-            <path d="M48 42h.01M72 42h.01"/><path d="M56 52l4 3 4-3"/>
-            <path d="M40 64c-10 10-14 26-12 44 1 12 10 18 32 18s31-6 32-18c2-18-2-34-12-44"/>
-            <path d="M92 108c10 0 16-6 14-14"/>
+            <path d="M12 62h96l-11 54a8 8 0 0 1-8 6H31a8 8 0 0 1-8-6z"/><path d="M36 62l16-34M84 62L68 28"/>
+            <path d="M22 84h76M26 104h68"/>
+            <path d="M60 62V36"/><path d="M60 40c0-12-8-20-22-20 0 12 8 20 22 20z"/><path d="M60 46c0-10 7-17 19-17 0 10-7 17-19 17z"/>
           </svg>
         </div>
         <a class="float" href="ProductPage.dc.html">
           <span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <span><strong>Royal Canin Kitten</strong><span>In stock · from ৳650.00 + VAT</span></span>
+          <span><strong>Chinigura aromatic rice</strong><span>In stock · from ৳95.00 + VAT</span></span>
         </a>
       </div>
     </section>
     <div class="notice" role="note"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg><span><b>Puja holiday:</b> orders placed from 9 Oct to 13 Oct are delivered from 14 Oct.</span></div>
 
-    <section aria-labelledby="cats-title">
-      <div class="sechead"><h2 class="h2" id="cats-title">Shop by category</h2><a href="Catalogue.dc.html">All products</a></div>
-      <div class="cats">
-        <a class="cat" href="Catalogue.dc.html"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M4 10h16l-1.5 9a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 10zM8 10V7a4 4 0 0 1 8 0v3"/></svg></span><strong>Cat food</strong><span>Dry, wet, treats, kitten, adult, senior, therapeutic</span></a>
-        <a class="cat" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M4 14h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4zM7 14l1-6h8l1 6"/></svg></span><strong>Litter</strong><span>Clumping, silica, tofu, bentonite</span></a>
-        <a class="cat" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><rect x="3" y="9" width="18" height="10" rx="2"/><path d="M6 9a6 6 0 0 1 12 0"/></svg></span><strong>Litter pots &amp; accessories</strong><span>Trays, hooded boxes, scoops, mats, liners</span></a>
-        <a class="cat" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 8V5h6v3M4 13h16"/></svg></span><strong>Bags &amp; carriers</strong><span>Carriers, backpacks, travel bags, storage bags</span></a>
-        <a class="cat" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg></span><strong>Health &amp; grooming</strong><span>Brushes, shampoos, flea care</span></a>
-        <a class="cat" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18"/></svg></span><strong>Toys &amp; furniture</strong><span>Scratchers, beds, wands, balls</span></a>
+    <section aria-labelledby="categories-title">
+      <div class="sechead"><h2 class="h2" id="categories-title">Shop by category</h2><a href="Catalogue.dc.html">All products</a></div>
+      <div class="ctiles">
+        <a class="ctile" href="Catalogue.dc.html"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M4 10h16l-1.5 9a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 10zM8 10V7a4 4 0 0 1 8 0v3"/></svg></span><strong>Rice &amp; grains</strong><span>Chinigura, kataribhog, red rice, flattened rice</span></a>
+        <a class="ctile" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M4 14h16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4zM7 14l1-6h8l1 6"/></svg></span><strong>Honey &amp; gur</strong><span>Wild and mustard-flower honey, khejur and akh gur</span></a>
+        <a class="ctile" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><rect x="3" y="9" width="18" height="10" rx="2"/><path d="M6 9a6 6 0 0 1 12 0"/></svg></span><strong>Oils &amp; ghee</strong><span>Cold-pressed mustard oil, coconut oil, cow ghee</span></a>
+        <a class="ctile" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 8V5h6v3M4 13h16"/></svg></span><strong>Spices</strong><span>Turmeric, chilli, cumin, whole garam masala</span></a>
+        <a class="ctile" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><circle cx="8" cy="9" r="2.5"/><circle cx="15" cy="8" r="2.5"/><circle cx="11" cy="15" r="2.5"/><circle cx="17" cy="15" r="2.5"/></svg></span><strong>Pulses</strong><span>Red lentils, mung, chickpeas, matar dal</span></a>
+        <a class="ctile" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9zM16 10h2a2 2 0 0 1 0 4h-2"/></svg></span><strong>Tea</strong><span>Sylhet black, green and orthodox leaf tea</span></a>
+        <a class="ctile" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><path d="M12 7c-4 0-7 3-7 7s3 7 7 7 7-3 7-7-3-7-7-7zM12 7c0-2 1-4 3-4"/></svg></span><strong>Fresh produce</strong><span>Seasonal mangoes, lychees, vegetables</span></a>
+        <a class="ctile" href="#"><span class="disc"><svg viewBox="0 0 24 24" class="ic" aria-hidden="true"><ellipse cx="12" cy="12" rx="5" ry="8"/><path d="M12 4v16"/></svg></span><strong>Dates &amp; dry fruit</strong><span>Ajwa and Medjool dates, cashews, raisins</span></a>
       </div>
     </section>
 
     <section aria-labelledby="origins-title">
-      <div class="sechead"><h2 class="h2" id="origins-title">Featured origins</h2><a href="ShopByCountry.dc.html">All countries</a></div>
+      <div class="sechead"><h2 class="h2" id="origins-title">Featured origins</h2><a href="ShopByCountry.dc.html">All origins</a></div>
       <div class="origins">
-        <a class="origin" href="OriginPage.dc.html"><svg class="flag" viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="6" fill="#A51931"/><rect y="1" width="9" height="4" fill="#F4F5F8"/><rect y="2" width="9" height="2" fill="#2D2A4A"/></svg><div><b>Thailand</b><span>18 products</span></div></a>
-        <a class="origin" href="#"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#000"/><rect y=".667" width="3" height=".667" fill="#D00"/><rect y="1.333" width="3" height=".667" fill="#FFCE00"/></svg><div><b>Germany</b><span>13 products</span></div></a>
-        <a class="origin" href="#"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#E30A17"/><circle cx="11" cy="10" r="5" fill="#fff"/><circle cx="12.3" cy="10" r="4" fill="#E30A17"/><path d="m17 10 3.6-1.2-2.2 3.1V8.1l2.2 3.1Z" fill="#fff"/></svg><div><b>Türkiye</b><span>9 products</span></div></a>
-        <a class="origin" href="#"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><path d="M10 10a5 5 0 0 1 10 0Z" fill="#CD2E3A"/><path d="M10 10a5 5 0 0 0 10 0Z" fill="#0047A0"/><path d="M4 5h4M4 6.5h4M4 8h4M22 12h4M22 13.5h4M22 15h4" stroke="#000" stroke-width=".8"/></svg><div><b>South Korea</b><span>5 products</span></div></a>
+        <a class="origin" href="OriginPage.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:30px;height:24px;color:var(--accent)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Satkhira</b><span>14 products</span></div></a>
+        <a class="origin" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:30px;height:24px;color:var(--accent)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Dinajpur</b><span>11 products</span></div></a>
+        <a class="origin" href="#"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:30px;height:24px;color:var(--accent)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><div><b>Sirajganj</b><span>9 products</span></div></a>
+        <a class="origin" href="#"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#006C35"/><path d="M.8 1.3h1.4" stroke="#fff" stroke-width=".08"/></svg><div><b>Saudi Arabia</b><span>5 products</span></div></a>
       </div>
     </section>
 
@@ -207,43 +208,43 @@ section{display:flex;flex-direction:column;gap:20px}
       <div class="sechead"><h2 class="h2" id="new-title">New arrivals</h2><a href="Catalogue.dc.html">See all new arrivals</a></div>
       <div class="grid4">
       <article class="card pcard">
-            <div class="pimg c1"><button class="wish" type="button" aria-pressed="false" aria-label="Save Royal Canin Kitten to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+            <div class="pimg c1"><button class="wish" type="button" aria-pressed="false" aria-label="Save Chinigura aromatic rice to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>France</span>
-              <h3><a href="ProductPage.dc.html">Royal Canin Kitten</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Dinajpur</span>
+              <h3><a href="ProductPage.dc.html">Chinigura aromatic rice</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★½</span>4.5 out of 5 (23 reviews)</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span><small>From</small> ৳650.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-haspopup="dialog" aria-label="Add Royal Canin Kitten: choose a size">Add</button></div>
+              <div class="buy"><div class="price"><span><small>From</small> ৳95.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-haspopup="dialog" aria-label="Add Chinigura aromatic rice: choose a size">Add</button></div>
             </div>
           </article>
       <article class="card pcard">
-            <div class="pimg c3"><button class="wish" type="button" aria-pressed="false" aria-label="Save Anatolia Adult Lamb to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+            <div class="pimg c3"><button class="wish" type="button" aria-pressed="false" aria-label="Save Sundarbans wild honey 500 g to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#E30A17"/><circle cx="11" cy="10" r="5" fill="#fff"/><circle cx="12.3" cy="10" r="4" fill="#E30A17"/><path d="m17 10 3.6-1.2-2.2 3.1V8.1l2.2 3.1Z" fill="#fff"/></svg>Türkiye</span>
-              <h3><a href="#">Anatolia Adult Lamb</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Satkhira</span>
+              <h3><a href="#">Sundarbans wild honey 500 g</a></h3>
               <div class="meta">No reviews yet</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span>৳1,980.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Anatolia Adult Lamb to cart">Add</button></div>
+              <div class="buy"><div class="price"><span>৳650.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Sundarbans wild honey 500 g to cart">Add</button></div>
             </div>
           </article>
       <article class="card pcard">
-            <div class="pimg c2"><button class="wish" type="button" aria-pressed="false" aria-label="Save Tofu Clumping Litter, Green Tea to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><rect x="10" y="36" width="60" height="44" rx="6" fill="currentColor"/><path d="M22 36V26h36v10" stroke="currentColor" stroke-width="6" fill="none"/></svg></div>
+            <div class="pimg c2"><button class="wish" type="button" aria-pressed="false" aria-label="Save Khejur gur 500 g to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><rect x="10" y="36" width="60" height="44" rx="6" fill="currentColor"/><path d="M22 36V26h36v10" stroke="currentColor" stroke-width="6" fill="none"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><path d="M10 10a5 5 0 0 1 10 0Z" fill="#CD2E3A"/><path d="M10 10a5 5 0 0 0 10 0Z" fill="#0047A0"/><path d="M4 5h4M4 6.5h4M4 8h4M22 12h4M22 13.5h4M22 15h4" stroke="#000" stroke-width=".8"/></svg>South Korea</span>
-              <h3><a href="#">Tofu Clumping Litter, Green Tea</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Jashore</span>
+              <h3><a href="#">Khejur gur 500 g</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★</span>4.2 out of 5 (31 reviews)</div>
               <span class="avail out"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>Out of stock</span>
-              <div class="buy"><div class="price"><span><small>From</small> ৳890.00</span><span class="tax">+ VAT</span></div><a class="add ghost" href="ProductOutOfStock.dc.html" aria-label="Tell me when Tofu Clumping Litter, Green Tea is back">Alert me</a></div>
+              <div class="buy"><div class="price"><span>৳280.00</span><span class="tax">+ VAT</span></div><a class="add ghost" href="ProductOutOfStock.dc.html" aria-label="Tell me when Khejur gur 500 g is back">Alert me</a></div>
             </div>
           </article>
       <article class="card pcard">
-            <div class="pimg c4"><button class="wish" type="button" aria-pressed="false" aria-label="Save Airline Carrier, Medium to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><rect x="12" y="28" width="56" height="50" rx="10" fill="currentColor"/><path d="M28 28a12 12 0 0 1 24 0" stroke="currentColor" stroke-width="6" fill="none"/></svg></div>
+            <div class="pimg c4"><button class="wish" type="button" aria-pressed="false" aria-label="Save Pure cow ghee 400 g to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><rect x="12" y="28" width="56" height="50" rx="10" fill="currentColor"/><path d="M28 28a12 12 0 0 1 24 0" stroke="currentColor" stroke-width="6" fill="none"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 19 10" aria-hidden="true"><rect width="19" height="10" fill="#fff"/><path d="M0 0h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0z" fill="#B22234"/><rect width="7.6" height="5.4" fill="#3C3B6E"/></svg>United States</span>
-              <h3><a href="#">Airline Carrier, Medium</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Sirajganj</span>
+              <h3><a href="#">Pure cow ghee 400 g</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★★</span>5.0 out of 5 (2 reviews)</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span>৳4,250.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Airline Carrier, Medium to cart">Add</button></div>
+              <div class="buy"><div class="price"><span>৳750.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Pure cow ghee 400 g to cart">Add</button></div>
             </div>
           </article>
       </div>
@@ -252,12 +253,12 @@ section{display:flex;flex-direction:column;gap:20px}
     <section class="promises" aria-label="Why shop with us">
       <div class="promise"><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/></svg></span><span><strong>Delivery across Dhaka</strong><span>Pick a delivery slot at checkout; the fee is shown before you order.</span></span></div>
       <div class="promise"><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10H3zM12 12h.01M7 12h.01M17 12h.01"/></svg></span><span><strong>Cash on delivery</strong><span>Or bank transfer, or cash or card at the branch counter.</span></span></div>
-      <div class="promise"><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><span><strong>Chosen by our vets</strong><span>Everything we sell is checked by the clinic team.</span></span></div>
-      <div class="promise"><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><path d="M12 10h.01"/></svg></span><span><strong>Or pick it up</strong><span>Choose Pickup at checkout and collect from a PurrCare branch.</span></span></div>
+      <div class="promise"><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><span><strong>Straight from the village</strong><span>Every batch is traced to its district and checked by our team.</span></span></div>
+      <div class="promise"><span class="tile"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><path d="M12 10h.01"/></svg></span><span><strong>Or pick it up</strong><span>Choose Pickup at checkout and collect from an Amar Gram branch.</span></span></div>
     </section>
   </main>
   <footer class="foot" style="margin-top:auto">
-    <span>© PurrCare — cat clinic, boarding, pharmacy and shop · Dhaka</span>
+    <span>© Amar Gram — organic, village-sourced goods · Dhaka</span>
     <nav aria-label="Shop information"><a href="#">Delivery &amp; returns</a><a href="#">Privacy policy</a><a href="#">Terms of sale</a><a href="#">FAQs</a></nav>
   </footer>
 </div>

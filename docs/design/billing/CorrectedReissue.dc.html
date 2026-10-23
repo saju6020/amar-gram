@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -103,24 +103,24 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:960px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main">
     <div class="titlerow">
       <div><h1 class="h1">Corrected invoice — draft for Nafisa Rahman</h1><p class="sub"><span class="pill p-neutral"><span aria-hidden="true">✎</span> Draft</span> &nbsp;Lines copied from the original. Edit what was wrong, then issue it as a new invoice.</p></div>
       <div class="actions"><button class="btn btn-danger" type="button">Discard draft</button><button class="btn btn-sec" type="button">Save draft</button><button class="btn" type="button">Issue corrected invoice…</button></div>
     </div>
     <div class="links" aria-label="Linked documents">
-      <span class="muted">Corrects</span><a href="InvoiceDetail.dc.html">INV-UTR-2627-000405</a><span class="pill p-neutral"><span aria-hidden="true">↺</span> Credited</span>
+      <span class="muted">Corrects</span><a href="InvoiceDetail.dc.html">INV-DHN-2627-000405</a><span class="pill p-neutral"><span aria-hidden="true">↺</span> Credited</span>
       <span class="arrow" aria-hidden="true">→</span>
-      <span class="muted">credited in full by</span><a href="CreditNoteDetail.dc.html">CN-UTR-2627-000033</a><span class="small muted">(Correction · ৳4,611.50 · "Litter charged as 3 bags, customer took 2")</span>
+      <span class="muted">credited in full by</span><a href="CreditNoteDetail.dc.html">CN-DHN-2627-000033</a><span class="small muted">(Correction · ৳4,611.50 · "Gur charged as 3 tins, customer took 2")</span>
       <span class="arrow" aria-hidden="true">→</span>
       <span class="muted">this draft</span>
     </div>
     <table class="ed">
       <thead><tr><th style="width:34%">Description</th><th style="width:10%" class="num">Qty</th><th style="width:14%" class="num">Unit price (৳)</th><th style="width:13%" class="num">Discount (৳)</th><th style="width:18%">Tax class</th><th></th></tr></thead>
       <tbody>
-        <tr class="changed"><td><input aria-label="Description, line 1" value="Clumping cat litter, 10 L"></td><td><input class="n" aria-label="Quantity, line 1" value="2"></td><td><input class="n" aria-label="Unit price, line 1" value="720.00"></td><td><input class="n" aria-label="Discount, line 1" value="0.00"></td><td><select aria-label="Tax class, line 1"><option>STD — Standard rate</option><option>ZERO — Zero-rated (medicine)</option></select></td><td class="small" style="color:var(--warning-ink)"><span aria-hidden="true">✎</span> Changed: qty was 3</td></tr>
-        <tr><td><input aria-label="Description, line 2" value="Sisal scratching post, 80 cm"></td><td><input class="n" aria-label="Quantity, line 2" value="1"></td><td><input class="n" aria-label="Unit price, line 2" value="1850.00"></td><td><input class="n" aria-label="Discount, line 2" value="0.00"></td><td><select aria-label="Tax class, line 2"><option>STD — Standard rate</option></select></td><td class="small muted">As on the original</td></tr>
+        <tr class="changed"><td><input aria-label="Description, line 1" value="Patali khejur gur 1 kg tin"></td><td><input class="n" aria-label="Quantity, line 1" value="2"></td><td><input class="n" aria-label="Unit price, line 1" value="720.00"></td><td><input class="n" aria-label="Discount, line 1" value="0.00"></td><td><select aria-label="Tax class, line 1"><option>STD — Standard rate</option><option>ZERO — Zero-rated (basic food)</option></select></td><td class="small" style="color:var(--warning-ink)"><span aria-hidden="true">✎</span> Changed: qty was 3</td></tr>
+        <tr><td><input aria-label="Description, line 2" value="Handwoven jute basket, large"></td><td><input class="n" aria-label="Quantity, line 2" value="1"></td><td><input class="n" aria-label="Unit price, line 2" value="1850.00"></td><td><input class="n" aria-label="Discount, line 2" value="0.00"></td><td><select aria-label="Tax class, line 2"><option>STD — Standard rate</option></select></td><td class="small muted">As on the original</td></tr>
       </tbody>
     </table>
     <p class="hint">Only the copied lines can be edited. New charges can't be added to a corrected invoice — bill them on a separate one.</p>
@@ -130,8 +130,8 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <table>
         <thead><tr><th>Line</th><th>Tax class</th><th class="num">Rate</th><th class="num">Net</th><th class="num">Tax</th><th class="num">Gross</th></tr></thead>
         <tbody>
-          <tr><td>Clumping cat litter, 10 L × 2</td><td>STD</td><td class="num">15%</td><td class="num">1,440.00</td><td class="num">216.00</td><td class="num">1,656.00</td></tr>
-          <tr><td>Sisal scratching post, 80 cm</td><td>STD</td><td class="num">15%</td><td class="num">1,850.00</td><td class="num">277.50</td><td class="num">2,127.50</td></tr>
+          <tr><td>Patali khejur gur 1 kg tin × 2</td><td>STD</td><td class="num">15%</td><td class="num">1,440.00</td><td class="num">216.00</td><td class="num">1,656.00</td></tr>
+          <tr><td>Handwoven jute basket, large</td><td>STD</td><td class="num">15%</td><td class="num">1,850.00</td><td class="num">277.50</td><td class="num">2,127.50</td></tr>
         </tbody>
       </table>
       <div class="totals" aria-live="polite">

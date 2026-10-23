@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .dialog h2{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 10px}
 .dialog p{font-size:13.5px;line-height:1.5;margin:0 0 10px}
 .dactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
-.sk{background:linear-gradient(90deg,var(--surface-sunken),#ebe7dd);border-radius:4px;height:10px}
+.sk{background:linear-gradient(90deg,var(--surface-sunken),#EDE4D1);border-radius:4px;height:10px}
 .rcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px}
 .rcard h3{font-size:14px;margin:0 0 8px}
 .rcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;font-size:12.5px}
@@ -127,15 +127,15 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .recip label:last-child{border-bottom:none}
 .recip .roles{font-size:12px;color:var(--ink-muted)}
 .recip label.dis{background:var(--surface-sunken);color:var(--ink-muted)}
-.cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
-.cat-card b{font-size:14px;color:var(--accent-ink)}
-.cat-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
-.cat-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
+.rep-card b{font-size:14px;color:var(--accent-ink)}
+.rep-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
+.rep-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
 
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active outlet"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="padding:22px 32px">
     <a class="back" href="ReportCatalogue.dc.html">← All reports</a>
     <div class="titlerow">
@@ -152,11 +152,11 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
           <caption><b>Shop revenue by category</b> · 1–31 Aug 2026 · Uttara · BDT</caption>
           <thead><tr><th scope="col">Category</th><th scope="col">Sub-category</th><th scope="col" class="num">Units</th><th scope="col" class="num" aria-sort="descending"><button type="button" class="sortbtn on">Net revenue (৳) <span aria-hidden="true">↓</span></button></th></tr></thead>
           <tbody>
-            <tr><th scope="row">Food</th><td>Dry food</td><td class="num">412</td><td class="num">৳4,18,600</td></tr>
-            <tr><th scope="row">Food</th><td>Prescription diet</td><td class="num">96</td><td class="num">৳2,21,400</td></tr>
-            <tr><th scope="row">Litter</th><td>Clumping</td><td class="num">188</td><td class="num">৳1,31,600</td></tr>
-            <tr><th scope="row">Health</th><td>Parasite control</td><td class="num">142</td><td class="num">৳1,13,250</td></tr>
-            <tr><th scope="row">Accessories</th><td>Carriers</td><td class="num">31</td><td class="num">৳62,000</td></tr>
+            <tr><th scope="row">Rice &amp; grains</th><td>Aromatic rice</td><td class="num">412</td><td class="num">৳4,18,600</td></tr>
+            <tr><th scope="row">Honey &amp; sweeteners</th><td>Wild honey</td><td class="num">96</td><td class="num">৳2,21,400</td></tr>
+            <tr><th scope="row">Oils &amp; ghee</th><td>Mustard oil</td><td class="num">188</td><td class="num">৳1,31,600</td></tr>
+            <tr><th scope="row">Spices</th><td>Ground spices</td><td class="num">142</td><td class="num">৳1,13,250</td></tr>
+            <tr><th scope="row">Dates &amp; dry fruit</th><td>Imported dates</td><td class="num">31</td><td class="num">৳62,000</td></tr>
           </tbody>
           <tfoot><tr><th scope="row">Total</th><td></td><td class="num">869</td><td class="num">৳9,46,850</td></tr></tfoot>
         </table>
@@ -170,15 +170,15 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
           <caption><b>Shop revenue by category</b> · 1–31 Aug 2026 · Uttara · BDT</caption>
           <thead><tr><th scope="col">Category</th><th scope="col">Sub-category</th><th scope="col" class="num">Units</th><th scope="col" class="num">Net revenue (৳)</th><th scope="col" class="num">Cost of goods (৳)</th><th scope="col" class="num">Margin (৳)</th><th scope="col" class="num">Margin %</th><th scope="col" class="num">Coverage %</th></tr></thead>
           <tbody>
-            <tr><th scope="row">Food</th><td>Dry food</td><td class="num">412</td><td class="num">৳4,18,600</td><td class="num">৳2,79,300</td><td class="num">৳1,39,300</td><td class="num">33.3%</td><td class="num">100.0%</td></tr>
-            <tr><th scope="row">Food</th><td>Prescription diet</td><td class="num">96</td><td class="num">৳2,21,400</td><td class="num">৳1,02,800</td><td class="num">৳47,600</td><td class="num">31.6%</td><td class="num">68.0%</td></tr>
-            <tr><th scope="row">Litter</th><td>Clumping</td><td class="num">188</td><td class="num">৳1,31,600</td><td class="num">৳88,700</td><td class="num">৳42,900</td><td class="num">32.6%</td><td class="num">100.0%</td></tr>
-            <tr><th scope="row">Health</th><td>Parasite control</td><td class="num">142</td><td class="num">৳1,13,250</td><td class="num">৳51,000</td><td class="num">৳21,300</td><td class="num">29.5%</td><td class="num">63.8%</td></tr>
-            <tr><th scope="row">Accessories</th><td>Carriers</td><td class="num">31</td><td class="num">৳62,000</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
+            <tr><th scope="row">Rice &amp; grains</th><td>Aromatic rice</td><td class="num">412</td><td class="num">৳4,18,600</td><td class="num">৳2,79,300</td><td class="num">৳1,39,300</td><td class="num">33.3%</td><td class="num">100.0%</td></tr>
+            <tr><th scope="row">Honey &amp; sweeteners</th><td>Wild honey</td><td class="num">96</td><td class="num">৳2,21,400</td><td class="num">৳1,02,800</td><td class="num">৳47,600</td><td class="num">31.6%</td><td class="num">68.0%</td></tr>
+            <tr><th scope="row">Oils &amp; ghee</th><td>Mustard oil</td><td class="num">188</td><td class="num">৳1,31,600</td><td class="num">৳88,700</td><td class="num">৳42,900</td><td class="num">32.6%</td><td class="num">100.0%</td></tr>
+            <tr><th scope="row">Spices</th><td>Ground spices</td><td class="num">142</td><td class="num">৳1,13,250</td><td class="num">৳51,000</td><td class="num">৳21,300</td><td class="num">29.5%</td><td class="num">63.8%</td></tr>
+            <tr><th scope="row">Dates &amp; dry fruit</th><td>Imported dates</td><td class="num">31</td><td class="num">৳62,000</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
           </tbody>
           <tfoot><tr><th scope="row">Total</th><td></td><td class="num">869</td><td class="num">৳9,46,850</td><td class="num">৳5,21,800</td><td class="num">৳2,51,100</td><td class="num">32.5%</td><td class="num">83.0%</td></tr></tfoot>
         </table>
-        <p class="small muted" style="margin:10px 0 0;line-height:1.5">Eight columns, from the same report definition. Carriers have no landed cost yet, so their margin is "Not available", never ৳0.</p>
+        <p class="small muted" style="margin:10px 0 0;line-height:1.5">Eight columns, from the same report definition. Imported dates have no landed cost yet, so their margin is "Not available", never ৳0.</p>
       </div>
     </div>
     <p class="annot"><b>Permission is shown by absence.</b> The page draws whatever columns the server sends. It never shows a lock, a blank column or "restricted" text — telling a shop manager which financial columns exist but are withheld would itself give information away.</p>

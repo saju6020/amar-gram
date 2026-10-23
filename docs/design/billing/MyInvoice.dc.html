@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -116,30 +116,30 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </helmet>
 <div style="width:1280px;height:1150px;background:var(--surface-page);overflow:auto">
   <div class="ptop">
-    <div class="pbrand">PurrCare</div>
-    <nav class="pnav" aria-label="Account"><a href="#">My cats</a><a href="#">Appointments</a><a href="#">Orders</a><a class="on" href="MyBilling.dc.html" aria-current="page">Billing</a><a href="#">Inbox</a></nav>
+    <div class="pbrand">Amar Gram</div>
+    <nav class="pnav" aria-label="Account"><a href="#">Orders</a><a class="on" href="MyBilling.dc.html" aria-current="page">Billing</a><a href="#">Inbox</a></nav>
     <div class="pwho"><div class="avatar" aria-hidden="true">FY</div>Farhana Yasmin <a href="#" style="margin-left:6px">Sign out</a></div>
   </div>
   <div class="wrap">
     <p style="margin:0 0 8px"><a href="MyBilling.dc.html">← Billing</a></p>
     <div class="titlerow">
-      <div><h1 class="h1" style="font-size:23px">Invoice INV-UTR-2627-000418 <span class="pill p-warn" style="vertical-align:middle"><span aria-hidden="true">◐</span> Part-paid</span></h1><p class="sub">Issued 23 Sep 2026 · due 7 Oct 2026 · PurrCare Uttara</p></div>
+      <div><h1 class="h1" style="font-size:23px">Invoice INV-DHN-2627-000418 <span class="pill p-warn" style="vertical-align:middle"><span aria-hidden="true">◐</span> Part-paid</span></h1><p class="sub">Issued 23 Sep 2026 · due 7 Oct 2026 · Amar Gram Dhanmondi outlet</p></div>
       <div class="actions"><button class="btn btn-sec" type="button">Download PDF</button></div>
     </div>
     <div class="lay">
       <div class="doc">
         <div class="parties">
-          <div><span class="cap">From</span><br><b>PurrCare Veterinary Ltd.</b><br>BIN 004512339-0101<br>House 12, Road 7, Sector 7, Uttara, Dhaka 1230</div>
+          <div><span class="cap">From</span><br><b>Amar Gram Ltd.</b><br>BIN 004512339-0101<br>House 12, Road 7, Dhanmondi, Dhaka 1205</div>
           <div><span class="cap">Billed to</span><br><b>Farhana Yasmin</b><br>Flat 4B, House 21, Road 11, Sector 4, Uttara, Dhaka 1230</div>
         </div>
         <table class="lines">
-          <thead><tr><th>For</th><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Discount</th><th class="num">Loyalty</th><th class="num">Rate</th><th class="num">Tax</th><th class="num">Amount</th></tr></thead>
+          <thead><tr><th>Channel</th><th>Description</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Discount</th><th class="num">Loyalty</th><th class="num">Rate</th><th class="num">Tax</th><th class="num">Amount</th></tr></thead>
           <tbody>
-            <tr><td>Clinic</td><td>Standard consultation — Luna</td><td class="num">1</td><td class="num">800.00</td><td class="num">—</td><td class="num">42.32</td><td class="num">15%</td><td class="num">113.65</td><td class="num">871.33</td></tr>
-            <tr><td>Clinic</td><td>Vaccination — FVRCP booster, Luna</td><td class="num">1</td><td class="num">1,200.00</td><td class="num">—</td><td class="num">63.49</td><td class="num">15%</td><td class="num">170.48</td><td class="num">1,306.99</td></tr>
-            <tr><td>Clinic</td><td>Meloxicam oral suspension, 10 ml</td><td class="num">1</td><td class="num">450.00</td><td class="num">—</td><td class="num">23.80</td><td class="num">0%</td><td class="num">0.00</td><td class="num">426.20</td></tr>
-            <tr><td>Shop</td><td>Royal Canin Indoor 27, 2 kg</td><td class="num">1</td><td class="num">2,650.00</td><td class="num">150.00</td><td class="num">132.27</td><td class="num">15%</td><td class="num">355.16</td><td class="num">2,722.89</td></tr>
-            <tr><td>Boarding</td><td>Standard suite — Milo, 18–21 Sep</td><td class="num">3</td><td class="num">1,500.00</td><td class="num">—</td><td class="num">238.12</td><td class="num">15%</td><td class="num">639.28</td><td class="num">4,901.16</td></tr>
+            <tr><td>Counter (POS)</td><td>Red lentils 1 kg</td><td class="num">5</td><td class="num">160.00</td><td class="num">—</td><td class="num">42.32</td><td class="num">15%</td><td class="num">113.65</td><td class="num">871.33</td></tr>
+            <tr><td>Counter (POS)</td><td>Cold-pressed mustard oil 1 L</td><td class="num">4</td><td class="num">300.00</td><td class="num">—</td><td class="num">63.49</td><td class="num">15%</td><td class="num">170.48</td><td class="num">1,306.99</td></tr>
+            <tr><td>Counter (POS)</td><td>Turmeric powder 200 g</td><td class="num">3</td><td class="num">150.00</td><td class="num">—</td><td class="num">23.80</td><td class="num">0%</td><td class="num">0.00</td><td class="num">426.20</td></tr>
+            <tr><td>Online</td><td>Sundarbans wild honey 2 kg jar</td><td class="num">1</td><td class="num">2,650.00</td><td class="num">150.00</td><td class="num">132.27</td><td class="num">15%</td><td class="num">355.16</td><td class="num">2,722.89</td></tr>
+            <tr><td>Subscription</td><td>Weekly organic veg box — weeks of 7, 14, 21 Sep</td><td class="num">3</td><td class="num">1,500.00</td><td class="num">—</td><td class="num">238.12</td><td class="num">15%</td><td class="num">639.28</td><td class="num">4,901.16</td></tr>
           </tbody>
         </table>
         <p class="small muted" style="margin:6px 0 0">Amounts in BDT (৳). "Loyalty" is each line's share of the 500 points you redeemed.</p>
@@ -156,11 +156,11 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <div>
         <div class="card htp">
           <h2>How to pay</h2>
-          <p class="small" style="margin:0 0 10px;line-height:1.5">Transfer to one of Uttara's accounts:</p>
-          <div class="acct"><b>BRAC Bank</b> · Uttara<br>PurrCare Veterinary Ltd.<br>Account 1501 2034 5678 001<br><span class="muted">Routing 060264351</span></div>
-          <div class="acct"><b>Dutch-Bangla Bank</b> · Uttara Model Town<br>PurrCare Veterinary Ltd.<br>Account 147 110 0045821<br><span class="muted">Routing 090264725</span></div>
-          <div class="ref">Use <b>INV-UTR-2627-000418</b> as the payment reference.</div>
-          <p class="small muted" style="margin:0;line-height:1.5">Or pay at the clinic by cash or card. Your receipt will appear here once the clinic has recorded it.</p>
+          <p class="small" style="margin:0 0 10px;line-height:1.5">Transfer to one of our accounts:</p>
+          <div class="acct"><b>BRAC Bank</b> · Dhanmondi<br>Amar Gram Ltd.<br>Account 1501 2034 5678 001<br><span class="muted">Routing 060264351</span></div>
+          <div class="acct"><b>Dutch-Bangla Bank</b> · Satmasjid Road<br>Amar Gram Ltd.<br>Account 147 110 0045821<br><span class="muted">Routing 090264725</span></div>
+          <div class="ref">Use <b>INV-DHN-2627-000418</b> as the payment reference.</div>
+          <p class="small muted" style="margin:0;line-height:1.5">Or pay cash or card at the Dhanmondi outlet. Your receipt will appear here once the outlet has recorded it.</p>
         </div>
         <p class="statelabel" style="margin-top:22px">Opening someone else's invoice link</p>
         <div class="card" style="text-align:center">

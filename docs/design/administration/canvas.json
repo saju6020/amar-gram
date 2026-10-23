@@ -9,13 +9,10 @@
     "BranchDetails.dc.html":            { "x": 1360, "y": 0,    "w": 1280, "h": 900 },
     "WeeklyHoursEditor.dc.html":        { "x": 2720, "y": 0,    "w": 1280, "h": 900 },
     "Closures.dc.html":                 { "x": 4080, "y": 0,    "w": 1280, "h": 900 },
-    "Rooms.dc.html":                    { "x": 5440, "y": 0,    "w": 1280, "h": 900 },
-    "BranchPickerAndAssignment.dc.html":{ "x": 6800, "y": 0,    "w": 1280, "h": 820 },
+    "BranchPickerAndAssignment.dc.html":{ "x": 5440, "y": 0,    "w": 1280, "h": 820 },
 
-    "ServiceList.dc.html":              { "x": 0,    "y": 1020, "w": 1280, "h": 820 },
-    "ServiceForm.dc.html":              { "x": 1360, "y": 1020, "w": 1280, "h": 1000 },
-    "EffectiveDatedHistory.dc.html":    { "x": 2720, "y": 1020, "w": 1280, "h": 820 },
-    "TaxClasses.dc.html":               { "x": 4080, "y": 1020, "w": 1280, "h": 820 },
+    "EffectiveDatedHistory.dc.html":    { "x": 0,    "y": 1020, "w": 1280, "h": 820 },
+    "TaxClasses.dc.html":               { "x": 1360, "y": 1020, "w": 1280, "h": 820 },
 
     "RosterWeekView.dc.html":           { "x": 0,    "y": 2140, "w": 1280, "h": 900 },
     "RosterPatternEditor.dc.html":      { "x": 1360, "y": 2140, "w": 1280, "h": 820 },
@@ -34,8 +31,8 @@
     "MaintenanceSwitch.dc.html":        { "x": 1360, "y": 5120, "w": 1280, "h": 760 }
   },
   "order": [
-    "BranchList.dc.html", "BranchDetails.dc.html", "WeeklyHoursEditor.dc.html", "Closures.dc.html", "Rooms.dc.html", "BranchPickerAndAssignment.dc.html",
-    "ServiceList.dc.html", "ServiceForm.dc.html", "EffectiveDatedHistory.dc.html", "TaxClasses.dc.html",
+    "BranchList.dc.html", "BranchDetails.dc.html", "WeeklyHoursEditor.dc.html", "Closures.dc.html", "BranchPickerAndAssignment.dc.html",
+    "EffectiveDatedHistory.dc.html", "TaxClasses.dc.html",
     "RosterWeekView.dc.html", "RosterPatternEditor.dc.html", "MyLeave.dc.html", "LeaveApprovals.dc.html",
     "SettingsForm.dc.html",
     "ContentList.dc.html", "ContentEditor.dc.html", "PolicyList.dc.html", "PublicPageAndFaqs.dc.html", "PolicyAcceptancePrompt.dc.html",
@@ -43,7 +40,7 @@
   ],
   "notes": {
     "row1": { "x": 0, "y": -280, "text": "Branches — US-ADM-01", "kind": "title1", "maxW": 2200 },
-    "row2": { "x": 0, "y": 740,  "text": "Services, prices & tax — US-ADM-04", "kind": "title1", "maxW": 1840 },
+    "row2": { "x": 0, "y": 740,  "text": "Prices & tax — US-ADM-04", "kind": "title1", "maxW": 1840 },
     "row3": { "x": 0, "y": 1860, "text": "Rosters & leave — US-ADM-03", "kind": "title1", "maxW": 1840 },
     "row4": { "x": 0, "y": 2880, "text": "Settings — US-ADM-05", "kind": "title1", "maxW": 900 },
     "row5": { "x": 0, "y": 3900, "text": "Content, policies & acceptance — US-ADM-07", "kind": "title1", "maxW": 2200 },

@@ -8,10 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
-:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2b2823}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2A1F12}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -112,7 +112,7 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative;overflow:hidden">
   <header class="obar">
-    <span class="logo">PurrCare</span>
+    <span class="logo">Amar Gram</span>
     <span class="chip-off"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2.3-1.7"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M10.7 5.1A15 15 0 0 1 22 8.8"/><path d="M12 20h.01"/></svg> Offline · read-only</span>
     <span class="spacer"></span>
     <span class="meta">No list shown</span>
@@ -131,7 +131,7 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
         <p class="eyebrow">Copy out of date</p>
         <div class="ico"><svg class="ic18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
         <h2>The saved copy is from Tuesday 22 September 2026 and is out of date.</h2>
-        <p>It isn't shown because today's appointments and tasks may be different. Once the connection returns, today's copy is saved automatically.</p>
+        <p>It isn't shown because today's pickup orders and packing list may be different. Once the connection returns, today's copy is saved automatically.</p>
         <button type="button" class="btn btn-secondary"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg> Try to reconnect</button>
       </div>
       <div class="card refuse">
@@ -144,9 +144,9 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
       <div class="card">
         <p class="eyebrow">A section left out of an otherwise valid copy</p>
         <p class="small" style="margin:0 0 10px">The rest of the list shows normally; the missing section says which of two reasons applies.</p>
-        <div class="omit"><strong>Boarding tasks weren't included in this copy.</strong><br>Your role doesn't include boarding tasks, so they aren't saved on this device.</div>
-        <div class="omit"><strong>Boarding tasks weren't included in this copy.</strong><br>The boarding task list isn't available in PurrCare yet, so there was nothing to save.</div>
-        <div class="omit" style="margin:0"><strong>Appointments weren't included in this copy.</strong><br>Your role doesn't include the appointment list, so it isn't saved on this device.</div>
+        <div class="omit"><strong>The packing list wasn't included in this copy.</strong><br>Your role doesn't include the packing list, so it isn't saved on this device.</div>
+        <div class="omit"><strong>The packing list wasn't included in this copy.</strong><br>No orders were waiting to be packed when the copy was saved, so there was nothing to save.</div>
+        <div class="omit" style="margin:0"><strong>Pickup orders weren't included in this copy.</strong><br>Your role doesn't include the pickup order list, so it isn't saved on this device.</div>
       </div>
     </div>
   </main>

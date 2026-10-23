@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -103,7 +103,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:960px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main">
     <div class="titlerow"><div><h1 class="h1">Record payment — how each method changes the form</h1><p class="sub">The fields come from each method's flags in the server's method list — the form never checks a method by name. An online method (none in this version) would be left out of this list.</p></div></div>
     <div class="g4">
@@ -115,7 +115,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
           <div class="field"><label>Amount (৳) <span class="req">*</span></label><input value="1000.00"></div>
           <div class="field"><label>Date received <span class="req">*</span></label><input value="23 Sep 2026"></div>
           <div class="field"><label>Receipt number <span class="opt">(optional)</span></label><input placeholder="From the paper receipt book"></div>
-          <div class="field"><label for="al">Apply to INV-UTR-2627-000377 (৳)</label><input id="al" class="invalid" value="900.00" aria-invalid="true" aria-describedby="al-e"><div class="err" id="al-e"><span aria-hidden="true">⚠</span> You can apply at most ৳750.00 to INV-UTR-2627-000377 — that is what it has outstanding.</div></div>
+          <div class="field"><label for="al">Apply to INV-DHN-2627-000377 (৳)</label><input id="al" class="invalid" value="900.00" aria-invalid="true" aria-describedby="al-e"><div class="err" id="al-e"><span aria-hidden="true">⚠</span> You can apply at most ৳750.00 to INV-DHN-2627-000377 — that is what it has outstanding.</div></div>
           <p class="hint" style="margin:0">No collector field. The limit in the message is the server's — the browser does no comparison of its own.</p>
         </div>
       </div>
@@ -146,10 +146,10 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
         <p class="statelabel">Deposit (earmarked)</p>
         <div class="panel">
           <div class="method">Cash in store · deposit</div>
-          <div class="field"><label>Earmark</label><input value="Deposit — boarding Milo, 2–6 Oct" readonly><div class="hint">Filled in by the boarding screen that opened this form. It can only pay that stay's invoice.</div></div>
+          <div class="field"><label>Earmark</label><input value="Advance — bulk pre-order ORD-2026-000140, delivery 2–6 Oct" readonly><div class="hint">Filled in by the order screen that opened this form. It can only pay that order's invoice.</div></div>
           <div class="field"><label>Amount (৳) <span class="req">*</span></label><input value="2000.00"></div>
           <div class="field"><label>Apply to</label><input value="Nothing now — held as a deposit" readonly></div>
-          <p class="hint" style="margin:0">Shown on the customer's account under Earmarked deposits until the stay is invoiced.</p>
+          <p class="hint" style="margin:0">Shown on the customer's account under Earmarked deposits until the order is invoiced.</p>
         </div>
       </div>
     </div>
