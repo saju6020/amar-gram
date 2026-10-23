@@ -55,7 +55,7 @@ From the repo root, in Git Bash:
 export PGPASSWORD=...                    # PostgreSQL password (PGHOST/PGPORT/PGUSER default to localhost/5432/postgres)
 export SEED_STAFF_PASSWORD=...           # at least 10 characters
 export SEED_CUSTOMER_PASSWORD=...        # at least 10 characters
-node web/scripts/seed-dev-db.mjs --db catecommerce_seedcheck
+node web/scripts/seed-dev-db.mjs --db amargram_seedcheck
 ```
 
 The wrapper does the following:
@@ -64,7 +64,7 @@ The wrapper does the following:
 2. Builds the API in **Release**, because the developer's own API usually holds `bin/Debug` locked.
 3. Runs `dotnet ef database update --connection …` against that database.
 4. Publishes a private copy of the API to a temp folder and **deletes its
-   `appsettings.Development.json`** (that file points at `catecommerce_dev`).
+   `appsettings.Development.json`** (that file points at `amargram_dev`).
 5. Starts the copy on port **5099** with the overrides above, plus raised sign-in, reset and
    registration rate limits.
 6. Runs `seed-dev.mjs` and then `seed-dev.mjs --verify`, and finally stops the API.
@@ -76,7 +76,7 @@ Options:
 - `--no-verify` skips the checks.
 - `--keep-log` keeps the API log.
 
-Safety: the wrapper always refuses `catecommerce_test`, and refuses `catecommerce_dev` unless
+Safety: the wrapper always refuses `amargram_test`, and refuses `amargram_dev` unless
 `--i-mean-dev` is passed.
 
 You can also run the seeder against an API you started yourself. That API must be in Development, use
@@ -97,19 +97,19 @@ node web/scripts/seed-dev.mjs --api http://localhost:5099 --verify    # read-onl
   60 and total 1,960, with no excluded lines.
 - Raising the Whiskas quantity to 2 gives subtotal 2,950, delivery 0 and total 2,950.
 
-## Rebuild `catecommerce_dev` from scratch
+## Rebuild `amargram_dev` from scratch
 
 1. Stop the dev API (port 5005) and the web app (port 3000), so nothing holds connections to the
    database.
 2. Back up the database:
-   `pg_dump -h localhost -U postgres -Fc -f catecommerce_dev-<date>.dump catecommerce_dev`
+   `pg_dump -h localhost -U postgres -Fc -f amargram_dev-<date>.dump amargram_dev`
    (see [backup-and-restore.md](backup-and-restore.md)).
 3. Drop it:
-   `psql -h localhost -U postgres -d postgres -c "DROP DATABASE catecommerce_dev WITH (FORCE)"`
+   `psql -h localhost -U postgres -d postgres -c "DROP DATABASE amargram_dev WITH (FORCE)"`
 4. Seed it. The wrapper creates the database again:
-   `node web/scripts/seed-dev-db.mjs --db catecommerce_dev --i-mean-dev`
+   `node web/scripts/seed-dev-db.mjs --db amargram_dev --i-mean-dev`
 5. Start the dev API and the web app as usual. If you have one, set the e2e env file
    (`web/.env.e2e.local`) to the same `E2E_STAFF_*` identifiers, and set `E2E_STAFF_PASSWORD` to
    `SEED_STAFF_PASSWORD`.
 
-To restore the old data instead, use `pg_restore -d catecommerce_dev <dump>` on an empty database.
+To restore the old data instead, use `pg_restore -d amargram_dev <dump>` on an empty database.

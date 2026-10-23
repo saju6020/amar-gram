@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="8.5.1" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Platform.Infrastructure.Common" Version="1.0.8" />
+    <PackageReference Include="Platform.Infrastructure.Core" Version="1.0.34" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Application\AmarGram.Application\AmarGram.Application.csproj" />
+    <ProjectReference Include="..\..\Read\AmarGram.Read\AmarGram.Read.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\AmarGram.Infrastructure\AmarGram.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Shared\AmarGram.Shared\AmarGram.Shared.csproj" />
+  </ItemGroup>
+
+  <!-- ARCHITECTURE gate fifth pass, LOW (2026-09-25): lets AmarGram.IntegrationTests directly
+       unit-test SessionAuthenticationMiddleware.ShouldRefuseUnsafeRequest (an internal, pure CSRF
+       decision method) without widening it to public. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="AmarGram.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

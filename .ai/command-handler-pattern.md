@@ -22,7 +22,7 @@ Immutable, data only.
 - Located in `src/Application/Commands/[ContextName]/`.
 
 ```csharp
-namespace CatEcommerce.Application.Commands.Cat;
+namespace AmarGram.Application.Commands.Cat;
 
 public sealed class RecordVaccinationCommand : Command
 {
@@ -84,7 +84,7 @@ using Platform.Infrastructure.Core.Commands;
 using Platform.Infrastructure.Core.Domain;
 using Platform.Infrastructure.Core.Validation;
 
-namespace CatEcommerce.Application.CommandHandlers.Cat;
+namespace AmarGram.Application.CommandHandlers.Cat;
 
 public sealed class RecordVaccinationCommandHandler(
     ILogger<RecordVaccinationCommandHandler> logger,
@@ -173,7 +173,7 @@ Only when the logic is **domain logic belonging to no single aggregate**, typica
 must see several.
 
 ```csharp
-namespace CatEcommerce.Domain.DomainServices;
+namespace AmarGram.Domain.DomainServices;
 
 /// FEFO allocation is a rule about the relationship between many batches.
 /// No single BatchAggregate can express it.
@@ -194,7 +194,7 @@ public interface IStockAllocationService
 
 Rules for a Domain Service:
 
-- Lives in `src/Domain/DomainServices/`, namespace `CatEcommerce.Domain.DomainServices`.
+- Lives in `src/Domain/DomainServices/`, namespace `AmarGram.Domain.DomainServices`.
 - Takes and returns **domain types**, never Commands or ViewModels.
 - Depends only on repository interfaces — no `DbContext`, no HTTP client, no logger-driven flow.
 - Is registered explicitly in `Program.cs` as Scoped.

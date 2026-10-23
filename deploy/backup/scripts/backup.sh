@@ -7,7 +7,7 @@ type="${1:?usage: backup.sh full|diff}"
 case "$type" in full|diff) ;; *) echo "backup type must be full or diff" >&2; exit 2 ;; esac
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-stanza="${PGBACKREST_STANZA:-purrcare}"
+stanza="${PGBACKREST_STANZA:-amargram}"
 failed=0
 
 for repo in 1 2; do

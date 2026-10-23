@@ -114,7 +114,7 @@ call — see ADR-342. The Api host composes its pipeline explicitly instead: for
 when a trusted proxy/network is configured) → `UseRouting()` → the single
 `SafeExceptionHandlerMiddleware` → `UseCors()` with an explicit allow-list → each area's own
 `Use<Area>Module()` → rate limiting → `MapHealthChecks("/health")` → `MapControllers()`. See
-`.ai/host-composition.md` §1 and `src/Api/CatEcommerce.Api/Program.cs`.
+`.ai/host-composition.md` §1 and `src/Api/AmarGram.Api/Program.cs`.
 
 No longer referenced:
 

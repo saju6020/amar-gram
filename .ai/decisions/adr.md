@@ -1001,7 +1001,7 @@ end; this ADR is that verification, and the two corrections are what running it 
 
 ### Decision
 
-`Enumeration` (`CatEcommerce.Shared.Common.Enums.Enumeration`) is defined in this solution's
+`Enumeration` (`AmarGram.Shared.Common.Enums.Enumeration`) is defined in this solution's
 `Shared` layer. It ships in **no** `Platform.Infrastructure.*` package on Core 1.0.34 — verified
 by building against the restored packages and finding no such type (HO-CAT-001 §7, fact F5).
 
@@ -1022,7 +1022,7 @@ the platform.
   documentation pass should correct it to say the base class is solution-owned, in `Shared`.
 - Every other bounded context that needs a rich enum (`AppointmentStatus`, `SurgeryStatus`, etc. —
   `.ai/enumeration-pattern.md`'s "Existing Enumerations" table) can now derive from this same
-  `CatEcommerce.Shared.Common.Enums.Enumeration`; there is exactly one base class in the solution,
+  `AmarGram.Shared.Common.Enums.Enumeration`; there is exactly one base class in the solution,
   not one per context.
 - Persisted the same way regardless of where the base class lives: by `Value`, via
   `HasConversion`, never by `DisplayName` — unaffected by this ADR.
@@ -1063,7 +1063,7 @@ rule 1 forbids without a documented boundary exception.
 
 - `GetCatProfileQueryHandler` and `GetCatMedicalHistoryQueryHandler` each issue a second query
   against `cat_weight_record` to resolve current/most-recent weight — an accepted read-side cost
-  for keeping `CatAggregate` bounded. Both already query through the same `CatEcommerceDbContext`
+  for keeping `CatAggregate` bounded. Both already query through the same `AmarGramDbContext`
   in the same request, so this adds one indexed lookup, not a second round trip to a different
   store.
 - `cat_weight_record (cat_id, recorded_on)` is indexed for exactly this access pattern
@@ -1114,7 +1114,7 @@ structural rather than a filter someone can forget).
 **Status:** Active
 **Decision:** The six security ports (`IPasswordHasher`, `IBreachedPasswordChecker`,
 `ISessionTokenIssuer`, `IPasswordResetTokenGenerator`, `IPasswordResetTokenDispatcher`,
-`IClientIpAccessor`, HO-ACC-001 §8.10) live in `src/Domain/CatEcommerce.Domain/DomainServices/`,
+`IClientIpAccessor`, HO-ACC-001 §8.10) live in `src/Domain/AmarGram.Domain/DomainServices/`,
 with their implementations in `Infrastructure` (`Security/` or `Hosting/`, §12.2). Aggregates never
 see a plaintext password, token or CAPTCHA answer — handlers call these ports and pass the aggregate
 an already-built value object or a boolean outcome.
@@ -1662,11 +1662,11 @@ each in its own git worktree, implementing different functional areas from
 `docs/handover/HO-<AREA>-001.md`. Before this ADR, four files were shared, hand-edited touch
 points that every area would have had to modify:
 
-- `src/Infrastructure/CatEcommerce.Infrastructure/Persistence/CatEcommerceDbContext.cs` — every
+- `src/Infrastructure/AmarGram.Infrastructure/Persistence/AmarGramDbContext.cs` — every
   area's `DbSet` properties lived on the one sealed class.
-- `src/Shared/CatEcommerce.Shared/Common/Constants/BusinessViolationCodes.cs` — every area's
+- `src/Shared/AmarGram.Shared/Common/Constants/BusinessViolationCodes.cs` — every area's
   violation codes lived in the one static class.
-- `src/Api/CatEcommerce.Api/Program.cs` — every command handler, validator, query handler,
+- `src/Api/AmarGram.Api/Program.cs` — every command handler, validator, query handler,
   domain event handler and infrastructure service for every area was hand-registered directly in
   this file (lines ~98–126 for Cat alone).
 - `Shared/Common/Constants/SettingDefinitions.cs` (HO-ADM-001 §10.2) — not yet built, but
@@ -1682,24 +1682,24 @@ when their actual features touch nothing in common.
 types; keep exactly one call site per area in `Program.cs`, itself delegating to a
 one-file-per-area DI module.**
 
-1. **`CatEcommerceDbContext`** is now `partial`. Cat's `DbSet` properties moved out of the base
-   file into `CatEcommerceDbContext.Cat.cs`. The base file keeps only the constructor and
+1. **`AmarGramDbContext`** is now `partial`. Cat's `DbSet` properties moved out of the base
+   file into `AmarGramDbContext.Cat.cs`. The base file keeps only the constructor and
    `OnModelCreating`, which already discovers every `IEntityTypeConfiguration<T>` in the
    assembly via `ApplyConfigurationsFromAssembly` — unchanged, so a new area adds its own
-   `CatEcommerceDbContext.[Area].cs` (DbSets) plus its own `IEntityTypeConfiguration` classes and
+   `AmarGramDbContext.[Area].cs` (DbSets) plus its own `IEntityTypeConfiguration` classes and
    needs **no** change to the base file or to `OnModelCreating`.
 2. **`BusinessViolationCodes`** is now `static partial`. Cat's codes moved to
    `BusinessViolationCodes.Cat.cs`. A new area adds `BusinessViolationCodes.[Area].cs` with its
    own `const string` codes.
 3. **`SettingDefinitions`** (HO-ADM-001 §10.2) is created now as an empty `static partial` shell
-   at `src/Shared/CatEcommerce.Shared/Common/Constants/SettingDefinitions.cs`, with no settings.
+   at `src/Shared/AmarGram.Shared/Common/Constants/SettingDefinitions.cs`, with no settings.
    HO-ADM-001 defines the registry's shape (`SettingDefinition`'s fields) and its own entries in
    `SettingDefinitions.Administration.cs`; every other area with a setting (HO-APT-001,
    HO-BRD-001, HO-IMP-001, HO-NTF-001, HO-ACC-001, per §10.2's Consumer column) adds its own
    `SettingDefinitions.[Area].cs`.
 4. **DI registration** moves out of `Program.cs` into one `Add<Area>Module(this IServiceCollection
    services, IConfiguration configuration)` extension per area, in
-   `src/Api/CatEcommerce.Api/Modules/<Area>Module.cs`. This layer was chosen — not Application,
+   `src/Api/AmarGram.Api/Modules/<Area>Module.cs`. This layer was chosen — not Application,
    Read or Infrastructure — because the Api project is the only project that already references
    all four layers (Application, Read, Infrastructure, Shared) and is where every registration in
    the pre-existing `Program.cs` already lived; a module in a lower layer could not see the other
@@ -1726,7 +1726,7 @@ resolves the full DI graph with no missing registration.
 
 ### Consequences
 
-- A future area's PR touches only its own new files: `CatEcommerceDbContext.[Area].cs`,
+- A future area's PR touches only its own new files: `AmarGramDbContext.[Area].cs`,
   `BusinessViolationCodes.[Area].cs`, optionally `SettingDefinitions.[Area].cs`, its own
   `IEntityTypeConfiguration` classes, and `Modules/[Area]Module.cs` — plus exactly one new line
   in `Program.cs` the *first* time that area is implemented, replacing its stub call with itself
@@ -2142,7 +2142,7 @@ time, with its own default options -- which clear `KnownProxies`/`KnownNetworks`
 - `CsrfTokenBinder` (`Api/Sessions/`) is deleted. `SessionCookieWriter.WriteCsrf` no longer computes
   anything; it writes whatever raw token it is given.
 - The host-wide CORS policy and `ForwardedHeadersOptions` configuration also move out of
-  `AccountsModule` into `src/Api/CatEcommerce.Api/Hosting/HostPipelineExtensions.cs`, called once
+  `AccountsModule` into `src/Api/AmarGram.Api/Hosting/HostPipelineExtensions.cs`, called once
   from `Program.cs`'s shared block -- both are host-level concerns applied ahead of every area, not
   an Accounts-owned policy (ARCHITECTURE gate, fourth pass, MEDIUM; owner decision, 2026-09-25). The
   CORS policy is renamed from `AccountsAllowedOrigins` to `HostAllowedOrigins`.
@@ -3485,7 +3485,7 @@ Deviations and clarifications found while building HO-IMP-001. They refine ADR-0
 - **`RecordRecallTraceExportCommand`** (not in section 11.1) writes the `RecallTraceExported` `BusinessEvent`; the trace CSV is refused if that audit write fails.
 - **Reorder suggestions** are served at `/api/staff/procurement/reorder-suggestions` (section 12.4) and filter on the preferred supplier.
 - **Integration tests use expiry offsets 100/75/45/15 days** instead of 91/89/59/29, because a branch's local date can differ from UTC's by a day.
-- **The Inventory test factory refuses to run** unless `CATECOMMERCE_TEST_DB` is set and does not name `catecommerce_dev`.
+- **The Inventory test factory refuses to run** unless `AMARGRAM_TEST_DB` is set and does not name `amargram_dev`.
 
 ### Integrator amendment, recorded at the merge of `ho/IMP-001` (2026-10-07)
 
@@ -3718,7 +3718,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 
 **Date:** 2026-10-09 (HO-POR-001)
 **Status:** Active
-**Decision:** **Composition only through other modules' published query handlers — never their tables** (§2 point 2). Readers take upstream `IQueryHandlerAsync<TQuery, TResult>` **by constructor** and call `HandleAsync` directly; **not the dispatcher** — "a nested dispatch hides the dependency from the constructor ... and turns a missing registration into a runtime failure the fault-isolation policy would then swallow as `Unavailable`. Constructor injection makes a missing upstream a startup failure" (§8.2, F34). No `CatEcommerceDbContext` in any portal query handler or section reader, no nested `IInMemoryDispatcher` call, "not even 'just one join'" (§4.4, §20.3). Every upstream query carries the portal query's `UserContext` and `CorrelationId` and the caller's id in the upstream's owner/customer filter.
+**Decision:** **Composition only through other modules' published query handlers — never their tables** (§2 point 2). Readers take upstream `IQueryHandlerAsync<TQuery, TResult>` **by constructor** and call `HandleAsync` directly; **not the dispatcher** — "a nested dispatch hides the dependency from the constructor ... and turns a missing registration into a runtime failure the fault-isolation policy would then swallow as `Unavailable`. Constructor injection makes a missing upstream a startup failure" (§8.2, F34). No `AmarGramDbContext` in any portal query handler or section reader, no nested `IInMemoryDispatcher` call, "not even 'just one join'" (§4.4, §20.3). Every upstream query carries the portal query's `UserContext` and `CorrelationId` and the caller's id in the upstream's owner/customer filter.
 **Reason:** If Billing changes how it stores invoices, the portal does not notice. `.ai/read-side-pattern.md` §5 permits cross-context joins; this slice deliberately takes the narrower path.
 
 ---
@@ -3799,7 +3799,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 **Date:** 2026-10-09 (HO-POR-001)
 **Status:** Active
 **Decision:** "Sections and per-cat status calls run **sequentially**. `Task.WhenAll` over upstream handlers is a defect" (F36, §8.3).
-**Reason:** The shared `CatEcommerceDbContext` is Scoped and not thread-safe; nested handlers resolved in the request scope share it.
+**Reason:** The shared `AmarGramDbContext` is Scoped and not thread-safe; nested handlers resolved in the request scope share it.
 
 ---
 
@@ -4354,7 +4354,7 @@ Recorded on `ho/XCT-001-build` (2026-10-12). The full reasoning is in `docs/hand
 **Decision:** (1) the database: `retention.refuse_hard_delete()` behind a `BEFORE DELETE` row trigger and a `BEFORE TRUNCATE` statement trigger on every `Forbidden` table; (2) EF: `HardDeleteGuardInterceptor`; (3) the build: a source scan allowing `ExecuteDelete` and raw `DELETE`/`TRUNCATE` only in `RetentionPurger` and migrations. `AggregateOnly` owned tables get no trigger.
 
 ## ADR-300 -- Production Runs as a Non-Owner, Non-Superuser Role
-**Decision:** `catecommerce_migrator` owns the schemas and migrates; `catecommerce_app` has DML only (no `TRUNCATE`, no DDL, no ownership); `catecommerce_backup_reporter` has `INSERT` on `ops.backup_run` only. Outside Development/Testing the host refuses to start if the current role is a superuser or owns a solution table (`DatabaseRoleGuard`). `deploy/database/roles.sql`.
+**Decision:** `amargram_migrator` owns the schemas and migrates; `amargram_app` has DML only (no `TRUNCATE`, no DDL, no ownership); `amargram_backup_reporter` has `INSERT` on `ops.backup_run` only. Outside Development/Testing the host refuses to start if the current role is a superuser or owns a solution table (`DatabaseRoleGuard`). `deploy/database/roles.sql`.
 
 ## ADR-301 -- Retention Periods Are Settings; the End of a Statutory Period Deletes Nothing
 **Decision:** the nine settings of section 10.2 (Administrator-only, audited). The end of a clinical, financial, regulatory or audit period produces a *review-eligible* count only; held personal data inside those records is anonymised when its hold ends. A wrong default cannot destroy anything.
@@ -4392,7 +4392,7 @@ Recorded on `ho/XCT-001-build` (2026-10-12). The full reasoning is in `docs/hand
 **Limit (2026-10-12):** the S3 transport was not exercised (no S3-compatible server image could be pulled); the drill uses a posix `repo2` with the same cipher.
 
 ## ADR-312 -- `ops.backup_run` Is Written Only by the Backup Job
-**Decision:** through `catecommerce_backup_reporter` (`INSERT` only); read by the API as a read model. A recorded exception to "every write goes through an aggregate": the job has no application identity and the row describes the job.
+**Decision:** through `amargram_backup_reporter` (`INSERT` only); read by the API as a read model. A recorded exception to "every write goes through an aggregate": the job has no application identity and the row describes the job.
 
 ## ADR-313 -- A Restore Test Is an Append-Only, Attributed Record
 **Decision:** entered by an Administrator from the drill JSON; **RPO, RTO and the outcome are computed by the aggregate** (passed only if every check passed, RPO <= 15 min, RTO <= 240 min). The next test is due `operations.restoreTestIntervalDays` (92) after the last *passed* test; a failed test does not reset it. A correction is a new record naming the one it supersedes.

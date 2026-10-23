@@ -11,12 +11,12 @@ version is below.
 ## 1. `Program.cs`
 
 ```csharp
-using CatEcommerce.Application.CommandHandlers.Cat;
-using CatEcommerce.Application.Commands.Cat;
-using CatEcommerce.Infrastructure.Persistence;
-using CatEcommerce.Read.Queries.Cat;
-using CatEcommerce.Read.QueryHandlers.Cat;
-using CatEcommerce.Read.ViewModels;
+using AmarGram.Application.CommandHandlers.Cat;
+using AmarGram.Application.Commands.Cat;
+using AmarGram.Infrastructure.Persistence;
+using AmarGram.Read.Queries.Cat;
+using AmarGram.Read.QueryHandlers.Cat;
+using AmarGram.Read.ViewModels;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Platform.Infrastructure.Core.Commands;
@@ -45,8 +45,8 @@ builder.Services.AddScoped<IUserContextProvider, DevUserContextProvider>();
 // dispatches in-process, which is the entire point of the change. Do not re-add it.
 
 // ── Persistence: EF Core over PostgreSQL, replacing the MongoDB repositories ──
-builder.Services.AddDbContext<CatEcommerceDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("CatEcommerce")));
+builder.Services.AddDbContext<AmarGramDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("AmarGram")));
 
 // Our EF Core implementation of the platform's aggregate repository contract.
 // (Replaces AddAggregateRootRepository() / AddReadRepository() from
@@ -95,8 +95,8 @@ app.Run();
 ```
 
 > **`UseHttpPipeline()` is not called.** See ADR-342 in `.ai/decisions/adr.md`,
-> `src/Api/CatEcommerce.Api/Program.cs` and
-> `src/Api/CatEcommerce.Api/Hosting/HostPipelineExtensions.cs` for the exact, current pipeline and
+> `src/Api/AmarGram.Api/Program.cs` and
+> `src/Api/AmarGram.Api/Hosting/HostPipelineExtensions.cs` for the exact, current pipeline and
 > why it was dropped: the platform's own exception handler logs request bodies verbatim (a
 > credential leak) and its CORS policy allows any origin with credentials.
 
@@ -205,7 +205,7 @@ One connection string. No `BusConfig`, no `config/dev-services.json`, no
 ```jsonc
 {
   "ConnectionStrings": {
-    "CatEcommerce": "Host=localhost;Port=5432;Database=catecommerce_dev;Username=postgres;Password=..."
+    "AmarGram": "Host=localhost;Port=5432;Database=amargram_dev;Username=postgres;Password=..."
   },
   "Logging": { "LogLevel": { "Default": "Information" } }
 }

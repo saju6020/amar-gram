@@ -2,17 +2,17 @@
 # HO-XCT-001 section 12.8 / ADR-313 -- a restore drill on an ISOLATED host or container. It restores the latest backup from repo2 (the off-site copy, to prove it works)
 # to SimulatedFailureAt = now - 5 minutes, times the restore, runs verify-restore.sql, and prints the JSON that POST /api/admin/operations/restore-tests accepts.
 # Required environment: DRILL_ENVIRONMENT=isolated (a guard against running it on a live host), PGDATA, EXPECTED_MIGRATION, FORBIDDEN_TABLE_COUNT.
-# Optional: DRILL_PORT (default 55432), DRILL_REPO (default 2), DRILL_DATABASE (default catecommerce), DRILL_LABEL.
+# Optional: DRILL_PORT (default 55432), DRILL_REPO (default 2), DRILL_DATABASE (default amargram), DRILL_LABEL.
 set -euo pipefail
 
 [ "${DRILL_ENVIRONMENT:-}" = "isolated" ] || { echo "refusing: set DRILL_ENVIRONMENT=isolated on an isolated drill host only" >&2; exit 2; }
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-stanza="${PGBACKREST_STANZA:-purrcare}"
+stanza="${PGBACKREST_STANZA:-amargram}"
 pgdata="${PGDATA:?PGDATA is not set}"
 port="${DRILL_PORT:-55432}"
 repo="${DRILL_REPO:-2}"
-database="${DRILL_DATABASE:-catecommerce}"
+database="${DRILL_DATABASE:-amargram}"
 
 failure_epoch="$(( $(date -u +%s) - 300 ))"
 failure_at="$(date -u -d "@$failure_epoch" +%Y-%m-%dT%H:%M:%SZ)"

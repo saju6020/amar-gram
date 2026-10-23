@@ -21,11 +21,11 @@ unchanged and still enforced: **`Application` never references `Read`, and `Read
 ```csharp
 using Platform.Infrastructure.Core.Queries;
 
-namespace CatEcommerce.Read.QueryHandlers.Appointment;
+namespace AmarGram.Read.QueryHandlers.Appointment;
 
 public sealed class GetDayScheduleQueryHandler(
     ILogger<GetDayScheduleQueryHandler> logger,
-    CatEcommerceDbContext db)
+    AmarGramDbContext db)
     : IQueryHandlerAsync<GetDayScheduleQuery, IReadOnlyList<AppointmentListItem>>
 {
     public async Task<QueryResponse<IReadOnlyList<AppointmentListItem>>> HandleAsync(
@@ -52,7 +52,7 @@ public sealed class GetDayScheduleQueryHandler(
 Filter criteria only. No logic, no defaults hiding a business rule.
 
 ```csharp
-namespace CatEcommerce.Read.Queries.Appointment;
+namespace AmarGram.Read.Queries.Appointment;
 
 public sealed class GetDayScheduleQuery : Query<IReadOnlyList<AppointmentListItem>>
 {

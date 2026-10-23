@@ -44,10 +44,10 @@ version-based optimistic concurrency built in, complementing the `xmin` row vers
 One generic implementation covers every aggregate:
 
 ```csharp
-namespace CatEcommerce.Infrastructure.Repositories;
+namespace AmarGram.Infrastructure.Repositories;
 
 public sealed class EfAggregateRootRepository<TAggregate>(
-    CatEcommerceDbContext db,
+    AmarGramDbContext db,
     IServiceProvider serviceProvider)
     : IAggregateRootRepository<TAggregate> where TAggregate : AggregateRoot
 {
@@ -140,14 +140,14 @@ weakening the generic one — a partially loaded aggregate cannot enforce its ow
 One DbContext for the solution, in `src/Infrastructure/Persistence/`:
 
 ```csharp
-public sealed class CatEcommerceDbContext(DbContextOptions<CatEcommerceDbContext> options)
+public sealed class AmarGramDbContext(DbContextOptions<AmarGramDbContext> options)
     : DbContext(options)
 {
     public DbSet<CatAggregate> Cats => Set<CatAggregate>();
     public DbSet<AppointmentAggregate> Appointments => Set<AppointmentAggregate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
-        => modelBuilder.ApplyConfigurationsFromAssembly(typeof(CatEcommerceDbContext).Assembly);
+        => modelBuilder.ApplyConfigurationsFromAssembly(typeof(AmarGramDbContext).Assembly);
 }
 ```
 

@@ -7,15 +7,15 @@ FROM postgres:17-bookworm
 RUN apt-get update \
  && apt-get install -y --no-install-recommends pgbackrest jq gettext-base ca-certificates curl openssl \
  && rm -rf /var/lib/apt/lists/* \
- && mkdir -p /etc/pgbackrest /var/lib/pgbackrest /var/spool/pgbackrest /var/log/pgbackrest /opt/purrcare/scripts \
- && chown -R postgres:postgres /etc/pgbackrest /var/lib/pgbackrest /var/spool/pgbackrest /var/log/pgbackrest /opt/purrcare
+ && mkdir -p /etc/pgbackrest /var/lib/pgbackrest /var/spool/pgbackrest /var/log/pgbackrest /opt/amargram/scripts \
+ && chown -R postgres:postgres /etc/pgbackrest /var/lib/pgbackrest /var/spool/pgbackrest /var/log/pgbackrest /opt/amargram
 
 COPY --chown=postgres:postgres pgbackrest.conf.template /etc/pgbackrest/pgbackrest.conf.template
 COPY --chown=postgres:postgres postgresql.backup.conf /etc/postgresql/postgresql.backup.conf
-COPY --chown=postgres:postgres schedule.cron /opt/purrcare/schedule.cron
-COPY --chown=postgres:postgres scripts/ /opt/purrcare/scripts/
-RUN chmod 0755 /opt/purrcare/scripts/*.sh
+COPY --chown=postgres:postgres schedule.cron /opt/amargram/schedule.cron
+COPY --chown=postgres:postgres scripts/ /opt/amargram/scripts/
+RUN chmod 0755 /opt/amargram/scripts/*.sh
 
-# Never run as root: every script runs as the postgres user. The schedule (schedule.cron) is installed in the postgres user crontab of the host or the orchestrator scheduler, which runs the scripts with: docker exec -u postgres <container> /opt/purrcare/scripts/<script>.
+# Never run as root: every script runs as the postgres user. The schedule (schedule.cron) is installed in the postgres user crontab of the host or the orchestrator scheduler, which runs the scripts with: docker exec -u postgres <container> /opt/amargram/scripts/<script>.
 USER postgres
-WORKDIR /opt/purrcare
+WORKDIR /opt/amargram

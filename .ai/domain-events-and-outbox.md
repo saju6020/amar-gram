@@ -71,7 +71,7 @@ Unchanged contract, new registration site — `Program.cs` instead of EventWorke
 `EventConsumerAdapter`:
 
 ```csharp
-namespace CatEcommerce.Application.DomainEventHandlers.Vaccination;
+namespace AmarGram.Application.DomainEventHandlers.Vaccination;
 
 public sealed class RecalculateVaccinationStatusHandler(
     ILogger<RecalculateVaccinationStatusHandler> logger,

@@ -55,7 +55,7 @@ an unbound queue with no error anywhere.
 | Query handler | `AddScoped<IQueryHandlerAsync<XQuery, XViewModel?>, XQueryHandler>()` | Scoped |
 | Domain event handler | `AddScoped<IEventHandlerAsync<XEvent>, XEventHandler>()` | Scoped |
 | **Domain service** | `AddScoped<IXDomainService, XDomainService>()` | Scoped |
-| DbContext | `AddDbContext<CatEcommerceDbContext>(...)` | Scoped |
+| DbContext | `AddDbContext<AmarGramDbContext>(...)` | Scoped |
 | Aggregate repository | `AddScoped(typeof(IAggregateRootRepository<>), typeof(EfAggregateRootRepository<>))` | Scoped |
 | Aggregate / value object / entity | — | Never registered |
 | External client (SMS, courier) | `AddHttpClient<IX, X>()` | Typed client |

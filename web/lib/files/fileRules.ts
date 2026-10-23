@@ -2,7 +2,7 @@ import type { FilePurpose } from '@/lib/api/files';
 
 /**
  * `FileRules` (HO-FIL-002 §8.1/§8.3, ADR-FE-149) — mirrors `FileRules.cs`
- * (`src/Shared/CatEcommerce.Shared/Common/Constants/FileRules.cs`) byte-for-byte: same purposes,
+ * (`src/Shared/AmarGram.Shared/Common/Constants/FileRules.cs`) byte-for-byte: same purposes,
  * same allow-lists, same caps. **The server is still the authority** — this table exists only so
  * a person is refused instantly, before a single byte leaves the machine, rather than after a
  * slow upload the server was always going to reject anyway (ADR-FE-149). A mismatch between this

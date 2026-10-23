@@ -18,6 +18,8 @@ focus is organic products. The six clinic areas are **retired**: Cat Profiles (`
 **Retired** in [`CONTRACTS.md`](CONTRACTS.md). Historical references to them in the remaining
 handovers and gate reports are left as written.
 
+**Amended 2026-10-24 ([`HO-P1`](HO-P1-RETIRE-CLINIC.md)):** the clinic code is removed, the code is renamed `CatEcommerce` → `AmarGram` (solution, projects, namespaces, `AmarGramDbContext`, connection string `AmarGram`, `amargram_*` databases and roles, `AMARGRAM_TEST_DB`), and the migrations are rebaselined to `InitialAmarGram` + `InitialAmarGramSql`.
+
 ## One pair per functional area
 
 Each backlog section in [`docs/USER_STORIES.md`](../USER_STORIES.md) gets exactly **two** handovers:

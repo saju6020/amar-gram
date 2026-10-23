@@ -67,7 +67,7 @@ function fail(message) {
 
 // ── the sample world ─────────────────────────────────────────────────────────────────────────────
 const MAIN_BRANCH_ID = '00000000-0000-0000-0000-00000000ba1c'; // inserted by the AddAdministration migration
-const SHOP_FLOOR_LOCATION_ID = '00000000-0000-0000-0000-0000000051a1'; // "Shop floor" at Main clinic (migration)
+const SHOP_FLOOR_LOCATION_ID = '00000000-0000-0000-0000-0000000051a1'; // "Shop floor" at Main outlet (migration)
 
 const STAFF = [
   {
@@ -131,7 +131,7 @@ const CUSTOMER = {
 };
 
 const BRANCH = {
-  name: 'Main clinic',
+  name: 'Main outlet',
   timeZoneId: 'Asia/Dhaka',
   addressLine: 'House 34, Road 7, Dhanmondi, Dhaka 1209',
   phoneNumber: '+8801711000100',

@@ -2,9 +2,9 @@
 // Runs the real-API customer + staff journey (tests/e2e/journey-real-api.spec.ts) end to end on its OWN database:
 //
 //   PGPASSWORD=... SEED_STAFF_PASSWORD=... SEED_CUSTOMER_PASSWORD=... \
-//     npm run test:e2e:journey -- --db catecommerce_journey
+//     npm run test:e2e:journey -- --db amargram_journey
 //
-//   1. refuses catecommerce_dev / catecommerce_test and the developer's ports (5005 API, 3000 web);
+//   1. refuses amargram_dev / amargram_test and the developer's ports (5005 API, 3000 web);
 //   2. makes sure the database is migrated and seeded (seed-dev-db.mjs, idempotent) - skipped when the seeded
 //      customer and staff administrator can already sign in; force with --reseed;
 //   3. starts a private copy of the API on --api-port (default 5098) with the seeding overrides (TEST1 captcha);
@@ -147,9 +147,9 @@ function makeWebCopy() {
   // junction) is on another drive ("Can't resolve './D:/...'"), so the copy lives on the same drive as web/: in the OS
   // temp folder when that is the same drive, otherwise in a hidden folder at the drive root.
   const sameDrive = parse(tmpdir()).root.toLowerCase() === parse(webRoot).root.toLowerCase();
-  const base = sameDrive ? tmpdir() : join(parse(webRoot).root, '.purrcare-journey-tmp');
+  const base = sameDrive ? tmpdir() : join(parse(webRoot).root, '.amargram-journey-tmp');
   mkdirSync(base, { recursive: true });
-  const dir = mkdtempSync(join(base, 'purrcare-journey-web-'));
+  const dir = mkdtempSync(join(base, 'amargram-journey-web-'));
   const keep = [
     'app',
     'components',

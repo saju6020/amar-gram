@@ -16,14 +16,14 @@ mkdir -p "$out"
 results="$out/results.txt"
 : > "$results"
 
-jqx() { docker run --rm -i --entrypoint jq purrcare-backup:dev "$@"; }
+jqx() { docker run --rm -i --entrypoint jq amargram-backup:dev "$@"; }
 jqfile() { local f="$1"; shift; jqx "$@" < "$f"; }
 random() { head -c 18 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
 DRILL_PG_PASSWORD="$(random)"; DRILL_CIPHER_PASS="$(random)"
 migrator_pw="$(random)"; app_pw="$(random)"; reporter_pw="$(random)"; journal_pw="$(random)"
 export DRILL_PG_PASSWORD DRILL_CIPHER_PASS
 
-container=purrcare-drill-pg
+container=amargram-drill-pg
 compose=(docker compose -f "$here_native/docker-compose.drill.yml")
 failures=0
 
@@ -31,17 +31,17 @@ pass() { echo "PASS $1 $2" | tee -a "$results"; }
 fail() { echo "FAIL $1 $2" | tee -a "$results"; failures=$((failures + 1)); }
 check() { local id="$1" description="$2"; shift 2; if "$@"; then pass "$id" "$description"; else fail "$id" "$description"; fi; }
 
-dx() { docker exec -i -e JOURNAL_REPO2_TARGET=/var/lib/pgbackrest/repo2-store/erasure-journal -e REPO2_CIPHER_PASS="$DRILL_CIPHER_PASS" -e PGDATABASE=catecommerce -e REPORTER_DB_PASSWORD="$reporter_pw" -e JOURNAL_DB_USER=catecommerce_journal_reader -e JOURNAL_DB_PASSWORD="$journal_pw" "$container" "$@"; }
-sql() { dx psql -U postgres -d catecommerce -v ON_ERROR_STOP=1 -At "$@"; }
+dx() { docker exec -i -e JOURNAL_REPO2_TARGET=/var/lib/pgbackrest/repo2-store/erasure-journal -e REPO2_CIPHER_PASS="$DRILL_CIPHER_PASS" -e PGDATABASE=amargram -e REPORTER_DB_PASSWORD="$reporter_pw" -e JOURNAL_DB_USER=amargram_journal_reader -e JOURNAL_DB_PASSWORD="$journal_pw" "$container" "$@"; }
+sql() { dx psql -U postgres -d amargram -v ON_ERROR_STOP=1 -At "$@"; }
 
 # A one-off container on the SAME volumes (the main container is stopped or killed): renders the drill pgBackRest config, then runs the command.
 oneoff() {
   local cipher="${CIPHER_OVERRIDE:-$DRILL_CIPHER_PASS}"
   docker run --rm --entrypoint bash \
-    -e PGDATA=/var/lib/postgresql/data -e PGPORT=5432 -e PGDATABASE=catecommerce -e REPO2_CIPHER_PASS="$cipher" \
+    -e PGDATA=/var/lib/postgresql/data -e PGPORT=5432 -e PGDATABASE=amargram -e REPO2_CIPHER_PASS="$cipher" \
     -e DRILL_ENVIRONMENT -e EXPECTED_MIGRATION -e FORBIDDEN_TABLE_COUNT -e DRILL_DATABASE \
-    -v purrcare-drill_pgdata:/var/lib/postgresql/data -v purrcare-drill_repo1:/var/lib/pgbackrest -v "$here_native":/drill:ro \
-    purrcare-backup:dev /drill/in-container.sh "$@"
+    -v amargram-drill_pgdata:/var/lib/postgresql/data -v amargram-drill_repo1:/var/lib/pgbackrest -v "$here_native":/drill:ro \
+    amargram-backup:dev /drill/in-container.sh "$@"
 }
 
 # Starts the restored cluster WITHOUT archiving, runs a query, stops it. usage: after_restore <sql>
@@ -49,7 +49,7 @@ query_restored() {
   oneoff bash -c '
     set -euo pipefail
     pg_ctl -D "$PGDATA" -o "-c archive_mode=off -c listen_addresses=" -w -t 600 start >/dev/null
-    psql -U postgres -d catecommerce -At -c "$0"
+    psql -U postgres -d amargram -At -c "$0"
     pg_ctl -D "$PGDATA" -m fast stop >/dev/null' "$1"
 }
 
@@ -57,7 +57,7 @@ query_restored() {
 # Waiting only for pg_isready was the cause of the intermittent I-G2 / "unable to find primary cluster" failures (backlog row 50).
 wait_ready() {
   for _ in $(seq 1 90); do
-    if [ "$(dx psql -U postgres -d catecommerce -At -c 'SELECT pg_is_in_recovery()' 2>/dev/null || echo t)" = "f" ]; then return 0; fi
+    if [ "$(dx psql -U postgres -d amargram -At -c 'SELECT pg_is_in_recovery()' 2>/dev/null || echo t)" = "f" ]; then return 0; fi
     sleep 2
   done
   return 1
@@ -76,7 +76,7 @@ assert_clean_stop() {
 # usage: restore_pitr_or_abort <log-name> <restore-pitr.sh args>
 restore_pitr_or_abort() {
   local name="$1"; shift
-  if ! oneoff /opt/purrcare/scripts/restore-pitr.sh "$@" > "$out/$name-restore.log" 2>&1; then
+  if ! oneoff /opt/amargram/scripts/restore-pitr.sh "$@" > "$out/$name-restore.log" 2>&1; then
     echo "ABORT: restore-pitr.sh failed (see $out/$name-restore.log):" >&2
     tail -n 8 "$out/$name-restore.log" >&2
     exit 1
@@ -90,15 +90,15 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== build the backup image" >&2
-docker build -q -t purrcare-backup:dev "$repo_native/deploy/backup" >/dev/null
+docker build -q -t amargram-backup:dev "$repo_native/deploy/backup" >/dev/null
 
 # ---- the schema: the real EF migrations, as one plain script (from an empty database; the idempotent form cannot wrap every migration) --------------------------------------------------------------------------------------------------
 schema_sql="${SCHEMA_SQL:-$out/schema.sql}"
 if [ "${SKIP_SCHEMA_GENERATION:-0}" != "1" ]; then
   echo "== generate the schema from the EF migrations" >&2
-  (cd "$repo_root" && ConnectionStrings__CatEcommerce="Host=localhost;Database=schema_only_never_connected;Username=x;Password=$DRILL_PG_PASSWORD" \
+  (cd "$repo_root" && ConnectionStrings__AmarGram="Host=localhost;Database=schema_only_never_connected;Username=x;Password=$DRILL_PG_PASSWORD" \
     dotnet dotnet-ef migrations script --no-build \
-      --project src/Infrastructure/CatEcommerce.Infrastructure --startup-project src/Api/CatEcommerce.Api --output "$(cd "$(dirname "$schema_sql")" && (pwd -W 2>/dev/null || pwd))/$(basename "$schema_sql")" >/dev/null)
+      --project src/Infrastructure/AmarGram.Infrastructure --startup-project src/Api/AmarGram.Api --output "$(cd "$(dirname "$schema_sql")" && (pwd -W 2>/dev/null || pwd))/$(basename "$schema_sql")" >/dev/null)
 fi
 export EXPECTED_MIGRATION
 EXPECTED_MIGRATION="$(grep -oE "VALUES \('[0-9]{14}_[A-Za-z0-9]+'" "$schema_sql" | tail -n 1 | sed -E "s/VALUES \('//; s/'//")"
@@ -109,32 +109,32 @@ echo "== start the drill cluster" >&2
 "${compose[@]}" down -v >/dev/null 2>&1 || true
 "${compose[@]}" up -d >/dev/null
 check I-G1 "cluster starts" wait_ready
-check I-G1 "stanza-create succeeds" dx pgbackrest --stanza=purrcare stanza-create
-check I-G1 "check succeeds" dx pgbackrest --stanza=purrcare check
+check I-G1 "stanza-create succeeds" dx pgbackrest --stanza=amargram stanza-create
+check I-G1 "check succeeds" dx pgbackrest --stanza=amargram check
 
 # ---- load the real schema, the roles of deploy/database/roles.sql, and the few rows the verification needs ------------------------------------------------------------
-dx psql -U postgres -d catecommerce -v ON_ERROR_STOP=1 -q -f - < "$schema_sql" >/dev/null
-dx psql -U postgres -d catecommerce -v ON_ERROR_STOP=1 -q \
+dx psql -U postgres -d amargram -v ON_ERROR_STOP=1 -q -f - < "$schema_sql" >/dev/null
+dx psql -U postgres -d amargram -v ON_ERROR_STOP=1 -q \
   -v migrator_password="$migrator_pw" -v app_password="$app_pw" -v reporter_password="$reporter_pw" -f - < "$repo_root/deploy/database/roles.sql" >/dev/null
-dx psql -U postgres -d catecommerce -v ON_ERROR_STOP=1 -q -f - < "$here/seed-helpers.sql" >/dev/null
-sql -c "CREATE ROLE catecommerce_journal_reader LOGIN PASSWORD '$journal_pw'" >/dev/null
-sql -c "GRANT USAGE ON SCHEMA ops TO catecommerce_journal_reader; GRANT SELECT ON ops.erasure_request TO catecommerce_journal_reader" >/dev/null
+dx psql -U postgres -d amargram -v ON_ERROR_STOP=1 -q -f - < "$here/seed-helpers.sql" >/dev/null
+sql -c "CREATE ROLE amargram_journal_reader LOGIN PASSWORD '$journal_pw'" >/dev/null
+sql -c "GRANT USAGE ON SCHEMA ops TO amargram_journal_reader; GRANT SELECT ON ops.erasure_request TO amargram_journal_reader" >/dev/null
 sql -c "SELECT drill.insert_default('account','customer_account'); SELECT drill.insert_default('clinic','cat'); SELECT drill.insert_default('clinic','appointment')" >/dev/null
-export FORBIDDEN_TABLE_COUNT DRILL_ENVIRONMENT=isolated DRILL_DATABASE=catecommerce
+export FORBIDDEN_TABLE_COUNT DRILL_ENVIRONMENT=isolated DRILL_DATABASE=amargram
 FORBIDDEN_TABLE_COUNT="$(sql -c "SELECT count(DISTINCT tgrelid) FROM pg_trigger WHERE tgname = 'trg_refuse_hard_delete' AND NOT tgisinternal")"
 sql -c "CREATE TABLE drill.rows (n int, ts timestamptz DEFAULT clock_timestamp()); CREATE TABLE drill.live (n serial, ts timestamptz)" >/dev/null
 
 # ---- I-G2: point-in-time recovery to a recorded instant --------------------------------------------------------------------------------------------------------------
 echo "== I-G2 PITR" >&2
 sql -c "INSERT INTO drill.rows(n) SELECT g FROM generate_series(1,1000) g" >/dev/null
-dx /opt/purrcare/scripts/backup.sh full
+dx /opt/amargram/scripts/backup.sh full
 sql -c "INSERT INTO drill.rows(n) SELECT g FROM generate_series(1001,2000) g" >/dev/null
 target="$(sql -c "SELECT to_char(clock_timestamp() AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS.US') || '+00'")"
 sleep 1
 sql -c "INSERT INTO drill.rows(n) SELECT g FROM generate_series(2001,3000) g" >/dev/null
 sql -c "SELECT pg_switch_wal()" >/dev/null
 sleep 5
-dx pgbackrest --stanza=purrcare check >/dev/null
+dx pgbackrest --stanza=amargram check >/dev/null
 "${compose[@]}" stop -t 60 pg >/dev/null
 assert_clean_stop
 restore_started=$(date +%s)
@@ -147,7 +147,7 @@ check I-G2 "exactly the rows up to T exist after the restore (2000 of 3000; foun
 echo "== I-G3 crash and restore to latest (about 80 s of writes)" >&2
 "${compose[@]}" up -d pg >/dev/null
 wait_ready
-dx /opt/purrcare/scripts/backup.sh full
+dx /opt/amargram/scripts/backup.sh full
 last_committed=""
 for _ in $(seq 1 16); do
   last_committed="$(sql -c "INSERT INTO drill.live(ts) VALUES (clock_timestamp()) RETURNING to_char(ts AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS.US')" | head -n 1)"
@@ -156,7 +156,7 @@ done
 docker kill "$container" >/dev/null
 # The killed container must really be dead before its stale postmaster.pid is removed (row 55: remove the file only once no postgres process is running).
 [ "$(docker inspect -f '{{.State.Running}}' "$container")" = "false" ] || { echo "ABORT: the drill container is still running after docker kill" >&2; exit 1; }
-oneoff bash -c 'rm -f "$PGDATA/postmaster.pid"; /opt/purrcare/scripts/restore-pitr.sh --target latest --confirm --i-understand-this-replaces-production' >/dev/null
+oneoff bash -c 'rm -f "$PGDATA/postmaster.pid"; /opt/amargram/scripts/restore-pitr.sh --target latest --confirm --i-understand-this-replaces-production' >/dev/null
 restored_last="$(query_restored "SELECT to_char(max(ts) AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS.US') FROM drill.live")"
 loss_seconds="$(date -u -d "$last_committed" +%s) - $(date -u -d "$restored_last" +%s)"
 loss_seconds=$(( loss_seconds ))
@@ -169,7 +169,7 @@ echo "== I-G8 erasure journal" >&2
 wait_ready
 sql -c "SELECT drill.insert_default('ops','erasure_request', jsonb_build_object('requested_on','now()'))" >/dev/null
 day="$(date -u +%Y-%m-%d)"
-check I-G8 "export-erasure-journal.sh succeeds" dx /opt/purrcare/scripts/export-erasure-journal.sh
+check I-G8 "export-erasure-journal.sh succeeds" dx /opt/amargram/scripts/export-erasure-journal.sh
 journal1="$(docker exec "$container" cat "/var/lib/pgbackrest/erasure-journal/$day.csv" 2>/dev/null || true)"
 journal2="$(dx bash -c 'openssl enc -d -aes-256-cbc -pbkdf2 -pass env:REPO2_CIPHER_PASS -in /var/lib/pgbackrest/repo2-store/erasure-journal/'"$day"'.csv.enc' 2>/dev/null || true)"
 check I-G8 "the journal is present in repo1 and repo2 and identical" test -n "$journal1" -a "$journal1" = "$journal2"
@@ -182,19 +182,19 @@ check I-G8 "the run was reported to ops.backup_run" test "$(sql -c "SELECT count
 echo "== I-G4 restore drill (a background writer keeps the audit trail moving for ~7 minutes)" >&2
 audit_writer() {
   while true; do
-    docker exec -i "$container" psql -U postgres -d catecommerce -q -At -c "SELECT drill.insert_default('audit','audit_entry', jsonb_build_object('OccurredOn','clock_timestamp()'))" >/dev/null 2>&1 || true
+    docker exec -i "$container" psql -U postgres -d amargram -q -At -c "SELECT drill.insert_default('audit','audit_entry', jsonb_build_object('OccurredOn','clock_timestamp()'))" >/dev/null 2>&1 || true
     sleep 20
   done
 }
 audit_writer & writer_pid=$!
 trap 'kill "$writer_pid" 2>/dev/null || true; cleanup' EXIT
-dx /opt/purrcare/scripts/backup.sh full
+dx /opt/amargram/scripts/backup.sh full
 sleep 400
 kill "$writer_pid" 2>/dev/null || true
-dx pgbackrest --stanza=purrcare check >/dev/null
+dx pgbackrest --stanza=amargram check >/dev/null
 "${compose[@]}" stop -t 60 pg >/dev/null
 assert_clean_stop
-if oneoff /opt/purrcare/scripts/restore-drill.sh > "$out/drill.json" 2> "$out/drill.err"; then
+if oneoff /opt/amargram/scripts/restore-drill.sh > "$out/drill.json" 2> "$out/drill.err"; then
   check I-G4 "restore-drill.sh emits the C12-shaped JSON" jqfile "$out/drill.json" -e '(.checks | length >= 5) and (.checks | map(.name) | index("migrations-current") != null)'
   check I-G4 "every drill check passed" jqfile "$out/drill.json" -e '[.checks[] | .passed] | all'
   check I-G4 "the drill restored from the latest backup in repo2 (off-site stand-in)" jqfile "$out/drill.json" -e '.backupSetLabel | length > 0'
@@ -207,12 +207,12 @@ echo "== I-G5 restore from repo2 only" >&2
 oneoff bash -c 'rm -rf /var/lib/pgbackrest/archive /var/lib/pgbackrest/backup'
 check I-G5 "repo1 is gone" test "$(oneoff bash -c 'ls /var/lib/pgbackrest | grep -cE "^(archive|backup)$" || true')" = "0"
 assert_clean_stop   # restore-drill.sh stopped its own server with pg_ctl before it exited
-oneoff bash -c 'rm -f "$PGDATA/postmaster.pid"; /opt/purrcare/scripts/restore-pitr.sh --target latest --repo 2 --confirm --i-understand-this-replaces-production' >/dev/null
+oneoff bash -c 'rm -f "$PGDATA/postmaster.pid"; /opt/amargram/scripts/restore-pitr.sh --target latest --repo 2 --confirm --i-understand-this-replaces-production' >/dev/null
 check I-G5 "the restore from repo2 alone succeeds and the data is there" test "$(query_restored 'SELECT count(*) FROM drill.rows')" = "2000"
 
 # ---- I-G6: without the passphrase the repository cannot be read -------------------------------------------------------------------------------------------------------------
 echo "== I-G6 wrong passphrase" >&2
-if CIPHER_OVERRIDE="$(random)" oneoff /opt/purrcare/scripts/restore-pitr.sh --target latest --repo 2 --confirm --i-understand-this-replaces-production >/dev/null 2>&1; then
+if CIPHER_OVERRIDE="$(random)" oneoff /opt/amargram/scripts/restore-pitr.sh --target latest --repo 2 --confirm --i-understand-this-replaces-production >/dev/null 2>&1; then
   fail I-G6 "a restore with the wrong passphrase must fail"
 else
   pass I-G6 "a restore with the wrong passphrase fails: repo2 is encrypted"

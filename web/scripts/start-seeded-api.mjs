@@ -2,9 +2,9 @@
 // Starts a private copy of the API on an already-seeded scratch database and leaves it running.
 // Used by run-journey-e2e.mjs; also handy by hand:
 //
-//   PGPASSWORD=... node web/scripts/start-seeded-api.mjs --db catecommerce_journey --port 5098 [--web-port 3098] [--skip-build]
+//   PGPASSWORD=... node web/scripts/start-seeded-api.mjs --db amargram_journey --port 5098 [--web-port 3098] [--skip-build]
 //
-// It applies the same safety refusals as seed-dev-db.mjs (never catecommerce_dev / catecommerce_test, never
+// It applies the same safety refusals as seed-dev-db.mjs (never amargram_dev / amargram_test, never
 // ports 5005 / 3000) and, like it, deletes appsettings.Development.json from the published copy so the process
 // can only reach the database named here. The database must already exist and be seeded
 // (`node web/scripts/seed-dev-db.mjs --db <name> --port <n>`).
@@ -20,7 +20,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..', '..');
-const apiProject = join(repo, 'src', 'Api', 'CatEcommerce.Api');
+const apiProject = join(repo, 'src', 'Api', 'AmarGram.Api');
 
 function parseArgs(argv) {
   const out = {};
@@ -39,14 +39,14 @@ function parseArgs(argv) {
 
 /** Throws (never exits) so callers can clean up. */
 export function assertSafeTarget({ db, port }) {
-  if (!db) throw new Error('pass --db <name> (a scratch database such as catecommerce_journey).');
+  if (!db) throw new Error('pass --db <name> (a scratch database such as amargram_journey).');
   if (!/^[a-z][a-z0-9_]{0,62}$/.test(db))
     throw new Error(`"${db}" is not a plain lower-case database name.`);
-  if (db === 'catecommerce_test')
-    throw new Error('refusing catecommerce_test: it belongs to the integration tests.');
-  if (db === 'catecommerce_dev')
+  if (db === 'amargram_test')
+    throw new Error('refusing amargram_test: it belongs to the integration tests.');
+  if (db === 'amargram_dev')
     throw new Error(
-      'refusing catecommerce_dev: it is the developer database; a journey registers customers and places orders.',
+      'refusing amargram_dev: it is the developer database; a journey registers customers and places orders.',
     );
   if (!Number.isInteger(port) || port < 1024 || port > 65535)
     throw new Error('--port must be a number between 1024 and 65535.');
@@ -89,7 +89,7 @@ export async function startSeededApi({ db, port, webPort = 3098, skipBuild = fal
     if (build.status !== 0)
       throw new Error(`dotnet build failed:\n${String(build.stdout ?? '').slice(-3000)}`);
   }
-  const work = mkdtempSync(join(tmpdir(), 'purrcare-journey-'));
+  const work = mkdtempSync(join(tmpdir(), 'amargram-journey-'));
   const apiDir = join(work, 'api');
   const publish = spawnSync(
     'dotnet',
@@ -98,18 +98,18 @@ export async function startSeededApi({ db, port, webPort = 3098, skipBuild = fal
   );
   if (publish.status !== 0)
     throw new Error(`dotnet publish failed:\n${String(publish.stdout ?? '').slice(-3000)}`);
-  rmSync(join(apiDir, 'appsettings.Development.json'), { force: true }); // its connection string names catecommerce_dev
+  rmSync(join(apiDir, 'appsettings.Development.json'), { force: true }); // its connection string names amargram_dev
 
   const logFile = join(work, 'api.log');
   const exe = join(
     apiDir,
-    process.platform === 'win32' ? 'CatEcommerce.Api.exe' : 'CatEcommerce.Api',
+    process.platform === 'win32' ? 'AmarGram.Api.exe' : 'AmarGram.Api',
   );
   const env = {
     ...process.env,
     ASPNETCORE_ENVIRONMENT: 'Development',
     ASPNETCORE_URLS: apiBase,
-    ConnectionStrings__CatEcommerce: connectionString,
+    ConnectionStrings__AmarGram: connectionString,
     Account__WebBaseUrl: `http://localhost:${webPort}`,
     PublicSite__WebBaseUrl: `http://localhost:${webPort}`,
     Cors__AllowedOrigins__0: `http://localhost:${webPort}`,

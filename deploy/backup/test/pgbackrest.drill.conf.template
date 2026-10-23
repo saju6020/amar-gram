@@ -16,6 +16,6 @@ spool-path=/var/spool/pgbackrest
 log-level-console=info
 log-path=/var/log/pgbackrest
 
-[purrcare]
+[amargram]
 pg1-path=${PGDATA}
 pg1-port=${PGPORT}

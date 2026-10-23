@@ -18,8 +18,8 @@ builder.Services.AddInMemoryBusServices();          // registers IInMemoryDispat
 // The one seam the platform declares but does not fill (ADR-018):
 builder.Services.AddScoped<IUserContextProvider, DevUserContextProvider>();
 
-builder.Services.AddDbContext<CatEcommerceDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("CatEcommerce")));
+builder.Services.AddDbContext<AmarGramDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("AmarGram")));
 builder.Services.AddScoped(typeof(IAggregateRootRepository<>), typeof(EfAggregateRootRepository<>));
 
 builder.Services.AddScoped<ICommandHandlerAsync<RecordVaccinationCommand>,
@@ -38,7 +38,7 @@ builder.Services.AddScoped<IQueryHandlerAsync<GetVaccinationHistoryQuery,
 Thin: mint the id, stamp the context, dispatch, map.
 
 ```csharp
-namespace CatEcommerce.Api.Controllers;
+namespace AmarGram.Api.Controllers;
 
 [ApiController]
 [Route("api/cats/{catId:guid}/vaccinations")]
@@ -205,7 +205,7 @@ public class CatAggregate : AggregateRoot
 ```csharp
 public sealed class GetVaccinationHistoryQueryHandler(
     ILogger<GetVaccinationHistoryQueryHandler> logger,
-    CatEcommerceDbContext db)
+    AmarGramDbContext db)
     : IQueryHandlerAsync<GetVaccinationHistoryQuery, IReadOnlyList<VaccinationHistoryItem>>
 {
     public async Task<QueryResponse<IReadOnlyList<VaccinationHistoryItem>>> HandleAsync(

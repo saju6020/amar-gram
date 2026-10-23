@@ -4,7 +4,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-stanza="${PGBACKREST_STANZA:-purrcare}"
+stanza="${PGBACKREST_STANZA:-amargram}"
 started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 log="$(mktemp)"
 trap 'rm -f "$log"' EXIT
