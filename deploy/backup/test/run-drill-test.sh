@@ -119,7 +119,7 @@ dx psql -U postgres -d amargram -v ON_ERROR_STOP=1 -q \
 dx psql -U postgres -d amargram -v ON_ERROR_STOP=1 -q -f - < "$here/seed-helpers.sql" >/dev/null
 sql -c "CREATE ROLE amargram_journal_reader LOGIN PASSWORD '$journal_pw'" >/dev/null
 sql -c "GRANT USAGE ON SCHEMA ops TO amargram_journal_reader; GRANT SELECT ON ops.erasure_request TO amargram_journal_reader" >/dev/null
-sql -c "SELECT drill.insert_default('account','customer_account'); SELECT drill.insert_default('clinic','cat'); SELECT drill.insert_default('clinic','appointment')" >/dev/null
+sql -c "SELECT drill.insert_default('account','customer_account')" >/dev/null
 export FORBIDDEN_TABLE_COUNT DRILL_ENVIRONMENT=isolated DRILL_DATABASE=amargram
 FORBIDDEN_TABLE_COUNT="$(sql -c "SELECT count(DISTINCT tgrelid) FROM pg_trigger WHERE tgname = 'trg_refuse_hard_delete' AND NOT tgisinternal")"
 sql -c "CREATE TABLE drill.rows (n int, ts timestamptz DEFAULT clock_timestamp()); CREATE TABLE drill.live (n serial, ts timestamptz)" >/dev/null

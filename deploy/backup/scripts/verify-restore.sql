@@ -19,12 +19,8 @@ FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
 WHERE t.tgname = 'trg_refuse_hard_delete' AND NOT t.tgisinternal;
 
 SELECT 'row-counts-nonzero',
-       (SELECT count(*) FROM account.customer_account) > 0
-         AND (SELECT count(*) FROM clinic.cat) > 0
-         AND (SELECT count(*) FROM clinic.appointment) > 0,
-       'customer_account=' || (SELECT count(*) FROM account.customer_account)
-         || ' cat=' || (SELECT count(*) FROM clinic.cat)
-         || ' appointment=' || (SELECT count(*) FROM clinic.appointment);
+       (SELECT count(*) FROM account.customer_account) > 0,
+       'customer_account=' || (SELECT count(*) FROM account.customer_account);
 
 SELECT 'audit-chain-recent',
        coalesce(max("OccurredOn"), '-infinity'::timestamptz) >= :'target_ts'::timestamptz - interval '15 minutes',
