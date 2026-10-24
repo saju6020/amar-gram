@@ -170,6 +170,14 @@ public static class AccountsModule
         services.AddScoped<ICommandHandlerAsync<MergeCustomerCommand>, MergeCustomerCommandHandler>();
         services.AddScoped<IValidator<MergeCustomerCommand>, MergeCustomerCommandValidator>();
 
+        // HO-P4 BG-19: staff notes, tags, and a staff-started password reset for a customer.
+        services.AddScoped<ICommandHandlerAsync<AddCustomerNoteCommand>, AddCustomerNoteCommandHandler>();
+        services.AddScoped<IValidator<AddCustomerNoteCommand>, AddCustomerNoteCommandValidator>();
+        services.AddScoped<ICommandHandlerAsync<SetCustomerTagsCommand>, SetCustomerTagsCommandHandler>();
+        services.AddScoped<IValidator<SetCustomerTagsCommand>, SetCustomerTagsCommandValidator>();
+        services.AddScoped<ICommandHandlerAsync<RequestCustomerPasswordResetCommand>, RequestCustomerPasswordResetCommandHandler>();
+        services.AddScoped<IValidator<RequestCustomerPasswordResetCommand>, RequestCustomerPasswordResetCommandValidator>();
+
         services.AddScoped<ICommandHandlerAsync<RecordPersonalDataExportCommand>, RecordPersonalDataExportCommandHandler>();
         services.AddScoped<IValidator<RecordPersonalDataExportCommand>, RecordPersonalDataExportCommandValidator>();
 
@@ -187,6 +195,8 @@ public static class AccountsModule
         services.AddScoped<IQueryHandlerAsync<GetStaffSessionStatusQuery, StaffSessionStatusViewModel?>, GetStaffSessionStatusQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetStaffCustomerQuery, StaffCustomerViewModel?>, GetStaffCustomerQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<FindCustomersQuery, IReadOnlyList<StaffCustomerSummaryViewModel>>, FindCustomersQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<BrowseCustomersQuery, PagedResult<StaffCustomerListItemViewModel>>, BrowseCustomersQueryHandler>(); // HO-P4 BG-19
+        services.AddScoped<IQueryHandlerAsync<GetCustomerNotesQuery, IReadOnlyList<CustomerNoteViewModel>>, GetCustomerNotesQueryHandler>(); // HO-P4 BG-19
         services.AddScoped<IQueryHandlerAsync<GetDuplicateCustomerGroupsQuery, PagedResult<DuplicateCustomerGroupViewModel>>, GetDuplicateCustomerGroupsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetPersonalDataExportQuery, PersonalDataExportViewModel?>, GetPersonalDataExportQueryHandler>();
 
@@ -208,6 +218,9 @@ public static class AccountsModule
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, AuditCustomerAnonymisedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, ClearAddressBookOnAnonymisedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, ClearPreferencesOnAnonymisedHandler>();
+        services.AddScoped<IEventHandlerAsync<CustomerStaffNoteAddedEvent>, AuditCustomerStaffNoteAddedHandler>(); // HO-P4 BG-19
+        services.AddScoped<IEventHandlerAsync<CustomerTagsChangedEvent>, AuditCustomerTagsChangedHandler>();
+        services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, ClearCustomerStaffRecordOnAnonymisedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerPersonalDataExportedEvent>, AuditCustomerPersonalDataExportedHandler>();
 
         // ── MVC filter (§12.4) -- UniqueConstraintExceptionFilter used to be registered here,

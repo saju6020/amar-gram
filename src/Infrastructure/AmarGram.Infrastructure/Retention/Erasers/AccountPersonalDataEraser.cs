@@ -21,7 +21,8 @@ namespace AmarGram.Infrastructure.Retention.Erasers;
 public sealed class AccountPersonalDataEraser(
     IAggregateRootRepository<CustomerAccountAggregate> customers,
     IAggregateRootRepository<CustomerAddressBookAggregate> addressBooks,
-    IAggregateRootRepository<CustomerNotificationPreferencesAggregate> preferences)
+    IAggregateRootRepository<CustomerNotificationPreferencesAggregate> preferences,
+    IAggregateRootRepository<CustomerStaffRecordAggregate> staffRecords)
     : IPersonalDataEraser
 {
     public const string AccountNotAnonymised = "AccountNotAnonymised";
@@ -48,6 +49,14 @@ public sealed class AccountPersonalDataEraser(
         {
             notificationPreferences.Clear(new CustomerNotificationPreferencesClearDto(actor, correlationId));
             await preferences.UpdateAsync(notificationPreferences, EventPublishOption.InMemoryPublishOnly);
+        }
+
+        // HO-P4 BG-19: the staff notes and tags are free text about the customer -- the same guarantee as the address book.
+        var staffRecord = await staffRecords.GetByIdAsync(customerAccountId);
+        if (staffRecord is not null && (staffRecord.Notes.Count > 0 || staffRecord.Labels.Count > 0))
+        {
+            staffRecord.Clear(new CustomerStaffRecordClearDto(actor, correlationId));
+            await staffRecords.UpdateAsync(staffRecord, EventPublishOption.InMemoryPublishOnly);
         }
 
         return new ErasureOutcome.Completed();

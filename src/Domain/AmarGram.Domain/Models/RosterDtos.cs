@@ -18,4 +18,7 @@ public sealed record RosterExceptionCreateDto(
     Guid StaffAccountId, Guid BranchId, DateOnly Date, AmarGram.Shared.Common.Enums.RosterExceptionKind Kind,
     TimeOnly Starts, TimeOnly Ends, string Reason, UserContext UserContext, Guid CorrelationId);
 
+/// <summary>HO-P4 BG-23.</summary>
+public sealed record RosterExceptionRetireDto(UserContext UserContext, Guid CorrelationId);
+
 public sealed record RosterExceptionCancelDto(DateOnly Today, UserContext UserContext, Guid CorrelationId);

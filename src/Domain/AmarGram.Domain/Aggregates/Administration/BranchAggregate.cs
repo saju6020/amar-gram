@@ -3,6 +3,7 @@ using AmarGram.Domain.Events.Administration;
 using AmarGram.Domain.Exceptions;
 using AmarGram.Domain.Models;
 using AmarGram.Shared.Common.Constants;
+using AmarGram.Shared.Common.Enums;
 using Platform.Infrastructure.Core.Domain;
 
 namespace AmarGram.Domain.Aggregates.Administration;
@@ -23,6 +24,9 @@ public sealed class BranchAggregate : AggregateRoot
     public string? PhoneNumber { get; private set; }
     public string? Email { get; private set; }
     public bool IsActive { get; private set; }
+
+    /// <summary>HO-P4 BG-21. Outlet or Warehouse; descriptive. Defaults to Outlet.</summary>
+    public BranchType Type { get; private set; } = BranchType.Outlet;
     public IReadOnlyList<OpeningInterval> WeeklyHours => _weeklyHours;
 
     private BranchAggregate() { }
@@ -41,6 +45,7 @@ public sealed class BranchAggregate : AggregateRoot
         AddressLine = dto.AddressLine;
         PhoneNumber = dto.PhoneNumber;
         Email = dto.Email;
+        Type = dto.Type ?? BranchType.Outlet;
         IsActive = true;
         _weeklyHours.Clear();
 
@@ -61,6 +66,7 @@ public sealed class BranchAggregate : AggregateRoot
         AddressLine = dto.AddressLine;
         PhoneNumber = dto.PhoneNumber;
         Email = dto.Email;
+        if (dto.Type is not null) Type = dto.Type;
 
         AddDomainEvent(new BranchDetailsUpdatedEvent { BranchId = Id, CorrelationId = dto.CorrelationId, UserContext = dto.UserContext });
         UpdateVersion();

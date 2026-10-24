@@ -44,6 +44,7 @@ public sealed class PasswordResetTokenAggregate : AggregateRoot
             AccountId = AccountId,
             Channel = Channel,
             ExpiresOn = ExpiresOn,
+            InitiatedByStaffId = dto.InitiatedByStaffId,
             CorrelationId = dto.CorrelationId,
             UserContext = dto.UserContext
         });

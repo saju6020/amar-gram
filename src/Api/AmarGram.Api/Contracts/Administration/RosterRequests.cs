@@ -13,6 +13,12 @@ public sealed class SetRosterPatternRequest
     public DateOnly? EffectiveFrom { get; init; }
 }
 
+/// <summary>HO-P4 BG-23 -- <c>PUT /api/admin/branches/{branchId}/rosters/{staffAccountId}/shifts/{date}</c>. <c>shift</c> is Morning, Evening or Off.</summary>
+public sealed class SetRosterShiftRequest
+{
+    public string Shift { get; init; } = default!;
+}
+
 public sealed class CreateRosterExceptionRequest
 {
     public string Kind { get; init; } = default!;

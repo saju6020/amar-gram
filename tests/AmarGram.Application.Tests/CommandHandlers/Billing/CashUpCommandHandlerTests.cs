@@ -33,7 +33,7 @@ public sealed class CashUpCommandHandlerTests
         _branches.Seed(branch);
     }
 
-    private RecordCashCountCommandHandler Count() => new(_cashUps, _branches, _time);
+    private RecordCashCountCommandHandler Count() => new(_cashUps, _branches, _finder, _time);
     private CloseCashUpCommandHandler Close() => new(_cashUps, _branches, _finder, _time);
 
     private RecordCashCountCommand CountCommand(decimal counted, DateOnly? date = null, string? explanation = null) => new()
@@ -94,6 +94,76 @@ public sealed class CashUpCommandHandlerTests
         Assert.True((await Close().HandleAsync(CloseCommand(cashUp.Version))).IsSuccess);
         Assert.Equal(-10m, cashUp.Variance);
         Assert.Equal(100m, cashUp.ExpectedSnapshot!.ExpectedCash);
+    }
+
+    // ── HO-P4 BG-20: the count per source ────────────────────────────────────────────────────────
+
+    private static readonly Guid Collector = Guid.NewGuid();
+
+    private void SeedTillAndCollectorCash()
+    {
+        _finder.CashUpRowsOfTheDay.Add(new CashUpRow(Guid.NewGuid(), CashUpRowKind.Payment, PaymentMethod.CashInStore, null, null, 100m, false));
+        _finder.CashUpRowsOfTheDay.Add(new CashUpRow(
+            Guid.NewGuid(), CashUpRowKind.Payment, PaymentMethod.CashOnDelivery, CollectorKind.Staff, null, 40m, false, null,
+            CashUpSources.StaffKey(Collector), "Rina"));
+    }
+
+    private RecordCashCountCommand SourceCountCommand(params (string Key, decimal Counted)[] counts) => new()
+    {
+        BranchId = _branchId, BusinessDate = Day, CountedCash = 0m, Counts = counts.Select(c => new CashUpSourceCountInput(c.Key, c.Counted)).ToList(),
+        Explanation = "counted by source", UserContext = _staff, CorrelationId = Guid.NewGuid(),
+    };
+
+    [Fact]
+    public async Task BG20_ACountBySource_StoresTheServersTotal_AndIgnoresTheTotalField()
+    {
+        SeedTillAndCollectorCash();
+
+        var response = await Count().HandleAsync(SourceCountCommand((CashUpSources.TillKey, 95m), (CashUpSources.StaffKey(Collector), 40m)));
+
+        Assert.True(response.IsSuccess);
+        var cashUp = _cashUps.Saved.Single();
+        Assert.Equal(135m, cashUp.CountedCash);
+        Assert.Equal(2, cashUp.SourceCounts.Count);
+        Assert.Equal("Rina", cashUp.SourceCounts.Single(c => c.Key == CashUpSources.StaffKey(Collector)).Label);
+    }
+
+    [Fact]
+    public async Task BG20_ASourceTheDayDoesNotHave_IsRefused()
+    {
+        SeedTillAndCollectorCash();
+
+        var response = await Count().HandleAsync(SourceCountCommand(("staff:" + Guid.NewGuid(), 10m)));
+
+        Assert.Equal(BusinessViolationCodes.UnknownCashUpSource, CodeOf(response));
+    }
+
+    [Fact]
+    public async Task BG20_Close_FreezesTheSourcesExpected_AndTheOverallVarianceIsTheSumOfTheSources()
+    {
+        SeedTillAndCollectorCash();
+        // The till is 5 short; the collector is 10 over; an uncounted source would have been counted as nothing.
+        await Count().HandleAsync(SourceCountCommand((CashUpSources.TillKey, 95m), (CashUpSources.StaffKey(Collector), 50m)));
+        var cashUp = _cashUps.Saved.Single();
+
+        Assert.True((await Close().HandleAsync(CloseCommand(cashUp.Version))).IsSuccess);
+
+        Assert.Equal(5m, cashUp.Variance);
+        Assert.Equal(2, cashUp.ExpectedSources.Count);
+        Assert.Equal(100m, cashUp.ExpectedSources.Single(s => s.Key == CashUpSources.TillKey).ExpectedCash);
+        Assert.Equal(40m, cashUp.ExpectedSources.Single(s => s.Key == CashUpSources.StaffKey(Collector)).ExpectedCash);
+    }
+
+    [Fact]
+    public async Task BG20_ATotalOnlyRecount_ClearsThePerSourceCounts()
+    {
+        SeedTillAndCollectorCash();
+        await Count().HandleAsync(SourceCountCommand((CashUpSources.TillKey, 95m)));
+
+        await Count().HandleAsync(CountCommand(140m));
+
+        Assert.Empty(_cashUps.Saved.Single().SourceCounts);
+        Assert.Equal(140m, _cashUps.Saved.Single().CountedCash);
     }
 
     [Fact]

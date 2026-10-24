@@ -36,7 +36,21 @@ public sealed class CreateRosterExceptionCommandValidator : AbstractValidator<Cr
     }
 }
 
-public sealed class CancelRosterExceptionCommandValidator : AbstractValidator<CancelRosterExceptionCommand>
+/// <summary>HO-P4 BG-23. <c>Custom</c> is a read-only classification, not a value a caller may set.</summary>
+public sealed class SetRosterShiftCommandValidator : AbstractValidator<SetRosterShiftCommand>
+{
+    public SetRosterShiftCommandValidator()
+    {
+        RuleFor(x => x.StaffAccountId).NotEmpty();
+        RuleFor(x => x.BranchId).NotEmpty();
+        RuleFor(x => x.Date).Must(d => d.Year >= 2000).WithMessage("is not a valid date.");
+        RuleFor(x => x.Shift).NotEmpty().MustBeValidEnumeration<SetRosterShiftCommand, RosterShift>()
+            .Must(v => !string.Equals(v, RosterShift.Custom.DisplayName, StringComparison.OrdinalIgnoreCase))
+            .WithMessage("must be Morning, Evening or Off.");
+    }
+}
+
+public sealed class CancelRosterExceptionCommandValidator: AbstractValidator<CancelRosterExceptionCommand>
 {
     public CancelRosterExceptionCommandValidator()
     {

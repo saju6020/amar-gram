@@ -331,6 +331,65 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.ToTable("customer_session", "account");
                 });
 
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Account.CustomerStaffRecordAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsMarkedToDelete")
+                        .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<string[]>("Labels")
+                        .IsRequired()
+                        .HasColumnType("character varying(30)[]")
+                        .HasColumnName("labels");
+
+                    b.Property<string>("Language")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("LastUpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ServiceId")
+                        .HasColumnType("text");
+
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("VerticalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Labels")
+                        .HasDatabaseName("ix_customer_staff_record_labels");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Labels"), "GIN");
+
+                    b.ToTable("customer_staff_record", "account");
+                });
+
             modelBuilder.Entity("AmarGram.Domain.Aggregates.Account.PasswordResetTokenAggregate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -661,6 +720,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("time_zone_id");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
 
                     b.Property<int>("Version")
                         .HasColumnType("integer");
@@ -2186,6 +2249,11 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ExpectedSources")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("expected_sources");
+
                     b.Property<string>("Explanation")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)")
@@ -2205,6 +2273,11 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("ServiceId")
                         .HasColumnType("text");
+
+                    b.Property<string>("SourceCounts")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("source_counts");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -9548,6 +9621,43 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("MarketingConsents");
+                });
+
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Account.CustomerStaffRecordAggregate", b =>
+                {
+                    b.OwnsMany("AmarGram.Domain.Entities.CustomerStaffNote", "Notes", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("AuthorStaffId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("author_staff_id");
+
+                            b1.Property<DateTimeOffset>("CreatedOn")
+                                .HasColumnType("timestamptz")
+                                .HasColumnName("created_on");
+
+                            b1.Property<string>("Text")
+                                .IsRequired()
+                                .HasMaxLength(1000)
+                                .HasColumnType("character varying(1000)")
+                                .HasColumnName("text");
+
+                            b1.Property<Guid>("customer_id")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("customer_id");
+
+                            b1.ToTable("customer_staff_note", "account");
+
+                            b1.WithOwner()
+                                .HasForeignKey("customer_id");
+                        });
+
+                    b.Navigation("Notes");
                 });
 
             modelBuilder.Entity("AmarGram.Domain.Aggregates.Account.StaffAccountAggregate", b =>

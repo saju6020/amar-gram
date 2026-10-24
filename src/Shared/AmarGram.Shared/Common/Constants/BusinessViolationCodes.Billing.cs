@@ -80,4 +80,6 @@ public static partial class BusinessViolationCodes
     public const string TooManyAllocations = nameof(TooManyAllocations);
     public const string InvoiceHasNoLines = nameof(InvoiceHasNoLines);
     public const string StaleVersion = nameof(StaleVersion);
+    public const string UnknownCashUpSource = nameof(UnknownCashUpSource); // HO-P4 BG-20
+    public const string DuplicateCashUpSource = nameof(DuplicateCashUpSource); // HO-P4 BG-20
 }

@@ -1,6 +1,7 @@
 using AmarGram.Domain.Aggregates.Administration;
 using AmarGram.Domain.Aggregates.Billing;
 using AmarGram.Domain.DomainServices;
+using AmarGram.Domain.ValueObjects;
 using AmarGram.Infrastructure.Billing;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Read.Queries.Billing;
@@ -24,7 +25,7 @@ public sealed class GetCashUpQueryHandler(AmarGramDbContext db, IBusinessSetting
         var timeZoneId = await db.Set<BranchAggregate>().AsNoTracking().Where(b => b.Id == query.BranchId).Select(b => b.TimeZoneId).FirstOrDefaultAsync() ?? "UTC";
 
         var cashUp = await db.Set<CashUpAggregate>().AsNoTracking().Where(c => c.BranchId == query.BranchId && c.BusinessDate == query.BusinessDate)
-            .Select(c => new { c.Version, c.Status, c.CountedCash, c.CountedBy, c.CountedOn, c.Variance, c.Explanation, c.ClosedBy, c.ClosedOn, c.ExpectedSnapshot })
+            .Select(c => new { c.Version, c.Status, c.CountedCash, c.CountedBy, c.CountedOn, c.Variance, c.Explanation, c.ClosedBy, c.ClosedOn, c.ExpectedSnapshot, c.SourceCounts, c.ExpectedSources })
             .FirstOrDefaultAsync();
         var rows = await CashUpRows.LoadAsync(db, query.BranchId, query.BusinessDate);
         var pending = await CashUpRows.CountPendingApprovalsAsync(db, query.BranchId, query.BusinessDate, timeZoneId);
@@ -39,7 +40,13 @@ public sealed class GetCashUpQueryHandler(AmarGramDbContext db, IBusinessSetting
             money(snapshot.CashRefunds), money(snapshot.CashReversals), money(snapshot.CarriedIn), carried, money(snapshot.ExpectedCash));
 
         var lines = rows.Select(r => new CashUpLineViewModel(
-            r.Id, r.Kind.ToString(), r.Method?.DisplayName, r.Collector?.DisplayName, r.RefundMethod?.DisplayName, money(r.Amount), SignedCash(r) != 0m, r.CarriedIn, r.Label)).ToList();
+            r.Id, r.Kind.ToString(), r.Method?.DisplayName, r.Collector?.DisplayName, r.RefundMethod?.DisplayName, money(r.Amount), SignedCash(r) != 0m, r.CarriedIn, r.Label, r.SourceKey)).ToList();
+
+        // HO-P4 BG-20: a closed day shows the sources frozen at close; an open day the live ones. Both are the calculator's own output.
+        var expectedSources = closed && cashUp!.ExpectedSources.Count > 0 ? cashUp.ExpectedSources : CashUpCalculator.CalculateSources(rows);
+        var sources = CashUpSources.Reconcile(expectedSources, cashUp?.SourceCounts ?? [], missingCountIsZero: closed)
+            .Select(r => new CashUpSourceViewModel(r.Key, r.Label, money(r.ExpectedCash), r.CountedCash is { } sc ? money(sc) : null, r.Variance is { } sv ? money(sv) : null))
+            .ToList();
 
         decimal? variance = cashUp is null ? null : cashUp.Variance ?? (cashUp.CountedCash is { } counted ? counted - snapshot.ExpectedCash : null);
         var closer = cashUp?.ClosedBy is { } closedBy
@@ -51,7 +58,7 @@ public sealed class GetCashUpQueryHandler(AmarGramDbContext db, IBusinessSetting
             Result = new CashUpViewModel(
                 query.BusinessDate, (cashUp?.Status ?? CashUpStatus.Open).DisplayName, cashUp?.Version ?? 0, expected, lines,
                 cashUp?.CountedCash is { } c ? money(c) : null, variance is { } v ? money(v) : null, cashUp?.Explanation, pending,
-                cashUp?.CountedBy, cashUp?.CountedOn, cashUp?.ClosedBy, closer, cashUp?.ClosedOn),
+                cashUp?.CountedBy, cashUp?.CountedOn, cashUp?.ClosedBy, closer, cashUp?.ClosedOn, sources),
         };
     }
 

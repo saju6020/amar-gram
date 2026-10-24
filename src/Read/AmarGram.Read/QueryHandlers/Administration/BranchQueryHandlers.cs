@@ -46,29 +46,34 @@ public sealed class GetBranchesQueryHandler(AmarGramDbContext db) : IQueryHandle
         hours.Select(h => new OpeningIntervalViewModel(h.DayOfWeek.ToString(), h.Opens.ToString("HH:mm"), h.Closes.ToString("HH:mm"))).ToList();
 }
 
-public sealed class GetAdminBranchesQueryHandler(AmarGramDbContext db) : IQueryHandlerAsync<GetAdminBranchesQuery, IReadOnlyList<AdminBranchViewModel>>
+public sealed class GetAdminBranchesQueryHandler(AmarGramDbContext db, AmarGram.Domain.DomainServices.IBranchCalendar branchCalendar, TimeProvider timeProvider)
+    : IQueryHandlerAsync<GetAdminBranchesQuery, IReadOnlyList<AdminBranchViewModel>>
 {
     public async Task<QueryResponse<IReadOnlyList<AdminBranchViewModel>>> HandleAsync(GetAdminBranchesQuery query)
     {
         var rows = await db.Set<BranchAggregate>().AsNoTracking().OrderBy(b => b.Name)
             .Select(b => new
             {
-                b.Id, b.Code, b.Name, b.TimeZoneId, b.AddressLine, b.PhoneNumber, b.Email, b.IsActive,
+                b.Id, b.Code, b.Name, b.TimeZoneId, b.AddressLine, b.PhoneNumber, b.Email, b.IsActive, b.Type,
                 Hours = b.WeeklyHours.OrderBy(h => h.DayOfWeek).ThenBy(h => h.Opens)
                     .Select(h => new RawOpeningInterval(h.DayOfWeek, h.Opens, h.Closes))
                     .ToList()
             })
             .ToListAsync();
 
+        var card = await new AdminBranchCardDetails(db, branchCalendar, timeProvider).LoadAsync(rows.Select(b => (b.Id, b.TimeZoneId)).ToList());
+
         var result = rows.Select(b => new AdminBranchViewModel(
             b.Id, b.Code, b.Name, b.TimeZoneId, b.AddressLine, b.PhoneNumber, b.Email, b.IsActive,
-            GetBranchesQueryHandler.ToOpeningIntervals(b.Hours))).ToList();
+            GetBranchesQueryHandler.ToOpeningIntervals(b.Hours),
+            b.Type.DisplayName, card[b.Id].TodayHours, card[b.Id].DeliveryAreas, card[b.Id].ActiveStaffCount)).ToList();
 
         return new QueryResponse<IReadOnlyList<AdminBranchViewModel>> { Result = result };
     }
 }
 
-public sealed class GetAdminBranchQueryHandler(AmarGramDbContext db) : IQueryHandlerAsync<GetAdminBranchQuery, AdminBranchViewModel?>
+public sealed class GetAdminBranchQueryHandler(AmarGramDbContext db, AmarGram.Domain.DomainServices.IBranchCalendar branchCalendar, TimeProvider timeProvider)
+    : IQueryHandlerAsync<GetAdminBranchQuery, AdminBranchViewModel?>
 {
     public async Task<QueryResponse<AdminBranchViewModel?>> HandleAsync(GetAdminBranchQuery query)
     {
@@ -76,7 +81,7 @@ public sealed class GetAdminBranchQueryHandler(AmarGramDbContext db) : IQueryHan
             .Where(b => b.Id == query.BranchId)
             .Select(b => new
             {
-                b.Id, b.Code, b.Name, b.TimeZoneId, b.AddressLine, b.PhoneNumber, b.Email, b.IsActive,
+                b.Id, b.Code, b.Name, b.TimeZoneId, b.AddressLine, b.PhoneNumber, b.Email, b.IsActive, b.Type,
                 Hours = b.WeeklyHours.OrderBy(h => h.DayOfWeek).ThenBy(h => h.Opens)
                     .Select(h => new RawOpeningInterval(h.DayOfWeek, h.Opens, h.Closes))
                     .ToList()
@@ -85,9 +90,12 @@ public sealed class GetAdminBranchQueryHandler(AmarGramDbContext db) : IQueryHan
 
         if (row is null) return new QueryResponse<AdminBranchViewModel?> { Result = null };
 
+        var card = (await new AdminBranchCardDetails(db, branchCalendar, timeProvider).LoadAsync([(row.Id, row.TimeZoneId)]))[row.Id];
+
         var result = new AdminBranchViewModel(
             row.Id, row.Code, row.Name, row.TimeZoneId, row.AddressLine, row.PhoneNumber, row.Email, row.IsActive,
-            GetBranchesQueryHandler.ToOpeningIntervals(row.Hours));
+            GetBranchesQueryHandler.ToOpeningIntervals(row.Hours),
+            row.Type.DisplayName, card.TodayHours, card.DeliveryAreas, card.ActiveStaffCount);
 
         return new QueryResponse<AdminBranchViewModel?> { Result = result };
     }

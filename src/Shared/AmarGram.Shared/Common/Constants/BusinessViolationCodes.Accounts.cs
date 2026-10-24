@@ -66,6 +66,12 @@ public static partial class BusinessViolationCodes
     public const string CustomerAlreadyMerged = nameof(CustomerAlreadyMerged);
     public const string CustomersNotDuplicates = nameof(CustomersNotDuplicates);
     public const string CatOwnerMismatch = nameof(CatOwnerMismatch);
+    // HO-P4 BG-19: staff notes and tags on a customer
+    public const string InvalidCustomerNote = nameof(InvalidCustomerNote);
+    public const string CustomerNoteLimitExceeded = nameof(CustomerNoteLimitExceeded);
+    public const string InvalidCustomerTag = nameof(InvalidCustomerTag);
+    public const string CustomerTagLimitExceeded = nameof(CustomerTagLimitExceeded);
+    public const string NoResetChannel = nameof(NoResetChannel);
     // ReasonRequired is declared in the base BusinessViolationCodes.cs -- reused verbatim,
     // not redeclared (a partial static class cannot repeat a const member's name).
 

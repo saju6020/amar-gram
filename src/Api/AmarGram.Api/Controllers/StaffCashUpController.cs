@@ -39,6 +39,7 @@ public sealed class StaffCashUpController(
         var response = await dispatcher.SendAsync(new RecordCashCountCommand
         {
             BranchId = branchId, BusinessDate = date, CountedCash = request.CountedCash, Explanation = request.Explanation,
+            Counts = request.Counts?.Where(c => c is not null).Select(c => new CashUpSourceCountInput(c.SourceKey ?? string.Empty, c.CountedCash)).ToList(),
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true,
         });
 

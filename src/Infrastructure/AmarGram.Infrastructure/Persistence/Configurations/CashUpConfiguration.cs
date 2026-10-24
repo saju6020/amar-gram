@@ -1,6 +1,10 @@
+using System.Text.Json;
 using AmarGram.Domain.Aggregates.Billing;
+using AmarGram.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AmarGram.Infrastructure.Persistence.Configurations;
 
@@ -25,6 +29,13 @@ public sealed class CashUpConfiguration : IEntityTypeConfiguration<CashUpAggrega
         builder.Property(x => x.ClosedBy).HasColumnName("closed_by");
         builder.Property(x => x.ClosedOn).HasColumnName("closed_on").HasColumnType("timestamptz");
 
+        // HO-P4 BG-20: the per-source counts and the frozen per-source expectation, as small jsonb documents (never queried by key; the
+        // cash-up read loads the row whole). The tables' immutability trigger only guards a closed row, so these columns change while open.
+        builder.Property(x => x.SourceCounts).HasColumnName("source_counts").HasColumnType("jsonb")
+            .HasConversion(JsonList<CashUpSourceCount>()).Metadata.SetValueComparer(ListComparer<CashUpSourceCount>());
+        builder.Property(x => x.ExpectedSources).HasColumnName("expected_sources").HasColumnType("jsonb")
+            .HasConversion(JsonList<CashUpSourceExpected>()).Metadata.SetValueComparer(ListComparer<CashUpSourceExpected>());
+
         builder.OwnsOne(x => x.ExpectedSnapshot, snapshot =>
         {
             snapshot.Property(s => s.CashTotal).HasColumnName("expected_cash_total").HasMoneyColumn();
@@ -43,4 +54,13 @@ public sealed class CashUpConfiguration : IEntityTypeConfiguration<CashUpAggrega
 
         builder.ConfigureRootTail();
     }
+
+    private static ValueConverter<IReadOnlyList<T>, string> JsonList<T>() => new(
+        v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+        v => JsonSerializer.Deserialize<List<T>>(v, JsonSerializerOptions.Default) ?? new List<T>());
+
+    private static ValueComparer<IReadOnlyList<T>> ListComparer<T>() => new(
+        (a, b) => (a ?? new List<T>()).SequenceEqual(b ?? new List<T>()),
+        v => v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item)),
+        v => v.ToList());
 }

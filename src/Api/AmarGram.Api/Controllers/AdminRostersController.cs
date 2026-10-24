@@ -46,6 +46,47 @@ public sealed class AdminRostersController(IInMemoryDispatcher dispatcher, IUser
         return response.IsSuccess ? NoContent() : BadRequest(response.ValidationResult);
     }
 
+    /// <summary>HO-P4 BG-23 -- one roster-grid cell (click-to-cycle). 200 with the cell as it now reads; 400 with the violation otherwise.</summary>
+    [HttpPut("rosters/{staffAccountId:guid}/shifts/{date}")]
+    [RequireAction(Actions.Rosters.Manage)]
+    public async Task<IActionResult> SetShift(Guid branchId, Guid staffAccountId, DateOnly date, [FromBody] SetRosterShiftRequest request)
+    {
+        var command = new SetRosterShiftCommand
+        {
+            StaffAccountId = staffAccountId, BranchId = branchId, Date = date, Shift = request.Shift ?? string.Empty,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
+        };
+
+        var response = await dispatcher.SendAsync(command);
+        if (!response.IsSuccess) return BadRequest(response.ValidationResult);
+
+        var cells = await dispatcher.GetResultAsync(new GetRosterCellsQuery
+        {
+            BranchId = branchId, From = date, To = date, StaffAccountId = staffAccountId,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
+        });
+
+        return Ok(cells.Result.Single());
+    }
+
+    /// <summary>HO-P4 BG-23 -- the grid's cells for a date range (at most <see cref="LeaveRules.MaxAvailabilityRangeDays"/> days).</summary>
+    [HttpGet("roster-cells")]
+    [RequireAction(Actions.Rosters.View)]
+    public async Task<IActionResult> GetCells(Guid branchId, [FromQuery] DateOnly from, [FromQuery] DateOnly to, [FromQuery] Guid? staffAccountId)
+    {
+        if (to < from) return BadRequest(new { error = "'to' cannot be before 'from'." });
+        if (to.DayNumber - from.DayNumber > LeaveRules.MaxAvailabilityRangeDays)
+            return BadRequest(new { error = $"The range cannot exceed {LeaveRules.MaxAvailabilityRangeDays} days." });
+
+        var response = await dispatcher.GetResultAsync(new GetRosterCellsQuery
+        {
+            BranchId = branchId, From = from, To = to, StaffAccountId = staffAccountId,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
+        });
+
+        return Ok(response.Result);
+    }
+
     [HttpDelete("rosters/{staffAccountId:guid}/next-pattern")]
     [RequireAction(Actions.Rosters.Manage)]
     public async Task<IActionResult> CancelNextPattern(Guid branchId, Guid staffAccountId)
