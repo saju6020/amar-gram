@@ -40,7 +40,18 @@ const STAFF = {
   password: process.env.E2E_STAFF_PASSWORD ?? '',
 };
 const CAPTCHA_ANSWER = process.env.JOURNEY_CAPTCHA_ANSWER ?? 'TEST1';
-const SEEDED_BRANDS = ['Whiskas', 'Royal Canin', 'Me-O', 'Purina Friskies', 'Catsan', 'Kit Cat'];
+// The producers in scripts/data/amargram-catalogue.json (the API keeps the `brand` name; the shop says "Producer").
+const SEEDED_BRANDS = [
+  'Barind Farms',
+  'Haat Bazaar Co-op',
+  'Madhupur Gram Foods',
+  'Meghna Naturals',
+  'Padma Organics',
+  'Rupsha Dairy',
+  'Sonar Bangla Farms',
+  'Sundarbans Harvest',
+  'Teesta Valley',
+];
 
 test.skip(!ENABLED, 'Set JOURNEY_REAL_API=1 (use npm run test:e2e:journey).');
 test.describe.configure({ mode: 'serial', timeout: 180_000 });
@@ -180,9 +191,9 @@ test.describe('a new visitor', () => {
       .toBe(true);
 
     // The brand filter lists the seeded brands, and only those.
-    const brandGroup = visitor.getByRole('group', { name: 'Brand' }).first();
+    const brandGroup = visitor.getByRole('group', { name: 'Producer' }).first();
     await expect(brandGroup).toBeVisible();
-    const showAll = brandGroup.getByRole('button', { name: /Show all \d+ brands/ });
+    const showAll = brandGroup.getByRole('button', { name: /Show all \d+ producers/ });
     if (await showAll.isVisible().catch(() => false)) await showAll.click();
     for (const brand of SEEDED_BRANDS) {
       await expect(
@@ -194,13 +205,11 @@ test.describe('a new visitor', () => {
     // Open a product and add it to the cart: the count appears in the header.
     await visitor
       // Anchored: the card's guest wishlist heart is also a link whose name mentions the product.
-      .getByRole('link', { name: /^Whiskas Adult Ocean Fish/ })
+      .getByRole('link', { name: /^Kalijira Rice/ })
       .first()
       .click();
-    await expect(visitor).toHaveURL(/\/shop\/products\/whiskas-adult-ocean-fish-dry/);
-    await expect(
-      visitor.getByRole('heading', { level: 1, name: /Whiskas Adult Ocean Fish/ }),
-    ).toBeVisible();
+    await expect(visitor).toHaveURL(/\/shop\/products\/kalijira-rice/);
+    await expect(visitor.getByRole('heading', { level: 1, name: /Kalijira Rice/ })).toBeVisible();
     await visitor.getByRole('button', { name: 'Add to cart' }).click();
     await expect(visitor.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
     await expect(visitor.getByTestId('cart-count').first()).toHaveText('1');
@@ -300,10 +309,8 @@ test.describe('the seeded customer', () => {
     }
 
     // Add one ৳850 item through the product page.
-    await page.goto('/shop/products/catsan-hygiene-plus-litter');
-    await expect(
-      page.getByRole('heading', { level: 1, name: /Catsan Hygiene Plus Litter/ }),
-    ).toBeVisible();
+    await page.goto('/shop/products/pure-mustard-oil');
+    await expect(page.getByRole('heading', { level: 1, name: /Pure Mustard Oil/ })).toBeVisible();
     await page.getByRole('button', { name: 'Add to cart' }).click();
     await expect(page.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
     await page.goto('/cart');

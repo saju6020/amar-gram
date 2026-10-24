@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { LimitedMarkup } from '@/components/content/LimitedMarkup';
 import { cn } from '@/lib/utils';
+import { certificationLabel } from '@/lib/shop/labels';
 import type { ProductDetail } from '@/lib/api/shop-catalogue';
 
 export interface ProductDetailsTabsProps {
@@ -18,13 +19,6 @@ interface Tab {
   label: string;
   panel: React.ReactNode;
 }
-
-const ANALYSIS_ROWS = [
-  ['Protein', 'proteinPercent'],
-  ['Fat', 'fatPercent'],
-  ['Fibre', 'fibrePercent'],
-  ['Moisture', 'moisturePercent'],
-] as const;
 
 function buildTabs(
   detail: ProductDetail,
@@ -48,13 +42,17 @@ function buildTabs(
   const lf = (field: string, node: React.ReactNode) => <div lang={lang_(field)}>{node}</div>;
   tabs[0]!.panel = lf('description', tabs[0]!.panel);
 
-  if (food && (food.ingredientList || food.guaranteedAnalysis)) {
+  const certifications = detail.certifications ?? [];
+  const organicCertifier = food?.organicCertifier ?? null;
+  const certificateNumber = food?.organicCertificateNumber ?? null;
+  const hasCertification = certifications.length > 0 || !!organicCertifier;
+  if ((food && food.ingredientList) || hasCertification) {
     tabs.push({
       id: 'ingredients',
-      label: 'Ingredients & analysis',
+      label: 'Ingredients & certification',
       panel: (
         <div className="flex flex-col gap-4">
-          {food.ingredientList && (
+          {food?.ingredientList && (
             <div>
               <h3 className="mb-1 text-sm font-bold text-ink">Ingredients</h3>
               <p lang={lang_('ingredientList')} className="whitespace-pre-line text-ink">
@@ -62,56 +60,62 @@ function buildTabs(
               </p>
             </div>
           )}
-          {food.guaranteedAnalysis && (
-            <table className="w-full max-w-md border-separate border-spacing-0 overflow-hidden rounded-card border border-border text-sm">
-              <caption className="mb-1 text-left text-sm font-bold text-ink">
-                Guaranteed analysis
-              </caption>
-              <thead className="sr-only">
-                <tr>
-                  <th scope="col">Nutrient</th>
-                  <th scope="col">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ANALYSIS_ROWS.map(([label, key]) => (
-                  <tr key={key} className="[&:last-child>*]:border-b-0">
-                    <th
-                      scope="row"
-                      className="border-b border-border px-3.5 py-2.5 text-left font-normal text-ink-muted"
+          {hasCertification && (
+            <div>
+              <h3 className="mb-1 text-sm font-bold text-ink">Certification</h3>
+              {certifications.length > 0 && (
+                <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+                  {certifications.map((certification) => (
+                    <li
+                      key={certification}
+                      className="rounded-pill bg-leaf-soft px-3 py-1 text-sm font-semibold text-leaf-ink"
                     >
-                      {label}
-                    </th>
-                    <td className="border-b border-border px-3.5 py-2.5 text-right font-semibold tabular-nums text-ink">
-                      {food.guaranteedAnalysis![key]}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      {certificationLabel(certification)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {organicCertifier && (
+                <p className="mt-2 text-sm text-ink-muted">
+                  Organic certifier: {organicCertifier}
+                  {certificateNumber ? ` (certificate ${certificateNumber})` : ''}
+                </p>
+              )}
+            </div>
           )}
         </div>
       ),
     });
   }
-  if (food?.feedingGuide) {
+  if (food?.storageInstructions || food?.shelfLife || food?.netWeight || food?.allergens) {
     tabs.push({
-      id: 'feeding',
-      label: 'Feeding guide',
-      panel: lf(
-        'feedingGuide',
-        <LimitedMarkup body={food.feedingGuide} className="space-y-3 text-ink" />,
+      id: 'storage',
+      label: 'Storage & labelling',
+      panel: (
+        <div className="flex flex-col gap-3 text-ink">
+          {food.storageInstructions && (
+            <p className="whitespace-pre-line">{food.storageInstructions}</p>
+          )}
+          {food.shelfLife && (
+            <p>
+              <span className="font-semibold">Shelf life:</span> {food.shelfLife}
+            </p>
+          )}
+          {food.netWeight && (
+            <p>
+              <span className="font-semibold">Net weight:</span> {food.netWeight}
+            </p>
+          )}
+          {food.allergens && (
+            <p>
+              <span className="font-semibold">Allergens:</span> {food.allergens}
+            </p>
+          )}
+        </div>
       ),
     });
   }
-  if (food?.storageInstructions) {
-    tabs.push({
-      id: 'storage',
-      label: 'Storage',
-      panel: <p className="whitespace-pre-line text-ink">{food.storageInstructions}</p>,
-    });
-  }
-  if (detail.countryOfOrigin || food?.manufacturer) {
+  if (detail.countryOfOrigin) {
     tabs.push({
       id: 'origin',
       label: 'Origin',
@@ -121,11 +125,6 @@ function buildTabs(
             <p>
               <span className="font-semibold">Country of origin:</span>{' '}
               {detail.countryOfOrigin.name}
-            </p>
-          )}
-          {food?.manufacturer && (
-            <p>
-              <span className="font-semibold">Manufacturer:</span> {food.manufacturer}
             </p>
           )}
           {originNotes && <LimitedMarkup body={originNotes} className="space-y-3 text-sm" />}
@@ -149,8 +148,8 @@ function buildTabs(
 /**
  * HO-SHP-002 §11.3 `ProductDetailsTabs` — an accessible tab list (arrows, Home, End). Every panel is
  * in the document (hidden when inactive) so the content is server-rendered. Free text — ingredient
- * list, storage instructions, manufacturer — is rendered AS TEXT; only description and feeding guide
- * go through `LimitedMarkup` (HO-SHP-001 backlog SHP row 22). Each language-varying field carries
+ * list, storage instructions, shelf life, allergens — is rendered AS TEXT; only the description
+ * goes through `LimitedMarkup` (HO-SHP-001 backlog SHP row 22). Each language-varying field carries
  * its own `lang` from `fieldLocales` (US-SHP-14 AC2).
  */
 export function ProductDetailsTabs({ detail, originNotes, lang }: ProductDetailsTabsProps) {

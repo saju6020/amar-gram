@@ -15,16 +15,17 @@ export const CATALOGUE_SORTS = [
 ] as const;
 export type CatalogueSort = (typeof CATALOGUE_SORTS)[number];
 
-export const MULTI_PARAMS = ['brand', 'origin', 'protein'] as const;
+export const MULTI_PARAMS = ['brand', 'origin', 'certification'] as const;
 export type MultiParam = (typeof MULTI_PARAMS)[number];
 
 export interface CatalogueParams {
   q: string;
   category: string;
   subcategory: string;
+  /** Producer names — the API's query param is still `brand` (HO-P2 §1.4). */
   brand: string[];
   origin: string[];
-  protein: string[];
+  certification: string[];
   minPrice: string;
   maxPrice: string;
   inStock: boolean;
@@ -41,7 +42,7 @@ export const EMPTY_CATALOGUE_PARAMS: CatalogueParams = {
   subcategory: '',
   brand: [],
   origin: [],
-  protein: [],
+  certification: [],
   minPrice: '',
   maxPrice: '',
   inStock: false,
@@ -89,7 +90,7 @@ export function parseCatalogueParams(input: CatalogueParamsInput): CataloguePara
     subcategory: firstOf(input, 'subcategory'),
     brand: listOf(input, 'brand'),
     origin: listOf(input, 'origin'),
-    protein: listOf(input, 'protein'),
+    certification: listOf(input, 'certification'),
     minPrice: DECIMAL.test(minPrice) ? minPrice : '',
     maxPrice: DECIMAL.test(maxPrice) ? maxPrice : '',
     inStock: firstOf(input, 'availability') === 'inStock',
@@ -148,7 +149,7 @@ export function activeFilterCount(params: CatalogueParams): number {
   return (
     params.brand.length +
     params.origin.length +
-    params.protein.length +
+    params.certification.length +
     (params.category ? 1 : 0) +
     (params.subcategory ? 1 : 0) +
     (params.minPrice || params.maxPrice ? 1 : 0) +

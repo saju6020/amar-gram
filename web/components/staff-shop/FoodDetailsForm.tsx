@@ -1,86 +1,41 @@
 'use client';
 
-import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FieldWithUnit } from '@/components/common/FieldWithUnit';
-import { LimitedMarkup } from '@/components/content/LimitedMarkup';
 import { submitSection } from '@/lib/shop/submitSection';
-import { proteinLabel } from '@/lib/shop/labels';
 import type { StaffFoodDetail, StaffProductDetail } from '@/lib/api/staff-shop';
 import { Field, SectionFrame, inputClass } from './SectionFrame';
 
-const PROTEINS = [
-  'Chicken',
-  'Turkey',
-  'Duck',
-  'Beef',
-  'Lamb',
-  'Fish',
-  'Tuna',
-  'Salmon',
-  'Rabbit',
-  'Insect',
-  'PlantBased',
-  'Mixed',
-  'Other',
-];
-
-const percent = z
-  .string()
-  .refine(
-    (v) => v === '' || (Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100),
-    'Enter a number from 0 to 100.',
-  );
-const schema = z
-  .object({
-    manufacturer: z.string().trim().max(200),
-    proteinSource: z.string(),
-    ingredientList: z.string().max(4000),
-    proteinPercent: percent,
-    fatPercent: percent,
-    fibrePercent: percent,
-    moisturePercent: percent,
-    feedingGuide: z.string().max(5000),
-    storageInstructions: z.string().max(1000),
-  })
-  .superRefine((v, ctx) => {
-    const values = [v.proteinPercent, v.fatPercent, v.fibrePercent, v.moisturePercent];
-    const filled = values.filter((x) => x !== '').length;
-    if (filled > 0 && filled < 4) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['proteinPercent'],
-        message: 'Enter all four analysis values, or leave all four empty.',
-      });
-    }
-  });
+const schema = z.object({
+  ingredientList: z.string().max(4000),
+  storageInstructions: z.string().max(1000),
+  shelfLife: z.string().trim().max(100),
+  netWeight: z.string().trim().max(50),
+  allergens: z.string().trim().max(500),
+  organicCertifier: z.string().trim().max(200),
+  organicCertificateNumber: z.string().trim().max(100),
+});
 export type FoodFormValues = z.infer<typeof schema>;
 const KNOWN = [
-  'manufacturer',
-  'proteinSource',
   'ingredientList',
-  'proteinPercent',
-  'fatPercent',
-  'fibrePercent',
-  'moisturePercent',
-  'feedingGuide',
   'storageInstructions',
+  'shelfLife',
+  'netWeight',
+  'allergens',
+  'organicCertifier',
+  'organicCertificateNumber',
 ] as const;
 
 function initial(food: StaffFoodDetail | null | undefined): FoodFormValues {
-  const a = food?.guaranteedAnalysis;
   return {
-    manufacturer: food?.manufacturer ?? '',
-    proteinSource: food?.proteinSource ?? '',
     ingredientList: food?.ingredientList ?? '',
-    proteinPercent: a ? String(a.proteinPercent) : '',
-    fatPercent: a ? String(a.fatPercent) : '',
-    fibrePercent: a ? String(a.fibrePercent) : '',
-    moisturePercent: a ? String(a.moisturePercent) : '',
-    feedingGuide: food?.feedingGuide ?? '',
     storageInstructions: food?.storageInstructions ?? '',
+    shelfLife: food?.shelfLife ?? '',
+    netWeight: food?.netWeight ?? '',
+    allergens: food?.allergens ?? '',
+    organicCertifier: food?.organicCertifier ?? '',
+    organicCertificateNumber: food?.organicCertificateNumber ?? '',
   };
 }
 
@@ -92,141 +47,107 @@ export interface FoodDetailsFormProps {
 
 /**
  * HO-SHP-002 §11.6 `FoodDetailsForm` — US-SHP-03, food only (the page does not offer it for any
- * other category). Guaranteed analysis is four inputs, each with a visible `%` unit; ingredient list
- * and storage are PLAIN TEXT, feeding guide is LimitedMarkup with a live preview. The form starts from the stored labelling returned by the staff read (HO-SHP-001-FU1).
+ * other category). HO-P2 §1.3: ingredient list, storage instructions, shelf life, net weight and
+ * allergens, plus the organic certifier / certificate number — all PLAIN TEXT. The certificate
+ * fields are optional; publishing needs both only when the product is marked Certified organic.
+ * The form starts from the stored labelling returned by the staff read (HO-SHP-001-FU1).
  */
 export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormProps) {
   const {
     register,
     handleSubmit,
     setError,
-    watch,
     reset,
     formState: { errors, isDirty, isSubmitting, isSubmitSuccessful },
   } = useForm<FoodFormValues>({
     resolver: zodResolver(schema),
     defaultValues: initial(product.food),
   });
-  const feedingGuide = watch('feedingGuide');
+  const organic = product.certifications.includes('CertifiedOrganic');
 
   return (
-    <>
-      <SectionFrame
-        title="Food & labelling"
-        errors={errors}
-        isDirty={isDirty}
-        isSubmitting={isSubmitting}
-        isSubmitSuccessful={isSubmitSuccessful}
-        onReload={onReload}
-        onSubmit={handleSubmit(async (values) => {
-          const ok = await submitSection(() => onSave(values), setError, KNOWN);
-          if (ok) reset(values);
-        })}
+    <SectionFrame
+      title="Food & labelling"
+      errors={errors}
+      isDirty={isDirty}
+      isSubmitting={isSubmitting}
+      isSubmitSuccessful={isSubmitSuccessful}
+      onReload={onReload}
+      onSubmit={handleSubmit(async (values) => {
+        const ok = await submitSection(() => onSave(values), setError, KNOWN);
+        if (ok) reset(values);
+      })}
+    >
+      <Field
+        id="fd-ingredients"
+        label="Ingredient list"
+        error={errors.ingredientList?.message}
+        hint="Plain text."
       >
-        <Field id="fd-manufacturer" label="Manufacturer" error={errors.manufacturer?.message}>
-          <input id="fd-manufacturer" className={inputClass} {...register('manufacturer')} />
-        </Field>
-        <div className="grid gap-4 md:grid-cols-2">
-          <Field id="fd-protein" label="Protein source" error={errors.proteinSource?.message}>
-            <select id="fd-protein" className={inputClass} {...register('proteinSource')}>
-              <option value="">Not set</option>
-              {PROTEINS.map((p) => (
-                <option key={p} value={p}>
-                  {proteinLabel(p)}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-        <Field
+        <textarea
           id="fd-ingredients"
-          label="Ingredient list"
-          error={errors.ingredientList?.message}
-          hint="Plain text."
-        >
-          <textarea
-            id="fd-ingredients"
-            rows={3}
-            className={inputClass}
-            {...register('ingredientList')}
-          />
+          rows={3}
+          className={inputClass}
+          {...register('ingredientList')}
+        />
+      </Field>
+      <Field
+        id="fd-storage"
+        label="Storage instructions"
+        error={errors.storageInstructions?.message}
+        hint="Plain text."
+      >
+        <textarea
+          id="fd-storage"
+          rows={2}
+          className={inputClass}
+          {...register('storageInstructions')}
+        />
+      </Field>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field id="fd-shelf-life" label="Shelf life" error={errors.shelfLife?.message}>
+          <input id="fd-shelf-life" className={inputClass} {...register('shelfLife')} />
         </Field>
-        <fieldset className="m-0 border-0 p-0">
-          <legend className="mb-2 p-0 text-sm font-semibold text-ink">Guaranteed analysis</legend>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <FieldWithUnit
-              id="fd-protein-pct"
-              label="Protein"
-              unit="%"
-              step="0.1"
-              error={errors.proteinPercent?.message}
-              {...register('proteinPercent')}
-            />
-            <FieldWithUnit
-              id="fd-fat-pct"
-              label="Fat"
-              unit="%"
-              step="0.1"
-              error={errors.fatPercent?.message}
-              {...register('fatPercent')}
-            />
-            <FieldWithUnit
-              id="fd-fibre-pct"
-              label="Fibre"
-              unit="%"
-              step="0.1"
-              error={errors.fibrePercent?.message}
-              {...register('fibrePercent')}
-            />
-            <FieldWithUnit
-              id="fd-moisture-pct"
-              label="Moisture"
-              unit="%"
-              step="0.1"
-              error={errors.moisturePercent?.message}
-              {...register('moisturePercent')}
-            />
-          </div>
-        </fieldset>
+        <Field id="fd-net-weight" label="Net weight" error={errors.netWeight?.message}>
+          <input id="fd-net-weight" className={inputClass} {...register('netWeight')} />
+        </Field>
+      </div>
+      <Field
+        id="fd-allergens"
+        label="Allergens"
+        error={errors.allergens?.message}
+        hint="Plain text, for example “Contains nuts”."
+      >
+        <textarea id="fd-allergens" rows={2} className={inputClass} {...register('allergens')} />
+      </Field>
+      <fieldset className="m-0 border-0 p-0">
+        <legend className="mb-2 p-0 text-sm font-semibold text-ink">Organic certification</legend>
+        <p className="mb-3 text-xs text-ink-muted">
+          {organic
+            ? 'This product is marked Certified organic: both fields are needed before it can be published.'
+            : 'Optional. Needed only when the product is marked Certified organic.'}
+        </p>
         <div className="grid gap-4 md:grid-cols-2">
           <Field
-            id="fd-feeding"
-            label="Feeding guide"
-            error={errors.feedingGuide?.message}
-            hint="Paragraphs, ## headings, - bullets, **bold** and links only."
+            id="fd-certifier"
+            label="Organic certifier"
+            error={errors.organicCertifier?.message}
           >
-            <textarea
-              id="fd-feeding"
-              rows={6}
+            <input id="fd-certifier" className={inputClass} {...register('organicCertifier')} />
+          </Field>
+          <Field
+            id="fd-certificate"
+            label="Certificate number"
+            error={errors.organicCertificateNumber?.message}
+          >
+            <input
+              id="fd-certificate"
               className={inputClass}
-              {...register('feedingGuide')}
+              {...register('organicCertificateNumber')}
             />
           </Field>
-          <div className="flex flex-col gap-1.5">
-            <p className="text-sm font-semibold text-ink">Preview</p>
-            <div
-              role="group"
-              aria-label="Feeding guide preview"
-              className="min-h-24 rounded-[var(--radius-sm)] border border-border bg-surface p-3 text-sm"
-            >
-              <LimitedMarkup body={feedingGuide || ''} className="space-y-2" />
-            </div>
-          </div>
         </div>
-        <Field
-          id="fd-storage"
-          label="Storage instructions"
-          error={errors.storageInstructions?.message}
-          hint="Plain text."
-        >
-          <textarea
-            id="fd-storage"
-            rows={2}
-            className={inputClass}
-            {...register('storageInstructions')}
-          />
-        </Field>
-      </SectionFrame>
-    </>
+      </fieldset>
+    </SectionFrame>
   );
 }

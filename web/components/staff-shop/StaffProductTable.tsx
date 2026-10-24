@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { DataTable } from '@/components/common/DataTable';
 import { formatInstantDate } from '@/lib/format/time';
-import { categoryLabel } from '@/lib/shop/labels';
+import { CATEGORY_LABELS, categoryLabel } from '@/lib/shop/labels';
 import type { StaffProductSummary } from '@/lib/api/staff-shop';
 
 export type StaffProductFilterName =
@@ -99,14 +99,9 @@ export function StaffProductTable(props: StaffProductTableProps) {
           label="Category"
           value={filters.category}
           onChange={(v) => onFilter('category', v)}
-          options={[
-            'CatFood',
-            'Litter',
-            'LitterPotsAndAccessories',
-            'BagsAndCarriers',
-            'HealthAndGrooming',
-            'ToysAndFurniture',
-          ].map((c) => [c, categoryLabel(c)] as [string, string])}
+          options={Object.keys(CATEGORY_LABELS).map(
+            (c) => [c, categoryLabel(c)] as [string, string],
+          )}
         />
         <SelectFilter
           id="f-kind"
@@ -140,7 +135,7 @@ export function StaffProductTable(props: StaffProductTableProps) {
         />
         <div className="flex flex-col gap-1.5">
           <label htmlFor="f-brand" className="text-xs font-semibold text-ink-muted">
-            Brand
+            Producer
           </label>
           <input
             id="f-brand"
@@ -188,7 +183,7 @@ export function StaffProductTable(props: StaffProductTableProps) {
         rowHref={(row) => `/staff/shop/products/${row.productId}`}
         columns={[
           { id: 'name', header: 'Name', cell: (row) => row.name },
-          { id: 'brand', header: 'Brand', cell: (row) => row.brand },
+          { id: 'brand', header: 'Producer', cell: (row) => row.brand },
           { id: 'category', header: 'Category', cell: (row) => categoryLabel(row.category) },
           {
             id: 'kind',

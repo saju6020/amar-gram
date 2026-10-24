@@ -5,27 +5,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LimitedMarkup } from '@/components/content/LimitedMarkup';
 import { submitSection } from '@/lib/shop/submitSection';
-import { categoryLabel, subcategoryLabel } from '@/lib/shop/labels';
+import {
+  CERTIFICATIONS,
+  categoryLabel,
+  certificationLabel,
+  isFoodCategory,
+  subcategoryLabel,
+} from '@/lib/shop/labels';
 import type { CategoryNode } from '@/lib/api/shop-catalogue';
 import type { TaxClass } from '@/lib/api/admin-catalogue';
 import type { StaffProductDetail } from '@/lib/api/staff-shop';
 import { Field, SectionFrame, inputClass } from './SectionFrame';
 
-export const HEALTH_FOCUSES = [
-  'Sterilised',
-  'WeightManagement',
-  'Urinary',
-  'Renal',
-  'Digestive',
-  'SkinAndCoat',
-  'Hairball',
-  'Dental',
-  'Sensitive',
-] as const;
-
 const schema = z.object({
   name: z.string().trim().min(1, 'Enter the product name.').max(200),
-  brand: z.string().trim().min(1, 'Enter the brand.').max(100),
+  brand: z.string().trim().min(1, 'Enter the producer.').max(100),
   description: z.string().max(5000, 'Keep the description under 5000 characters.'),
   subcategory: z.string(),
   tags: z.string(),
@@ -33,7 +27,7 @@ const schema = z.object({
   taxClassId: z.string().min(1, 'Choose a tax class.'),
   listedOnStorefront: z.boolean(),
   isExpiryTracked: z.boolean(),
-  healthFocus: z.array(z.string()),
+  certifications: z.array(z.string()),
   slug: z.string().trim().min(1, 'Enter the web address.'),
 });
 export type DetailsFormValues = z.infer<typeof schema>;
@@ -47,7 +41,7 @@ const KNOWN = [
   'taxClassId',
   'listedOnStorefront',
   'isExpiryTracked',
-  'healthFocus',
+  'certifications',
   'slug',
 ] as const;
 
@@ -76,8 +70,9 @@ export interface ProductDetailsFormProps {
  * HO-SHP-002 §11.6 `ProductDetailsForm` — US-SHP-01. Description is LimitedMarkup with a live
  * preview through the SHARED renderer (what staff see is what the shop shows). The slug is read-only
  * once the product has been published; the category is read-only while the product is active.
- * *Track expiry* is locked on for food. Health focus (food) is saved with the details and loaded from
- * the staff read (HO-SHP-001-FU1), so a save that does not touch it sends back what is stored.
+ * *Track expiry* is locked on for food. Certifications (HO-P2 §1.3, food only — the API clears them on
+ * non-food) are saved with the details and loaded from
+ * the staff read (HO-SHP-001-FU1), so a save that does not touch them sends back what is stored.
  */
 export function ProductDetailsForm({
   product,
@@ -87,7 +82,7 @@ export function ProductDetailsForm({
   onSave,
   onReload,
 }: ProductDetailsFormProps) {
-  const isFood = product.category === 'CatFood' && product.kind === 'Standard';
+  const isFood = isFoodCategory(product.category) && product.kind === 'Standard';
   const {
     register,
     handleSubmit,
@@ -107,7 +102,7 @@ export function ProductDetailsForm({
       taxClassId: product.taxClassId,
       listedOnStorefront: product.listedOnStorefront,
       isExpiryTracked: isFood ? true : product.isExpiryTracked,
-      healthFocus: product.healthFocus ?? [],
+      certifications: product.certifications ?? [],
       slug: product.slug,
     },
   });
@@ -141,7 +136,7 @@ export function ProductDetailsForm({
           {...register('name')}
         />
       </Field>
-      <Field id="pd-brand" label="Brand" error={errors.brand?.message}>
+      <Field id="pd-brand" label="Producer" error={errors.brand?.message}>
         <input
           id="pd-brand"
           className={inputClass}
@@ -255,18 +250,21 @@ export function ProductDetailsForm({
       </label>
       {isFood && (
         <fieldset className="m-0 border-0 p-0">
-          <legend className="mb-1 p-0 text-sm font-semibold text-ink">Health focus</legend>
-          <p className="mb-2 text-xs text-ink-muted">Saved with the details.</p>
+          <legend className="mb-1 p-0 text-sm font-semibold text-ink">Certifications</legend>
+          <p className="mb-2 text-xs text-ink-muted">
+            Saved with the details. Certified organic needs the certifier and certificate number
+            before the product can be published.
+          </p>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            {HEALTH_FOCUSES.map((focus) => (
-              <label key={focus} className="flex items-center gap-1.5 text-sm text-ink">
+            {CERTIFICATIONS.map((certification) => (
+              <label key={certification} className="flex items-center gap-1.5 text-sm text-ink">
                 <input
                   type="checkbox"
-                  value={focus}
+                  value={certification}
                   className="h-4 w-4 accent-[var(--accent)]"
-                  {...register('healthFocus')}
+                  {...register('certifications')}
                 />
-                {subcategoryLabel(focus)}
+                {certificationLabel(certification)}
               </label>
             ))}
           </div>

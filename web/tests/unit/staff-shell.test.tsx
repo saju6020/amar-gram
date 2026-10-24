@@ -213,6 +213,6 @@ describe('StaffShell — the Amar Gram logo', () => {
     renderShell(<StaffShell>content</StaffShell>);
     const logo = screen.getByRole('link', { name: 'Amar Gram Shop' });
     expect(logo).toHaveAttribute('href', '/staff');
-    expect(logo.querySelector('[aria-hidden="true"].bg-accent')).not.toBeNull();
+    expect(logo.querySelector('[aria-hidden="true"].bg-leaf')).not.toBeNull();
   });
 });

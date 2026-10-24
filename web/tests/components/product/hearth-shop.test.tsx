@@ -139,7 +139,7 @@ describe('ShopHero — built from the banner, nothing invented', () => {
           title: 'Harvest season',
           body: 'Everything a new kitchen needs.',
           placement: 'Home',
-          linkUrl: '/shop/products?category=CatFood',
+          linkUrl: '/shop/products?category=RiceAndGrains',
         }}
         featured={makeItem()}
       />,
@@ -148,7 +148,7 @@ describe('ShopHero — built from the banner, nothing invented', () => {
     expect(screen.getByText('Everything a new kitchen needs.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Find out more/ })).toHaveAttribute(
       'href',
-      '/shop/products?category=CatFood',
+      '/shop/products?category=RiceAndGrains',
     );
     expect(screen.getByRole('link', { name: /Organic Rolled Oats/ })).toHaveAttribute(
       'href',

@@ -100,7 +100,7 @@ export interface CustomerShipment {
 export interface ReturnableLine {
   lineId: string;
   maxQuantity: number;
-  returnClass: 'Food' | 'Litter' | 'Other';
+  returnClass: 'Food' | 'Household' | 'Other';
 }
 
 export interface CustomerRefund {

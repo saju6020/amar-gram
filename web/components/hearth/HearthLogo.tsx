@@ -1,11 +1,17 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-/** A sprout with two leaves rising from a field line, white on the green badge (Amar Gram, 2026-10-23). */
+/** A sprout with two leaves rising from a field line, in the leaf-soft tone on the banana-leaf badge (Amar Gram, 2026-10-23). */
 function Sprout() {
   return (
     <svg width="68%" height="68%" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
-      <path d="M16 28V15" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" />
+      <path
+        d="M16 28V15"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.4}
+        strokeLinecap="round"
+      />
       <path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z" />
       <path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z" />
       <path
@@ -18,7 +24,7 @@ function Sprout() {
       <path
         d="M15 15.6L9.4 10.4M17 12.8l5.4-5"
         fill="none"
-        stroke="var(--accent)"
+        stroke="var(--leaf)"
         strokeWidth={1.1}
         strokeLinecap="round"
       />
@@ -27,8 +33,8 @@ function Sprout() {
 }
 
 /**
- * The shop's logo (Amar Gram pivot, 2026-10-23; replaces the PurrCare badge): a tilted leaf-green badge
- * with the sprout, "Amar" in deep green and "Gram" in harvest turmeric, and a small "Shop" tag. Reads
+ * The shop's logo (Amar Gram pivot, 2026-10-23; replaces the PurrCare badge): a tilted banana-leaf badge
+ * with the sprout, "Amar" in ink and "Gram" in leaf green (both in the display font), and a small "Shop" tag. Reads
  * "Amar Gram Shop".
  * Sized from the link's font size, so the header's `text-xl md:text-2xl` scales it.
  */
@@ -45,19 +51,18 @@ function SproutBadgeLogo({
     <Link
       href={href}
       className={cn(
-        'inline-flex items-center gap-2.5 whitespace-nowrap text-2xl text-accent-ink no-underline',
+        'inline-flex items-center gap-2.5 whitespace-nowrap text-2xl text-ink no-underline',
         className,
       )}
     >
       <span
         aria-hidden="true"
-        className="grid size-[1.65em] flex-none rotate-[-4deg] place-items-center rounded-[0.52em] bg-accent text-white"
+        className="grid size-[1.65em] flex-none rotate-[-4deg] place-items-center rounded-[0.52em] bg-leaf text-leaf-soft"
       >
         <Sprout />
       </span>
-      <span className="font-sans text-[1.12em] font-black leading-none tracking-[-0.045em]">
-        Amar{' '}
-        <span className="text-warm">Gram</span>
+      <span className="font-display text-[1.12em] font-bold leading-none tracking-[-0.02em]">
+        Amar <span className="text-leaf">Gram</span>
       </span>{' '}
       <span
         className={cn(

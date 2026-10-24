@@ -54,7 +54,7 @@ interface LineDraft {
 
 const POLICY: Record<string, string> = {
   Food: "Opened food can only be returned if there's a quality problem or a recall.",
-  Litter: "Used litter can't be returned.",
+  Household: "Used household and care items can't be returned unless faulty or recalled.",
 };
 
 function Form({ order }: { order: CustomerOrderDetail }) {

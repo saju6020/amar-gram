@@ -66,7 +66,7 @@ describe('Approving a return that needs a defect - U-E3', () => {
 
     await user.click(screen.getByRole('checkbox', { name: /Defect confirmed/ }));
     expect(approve).toBeDisabled(); // still no note
-    await user.type(screen.getByLabelText(/Defect note/), 'Torn bag, kibble stale');
+    await user.type(screen.getByLabelText(/Defect note/), 'Torn bag, rice stale');
     expect(approve).toBeEnabled();
     expect(screen.queryByText(/Approve is unavailable/)).not.toBeInTheDocument();
   });

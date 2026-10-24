@@ -22,7 +22,7 @@ const schema = z
   .object({
     kind: z.enum(['Standard', 'Bundle']),
     name: z.string().trim().min(1, 'Enter the product name.').max(200),
-    brand: z.string().trim().min(1, 'Enter the brand.').max(100),
+    brand: z.string().trim().min(1, 'Enter the producer.').max(100),
     category: z.string().min(1, 'Choose a category.'),
     subcategory: z.string(),
     taxClassId: z.string().min(1, 'Choose a tax class.'),
@@ -146,7 +146,7 @@ export function NewProductForm({ categories, taxClasses, onCreate }: NewProductF
           }}
         />
       </Field>
-      <Field id="np-brand" label="Brand" error={errors.brand?.message}>
+      <Field id="np-brand" label="Producer" error={errors.brand?.message}>
         <input
           id="np-brand"
           className={inputClass}

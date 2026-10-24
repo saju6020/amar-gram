@@ -1,3 +1,4 @@
+import { isFoodCategory } from '@/lib/shop/labels';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import { findSku } from '../shop/store';
 import { orderingIds as ids } from './fixtures';
@@ -81,7 +82,7 @@ export interface DbOrderLine {
   taxCents: Cents;
   totalCents: Cents;
   quantityReturned: number;
-  returnClass: 'Food' | 'Litter' | 'Other';
+  returnClass: 'Food' | 'Household' | 'Other';
   allocations: DbAllocation[];
 }
 
@@ -357,7 +358,7 @@ export interface SkuInfo {
   priceCents: Cents | null;
   purchasable: boolean;
   isBundle: boolean;
-  returnClass: 'Food' | 'Litter' | 'Other';
+  returnClass: 'Food' | 'Household' | 'Other';
   categoryId: number;
 }
 
@@ -376,7 +377,11 @@ export function skuInfo(skuId: string): SkuInfo | undefined {
     purchasable: product.status === 'Active' && sku.status === 'Active' && sku.price !== null,
     isBundle: product.kind === 'Bundle',
     returnClass:
-      product.category === 'CatFood' ? 'Food' : product.category === 'Litter' ? 'Litter' : 'Other',
+      isFoodCategory(product.category)
+        ? 'Food'
+        : product.category === 'HouseholdAndCare'
+          ? 'Household'
+          : 'Other',
     categoryId: 1,
   };
 }
@@ -802,7 +807,7 @@ function seedReturns(): DbReturn[] {
           quantity: 1,
           reason: 'QualityDefect',
           condition: 'Opened',
-          customerNote: 'The kibble smelled stale.',
+          customerNote: 'The rice smelled stale.',
           defectConfirmed: false,
           defectNote: null,
           quantityReceived: 0,

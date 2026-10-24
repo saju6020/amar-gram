@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toggleValue, type CatalogueParams } from '@/lib/shop/catalogueParams';
-import { categoryLabel, proteinLabel, subcategoryLabel } from '@/lib/shop/labels';
+import { categoryLabel, certificationLabel, subcategoryLabel } from '@/lib/shop/labels';
 import type { CatalogueFilters } from '@/lib/api/shop-catalogue';
 
 export interface ActiveFilterChipsProps {
@@ -59,11 +59,11 @@ function chipsFor(
       patch: { brand: toggleValue(value.brand, brand) },
     });
   }
-  for (const protein of value.protein) {
+  for (const certification of value.certification) {
     chips.push({
-      key: `protein-${protein}`,
-      label: proteinLabel(protein),
-      patch: { protein: toggleValue(value.protein, protein) },
+      key: `certification-${certification}`,
+      label: certificationLabel(certification),
+      patch: { certification: toggleValue(value.certification, certification) },
     });
   }
   if (value.minPrice || value.maxPrice) {

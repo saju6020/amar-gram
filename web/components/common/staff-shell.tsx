@@ -18,12 +18,12 @@ import {
   Menu,
   Package,
   PanelLeftClose,
-  PawPrint,
   Receipt,
   Settings,
   Settings2,
   Shield,
   ShoppingCart,
+  Sprout,
   Store,
   Truck,
   Undo2,
@@ -173,13 +173,13 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
 
       <aside
         className={cn(
-          'sticky top-0 flex h-screen w-16 flex-shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200',
+          'sticky top-0 flex h-screen w-16 flex-shrink-0 flex-col border-r border-leaf-ink bg-leaf-ink text-leaf-soft transition-[width] duration-200',
           !collapsed && 'sm:w-64',
         )}
       >
         <div
           className={cn(
-            'flex h-14 flex-shrink-0 items-center justify-center gap-2 border-b border-border px-3',
+            'flex h-14 flex-shrink-0 items-center justify-center gap-2 border-b border-leaf px-3',
             !collapsed && 'sm:justify-between sm:px-4',
           )}
         >
@@ -187,7 +187,10 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           <HearthLogo
             variant="portal"
             href="/staff"
-            className={cn('sr-only min-w-0 gap-2 text-base', !collapsed && 'sm:not-sr-only')}
+            className={cn(
+              'sr-only min-w-0 gap-2 text-base text-leaf-soft focus-visible:outline-leaf-soft',
+              !collapsed && 'sm:not-sr-only',
+            )}
           />
 
           {/* Below sm: opens the nav sheet (a real modal Dialog — see above). At sm and up: the
@@ -221,7 +224,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="icon"
-            className="hidden text-ink-muted sm:inline-flex"
+            className="hidden text-leaf-soft hover:bg-leaf hover:text-leaf-soft focus-visible:outline-leaf-soft sm:inline-flex"
             aria-expanded={!collapsed}
             aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
             onClick={() => setCollapsed((current) => !current)}
@@ -343,11 +346,13 @@ function NavSections({
   // A closed group's links: gone from the sheet and the expanded aside, but the icon rail (below
   // sm, or collapsed) keeps every icon — it has no headings to open.
   // (The sheet uses the hidden attribute: those links are truly gone, for assistive tech too.)
+  // The compact nav lives in the dark banana-leaf aside; the full nav is in the light sheet.
+  const dark = mode === 'compact';
   const closedLinks = mode === 'full' || collapsed ? undefined : 'sm:hidden';
 
   if (sections.length === 0) {
     return (
-      <p className={cn('px-2 text-sm text-ink-muted', labelOnly)}>
+      <p className={cn('px-2 text-sm', dark ? 'text-leaf-soft' : 'text-ink-muted', labelOnly)}>
         No areas registered yet — see web/README.md.
       </p>
     );
@@ -373,14 +378,20 @@ function NavSections({
                   aria-controls={listId}
                   onClick={() => onToggleGroup(section.key)}
                   className={cn(
-                    'h-8 w-full items-center justify-between gap-2 rounded-[8px] px-2.5 text-left text-[11px] font-bold uppercase tracking-[0.09em] text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink',
+                    'h-8 w-full items-center justify-between gap-2 rounded-[8px] px-2.5 text-left text-[11px] font-bold uppercase tracking-[0.09em] transition-colors',
+                    dark
+                      ? 'text-leaf-soft hover:bg-leaf focus-visible:outline-leaf-soft'
+                      : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
                     labelOnlyFlex,
                   )}
                 >
                   <span className="truncate">{section.label}</span>
                   <span className="flex flex-none items-center gap-2">
                     {!open && holdsCurrent && (
-                      <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" />
+                      <span
+                        aria-hidden="true"
+                        className={cn('size-1.5 rounded-full', dark ? 'bg-leaf-soft' : 'bg-accent')}
+                      />
                     )}
                     <ChevronDown
                       size={15}
@@ -395,7 +406,7 @@ function NavSections({
                 {mode === 'compact' && (
                   <span
                     aria-hidden="true"
-                    className={cn('mx-3 my-1 block h-px bg-border', !collapsed && 'sm:hidden')}
+                    className={cn('mx-3 my-1 block h-px bg-leaf', !collapsed && 'sm:hidden')}
                   />
                 )}
               </>
@@ -406,7 +417,7 @@ function NavSections({
               className={cn('flex flex-col gap-0.5', !open && closedLinks)}
             >
               {section.items.map((item) => {
-                const Icon = (item.icon && NAV_ICONS[item.icon]) || PawPrint;
+                const Icon = (item.icon && NAV_ICONS[item.icon]) || Sprout;
                 const active = item.href === activeHref;
                 return (
                   <Link
@@ -420,9 +431,14 @@ function NavSections({
                     className={cn(
                       'group flex h-9 items-center gap-3 rounded-[10px] px-2.5 text-sm font-medium no-underline transition-colors',
                       mode === 'compact' && cn('justify-center', !collapsed && 'sm:justify-start'),
+                      dark && 'focus-visible:outline-leaf-soft',
                       active
-                        ? 'bg-accent-soft text-accent-ink'
-                        : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
+                        ? dark
+                          ? 'bg-leaf-soft text-leaf-ink'
+                          : 'bg-accent-soft text-accent-ink'
+                        : dark
+                          ? 'text-leaf-soft hover:bg-leaf'
+                          : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
                     )}
                   >
                     <Icon
@@ -431,7 +447,13 @@ function NavSections({
                       aria-hidden="true"
                       className={cn(
                         'flex-none',
-                        active ? 'text-accent' : 'text-ink-faint group-hover:text-ink-muted',
+                        dark
+                          ? active
+                            ? 'text-leaf-ink'
+                            : 'text-leaf-soft'
+                          : active
+                            ? 'text-accent'
+                            : 'text-ink-faint group-hover:text-ink-muted',
                       )}
                     />
                     <span

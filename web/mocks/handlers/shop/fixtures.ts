@@ -79,7 +79,6 @@ export interface MockTranslation {
   name: string | null;
   description: string | null;
   ingredientList: string | null;
-  feedingGuide: string | null;
 }
 
 export interface MockProduct {
@@ -95,19 +94,16 @@ export interface MockProduct {
   status: 'Draft' | 'Active' | 'Archived';
   listed: boolean;
   country: string | null;
-  protein: string | null;
   tags: string[];
   ingredientList: string | null;
-  manufacturer: string | null;
-  analysis: {
-    proteinPercent: number;
-    fatPercent: number;
-    fibrePercent: number;
-    moisturePercent: number;
-  } | null;
-  feedingGuide: string | null;
   storageInstructions: string | null;
-  healthFocus: string[];
+  shelfLife: string | null;
+  netWeight: string | null;
+  allergens: string | null;
+  organicCertifier: string | null;
+  organicCertificateNumber: string | null;
+  /** HO-P2 §1.3 certification names (`CertifiedOrganic`, `PesticideFree`, `Traditional`, `Halal`). */
+  certifications: string[];
   images: Array<{
     fileId: string;
     altText: string;
@@ -140,13 +136,19 @@ export const COUNTRY_NAMES: Record<string, string> = {
   BD: 'Bangladesh',
 };
 
+/** HO-P2 §1.1/§1.2 — mirrors `ProductCategory` / `ProductSubcategory` in the API. */
 export const CATEGORY_TREE: Record<string, string[]> = {
-  CatFood: ['Dry', 'Wet', 'Treats', 'Grains', 'Pulses', 'Oils'],
-  Litter: ['Clumping', 'Silica', 'Tofu', 'Bentonite'],
-  LitterPotsAndAccessories: ['Trays', 'HoodedBoxes', 'Scoops', 'Mats', 'Liners'],
-  BagsAndCarriers: ['Carriers', 'Backpacks', 'TravelBags', 'StorageBags'],
-  HealthAndGrooming: [],
-  ToysAndFurniture: [],
+  RiceAndGrains: ['AromaticRice', 'EverydayRice', 'FlattenedAndPuffedRice', 'Flour'],
+  HoneyAndGur: ['Honey', 'DateMolasses', 'SugarcaneGur'],
+  OilsAndGhee: ['MustardOil', 'Ghee', 'OtherOils'],
+  Spices: ['GroundSpices', 'WholeSpices', 'SpiceBlends'],
+  Pulses: ['Lentils', 'ChickpeasAndPeas'],
+  TeaAndDrinks: ['Tea', 'HerbalTea', 'JuicesAndSyrups'],
+  FreshProduce: ['Fruit', 'Vegetables'],
+  DatesAndDryFruit: ['Dates', 'Nuts', 'DriedFruit'],
+  DairyAndEggs: ['Eggs', 'MilkAndYoghurt'],
+  SnacksAndSweets: ['Snacks', 'TraditionalSweets', 'Pickles'],
+  HouseholdAndCare: ['JuteAndBags', 'NaturalCare'],
 };
 
 export const MOCK_NOW = '2026-10-04T08:00:00Z';
@@ -158,14 +160,6 @@ const DESCRIPTION = [
   '- No artificial additives',
   '',
   'Read the [preparation guide](/shop) before cooking.',
-].join('\n');
-
-const FEEDING_GUIDE = [
-  '## Daily amounts',
-  '',
-  'Use **40 g** per serving, cooked in 250 ml of water.',
-  '',
-  '- Rinse before cooking',
 ].join('\n');
 
 function sku(
@@ -200,20 +194,21 @@ function product(
   return {
     version: 1,
     description: DESCRIPTION,
-    category: 'CatFood',
-    subcategory: 'Dry',
+    category: 'RiceAndGrains',
+    subcategory: 'EverydayRice',
     kind: 'Standard',
     status: 'Active',
     listed: true,
     country: null,
-    protein: null,
     tags: [],
     ingredientList: null,
-    manufacturer: null,
-    analysis: null,
-    feedingGuide: null,
     storageInstructions: null,
-    healthFocus: [],
+    shelfLife: null,
+    netWeight: null,
+    allergens: null,
+    organicCertifier: null,
+    organicCertificateNumber: null,
+    certifications: [],
     images: [],
     ratingAverage: null,
     ratingCount: 0,
@@ -231,66 +226,86 @@ function product(
 
 function food(extra: Partial<MockProduct>): Partial<MockProduct> {
   return {
-    category: 'CatFood',
-    manufacturer: 'Amar Gram Test Foods Ltd',
-    analysis: { proteinPercent: 32, fatPercent: 16, fibrePercent: 3.5, moisturePercent: 9 },
-    feedingGuide: FEEDING_GUIDE,
-    storageInstructions:
-      'Store in a cool, dry place. Reseal the bag and use within 6 weeks of opening.',
+    category: 'RiceAndGrains',
+    storageInstructions: 'Store in a cool, dry place. Keep the bag sealed once opened.',
+    shelfLife: '12 months from packing',
+    netWeight: '1 kg',
+    allergens: 'None',
     isExpiryTracked: true,
     ...extra,
   };
 }
 
-const BRANDS: Array<{ brand: string; country: string; protein: string }> = [
-  { brand: 'Green Valley', country: 'TH', protein: 'Fish' },
-  { brand: 'Sunfield', country: 'TH', protein: 'Tuna' },
-  { brand: 'Riverbend', country: 'TH', protein: 'Salmon' },
-  { brand: 'Golden Harvest', country: 'US', protein: 'Chicken' },
-  { brand: 'Village Fresh', country: 'US', protein: 'Chicken' },
-  { brand: 'Nature Basket', country: 'DE', protein: 'Beef' },
-  { brand: 'Pure Earth', country: 'TR', protein: 'Chicken' },
-  { brand: 'Monsoon Farms', country: 'KR', protein: 'Salmon' },
-  { brand: 'Hill Orchard', country: 'TH', protein: 'Tuna' },
-  { brand: 'Delta Grains', country: 'FR', protein: 'Beef' },
-  { brand: 'Spice Route', country: 'IN', protein: 'Lamb' },
-  { brand: 'Sonar Bangla', country: 'DE', protein: 'Turkey' },
+/** Producers for the generated catalogue (HO-P2 §1.4: the API's `brand` column holds the producer). */
+const PRODUCERS: Array<{ brand: string; country: string }> = [
+  { brand: 'Sonar Bangla Farms', country: 'BD' },
+  { brand: 'Padma Organics', country: 'BD' },
+  { brand: 'Haat Bazaar Co-op', country: 'BD' },
+  { brand: 'Sundarbans Harvest', country: 'BD' },
+  { brand: 'Meghna Naturals', country: 'BD' },
+  { brand: 'Teesta Valley', country: 'BD' },
+  { brand: 'Green Valley', country: 'TH' },
+  { brand: 'Golden Harvest', country: 'IN' },
+  { brand: 'Black Forest Mill', country: 'DE' },
 ];
-const STAGES = ['Classic', 'Premium', 'Family'];
-const TEXTURES = ['Dry', 'Wet'];
+const GENERATED_LINES: Array<{ category: string; subcategory: string; name: string; tag: string }> =
+  [
+    { category: 'RiceAndGrains', subcategory: 'AromaticRice', name: 'Kalijira Rice', tag: 'rice' },
+    { category: 'RiceAndGrains', subcategory: 'EverydayRice', name: 'Miniket Rice', tag: 'rice' },
+    { category: 'HoneyAndGur', subcategory: 'SugarcaneGur', name: 'Sugarcane Gur', tag: 'gur' },
+    { category: 'OilsAndGhee', subcategory: 'Ghee', name: 'Desi Ghee', tag: 'ghee' },
+    { category: 'Spices', subcategory: 'GroundSpices', name: 'Turmeric Powder', tag: 'spice' },
+    { category: 'Pulses', subcategory: 'Lentils', name: 'Moong Dal', tag: 'dal' },
+    { category: 'TeaAndDrinks', subcategory: 'Tea', name: 'Sylhet Green Tea', tag: 'tea' },
+    { category: 'FreshProduce', subcategory: 'Fruit', name: 'Himsagar Mango', tag: 'fruit' },
+    { category: 'DatesAndDryFruit', subcategory: 'Dates', name: 'Khejur Dates', tag: 'dates' },
+    { category: 'DairyAndEggs', subcategory: 'Eggs', name: 'Free-range Eggs', tag: 'eggs' },
+    { category: 'SnacksAndSweets', subcategory: 'Pickles', name: 'Olive Pickle', tag: 'pickle' },
+  ];
+const GRADES = ['Classic', 'Premium', 'Family'];
+const CERTIFICATION_CYCLE: string[][] = [
+  ['CertifiedOrganic'],
+  [],
+  ['PesticideFree', 'Traditional'],
+  ['Halal'],
+];
 
 function seedGenerated(): MockProduct[] {
   const out: MockProduct[] = [];
   let n = 200;
-  for (const [bi, b] of BRANDS.entries()) {
-    for (const [si, stage] of STAGES.entries()) {
+  for (const [bi, b] of PRODUCERS.entries()) {
+    for (const [si, grade] of GRADES.entries()) {
       n += 1;
-      const texture = TEXTURES[(bi + si) % 2]!;
-      const slug = `${b.brand.toLowerCase().replace(/[^a-z]+/g, '-')}-${stage.toLowerCase()}-${texture.toLowerCase()}-${n}`;
+      const line = GENERATED_LINES[(bi * 3 + si) % GENERATED_LINES.length]!;
+      const slug = `${b.brand.toLowerCase().replace(/[^a-z]+/g, '-')}-${grade.toLowerCase()}-${line.name.toLowerCase().replace(/[^a-z]+/g, '-')}-${n}`;
       const base = 450 + ((bi * 7 + si * 13) % 9) * 110;
       const stocked = (bi + si) % 4 !== 3;
+      const certifications = CERTIFICATION_CYCLE[(bi + si) % CERTIFICATION_CYCLE.length]!;
       out.push(
         product({
           productId: uuid('a', n),
           slug,
-          name: `${b.brand} ${stage} ${texture} Mix`,
+          name: `${b.brand} ${grade} ${line.name}`,
           brand: b.brand,
-          subcategory: texture,
+          category: line.category,
+          subcategory: line.subcategory,
           country: b.country,
-          protein: b.protein,
-          tags: [
-            texture.toLowerCase(),
-            b.protein.toLowerCase(),
-            si === 0 ? 'grain-free' : 'balanced',
-          ],
-          ingredientList: `${b.protein} meal, rice, ${b.protein === 'Chicken' ? 'chicken fat, ' : ''}vitamins and minerals`,
+          tags: [line.tag, si === 0 ? 'organic' : 'everyday'],
+          ingredientList: `${line.name} (100%)`,
           ratingAverage: 3 + ((bi + si) % 3) * 0.7,
           ratingCount: 4 + bi * 3 + si,
           createdAt: `2026-0${1 + ((bi + si) % 8)}-15T00:00:00Z`,
           sold: 10 + bi * 17 + si * 5,
-          ...food({}),
+          ...food({ category: line.category }),
+          certifications,
+          ...(certifications.includes('CertifiedOrganic')
+            ? {
+                organicCertifier: 'Bangladesh Organic Council',
+                organicCertificateNumber: `BOC-${n}`,
+              }
+            : {}),
           skus: [
-            sku(n * 10 + 1, `GEN-${n}-S`, '400 g', String(base) + '.00', stocked),
+            sku(n * 10 + 1, `GEN-${n}-S`, '500 g', String(base) + '.00', stocked),
             sku(
               n * 10 + 2,
               `GEN-${n}-L`,
@@ -307,21 +322,29 @@ function seedGenerated(): MockProduct[] {
     }
   }
   const others: Array<[string, string, string, string, string, string]> = [
-    ['Litter', 'Tofu', 'Tofu Litter', 'Pure Earth', 'JP', '1100.00'],
-    ['Litter', 'Clumping', 'Clumping Litter', 'Clean Home', 'DE', '900.00'],
-    ['Litter', 'Silica', 'Crystal Silica Litter', 'Clean Home', 'DE', '1350.00'],
-    ['LitterPotsAndAccessories', 'Scoops', 'Steel Litter Scoop', 'Amar Gram', 'BD', '250.00'],
-    ['LitterPotsAndAccessories', 'HoodedBoxes', 'Hooded Litter Box', 'Savic', 'FR', '3200.00'],
-    ['BagsAndCarriers', 'Carriers', 'Jute Shopping Carrier', 'Ferplast', 'IN', '4500.00'],
-    ['BagsAndCarriers', 'Backpacks', 'Bubble Backpack', 'PetPal', 'KR', '5200.00'],
-    ['HealthAndGrooming', '', 'Slicker Brush', 'Hertzko', 'US', '650.00'],
-    ['HealthAndGrooming', '', 'Herbal Hand Balm', 'Beaphar', 'FR', '780.00'],
-    ['ToysAndFurniture', '', 'Wooden Puzzle Toy', 'KONG', 'US', '420.00'],
-    ['ToysAndFurniture', '', 'Bamboo Plant Stand', 'Trixie', 'DE', '2400.00'],
-    ['ToysAndFurniture', '', 'Cotton Ball Set', 'Petstages', 'US', '320.00'],
+    ['HouseholdAndCare', 'JuteAndBags', 'Jute Shopping Bag', 'Sonar Bangla Farms', 'BD', '250.00'],
+    ['HouseholdAndCare', 'JuteAndBags', 'Jute Produce Pouch', 'Sonar Bangla Farms', 'BD', '180.00'],
+    ['HouseholdAndCare', 'NaturalCare', 'Herbal Hand Balm', 'Meghna Naturals', 'BD', '780.00'],
+    ['HouseholdAndCare', 'NaturalCare', 'Neem Soap Bar', 'Meghna Naturals', 'BD', '220.00'],
+    ['TeaAndDrinks', 'HerbalTea', 'Tulsi Herbal Tea', 'Teesta Valley', 'BD', '420.00'],
+    ['TeaAndDrinks', 'JuicesAndSyrups', 'Bel Sharbat Syrup', 'Haat Bazaar Co-op', 'BD', '350.00'],
+    [
+      'SnacksAndSweets',
+      'TraditionalSweets',
+      'Nolen Gur Sandesh',
+      'Haat Bazaar Co-op',
+      'BD',
+      '600.00',
+    ],
+    ['SnacksAndSweets', 'Snacks', 'Puffed Rice Muri', 'Haat Bazaar Co-op', 'BD', '120.00'],
+    ['FreshProduce', 'Vegetables', 'Seasonal Vegetable Box', 'Padma Organics', 'BD', '900.00'],
+    ['DairyAndEggs', 'MilkAndYoghurt', 'Mishti Doi', 'Padma Organics', 'BD', '320.00'],
+    ['DatesAndDryFruit', 'Nuts', 'Roasted Cashew Nuts', 'Golden Harvest', 'IN', '1400.00'],
+    ['Spices', 'WholeSpices', 'Whole Cumin Seeds', 'Golden Harvest', 'IN', '480.00'],
   ];
-  for (const [category, subcategory, name, brand, , price] of others) {
+  for (const [category, subcategory, name, brand, country, price] of others) {
     n += 1;
+    const isFood = category !== 'HouseholdAndCare';
     out.push(
       product({
         productId: uuid('a', n),
@@ -329,11 +352,13 @@ function seedGenerated(): MockProduct[] {
         name,
         brand,
         category,
-        subcategory: subcategory || null,
+        subcategory,
+        country,
         tags: [category.toLowerCase()],
         ratingAverage: 4.2,
         ratingCount: 9,
         sold: 30 + n,
+        ...(isFood ? food({ category }) : {}),
         skus: [sku(n * 10 + 1, `GEN-${n}`, 'Standard', price, n % 5 !== 0)],
       }),
     );
@@ -348,10 +373,12 @@ export function seedProducts(): MockProduct[] {
       slug: shopFixtureIds.multiVariantSlug,
       name: 'Organic Rolled Oats',
       brand: 'Amar Gram Farms',
-      subcategory: 'Grains',
-      country: 'TH',
-      protein: 'PlantBased',
+      subcategory: 'FlattenedAndPuffedRice',
+      country: 'BD',
       tags: ['oats', 'breakfast', 'organic'],
+      certifications: ['CertifiedOrganic', 'PesticideFree'],
+      organicCertifier: 'Bangladesh Organic Council',
+      organicCertificateNumber: 'BOC-2026-0142',
       ingredientList: 'Whole grain rolled oats (100%)',
       ratingAverage: 4.5,
       ratingCount: 23,
@@ -377,10 +404,10 @@ export function seedProducts(): MockProduct[] {
       slug: shopFixtureIds.thaiRiceSlug,
       name: 'Thai Jasmine Rice',
       brand: 'Green Valley',
-      subcategory: 'Grains',
+      subcategory: 'AromaticRice',
       country: 'TH',
-      protein: 'PlantBased',
       tags: ['rice', 'jasmine', 'long-grain'],
+      certifications: ['PesticideFree'],
       ingredientList: 'Jasmine rice (100%)',
       ratingAverage: 4,
       ratingCount: 8,
@@ -394,77 +421,81 @@ export function seedProducts(): MockProduct[] {
           name: 'থাই জেসমিন চাল',
           description: 'সুগন্ধি লম্বা দানার চাল।',
           ingredientList: 'জেসমিন চাল (১০০%)',
-          // feeding guide intentionally missing: falls back to en (US-SHP-14 AC2)
-          feedingGuide: null,
         },
       ],
     }),
     product({
       productId: uuid('a', 3),
-      slug: 'canned-tuna-chunks',
-      name: 'Canned Tuna Chunks',
-      brand: 'Sunfield',
-      subcategory: 'Wet',
-      country: 'TH',
-      protein: 'Tuna',
-      tags: ['tuna', 'canned'],
-      ingredientList: 'Tuna, sunflower oil, salt',
+      slug: 'date-palm-gur',
+      name: 'Date Palm Gur',
+      brand: 'Sundarbans Harvest',
+      category: 'HoneyAndGur',
+      subcategory: 'DateMolasses',
+      country: 'BD',
+      tags: ['gur', 'jessore', 'winter'],
+      certifications: ['Traditional'],
+      ingredientList: 'Date palm sap (100%)',
       ratingAverage: 3.8,
       ratingCount: 12,
       sold: 150,
       createdAt: '2026-07-10T00:00:00Z',
-      ...food({}),
-      skus: [sku(301, 'TUNA-1KG', '1 kg', '690.00', true)],
+      ...food({ category: 'HoneyAndGur' }),
+      skus: [sku(301, 'GUR-1KG', '1 kg', '690.00', true)],
     }),
     product({
       productId: uuid('a', 4),
-      slug: 'chicken-masala-mix',
-      name: 'Chicken Masala Mix',
-      brand: 'Spice Route',
-      subcategory: 'Dry',
-      country: 'US',
-      protein: 'Chicken',
-      tags: ['spice', 'chicken', 'masala'],
-      ingredientList: 'Coriander, cumin, chilli, turmeric, dried chicken stock',
+      slug: 'garam-masala-blend',
+      name: 'Garam Masala Blend',
+      brand: 'Haat Bazaar Co-op',
+      category: 'Spices',
+      subcategory: 'SpiceBlends',
+      country: 'BD',
+      tags: ['spice', 'masala'],
+      certifications: ['Halal'],
+      ingredientList: 'Coriander, cumin, cardamom, cinnamon, clove, black pepper',
       ratingAverage: 4.7,
       ratingCount: 31,
       sold: 300,
-      ...food({}),
+      ...food({ category: 'Spices' }),
       skus: [
-        sku(401, 'CMM-1KG', '1 kg', '1800.00', true),
-        sku(402, 'CMM-3KG', '3 kg', '4900.00', true),
+        sku(401, 'GM-250G', '250 g', '1800.00', true),
+        sku(402, 'GM-750G', '750 g', '4900.00', true),
       ],
     }),
     product({
       productId: uuid('a', 5),
       slug: 'pure-mustard-oil',
       name: 'Pure Mustard Oil',
-      brand: 'Village Fresh',
-      subcategory: 'Oils',
-      country: 'US',
-      protein: 'PlantBased',
+      brand: 'Padma Organics',
+      category: 'OilsAndGhee',
+      subcategory: 'MustardOil',
+      country: 'BD',
       tags: ['oil', 'mustard', 'cold-pressed'],
+      certifications: ['CertifiedOrganic'],
+      organicCertifier: 'Bangladesh Organic Council',
+      organicCertificateNumber: 'BOC-2026-0187',
       ingredientList: 'Cold-pressed mustard seed oil (100%)',
       ratingAverage: 4.4,
       ratingCount: 6,
       sold: 90,
-      ...food({}),
+      ...food({ category: 'OilsAndGhee' }),
       skus: [sku(501, 'MO-1_5L', '1.5 L', '3800.00', true)],
     }),
     product({
       productId: uuid('a', 6),
       slug: 'raw-forest-honey',
       name: 'Raw Forest Honey',
-      brand: 'Hill Orchard',
-      subcategory: 'Treats',
-      country: 'US',
-      protein: 'PlantBased',
+      brand: 'Sundarbans Harvest',
+      category: 'HoneyAndGur',
+      subcategory: 'Honey',
+      country: 'BD',
       tags: ['honey', 'raw'],
+      certifications: ['Traditional'],
       ingredientList: 'Raw honey (100%)',
       ratingAverage: 4.1,
       ratingCount: 3,
       sold: 40,
-      ...food({}),
+      ...food({ category: 'HoneyAndGur' }),
       skus: [sku(601, 'HONEY-500G', '500 g', '4100.00', true)],
     }),
     product({
@@ -473,8 +504,8 @@ export function seedProducts(): MockProduct[] {
       name: 'Breakfast Starter Kit',
       brand: 'Amar Gram',
       kind: 'Bundle',
-      category: 'CatFood',
-      subcategory: 'Grains',
+      category: 'RiceAndGrains',
+      subcategory: 'FlattenedAndPuffedRice',
       tags: ['kit', 'breakfast'],
       ratingAverage: null,
       ratingCount: 0,
@@ -486,64 +517,65 @@ export function seedProducts(): MockProduct[] {
           skuId: shopFixtureIds.skuOats400,
           quantity: 1,
         },
-        { productSlug: 'cotton-ball-set', skuId: uuid('b', 9999), quantity: 2 },
+        { productSlug: 'jute-shopping-bag', skuId: uuid('b', 9999), quantity: 2 },
       ],
     }),
     product({
       productId: uuid('a', 8),
       slug: shopFixtureIds.noConsentSlug,
       name: 'Red Lentils (Masoor Dal)',
-      brand: 'Pure Earth',
-      subcategory: 'Pulses',
+      brand: 'Teesta Valley',
+      category: 'Pulses',
+      subcategory: 'Lentils',
       country: 'TR',
-      protein: 'PlantBased',
       tags: ['lentils', 'dal'],
       ingredientList: 'Split red lentils (100%)',
       ratingAverage: 3.9,
       ratingCount: 5,
       sold: 70,
-      ...food({}),
+      ...food({ category: 'Pulses' }),
       skus: [sku(801, 'RL-1KG', '1 kg', '1250.00', false)],
     }),
     product({
       productId: uuid('a', 9),
-      slug: 'slow-cooked-beef-curry',
-      name: 'Slow-cooked Beef Curry',
-      brand: 'Nature Basket',
-      subcategory: 'Wet',
-      country: 'DE',
-      protein: 'Beef',
-      tags: ['wet', 'beef', 'curry'],
-      ingredientList: 'Beef, onion, tomato, spices',
+      slug: 'mango-pickle',
+      name: 'Mango Pickle (Achar)',
+      brand: 'Haat Bazaar Co-op',
+      category: 'SnacksAndSweets',
+      subcategory: 'Pickles',
+      country: 'BD',
+      tags: ['pickle', 'mango', 'achar'],
+      certifications: ['Traditional'],
+      ingredientList: 'Green mango, mustard oil, salt, spices',
       ratingAverage: 4.6,
       ratingCount: 17,
       sold: 120,
-      ...food({}),
-      skus: [sku(901, 'BC-400G', '400 g', '520.00', true)],
+      ...food({ category: 'SnacksAndSweets' }),
+      skus: [sku(901, 'MP-400G', '400 g', '520.00', true)],
     }),
     product({
       productId: uuid('a', 10),
-      slug: 'smoked-salmon-flakes',
-      name: 'Smoked Salmon Flakes',
-      brand: 'Monsoon Farms',
-      subcategory: 'Dry',
+      slug: 'khejur-dates',
+      name: 'Khejur Dates',
+      brand: 'Sundarbans Harvest',
+      category: 'DatesAndDryFruit',
+      subcategory: 'Dates',
       country: 'KR',
-      protein: 'Salmon',
-      tags: ['salmon', 'smoked'],
-      ingredientList: 'Salmon, salt, natural smoke',
+      tags: ['dates', 'dried'],
+      ingredientList: 'Dates (100%)',
       ratingAverage: 4.3,
       ratingCount: 10,
       sold: 60,
-      ...food({}),
-      skus: [sku(1001, 'SSF-1KG', '1 kg', '1650.00', true)],
+      ...food({ category: 'DatesAndDryFruit' }),
+      skus: [sku(1001, 'KD-1KG', '1 kg', '1650.00', true)],
     }),
     product({
       productId: shopFixtureIds.draftProductId,
       slug: shopFixtureIds.draftSlug,
       name: 'Herbal Soap (draft)',
-      brand: 'Beaphar',
-      category: 'HealthAndGrooming',
-      subcategory: null,
+      brand: 'Meghna Naturals',
+      category: 'HouseholdAndCare',
+      subcategory: 'NaturalCare',
       status: 'Draft',
       firstPublishedOn: null,
       skus: [sku(9001, 'DRAFT-1', 'Standard', null, false)],
@@ -552,18 +584,19 @@ export function seedProducts(): MockProduct[] {
       productId: shopFixtureIds.unmetChecklistProductId,
       slug: 'unmet-checklist-food',
       name: 'Unfinished Muesli',
-      brand: 'Monsoon Farms',
+      brand: 'Padma Organics',
+      ...food({}),
       status: 'Draft',
       firstPublishedOn: null,
       skus: [sku(9101, 'UNMET-1', '1 kg', null, false)],
     }),
   ];
-  // Make the kit's second component a real out-of-stock product (the cotton ball set).
+  // Make the kit's second component a real out-of-stock product (the jute shopping bag).
   const generated = seedGenerated();
-  const cottonBalls = generated.find((g) => g.slug === 'cotton-ball-set');
-  if (cottonBalls) {
-    cottonBalls.skus[0]!.skuId = uuid('b', 9999);
-    cottonBalls.skus[0]!.inStock = false;
+  const juteBag = generated.find((g) => g.slug === 'jute-shopping-bag');
+  if (juteBag) {
+    juteBag.skus[0]!.skuId = uuid('b', 9999);
+    juteBag.skus[0]!.inStock = false;
   }
   return [...hand, ...generated];
 }
@@ -586,7 +619,7 @@ export function seedOrigins(): MockOrigin[] {
     },
     {
       code: 'DE',
-      sourcingNotes: 'Wet foods from a family-run German cannery, cooked without added sugar.',
+      sourcingNotes: 'Cold-pressed oils and specialty foods from a family-run German mill.',
       isFeatured: true,
       sortOrder: 2,
     },

@@ -6,10 +6,10 @@ export function makeItem(overrides: Partial<CatalogueItem> = {}): CatalogueItem 
     slug: 'organic-rolled-oats',
     name: 'Organic Rolled Oats',
     brand: 'Amar Gram Farms',
-    category: 'CatFood',
-    subcategory: 'Grains',
+    category: 'RiceAndGrains',
+    subcategory: 'FlattenedAndPuffedRice',
     kind: 'Standard',
-    countryOfOrigin: { code: 'TH', name: 'Thailand' },
+    countryOfOrigin: { code: 'BD', name: 'Bangladesh' },
     fromPrice: { amount: '650.00', currencyCode: 'BDT' },
     priceVaries: false,
     availability: 'InStock',
@@ -28,18 +28,18 @@ export const FACETS: CatalogueFilters = {
     { code: 'TH', name: 'Thailand', count: 9 },
     { code: 'JP', name: 'Japan', count: 2 },
   ],
-  proteinSources: [{ value: 'Salmon', count: 3 }],
+  certifications: [{ value: 'CertifiedOrganic', count: 3 }],
   price: { min: 250, max: 5200 },
 };
 
 export const CATEGORIES: CategoryNode[] = [
   {
-    value: 'CatFood',
+    value: 'RiceAndGrains',
     productCount: 20,
     subcategories: [
-      { value: 'Dry', productCount: 10 },
-      { value: 'Grains', productCount: 5 },
+      { value: 'AromaticRice', productCount: 10 },
+      { value: 'FlattenedAndPuffedRice', productCount: 5 },
     ],
   },
-  { value: 'Litter', productCount: 4, subcategories: [] },
+  { value: 'HouseholdAndCare', productCount: 4, subcategories: [] },
 ];

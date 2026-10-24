@@ -109,20 +109,18 @@ export interface StaffTranslation {
   name: string | null;
   description: string | null;
   ingredientList: string | null;
-  feedingGuide: string | null;
 }
+/** HO-P2 §1.3 — mirrors the API's `FoodDetails` value object. */
 export interface StaffFoodDetail {
-  manufacturer: string | null;
-  proteinSource: string | null;
   ingredientList: string | null;
-  guaranteedAnalysis: {
-    proteinPercent: number;
-    fatPercent: number;
-    fibrePercent: number;
-    moisturePercent: number;
-  } | null;
-  feedingGuide: string | null;
   storageInstructions: string | null;
+  shelfLife: string | null;
+  netWeight: string | null;
+  /** Free text. */
+  allergens: string | null;
+  /** Optional; publishing needs both only when `CertifiedOrganic` is set. */
+  organicCertifier: string | null;
+  organicCertificateNumber: string | null;
 }
 export interface StaffImage {
   fileId: string;
@@ -160,8 +158,8 @@ export interface StaffProductDetail {
   food: StaffFoodDetail | null;
   /** Ordered by `sortOrder`. Valid input to `PUT …/images`. */
   images: StaffImage[];
-  /** Enumeration names; goes back with the Details `PUT`. */
-  healthFocus: string[];
+  /** HO-P2 §1.3 — certification enumeration names; goes back with the Details `PUT`. */
+  certifications: string[];
 }
 
 const productPath = (productId: string) =>
@@ -197,7 +195,7 @@ export interface UpdateProductDetailsRequest {
   countryOfOriginCode?: string | null;
   listedOnStorefront: boolean;
   isExpiryTracked: boolean;
-  healthFocus: string[];
+  certifications: string[];
 }
 export function updateProductDetails(
   productId: string,
@@ -215,17 +213,13 @@ export function changeProductSlug(
 
 export interface SetFoodDetailsRequest {
   expectedVersion: number;
-  manufacturer?: string | null;
-  proteinSource?: string | null;
   ingredientList?: string | null;
-  guaranteedAnalysis?: {
-    proteinPercent: number;
-    fatPercent: number;
-    fibrePercent: number;
-    moisturePercent: number;
-  } | null;
-  feedingGuide?: string | null;
   storageInstructions?: string | null;
+  shelfLife?: string | null;
+  netWeight?: string | null;
+  allergens?: string | null;
+  organicCertifier?: string | null;
+  organicCertificateNumber?: string | null;
 }
 export function setFoodDetails(productId: string, request: SetFoodDetailsRequest): Promise<void> {
   return apiFetch(`${productPath(productId)}/food`, { method: 'PUT', body: request });
@@ -270,7 +264,6 @@ export interface TranslationInput {
   name?: string | null;
   description?: string | null;
   ingredientList?: string | null;
-  feedingGuide?: string | null;
 }
 export function setProductTranslation(
   productId: string,

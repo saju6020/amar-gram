@@ -171,12 +171,12 @@ const ENDPOINTS: Endpoint[] = [
   // public shop
   e('GET /api/shop/products', 'anon', () => [
     '/api/shop/products',
-    '/api/shop/products?category=CatFood',
-    '/api/shop/products?brand=Whiskas&page=1',
+    '/api/shop/products?category=RiceAndGrains',
+    '/api/shop/products?brand=Sonar%20Bangla%20Farms&page=1',
   ]),
   e('GET /api/shop/filters', 'anon', () => [
     '/api/shop/filters',
-    '/api/shop/filters?category=CatFood',
+    '/api/shop/filters?category=RiceAndGrains',
   ]),
   e('GET /api/shop/categories', 'anon'),
   e('GET /api/shop/origins', 'anon'),

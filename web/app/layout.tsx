@@ -1,19 +1,22 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { Inter } from 'next/font/google';
+import { Fraunces, Work_Sans } from 'next/font/google';
 import { Providers } from './providers';
 import { NavigationProgress } from '@/components/common/NavigationProgress';
 import { WebVitalsReporter } from '@/components/observability/WebVitalsReporter';
 import { ServiceWorkerCleanup } from '@/components/offline/ServiceWorkerCleanup';
 import './globals.css';
 
-// Site font (owner, 2026-10-16, after the font preview): Inter for everything - headings, body,
-// tables and numbers - as the variable font (weights 100-900, real italic, optical size). It feeds
-// both app/globals.css tokens, --font-display and --font-sans. (Was Newsreader + Public Sans.)
-const inter = Inter({
+// Site fonts (Phase 2, 2026-10-24): Fraunces for display (headings, prices, the wordmark) and Work Sans
+// for body text, as variable fonts. They feed the --font-display and --font-sans tokens in app/globals.css.
+const fraunces = Fraunces({
   subsets: ['latin'],
-  style: ['normal', 'italic'],
-  axes: ['opsz'],
+  variable: '--font-display-loaded',
+  display: 'swap',
+});
+
+const workSans = Work_Sans({
+  subsets: ['latin'],
   variable: '--font-sans-loaded',
   display: 'swap',
 });
@@ -25,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${fraunces.variable} ${workSans.variable}`}>
       <body>
         {/* Issues.md #1/#6 — a top progress bar for every page change, in every area. */}
         <Suspense fallback={null}>

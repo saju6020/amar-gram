@@ -1,3 +1,4 @@
+import { isFoodCategory } from '@/lib/shop/labels';
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import {
   COUNTRY_NAMES,
@@ -72,7 +73,7 @@ async function write(
 export function checklistFor(p: MockProduct) {
   const active = p.skus.filter((s) => s.status === 'Active');
   const unpriced = active.filter((s) => !s.price).map((s) => s.code);
-  const isFood = p.category === 'CatFood' && p.kind === 'Standard';
+  const isFood = isFoodCategory(p.category) && p.kind === 'Standard';
   const items = [
     {
       item: 'ActiveSku',
@@ -128,20 +129,14 @@ export function checklistFor(p: MockProduct) {
     message: 'Products without a photo convert poorly.',
   });
   if (isFood) {
-    const complete = !!(
-      p.manufacturer &&
-      p.ingredientList &&
-      p.analysis &&
-      p.feedingGuide &&
-      p.storageInstructions
-    );
+    const complete = !!(p.ingredientList && p.storageInstructions && p.shelfLife && p.netWeight);
     items.push({
       item: 'LabellingComplete',
       isBlocking: false,
       isMet: complete,
       message: complete
         ? 'Labelling is complete.'
-        : 'Add the manufacturer, ingredient list, analysis, feeding guide and storage instructions.',
+        : 'Add the ingredient list, storage instructions, shelf life and net weight.',
     });
   }
   return items;
@@ -161,20 +156,22 @@ const skuLabelFor = (p: MockProduct, s: MockSku) => {
 /** `null` when no food details were ever set — as the real read. */
 function staffFood(p: MockProduct) {
   const any =
-    p.manufacturer ||
-    p.protein ||
     p.ingredientList ||
-    p.analysis ||
-    p.feedingGuide ||
-    p.storageInstructions;
+    p.storageInstructions ||
+    p.shelfLife ||
+    p.netWeight ||
+    p.allergens ||
+    p.organicCertifier ||
+    p.organicCertificateNumber;
   if (!any) return null;
   return {
-    manufacturer: p.manufacturer,
-    proteinSource: p.protein,
     ingredientList: p.ingredientList,
-    guaranteedAnalysis: p.analysis,
-    feedingGuide: p.feedingGuide,
     storageInstructions: p.storageInstructions,
+    shelfLife: p.shelfLife,
+    netWeight: p.netWeight,
+    allergens: p.allergens,
+    organicCertifier: p.organicCertifier,
+    organicCertificateNumber: p.organicCertificateNumber,
   };
 }
 
@@ -247,7 +244,7 @@ function staffDetail(p: MockProduct) {
     images: [...p.images]
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((i) => ({ ...i, url: null })),
-    healthFocus: p.healthFocus,
+    certifications: p.certifications,
   };
 }
 
@@ -355,14 +352,15 @@ export const staffHandlers: HttpHandler[] = [
       status: 'Draft',
       listed: true,
       country: null,
-      protein: null,
       tags: [],
       ingredientList: null,
-      manufacturer: null,
-      analysis: null,
-      feedingGuide: null,
       storageInstructions: null,
-      healthFocus: [],
+      shelfLife: null,
+      netWeight: null,
+      allergens: null,
+      organicCertifier: null,
+      organicCertificateNumber: null,
+      certifications: [],
       images: [],
       skus:
         body.kind === 'Bundle'
@@ -392,7 +390,7 @@ export const staffHandlers: HttpHandler[] = [
       related: [],
       translations: [],
       taxClassId: body.taxClassId,
-      isExpiryTracked: body.category === 'CatFood',
+      isExpiryTracked: isFoodCategory(body.category),
       firstPublishedOn: null,
     });
     persist();
@@ -416,9 +414,9 @@ export const staffHandlers: HttpHandler[] = [
         tags: (b.tags as string[]) ?? [],
         country: (b.countryOfOriginCode as string | null) ?? null,
         listed: b.listedOnStorefront !== false,
-        isExpiryTracked: p.category === 'CatFood' ? true : Boolean(b.isExpiryTracked),
+        isExpiryTracked: isFoodCategory(p.category) ? true : Boolean(b.isExpiryTracked),
         taxClassId: b.taxClassId,
-        healthFocus: (b.healthFocus as string[] | undefined) ?? [],
+        certifications: (b.certifications as string[] | undefined) ?? [],
       });
       if (b.category && b.category !== p.category && p.status === 'Active') {
         return badRequest(
@@ -447,26 +445,14 @@ export const staffHandlers: HttpHandler[] = [
 
   http.put('*/api/staff/shop/products/:productId/food', ({ params, request }) =>
     write(String(params.productId), request, (p, b) => {
-      const analysis = b.guaranteedAnalysis as {
-        proteinPercent: number;
-        fatPercent: number;
-        fibrePercent: number;
-        moisturePercent: number;
-      } | null;
-      if (analysis && Object.values(analysis).some((v) => v < 0 || v > 100)) {
-        return badRequest(
-          'GuaranteedAnalysis',
-          'InvalidGuaranteedAnalysis',
-          'Each analysis value must be between 0 and 100 %.',
-        );
-      }
       Object.assign(p, {
-        manufacturer: b.manufacturer ?? null,
-        protein: b.proteinSource ?? null,
         ingredientList: b.ingredientList ?? null,
-        analysis: analysis ?? null,
-        feedingGuide: b.feedingGuide ?? null,
         storageInstructions: b.storageInstructions ?? null,
+        shelfLife: b.shelfLife ?? null,
+        netWeight: b.netWeight ?? null,
+        allergens: b.allergens ?? null,
+        organicCertifier: b.organicCertifier ?? null,
+        organicCertificateNumber: b.organicCertificateNumber ?? null,
       });
     }),
   ),
@@ -564,7 +550,6 @@ export const staffHandlers: HttpHandler[] = [
         name: (b.name as string) || null,
         description: (b.description as string) || null,
         ingredientList: (b.ingredientList as string) || null,
-        feedingGuide: (b.feedingGuide as string) || null,
       };
       p.translations = p.translations.filter((t) => t.locale !== locale);
       if (Object.values(fields).some(Boolean)) p.translations.push({ locale, ...fields });

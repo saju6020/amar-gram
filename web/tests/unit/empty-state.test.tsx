@@ -27,10 +27,10 @@ describe('EmptyState', () => {
 
   it('defaults to a neutral icon, never the warm customer illustration, unless told otherwise', () => {
     const { container, rerender } = render(<EmptyState title="No results." />);
-    expect(container.querySelector('svg path[d^="M19 23"]')).not.toBeInTheDocument();
+    expect(container.querySelector('svg[viewBox="0 0 120 132"]')).not.toBeInTheDocument();
 
     rerender(<EmptyState title="No orders yet." icon={<EmptyWarmIllustration />} />);
-    expect(container.querySelector('svg path[d^="M19 23"]')).toBeInTheDocument();
+    expect(container.querySelector('svg[viewBox="0 0 120 132"]')).toBeInTheDocument();
   });
 
   it('renders no icon at all when icon is explicitly null', () => {

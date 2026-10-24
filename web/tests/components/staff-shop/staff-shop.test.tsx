@@ -51,8 +51,8 @@ const PRODUCT = (over: Partial<StaffProductDetail> = {}): StaffProductDetail => 
   name: 'Organic Rolled Oats',
   brand: 'Amar Gram Farms',
   description: 'Food **for** breakfast',
-  category: 'CatFood',
-  subcategory: 'Grains',
+  category: 'RiceAndGrains',
+  subcategory: 'FlattenedAndPuffedRice',
   tags: ['oats'],
   slug: 'organic-rolled-oats',
   status: 'Draft',
@@ -63,7 +63,7 @@ const PRODUCT = (over: Partial<StaffProductDetail> = {}): StaffProductDetail => 
   listedOnStorefront: true,
   food: null,
   images: [],
-  healthFocus: [],
+  certifications: [],
   skus: [SKU()],
   publishChecklist: [
     {
@@ -158,18 +158,26 @@ describe('ProductEditorHeader — HO-SHP-002 §11.6, ADR-FE-034', () => {
 });
 
 describe('Food section — US-SHP-03', () => {
-  it('U-D2: Food shows the food form with % units on the four analysis inputs', () => {
+  it('U-D2: Food shows the food form with the generic labelling fields and optional certificate', () => {
     render(<FoodDetailsForm product={PRODUCT()} onSave={vi.fn()} onReload={() => {}} />);
-    for (const name of ['Protein', 'Fat', 'Fibre', 'Moisture']) {
-      const input = screen.getByLabelText(new RegExp(`^${name} [(]%[)]`));
-      expect(input).toBeInTheDocument();
-      expect(input.parentElement).toHaveTextContent('%');
+    for (const label of [
+      'Ingredient list',
+      'Storage instructions',
+      'Shelf life',
+      'Net weight',
+      'Allergens',
+      'Organic certifier',
+      'Certificate number',
+    ]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
     }
-    expect(screen.getByLabelText('Feeding guide')).toBeInTheDocument();
+    expect(
+      screen.getByText('Optional. Needed only when the product is marked Certified organic.'),
+    ).toBeInTheDocument();
   });
 
-  it('U-D2: a Litter product has no food section', async () => {
-    const litter = db.products.find((p) => p.category === 'Litter')!;
+  it('U-D2: a household product has no food section', async () => {
+    const litter = db.products.find((p) => p.category === 'HouseholdAndCare')!;
     await act(async () => {
       renderWithClient(
         <Suspense fallback={null}>
@@ -180,29 +188,31 @@ describe('Food section — US-SHP-03', () => {
     expect(
       await screen.findByText("Food details don't apply to this product", {}, { timeout: 4000 }),
     ).toBeInTheDocument();
-    expect(screen.queryByLabelText('Feeding guide')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Shelf life')).not.toBeInTheDocument();
   });
 
-  it('requires all four analysis values or none', async () => {
-    const user = userEvent.setup();
-    const onSave = vi.fn();
-    render(<FoodDetailsForm product={PRODUCT()} onSave={onSave} onReload={() => {}} />);
-    await user.type(screen.getByLabelText(/^Protein [(]%[)]/), '32');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
+  it('asks for both certificate fields once the product is Certified organic', () => {
+    render(
+      <FoodDetailsForm
+        product={PRODUCT({ certifications: ['CertifiedOrganic'] })}
+        onSave={vi.fn()}
+        onReload={() => {}}
+      />,
+    );
     expect(
-      await screen.findByText('Enter all four analysis values, or leave all four empty.'),
+      screen.getByText(/both fields are needed before it can be published/),
     ).toBeInTheDocument();
-    expect(onSave).not.toHaveBeenCalled();
   });
 });
 
 const STORED_FOOD = {
-  manufacturer: 'Amar Gram Farms Ltd',
-  proteinSource: 'Chicken',
-  ingredientList: 'Chicken meal, rice',
-  guaranteedAnalysis: { proteinPercent: 34, fatPercent: 16, fibrePercent: 3.5, moisturePercent: 9 },
-  feedingGuide: 'Feed twice a day.',
+  ingredientList: 'Whole grain oats',
   storageInstructions: 'Keep cool and dry.',
+  shelfLife: '12 months',
+  netWeight: '500 g',
+  allergens: 'May contain gluten',
+  organicCertifier: 'Bangladesh Organic Council',
+  organicCertificateNumber: 'BOC-2026-0142',
 };
 
 describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', () => {
@@ -214,22 +224,20 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
         onReload={() => {}}
       />,
     );
-    expect(screen.getByLabelText('Manufacturer')).toHaveValue('Amar Gram Farms Ltd');
-    expect(screen.getByLabelText('Protein source')).toHaveValue('Chicken');
-    expect(screen.getByLabelText('Ingredient list')).toHaveValue('Chicken meal, rice');
-    expect(screen.getByLabelText(/^Protein [(]%[)]/)).toHaveValue(34);
-    expect(screen.getByLabelText(/^Fat [(]%[)]/)).toHaveValue(16);
-    expect(screen.getByLabelText(/^Fibre [(]%[)]/)).toHaveValue(3.5);
-    expect(screen.getByLabelText(/^Moisture [(]%[)]/)).toHaveValue(9);
-    expect(screen.getByLabelText('Feeding guide')).toHaveValue('Feed twice a day.');
+    expect(screen.getByLabelText('Ingredient list')).toHaveValue('Whole grain oats');
+    expect(screen.getByLabelText('Shelf life')).toHaveValue('12 months');
+    expect(screen.getByLabelText('Net weight')).toHaveValue('500 g');
+    expect(screen.getByLabelText('Allergens')).toHaveValue('May contain gluten');
+    expect(screen.getByLabelText('Organic certifier')).toHaveValue('Bangladesh Organic Council');
+    expect(screen.getByLabelText('Certificate number')).toHaveValue('BOC-2026-0142');
     expect(screen.getByLabelText('Storage instructions')).toHaveValue('Keep cool and dry.');
     expect(screen.queryByText(/Saving replaces/)).not.toBeInTheDocument();
   });
 
-  it('ProductDetailsForm ticks the stored health focus', () => {
+  it('ProductDetailsForm ticks the stored certifications', () => {
     render(
       <ProductDetailsForm
-        product={PRODUCT({ healthFocus: ['Urinary', 'Sterilised'] })}
+        product={PRODUCT({ certifications: ['Halal', 'PesticideFree'] })}
         categories={[]}
         taxClasses={[{ id: 't1', code: 'STD', name: 'Standard', isActive: true }]}
         countries={[]}
@@ -237,18 +245,18 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
         onReload={() => {}}
       />,
     );
-    const group = screen.getByRole('group', { name: 'Health focus' });
-    expect(within(group).getByRole('checkbox', { name: 'Urinary' })).toBeChecked();
-    expect(within(group).getByRole('checkbox', { name: 'Sterilised' })).toBeChecked();
-    expect(within(group).getByRole('checkbox', { name: 'Renal' })).not.toBeChecked();
+    const group = screen.getByRole('group', { name: 'Certifications' });
+    expect(within(group).getByRole('checkbox', { name: 'Halal' })).toBeChecked();
+    expect(within(group).getByRole('checkbox', { name: 'Pesticide-free' })).toBeChecked();
+    expect(within(group).getByRole('checkbox', { name: 'Traditional' })).not.toBeChecked();
   });
 
-  it('S1 regression: saving Details without touching health focus sends the loaded health focus back', async () => {
+  it('S1 regression: saving Details without touching certifications sends the loaded certifications back', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(
       <ProductDetailsForm
-        product={PRODUCT({ healthFocus: ['Urinary', 'Sterilised'] })}
+        product={PRODUCT({ certifications: ['Halal', 'PesticideFree'] })}
         categories={[]}
         taxClasses={[{ id: 't1', code: 'STD', name: 'Standard', isActive: true }]}
         countries={[]}
@@ -259,7 +267,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
     await user.type(screen.getByLabelText('Name'), ' 2');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(onSave).toHaveBeenCalled());
-    expect([...onSave.mock.calls[0]![0].healthFocus].sort()).toEqual(['Sterilised', 'Urinary']);
+    expect([...onSave.mock.calls[0]![0].certifications].sort()).toEqual(['Halal', 'PesticideFree']);
   });
 
   it('ImagesEditor lists the stored images in order, scope and primary, and saving unchanged sends them back', async () => {
@@ -500,9 +508,9 @@ describe('Sections keep their values — NFR-USA-5', () => {
         product={PRODUCT()}
         categories={[
           {
-            value: 'CatFood',
+            value: 'RiceAndGrains',
             productCount: 1,
-            subcategories: [{ value: 'Grains', productCount: 1 }],
+            subcategories: [{ value: 'FlattenedAndPuffedRice', productCount: 1 }],
           },
         ]}
         taxClasses={[{ id: 't1', code: 'STD', name: 'Standard', isActive: true }]}
@@ -589,7 +597,6 @@ describe('TranslationsEditor — US-SHP-14 AC3', () => {
               name: 'বাংলা নাম',
               description: null,
               ingredientList: null,
-              feedingGuide: null,
             },
           ],
         })}

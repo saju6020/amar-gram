@@ -690,7 +690,7 @@ export const ORDER_CODE_MESSAGES: Readonly<Record<string, string>> = {
   ReturnQuantityExceeded: 'You can return at most the quantity you bought.',
   ReturnNotEligibleOpenedFood:
     "Opened food can only be returned if there's a quality problem or a recall.",
-  ReturnNotEligibleUsedLitter: 'Used litter cannot be returned.',
+  ReturnNotEligibleUsedItem: 'Used household and care items cannot be returned unless faulty or recalled.',
   DefectConfirmationRequired: 'Confirm the defect, with a note, on every line that needs it.',
   InvalidReturnTransition: "That isn't possible for a return in its current state.",
   ReturnReceiptExceedsApproved: "You can't receive more than was approved.",

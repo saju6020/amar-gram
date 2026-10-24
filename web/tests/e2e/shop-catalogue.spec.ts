@@ -113,7 +113,7 @@ test.describe('search (US-SHP-06)', () => {
 
   test('E-A4: an ingredient and a tag find matching products', async ({ page }) => {
     await page.goto('/shop/products?q=sunflower');
-    await expect(page.getByRole('heading', { level: 2, name: 'Canned Tuna Chunks' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Date Palm Gur' })).toBeVisible();
     await page.goto('/shop/products?q=long-grain');
     await expect(page.getByRole('heading', { level: 2, name: 'Thai Jasmine Rice' })).toBeVisible();
   });

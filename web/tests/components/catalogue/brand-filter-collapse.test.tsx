@@ -25,10 +25,10 @@ function setup(brand: string[] = []) {
 }
 
 const brandBoxes = () =>
-  within(screen.getByRole('group', { name: 'Brand' })).getAllByRole('checkbox');
+  within(screen.getByRole('group', { name: 'Producer' })).getAllByRole('checkbox');
 
 // Only Category is open on arrival (owner, 2026-10-17); a ticked brand opens the group by itself.
-const openBrand = () => userEvent.click(screen.getByRole('button', { name: 'Brand' }));
+const openBrand = () => userEvent.click(screen.getByRole('button', { name: 'Producer' }));
 
 describe('CatalogueFilters brand list — Issues.md #3', () => {
   it('Brand starts closed, and opens by itself when a brand is already ticked', () => {
@@ -42,12 +42,18 @@ describe('CatalogueFilters brand list — Issues.md #3', () => {
         onChange={vi.fn()}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Brand' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Producer' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
     expect(screen.queryByRole('checkbox', { name: /Brand 1\b/ })).not.toBeInTheDocument();
     view.unmount();
 
     setup(['Brand 15']);
-    expect(screen.getByRole('button', { name: 'Brand' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: 'Producer' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
   });
 
   it('shows the top eight brands and a "Show all" button that expands and collapses', async () => {
@@ -56,12 +62,12 @@ describe('CatalogueFilters brand list — Issues.md #3', () => {
     expect(brandBoxes()).toHaveLength(8);
     expect(screen.queryByLabelText(/Brand 9\b/)).not.toBeInTheDocument();
 
-    const toggle = screen.getByRole('button', { name: 'Show all 20 brands' });
+    const toggle = screen.getByRole('button', { name: 'Show all 20 producers' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(toggle);
     expect(brandBoxes()).toHaveLength(20);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Show fewer brands' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Show fewer producers' }));
     expect(brandBoxes()).toHaveLength(8);
   });
 
@@ -74,7 +80,7 @@ describe('CatalogueFilters brand list — Issues.md #3', () => {
   it('searching lists every match and hides the toggle', async () => {
     setup();
     await openBrand();
-    await userEvent.type(screen.getByLabelText('Search brands'), 'Brand 1');
+    await userEvent.type(screen.getByLabelText('Search producers'), 'Brand 1');
     // Brand 1 and Brand 10..19
     expect(brandBoxes()).toHaveLength(11);
     expect(screen.queryByRole('button', { name: /Show all/ })).not.toBeInTheDocument();

@@ -50,8 +50,8 @@ test.describe('Shop by Country to a product (AC-5)', () => {
     await cards.first().getByRole('link').first().click();
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.getByRole('link', { name: /Thailand/ }).first()).toBeVisible();
-    await page.getByRole('tab', { name: 'Ingredients & analysis' }).click();
-    await expect(page.getByRole('tabpanel', { name: 'Ingredients & analysis' })).toContainText(
+    await page.getByRole('tab', { name: 'Ingredients & certification' }).click();
+    await expect(page.getByRole('tabpanel', { name: 'Ingredients & certification' })).toContainText(
       'Ingredients',
     );
     await expect(

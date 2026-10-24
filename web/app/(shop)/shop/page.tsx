@@ -1,14 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import {
-  Archive,
-  Backpack,
-  Fish,
-  Gamepad2,
-  HeartPulse,
-  Layers,
-  type LucideIcon,
-} from 'lucide-react';
 import { BannerStrip } from '@/components/shop/BannerStrip';
 import { OriginGrid } from '@/components/shop/OriginGrid';
 import { ShopHero } from '@/components/shop/ShopHero';
@@ -16,6 +7,7 @@ import { ProductGrid } from '@/components/catalogue/ProductGrid';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
 import { PromiseStrip } from '@/components/hearth/DeliveryPromise';
 import { IconTile } from '@/components/hearth/IconTile';
+import { categoryIcon } from '@/components/shop/categoryIcons';
 import {
   getBannersServer,
   getCatalogueServer,
@@ -28,20 +20,12 @@ import { isMaintenanceError, settle } from '@/lib/shop/helpers';
 
 export const metadata: Metadata = {
   title: 'Amar Gram — organic food and everyday goods',
-  description: 'Shop organic rice, honey, spices, oils and everyday goods, each with its origin named.',
+  description:
+    'Shop organic rice, honey, spices, oils and everyday goods, each with its origin named.',
   alternates: { canonical: '/shop' },
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  CatFood: Fish,
-  Litter: Layers,
-  LitterPotsAndAccessories: Archive,
-  BagsAndCarriers: Backpack,
-  HealthAndGrooming: HeartPulse,
-  ToysAndFurniture: Gamepad2,
-};
 
 const SECTION_HEADING = 'font-display text-[clamp(1.5rem,3vw,2rem)] font-semibold text-ink m-0';
 
@@ -104,7 +88,7 @@ export default async function ShopHomePage({ searchParams }: { searchParams: Sea
           </div>
           <ul className="m-0 grid list-none grid-cols-2 gap-4 p-0 md:grid-cols-3 lg:grid-cols-6">
             {categories.value.map((category) => {
-              const Icon = CATEGORY_ICONS[category.value] ?? Fish;
+              const Icon = categoryIcon(category.value);
               return (
                 <li key={category.value}>
                   <Link

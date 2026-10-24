@@ -4,7 +4,7 @@ import { useId, useState } from 'react';
 import { Globe } from 'lucide-react';
 import { pillInputClass } from '@/components/hearth/fields';
 import { countryFlag } from '@/lib/format/shop';
-import { categoryLabel, proteinLabel, subcategoryLabel } from '@/lib/shop/labels';
+import { categoryLabel, certificationLabel, subcategoryLabel } from '@/lib/shop/labels';
 import { toggleValue, type CatalogueParams } from '@/lib/shop/catalogueParams';
 import type { CatalogueFilters as Facets, CategoryNode } from '@/lib/api/shop-catalogue';
 import { CheckOption, FilterGroup, RadioOption } from './FilterGroup';
@@ -22,7 +22,7 @@ export interface CatalogueFiltersProps {
 }
 
 const RATINGS = [4, 3, 2] as const;
-/** Brands shown before "Show all" — the facet list arrives most-products-first. */
+/** Producers shown before "Show all" — the facet list arrives most-products-first. */
 const BRANDS_COLLAPSED = 8;
 
 /**
@@ -30,7 +30,7 @@ const BRANDS_COLLAPSED = 8;
  * and closing (2026-10-16). On arrival only Category is open (owner, 2026-10-17: no scrollbar on
  * landing); every other group starts closed unless it already holds a choice. The
  * facet options and counts come from `GET /api/shop/filters`; nothing here counts or filters
- * (ADR-FE-031). The brand search box narrows the OPTION LIST only, never the results.
+ * (ADR-FE-031). The producer search box (producers are the API's `brand`) narrows the OPTION LIST only, never the results.
  */
 export function CatalogueFilters({
   value,
@@ -46,7 +46,7 @@ export function CatalogueFilters({
   const [showAllBrands, setShowAllBrands] = useState(false);
   const brandQuery = brandSearch.toLowerCase().trim();
   const matchingBrands = facets.brands.filter((b) => b.name.toLowerCase().includes(brandQuery));
-  // Collapsed, the list keeps the top brands plus anything already ticked, so a choice never hides.
+  // Collapsed, the list keeps the top producers plus anything already ticked, so a choice never hides.
   const collapsible = !brandQuery && !showAllBrands && matchingBrands.length > BRANDS_COLLAPSED;
   const brands = collapsible
     ? matchingBrands.filter((b, i) => i < BRANDS_COLLAPSED || value.brand.includes(b.name))
@@ -123,16 +123,16 @@ export function CatalogueFilters({
       )}
 
       {facets.brands.length > 0 && (
-        <FilterGroup legend="Brand" defaultOpen={false} active={value.brand.length > 0}>
+        <FilterGroup legend="Producer" defaultOpen={false} active={value.brand.length > 0}>
           {facets.brands.length > 8 && (
             <div>
               <label htmlFor={`${uid}-brand-search`} className="sr-only">
-                Search brands
+                Search producers
               </label>
               <input
                 id={`${uid}-brand-search`}
                 type="search"
-                placeholder="Search brands"
+                placeholder="Search producers"
                 value={brandSearch}
                 onChange={(event) => setBrandSearch(event.target.value)}
                 className={pillInputClass}
@@ -149,7 +149,7 @@ export function CatalogueFilters({
               onChange={() => onChange({ brand: toggleValue(value.brand, brand.name) })}
             />
           ))}
-          {brands.length === 0 && <p className="text-xs text-ink-muted">No brands match.</p>}
+          {brands.length === 0 && <p className="text-xs text-ink-muted">No producers match.</p>}
           {!brandQuery && matchingBrands.length > BRANDS_COLLAPSED && (
             <button
               type="button"
@@ -157,22 +157,32 @@ export function CatalogueFilters({
               onClick={() => setShowAllBrands((shown) => !shown)}
               className="self-start text-sm font-medium text-accent-ink underline-offset-2 hover:underline"
             >
-              {showAllBrands ? 'Show fewer brands' : `Show all ${matchingBrands.length} brands`}
+              {showAllBrands
+                ? 'Show fewer producers'
+                : `Show all ${matchingBrands.length} producers`}
             </button>
           )}
         </FilterGroup>
       )}
 
-      {facets.proteinSources.length > 0 && (
-        <FilterGroup legend="Protein source" defaultOpen={false} active={value.protein.length > 0}>
-          {facets.proteinSources.map((protein) => (
+      {facets.certifications.length > 0 && (
+        <FilterGroup
+          legend="Certification"
+          defaultOpen={false}
+          active={value.certification.length > 0}
+        >
+          {facets.certifications.map((certification) => (
             <CheckOption
-              key={protein.value}
-              id={`${uid}-protein-${protein.value}`}
-              label={proteinLabel(protein.value)}
-              count={protein.count}
-              checked={value.protein.includes(protein.value)}
-              onChange={() => onChange({ protein: toggleValue(value.protein, protein.value) })}
+              key={certification.value}
+              id={`${uid}-certification-${certification.value}`}
+              label={certificationLabel(certification.value)}
+              count={certification.count}
+              checked={value.certification.includes(certification.value)}
+              onChange={() =>
+                onChange({
+                  certification: toggleValue(value.certification, certification.value),
+                })
+              }
             />
           ))}
         </FilterGroup>

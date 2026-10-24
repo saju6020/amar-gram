@@ -7,20 +7,29 @@ import { toApiSearchParams, type CatalogueParams } from '@/lib/shop/cataloguePar
  * `lib/api/shop-catalogue.ts` — HO-SHP-002 §8.3. The PUBLIC catalogue reads (HO-SHP-001 §12.4).
  * Types mirror the real view models (`src/Read/**\/ViewModels`) field for field. The `…Server`
  * functions are for Server Components and go through `getPublic`; the rest are for client islands
- * and go through `apiFetch`. Plain-text fields (names, brands, review text, ingredient list,
- * storage instructions) must be rendered as text; only `description`, `feedingGuide` and an
+ * and go through `apiFetch`. Plain-text fields (names, producers, review text, ingredient list,
+ * storage instructions) must be rendered as text; only `description` and an
  * origin's `sourcingNotes` are LimitedMarkup (HO-SHP-001 backlog SHP row 22).
  */
 
 export type Availability = 'InStock' | 'OutOfStock';
 export type ProductKind = 'Standard' | 'Bundle';
+/** HO-P2 §1.1 — the API sends the enumeration NAME. */
 export type ProductCategory =
-  | 'CatFood'
-  | 'Litter'
-  | 'LitterPotsAndAccessories'
-  | 'BagsAndCarriers'
-  | 'HealthAndGrooming'
-  | 'ToysAndFurniture';
+  | 'RiceAndGrains'
+  | 'HoneyAndGur'
+  | 'OilsAndGhee'
+  | 'Spices'
+  | 'Pulses'
+  | 'TeaAndDrinks'
+  | 'FreshProduce'
+  | 'DatesAndDryFruit'
+  | 'DairyAndEggs'
+  | 'SnacksAndSweets'
+  | 'HouseholdAndCare';
+
+/** HO-P2 §1.3 — replaces the pet-food health focus. Multi-select. */
+export type Certification = 'CertifiedOrganic' | 'PesticideFree' | 'Traditional' | 'Halal';
 
 export interface CountryRef {
   code: string;
@@ -65,9 +74,10 @@ export interface CatalogueResult extends PagedResult<CatalogueItem> {
 }
 
 export interface CatalogueFilters {
+  /** Producers (HO-P2 §1.4: shown as "Producer"; the API keeps the `brand` name). */
   brands: Array<{ name: string; count: number }>;
   origins: Array<{ code: string; name: string; count: number }>;
-  proteinSources: Array<{ value: string; count: number }>;
+  certifications: Array<{ value: string; count: number }>;
   price: { min: number | null; max: number | null };
 }
 
@@ -85,19 +95,16 @@ export interface Origin {
   isFeatured: boolean;
 }
 
-export interface GuaranteedAnalysis {
-  proteinPercent: number;
-  fatPercent: number;
-  fibrePercent: number;
-  moisturePercent: number;
-}
 export interface FoodDetail {
-  manufacturer: string | null;
-  proteinSource: string | null;
   ingredientList: string | null;
-  guaranteedAnalysis: GuaranteedAnalysis | null;
-  feedingGuide: string | null;
   storageInstructions: string | null;
+  shelfLife?: string | null;
+  netWeight?: string | null;
+  /** Free text. */
+  allergens?: string | null;
+  /** HO-P2 §1.3 — optional; publishing requires them only when `CertifiedOrganic` is set. */
+  organicCertifier?: string | null;
+  organicCertificateNumber?: string | null;
 }
 export interface DetailSku {
   skuId: string;
@@ -128,6 +135,8 @@ export interface ProductDetail {
   category: ProductCategory;
   subcategory: string | null;
   tags: string[];
+  /** HO-P2 §1.3 — certification names (`CertifiedOrganic`, …); absent from older responses. */
+  certifications?: string[];
   kind: ProductKind;
   countryOfOrigin: CountryRef | null;
   food: FoodDetail | null;
@@ -176,7 +185,7 @@ function langQuery(lang?: string): URLSearchParams {
 // ---- Server Component reads (getPublic) -------------------------------------------------------
 
 // S12: the Data Cache keys on the full URL, and these reads are keyed on free-form visitor input
-// (search text, brand, price, category, language), so each unique query string would add an
+// (search text, producer, price, category, language), so each unique query string would add an
 // entry that is never evicted. They are not cached (`revalidate: 0`); the API has its own caches.
 const NOT_CACHED = { revalidate: 0 } as const;
 

@@ -374,15 +374,15 @@ describe('Return request - U-C7', () => {
     canRequestReturn: true,
     lines: [
       { ...order().lines[0]!, lineId: 'food', productName: 'Organic Rolled Oats' },
-      { ...order().lines[0]!, lineId: 'litter', lineNumber: 2, productName: 'Tofu Litter' },
+      { ...order().lines[0]!, lineId: 'jute', lineNumber: 2, productName: 'Jute Shopping Bag' },
     ],
     returnableLines: [
       { lineId: 'food', maxQuantity: 2, returnClass: 'Food' },
-      { lineId: 'litter', maxQuantity: 2, returnClass: 'Litter' },
+      { lineId: 'jute', maxQuantity: 2, returnClass: 'Household' },
     ],
   });
 
-  it('shows the opened-food and used-litter policy once a line is chosen, and caps the quantity', async () => {
+  it('shows the opened-food and used-item policy once a line is chosen, and caps the quantity', async () => {
     serveOrder(delivered);
     const user = userEvent.setup();
     renderWithClient(<ReturnRequestScreen orderId="o1" />);
@@ -396,7 +396,11 @@ describe('Return request - U-C7', () => {
     expect(screen.getByText('Up to 2.')).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Sealed/ })).toBeChecked();
     await user.click(screen.getAllByRole('checkbox')[1]!);
-    expect(screen.getByText("Used litter can't be returned.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Used household and care items can't be returned unless faulty or recalled.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it('renders the server 400 against the line it names, not at the top', async () => {

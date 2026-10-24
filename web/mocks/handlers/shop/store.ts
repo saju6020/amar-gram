@@ -1,3 +1,4 @@
+import { isFoodCategory } from '@/lib/shop/labels';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import {
   COUNTRY_NAMES,
@@ -171,18 +172,14 @@ export function catalogueItem(p: MockProduct) {
 
 export function detailView(p: MockProduct, locale: string | undefined) {
   const translation = locale ? p.translations.find((t) => t.locale === locale) : undefined;
-  const pick = (
-    field: 'name' | 'description' | 'ingredientList' | 'feedingGuide',
-    base: string | null,
-  ) => {
+  const pick = (field: 'name' | 'description' | 'ingredientList', base: string | null) => {
     const translated = translation?.[field] ?? null;
     return { value: translated ?? base, locale: translated ? locale! : 'en' };
   };
   const name = pick('name', p.name);
   const description = pick('description', p.description);
   const ingredientList = pick('ingredientList', p.ingredientList);
-  const feedingGuide = pick('feedingGuide', p.feedingGuide);
-  const isFood = p.category === 'CatFood';
+  const isFood = isFoodCategory(p.category);
   return {
     productId: p.productId,
     slug: p.slug,
@@ -199,14 +196,16 @@ export function detailView(p: MockProduct, locale: string | undefined) {
     food:
       isFood && p.kind === 'Standard'
         ? {
-            manufacturer: p.manufacturer,
-            proteinSource: p.protein,
             ingredientList: ingredientList.value,
-            guaranteedAnalysis: p.analysis,
-            feedingGuide: feedingGuide.value,
             storageInstructions: p.storageInstructions,
+            shelfLife: p.shelfLife,
+            netWeight: p.netWeight,
+            allergens: p.allergens,
+            organicCertifier: p.organicCertifier,
+            organicCertificateNumber: p.organicCertificateNumber,
           }
         : null,
+    certifications: p.certifications,
     images: [imageFor(p, true), { ...imageFor(p, false), altText: `${p.name} — back of pack` }],
     skus: activeSkus(p).map((s) => ({
       skuId: s.skuId,
@@ -231,7 +230,6 @@ export function detailView(p: MockProduct, locale: string | undefined) {
       name: name.locale,
       description: description.locale,
       ingredientList: ingredientList.locale,
-      feedingGuide: feedingGuide.locale,
     },
     bundle:
       p.kind === 'Bundle' && p.bundle

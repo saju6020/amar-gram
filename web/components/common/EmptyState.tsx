@@ -1,15 +1,13 @@
 import * as React from 'react';
 import { Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LineArtBasket } from '@/components/hearth/LineArtBasket';
 
 /**
- * The warm-customer-layer line-art illustration, copied verbatim from `docs/design/portal/
- * DashboardNewCustomer.dc.html` (also used by `CatalogueNoResults.dc.html` and
- * `MySubscriptionsEmpty.dc.html` — several portal-facing areas, so it lives here rather than being
- * re-copied per area). The artwork is replaced in the visual-theme phase. Sits in a `--warm-soft` disc — only ever
- * meaningful inside `[data-theme="customer"]` (app/(portal)/layout.tsx); never pass this as
- * `EmptyState`'s icon on a staff screen (the scaffold handover §8.5's `--warm` contrast note, and the
- * task's "staff empty states stay neutral" rule).
+ * The warm-customer-layer illustration: the Hearth harvest basket (`LineArtBasket`, Amar Gram Phase 2) in a
+ * `--warm-soft` disc. Shared by several customer-facing areas, so it lives here. Only ever meaningful inside
+ * `[data-theme="customer"]`; never pass this as `EmptyState`'s icon on a staff screen (`--warm` contrast, and
+ * the "staff empty states stay neutral" rule).
  */
 export function EmptyWarmIllustration({ className }: { className?: string }) {
   return (
@@ -20,22 +18,7 @@ export function EmptyWarmIllustration({ className }: { className?: string }) {
         className,
       )}
     >
-      <svg
-        width="38"
-        height="38"
-        viewBox="0 0 64 64"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M19 23 17 9l10 7M45 23l2-14-10 7" />
-        <path d="M18 26c0-7 6-11 14-11s14 4 14 11-6 11-14 11-14-4-14-11Z" />
-        <path d="M26 25v1.5M38 25v1.5M30 30.5l2 1.5 2-1.5" />
-        <path d="M22 36c-4 6-5 13-3 21h26c2-8 1-15-3-21" />
-        <path d="M45 55c6 0 9-4 7.5-9" />
-      </svg>
+      <LineArtBasket width={36} height={40} />
     </span>
   );
 }

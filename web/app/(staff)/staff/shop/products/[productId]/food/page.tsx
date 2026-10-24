@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { FoodDetailsForm } from '@/components/staff-shop/FoodDetailsForm';
 import { setFoodDetails } from '@/lib/api/staff-shop';
+import { isFoodCategory } from '@/lib/shop/labels';
 import { useStaffProduct, useTwoStepSave } from '@/lib/hooks/useStaffShop';
 
 /**
@@ -19,7 +20,7 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
   const [formKey, setFormKey] = useState(0);
   const p = product.data;
   if (!p) return <LoadingState rows={8} />;
-  if (p.category !== 'CatFood' || p.kind !== 'Standard') {
+  if (!isFoodCategory(p.category) || p.kind !== 'Standard') {
     return (
       <EmptyState
         title="Food details don't apply to this product"
@@ -38,31 +39,23 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
           if (result.isSuccess) setFormKey((k) => k + 1);
         });
       }}
-      onSave={(v) => {
-        const analysis =
-          v.proteinPercent === ''
-            ? null
-            : {
-                proteinPercent: Number(v.proteinPercent),
-                fatPercent: Number(v.fatPercent),
-                fibrePercent: Number(v.fibrePercent),
-                moisturePercent: Number(v.moisturePercent),
-              };
-        return twoStep(
+      onSave={(v) =>
+        twoStep(
           () =>
             setFoodDetails(productId, {
               expectedVersion: p.version,
-              manufacturer: v.manufacturer || null,
-              proteinSource: v.proteinSource || null,
               ingredientList: v.ingredientList || null,
-              guaranteedAnalysis: analysis,
-              feedingGuide: v.feedingGuide || null,
               storageInstructions: v.storageInstructions || null,
+              shelfLife: v.shelfLife || null,
+              netWeight: v.netWeight || null,
+              allergens: v.allergens || null,
+              organicCertifier: v.organicCertifier || null,
+              organicCertificateNumber: v.organicCertificateNumber || null,
             }),
           null,
           'Labelling saved',
-        );
-      }}
+        )
+      }
     />
   );
 }

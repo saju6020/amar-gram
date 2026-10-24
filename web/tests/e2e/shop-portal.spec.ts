@@ -81,7 +81,7 @@ test.describe('reviews (US-SHP-09)', () => {
 
   test('a product the customer has not bought says why it cannot be reviewed', async ({ page }) => {
     await signInAsCustomer(page);
-    await page.goto('/shop/products/canned-tuna-chunks');
+    await page.goto('/shop/products/date-palm-gur');
     await expect(
       page.getByText('Only customers who bought this product can review it.'),
     ).toBeVisible();

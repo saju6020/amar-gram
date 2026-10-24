@@ -53,7 +53,7 @@ export interface PricedLine {
   taxRatePercent: number;
   taxCents: Cents;
   totalCents: Cents;
-  returnClass: 'Food' | 'Litter' | 'Other';
+  returnClass: 'Food' | 'Household' | 'Other';
 }
 
 export interface QuoteResult {

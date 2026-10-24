@@ -639,8 +639,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
         line.reason !== 'Recalled'
       ) {
         problems.push({ propertyName: `Lines[${index}]`, errorCode: 'ReturnNotEligibleOpenedFood', errorMessage: "Opened food can only be returned if there's a quality problem or a recall." });
-      } else if (orderLine.returnClass === 'Litter' && line.condition === 'Used') {
-        problems.push({ propertyName: `Lines[${index}]`, errorCode: 'ReturnNotEligibleUsedLitter', errorMessage: 'Used litter cannot be returned.' });
+      } else if (orderLine.returnClass === 'Household' && line.condition === 'Used') {
+        problems.push({ propertyName: `Lines[${index}]`, errorCode: 'ReturnNotEligibleUsedItem', errorMessage: 'Used items cannot be returned.' });
       }
     });
     if (problems.length > 0) return violations(problems);

@@ -29,8 +29,8 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
     if (await retry.isVisible()) await retry.click();
     await expect(heading).toBeVisible();
     await page.getByLabel('Name').fill(name);
-    await page.getByLabel('Brand').fill('E2E Brand');
-    await page.getByLabel('Category').selectOption('CatFood');
+    await page.getByLabel('Producer').fill('E2E Brand');
+    await page.getByLabel('Category').selectOption('RiceAndGrains');
     await page.getByLabel('Tax class').selectOption({ label: 'Standard' });
     await expect(page.getByLabel(/Web address/)).toHaveValue(slug);
     await page.getByRole('button', { name: 'Create product' }).click();
@@ -151,28 +151,28 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
 });
 
 test.describe('content languages (US-SHP-14)', () => {
-  test('E-F1: switch to bn on a product (English fallback where missing); staff edits the bn feeding guide', async ({
+  test('E-F1: switch to bn on a product (English fallback where missing); staff edits the bn ingredient list', async ({
     page,
   }) => {
     await page.goto(`/shop/products/${shopFixtureIds.thaiRiceSlug}`);
     await page.getByLabel('Product language').selectOption('bn');
     await expect(page).toHaveURL(/lang=bn/);
     await expect(page.getByRole('heading', { level: 1, name: 'থাই জেসমিন চাল' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Feeding guide' }).click();
-    const feeding = page.getByRole('tabpanel', { name: 'Feeding guide' });
-    await expect(feeding).toContainText('Daily amounts'); // falls back to English
-    await expect(feeding.locator('[lang="en"]')).toHaveCount(1);
+    await page.getByRole('tab', { name: 'Ingredients & certification' }).click();
+    const ingredients = page.getByRole('tabpanel', { name: 'Ingredients & certification' });
+    await expect(ingredients).toContainText('জেসমিন চাল');
+    await expect(ingredients.locator('[lang="bn"]')).not.toHaveCount(0);
 
     await page.goto('/staff/sign-in');
     await signInAsStaff(page);
     await page.goto(`/staff/shop/products/${shopFixtureIds.thaiRiceProductId}/translations`);
     await expect(page.getByRole('heading', { name: /Bangla \(bn\)/ })).toBeVisible();
-    await page
-      .getByLabel('Feeding guide', { exact: true })
-      .fill('## দৈনিক পরিমাণ\n\nদিনে ৪০ গ্রাম।');
+    await page.getByLabel('Ingredient list', { exact: true }).fill('জেসমিন চাল, লবণ');
     await page.getByRole('button', { name: 'Save Bangla' }).click();
     await page.reload();
-    await expect(page.getByLabel('Feeding guide', { exact: true })).toHaveValue(/দৈনিক পরিমাণ/);
+    await expect(page.getByLabel('Ingredient list', { exact: true })).toHaveValue(
+      /জেসমিন চাল, লবণ/,
+    );
   });
 });
 

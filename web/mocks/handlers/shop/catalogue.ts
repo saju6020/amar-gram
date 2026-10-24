@@ -1,3 +1,4 @@
+import { isFoodCategory } from '@/lib/shop/labels';
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import { COUNTRY_NAMES, CATEGORY_TREE, badRequest, type MockProduct } from './fixtures';
 import {
@@ -54,7 +55,7 @@ function searchWords(p: MockProduct): string[] {
       p.brand,
       p.tags.join(' '),
       p.ingredientList ?? '',
-      p.protein ?? '',
+      p.certifications.join(' '),
       COUNTRY_NAMES[p.country ?? ''] ?? '',
     ].join(' '),
   );
@@ -95,7 +96,7 @@ function getList(url: URL) {
   const q = (sp.get('q') ?? '').trim();
   const brands = sp.getAll('brand').map((b) => b.toLowerCase());
   const origins = sp.getAll('origin').map((o) => o.toUpperCase());
-  const proteins = sp.getAll('protein');
+  const certifications = sp.getAll('certification');
   const minPrice = sp.get('minPrice');
   const maxPrice = sp.get('maxPrice');
   const minRating = Number(sp.get('minRating') ?? '0');
@@ -106,7 +107,8 @@ function getList(url: URL) {
     if (sp.get('subcategory') && p.subcategory !== sp.get('subcategory')) return false;
     if (brands.length && !brands.includes(p.brand.toLowerCase())) return false;
     if (origins.length && !(p.country && origins.includes(p.country))) return false;
-    if (proteins.length && !(p.protein && proteins.includes(p.protein))) return false;
+    if (certifications.length && !certifications.some((c) => p.certifications.includes(c)))
+      return false;
     if (minPrice || maxPrice) {
       const ok = p.skus.some((s) => {
         if (s.status !== 'Active' || !s.price) return false;
@@ -146,7 +148,7 @@ function getList(url: URL) {
       subcategory: sp.get('subcategory'),
       brand: brands.length ? sp.getAll('brand').join(',') : null,
       origin: origins.length ? origins.join(',') : null,
-      protein: proteins.length ? proteins.join(',') : null,
+      certification: certifications.length ? certifications.join(',') : null,
       minPrice: minPrice ? Number(minPrice).toFixed(2) : null,
       maxPrice: maxPrice ? Number(maxPrice).toFixed(2) : null,
       availability: sp.get('availability') === 'inStock' ? 'inStock' : null,
@@ -214,7 +216,10 @@ export const catalogueHandlers: HttpHandler[] = [
         name: COUNTRY_NAMES[code] ?? code,
         count,
       })),
-      proteinSources: countBy(scope, (p) => p.protein).map(([value, count]) => ({ value, count })),
+      certifications: countBy(
+        scope.flatMap((p) => p.certifications.map((c) => ({ c, p }))),
+        (x) => x.c,
+      ).map(([value, count]) => ({ value, count })),
       price: {
         min: prices.length ? Math.min(...prices) : null,
         max: prices.length ? Math.max(...prices) : null,
@@ -305,7 +310,7 @@ export const catalogueHandlers: HttpHandler[] = [
 ];
 
 function originViews() {
-  const scope = storefrontProducts().filter((p) => p.category === 'CatFood');
+  const scope = storefrontProducts().filter((p) => isFoodCategory(p.category));
   return [...db.origins]
     .map((o) => ({
       code: o.code,

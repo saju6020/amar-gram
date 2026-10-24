@@ -46,7 +46,7 @@ function useProductSkus() {
   );
 }
 
-/** "Kaniva Chicken, Tuna & Rice · 1 kg" — the card's name with its size, for messages and labels. */
+/** "Kalijira Rice · 1 kg" — the card's name with its size, for messages and labels. */
 function cardTitle(item: CatalogueItem): string {
   return item.sizeLabel ? `${item.name} · ${item.sizeLabel}` : item.name;
 }

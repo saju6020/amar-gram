@@ -318,7 +318,7 @@ try {
   for (const path of [
     '/shop',
     '/shop/products',
-    '/shop/products/whiskas-adult-ocean-fish-dry',
+    '/shop/products/kalijira-rice',
     '/cart',
     '/checkout',
     '/register',

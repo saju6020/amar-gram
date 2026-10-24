@@ -17,6 +17,7 @@ import {
 import { describeApiError, SHOP_CODE_MESSAGES } from '@/lib/api/errors';
 import type { ProductTransition } from '@/lib/api/staff-shop';
 import { useProductTransition, useShopLocales, useStaffProduct } from '@/lib/hooks/useStaffShop';
+import { isFoodCategory } from '@/lib/shop/labels';
 import { CONFLICT_MESSAGE } from '@/lib/shop/submitSection';
 import { cn } from '@/lib/utils';
 
@@ -65,7 +66,7 @@ function ProductEditorShell({
   const base = `/staff/shop/products/${productId}`;
   const sections = [
     { label: 'Details', href: base },
-    ...(p.category === 'CatFood' && p.kind === 'Standard'
+    ...(isFoodCategory(p.category) && p.kind === 'Standard'
       ? [{ label: 'Food & labelling', href: `${base}/food` }]
       : []),
     { label: 'Variants & prices', href: `${base}/variants` },
