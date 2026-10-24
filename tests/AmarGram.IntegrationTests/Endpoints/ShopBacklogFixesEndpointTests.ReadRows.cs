@@ -40,15 +40,14 @@ public sealed partial class ShopBacklogFixesEndpointTests
     }
 
     [Fact]
-    public async Task Row15_FoodBlock_AppearsWhenOnlyAGuaranteedAnalysisColumnOtherThanProteinIsSet()
+    public async Task Row15_FoodBlock_AppearsWhenOnlyTheNetWeightColumnIsSet()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("FatOnly"), "Fat Only Food", "CatFood");
-        // Every other food column cleared: only the fat figure remains (a state the old protein-only check missed).
-        await ExecuteSqlAsync($@"UPDATE product.product SET food_protein_source = NULL, food_ingredient_list = NULL,
-            food_manufacturer = NULL, food_feeding_guide = NULL, food_storage_instructions = NULL,
-            food_analysis_protein_percent = NULL, food_analysis_fibre_percent = NULL, food_analysis_moisture_percent = NULL,
-            food_analysis_fat_percent = 12.5 WHERE ""Id"" = {product.ProductId}");
+        var product = await CreateProductAsync(staff, NewBrand("NetWeightOnly"), "Net Weight Only Food", "RiceAndGrains");
+        // Every other food column cleared: only the net weight remains (a state a first-column-only check would miss).
+        await ExecuteSqlAsync($@"UPDATE product.product SET food_ingredient_list = NULL, food_storage_instructions = NULL,
+            food_shelf_life = NULL, food_allergens = NULL, food_organic_certifier = NULL, food_organic_certificate_number = NULL,
+            food_net_weight = '5 kg' WHERE ""Id"" = {product.ProductId}");
 
         var detail = await JsonOkAsync(await CreateClient().GetAsync($"/api/shop/products/{product.Slug}"));
 
@@ -79,7 +78,7 @@ public sealed partial class ShopBacklogFixesEndpointTests
     [InlineData("category=NotACategory", "category")]
     [InlineData("subcategory=NotASubcategory", "subcategory")]
     [InlineData("origin=ZZ9", "origin")]
-    [InlineData("protein=Unicorn", "protein")]
+    [InlineData("certification=Unicorn", "certification")]
     public async Task Row30_UnknownEnumeratedFilter_IsInvalidCatalogueFilter_NamingTheParameter(string filter, string parameter)
     {
         var response = await CreateClient().GetAsync($"/api/shop/products?{filter}");
@@ -93,7 +92,7 @@ public sealed partial class ShopBacklogFixesEndpointTests
     [Fact]
     public async Task Row30_KnownFilterValues_StillWork()
     {
-        var response = await CreateClient().GetAsync("/api/shop/products?category=CatFood&origin=DE");
+        var response = await CreateClient().GetAsync("/api/shop/products?category=RiceAndGrains&origin=DE");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

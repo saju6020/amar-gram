@@ -15,7 +15,7 @@ public sealed class SkuShippingWeightDomainTests
     {
         var product = new ProductAggregate(Guid.NewGuid());
         product.Create(new ProductCreateDto(
-            ProductKind.Standard, "Weighed Product", "Acme", ProductCategory.HealthAndGrooming, null,
+            ProductKind.Standard, "Weighed Product", "Acme", ProductCategory.HouseholdAndCare, null,
             Guid.NewGuid(), "weighed-product", null, null, TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }

@@ -17,5 +17,5 @@ public sealed class UpdateProductDetailsCommand : Command
     public string? CountryOfOriginCode { get; init; }
     public bool ListedOnStorefront { get; init; } = true;
     public bool IsExpiryTracked { get; init; }
-    public IReadOnlyList<string> HealthFocus { get; init; } = [];
+    public IReadOnlyList<string> Certifications { get; init; } = [];
 }

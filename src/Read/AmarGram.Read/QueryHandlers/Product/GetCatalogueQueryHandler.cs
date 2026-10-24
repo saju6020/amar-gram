@@ -102,12 +102,13 @@ public sealed class GetCatalogueQueryHandler(AmarGramDbContext db, IContentLocal
             source = source.Where(e => e.CountryOfOriginCode != null && origins.Contains(e.CountryOfOriginCode));
         }
 
-        if (query.Protein.Count > 0)
+        // HO-P2 §1.4: a product matches when it carries ANY of the requested certifications.
+        if (query.Certification.Count > 0)
         {
-            var proteinValues = query.Protein
-                .Select(p => EnumerationParsing.TryParse<ProteinSource>(p, out var ps) ? ps : null)
-                .Where(ps => ps is not null).Select(ps => ps!.Value).ToList();
-            source = source.Where(e => e.ProteinSource != null && proteinValues.Contains(e.ProteinSource.Value));
+            var certificationValues = query.Certification
+                .Select(c => EnumerationParsing.TryParse<Certification>(c, out var parsed) ? parsed : null)
+                .Where(c => c is not null).Select(c => c!.Value).ToList();
+            source = source.Where(e => e.Certifications.Any(c => certificationValues.Contains(c)));
         }
 
         // Section 12.4: a product matches when ANY active SKU's CURRENT price is within [minPrice, maxPrice] --
@@ -225,7 +226,7 @@ public sealed class GetCatalogueQueryHandler(AmarGramDbContext db, IContentLocal
             ["subcategory"] = query.Subcategory,
             ["brand"] = query.Brand.Count > 0 ? string.Join(",", query.Brand) : null,
             ["origin"] = query.Origin.Count > 0 ? string.Join(",", query.Origin) : null,
-            ["protein"] = query.Protein.Count > 0 ? string.Join(",", query.Protein) : null,
+            ["certification"] = query.Certification.Count > 0 ? string.Join(",", query.Certification) : null,
             ["minPrice"] = query.MinPrice?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
             ["maxPrice"] = query.MaxPrice?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
             ["availability"] = query.AvailabilityInStock == true ? "inStock" : null,

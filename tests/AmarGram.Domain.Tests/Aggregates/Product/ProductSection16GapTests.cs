@@ -11,7 +11,7 @@ namespace AmarGram.Domain.Tests.Aggregates.Product;
 
 /// <summary>
 /// HO-SHP-001 section 16 cases that had no implementing test at the TEST gate (2026-10-04):
-/// U-A5b (a gif is never a product image), U-B2 (guaranteed-analysis validation) and the domain
+/// U-A5b (a gif is never a product image), U-B2 (the organic certificate rules, formerly guaranteed-analysis validation) and the domain
 /// half of R3 (the four violation codes that replaced the wrong <c>InvalidSlug</c>). The HTTP
 /// halves live in <c>ShopSection16GapEndpointTests</c>. Section 18: A1 (U-A5b), A6 (U-B2).
 /// </summary>
@@ -23,7 +23,7 @@ public sealed class ProductSection16GapTests
     {
         var product = new ProductAggregate(Guid.NewGuid());
         product.Create(new ProductCreateDto(
-            ProductKind.Standard, "Test Product", "Acme", category ?? ProductCategory.HealthAndGrooming, null,
+            ProductKind.Standard, "Test Product", "Acme", category ?? ProductCategory.HouseholdAndCare, null,
             TaxClassId, "test-product", null, null, TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }
@@ -72,64 +72,57 @@ public sealed class ProductSection16GapTests
         Assert.DoesNotContain(rule.AllowedContentTypes, t => t.Equals("image/gif", StringComparison.OrdinalIgnoreCase));
     }
 
-    // ── U-B2 ────────────────────────────────────────────────────────────────────────────────────
+    // ── U-B2 (HO-P2 §1.3: the guaranteed-analysis block became the organic certificate rules) ─────
 
     [Fact]
-    public void U_B2_GuaranteedAnalysis_32_15_4_10_IsAcceptedAndStoredOnTheProduct()
+    public void U_B2_FoodLabel_IsStoredOnTheProduct()
     {
-        var product = CreateProduct(ProductCategory.CatFood);
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
 
-        product.SetFoodDetails(new FoodDetails(null, null, null, new GuaranteedAnalysis(32, 15, 4, 10), null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails("Rice", "Cool and dry", "12 months", "5 kg", "None", "Bangladesh Organic Board", "BOB-1042"),
+            TestUserContext.Create(), Guid.NewGuid());
 
-        var analysis = product.FoodDetails!.GuaranteedAnalysis!;
-        Assert.Equal((32m, 15m, 4m, 10m), (analysis.ProteinPercent, analysis.FatPercent, analysis.FibrePercent, analysis.MoisturePercent));
-    }
-
-    [Fact]
-    public void U_B2_GuaranteedAnalysis_60_30_10_5_SumsOverOneHundred_IsInvalid()
-    {
-        var ex = Assert.Throws<DomainRuleViolationException>(() => new GuaranteedAnalysis(60, 30, 10, 5));
-
-        Assert.Equal(BusinessViolationCodes.InvalidGuaranteedAnalysis, ex.ErrorCode);
-        Assert.Contains("100", ex.Message);
+        var food = product.FoodDetails!;
+        Assert.Equal(("Rice", "Cool and dry", "12 months", "5 kg", "None"), (food.IngredientList, food.StorageInstructions, food.ShelfLife, food.NetWeight, food.Allergens));
+        Assert.True(food.HasOrganicCertificate);
+        Assert.True(food.HasFullLabelling);
     }
 
     [Theory]
-    [InlineData(101, 0, 0, 0)]
-    [InlineData(0, 101, 0, 0)]
-    [InlineData(0, 0, 101, 0)]
-    [InlineData(0, 0, 0, 101)]
-    [InlineData(-1, 0, 0, 0)]
-    [InlineData(0, -0.01, 0, 0)]
-    public void U_B2_GuaranteedAnalysis_ValueOutsideZeroToOneHundred_IsInvalid(double protein, double fat, double fibre, double moisture)
+    [InlineData("Bangladesh Organic Board", null)]
+    [InlineData(null, "BOB-1042")]
+    [InlineData(null, null)]
+    public void U_B2_OrganicCertificate_NeedsBothFields(string? certifier, string? number)
+    {
+        var food = new FoodDetails(null, null, null, null, null, certifier, number);
+
+        Assert.False(food.HasOrganicCertificate);
+    }
+
+    [Fact]
+    public void U_B2_OverlongFoodField_IsRejected()
     {
         var ex = Assert.Throws<DomainRuleViolationException>(() =>
-            new GuaranteedAnalysis((decimal)protein, (decimal)fat, (decimal)fibre, (decimal)moisture));
+            new FoodDetails(null, null, new string('x', ProductRules.ShelfLifeMaxLength + 1), null, null, null, null));
 
-        Assert.Equal(BusinessViolationCodes.InvalidGuaranteedAnalysis, ex.ErrorCode);
+        Assert.Equal(BusinessViolationCodes.FoodDetailsOnlyForFood, ex.ErrorCode);
     }
 
-    [Theory]
-    [InlineData(100, 0, 0, 0)]
-    [InlineData(0, 0, 0, 0)]
-    [InlineData(25, 25, 25, 25)]
-    public void U_B2_GuaranteedAnalysis_BoundaryValues_AreAccepted(double protein, double fat, double fibre, double moisture)
-    {
-        var analysis = new GuaranteedAnalysis((decimal)protein, (decimal)fat, (decimal)fibre, (decimal)moisture);
-
-        Assert.Equal((decimal)protein, analysis.ProteinPercent);
-    }
-
-    /// <summary>"All or none": the value object cannot be built from three values (the type has no
-    /// such constructor), and a product with no analysis reports none -- never a partial one.</summary>
     [Fact]
-    public void U_B2_NoAnalysis_IsNull_AndTheTypeHasNoPartialConstructor()
+    public void U_B2_ActiveCertifiedOrganicProduct_CannotLoseItsCertificate()
     {
-        var product = CreateProduct(ProductCategory.CatFood);
-        product.SetFoodDetails(new FoodDetails(null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
+        product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails(null, null, null, null, null, "Bangladesh Organic Board", "BOB-1042"), TestUserContext.Create(), Guid.NewGuid());
+        product.UpdateDetails(new ProductDetailsUpdateDto(product.Name, product.Brand, product.Description, product.Category, product.Subcategory,
+            product.Tags, product.TaxClassId, "BD", product.ListedOnStorefront, true, [Certification.CertifiedOrganic],
+            TestUserContext.Create(), Guid.NewGuid()));
+        product.Publish(new PublicationFacts([product.Skus.Single().Id], true, []), DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid());
 
-        Assert.Null(product.FoodDetails!.GuaranteedAnalysis);
-        Assert.All(typeof(GuaranteedAnalysis).GetConstructors(), c => Assert.Equal(4, c.GetParameters().Length));
+        var ex = Assert.Throws<DomainRuleViolationException>(() =>
+            product.SetFoodDetails(new FoodDetails(null, null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid()));
+
+        Assert.Equal(BusinessViolationCodes.OrganicCertificateRequired, ex.ErrorCode);
     }
 
     // ── R3 (domain) ─────────────────────────────────────────────────────────────────────────────
@@ -142,7 +135,7 @@ public sealed class ProductSection16GapTests
         var product = new ProductAggregate(Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.Create(new ProductCreateDto(
-            ProductKind.Standard, name, "Acme", ProductCategory.HealthAndGrooming, null, TaxClassId, "slug-a", null, null, TestUserContext.Create(), Guid.NewGuid())));
+            ProductKind.Standard, name, "Acme", ProductCategory.HouseholdAndCare, null, TaxClassId, "slug-a", null, null, TestUserContext.Create(), Guid.NewGuid())));
 
         Assert.Equal(BusinessViolationCodes.InvalidProductName, ex.ErrorCode);
     }
@@ -165,7 +158,7 @@ public sealed class ProductSection16GapTests
         var product = new ProductAggregate(Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.Create(new ProductCreateDto(
-            ProductKind.Standard, "Name", brand, ProductCategory.HealthAndGrooming, null, TaxClassId, "slug-b", null, null, TestUserContext.Create(), Guid.NewGuid())));
+            ProductKind.Standard, "Name", brand, ProductCategory.HouseholdAndCare, null, TaxClassId, "slug-b", null, null, TestUserContext.Create(), Guid.NewGuid())));
 
         Assert.Equal(BusinessViolationCodes.InvalidBrand, ex.ErrorCode);
     }

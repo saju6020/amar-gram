@@ -26,7 +26,7 @@ public sealed partial class ProductAggregate : AggregateRoot
     private readonly List<RelatedProductLink> _relatedProducts = [];
     private readonly List<ProductTranslation> _translations = [];
     private readonly List<string> _tags = [];
-    private readonly List<HealthFocus> _healthFocus = [];
+    private readonly List<Certification> _certifications = [];
 
     public ProductKind Kind { get; private set; } = default!;
     public string Name { get; private set; } = default!;
@@ -50,9 +50,10 @@ public sealed partial class ProductAggregate : AggregateRoot
     public IReadOnlyList<RelatedProductLink> RelatedProducts => _relatedProducts;
     public IReadOnlyList<ProductTranslation> Translations => _translations;
     public new IReadOnlyList<string> Tags => _tags;
-    public IReadOnlyList<HealthFocus> HealthFocus => _healthFocus;
+    public IReadOnlyList<Certification> Certifications => _certifications;
 
-    public bool IsFood => Category == ProductCategory.CatFood;
+    /// <summary>HO-P2 §1.1 -- the category's own explicit food rule.</summary>
+    public bool IsFood => Category.IsFood;
 
     private ProductAggregate() { }
 
@@ -112,12 +113,16 @@ public sealed partial class ProductAggregate : AggregateRoot
         if (Status == ProductStatus.Active && IsFood && normalisedCountry is null)
             throw new DomainRuleViolationException(BusinessViolationCodes.CountryOfOriginRequired, "An active food product must keep a country of origin.", nameof(dto.CountryOfOriginCode));
 
+        // HO-P2 §1.3: an active product (whose category is locked) cannot claim CertifiedOrganic without its certificate.
+        if (Status == ProductStatus.Active && IsFood && dto.Certifications.Contains(Certification.CertifiedOrganic) && !(FoodDetails?.HasOrganicCertificate ?? false))
+            throw new DomainRuleViolationException(BusinessViolationCodes.OrganicCertificateRequired, "Add the organic certifier and certificate number to the food details before marking an active product CertifiedOrganic.", nameof(dto.Certifications));
+
         Name = ValidateName(dto.Name);
         Brand = ValidateBrand(dto.Brand);
         Description = ValidateDescription(dto.Description);
         if (Status != ProductStatus.Active)
         {
-            var leavingFood = IsFood && dto.Category != ProductCategory.CatFood;
+            var leavingFood = IsFood && !dto.Category.IsFood;
             Category = dto.Category;
 
             // Row 31: food-only state cannot outlive the category.
@@ -130,7 +135,7 @@ public sealed partial class ProductAggregate : AggregateRoot
         IsExpiryTracked = IsFood || dto.IsExpiryTracked;
 
         SetTags(dto.Tags);
-        SetHealthFocusInternal(dto.HealthFocus);
+        SetCertificationsInternal(dto.Certifications);
 
         RefreshSearchText();
 
@@ -217,20 +222,25 @@ public sealed partial class ProductAggregate : AggregateRoot
         _tags.AddRange(normalised);
     }
 
-    private void SetHealthFocusInternal(IReadOnlyList<HealthFocus> focuses)
+    /// <summary>HO-P2 §1.3 -- certifications are food-only, like the health focus they replaced.</summary>
+    private void SetCertificationsInternal(IReadOnlyList<Certification> certifications)
     {
         if (!IsFood)
         {
-            _healthFocus.Clear();
+            _certifications.Clear();
             return;
         }
 
-        if (focuses.Count > ProductRules.MaxHealthFocus)
-            throw new DomainRuleViolationException(BusinessViolationCodes.TagLimitExceeded, $"A product may have at most {ProductRules.MaxHealthFocus} health focus values.", nameof(HealthFocus));
+        var distinct = certifications.Distinct().ToList();
+        if (distinct.Count > ProductRules.MaxCertifications)
+            throw new DomainRuleViolationException(BusinessViolationCodes.TagLimitExceeded, $"A product may have at most {ProductRules.MaxCertifications} certifications.", nameof(Certifications));
 
-        _healthFocus.Clear();
-        _healthFocus.AddRange(focuses.Distinct());
+        _certifications.Clear();
+        _certifications.AddRange(distinct);
     }
+
+    /// <summary>HO-P2 §1.3 -- a food product claiming <c>CertifiedOrganic</c> must name its certifier and certificate number.</summary>
+    public bool RequiresOrganicCertificate => IsFood && _certifications.Contains(Certification.CertifiedOrganic);
 
     /// <summary>Section 8.3 -- lower-cased, whitespace-collapsed concatenation of name, brand,
     /// tags, ingredient list, every SKU flavour and every translation name. Recomputed by the

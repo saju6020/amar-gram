@@ -183,7 +183,7 @@ public sealed class InventorySellableSummaryEquivalenceTests(InventoryApiFactory
         Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync($"/api/staff/inventory/batches/{boundary}/write-off", new { reason = "Water damage." }, Json)).StatusCode);
         await AssertEqualAsync(branch.BranchId, "write-off");
         var recall = await admin.PostAsJsonAsync($"/api/staff/inventory/batches/{shopBatch}/recall",
-            new { confirmLotNumber = "LOTSHOP", reason = "Salmonella found in the lot.", customerAdvice = "Stop feeding it and keep the packaging." }, Json);
+            new { confirmLotNumber = "LOTSHOP", reason = "Salmonella found in the lot.", customerAdvice = "Stop using it and keep the packaging." }, Json);
         await JsonOkAsync(recall);
         await AssertEqualAsync(branch.BranchId, "recall");
     }

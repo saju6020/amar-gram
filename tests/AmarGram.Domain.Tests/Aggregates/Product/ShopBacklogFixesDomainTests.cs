@@ -161,29 +161,29 @@ public sealed class ShopBacklogFixesDomainTests
     [Fact]
     public void UpdateDetails_DraftFoodProductMovedToAnotherCategory_ClearsFoodDetails()
     {
-        var product = NewProduct(ProductCategory.CatFood);
-        product.SetFoodDetails(new FoodDetails("Royal Canin", ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        var product = NewProduct(ProductCategory.RiceAndGrains);
+        product.SetFoodDetails(new FoodDetails("Rice, salt", null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
-        product.UpdateDetails(Details(product, ProductCategory.ToysAndFurniture));
+        product.UpdateDetails(Details(product, ProductCategory.HouseholdAndCare));
 
         Assert.Null(product.FoodDetails);
-        Assert.DoesNotContain("chicken", product.SearchText);
+        Assert.DoesNotContain("rice", product.SearchText);
     }
 
     [Fact]
     public void UpdateDetails_StayingInFood_KeepsFoodDetails()
     {
-        var product = NewProduct(ProductCategory.CatFood);
-        product.SetFoodDetails(new FoodDetails("Royal Canin", ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        var product = NewProduct(ProductCategory.RiceAndGrains);
+        product.SetFoodDetails(new FoodDetails("Rice, salt", null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
-        product.UpdateDetails(Details(product, ProductCategory.CatFood));
+        product.UpdateDetails(Details(product, ProductCategory.RiceAndGrains));
 
         Assert.NotNull(product.FoodDetails);
     }
 
     private static ProductAggregate ActiveProduct(out Guid skuId)
     {
-        var product = NewProduct(ProductCategory.ToysAndFurniture);
+        var product = NewProduct(ProductCategory.HouseholdAndCare);
         skuId = Guid.NewGuid();
         product.AddSku(new SkuAddDto(skuId, "SKU-A", null, "Small", null, null, null), TestUserContext.Create(), Guid.NewGuid());
         product.Publish(new PublicationFacts([skuId], true, []), DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid());
@@ -222,14 +222,14 @@ public sealed class ShopBacklogFixesDomainTests
     [Fact]
     public void AddSku_OnADraftProduct_StillWorks()
     {
-        var product = NewProduct(ProductCategory.ToysAndFurniture);
+        var product = NewProduct(ProductCategory.HouseholdAndCare);
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "SKU-A", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         Assert.Single(product.Skus);
     }
 
     private static (ProductAggregate Product, Guid DiscontinuedSkuId) ActiveProductWithADiscontinuedSku()
     {
-        var product = NewProduct(ProductCategory.ToysAndFurniture);
+        var product = NewProduct(ProductCategory.HouseholdAndCare);
         var first = Guid.NewGuid();
         var second = Guid.NewGuid();
         product.AddSku(new SkuAddDto(first, "SKU-A", null, "Small", null, null, null), TestUserContext.Create(), Guid.NewGuid());
@@ -264,7 +264,7 @@ public sealed class ShopBacklogFixesDomainTests
     [Fact]
     public void ReactivateSku_OnADraftProduct_NeedsNoPrice()
     {
-        var product = NewProduct(ProductCategory.ToysAndFurniture);
+        var product = NewProduct(ProductCategory.HouseholdAndCare);
         var skuId = Guid.NewGuid();
         product.AddSku(new SkuAddDto(skuId, "SKU-A", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         product.DiscontinueSku(skuId, TestUserContext.Create(), Guid.NewGuid());
@@ -278,7 +278,7 @@ public sealed class ShopBacklogFixesDomainTests
 
     [Theory]
     [InlineData("[home](/)")]
-    [InlineData("[food](/shop/products?category=CatFood)")]
+    [InlineData("[food](/shop/products?category=RiceAndGrains)")]
     [InlineData("[ext](https://example.com/a)")]
     public void LimitedMarkup_AcceptsHttpsAndSiteRelativeLinks(string markup)
     {

@@ -25,7 +25,7 @@ public sealed class CreateProductCommandHandlerTests
     private static CreateProductCommand ValidCommand(Guid taxClassId, string slug = "organic-dry-mix") => new()
     {
         ProductId = Guid.NewGuid(), Kind = "Standard", Name = "Organic Dry Mix", Brand = "Amar Gram",
-        Category = "CatFood", Subcategory = "Dry", TaxClassId = taxClassId, Slug = slug,
+        Category = "RiceAndGrains", Subcategory = "AromaticRice", TaxClassId = taxClassId, Slug = slug,
         UserContext = ShopManagerContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
     };
 
@@ -54,7 +54,7 @@ public sealed class CreateProductCommandHandlerTests
 
         var existing = new ProductAggregate(Guid.NewGuid());
         existing.Create(new ProductCreateDto(AmarGram.Shared.Common.Enums.ProductKind.Standard, "Existing", "Brand",
-            AmarGram.Shared.Common.Enums.ProductCategory.ToysAndFurniture, null, taxClass.Id, "organic-dry-mix",
+            AmarGram.Shared.Common.Enums.ProductCategory.HouseholdAndCare, null, taxClass.Id, "organic-dry-mix",
             null, null, ShopManagerContext(), Guid.NewGuid()));
         productRepository.Seed(existing);
 

@@ -22,7 +22,7 @@ public sealed class ShopCodeReviewFixesEndpointTests(ShopApiFactory factory) : S
 
         async Task<Guid> TwoSkuProductAsync(string name, decimal first, decimal second)
         {
-            var create = await staff.PostAsJsonAsync("/api/staff/shop/products", new { kind = "Standard", name, brand, category = "ToysAndFurniture", taxClassId, slug = UniqueSlug("band") }, Json);
+            var create = await staff.PostAsJsonAsync("/api/staff/shop/products", new { kind = "Standard", name, brand, category = "HouseholdAndCare", taxClassId, slug = UniqueSlug("band") }, Json);
             var productId = (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("productId").GetGuid();
             foreach (var (size, price) in new[] { ("S", first), ("L", second) })
             {

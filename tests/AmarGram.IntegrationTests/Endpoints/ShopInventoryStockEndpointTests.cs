@@ -27,7 +27,7 @@ public sealed class ShopInventoryStockEndpointTests(ShopApiFactory factory) : Sh
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
         var slug = UniqueSlug("variants");
         var create = await staff.PostAsJsonAsync("/api/staff/shop/products",
-            new { kind = "Standard", name = "Two Sizes", brand, category = "ToysAndFurniture", taxClassId, slug }, Json);
+            new { kind = "Standard", name = "Two Sizes", brand, category = "HouseholdAndCare", taxClassId, slug }, Json);
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var productId = (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("productId").GetGuid();
 

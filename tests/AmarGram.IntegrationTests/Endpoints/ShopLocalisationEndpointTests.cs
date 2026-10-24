@@ -24,7 +24,7 @@ public sealed class ShopLocalisationEndpointTests(ShopApiFactory factory) : Shop
     {
         var bnFactory = Factory.WithBengaliEnabled();
         var staff = await SignInAsShopManagerAsync(bnFactory);
-        var product = await CreateProductAsync(staff, NewBrand("Bn"), "English Name", "CatFood", ingredientList: "english ingredients");
+        var product = await CreateProductAsync(staff, NewBrand("Bn"), "English Name", "RiceAndGrains", ingredientList: "english ingredients");
         return (bnFactory, staff, product);
     }
 
@@ -39,22 +39,21 @@ public sealed class ShopLocalisationEndpointTests(ShopApiFactory factory) : Shop
     }
 
     [Fact]
-    public async Task I_H4_AllFourFieldsInBengali_ShowInBengali_WithEveryFieldLocaleBn()
+    public async Task I_H4_AllThreeFieldsInBengali_ShowInBengali_WithEveryFieldLocaleBn()
     {
         var (bnFactory, staff, product) = await BengaliProductAsync();
 
         await SetTranslationAsync(staff, product.ProductId, "bn", new
-        { name = "বাংলা নাম", description = "বাংলা বিবরণ", ingredientList = "মুরগি, চাল", feedingGuide = "দিনে দুইবার" });
+        { name = "বাংলা নাম", description = "বাংলা বিবরণ", ingredientList = "চাল, লবণ" });
 
         var anonymous = bnFactory.CreateClient();
         var body = await JsonOkAsync(await anonymous.GetAsync($"/api/shop/products/{product.Slug}?locale=bn"));
 
         Assert.Equal("বাংলা নাম", body.GetProperty("name").GetString());
         Assert.Equal("বাংলা বিবরণ", body.GetProperty("description").GetString());
-        Assert.Equal("মুরগি, চাল", body.GetProperty("food").GetProperty("ingredientList").GetString());
-        Assert.Equal("দিনে দুইবার", body.GetProperty("food").GetProperty("feedingGuide").GetString());
+        Assert.Equal("চাল, লবণ", body.GetProperty("food").GetProperty("ingredientList").GetString());
         Assert.Equal("bn", body.GetProperty("locale").GetString());
-        foreach (var field in new[] { "name", "description", "ingredientList", "feedingGuide" })
+        foreach (var field in new[] { "name", "description", "ingredientList" })
             Assert.Equal("bn", body.GetProperty("fieldLocales").GetProperty(field).GetString());
 
         // The default language is untouched.
@@ -89,24 +88,19 @@ public sealed class ShopLocalisationEndpointTests(ShopApiFactory factory) : Shop
     }
 
     [Fact]
-    public async Task I_H5_ARemovedBengaliFeedingGuide_FallsBackToEnglish_PerField()
+    public async Task I_H5_ARemovedBengaliIngredientList_FallsBackToEnglish_PerField()
     {
         var (bnFactory, staff, product) = await BengaliProductAsync();
-        // The product's own (English) feeding guide.
-        var food = await staff.PutAsJsonAsync($"/api/staff/shop/products/{product.ProductId}/food",
-            new { expectedVersion = await ProductVersionAsync(staff, product.ProductId), ingredientList = "english ingredients", feedingGuide = "Feed twice a day" }, Json);
-        Assert.Equal(HttpStatusCode.NoContent, food.StatusCode);
-
-        await SetTranslationAsync(staff, product.ProductId, "bn", new { name = "বাংলা নাম", ingredientList = "মুরগি", feedingGuide = "দিনে দুইবার" });
-        // Replace the translation without a feeding guide: that field now falls back.
-        await SetTranslationAsync(staff, product.ProductId, "bn", new { name = "বাংলা নাম", ingredientList = "মুরগি" });
+        // The product's own (English) ingredient list was set when the product was created.
+        await SetTranslationAsync(staff, product.ProductId, "bn", new { name = "বাংলা নাম", description = "বাংলা বিবরণ", ingredientList = "চাল" });
+        // Replace the translation without an ingredient list: that field now falls back.
+        await SetTranslationAsync(staff, product.ProductId, "bn", new { name = "বাংলা নাম" });
 
         var body = await JsonOkAsync(await bnFactory.CreateClient().GetAsync($"/api/shop/products/{product.Slug}?locale=bn"));
 
-        Assert.Equal("Feed twice a day", body.GetProperty("food").GetProperty("feedingGuide").GetString());
-        Assert.Equal("en", body.GetProperty("fieldLocales").GetProperty("feedingGuide").GetString());
+        Assert.Equal("english ingredients", body.GetProperty("food").GetProperty("ingredientList").GetString());
+        Assert.Equal("en", body.GetProperty("fieldLocales").GetProperty("ingredientList").GetString());
         Assert.Equal("bn", body.GetProperty("fieldLocales").GetProperty("name").GetString());
-        Assert.Equal("bn", body.GetProperty("fieldLocales").GetProperty("ingredientList").GetString());
         Assert.Equal("en", body.GetProperty("fieldLocales").GetProperty("description").GetString());
 
         // Removing the translation altogether: everything falls back.
@@ -121,7 +115,7 @@ public sealed class ShopLocalisationEndpointTests(ShopApiFactory factory) : Shop
     public async Task I_H6_ALocaleThatIsNotEnabled_Is400_OnWrite_AndTheDefaultLanguageOnAPublicRead()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("NoFr"), "Plain Name", "CatFood");
+        var product = await CreateProductAsync(staff, NewBrand("NoFr"), "Plain Name", "RiceAndGrains");
 
         // The base factory keeps the shipped default: only English is enabled.
         var locales = await JsonOkAsync(await CreateClient().GetAsync("/api/shop/locales"));

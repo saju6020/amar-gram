@@ -87,9 +87,8 @@ public sealed class GetStaffProductDetailQueryHandler(
 
         var fd = product.FoodDetails;
         var food = fd is null ? null : new FoodDetailViewModel(
-            fd.Manufacturer, fd.ProteinSource?.DisplayName, fd.IngredientList,
-            fd.GuaranteedAnalysis is { } ga ? new GuaranteedAnalysisViewModel(ga.ProteinPercent, ga.FatPercent, ga.FibrePercent, ga.MoisturePercent) : null,
-            fd.FeedingGuide, fd.StorageInstructions);
+            fd.IngredientList, fd.StorageInstructions, fd.ShelfLife, fd.NetWeight, fd.Allergens,
+            fd.OrganicCertifier, fd.OrganicCertificateNumber);
 
         var images = product.Images.OrderBy(i => i.SortOrder)
             .Select(i => new StaffProductImageViewModel(i.FileId, null, i.AltText, i.SortOrder, i.IsPrimary, i.SkuId)).ToList();
@@ -106,8 +105,8 @@ public sealed class GetStaffProductDetailQueryHandler(
                     row?.SkuStatus == SkuStatus.Active && row?.ProductStatus == ProductStatus.Active);
             }).ToList(),
             relatedViewModels,
-            product.Translations.OrderBy(t => t.Locale).Select(t => new StaffTranslationViewModel(t.Locale, t.Name, t.Description, t.IngredientList, t.FeedingGuide)).ToList(),
-            food, images, product.HealthFocus.Select(h => h.DisplayName).ToList());
+            product.Translations.OrderBy(t => t.Locale).Select(t => new StaffTranslationViewModel(t.Locale, t.Name, t.Description, t.IngredientList)).ToList(),
+            food, images, product.Certifications.Select(c => c.DisplayName).ToList());
 
         return new QueryResponse<StaffProductDetailViewModel?> { Result = viewModel };
     }

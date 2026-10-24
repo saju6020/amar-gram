@@ -106,7 +106,5 @@ public sealed class CatalogueLookup(AmarGramDbContext db) : ICatalogueLookup
     }
 
     private static ProductReturnClass ReturnClassOf(ProductCategory category) =>
-        category == ProductCategory.CatFood ? ProductReturnClass.Food
-        : category == ProductCategory.Litter ? ProductReturnClass.Litter
-        : ProductReturnClass.Other;
+        ProductReturnClass.Of(category);
 }

@@ -35,8 +35,10 @@ public sealed class GetOriginsQueryHandler(AmarGramDbContext db) : IQueryHandler
 
     internal static async Task<List<(string Code, int Count)>> FoodOriginCountsAsync(AmarGramDbContext db)
     {
+        // HO-P2 §1.1: every food category, not one value.
+        var foodCategories = ProductCategory.FoodValues;
         var rows = await db.StorefrontCatalogueEntries.AsNoTracking()
-            .Where(e => e.CountryOfOriginCode != null && e.Category == ProductCategory.CatFood.Value)
+            .Where(e => e.CountryOfOriginCode != null && foodCategories.Contains(e.Category))
             .GroupBy(e => e.CountryOfOriginCode!)
             .Select(g => new { Code = g.Key, Count = g.Count() })
             .ToListAsync();

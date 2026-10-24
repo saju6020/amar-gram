@@ -19,7 +19,7 @@ public sealed class ScheduleSkuPriceCommandHandlerTests
     private static ProductAggregate ProductWithSku(Guid skuId)
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.ToysAndFurniture,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), "scratch-post", null, null, ShopManagerContext(), Guid.NewGuid()));
         product.AddSku(new SkuAddDto(skuId, "SP-1", null, null, null, null, null), ShopManagerContext(), Guid.NewGuid());
         return product;

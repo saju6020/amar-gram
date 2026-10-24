@@ -17,7 +17,7 @@ namespace AmarGram.Domain.Aggregates.Product;
 /// </summary>
 public sealed partial class ProductAggregate
 {
-    /// <summary>Sets (replaces) one locale's translation. A translation whose four fields are all
+    /// <summary>Sets (replaces) one locale's translation. A translation whose three fields are all
     /// empty removes the locale instead ("an empty translation is removed").</summary>
     public void SetTranslation(
         ProductTranslationInputDto content, string defaultLocale, IReadOnlyList<string> enabledLocales,
@@ -28,9 +28,8 @@ public sealed partial class ProductAggregate
         ValidateTranslationText(content.Name, ProductRules.NameMaxLength, markup: false, nameof(content.Name));
         ValidateTranslationText(content.Description, ProductRules.DescriptionMaxLength, markup: true, nameof(content.Description));
         ValidateTranslationText(content.IngredientList, ProductRules.IngredientListMaxLength, markup: false, nameof(content.IngredientList));
-        ValidateTranslationText(content.FeedingGuide, ProductRules.FeedingGuideMaxLength, markup: true, nameof(content.FeedingGuide));
 
-        var translation = new ProductTranslation(content.Locale, content.Name, content.Description, content.IngredientList, content.FeedingGuide);
+        var translation = new ProductTranslation(content.Locale, content.Name, content.Description, content.IngredientList);
         _translations.RemoveAll(t => t.Locale == content.Locale);
         if (!translation.IsEmpty) _translations.Add(translation);
 

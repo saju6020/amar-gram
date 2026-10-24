@@ -15,7 +15,6 @@ public sealed class SetProductTranslationCommandValidator : AbstractValidator<Se
         RuleFor(x => x.Name).MaximumLength(ProductRules.NameMaxLength);
         RuleFor(x => x.Description).MaximumLength(ProductRules.DescriptionMaxLength);
         RuleFor(x => x.IngredientList).MaximumLength(ProductRules.IngredientListMaxLength);
-        RuleFor(x => x.FeedingGuide).MaximumLength(ProductRules.FeedingGuideMaxLength);
     }
 }
 

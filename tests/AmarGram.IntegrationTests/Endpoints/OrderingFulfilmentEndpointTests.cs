@@ -247,7 +247,7 @@ public sealed class OrderingFulfilmentEndpointTests(OrderingApiFactory factory) 
         // the batch is recalled while the order is being packed
         var lot = line.Allocations.Single().LotNumber;
         await ExpectAsync(HttpStatusCode.Created, await keeper.PostAsJsonAsync($"/api/staff/inventory/batches/{recalledBatch}/recall",
-            new { confirmLotNumber = lot, reason = "Salmonella found in the lot.", customerAdvice = "Stop feeding it." }, Json));
+            new { confirmLotNumber = lot, reason = "Salmonella found in the lot.", customerAdvice = "Stop using it." }, Json));
 
         await AssertErrorAsync(await reception.PostAsJsonAsync($"/api/staff/orders/{orderId}/dispatch", DispatchBody(courierId), Json), "BatchRecalled");
         Assert.Equal(OrderStatus.Packing, (await LoadOrderAsync(orderId)).Status);

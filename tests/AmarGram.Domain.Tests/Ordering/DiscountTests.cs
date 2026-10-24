@@ -14,11 +14,11 @@ public sealed class DiscountTests
 {
     private static readonly UserContext User = new(Guid.NewGuid(), Guid.NewGuid());
     private static readonly DateTimeOffset Now = new(2026, 10, 9, 8, 0, 0, TimeSpan.Zero);
-    private static readonly Guid Litter1 = Guid.NewGuid();
-    private static readonly Guid Litter2 = Guid.NewGuid();
+    private static readonly Guid Household1 = Guid.NewGuid();
+    private static readonly Guid Household2 = Guid.NewGuid();
     private static readonly Guid Food1 = Guid.NewGuid();
-    private static readonly int LitterCategory = ProductCategory.Litter.Value;
-    private static readonly int FoodCategory = ProductCategory.CatFood.Value;
+    private static readonly int HouseholdCategory = ProductCategory.HouseholdAndCare.Value;
+    private static readonly int FoodCategory = ProductCategory.RiceAndGrains.Value;
 
     private static DiscountRuleSet Rules(
         DiscountKind? kind = null, long? percentHundredths = 1000, long? amount = null, long? minimum = null, DiscountScope? scope = null,
@@ -55,7 +55,7 @@ public sealed class DiscountTests
         Expect("DiscountUsageLimitReached", Rules(usageLimit: 5, used: 5));
         Expect("DiscountCustomerLimitReached", Rules(perCustomer: 1), new CustomerDiscountFacts(1, true));
         Expect("DiscountFirstOrderOnly", Rules(firstOrder: true), new CustomerDiscountFacts(0, true));
-        Expect("DiscountNotApplicableToItems", Rules(scope: DiscountScope.Categories, categories: [LitterCategory]));
+        Expect("DiscountNotApplicableToItems", Rules(scope: DiscountScope.Categories, categories: [HouseholdCategory]));
         Expect("DiscountMinimumSpendNotMet", Rules(minimum: 150_000));
     }
 
@@ -82,8 +82,8 @@ public sealed class DiscountTests
     [Fact]
     public void U_B6_TheMinimumSpend_CountsEligibleItemsOnly()
     {
-        var rules = Rules(scope: DiscountScope.Categories, categories: [LitterCategory], minimum: 50_000);
-        var lines = new[] { Line(Litter1, LitterCategory, 30_000), Line(Food1, FoodCategory, 500_000) };
+        var rules = Rules(scope: DiscountScope.Categories, categories: [HouseholdCategory], minimum: 50_000);
+        var lines = new[] { Line(Household1, HouseholdCategory, 30_000), Line(Food1, FoodCategory, 500_000) };
 
         Assert.Equal("DiscountMinimumSpendNotMet", DiscountRules.Evaluate(rules, lines, NewCustomer, Now).ReasonCode);
     }
@@ -99,13 +99,13 @@ public sealed class DiscountTests
 
     // ── U-B7 ────────────────────────────────────────────────────────────────────────────────────────
     [Fact]
-    public void U_B7_A10PercentCodeScopedToLitter_DiscountsLitterLinesOnly_OrderDiscountIsZero()
+    public void U_B7_A10PercentCodeScopedToHousehold_DiscountsHouseholdLinesOnly_OrderDiscountIsZero()
     {
-        var litterA = Line(Litter1, LitterCategory, 85_000);
-        var litterB = Line(Litter2, LitterCategory, 12_050);
+        var litterA = Line(Household1, HouseholdCategory, 85_000);
+        var litterB = Line(Household2, HouseholdCategory, 12_050);
         var food = Line(Food1, FoodCategory, 200_000);
 
-        var result = DiscountRules.Evaluate(Rules(scope: DiscountScope.Categories, categories: [LitterCategory]), [litterA, litterB, food], NewCustomer, Now);
+        var result = DiscountRules.Evaluate(Rules(scope: DiscountScope.Categories, categories: [HouseholdCategory]), [litterA, litterB, food], NewCustomer, Now);
 
         Assert.True(result.Applied);
         Assert.Equal(8_500L, result.Application.LineDiscounts[litterA.LineRef].Value);
@@ -118,10 +118,10 @@ public sealed class DiscountTests
     [Fact]
     public void U_B7_AProductScopedCode_DiscountsThoseProductsOnly()
     {
-        var wanted = Line(Litter1, LitterCategory, 10_000);
-        var other = Line(Litter2, LitterCategory, 10_000);
+        var wanted = Line(Household1, HouseholdCategory, 10_000);
+        var other = Line(Household2, HouseholdCategory, 10_000);
 
-        var result = DiscountRules.Evaluate(Rules(scope: DiscountScope.Products, products: [Litter1]), [wanted, other], NewCustomer, Now);
+        var result = DiscountRules.Evaluate(Rules(scope: DiscountScope.Products, products: [Household1]), [wanted, other], NewCustomer, Now);
 
         Assert.Equal(1_000L, result.Application.LineDiscounts[wanted.LineRef].Value);
         Assert.False(result.Application.LineDiscounts.ContainsKey(other.LineRef));
@@ -130,19 +130,19 @@ public sealed class DiscountTests
     [Fact]
     public void U_B7_AScopedFixedCode_IsApportionedOverTheMatchingLines_NeverBeyondTheirSubtotals()
     {
-        var a = Line(Litter1, LitterCategory, 6_000);
-        var b = Line(Litter2, LitterCategory, 4_000);
+        var a = Line(Household1, HouseholdCategory, 6_000);
+        var b = Line(Household2, HouseholdCategory, 4_000);
         var food = Line(Food1, FoodCategory, 90_000);
 
         var result = DiscountRules.Evaluate(
-            Rules(DiscountKind.FixedAmount, amount: 100_000, scope: DiscountScope.Categories, categories: [LitterCategory]), [a, b, food], NewCustomer, Now);
+            Rules(DiscountKind.FixedAmount, amount: 100_000, scope: DiscountScope.Categories, categories: [HouseholdCategory]), [a, b, food], NewCustomer, Now);
 
         // the fixed value (1000.00) exceeds the matching goods (100.00): capped, so each line is discounted by its whole subtotal
         Assert.Equal(6_000L, result.Application.LineDiscounts[a.LineRef].Value);
         Assert.Equal(4_000L, result.Application.LineDiscounts[b.LineRef].Value);
 
         var split = DiscountRules.Evaluate(
-            Rules(DiscountKind.FixedAmount, amount: 5_001, scope: DiscountScope.Categories, categories: [LitterCategory]), [a, b, food], NewCustomer, Now);
+            Rules(DiscountKind.FixedAmount, amount: 5_001, scope: DiscountScope.Categories, categories: [HouseholdCategory]), [a, b, food], NewCustomer, Now);
         Assert.Equal(5_001L, split.Application.LineDiscountTotal.Value);
         Assert.All(split.Application.LineDiscounts, kv => Assert.True(kv.Value.Value <= new[] { a, b }.Single(l => l.LineRef == kv.Key).Subtotal.Value));
     }
@@ -151,7 +151,7 @@ public sealed class DiscountTests
     [Fact]
     public void U_B8_AFixed100UnscopedOnThreeLines_IsAnOrderDiscountApportionedExactlyIntoShares()
     {
-        var lines = new[] { Line(Food1, FoodCategory, 85_000), Line(Litter1, LitterCategory, 85_000), Line(Litter2, LitterCategory, 12_000) };
+        var lines = new[] { Line(Food1, FoodCategory, 85_000), Line(Household1, HouseholdCategory, 85_000), Line(Household2, HouseholdCategory, 12_000) };
 
         var result = DiscountRules.Evaluate(Rules(DiscountKind.FixedAmount, amount: 10_000), lines, NewCustomer, Now);
 
@@ -173,7 +173,7 @@ public sealed class DiscountTests
     public void U_B8_A10PercentOrderCode_OnTheWorkedCart_Is182()
     {
         // 2 x 850.00 + 1 x 120.00 = 1820.00; 10 % = 182.00 (U-D1)
-        var lines = new[] { Line(Food1, FoodCategory, 170_000), Line(Litter1, LitterCategory, 12_000) };
+        var lines = new[] { Line(Food1, FoodCategory, 170_000), Line(Household1, HouseholdCategory, 12_000) };
 
         var result = DiscountRules.Evaluate(Rules(), lines, NewCustomer, Now);
 
@@ -303,13 +303,13 @@ public sealed class DiscountTests
     public void TheRuleSet_FaithfullyReflectsTheAggregate()
     {
         var code = new DiscountCodeAggregate(Guid.NewGuid());
-        code.Create(Definition("T-RULES", DiscountKind.FixedAmount, amount: 100.5m, scope: DiscountScope.Products, products: [Litter1]));
+        code.Create(Definition("T-RULES", DiscountKind.FixedAmount, amount: 100.5m, scope: DiscountScope.Products, products: [Household1]));
         code.Redeem();
 
         var rules = code.ToRuleSet();
         Assert.Equal(10_050L, rules.Amount!.Value.Value);
         Assert.Null(rules.PercentHundredths);
-        Assert.Contains(Litter1, rules.ProductIds);
+        Assert.Contains(Household1, rules.ProductIds);
         Assert.Equal(1, rules.TimesRedeemed);
         Assert.Single(code.Events);
     }

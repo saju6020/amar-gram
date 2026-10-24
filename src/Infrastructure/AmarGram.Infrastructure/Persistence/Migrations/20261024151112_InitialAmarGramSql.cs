@@ -427,7 +427,7 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 p.subcategory,
                 p.kind,
                 p.country_of_origin_code,
-                p.food_protein_source AS protein_source,
+                p.certifications,
                 p.search_text,
                 p.first_published_on,
                 pricing.min_price,

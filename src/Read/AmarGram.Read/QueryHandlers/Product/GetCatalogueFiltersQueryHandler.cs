@@ -38,16 +38,18 @@ public sealed class GetCatalogueFiltersQueryHandler(AmarGramDbContext db, IMemor
         var origins = originGroups.Select(o => new OriginCount(o.Code, CountryCodes.FindName(o.Code) ?? o.Code, o.Count))
             .OrderBy(o => o.Name).ToList();
 
-        var proteinGroups = await entries.Where(e => e.ProteinSource != null)
-            .GroupBy(e => e.ProteinSource!.Value)
+        // HO-P2 §1.4: one count per product per certification (the array column is unnested in SQL).
+        var certificationGroups = await entries.SelectMany(e => e.Certifications)
+            .GroupBy(c => c)
             .Select(g => new { Value = g.Key, Count = g.Count() })
             .ToListAsync();
-        var proteins = proteinGroups.Select(p => new NamedCount(Enumeration.FromValue<ProteinSource>(p.Value).DisplayName, p.Count)).ToList();
+        var certifications = certificationGroups.OrderBy(c => c.Value)
+            .Select(c => new NamedCount(Enumeration.FromValue<Certification>(c.Value).DisplayName, c.Count)).ToList();
 
         var minPrice = await entries.Where(e => e.MinPrice != null).Select(e => (decimal?)e.MinPrice!.Value).MinAsync();
         var maxPrice = await entries.Where(e => e.MaxPrice != null).Select(e => (decimal?)e.MaxPrice!.Value).MaxAsync();
 
-        var result = new CatalogueFiltersViewModel(brands, origins, proteins, new PriceBounds(minPrice, maxPrice));
+        var result = new CatalogueFiltersViewModel(brands, origins, certifications, new PriceBounds(minPrice, maxPrice));
         cache.Set(cacheKey, result, TimeSpan.FromSeconds(shopOptions.Value.Catalogue.FacetCacheSeconds));
 
         return new QueryResponse<CatalogueFiltersViewModel> { Result = result };

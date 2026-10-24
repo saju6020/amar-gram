@@ -13,11 +13,11 @@ public sealed class FinancialReportBuilderTests
     private static readonly DateOnly October = new(2026, 10, 14);
     private static readonly DateOnly November = new(2026, 11, 2);
 
-    private static RevenueFact Invoice(DateOnly date, string line, decimal net, decimal tax = 0m, bool costed = false, decimal cogs = 0m, string currency = "BDT", string category = "CatFood", string origin = "DE") =>
+    private static RevenueFact Invoice(DateOnly date, string line, decimal net, decimal tax = 0m, bool costed = false, decimal cogs = 0m, string currency = "BDT", string category = "RiceAndGrains", string origin = "DE") =>
         new(date, currency, RevenueFactKind.Invoice, line, category, "—", origin, category, 1m, net, 0m, net, tax, costed ? cogs : 0m, costed);
 
     private static RevenueFact Credit(DateOnly date, string line, decimal net, decimal tax = 0m, bool costed = false, string currency = "BDT") =>
-        new(date, currency, RevenueFactKind.Credit, line, "CatFood", "—", "DE", "CatFood", 0m, 0m, 0m, net, tax, 0m, costed);
+        new(date, currency, RevenueFactKind.Credit, line, "RiceAndGrains", "—", "DE", "RiceAndGrains", 0m, 0m, 0m, net, tax, 0m, costed);
 
     // ── U-D1 ───────────────────────────────────────────────────────────────────────────────────────────────
     [Fact]
@@ -104,7 +104,7 @@ public sealed class FinancialReportBuilderTests
         {
             Invoice(October, "Shop", 200m, costed: true, cogs: 120m),
             Credit(November, "Shop", 100m, costed: true),
-            new RevenueFact(November, "BDT", RevenueFactKind.ReturnCost, "Shop", "CatFood", "—", "DE", "CatFood", 0m, 0m, 0m, 0m, 0m, 60m, true),
+            new RevenueFact(November, "BDT", RevenueFactKind.ReturnCost, "Shop", "RiceAndGrains", "—", "DE", "RiceAndGrains", 0m, 0m, 0m, 0m, 0m, 60m, true),
         };
 
         var aggregates = RevenueBuilder.Aggregate(facts, TimeBucket.Month, f => [f.Line]);
@@ -267,8 +267,8 @@ public sealed class FinancialReportBuilderTests
     [Fact]
     public void ALineWithNoSku_IsDeliveryAndFees_WithNoOrigin_AProductGroupsByItsCategoryAndOrigin_AndTheLineIsTheSalesChannel()
     {
-        var food = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.CatFood.Value, SubCategory = null, CountryOfOrigin = "FR" };
-        var litter = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.Litter.Value, CountryOfOrigin = null };
+        var food = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.RiceAndGrains.Value, SubCategory = null, CountryOfOrigin = "FR" };
+        var litter = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.HouseholdAndCare.Value, CountryOfOrigin = null };
 
         var delivery = RevenueFacts.Dimensions(OrderChannel.Online.Value, null);
         var foodDims = RevenueFacts.Dimensions(OrderChannel.Online.Value, food);
@@ -277,10 +277,10 @@ public sealed class FinancialReportBuilderTests
 
         Assert.Equal("Delivery and fees", delivery.Category);
         Assert.Equal("Not applicable", delivery.Origin);
-        Assert.Equal("CatFood", foodDims.Category);
+        Assert.Equal("RiceAndGrains", foodDims.Category);
         Assert.Equal("FR", foodDims.Origin);
         Assert.Equal("Not applicable", litterDims.Origin);
-        Assert.Equal("CatFood", foodDims.ServiceGroup);
+        Assert.Equal("RiceAndGrains", foodDims.ServiceGroup);
         Assert.Equal("Online", foodDims.Line);
         Assert.Equal("Counter", litterDims.Line);
         Assert.Equal(RevenueFacts.OtherChannel, manual.Line);   // a line with no order behind it

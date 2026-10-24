@@ -314,7 +314,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var brand = NewBrand("Disc");
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
 
-        var create = await staff.PostAsJsonAsync("/api/staff/shop/products", new { kind = "Standard", name = "Two Size Bowl", brand, category = "LitterPotsAndAccessories", taxClassId, slug = UniqueSlug("bowl") }, Json);
+        var create = await staff.PostAsJsonAsync("/api/staff/shop/products", new { kind = "Standard", name = "Two Size Jar", brand, category = "HouseholdAndCare", taxClassId, slug = UniqueSlug("bowl") }, Json);
         var productId = (await BodyAsync(create)).GetProperty("productId").GetGuid();
 
         async Task<Guid> AddSkuAsync(string size)
@@ -377,7 +377,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Merge");
 
-        var reviewed = await CreateProductAsync(staff, brand, "Reviewed Food", "CatFood");
+        var reviewed = await CreateProductAsync(staff, brand, "Reviewed Food", "RiceAndGrains");
         var wished = await CreateProductAsync(staff, brand, "Wished Toy");
         var alerted = await CreateProductAsync(staff, brand, "Alerted Item");
         await SetSkuOutOfStockAsync(alerted.SkuId);
@@ -479,7 +479,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var (purchaseFactory, purchases) = Factory.WithControllablePurchaseHistory();
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Anon");
-        var reviewed = await CreateProductAsync(staff, brand, "Anon Reviewed Food", "CatFood");
+        var reviewed = await CreateProductAsync(staff, brand, "Anon Reviewed Food", "RiceAndGrains");
         var wished = await CreateProductAsync(staff, brand, "Anon Wished Toy");
         var alerted = await CreateProductAsync(staff, brand, "Anon Alerted Item");
         await SetSkuOutOfStockAsync(alerted.SkuId);
@@ -492,7 +492,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         Assert.Equal(HttpStatusCode.NoContent, (await staff.PostAsync($"/api/staff/shop/reviews/{reviewId}/publish", null)).StatusCode);
 
         // Row 21 / BSB1: a review still awaiting moderation when the customer is anonymised.
-        var pendingProduct = await CreateProductAsync(staff, brand, "Anon Pending Food", "CatFood");
+        var pendingProduct = await CreateProductAsync(staff, brand, "Anon Pending Food", "RiceAndGrains");
         purchases.SetPurchased(customerId, pendingProduct.SkuId);
         var pendingResponse = await customer.PostAsJsonAsync("/api/customers/me/reviews",
             new { productId = pendingProduct.ProductId, skuId = pendingProduct.SkuId, rating = 2, title = "Private title", body = "Private words" }, Json);

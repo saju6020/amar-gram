@@ -158,7 +158,7 @@ public abstract class InventoryIntegrationTestBase(InventoryApiFactory factory) 
         var taxClassId = (await taxClass.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("taxClassId").GetGuid();
 
         var productName = name ?? "Inventory test product " + Guid.NewGuid().ToString("N")[..8];
-        var category = food ? "CatFood" : "HealthAndGrooming";
+        var category = food ? "RiceAndGrains" : "HouseholdAndCare";
         var create = await admin.PostAsJsonAsync("/api/staff/shop/products",
             new { kind = "Standard", name = productName, brand = "Brand-" + Guid.NewGuid().ToString("N")[..6], category, taxClassId, slug = "p-" + Guid.NewGuid().ToString("N") }, Json);
         Assert.True(create.StatusCode == HttpStatusCode.Created, await create.Content.ReadAsStringAsync());

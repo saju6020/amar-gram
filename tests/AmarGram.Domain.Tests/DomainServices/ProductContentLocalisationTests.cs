@@ -11,19 +11,17 @@ public sealed class ProductContentLocalisationTests
     [Fact]
     public void U_H6_PerFieldFallback_NameInBn_DescriptionFallsBackToEn()
     {
-        var translations = new List<ProductTranslation> { new("bn", "অর্গানিক চাল", "", "মুরগি", null) };
+        var translations = new List<ProductTranslation> { new("bn", "অর্গানিক চাল", "", "চাল") };
 
-        var resolved = ProductContentLocalisation.Resolve("Organic Rice", "A description", "chicken", "Feed twice a day", translations, "bn", "en", Enabled);
+        var resolved = ProductContentLocalisation.Resolve("Organic Rice", "A description", "rice", translations, "bn", "en", Enabled);
 
         Assert.Equal("অর্গানিক চাল", resolved.Name);
         Assert.Equal("A description", resolved.Description);
-        Assert.Equal("মুরগি", resolved.IngredientList);
-        Assert.Equal("Feed twice a day", resolved.FeedingGuide);
+        Assert.Equal("চাল", resolved.IngredientList);
         Assert.Equal("bn", resolved.Locale);
         Assert.Equal("bn", resolved.FieldLocales["name"]);
         Assert.Equal("en", resolved.FieldLocales["description"]);
         Assert.Equal("bn", resolved.FieldLocales["ingredientList"]);
-        Assert.Equal("en", resolved.FieldLocales["feedingGuide"]);
     }
 
     [Theory]
@@ -34,9 +32,9 @@ public sealed class ProductContentLocalisationTests
     [InlineData("xx-YY")]
     public void U_H6_DefaultOrUnknownOrDisabledLocale_ResolvesToTheDefault_NeverAnError(string? requested)
     {
-        var translations = new List<ProductTranslation> { new("bn", "চাল", "বর্ণনা", "মুরগি", "দিনে দুইবার") };
+        var translations = new List<ProductTranslation> { new("bn", "চাল", "বর্ণনা", "চাল") };
 
-        var resolved = ProductContentLocalisation.Resolve("Organic Rice", "A description", "chicken", "Feed", translations, requested, "en", Enabled);
+        var resolved = ProductContentLocalisation.Resolve("Organic Rice", "A description", "rice", translations, requested, "en", Enabled);
 
         Assert.Equal("Organic Rice", resolved.Name);
         Assert.Equal("en", resolved.Locale);
@@ -46,9 +44,9 @@ public sealed class ProductContentLocalisationTests
     [Fact]
     public void U_H6_ALocaleNoLongerEnabled_IsIgnored_EvenWithAStoredTranslation()
     {
-        var translations = new List<ProductTranslation> { new("bn", "চাল", null, null, null) };
+        var translations = new List<ProductTranslation> { new("bn", "চাল", null, null) };
 
-        var resolved = ProductContentLocalisation.Resolve("Organic Rice", "d", null, null, translations, "bn", "en", ["en"]);
+        var resolved = ProductContentLocalisation.Resolve("Organic Rice", "d", null, translations, "bn", "en", ["en"]);
 
         Assert.Equal("Organic Rice", resolved.Name);
     }

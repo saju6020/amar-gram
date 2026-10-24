@@ -139,7 +139,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         // the batch is recalled: the same request is eligible outright
         var allocation = d.Order.Lines.Single(l => l.Id == foodLine).Allocations.Single();
         await ExpectAsync(HttpStatusCode.Created, await d.Keeper.PostAsJsonAsync($"/api/staff/inventory/batches/{allocation.BatchId}/recall",
-            new { confirmLotNumber = allocation.LotNumber, reason = "Contamination.", customerAdvice = "Stop feeding it." }, Json));
+            new { confirmLotNumber = allocation.LotNumber, reason = "Contamination.", customerAdvice = "Stop using it." }, Json));
 
         var accepted = await ReadAsync(await ExpectAsync(HttpStatusCode.Created, await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", body, Json)));
         var staff = await ReadAsync(await d.Reception.GetAsync($"/api/staff/returns/{accepted.GetProperty("returnRequestId").GetGuid()}"));
@@ -149,7 +149,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
     }
 
     [Fact]
-    public async Task UsedLitterAndAMixedRequest_AreRefusedWhole_WithAReasonPerLine()
+    public async Task UsedHouseholdItemAndAMixedRequest_AreRefusedWhole_WithAReasonPerLine()
     {
         var d = await DeliveredOrderAsync();
         var foodLine = LineOf(d, d.Shop.Food.SkuId);

@@ -105,45 +105,35 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         Assert.Equal("FileTypeNotAllowed", FirstErrorCode(await BodyAsync(response)));
     }
 
-    // ── U-B2 over HTTP ──────────────────────────────────────────────────────────────────────────
+    // ── U-B2 over HTTP (HO-P2 §1.3: the organic certificate replaced the guaranteed analysis) ──
 
     [Fact]
-    public async Task U_B2_GuaranteedAnalysis_OverHttp_AcceptedSumBoundAndAllOrNone()
+    public async Task U_B2_OrganicCertificate_OverHttp_RequiredWhileCertifiedOrganic_AndShownOnThePublicDetail()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("Analysis"), "Analysis Food", category: "CatFood", countryCode: "DE");
+        // CreateProductAsync supplies a certifier and certificate number for a CertifiedOrganic product, then publishes it.
+        var product = await CreateProductAsync(staff, NewBrand("Organic"), "Organic Food", category: "RiceAndGrains", countryCode: "BD", certifications: ["CertifiedOrganic"]);
         var url = $"/api/staff/shop/products/{product.ProductId}/food";
 
-        async Task<HttpResponseMessage> PutAsync(object analysis) => await staff.PutAsJsonAsync(url, new
-        { expectedVersion = await ProductVersionAsync(staff, product.ProductId), guaranteedAnalysis = analysis }, Json);
+        async Task<HttpResponseMessage> PutAsync(object food) => await staff.PutAsJsonAsync(url, food, Json);
 
-        async Task<JsonElement> StoredAnalysisAsync() =>
-            (await BodyAsync(await AnonymousGetAsync($"/api/shop/products/{product.Slug}"))).GetProperty("food").GetProperty("guaranteedAnalysis");
+        // The public detail carries the certification and the certifier.
+        var detail = await BodyAsync(await AnonymousGetAsync($"/api/shop/products/{product.Slug}"));
+        Assert.Equal(["CertifiedOrganic"], detail.GetProperty("certifications").EnumerateArray().Select(c => c.GetString()));
+        Assert.Equal("Test Organic Board", detail.GetProperty("food").GetProperty("organicCertifier").GetString());
 
-        // 32/15/4/10 accepted and round-trips through the public detail.
-        Assert.Equal(HttpStatusCode.NoContent, (await PutAsync(new { proteinPercent = 32, fatPercent = 15, fibrePercent = 4, moisturePercent = 10 })).StatusCode);
-        var stored = await StoredAnalysisAsync();
-        Assert.Equal(32m, stored.GetProperty("proteinPercent").GetDecimal());
-        Assert.Equal(10m, stored.GetProperty("moisturePercent").GetDecimal());
+        // Dropping the certificate from an active CertifiedOrganic product is refused.
+        var refused = await PutAsync(new { expectedVersion = await ProductVersionAsync(staff, product.ProductId), ingredientList = "Rice" });
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+        Assert.Equal("OrganicCertificateRequired", FirstErrorCode(await BodyAsync(refused)));
 
-        // 60/30/10/5 sums to 105.
-        var sum = await PutAsync(new { proteinPercent = 60, fatPercent = 30, fibrePercent = 10, moisturePercent = 5 });
-        Assert.Equal(HttpStatusCode.BadRequest, sum.StatusCode);
-        Assert.Equal("InvalidGuaranteedAnalysis", FirstErrorCode(await BodyAsync(sum)));
-
-        // 101/0/0/0 is out of the 0-100 bound.
-        var bound = await PutAsync(new { proteinPercent = 101, fatPercent = 0, fibrePercent = 0, moisturePercent = 0 });
-        Assert.Equal(HttpStatusCode.BadRequest, bound.StatusCode);
-        Assert.Equal("InvalidGuaranteedAnalysis", FirstErrorCode(await BodyAsync(bound)));
-
-        // Three of four is refused outright (all four or none): the request contract requires every value.
-        var threeOfFour = await PutAsync(new { proteinPercent = 20, fatPercent = 10, fibrePercent = 5 });
-        Assert.Equal(HttpStatusCode.BadRequest, threeOfFour.StatusCode);
-
-        // None of the refusals touched the stored analysis.
-        var after = await StoredAnalysisAsync();
-        Assert.Equal(32m, after.GetProperty("proteinPercent").GetDecimal());
-        Assert.Equal(15m, after.GetProperty("fatPercent").GetDecimal());
+        // Replacing it with another certificate is accepted and stored.
+        var replaced = await PutAsync(new
+        { expectedVersion = await ProductVersionAsync(staff, product.ProductId), organicCertifier = "Other Board", organicCertificateNumber = "OB-7" });
+        Assert.Equal(HttpStatusCode.NoContent, replaced.StatusCode);
+        var after = await BodyAsync(await AnonymousGetAsync($"/api/shop/products/{product.Slug}"));
+        Assert.Equal("Other Board", after.GetProperty("food").GetProperty("organicCertifier").GetString());
+        Assert.Equal("OB-7", after.GetProperty("food").GetProperty("organicCertificateNumber").GetString());
     }
 
     // ── U-E3 ────────────────────────────────────────────────────────────────────────────────────
@@ -153,7 +143,7 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         { "minPrice=500&maxPrice=100", "minPrice" },
         { "minPrice=abc", "minPrice" },
         { "maxPrice=abc", "maxPrice" },
-        { "protein=Wombat", "protein" },
+        { "certification=Wombat", "certification" },
         { "minRating=6", "minRating" },
         { "minRating=0", "minRating" },
         { "pageSize=1&pageNumber=2000000000", "pageNumber" },
@@ -189,7 +179,7 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
 
     [Theory]
     [InlineData("origin")]
-    [InlineData("protein")]
+    [InlineData("certification")]
     public async Task U_E3_TwentyOneValuesOfAMultiValuedFilter_IsInvalidCatalogueFilter(string parameter)
     {
         var values = string.Join("&", Enumerable.Range(0, 21).Select(i => $"{parameter}=Adult"));
@@ -234,7 +224,7 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         var slug = UniqueSlug("two-sku");
 
         var create = await staff.PostAsJsonAsync("/api/staff/shop/products",
-            new { kind = "Standard", name = "Two Sku Litter " + Token(), brand, category = "HealthAndGrooming", taxClassId, slug }, Json);
+            new { kind = "Standard", name = "Two Sku Jute Bag " + Token(), brand, category = "HouseholdAndCare", taxClassId, slug }, Json);
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var productId = (await BodyAsync(create)).GetProperty("productId").GetGuid();
 
@@ -363,7 +353,7 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         var token = Token();
         var alpha = await CreateProductAsync(staff, brand, $"Alpha {token}");
         var bravo = await CreateProductAsync(staff, brand, $"Bravo {token}");
-        var charlie = await CreateProductAsync(staff, brand, $"Charlie {token}", category: "ToysAndFurniture", publish: false);
+        var charlie = await CreateProductAsync(staff, brand, $"Charlie {token}", category: "Spices", publish: false);
         await CreateProductAsync(staff, NewBrand("OtherList"), $"Alpha {token}"); // same name, other brand: must never appear
         return (alpha, bravo, charlie, brand, token);
     }
@@ -392,8 +382,8 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         Assert.Equal("Draft", draft.GetProperty("items")[0].GetProperty("status").GetString());
 
         // Category, kind and listed.
-        var toys = await BodyAsync(await staff.GetAsync($"{scope}&category=ToysAndFurniture"));
-        Assert.Equal([charlie.ProductId], OrderedItemIds(toys));
+        var spices = await BodyAsync(await staff.GetAsync($"{scope}&category=Spices"));
+        Assert.Equal([charlie.ProductId], OrderedItemIds(spices));
         Assert.Equal(3, (await BodyAsync(await staff.GetAsync($"{scope}&kind=Standard"))).GetProperty("totalCount").GetInt32());
         Assert.Equal(0, (await BodyAsync(await staff.GetAsync($"{scope}&kind=Bundle"))).GetProperty("totalCount").GetInt32());
         var listed = (await BodyAsync(await staff.GetAsync($"{scope}&listed=true"))).GetProperty("totalCount").GetInt32();
@@ -480,11 +470,11 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         var brand = NewBrand("Filters");
         var review = await ReviewerAsync(staff);
 
-        var p1 = await CreateProductAsync(staff, brand, "Small Dry " + Token(), category: "CatFood", subcategory: "Dry", countryCode: "FR", proteinSource: "Chicken", price: 1200m);
-        var p2 = await CreateProductAsync(staff, brand, "Adult Wet " + Token(), category: "CatFood", subcategory: "Wet", countryCode: "DE", proteinSource: "Salmon", price: 3000m);
-        var p3 = await CreateProductAsync(staff, brand, "Adult Dry " + Token(), category: "CatFood", subcategory: "Dry", countryCode: "FR", proteinSource: "Chicken", price: 2000m);
-        var p4 = await CreateProductAsync(staff, brand, "Toy Mouse " + Token(), category: "ToysAndFurniture", price: 500m);
-        var p5 = await CreateProductAsync(staff, brand, "Toy Ball " + Token(), category: "ToysAndFurniture", price: 700m);
+        var p1 = await CreateProductAsync(staff, brand, "Small Aromatic " + Token(), category: "RiceAndGrains", subcategory: "AromaticRice", countryCode: "FR", certifications: ["Halal"], price: 1200m);
+        var p2 = await CreateProductAsync(staff, brand, "Everyday " + Token(), category: "RiceAndGrains", subcategory: "EverydayRice", countryCode: "DE", certifications: ["PesticideFree"], price: 3000m);
+        var p3 = await CreateProductAsync(staff, brand, "Large Aromatic " + Token(), category: "RiceAndGrains", subcategory: "AromaticRice", countryCode: "FR", certifications: ["Halal"], price: 2000m);
+        var p4 = await CreateProductAsync(staff, brand, "Jute Bag " + Token(), category: "HouseholdAndCare", price: 500m);
+        var p5 = await CreateProductAsync(staff, brand, "Jute Basket " + Token(), category: "HouseholdAndCare", price: 700m);
         await MakeSkuUnpricedAsync(p5.SkuId); // no sellable price: not in stock
         await review(p1, 5);
         await review(p2, 2);
@@ -506,12 +496,12 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
 
         // Each filter alone.
         await AssertFilterAsync("origin=FR", p1, p3);
-        await AssertFilterAsync("category=CatFood", p1, p2, p3);
-        await AssertFilterAsync("category=ToysAndFurniture", p4, p5);
-        await AssertFilterAsync("category=CatFood&subcategory=Dry", p1, p3);
-        await AssertFilterAsync("subcategory=Wet", p2);
-        await AssertFilterAsync("protein=Chicken", p1, p3);
-        await AssertFilterAsync("protein=Salmon", p2);
+        await AssertFilterAsync("category=RiceAndGrains", p1, p2, p3);
+        await AssertFilterAsync("category=HouseholdAndCare", p4, p5);
+        await AssertFilterAsync("category=RiceAndGrains&subcategory=AromaticRice", p1, p3);
+        await AssertFilterAsync("subcategory=EverydayRice", p2);
+        await AssertFilterAsync("certification=Halal", p1, p3);
+        await AssertFilterAsync("certification=PesticideFree", p2);
         await AssertFilterAsync("minPrice=1500&maxPrice=2500", p3);
         await AssertFilterAsync("minPrice=1000", p1, p2, p3);
         await AssertFilterAsync("maxPrice=1200", p1, p4);
@@ -520,19 +510,19 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
         await AssertFilterAsync("minRating=2", p1, p2);
 
         // Three filters combined.
-        await AssertFilterAsync("origin=FR&protein=Chicken&minPrice=1500", p3);
-        await AssertFilterAsync("category=CatFood&minRating=2&maxPrice=2500", p1);
-        await AssertFilterAsync("subcategory=Dry&availability=inStock&minPrice=1500", p3);
-        await AssertFilterAsync("category=ToysAndFurniture&availability=inStock&maxPrice=600", p4);
+        await AssertFilterAsync("origin=FR&certification=Halal&minPrice=1500", p3);
+        await AssertFilterAsync("category=RiceAndGrains&minRating=2&maxPrice=2500", p1);
+        await AssertFilterAsync("subcategory=AromaticRice&availability=inStock&minPrice=1500", p3);
+        await AssertFilterAsync("category=HouseholdAndCare&availability=inStock&maxPrice=600", p4);
 
         // Filters that exclude everything.
-        await AssertFilterAsync("origin=FR&protein=Salmon");
+        await AssertFilterAsync("origin=FR&certification=PesticideFree");
         await AssertFilterAsync("minRating=5&maxPrice=1000");
 
         // The response echoes what was applied.
-        var echoed = (await BodyAsync(await AnonymousGetAsync($"{scope}&origin=FR&subcategory=Dry&minRating=4"))).GetProperty("appliedFilters");
+        var echoed = (await BodyAsync(await AnonymousGetAsync($"{scope}&origin=FR&subcategory=AromaticRice&minRating=4"))).GetProperty("appliedFilters");
         Assert.Equal("FR", echoed.GetProperty("origin").GetString());
-        Assert.Equal("Dry", echoed.GetProperty("subcategory").GetString());
+        Assert.Equal("AromaticRice", echoed.GetProperty("subcategory").GetString());
         Assert.Equal("4", echoed.GetProperty("minRating").GetString());
     }
 
@@ -612,7 +602,7 @@ public sealed class ShopSection16GapEndpointTests(ShopApiFactory factory) : Shop
             await staff.PutAsJsonAsync($"/api/staff/shop/products/{product.ProductId}", new
             {
                 expectedVersion = await ProductVersionAsync(staff, product.ProductId), name, brand, description,
-                category = "HealthAndGrooming", taxClassId, tags = Array.Empty<string>(), healthFocus = Array.Empty<string>()
+                category = "HouseholdAndCare", taxClassId, tags = Array.Empty<string>(), certifications = Array.Empty<string>()
             }, Json);
 
         foreach (var response in new[]

@@ -19,7 +19,7 @@ public sealed class ShopSkuShippingWeightEndpointTests(ShopApiFactory factory) :
         var staff = await SignInAsShopManagerAsync();
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
         var create = await staff.PostAsJsonAsync("/api/staff/shop/products",
-            new { kind = "Standard", name = "Weighed " + Guid.NewGuid().ToString("N")[..8], brand = "Acme", category = "HealthAndGrooming", taxClassId, slug = UniqueSlug("weighed") }, Json);
+            new { kind = "Standard", name = "Weighed " + Guid.NewGuid().ToString("N")[..8], brand = "Acme", category = "HouseholdAndCare", taxClassId, slug = UniqueSlug("weighed") }, Json);
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         return (staff, (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("productId").GetGuid());
     }

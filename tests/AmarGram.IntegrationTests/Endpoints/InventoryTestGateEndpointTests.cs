@@ -148,7 +148,7 @@ public sealed class InventoryTestGateEndpointTests(InventoryApiFactory factory, 
         Assert.Equal(3m, (await PositionAsync(t.BatchId, t.SecondWarehouseId)).OnHand);
 
         var recall = await t.Keeper.Client.PostAsJsonAsync($"/api/staff/inventory/batches/{t.BatchId}/recall",
-            new { confirmLotNumber = t.Lot, reason = "Salmonella found in the lot.", customerAdvice = "Stop feeding it." }, Json);
+            new { confirmLotNumber = t.Lot, reason = "Salmonella found in the lot.", customerAdvice = "Stop using it." }, Json);
         Assert.Equal(HttpStatusCode.Created, recall.StatusCode);
 
         Assert.Equal(0m, await SellableAsync(t.First.BranchId, t.Sku.SkuId));
@@ -355,7 +355,7 @@ public sealed class InventoryTestGateEndpointTests(InventoryApiFactory factory, 
     }
 
     private static Task<HttpResponseMessage> RecallAsync(HttpClient client, Guid batchId, string lot) =>
-        client.PostAsJsonAsync($"/api/staff/inventory/batches/{batchId}/recall", new { confirmLotNumber = lot, reason = "Salmonella found in the lot.", customerAdvice = "Stop feeding it." }, Json);
+        client.PostAsJsonAsync($"/api/staff/inventory/batches/{batchId}/recall", new { confirmLotNumber = lot, reason = "Salmonella found in the lot.", customerAdvice = "Stop using it." }, Json);
 
     // ── the alert-raise race, a genuinely fresh key every round ──────────────────────────────────────────────────────────────────
 

@@ -40,7 +40,7 @@ public static partial class BusinessViolationCodes
     public const string InvalidImage = nameof(InvalidImage);
     public const string InvalidCountryCode = nameof(InvalidCountryCode);
     public const string FoodDetailsOnlyForFood = nameof(FoodDetailsOnlyForFood);
-    public const string InvalidGuaranteedAnalysis = nameof(InvalidGuaranteedAnalysis);
+    public const string OrganicCertificateRequired = nameof(OrganicCertificateRequired);
     public const string CountryOfOriginRequired = nameof(CountryOfOriginRequired);
     public const string ProductNotPublishable = nameof(ProductNotPublishable);
     public const string InvalidProductTransition = nameof(InvalidProductTransition);

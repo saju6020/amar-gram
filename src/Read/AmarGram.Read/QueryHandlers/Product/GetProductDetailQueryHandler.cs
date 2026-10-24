@@ -35,17 +35,16 @@ public sealed class GetProductDetailQueryHandler(
             .Select(p => new
             {
                 p.Id, p.Slug, p.Name, p.Brand, p.Description, p.Category, p.Subcategory, p.Tags, p.Kind, p.CountryOfOriginCode,
-                Manufacturer = p.FoodDetails == null ? null : p.FoodDetails.Manufacturer,
-                FoodProtein = p.FoodDetails == null ? null : p.FoodDetails.ProteinSource,
+                p.Certifications,
                 IngredientList = p.FoodDetails == null ? null : p.FoodDetails.IngredientList,
-                FeedingGuide = p.FoodDetails == null ? null : p.FoodDetails.FeedingGuide,
                 StorageInstructions = p.FoodDetails == null ? null : p.FoodDetails.StorageInstructions,
-                ProteinPercent = p.FoodDetails == null ? null : p.FoodDetails.AnalysisProteinPercent,
-                FatPercent = p.FoodDetails == null ? null : p.FoodDetails.AnalysisFatPercent,
-                FibrePercent = p.FoodDetails == null ? null : p.FoodDetails.AnalysisFibrePercent,
-                MoisturePercent = p.FoodDetails == null ? null : p.FoodDetails.AnalysisMoisturePercent,
+                ShelfLife = p.FoodDetails == null ? null : p.FoodDetails.ShelfLife,
+                NetWeight = p.FoodDetails == null ? null : p.FoodDetails.NetWeight,
+                Allergens = p.FoodDetails == null ? null : p.FoodDetails.Allergens,
+                OrganicCertifier = p.FoodDetails == null ? null : p.FoodDetails.OrganicCertifier,
+                OrganicCertificateNumber = p.FoodDetails == null ? null : p.FoodDetails.OrganicCertificateNumber,
                 Images = p.Images.Select(i => new { i.SkuId, i.FileId, i.AltText, i.IsPrimary, i.SortOrder }).ToList(),
-                Translations = p.Translations.Select(t => new { t.Locale, t.Name, t.Description, t.IngredientList, t.FeedingGuide }).ToList()
+                Translations = p.Translations.Select(t => new { t.Locale, t.Name, t.Description, t.IngredientList }).ToList()
             })
             .AsSplitQuery()
             .FirstOrDefaultAsync();
@@ -79,26 +78,19 @@ public sealed class GetProductDetailQueryHandler(
         // US-SHP-14: per-field fallback to the default language; an unknown or disabled locale is the
         // default, never an error on a public read.
         var translations = product.Translations
-            .Select(t => new ProductTranslation(t.Locale, t.Name, t.Description, t.IngredientList, t.FeedingGuide)).ToList();
+            .Select(t => new ProductTranslation(t.Locale, t.Name, t.Description, t.IngredientList)).ToList();
         var localised = ProductContentLocalisation.Resolve(
-            product.Name, product.Description, product.IngredientList, product.FeedingGuide,
+            product.Name, product.Description, product.IngredientList,
             translations, query.Locale, localeSettings.DefaultLocale, localeSettings.EnabledLocales);
 
         FoodDetailViewModel? food = null;
-        var isFood = product.Category == ProductCategory.CatFood;
-        var hasFoodDetails = product.Manufacturer is not null || product.FoodProtein is not null
-            || product.IngredientList is not null || product.FeedingGuide is not null || product.StorageInstructions is not null
-            || product.ProteinPercent is not null || product.FatPercent is not null
-            || product.FibrePercent is not null || product.MoisturePercent is not null;
-        if (isFood && hasFoodDetails)
+        var hasFoodDetails = product.IngredientList is not null || product.StorageInstructions is not null
+            || product.ShelfLife is not null || product.NetWeight is not null || product.Allergens is not null
+            || product.OrganicCertifier is not null || product.OrganicCertificateNumber is not null;
+        if (product.Category.IsFood && hasFoodDetails)
         {
-            var analysis = product.ProteinPercent is { } protein && product.FatPercent is { } fat
-                && product.FibrePercent is { } fibre && product.MoisturePercent is { } moisture
-                ? new GuaranteedAnalysisViewModel(protein, fat, fibre, moisture)
-                : null;
-
-            food = new FoodDetailViewModel(product.Manufacturer, product.FoodProtein?.DisplayName,
-                localised.IngredientList, analysis, localised.FeedingGuide, product.StorageInstructions);
+            food = new FoodDetailViewModel(localised.IngredientList, product.StorageInstructions, product.ShelfLife,
+                product.NetWeight, product.Allergens, product.OrganicCertifier, product.OrganicCertificateNumber);
         }
 
         var productImages = product.Images.Where(i => i.SkuId is null)
@@ -110,7 +102,7 @@ public sealed class GetProductDetailQueryHandler(
 
         var result = new ProductDetailViewModel(
             product.Id, product.Slug, localised.Name, product.Brand, localised.Description, product.Category.DisplayName,
-            product.Subcategory?.DisplayName, product.Tags, product.Kind.DisplayName, country,
+            product.Subcategory?.DisplayName, product.Tags, product.Certifications.Select(c => c.DisplayName).ToList(), product.Kind.DisplayName, country,
             food, productImages, skuViewModels, new RatingSummary(rating?.RatingAverage, rating?.RatingCount ?? 0),
             businessSettings.GetBool(AmarGram.Shared.Common.Constants.SettingKeys.CommercePricesIncludeTax), localised.Locale, localised.FieldLocales,
             await BuildBundleAsync(product.Id, product.Kind));

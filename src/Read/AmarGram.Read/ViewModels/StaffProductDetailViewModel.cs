@@ -47,7 +47,7 @@ public sealed record StaffProductDetailViewModel(
     IReadOnlyList<StaffTranslationViewModel>? Translations = null,
     FoodDetailViewModel? Food = null,
     IReadOnlyList<StaffProductImageViewModel>? Images = null,
-    IReadOnlyList<string>? HealthFocus = null);
+    IReadOnlyList<string>? Certifications = null);
 
 /// <summary>HO-SHP-001-FU1 -- the staff image row carries <c>FileId</c> and <c>SortOrder</c> so the
 /// images editor can re-save the set it loaded. <c>Url</c> is null until a media URL builder exists

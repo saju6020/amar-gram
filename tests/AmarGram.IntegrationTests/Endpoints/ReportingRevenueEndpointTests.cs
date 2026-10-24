@@ -93,7 +93,7 @@ public sealed class ReportingRevenueEndpointTests(OrderingApiFactory factory) : 
         var byCategory = await ReportAsync(admin, ReportCatalogue.RevenueShopByCategoryKey, order.Shop.Context);
         var categories = byCategory.GetProperty("rows").EnumerateArray().ToList();
         Assert.Equal(shopNet, categories.Sum(r => Money(r.GetProperty("netRevenue"))));
-        Assert.Equal(order.CostedNet + order.UncostedNet, Money(categories.Single(r => r.GetProperty("category").GetString() == "CatFood").GetProperty("netRevenue")));
+        Assert.Equal(order.CostedNet + order.UncostedNet, Money(categories.Single(r => r.GetProperty("category").GetString() == "RiceAndGrains").GetProperty("netRevenue")));
         Assert.Equal(order.DeliveryNet, Money(categories.Single(r => r.GetProperty("category").GetString() == "Delivery and fees").GetProperty("netRevenue")));
         Assert.Equal(shopNet, Money(byCategory.GetProperty("totals").GetProperty("netRevenue")));
 
@@ -104,7 +104,7 @@ public sealed class ReportingRevenueEndpointTests(OrderingApiFactory factory) : 
         Assert.Equal(shopNet, origins.Sum(r => Money(r.GetProperty("netRevenue"))));
 
         // The unit count is the quantity sold.
-        Assert.Equal(4m, decimal.Parse(categories.Single(r => r.GetProperty("category").GetString() == "CatFood").GetProperty("units").GetString()!, CultureInfo.InvariantCulture));
+        Assert.Equal(4m, decimal.Parse(categories.Single(r => r.GetProperty("category").GetString() == "RiceAndGrains").GetProperty("units").GetString()!, CultureInfo.InvariantCulture));
     }
 
     // ── I-D4: ADR-281 -- a shop manager sees revenue, never cost or margin, in JSON, CSV or PDF ──────────────────

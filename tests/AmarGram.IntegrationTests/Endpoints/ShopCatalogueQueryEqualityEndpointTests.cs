@@ -34,11 +34,11 @@ public sealed class ShopCatalogueQueryEqualityEndpointTests(ShopApiFactory facto
             return p;
         }
 
-        var p1 = await Standard("Alpha", "HealthAndGrooming", 400m, 5m);
-        var p2 = await Standard("Bravo", "ToysAndFurniture", 900m, 5m);
-        var p3 = await Standard("Charlie", "HealthAndGrooming", 400m, 0m);          // ties with Alpha on price, not stocked
-        var p4 = await Standard("Delta", "ToysAndFurniture", 1200m, 5m);
-        var p5 = await Standard("Echo", "HealthAndGrooming", 250m, 0m);
+        var p1 = await Standard("Alpha", "HouseholdAndCare", 400m, 5m);
+        var p2 = await Standard("Bravo", "Spices", 900m, 5m);
+        var p3 = await Standard("Charlie", "HouseholdAndCare", 400m, 0m);          // ties with Alpha on price, not stocked
+        var p4 = await Standard("Delta", "Spices", 1200m, 5m);
+        var p5 = await Standard("Echo", "HouseholdAndCare", 250m, 0m);
 
         // Bravo: a later price supersedes the first (the latest effective one counts); a future price is ignored.
         await Task.Delay(50);
@@ -47,10 +47,10 @@ public sealed class ShopCatalogueQueryEqualityEndpointTests(ShopApiFactory facto
         await SchedulePriceAsync(staff, p2.SkuId, 100m, DateTimeOffset.UtcNow.AddDays(1));
 
         var bundleIn = await CreateBundleAsync(staff, brand, "Kit In", [(p1.SkuId, 1), (p4.SkuId, 1)], 2000m);
-        price[bundleIn.ProductId] = 2000m; category[bundleIn.ProductId] = "HealthAndGrooming"; bundles.Add(bundleIn.ProductId); inStock.Add(bundleIn.ProductId);
+        price[bundleIn.ProductId] = 2000m; category[bundleIn.ProductId] = "HouseholdAndCare"; bundles.Add(bundleIn.ProductId); inStock.Add(bundleIn.ProductId);
 
         var bundleOut = await CreateBundleAsync(staff, brand, "Kit Out", [(p5.SkuId, 1), (p3.SkuId, 1)], 1500m);   // neither component has stock
-        price[bundleOut.ProductId] = 1500m; category[bundleOut.ProductId] = "HealthAndGrooming"; bundles.Add(bundleOut.ProductId);
+        price[bundleOut.ProductId] = 1500m; category[bundleOut.ProductId] = "HouseholdAndCare"; bundles.Add(bundleOut.ProductId);
 
         return new Seed(brand, price, inStock, category, bundles);
     }
@@ -82,8 +82,8 @@ public sealed class ShopCatalogueQueryEqualityEndpointTests(ShopApiFactory facto
         string[] sorts = ["newest", "price_asc", "price_desc", "popularity", "rating"];
         string[] filters =
         [
-            "", "&category=ToysAndFurniture", "&category=HealthAndGrooming", "&minPrice=500&maxPrice=1300", "&availability=inStock",
-            "&availability=inStock&category=HealthAndGrooming", "&availability=inStock&minPrice=500&maxPrice=1300"
+            "", "&category=Spices", "&category=HouseholdAndCare", "&minPrice=500&maxPrice=1300", "&availability=inStock",
+            "&availability=inStock&category=HouseholdAndCare", "&availability=inStock&minPrice=500&maxPrice=1300"
         ];
 
         foreach (var sort in sorts)
@@ -99,8 +99,8 @@ public sealed class ShopCatalogueQueryEqualityEndpointTests(ShopApiFactory facto
             Assert.Equal(whole.Count, Ids(whole).Distinct().Count());
 
             var expected = seed.Price.Keys.AsEnumerable();
-            if (filter.Contains("category=ToysAndFurniture")) expected = expected.Where(id => seed.Category[id] == "ToysAndFurniture");
-            if (filter.Contains("category=HealthAndGrooming")) expected = expected.Where(id => seed.Category[id] == "HealthAndGrooming");
+            if (filter.Contains("category=Spices")) expected = expected.Where(id => seed.Category[id] == "Spices");
+            if (filter.Contains("category=HouseholdAndCare")) expected = expected.Where(id => seed.Category[id] == "HouseholdAndCare");
             if (filter.Contains("minPrice=500")) expected = expected.Where(id => !seed.Bundles.Contains(id) && seed.Price[id] is >= 500m and <= 1300m);
             if (filter.Contains("availability=inStock")) expected = expected.Where(seed.InStock.Contains);
             Assert.Equal(expected.OrderBy(i => i), Ids(whole).OrderBy(i => i));

@@ -35,7 +35,7 @@ public sealed class BatchAndLedgerTests
     }
 
     private static void Recall(BatchAggregate batch) =>
-        batch.Recall(new BatchRecallDto("RCL-2026-000001", "Contamination.", "Stop feeding it.", DateTimeOffset.UtcNow, Actor()), "LOT-1");
+        batch.Recall(new BatchRecallDto("RCL-2026-000001", "Contamination.", "Stop using it.", DateTimeOffset.UtcNow, Actor()), "LOT-1");
 
     // ── U-D7 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -210,7 +210,7 @@ public sealed class BatchAndLedgerTests
     public void U_I1_ARecallFromWrittenOffIsRefused_AndTheLotNumberMustMatchExactly()
     {
         var written = In(BatchStatus.WrittenOff);
-        var dto = new BatchRecallDto("RCL-2026-000001", "Contamination.", "Stop feeding it.", DateTimeOffset.UtcNow, Actor());
+        var dto = new BatchRecallDto("RCL-2026-000001", "Contamination.", "Stop using it.", DateTimeOffset.UtcNow, Actor());
 
         Assert.Equal(BusinessViolationCodes.InvalidBatchTransition, Assert.Throws<DomainRuleViolationException>(() => written.Recall(dto, "LOT-1")).ErrorCode);
         Assert.Equal(BusinessViolationCodes.RecallConfirmationMismatch, Assert.Throws<DomainRuleViolationException>(() => NewBatch().Recall(dto, "lot-1")).ErrorCode);

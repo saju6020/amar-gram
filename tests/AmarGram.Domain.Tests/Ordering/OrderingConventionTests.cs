@@ -185,7 +185,7 @@ public sealed class OrderingConventionTests
         Has<DeliveryServiceLevel>("Standard", "Express");
         Has<OrderCancellationReason>("CustomerRequest", "StaffDecision", "PaymentWindowExpired");
         Has<DeliveryFailureReason>("Refused", "Undeliverable", "Uncollected");
-        Has<ProductReturnClass>("Food", "Litter", "Other");
+        Has<ProductReturnClass>("Food", "Household", "Other");
         Has<ReturnKind>("CustomerReturn", "DeliveryFailure");
         Has<ReturnStatus>("Requested", "Approved", "Rejected", "Received", "Closed");
         Has<ReturnReason>("WrongItem", "Damaged", "QualityDefect", "ChangedMind", "Recalled", "Other");
@@ -242,7 +242,7 @@ public sealed class OrderingConventionTests
             "TransferAmountMismatch", "PaymentAlreadyAwaitingApproval", "NoPaymentAwaitingApproval", "SecondApproverMustDiffer", "OrderNotFullyAllocated",
             "BatchRecalled", "BatchExpired", "CourierNotFound", "CodCollectionRequired", "CollectionPaymentMismatch", "TerminalReferenceRequired",
             "DeliveryFailureReasonInvalid", "TendersDoNotCoverTotal", "ReallocationReasonRequired", "ReturnNotFound", "ReturnWindowClosed",
-            "ReturnQuantityExceeded", "ReturnNotEligibleOpenedFood", "ReturnNotEligibleUsedLitter", "DefectConfirmationRequired", "InvalidReturnTransition",
+            "ReturnQuantityExceeded", "ReturnNotEligibleOpenedFood", "ReturnNotEligibleUsedItem", "DefectConfirmationRequired", "InvalidReturnTransition",
             "ReturnReceiptExceedsApproved", "RefundExceedsAmountPaid", "RefundMethodNotAllowed", "RefundMethodUnavailable",
             "RefundReferenceRequired", "DeliveryZoneNotFound", "DeliveryZoneNameAlreadyExists", "InvalidDeliveryZone", "CourierNameAlreadyExists",
             "InvalidBankTransferAccount", "ReconciliationIssueNotFound",

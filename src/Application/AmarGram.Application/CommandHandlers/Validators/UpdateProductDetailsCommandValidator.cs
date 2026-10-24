@@ -16,10 +16,10 @@ public sealed class UpdateProductDetailsCommandValidator : AbstractValidator<Upd
         RuleFor(x => x.Category).NotEmpty().MustBeValidEnumeration<UpdateProductDetailsCommand, ProductCategory>();
         RuleFor(x => x.Subcategory).MustBeValidEnumeration<UpdateProductDetailsCommand, ProductSubcategory>();
         RuleFor(x => x.TaxClassId).NotEmpty();
-        RuleForEach(x => x.HealthFocus).MustBeValidEnumeration<UpdateProductDetailsCommand, HealthFocus>();
+        RuleForEach(x => x.Certifications).MustBeValidEnumeration<UpdateProductDetailsCommand, Certification>();
         RuleFor(x => x.Tags).Must(t => t.Count <= ProductRules.MaxTags)
             .WithMessage($"A product may have at most {ProductRules.MaxTags} tags.");
-        RuleFor(x => x.HealthFocus).Must(t => t.Count <= ProductRules.MaxHealthFocus)
-            .WithMessage($"A product may have at most {ProductRules.MaxHealthFocus} health focus values.");
+        RuleFor(x => x.Certifications).Must(t => t.Count <= ProductRules.MaxCertifications)
+            .WithMessage($"A product may have at most {ProductRules.MaxCertifications} certifications.");
     }
 }

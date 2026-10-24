@@ -15,6 +15,6 @@ public sealed record ProductDetailsUpdateDto(
     string? CountryOfOriginCode,
     bool ListedOnStorefront,
     bool IsExpiryTracked,
-    IReadOnlyList<HealthFocus> HealthFocus,
+    IReadOnlyList<Certification> Certifications,
     UserContext UserContext,
     Guid CorrelationId);

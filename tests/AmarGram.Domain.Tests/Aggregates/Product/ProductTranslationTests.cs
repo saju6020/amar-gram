@@ -16,13 +16,13 @@ public sealed class ProductTranslationTests
     private static ProductAggregate NewProduct()
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Bamboo Shelf", "Amar Gram", ProductCategory.ToysAndFurniture, null,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Bamboo Shelf", "Amar Gram", ProductCategory.HouseholdAndCare, null,
             Guid.NewGuid(), "bamboo-shelf", null, null, TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }
 
-    private static void Set(ProductAggregate product, string locale, string? name = null, string? description = null, string? ingredients = null, string? feeding = null) =>
-        product.SetTranslation(new ProductTranslationInputDto(locale, name, description, ingredients, feeding), "en", Enabled, TestUserContext.Create(), Guid.NewGuid());
+    private static void Set(ProductAggregate product, string locale, string? name = null, string? description = null, string? ingredients = null) =>
+        product.SetTranslation(new ProductTranslationInputDto(locale, name, description, ingredients), "en", Enabled, TestUserContext.Create(), Guid.NewGuid());
 
     [Fact]
     public void U_H7_TheDefaultLocale_IsNotTranslatable()
@@ -34,7 +34,7 @@ public sealed class ProductTranslationTests
     [Fact]
     public void U_H7_ALocaleThatIsNotEnabled_IsRefused()
     {
-        var ex = Assert.Throws<DomainRuleViolationException>(() => Set(NewProduct(), "fr", "Arbre à chat"));
+        var ex = Assert.Throws<DomainRuleViolationException>(() => Set(NewProduct(), "fr", "Étagère en bambou"));
         Assert.Equal(BusinessViolationCodes.LocaleNotEnabled, ex.ErrorCode);
     }
 
@@ -43,7 +43,7 @@ public sealed class ProductTranslationTests
     {
         var product = NewProduct();
 
-        Set(product, "bn", "বিড়ালের গাছ", "বিবরণ");
+        Set(product, "bn", "বাঁশের তাক", "বিবরণ");
         Set(product, "bn", "নতুন নাম");
 
         var translation = Assert.Single(product.Translations);
@@ -56,9 +56,9 @@ public sealed class ProductTranslationTests
     public void U_H7_AnEmptyTranslation_RemovesTheLocale()
     {
         var product = NewProduct();
-        Set(product, "bn", "বিড়ালের গাছ");
+        Set(product, "bn", "বাঁশের তাক");
 
-        Set(product, "bn", "  ", "", null, null);
+        Set(product, "bn", "  ", "", null);
 
         Assert.Empty(product.Translations);
     }
@@ -67,7 +67,7 @@ public sealed class ProductTranslationTests
     public void U_H7_RemoveTranslation_RemovesIt_AndAnAbsentOneIsANoOp()
     {
         var product = NewProduct();
-        Set(product, "bn", "বিড়ালের গাছ");
+        Set(product, "bn", "বাঁশের তাক");
 
         product.RemoveTranslation("bn", "en", Enabled, TestUserContext.Create(), Guid.NewGuid());
         product.RemoveTranslation("bn", "en", Enabled, TestUserContext.Create(), Guid.NewGuid());

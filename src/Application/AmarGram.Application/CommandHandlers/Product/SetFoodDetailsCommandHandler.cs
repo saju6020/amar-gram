@@ -28,16 +28,9 @@ public sealed class SetFoodDetailsCommandHandler(
         if (product.Version != command.ExpectedVersion)
             return Violation(BusinessViolationCodes.ProductVersionConflict, nameof(command.ExpectedVersion), $"Expected version {command.ExpectedVersion} but the product is at {product.Version}.");
 
-        ProteinSource? proteinSource = null;
-        if (!string.IsNullOrWhiteSpace(command.ProteinSource))
-        {
-            if (!EnumerationParsing.TryParse<ProteinSource>(command.ProteinSource, out proteinSource) || proteinSource is null)
-                return Violation(BusinessViolationCodes.InvalidProductCategory, nameof(command.ProteinSource), $"'{command.ProteinSource}' is not a known protein source.");
-        }
-
         try
         {
-            product.SetFoodDetails(command.ToDomainDto(proteinSource), command.UserContext, command.CorrelationId);
+            product.SetFoodDetails(command.ToDomainDto(), command.UserContext, command.CorrelationId);
         }
         catch (DomainRuleViolationException ex)
         {

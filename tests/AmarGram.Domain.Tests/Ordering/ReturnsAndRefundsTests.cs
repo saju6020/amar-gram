@@ -69,10 +69,10 @@ public sealed class ReturnsAndRefundsTests
     }
 
     [Fact]
-    public void UsedLitter_IsRefused_ButOpenedLitterIsNot()
+    public void UsedHouseholdItem_IsRefused_ButOpenedOneIsNot()
     {
-        Assert.Equal(BusinessViolationCodes.ReturnNotEligibleUsedLitter, Judge(Line(ProductReturnClass.Litter, ItemCondition.Used)).Code);
-        Assert.True(Judge(Line(ProductReturnClass.Litter, ItemCondition.Opened)).Eligible);
+        Assert.Equal(BusinessViolationCodes.ReturnNotEligibleUsedItem, Judge(Line(ProductReturnClass.Household, ItemCondition.Used)).Code);
+        Assert.True(Judge(Line(ProductReturnClass.Household, ItemCondition.Opened)).Eligible);
     }
 
     // U-G4 the exceptions

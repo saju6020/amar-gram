@@ -16,6 +16,7 @@ public static class ProductPublicationRules
     public const string CountryOfOrigin = "CountryOfOrigin";
     public const string PrimaryImage = "PrimaryImage";
     public const string LabellingComplete = "LabellingComplete";
+    public const string OrganicCertificate = "OrganicCertificate";
     public const string BundleComposition = "BundleComposition";
 
     public static IReadOnlyList<PublicationChecklistItem> Evaluate(ProductAggregate product, PublicationFacts facts)
@@ -40,7 +41,14 @@ public static class ProductPublicationRules
 
         items.Add(new PublicationChecklistItem(LabellingComplete, false,
             !product.IsFood || (product.FoodDetails?.HasFullLabelling ?? false),
-            "Add manufacturer, ingredients, guaranteed analysis, feeding guide and storage instructions for complete labelling."));
+            "Add ingredients, storage instructions, shelf life and net weight for complete labelling."));
+
+        // HO-P2 §1.3: the certifier and certificate number are optional, except that a CertifiedOrganic claim needs both.
+        if (product.RequiresOrganicCertificate)
+        {
+            items.Add(new PublicationChecklistItem(OrganicCertificate, true, product.FoodDetails?.HasOrganicCertificate ?? false,
+                "Add the organic certifier and certificate number before publishing a CertifiedOrganic product."));
+        }
 
         if (product.Kind == ProductKind.Bundle)
         {

@@ -50,13 +50,13 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : AmarGram
     /// (by default) publishes it. Food products get a country of origin and food details so they
     /// can publish. §16.1 rule 1/2: every identifier is minted per call.</summary>
     protected async Task<SeededProduct> CreateProductAsync(
-        HttpClient staff, string brand, string name, string category = "HealthAndGrooming", decimal price = 1000m,
+        HttpClient staff, string brand, string name, string category = "HouseholdAndCare", decimal price = 1000m,
         string? countryCode = null, string? ingredientList = null,
-        string[]? healthFocus = null, string? proteinSource = null, bool publish = true, string? tag = null, string? subcategory = null, decimal stock = 100m)
+        string[]? certifications = null, bool publish = true, string? tag = null, string? subcategory = null, decimal stock = 100m)
     {
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
         var slug = UniqueSlug("p");
-        var isFood = category == "CatFood";
+        var isFood = category != "HouseholdAndCare"; // HO-P2 §1.1: every category but HouseholdAndCare is food
 
         var create = await staff.PostAsJsonAsync("/api/staff/shop/products", new { kind = "Standard", name, brand, category, subcategory, taxClassId, slug }, Json);
         Assert.True(create.StatusCode == HttpStatusCode.Created, $"{(int)create.StatusCode}: {await create.Content.ReadAsStringAsync()}");
@@ -67,14 +67,19 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : AmarGram
             expectedVersion = await ProductVersionAsync(staff, productId), name, brand, category, subcategory, taxClassId,
             countryOfOriginCode = isFood ? (countryCode ?? "DE") : countryCode,
             tags = tag is null ? Array.Empty<string>() : [tag],
-            healthFocus = healthFocus ?? []
+            certifications = certifications ?? []
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, details.StatusCode);
 
         if (isFood)
         {
             var food = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
-            { expectedVersion = await ProductVersionAsync(staff, productId), ingredientList, proteinSource }, Json);
+            {
+                expectedVersion = await ProductVersionAsync(staff, productId), ingredientList,
+                // HO-P2 §1.3: a CertifiedOrganic product publishes only with its certifier and certificate number.
+                organicCertifier = certifications?.Contains("CertifiedOrganic") == true ? "Test Organic Board" : null,
+                organicCertificateNumber = certifications?.Contains("CertifiedOrganic") == true ? "ORG-" + UniqueCode("C") : null
+            }, Json);
             Assert.Equal(HttpStatusCode.NoContent, food.StatusCode);
         }
 
@@ -116,7 +121,7 @@ public abstract class ShopIntegrationTestBase(ShopApiFactory factory) : AmarGram
         var skuCode = UniqueCode("BND");
 
         var create = await staff.PostAsJsonAsync("/api/staff/shop/products", new
-        { kind = "Bundle", name, brand, category = "HealthAndGrooming", taxClassId, slug, bundleSkuCode = skuCode }, Json);
+        { kind = "Bundle", name, brand, category = "HouseholdAndCare", taxClassId, slug, bundleSkuCode = skuCode }, Json);
         Assert.True(create.StatusCode == HttpStatusCode.Created, $"{(int)create.StatusCode}: {await create.Content.ReadAsStringAsync()}");
         var productId = (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("productId").GetGuid();
 

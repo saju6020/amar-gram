@@ -25,7 +25,7 @@ public sealed class UpdateProductDetailsRequest
     public string? CountryOfOriginCode { get; init; }
     public bool ListedOnStorefront { get; init; } = true;
     public bool IsExpiryTracked { get; init; }
-    public IReadOnlyList<string> HealthFocus { get; init; } = [];
+    public IReadOnlyList<string> Certifications { get; init; } = [];
 }
 
 public sealed class ChangeProductSlugRequest
@@ -114,5 +114,4 @@ public sealed class SetProductTranslationRequest
     public string? Name { get; init; }
     public string? Description { get; init; }
     public string? IngredientList { get; init; }
-    public string? FeedingGuide { get; init; }
 }

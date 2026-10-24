@@ -26,7 +26,7 @@ public sealed class RecordProductSalesStatsTests(ShopApiFactory factory) : ShopI
         var db = scope.ServiceProvider.GetRequiredService<AmarGramDbContext>();
 
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.ToysAndFurniture,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), UniqueSlug("sales-stats"), null, null, new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
         await productRepository.SaveAsync(product, EventPublishOption.InMemoryPublishOnly);
 

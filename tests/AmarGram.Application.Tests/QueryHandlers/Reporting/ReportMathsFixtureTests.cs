@@ -16,10 +16,10 @@ public sealed class ReportMathsFixtureTests
     private static readonly DateOnly Day = new(2026, 10, 13);
 
     private static RevenueFact Invoice(string line, decimal net, decimal tax, bool costed, decimal cogs) =>
-        new(Day, "BDT", RevenueFactKind.Invoice, line, "CatFood", "—", "DE", "CatFood", 1m, net, 0m, net, tax, costed ? cogs : 0m, costed);
+        new(Day, "BDT", RevenueFactKind.Invoice, line, "RiceAndGrains", "—", "DE", "RiceAndGrains", 1m, net, 0m, net, tax, costed ? cogs : 0m, costed);
 
     private static RevenueFact Credit(string line, decimal net, decimal tax, bool costed) =>
-        new(Day, "BDT", RevenueFactKind.Credit, line, "CatFood", "—", "DE", "CatFood", 0m, 0m, 0m, net, tax, 0m, costed);
+        new(Day, "BDT", RevenueFactKind.Credit, line, "RiceAndGrains", "—", "DE", "RiceAndGrains", 0m, 0m, 0m, net, tax, 0m, costed);
 
     // ── T-U3 ────────────────────────────────────────────────────────────────────────────────────────────
     // By hand: Shop = 100 + 40 invoiced, minus a 20 credit note = 120 net. Tax 15 + 6 - 3 = 18. Costed net = 100 - 20 = 80; cost of goods 60; margin 80 - 60 = 20; margin % = 20 / 80 = 25.0;
@@ -62,7 +62,7 @@ public sealed class ReportMathsFixtureTests
     [Fact]
     public void T_U3_ACreditNoteInAnotherCurrency_IsNeverNettedAgainstTheOtherCurrencysRevenue()
     {
-        var usd = new RevenueFact(Day, "USD", RevenueFactKind.Credit, "Shop", "CatFood", "—", "DE", "CatFood", 0m, 0m, 0m, 5m, 0m, 0m, false);
+        var usd = new RevenueFact(Day, "USD", RevenueFactKind.Credit, "Shop", "RiceAndGrains", "—", "DE", "RiceAndGrains", 0m, 0m, 0m, 5m, 0m, 0m, false);
 
         var aggregates = RevenueBuilder.Aggregate([Invoice("Shop", 100m, 0m, false, 0m), usd], TimeBucket.Day, f => [f.Line]);
 

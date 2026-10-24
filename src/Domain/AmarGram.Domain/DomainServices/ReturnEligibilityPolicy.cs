@@ -18,8 +18,8 @@ public sealed record ReturnLineVerdict(Guid OrderLineId, bool Eligible, bool Req
 /// <summary>
 /// HO-ORD-001 §8.10 (ADR-210), US-ORD-13, BR-10 -- who may send what back, as a pure function. In order, per line: the order was delivered and today (branch-local) is
 /// no later than <c>DeliveredOn + returnWindowDays</c> (<c>ReturnWindowClosed</c>); the quantity is no more than delivered less returned less already asked
-/// for (<c>ReturnQuantityExceeded</c>); then <b>BR-10</b> -- food that is not sealed, or used litter, is refused (<c>ReturnNotEligibleOpenedFood</c> /
-/// <c>ReturnNotEligibleUsedLitter</c>) <b>unless</b> an allocated batch is recalled or defective (then eligible outright) or the reason is a quality defect (then
+/// for (<c>ReturnQuantityExceeded</c>); then <b>BR-10</b> -- food that is not sealed, or a used household or care item, is refused (<c>ReturnNotEligibleOpenedFood</c> /
+/// <c>ReturnNotEligibleUsedItem</c>) <b>unless</b> an allocated batch is recalled or defective (then eligible outright) or the reason is a quality defect (then
 /// eligible <i>for approval</i> with a defect to confirm). Anything else is eligible and goes to staff approval.
 /// </summary>
 public static class ReturnEligibilityPolicy
@@ -41,15 +41,15 @@ public static class ReturnEligibilityPolicy
                 : $"You can return up to {returnable} of '{line.ProductName}'.");
 
         var openedFood = line.ReturnClass == ProductReturnClass.Food && line.Condition != ItemCondition.Sealed;
-        var usedLitter = line.ReturnClass == ProductReturnClass.Litter && line.Condition == ItemCondition.Used;
-        if (!openedFood && !usedLitter) return new ReturnLineVerdict(line.OrderLineId, true, false, null, null);
+        var usedHousehold = line.ReturnClass == ProductReturnClass.Household && line.Condition == ItemCondition.Used;
+        if (!openedFood && !usedHousehold) return new ReturnLineVerdict(line.OrderLineId, true, false, null, null);
 
         if (line.BatchRecalledOrDefective) return new ReturnLineVerdict(line.OrderLineId, true, false, null, null);
         if (line.Reason == ReturnReason.QualityDefect) return new ReturnLineVerdict(line.OrderLineId, true, true, null, null);
 
         return openedFood
             ? Refused(line, BusinessViolationCodes.ReturnNotEligibleOpenedFood, $"'{line.ProductName}' has been opened, so it can only be returned if it is faulty or recalled.")
-            : Refused(line, BusinessViolationCodes.ReturnNotEligibleUsedLitter, $"'{line.ProductName}' has been used, so it can only be returned if it is faulty or recalled.");
+            : Refused(line, BusinessViolationCodes.ReturnNotEligibleUsedItem, $"'{line.ProductName}' has been used, so it can only be returned if it is faulty or recalled.");
     }
 
     private static ReturnLineVerdict Refused(ReturnLineEligibilityInput line, string code, string message) => new(line.OrderLineId, false, false, code, message);

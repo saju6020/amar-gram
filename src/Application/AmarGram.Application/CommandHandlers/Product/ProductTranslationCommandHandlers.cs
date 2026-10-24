@@ -33,7 +33,7 @@ public sealed class SetProductTranslationCommandHandler(
         try
         {
             product.SetTranslation(
-                new ProductTranslationInputDto(command.Locale, command.Name, command.Description, command.IngredientList, command.FeedingGuide),
+                new ProductTranslationInputDto(command.Locale, command.Name, command.Description, command.IngredientList),
                 localeSettings.DefaultLocale, localeSettings.EnabledLocales, command.UserContext, command.CorrelationId);
         }
         catch (DomainRuleViolationException ex)

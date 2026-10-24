@@ -68,7 +68,7 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
         var (matchId, _) = await CreateActiveFoodProductAsync(client, brand, "Matching Food " + Guid.NewGuid().ToString("N")[..6], country, price: 1200m);
         var (nonMatchId, _) = await CreateActiveFoodProductAsync(client, brand, "Other Adult Food " + Guid.NewGuid().ToString("N")[..6], "DE", price: 3000m);
 
-        var response = await AnonymousGetAsync($"/api/shop/products?brand={Uri.EscapeDataString(brand)}&origin={country}&minPrice=1000&maxPrice=1500&category=CatFood");
+        var response = await AnonymousGetAsync($"/api/shop/products?brand={Uri.EscapeDataString(brand)}&origin={country}&minPrice=1000&maxPrice=1500&category=RiceAndGrains");
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
 
         var ids = body.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("productId").GetGuid()).ToList();
@@ -118,13 +118,13 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
     }
 
     [Fact]
-    public async Task Categories_ListsAllSixWithSubcategories()
+    public async Task Categories_ListsAllElevenWithSubcategories()
     {
         var response = await AnonymousGetAsync("/api/shop/categories");
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
-        Assert.Equal(6, body.GetArrayLength());
-        var catFood = body.EnumerateArray().First(c => c.GetProperty("value").GetString() == "CatFood");
-        Assert.True(catFood.GetProperty("subcategories").GetArrayLength() == 3); // Dry, Wet, Treats (the life-stage and therapeutic ones were retired in HO-P1)
+        Assert.Equal(11, body.GetArrayLength());
+        var rice = body.EnumerateArray().First(c => c.GetProperty("value").GetString() == "RiceAndGrains");
+        Assert.True(rice.GetProperty("subcategories").GetArrayLength() == 4); // Aromatic rice, Everyday rice, Flattened & puffed rice, Flour (HO-P2 §1.2)
     }
 
     [Fact]
@@ -132,14 +132,14 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
     {
         var client = await SignInAsShopManagerAsync();
         var brand = "DetailBrand" + Guid.NewGuid().ToString("N")[..8];
-        var (_, slug) = await CreateActiveFoodProductAsync(client, brand, "Detail Product " + Guid.NewGuid().ToString("N")[..6], "DE", ingredientList: "chicken, rice");
+        var (_, slug) = await CreateActiveFoodProductAsync(client, brand, "Detail Product " + Guid.NewGuid().ToString("N")[..6], "DE", ingredientList: "basmati rice");
 
         var response = await AnonymousGetAsync($"/api/shop/products/{slug}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("public, max-age=60", response.Headers.CacheControl?.ToString());
 
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
-        Assert.Equal("chicken, rice", body.GetProperty("food").GetProperty("ingredientList").GetString());
+        Assert.Equal("basmati rice", body.GetProperty("food").GetProperty("ingredientList").GetString());
         Assert.True(body.GetProperty("skus").GetArrayLength() >= 1);
     }
 
@@ -151,7 +151,7 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
         var slug = UniqueSlug("draft-product");
 
         await client.PostAsJsonAsync("/api/staff/shop/products", new
-        { kind = "Standard", name = "Draft Product", brand = "Acme", category = "ToysAndFurniture", taxClassId, slug }, Json);
+        { kind = "Standard", name = "Draft Product", brand = "Acme", category = "HouseholdAndCare", taxClassId, slug }, Json);
 
         var response = await AnonymousGetAsync($"/api/shop/products/{slug}");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -170,12 +170,12 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
         var slug = UniqueSlug(name.ToLowerInvariant().Replace(" ", "-"));
 
         var create = await staffClient.PostAsJsonAsync("/api/staff/shop/products", new
-        { kind = "Standard", name, brand, category = "CatFood", taxClassId, slug }, Json);
+        { kind = "Standard", name, brand, category = "RiceAndGrains", taxClassId, slug }, Json);
         var createBody = await create.Content.ReadFromJsonAsync<JsonElement>(Json);
         var productId = createBody.GetProperty("productId").GetGuid();
 
         await staffClient.PutAsJsonAsync($"/api/staff/shop/products/{productId}", new
-        { expectedVersion = 1, name, brand, category = "CatFood", taxClassId, countryOfOriginCode = countryCode }, Json);
+        { expectedVersion = 1, name, brand, category = "RiceAndGrains", taxClassId, countryOfOriginCode = countryCode }, Json);
 
         await staffClient.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
         { expectedVersion = 2, ingredientList }, Json);

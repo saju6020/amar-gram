@@ -1,39 +1,24 @@
 using AmarGram.Domain.Exceptions;
 using AmarGram.Shared.Common.Constants;
-using AmarGram.Shared.Common.Enums;
-using AmarGram.Shared.Common.Helpers;
 
 namespace AmarGram.Domain.ValueObjects;
 
 /// <summary>
-/// HO-SHP-001 section 8.5 -- owned one, optional, food-only columns on <c>product.product</c>.
-///
-/// The four guaranteed-analysis percentages are stored as flat, individually nullable columns
-/// rather than a nested owned <c>GuaranteedAnalysis</c> type: EF Core cannot materialise an
-/// optional owned type that itself contains another owned dependent ("an optional dependent using
-/// table sharing and containing other dependents without any required non-shared property to
-/// identify whether the entity exists") -- every field of <c>FoodDetails</c> is genuinely optional
-/// (a product may set only, say, <c>Manufacturer</c>), so there is no non-null sentinel to add.
-/// <see cref="GuaranteedAnalysis"/> is exposed as a derived, unmapped property that reconstructs
-/// the validated value object from the four columns, so every other caller keeps working with the
-/// same type section 8.5 names.
+/// HO-SHP-001 section 8.5, HO-P2 §1.3 -- owned one, optional, food-only columns on <c>product.product</c>:
+/// the generic food label (ingredients, storage, shelf life, net weight, allergens) and the organic
+/// certificate. Every field is optional here; publishing a <c>CertifiedOrganic</c> product needs the
+/// certifier and certificate number (<see cref="HasOrganicCertificate"/>, checked by
+/// <c>ProductPublicationRules</c>).
 /// </summary>
 public sealed record FoodDetails
 {
-    public string? Manufacturer { get; private set; }
-    public ProteinSource? ProteinSource { get; private set; }
     public string? IngredientList { get; private set; }
-    public decimal? AnalysisProteinPercent { get; private set; }
-    public decimal? AnalysisFatPercent { get; private set; }
-    public decimal? AnalysisFibrePercent { get; private set; }
-    public decimal? AnalysisMoisturePercent { get; private set; }
-    public string? FeedingGuide { get; private set; }
     public string? StorageInstructions { get; private set; }
-
-    /// <summary>Derived, not mapped -- reconstructed from the four flat columns above.</summary>
-    public GuaranteedAnalysis? GuaranteedAnalysis => AnalysisProteinPercent is null
-        ? null
-        : new GuaranteedAnalysis(AnalysisProteinPercent.Value, AnalysisFatPercent!.Value, AnalysisFibrePercent!.Value, AnalysisMoisturePercent!.Value);
+    public string? ShelfLife { get; private set; }
+    public string? NetWeight { get; private set; }
+    public string? Allergens { get; private set; }
+    public string? OrganicCertifier { get; private set; }
+    public string? OrganicCertificateNumber { get; private set; }
 
     /// <summary>EF Core materialises this owned type by property injection (a parameterless
     /// constructor), not constructor binding.</summary>
@@ -41,44 +26,34 @@ public sealed record FoodDetails
     {
     }
 
-    public FoodDetails(string? manufacturer, ProteinSource? proteinSource,
-        string? ingredientList, GuaranteedAnalysis? guaranteedAnalysis, string? feedingGuide, string? storageInstructions)
+    public FoodDetails(string? ingredientList, string? storageInstructions, string? shelfLife, string? netWeight,
+        string? allergens, string? organicCertifier, string? organicCertificateNumber)
     {
-        if (manufacturer is { Length: > ProductRules.ManufacturerMaxLength })
-            throw new DomainRuleViolationException(BusinessViolationCodes.FoodDetailsOnlyForFood, "Manufacturer cannot exceed 200 characters.", nameof(Manufacturer));
-
-        if (ingredientList is { Length: > ProductRules.IngredientListMaxLength })
-            throw new DomainRuleViolationException(BusinessViolationCodes.FoodDetailsOnlyForFood, "Ingredient list cannot exceed 4000 characters.", nameof(IngredientList));
-
-        if (storageInstructions is { Length: > ProductRules.StorageInstructionsMaxLength })
-            throw new DomainRuleViolationException(BusinessViolationCodes.FoodDetailsOnlyForFood, "Storage instructions cannot exceed 1000 characters.", nameof(StorageInstructions));
-
-        if (feedingGuide is { Length: > 0 })
-        {
-            if (feedingGuide.Length > ProductRules.FeedingGuideMaxLength)
-                throw new DomainRuleViolationException(BusinessViolationCodes.FoodDetailsOnlyForFood, "Feeding guide cannot exceed 4000 characters.", nameof(FeedingGuide));
-
-            var markupError = LimitedMarkup.Validate(feedingGuide);
-            if (markupError is not null)
-                throw new DomainRuleViolationException(markupError, "Feeding guide failed markup validation.", nameof(FeedingGuide));
-        }
-
-        Manufacturer = Trim(manufacturer);
-        ProteinSource = proteinSource;
-        IngredientList = Trim(ingredientList);
-        AnalysisProteinPercent = guaranteedAnalysis?.ProteinPercent;
-        AnalysisFatPercent = guaranteedAnalysis?.FatPercent;
-        AnalysisFibrePercent = guaranteedAnalysis?.FibrePercent;
-        AnalysisMoisturePercent = guaranteedAnalysis?.MoisturePercent;
-        FeedingGuide = string.IsNullOrEmpty(feedingGuide) ? null : feedingGuide;
-        StorageInstructions = Trim(storageInstructions);
+        IngredientList = Checked(ingredientList, ProductRules.IngredientListMaxLength, "Ingredient list", nameof(IngredientList));
+        StorageInstructions = Checked(storageInstructions, ProductRules.StorageInstructionsMaxLength, "Storage instructions", nameof(StorageInstructions));
+        ShelfLife = Checked(shelfLife, ProductRules.ShelfLifeMaxLength, "Shelf life", nameof(ShelfLife));
+        NetWeight = Checked(netWeight, ProductRules.NetWeightMaxLength, "Net weight", nameof(NetWeight));
+        Allergens = Checked(allergens, ProductRules.AllergensMaxLength, "Allergens", nameof(Allergens));
+        OrganicCertifier = Checked(organicCertifier, ProductRules.OrganicCertifierMaxLength, "Organic certifier", nameof(OrganicCertifier));
+        OrganicCertificateNumber = Checked(organicCertificateNumber, ProductRules.OrganicCertificateNumberMaxLength, "Organic certificate number", nameof(OrganicCertificateNumber));
     }
 
     /// <summary>US-SHP-03 AC1's labelling checklist (OQ-3) -- which fields are present, for the
-    /// "LabellingComplete" warning-only publication item.</summary>
+    /// "LabellingComplete" warning-only publication item. Allergens are free text and may rightly be empty.</summary>
     public bool HasFullLabelling =>
-        !string.IsNullOrWhiteSpace(Manufacturer) && !string.IsNullOrWhiteSpace(IngredientList) &&
-        GuaranteedAnalysis is not null && !string.IsNullOrWhiteSpace(FeedingGuide) && !string.IsNullOrWhiteSpace(StorageInstructions);
+        IngredientList is not null && StorageInstructions is not null && ShelfLife is not null && NetWeight is not null;
 
-    private static string? Trim(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    /// <summary>HO-P2 §1.3 -- both the certifier and the certificate number are present.</summary>
+    public bool HasOrganicCertificate => OrganicCertifier is not null && OrganicCertificateNumber is not null;
+
+    private static string? Checked(string? value, int maxLength, string label, string property)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        var trimmed = value.Trim();
+        if (trimmed.Length > maxLength)
+            throw new DomainRuleViolationException(BusinessViolationCodes.FoodDetailsOnlyForFood, $"{label} cannot exceed {maxLength} characters.", property);
+
+        return trimmed;
+    }
 }

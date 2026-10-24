@@ -26,7 +26,7 @@ public sealed class ShopBacklogFixesWishlistApplicationTests
     private static ProductAggregate NewProduct(string slug = "scratch-post")
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.ToysAndFurniture,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), slug, null, null, Ctx(), Guid.NewGuid()));
         return product;
     }

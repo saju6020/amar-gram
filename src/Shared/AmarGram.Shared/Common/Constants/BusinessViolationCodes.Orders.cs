@@ -69,7 +69,7 @@ public static partial class BusinessViolationCodes
     public const string ReturnWindowClosed = nameof(ReturnWindowClosed);
     public const string ReturnQuantityExceeded = nameof(ReturnQuantityExceeded);
     public const string ReturnNotEligibleOpenedFood = nameof(ReturnNotEligibleOpenedFood);
-    public const string ReturnNotEligibleUsedLitter = nameof(ReturnNotEligibleUsedLitter);
+    public const string ReturnNotEligibleUsedItem = nameof(ReturnNotEligibleUsedItem);
     public const string DefectConfirmationRequired = nameof(DefectConfirmationRequired);
     public const string InvalidReturnTransition = nameof(InvalidReturnTransition);
     public const string ReturnReceiptExceedsApproved = nameof(ReturnReceiptExceedsApproved);

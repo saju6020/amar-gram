@@ -10,4 +10,4 @@ public sealed record BundleComponentInputDto(Guid ComponentId, Guid ComponentSku
 public sealed record RelatedProductInputDto(Guid LinkId, Guid RelatedProductId, RelatedProductKind Kind, int SortOrder);
 
 /// <summary>HO-SHP-001 section 8.14 -- one locale's translated text.</summary>
-public sealed record ProductTranslationInputDto(string Locale, string? Name, string? Description, string? IngredientList, string? FeedingGuide);
+public sealed record ProductTranslationInputDto(string Locale, string? Name, string? Description, string? IngredientList);

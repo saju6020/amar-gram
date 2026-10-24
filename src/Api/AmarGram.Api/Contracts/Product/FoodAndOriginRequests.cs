@@ -1,22 +1,15 @@
 namespace AmarGram.Api.Contracts.Product;
 
-public sealed class GuaranteedAnalysisRequest
-{
-    public required decimal ProteinPercent { get; init; }
-    public required decimal FatPercent { get; init; }
-    public required decimal FibrePercent { get; init; }
-    public required decimal MoisturePercent { get; init; }
-}
-
 public sealed class SetFoodDetailsRequest
 {
     public required int ExpectedVersion { get; init; }
-    public string? Manufacturer { get; init; }
-    public string? ProteinSource { get; init; }
     public string? IngredientList { get; init; }
-    public GuaranteedAnalysisRequest? GuaranteedAnalysis { get; init; }
-    public string? FeedingGuide { get; init; }
     public string? StorageInstructions { get; init; }
+    public string? ShelfLife { get; init; }
+    public string? NetWeight { get; init; }
+    public string? Allergens { get; init; }
+    public string? OrganicCertifier { get; init; }
+    public string? OrganicCertificateNumber { get; init; }
 }
 
 public sealed class SourcingOriginRequest

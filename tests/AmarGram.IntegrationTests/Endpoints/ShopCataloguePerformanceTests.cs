@@ -26,8 +26,8 @@ namespace AmarGram.IntegrationTests.Endpoints;
 /// for this one.
 ///
 /// <b>The fixture</b> (§16.1 rule 6): brand "zz Perf Fixture", 5,000 Active listed products x 4 SKUs =
-/// 20,000 SKUs, each priced now, across all six categories, 12 origins and every
-/// protein, created through the aggregates and their repositories (no raw SQL), seeded once and
+/// 20,000 SKUs, each priced now, across all eleven categories, 12 origins and every
+/// certification, created through the aggregates and their repositories (no raw SQL), seeded once and
 /// idempotently -- it resumes from however many already exist and is never deleted (OQ-15). "Stocked"
 /// is Inventory's: every fixture SKU without sellable stock in <c>inventory.v_sku_sellable</c> at the storefront (main) branch is received through
 /// Inventory's goods-receipt endpoint (200 lines per receipt), also idempotently (HO-SHP-001-FU2).
@@ -47,8 +47,8 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
 
     private static readonly string[] Origins = ["DE", "FR", "IT", "ES", "GB", "NL", "BE", "AT", "SE", "DK", "PL", "TH"];
     private static readonly ProductCategory[] Categories = [.. Enumeration.GetAll<ProductCategory>()];
-    private static readonly ProteinSource[] Proteins = [.. Enumeration.GetAll<ProteinSource>()];
-    private static readonly string[] Flavours = ["Salmon", "Chicken", "Tuna", "Duck", "Beef", "Turkey"];
+    private static readonly Certification[] Certifications = [.. Enumeration.GetAll<Certification>().Where(c => c != Certification.CertifiedOrganic)];
+    private static readonly string[] Flavours = ["Mango", "Lentil", "Honey", "Turmeric", "Date", "Mustard"];
 
     [Fact]
     public async Task I_E11_CatalogueP95_AtTwentyThousandSkus_IsWithinBudget()
@@ -122,7 +122,7 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
     private static List<string> BuildRequestMix()
     {
         var sorts = new[] { "relevance", "newest", "price_asc", "price_desc", "popularity", "rating" };
-        var terms = new[] { "perf", "fixture", "perf fixtur", "salmon", "chicken", "tuna", "zz perf", "duck dinner" };
+        var terms = new[] { "perf", "fixture", "perf fixtur", "mango", "lentil", "honey", "zz perf", "date turmeric" };
         var random = new Random(20_000);
         var urls = new List<string>();
 
@@ -138,7 +138,7 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
                 {
                     case 0: parts.Add($"category={Categories[random.Next(Categories.Length)].DisplayName}"); break;
                     case 1: parts.Add($"origin={Origins[random.Next(Origins.Length)]}"); break;
-                    case 2: parts.Add($"protein={Proteins[random.Next(Proteins.Length)].DisplayName}"); break;
+                    case 2: parts.Add($"certification={Certifications[random.Next(Certifications.Length)].DisplayName}"); break;
                     case 3: parts.Add($"minPrice={random.Next(100, 900)}&maxPrice={random.Next(1000, 6000)}"); break;
                     case 4: parts.Add("availability=inStock"); break;
                     default: parts.Add($"minRating={random.Next(1, 4)}"); break;
@@ -189,13 +189,13 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
                     ProductKind.Standard, $"Perf Fixture {Flavours[index % Flavours.Length]} {index:00000}", FixtureBrand, category, null,
                     taxClassId, $"zz-perf-fixture-{index:00000}", null, null, userContext, Guid.NewGuid()));
 
-                if (category == ProductCategory.CatFood)
+                if (category.IsFood)
                 {
                     product.UpdateDetails(new ProductDetailsUpdateDto(
-                        product.Name, FixtureBrand, "", category, null, [], taxClassId, Origins[index % Origins.Length], true, true, [], userContext, Guid.NewGuid()));
+                        product.Name, FixtureBrand, "", category, null, [], taxClassId, Origins[index % Origins.Length], true, true,
+                        [Certifications[index % Certifications.Length]], userContext, Guid.NewGuid()));
                     product.SetFoodDetails(new FoodDetails(
-                        "Perf Foods", Proteins[index % Proteins.Length],
-                        $"{Flavours[index % Flavours.Length].ToLowerInvariant()}, rice", null, null, null), userContext, Guid.NewGuid());
+                        $"{Flavours[index % Flavours.Length].ToLowerInvariant()}, rice", null, null, null, null, null, null), userContext, Guid.NewGuid());
                 }
                 else if (index % 3 == 0)
                 {
@@ -239,7 +239,7 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
                 .SelectMany(p => p.Skus, (p, s) => new { SkuId = s.Id, p.Category })
                 .Where(r => !db.SkuSellable.Any(v => v.SkuId == r.SkuId && v.BranchId == storefrontBranchId && v.SellableQuantity > 0))
                 .ToListAsync();
-            unstocked = rows.Select(r => (r.SkuId, r.Category == ProductCategory.CatFood)).ToList();
+            unstocked = rows.Select(r => (r.SkuId, r.Category.IsFood)).ToList();
         }
 
         output.WriteLine($"I-E11 fixture: stocking {unstocked.Count} SKUs through goods receipts.");

@@ -49,7 +49,7 @@ public sealed class StockAlertGuardTests
         var skuId = Guid.NewGuid();
 
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scoop", "Amar Gram", ProductCategory.LitterPotsAndAccessories, null,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scoop", "Amar Gram", ProductCategory.HouseholdAndCare, null,
             Guid.NewGuid(), "scoop", null, null, Ctx, Guid.NewGuid()));
         product.AddSku(new SkuAddDto(skuId, "SCOOP-1", null, "Small", null, null, null), Ctx, Guid.NewGuid());
         if (published)

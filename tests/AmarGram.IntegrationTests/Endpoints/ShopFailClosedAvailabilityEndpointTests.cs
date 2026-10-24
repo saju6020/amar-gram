@@ -25,7 +25,7 @@ public sealed class ShopFailClosedAvailabilityEndpointTests(ShopApiFactory facto
         var failClosed = Factory;
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Closed");
-        var product = await CreateProductAsync(staff, brand, "Priced And Published Food", "CatFood", price: 1500m, stock: 0m);
+        var product = await CreateProductAsync(staff, brand, "Priced And Published Food", "RiceAndGrains", price: 1500m, stock: 0m);
         var other = await CreateProductAsync(staff, brand, "Another Item", price: 200m, stock: 0m);
         var bundle = await CreateBundleAsync(staff, brand, "Closed Bundle", [(other.SkuId, 2)]);
         var (customer, _) = await RegisterAndSignInCustomerAsync(failClosed);

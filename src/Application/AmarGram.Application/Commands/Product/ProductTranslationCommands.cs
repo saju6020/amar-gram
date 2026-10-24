@@ -11,7 +11,6 @@ public sealed class SetProductTranslationCommand : Command
     public string? Name { get; init; }
     public string? Description { get; init; }
     public string? IngredientList { get; init; }
-    public string? FeedingGuide { get; init; }
 }
 
 public sealed class RemoveProductTranslationCommand : Command

@@ -8,7 +8,7 @@ namespace AmarGram.IntegrationTests.Persistence;
 
 /// <summary>
 /// SHP backlog row 44 -- HO-SHP-001 §12.1: the storefront filter indexes cover Active products only,
-/// food life-stage/protein have indexes, and the "newest" index is DESC. Applies every migration to a
+/// the protein-source index is gone (HO-P2 §1.3), and the "newest" index is DESC. Applies every migration to a
 /// scratch database (same pattern as <c>CatSchemaIndexTests</c>) and reads <c>pg_indexes</c>.
 /// </summary>
 public sealed class ProductSchemaIndexTests : IAsyncLifetime
@@ -64,7 +64,7 @@ public sealed class ProductSchemaIndexTests : IAsyncLifetime
             return await command.ExecuteScalarAsync() as string ?? "";
         }
 
-        foreach (var name in new[] { "ix_product_brand", "ix_product_country_of_origin", "ix_product_food_protein_source" })
+        foreach (var name in new[] { "ix_product_brand", "ix_product_country_of_origin" })
         {
             var def = await IndexDefAsync(name);
             Assert.True(def.Length > 0, $"Expected index {name}.");
@@ -72,7 +72,7 @@ public sealed class ProductSchemaIndexTests : IAsyncLifetime
             Assert.Contains("status", def);
         }
 
-        Assert.Contains("food_protein_source", await IndexDefAsync("ix_product_food_protein_source"));
+        Assert.Equal("", await IndexDefAsync("ix_product_food_protein_source")); // HO-P2 §1.3: the protein-source index is gone
 
         var newest = await IndexDefAsync("ix_product_first_published_on_desc");
         Assert.Contains("first_published_on DESC", newest);

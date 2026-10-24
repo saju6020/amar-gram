@@ -18,7 +18,7 @@ public sealed class ProductBundleAndRelatedTests
     {
         var product = new ProductAggregate(Guid.NewGuid());
         product.Create(new ProductCreateDto(
-            ProductKind.Bundle, "Pantry Starter Kit", "Amar Gram", ProductCategory.HealthAndGrooming, null,
+            ProductKind.Bundle, "Pantry Starter Kit", "Amar Gram", ProductCategory.HouseholdAndCare, null,
             TaxClassId, "pantry-starter-kit", Guid.NewGuid(), "KIT-1", TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }
@@ -27,7 +27,7 @@ public sealed class ProductBundleAndRelatedTests
     {
         var product = new ProductAggregate(Guid.NewGuid());
         product.Create(new ProductCreateDto(
-            ProductKind.Standard, "Plain Product", "Amar Gram", ProductCategory.HealthAndGrooming, null,
+            ProductKind.Standard, "Plain Product", "Amar Gram", ProductCategory.HouseholdAndCare, null,
             TaxClassId, "plain-product", null, null, TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }

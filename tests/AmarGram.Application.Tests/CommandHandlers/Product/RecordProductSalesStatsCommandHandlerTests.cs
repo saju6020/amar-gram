@@ -17,7 +17,7 @@ public sealed class RecordProductSalesStatsCommandHandlerTests
     private static ProductAggregate SeedProduct()
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.ToysAndFurniture,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), "scratch-post", null, null, SystemContext(), Guid.NewGuid()));
         return product;
     }

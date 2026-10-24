@@ -1507,17 +1507,15 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     is_expiry_tracked = table.Column<bool>(type: "boolean", nullable: false),
                     listed_on_storefront = table.Column<bool>(type: "boolean", nullable: false),
                     search_text = table.Column<string>(type: "text", nullable: false),
-                    food_manufacturer = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    food_protein_source = table.Column<int>(type: "integer", nullable: true),
                     food_ingredient_list = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    food_analysis_protein_percent = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: true),
-                    food_analysis_fat_percent = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: true),
-                    food_analysis_fibre_percent = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: true),
-                    food_analysis_moisture_percent = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: true),
-                    food_feeding_guide = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     food_storage_instructions = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    food_shelf_life = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    food_net_weight = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    food_allergens = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    food_organic_certifier = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    food_organic_certificate_number = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     tags = table.Column<string[]>(type: "text[]", nullable: false),
-                    health_focus = table.Column<int[]>(type: "integer[]", nullable: false),
+                    certifications = table.Column<int[]>(type: "integer[]", nullable: false),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -3469,8 +3467,7 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     product_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     description = table.Column<string>(type: "character varying(5000)", maxLength: 5000, nullable: true),
-                    ingredient_list = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
-                    feeding_guide = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true)
+                    ingredient_list = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -4958,13 +4955,6 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 table: "product",
                 column: "first_published_on",
                 descending: new bool[0]);
-
-            migrationBuilder.CreateIndex(
-                name: "ix_product_food_protein_source",
-                schema: "product",
-                table: "product",
-                column: "food_protein_source",
-                filter: "status = 2");
 
             migrationBuilder.CreateIndex(
                 name: "ix_product_slug",

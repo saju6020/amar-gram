@@ -15,10 +15,10 @@ public static class ProductMapper
         new(kind, command.Name, command.Brand, category, subcategory, command.TaxClassId, command.Slug,
             command.BundleSkuId, command.BundleSkuCode, command.UserContext, command.CorrelationId);
 
-    public static ProductDetailsUpdateDto ToDomainDto(this UpdateProductDetailsCommand command, ProductCategory category, ProductSubcategory? subcategory, IReadOnlyList<HealthFocus> healthFocus) =>
+    public static ProductDetailsUpdateDto ToDomainDto(this UpdateProductDetailsCommand command, ProductCategory category, ProductSubcategory? subcategory, IReadOnlyList<Certification> certifications) =>
         new(command.Name, command.Brand, command.Description ?? "", category, subcategory, command.Tags,
             command.TaxClassId, command.CountryOfOriginCode, command.ListedOnStorefront, command.IsExpiryTracked,
-            healthFocus, command.UserContext, command.CorrelationId);
+            certifications, command.UserContext, command.CorrelationId);
 
     public static SkuAddDto ToDomainDto(this AddSkuCommand command) =>
         new(command.SkuId, command.Code, command.Barcode, command.SizeOrWeight, command.Flavour, command.Colour, command.PackQuantity, command.ShippingWeightGrams);
@@ -32,16 +32,9 @@ public static class ProductMapper
     public static SkuPriceCreateDto ToDomainDto(this ScheduleSkuPriceCommand command, DateTimeOffset now) =>
         new(command.SkuId, new Money(command.Amount, command.CurrencyCode), command.EffectiveFrom, command.UserContext.UserId, now, command.UserContext, command.CorrelationId);
 
-    public static FoodDetails ToDomainDto(this SetFoodDetailsCommand command, ProteinSource? proteinSource)
-    {
-        var analysis = command.GuaranteedAnalysis is null
-            ? null
-            : new GuaranteedAnalysis(command.GuaranteedAnalysis.ProteinPercent, command.GuaranteedAnalysis.FatPercent,
-                command.GuaranteedAnalysis.FibrePercent, command.GuaranteedAnalysis.MoisturePercent);
-
-        return new FoodDetails(command.Manufacturer, proteinSource, command.IngredientList, analysis,
-            command.FeedingGuide, command.StorageInstructions);
-    }
+    public static FoodDetails ToDomainDto(this SetFoodDetailsCommand command) =>
+        new(command.IngredientList, command.StorageInstructions, command.ShelfLife, command.NetWeight,
+            command.Allergens, command.OrganicCertifier, command.OrganicCertificateNumber);
 
     public static SourcingOriginCreateDto ToDomainDto(this CreateSourcingOriginCommand command) =>
         new(command.CountryCode, command.SourcingNotes, command.IsFeatured, command.SortOrder, command.UserContext, command.CorrelationId);

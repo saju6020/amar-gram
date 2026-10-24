@@ -18,7 +18,7 @@ public sealed class ProductEndpointTests(ShopApiFactory factory) : ShopIntegrati
 
         var create = await client.PostAsJsonAsync("/api/staff/shop/products", new
         {
-            kind = "Standard", name = "Scratch Post", brand = "Acme", category = "ToysAndFurniture",
+            kind = "Standard", name = "Scratch Post", brand = "Acme", category = "HouseholdAndCare",
             taxClassId, slug
         }, Json);
 
@@ -107,7 +107,7 @@ public sealed class ProductEndpointTests(ShopApiFactory factory) : ShopIntegrati
 
         var update = await client.PutAsJsonAsync($"/api/staff/shop/products/{productId}", new
         {
-            expectedVersion = 999, name = "Renamed", brand = "Acme", category = "ToysAndFurniture", taxClassId
+            expectedVersion = 999, name = "Renamed", brand = "Acme", category = "HouseholdAndCare", taxClassId
         }, Json);
 
         Assert.Equal(HttpStatusCode.Conflict, update.StatusCode);
@@ -122,14 +122,14 @@ public sealed class ProductEndpointTests(ShopApiFactory factory) : ShopIntegrati
 
         var receptionAttempt = await receptionClient.PostAsJsonAsync("/api/staff/shop/products", new
         {
-            kind = "Standard", name = "X", brand = "Y", category = "ToysAndFurniture", taxClassId, slug = UniqueSlug("x")
+            kind = "Standard", name = "X", brand = "Y", category = "HouseholdAndCare", taxClassId, slug = UniqueSlug("x")
         }, Json);
         Assert.Equal(HttpStatusCode.Forbidden, receptionAttempt.StatusCode);
 
         var anonymousClient = CreateClient();
         var anonymousAttempt = await anonymousClient.PostAsJsonAsync("/api/staff/shop/products", new
         {
-            kind = "Standard", name = "X", brand = "Y", category = "ToysAndFurniture", taxClassId, slug = UniqueSlug("x")
+            kind = "Standard", name = "X", brand = "Y", category = "HouseholdAndCare", taxClassId, slug = UniqueSlug("x")
         }, Json);
         Assert.Equal(HttpStatusCode.Unauthorized, anonymousAttempt.StatusCode);
     }
@@ -154,7 +154,7 @@ public sealed class ProductEndpointTests(ShopApiFactory factory) : ShopIntegrati
     {
         var response = await client.PostAsJsonAsync("/api/staff/shop/products", new
         {
-            kind = "Standard", name = "Test Product " + slug, brand = "Acme", category = "ToysAndFurniture", taxClassId, slug
+            kind = "Standard", name = "Test Product " + slug, brand = "Acme", category = "HouseholdAndCare", taxClassId, slug
         }, Json);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);

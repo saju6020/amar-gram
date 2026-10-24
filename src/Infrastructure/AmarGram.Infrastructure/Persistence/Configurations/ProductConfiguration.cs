@@ -38,7 +38,7 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<AmarGram.Dom
         builder.Property(x => x.Tags).HasColumnName("tags").HasColumnType("text[]").IsRequired()
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        ConfigureHealthFocus(builder);
+        ConfigureCertifications(builder);
         ConfigureFoodDetails(builder);
 
         builder.HasIndex(x => new { x.Status, x.ListedOnStorefront, x.Category, x.Subcategory }).HasDatabaseName("ix_product_status_listed_category_subcategory");
@@ -62,42 +62,36 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<AmarGram.Dom
         builder.Ignore(x => x.Metadata);
     }
 
-    private static void ConfigureHealthFocus(EntityTypeBuilder<AmarGram.Domain.Aggregates.Product.ProductAggregate> builder)
+    /// <summary>HO-P2 §1.3 -- multi-select certifications (was health focus), an integer[] column.</summary>
+    private static void ConfigureCertifications(EntityTypeBuilder<AmarGram.Domain.Aggregates.Product.ProductAggregate> builder)
     {
-        var comparer = new ValueComparer<IReadOnlyList<HealthFocus>>(
+        var comparer = new ValueComparer<IReadOnlyList<Certification>>(
             (a, b) => a!.SequenceEqual(b!),
             v => v.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.Value)),
             v => v.ToList());
 
-        var healthFocusProperty = builder.Property(x => x.HealthFocus)
-            .HasColumnName("health_focus")
+        var certificationsProperty = builder.Property(x => x.Certifications)
+            .HasColumnName("certifications")
             .HasColumnType("integer[]")
             .HasConversion(
                 v => v.Select(h => h.Value).ToArray(),
-                v => v.Select(Enumeration.FromValue<HealthFocus>).ToList())
+                v => v.Select(Enumeration.FromValue<Certification>).ToList())
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        healthFocusProperty.Metadata.SetValueComparer(comparer);
+        certificationsProperty.Metadata.SetValueComparer(comparer);
     }
 
     private static void ConfigureFoodDetails(EntityTypeBuilder<AmarGram.Domain.Aggregates.Product.ProductAggregate> builder)
     {
         builder.OwnsOne(x => x.FoodDetails, food =>
         {
-            food.Property(f => f.Manufacturer).HasColumnName("food_manufacturer").HasMaxLength(ProductRules.ManufacturerMaxLength);
-            food.Property(f => f.ProteinSource).HasColumnName("food_protein_source")
-                .HasConversion(v => v == null ? (int?)null : v.Value, v => v == null ? null : Enumeration.FromValue<ProteinSource>(v.Value));
-            food.HasIndex(f => f.ProteinSource).HasDatabaseName("ix_product_food_protein_source").HasFilter($"status = {ProductStatus.Active.Value}");
             food.Property(f => f.IngredientList).HasColumnName("food_ingredient_list").HasMaxLength(ProductRules.IngredientListMaxLength);
-            food.Property(f => f.FeedingGuide).HasColumnName("food_feeding_guide").HasMaxLength(ProductRules.FeedingGuideMaxLength);
             food.Property(f => f.StorageInstructions).HasColumnName("food_storage_instructions").HasMaxLength(ProductRules.StorageInstructionsMaxLength);
-
-            // Flat columns, not a nested owned type -- see FoodDetails' own doc comment.
-            food.Property(f => f.AnalysisProteinPercent).HasColumnName("food_analysis_protein_percent").HasPrecision(5, 2);
-            food.Property(f => f.AnalysisFatPercent).HasColumnName("food_analysis_fat_percent").HasPrecision(5, 2);
-            food.Property(f => f.AnalysisFibrePercent).HasColumnName("food_analysis_fibre_percent").HasPrecision(5, 2);
-            food.Property(f => f.AnalysisMoisturePercent).HasColumnName("food_analysis_moisture_percent").HasPrecision(5, 2);
-            food.Ignore(f => f.GuaranteedAnalysis);
+            food.Property(f => f.ShelfLife).HasColumnName("food_shelf_life").HasMaxLength(ProductRules.ShelfLifeMaxLength);
+            food.Property(f => f.NetWeight).HasColumnName("food_net_weight").HasMaxLength(ProductRules.NetWeightMaxLength);
+            food.Property(f => f.Allergens).HasColumnName("food_allergens").HasMaxLength(ProductRules.AllergensMaxLength);
+            food.Property(f => f.OrganicCertifier).HasColumnName("food_organic_certifier").HasMaxLength(ProductRules.OrganicCertifierMaxLength);
+            food.Property(f => f.OrganicCertificateNumber).HasColumnName("food_organic_certificate_number").HasMaxLength(ProductRules.OrganicCertificateNumberMaxLength);
         });
     }
 
@@ -187,7 +181,6 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<AmarGram.Dom
             translation.Property(t => t.Name).HasColumnName("name").HasMaxLength(ProductRules.NameMaxLength);
             translation.Property(t => t.Description).HasColumnName("description").HasMaxLength(ProductRules.DescriptionMaxLength);
             translation.Property(t => t.IngredientList).HasColumnName("ingredient_list").HasMaxLength(ProductRules.IngredientListMaxLength);
-            translation.Property(t => t.FeedingGuide).HasColumnName("feeding_guide").HasMaxLength(ProductRules.FeedingGuideMaxLength);
         });
         builder.Navigation(x => x.Translations).UsePropertyAccessMode(PropertyAccessMode.Field);
     }

@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AmarGram.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AmarGramDbContext))]
-    [Migration("20261023214409_InitialAmarGramSql")]
+    [Migration("20261024151112_InitialAmarGramSql")]
     partial class InitialAmarGramSql
     {
         /// <inheritdoc />
@@ -6904,6 +6904,11 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("category");
 
+                    b.Property<int[]>("Certifications")
+                        .IsRequired()
+                        .HasColumnType("integer[]")
+                        .HasColumnName("certifications");
+
                     b.Property<string>("CountryOfOriginCode")
                         .HasMaxLength(2)
                         .HasColumnType("character(2)")
@@ -6925,11 +6930,6 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("FirstPublishedOn")
                         .HasColumnType("timestamptz")
                         .HasColumnName("first_published_on");
-
-                    b.Property<int[]>("HealthFocus")
-                        .IsRequired()
-                        .HasColumnType("integer[]")
-                        .HasColumnName("health_focus");
 
                     b.Property<bool>("IsExpiryTracked")
                         .HasColumnType("boolean")
@@ -9256,6 +9256,11 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("category");
 
+                    b.PrimitiveCollection<int[]>("Certifications")
+                        .IsRequired()
+                        .HasColumnType("integer[]")
+                        .HasColumnName("certifications");
+
                     b.Property<string>("CountryOfOriginCode")
                         .HasColumnType("text")
                         .HasColumnName("country_of_origin_code");
@@ -9300,10 +9305,6 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid")
                         .HasColumnName("product_id");
-
-                    b.Property<int?>("ProteinSource")
-                        .HasColumnType("integer")
-                        .HasColumnName("protein_source");
 
                     b.Property<decimal?>("RatingAverage")
                         .HasColumnType("numeric")
@@ -12277,44 +12278,35 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                             b1.Property<Guid>("ProductAggregateId")
                                 .HasColumnType("uuid");
 
-                            b1.Property<decimal?>("AnalysisFatPercent")
-                                .HasPrecision(5, 2)
-                                .HasColumnType("numeric(5,2)")
-                                .HasColumnName("food_analysis_fat_percent");
-
-                            b1.Property<decimal?>("AnalysisFibrePercent")
-                                .HasPrecision(5, 2)
-                                .HasColumnType("numeric(5,2)")
-                                .HasColumnName("food_analysis_fibre_percent");
-
-                            b1.Property<decimal?>("AnalysisMoisturePercent")
-                                .HasPrecision(5, 2)
-                                .HasColumnType("numeric(5,2)")
-                                .HasColumnName("food_analysis_moisture_percent");
-
-                            b1.Property<decimal?>("AnalysisProteinPercent")
-                                .HasPrecision(5, 2)
-                                .HasColumnType("numeric(5,2)")
-                                .HasColumnName("food_analysis_protein_percent");
-
-                            b1.Property<string>("FeedingGuide")
-                                .HasMaxLength(4000)
-                                .HasColumnType("character varying(4000)")
-                                .HasColumnName("food_feeding_guide");
+                            b1.Property<string>("Allergens")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)")
+                                .HasColumnName("food_allergens");
 
                             b1.Property<string>("IngredientList")
                                 .HasMaxLength(4000)
                                 .HasColumnType("character varying(4000)")
                                 .HasColumnName("food_ingredient_list");
 
-                            b1.Property<string>("Manufacturer")
+                            b1.Property<string>("NetWeight")
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("food_net_weight");
+
+                            b1.Property<string>("OrganicCertificateNumber")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("food_organic_certificate_number");
+
+                            b1.Property<string>("OrganicCertifier")
                                 .HasMaxLength(200)
                                 .HasColumnType("character varying(200)")
-                                .HasColumnName("food_manufacturer");
+                                .HasColumnName("food_organic_certifier");
 
-                            b1.Property<int?>("ProteinSource")
-                                .HasColumnType("integer")
-                                .HasColumnName("food_protein_source");
+                            b1.Property<string>("ShelfLife")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("food_shelf_life");
 
                             b1.Property<string>("StorageInstructions")
                                 .HasMaxLength(1000)
@@ -12322,10 +12314,6 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasColumnName("food_storage_instructions");
 
                             b1.HasKey("ProductAggregateId");
-
-                            b1.HasIndex("ProteinSource")
-                                .HasDatabaseName("ix_product_food_protein_source")
-                                .HasFilter("status = 2");
 
                             b1.ToTable("product", "product");
 
@@ -12416,11 +12404,6 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasMaxLength(5000)
                                 .HasColumnType("character varying(5000)")
                                 .HasColumnName("description");
-
-                            b1.Property<string>("FeedingGuide")
-                                .HasMaxLength(4000)
-                                .HasColumnType("character varying(4000)")
-                                .HasColumnName("feeding_guide");
 
                             b1.Property<string>("IngredientList")
                                 .HasMaxLength(4000)

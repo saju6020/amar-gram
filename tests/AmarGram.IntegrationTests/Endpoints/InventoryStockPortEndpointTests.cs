@@ -536,7 +536,7 @@ public sealed class InventoryStockPortEndpointTests(InventoryApiFactory factory)
         var s = await StockThreeBatchesAsync();
         string lot;
         await using (var lookup = OpenPort()) lot = await lookup.Db.Batches.AsNoTracking().Where(b => b.Id == s.Late).Select(b => b.LotNumber).SingleAsync();
-        Assert.Equal(HttpStatusCode.Created, (await s.Branch.Admin.Client.PostAsJsonAsync($"/api/staff/inventory/batches/{s.Late}/recall", new { confirmLotNumber = lot, reason = "Supplier notice.", customerAdvice = "Stop feeding it." }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await s.Branch.Admin.Client.PostAsJsonAsync($"/api/staff/inventory/batches/{s.Late}/recall", new { confirmLotNumber = lot, reason = "Supplier notice.", customerAdvice = "Stop using it." }, Json)).StatusCode);
         await using var port = OpenPort();
 
         var result = await port.Ledger.GetBatchUsabilityAsync(s.Branch.BranchId, [s.Late], default);

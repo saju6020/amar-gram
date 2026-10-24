@@ -224,7 +224,7 @@ public abstract class OrderingIntegrationTestBase(OrderingApiFactory factory) : 
     {
         var admin = context.Admin;
         var productName = name ?? "Ordering product " + Guid.NewGuid().ToString("N")[..8];
-        var category = food ? "CatFood" : "HealthAndGrooming";
+        var category = food ? "RiceAndGrains" : "HouseholdAndCare";
         var tax = taxClassId ?? context.TaxClassId;
         var brand = "Brand-" + Guid.NewGuid().ToString("N")[..6];
 
@@ -234,11 +234,11 @@ public abstract class OrderingIntegrationTestBase(OrderingApiFactory factory) : 
         var productId = (await ReadAsync(create)).GetProperty("productId").GetGuid();
 
         await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff/shop/products/{productId}", new
-        { expectedVersion = await ProductVersionAsync(admin, productId), name = productName, brand, category, taxClassId = tax, countryOfOriginCode = food ? "DE" : null, tags = Array.Empty<string>(), healthFocus = Array.Empty<string>() }, Json));
+        { expectedVersion = await ProductVersionAsync(admin, productId), name = productName, brand, category, taxClassId = tax, countryOfOriginCode = food ? "DE" : null, tags = Array.Empty<string>(), certifications = Array.Empty<string>() }, Json));
 
         if (food)
             await ExpectAsync(HttpStatusCode.NoContent, await admin.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food",
-                new { expectedVersion = await ProductVersionAsync(admin, productId), manufacturer = "Test Manufacturer" }, Json));
+                new { expectedVersion = await ProductVersionAsync(admin, productId), storageInstructions = "Store in a cool, dry place" }, Json));
 
         var addSku = await admin.PostAsJsonAsync($"/api/staff/shop/products/{productId}/skus",
             new { expectedVersion = await ProductVersionAsync(admin, productId), code = NewCode("SKU"), barcode }, Json);

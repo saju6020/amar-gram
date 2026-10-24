@@ -12,7 +12,7 @@ public sealed class ProductPublicationRulesTests
     private static ProductAggregate NonFoodProductWithOneSku()
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.ToysAndFurniture,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), "scratch-post", null, null, TestUserContext.Create(), Guid.NewGuid()));
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "SP-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         return product;
@@ -22,7 +22,7 @@ public sealed class ProductPublicationRulesTests
     public void Evaluate_NoActiveSku_ActiveSkuItemBlockingAndUnmet()
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.ToysAndFurniture,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), "scratch-post", null, null, TestUserContext.Create(), Guid.NewGuid()));
 
         var checklist = ProductPublicationRules.Evaluate(product, new PublicationFacts([], true, []));

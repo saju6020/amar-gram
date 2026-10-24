@@ -29,15 +29,15 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var name = "Staff Read Food " + Guid.NewGuid().ToString("N")[..8];
 
         var create = await staff.PostAsJsonAsync("/api/staff/shop/products",
-            new { kind = "Standard", name, brand = "Acme", category = "CatFood", taxClassId, slug = UniqueSlug("staff-read") }, Json);
+            new { kind = "Standard", name, brand = "Acme", category = "RiceAndGrains", taxClassId, slug = UniqueSlug("staff-read") }, Json);
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var productId = (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("productId").GetGuid();
 
         var details = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}", new
         {
             expectedVersion = await ProductVersionAsync(staff, productId), name, brand = "Acme", description = "A food.",
-            category = "CatFood", taxClassId, countryOfOriginCode = "DE", tags = new[] { "grain-free" },
-            healthFocus = new[] { "Sterilised", "Urinary" }
+            category = "RiceAndGrains", taxClassId, countryOfOriginCode = "DE", tags = new[] { "stone-ground" },
+            certifications = new[] { "PesticideFree", "Halal" }
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, details.StatusCode);
 
@@ -45,7 +45,7 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var addSku = await staff.PostAsJsonAsync($"/api/staff/shop/products/{productId}/skus", new
         {
             expectedVersion = await ProductVersionAsync(staff, productId), code = skuCode,
-            sizeOrWeight = "2 kg", flavour = "Chicken", colour = "Red", packQuantity = 3
+            sizeOrWeight = "2 kg", flavour = "Aromatic", colour = "Red", packQuantity = 3
         }, Json);
         Assert.Equal(HttpStatusCode.Created, addSku.StatusCode);
         var skuId = (await addSku.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("skuId").GetGuid();
@@ -53,9 +53,9 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var food = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
         {
             expectedVersion = await ProductVersionAsync(staff, productId),
-            manufacturer = "Royal Canin", proteinSource = "Chicken", ingredientList = "Chicken, rice",
-            guaranteedAnalysis = new { proteinPercent = 32.0m, fatPercent = 15.0m, fibrePercent = 4.0m, moisturePercent = 10.0m },
-            feedingGuide = "Feed twice daily.", storageInstructions = "Store in a cool, dry place."
+            ingredientList = "Basmati rice", storageInstructions = "Store in a cool, dry place.",
+            shelfLife = "12 months", netWeight = "2 kg", allergens = "None",
+            organicCertifier = "Bangladesh Organic Board", organicCertificateNumber = "BOB-1042"
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, food.StatusCode);
 
@@ -71,7 +71,7 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
     }
 
     [Fact]
-    public async Task FU1_T1_StaffDetail_ReturnsFoodImagesHealthFocusAndSkuLabelAndAttributes()
+    public async Task FU1_T1_StaffDetail_ReturnsFoodImagesCertificationsAndSkuLabelAndAttributes()
     {
         var (staff, productId, _, skuId, skuCode, fileId) = await SeedFullFoodProductAsync();
 
@@ -80,19 +80,16 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
 
         var food = body.GetProperty("food");
-        Assert.Equal("Royal Canin", food.GetProperty("manufacturer").GetString());
-        Assert.Equal("Chicken", food.GetProperty("proteinSource").GetString());
-        Assert.Equal("Chicken, rice", food.GetProperty("ingredientList").GetString());
-        Assert.Equal("Feed twice daily.", food.GetProperty("feedingGuide").GetString());
+        Assert.Equal("Basmati rice", food.GetProperty("ingredientList").GetString());
         Assert.Equal("Store in a cool, dry place.", food.GetProperty("storageInstructions").GetString());
-        var analysis = food.GetProperty("guaranteedAnalysis");
-        Assert.Equal(32.0m, analysis.GetProperty("proteinPercent").GetDecimal());
-        Assert.Equal(15.0m, analysis.GetProperty("fatPercent").GetDecimal());
-        Assert.Equal(4.0m, analysis.GetProperty("fibrePercent").GetDecimal());
-        Assert.Equal(10.0m, analysis.GetProperty("moisturePercent").GetDecimal());
+        Assert.Equal("12 months", food.GetProperty("shelfLife").GetString());
+        Assert.Equal("2 kg", food.GetProperty("netWeight").GetString());
+        Assert.Equal("None", food.GetProperty("allergens").GetString());
+        Assert.Equal("Bangladesh Organic Board", food.GetProperty("organicCertifier").GetString());
+        Assert.Equal("BOB-1042", food.GetProperty("organicCertificateNumber").GetString());
 
-        var focus = body.GetProperty("healthFocus").EnumerateArray().Select(e => e.GetString()!).OrderBy(f => f).ToArray();
-        Assert.Equal(new[] { "Sterilised", "Urinary" }, focus);
+        var certifications = body.GetProperty("certifications").EnumerateArray().Select(e => e.GetString()!).OrderBy(f => f).ToArray();
+        Assert.Equal(new[] { "Halal", "PesticideFree" }, certifications);
 
         var image = Assert.Single(body.GetProperty("images").EnumerateArray());
         Assert.Equal(fileId, image.GetProperty("fileId").GetGuid());
@@ -105,12 +102,12 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         Assert.Equal(skuId, sku.GetProperty("skuId").GetGuid());
         Assert.Equal(skuCode, sku.GetProperty("code").GetString());
         Assert.Equal("2 kg", sku.GetProperty("sizeOrWeight").GetString());
-        Assert.Equal("Chicken", sku.GetProperty("flavour").GetString());
+        Assert.Equal("Aromatic", sku.GetProperty("flavour").GetString());
         Assert.Equal("Red", sku.GetProperty("colour").GetString());
         Assert.Equal(3, sku.GetProperty("packQuantity").GetInt32());
         var label = sku.GetProperty("label").GetString()!;
         Assert.Contains("2 kg", label);
-        Assert.Contains("Chicken", label);
+        Assert.Contains("Aromatic", label);
     }
 
     [Fact]
@@ -119,26 +116,26 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var staff = await SignInAsShopManagerAsync();
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
         var create = await staff.PostAsJsonAsync("/api/staff/shop/products",
-            new { kind = "Standard", name = "Bare Toy", brand = "Acme", category = "CatFood", taxClassId, slug = UniqueSlug("bare") }, Json);
+            new { kind = "Standard", name = "Bare Product", brand = "Acme", category = "RiceAndGrains", taxClassId, slug = UniqueSlug("bare") }, Json);
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var productId = (await create.Content.ReadFromJsonAsync<JsonElement>(Json)).GetProperty("productId").GetGuid();
 
         var body = await staff.GetFromJsonAsync<JsonElement>($"/api/staff/shop/products/{productId}", Json);
         Assert.Equal(JsonValueKind.Null, body.GetProperty("food").ValueKind);
         Assert.Empty(body.GetProperty("images").EnumerateArray());
-        Assert.Empty(body.GetProperty("healthFocus").EnumerateArray());
+        Assert.Empty(body.GetProperty("certifications").EnumerateArray());
     }
 
     [Fact]
-    public async Task FU1_T2_RoundTrip_ReadThenResaveDetailsWithReturnedHealthFocus_PreservesIt_AndFoodAndImagesResaveUnchanged()
+    public async Task FU1_T2_RoundTrip_ReadThenResaveDetailsWithReturnedCertifications_PreservesThem_AndFoodAndImagesResaveUnchanged()
     {
         var (staff, productId, taxClassId, _, _, fileId) = await SeedFullFoodProductAsync();
 
         var before = await staff.GetFromJsonAsync<JsonElement>($"/api/staff/shop/products/{productId}", Json);
-        var returnedFocus = before.GetProperty("healthFocus").EnumerateArray().Select(e => e.GetString()!).ToArray();
-        Assert.Equal(2, returnedFocus.Length);
+        var returnedCertifications = before.GetProperty("certifications").EnumerateArray().Select(e => e.GetString()!).ToArray();
+        Assert.Equal(2, returnedCertifications.Length);
 
-        // The form's Details save: everything it loaded, health focus included.
+        // The form's Details save: everything it loaded, certifications included.
         var details = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}", new
         {
             expectedVersion = before.GetProperty("version").GetInt32(),
@@ -148,7 +145,7 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
             listedOnStorefront = before.GetProperty("listedOnStorefront").GetBoolean(),
             isExpiryTracked = before.GetProperty("isExpiryTracked").GetBoolean(),
             tags = before.GetProperty("tags").EnumerateArray().Select(t => t.GetString()!).ToArray(),
-            healthFocus = returnedFocus
+            certifications = returnedCertifications
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, details.StatusCode);
 
@@ -157,10 +154,11 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         var setFood = await staff.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
         {
             expectedVersion = await ProductVersionAsync(staff, productId),
-            manufacturer = food.GetProperty("manufacturer").GetString(),
-            proteinSource = food.GetProperty("proteinSource").GetString(), ingredientList = food.GetProperty("ingredientList").GetString(),
-            guaranteedAnalysis = food.GetProperty("guaranteedAnalysis"),
-            feedingGuide = food.GetProperty("feedingGuide").GetString(), storageInstructions = food.GetProperty("storageInstructions").GetString()
+            ingredientList = food.GetProperty("ingredientList").GetString(), storageInstructions = food.GetProperty("storageInstructions").GetString(),
+            shelfLife = food.GetProperty("shelfLife").GetString(), netWeight = food.GetProperty("netWeight").GetString(),
+            allergens = food.GetProperty("allergens").GetString(),
+            organicCertifier = food.GetProperty("organicCertifier").GetString(),
+            organicCertificateNumber = food.GetProperty("organicCertificateNumber").GetString()
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, setFood.StatusCode);
 
@@ -178,9 +176,9 @@ public sealed class ShopStaffProductDetailReadEndpointTests(ShopApiFactory facto
         Assert.Equal(HttpStatusCode.NoContent, setImages.StatusCode);
 
         var after = await staff.GetFromJsonAsync<JsonElement>($"/api/staff/shop/products/{productId}", Json);
-        Assert.Equal(returnedFocus.OrderBy(f => f), after.GetProperty("healthFocus").EnumerateArray().Select(e => e.GetString()!).OrderBy(f => f));
-        Assert.Equal("Royal Canin", after.GetProperty("food").GetProperty("manufacturer").GetString());
-        Assert.Equal(32.0m, after.GetProperty("food").GetProperty("guaranteedAnalysis").GetProperty("proteinPercent").GetDecimal());
+        Assert.Equal(returnedCertifications.OrderBy(f => f), after.GetProperty("certifications").EnumerateArray().Select(e => e.GetString()!).OrderBy(f => f));
+        Assert.Equal("Bangladesh Organic Board", after.GetProperty("food").GetProperty("organicCertifier").GetString());
+        Assert.Equal("2 kg", after.GetProperty("food").GetProperty("netWeight").GetString());
         Assert.Equal(fileId, Assert.Single(after.GetProperty("images").EnumerateArray()).GetProperty("fileId").GetGuid());
     }
 }

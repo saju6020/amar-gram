@@ -56,7 +56,7 @@ public sealed partial class ShopMigrationPredicateTests
         Assert.Equal($"status = {StockAlertStatus.Pending.Value}", filters["ix_stock_alert_pending_per_customer_sku"]);
 
         // SHP backlog row 44: HO-SHP-001 section 12.1's filtered (WHERE status = Active) filter indexes.
-        foreach (var name in new[] { "ix_product_brand", "ix_product_country_of_origin", "ix_product_food_protein_source" })
+        foreach (var name in new[] { "ix_product_brand", "ix_product_country_of_origin" })
             Assert.Equal($"status = {ProductStatus.Active.Value}", filters[name]);
     }
 

@@ -59,14 +59,14 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
     // ── I-E5 (the filters half) ─────────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task I_E5_Filters_OfferTheBrandsOriginsProteinsAndPriceBoundsOfActiveListedProducts()
+    public async Task I_E5_Filters_OfferTheProducersOriginsCertificationsAndPriceBoundsOfActiveListedProducts()
     {
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Facet");
-        await CreateProductAsync(staff, brand, "Facet Food", "CatFood", price: 777m, countryCode: "SE", proteinSource: "Duck");
-        await CreateProductAsync(staff, brand, "Draft Food", "CatFood", countryCode: "NO", publish: false);
+        await CreateProductAsync(staff, brand, "Facet Food", "RiceAndGrains", price: 777m, countryCode: "SE", certifications: ["Halal"]);
+        await CreateProductAsync(staff, brand, "Draft Food", "RiceAndGrains", countryCode: "NO", publish: false);
 
-        var response = await CreateClient().GetAsync("/api/shop/filters?category=CatFood");
+        var response = await CreateClient().GetAsync("/api/shop/filters?category=RiceAndGrains");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
 
@@ -74,7 +74,7 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
         Assert.True(brandFacet.ValueKind == JsonValueKind.Object, "The brand facet is missing (the facets are cached for 60 s; a fresh brand appears on the next window).");
         Assert.Equal(1, brandFacet.GetProperty("count").GetInt32());
         Assert.Contains(body.GetProperty("origins").EnumerateArray(), o => o.GetProperty("code").GetString() == "SE" && o.GetProperty("name").GetString() == "Sweden");
-        Assert.Contains(body.GetProperty("proteinSources").EnumerateArray(), p => p.GetProperty("value").GetString() == "Duck");
+        Assert.Contains(body.GetProperty("certifications").EnumerateArray(), c => c.GetProperty("value").GetString() == "Halal");
         Assert.True(body.GetProperty("price").GetProperty("min").GetDecimal() <= 777m);
     }
     // ── I-E10 ───────────────────────────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ public sealed class ShopStorefrontCrossCuttingEndpointTests(ShopApiFactory facto
 
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Logs");
-        var food = await CreateProductAsync(staff, brand, "Log Check Food", "CatFood", ingredientList: $"salmon, {allergenMarker.ToLowerInvariant()}");
+        var food = await CreateProductAsync(staff, brand, "Log Check Food", "RiceAndGrains", ingredientList: $"salmon, {allergenMarker.ToLowerInvariant()}");
 
         var (customer, customerId) = await RegisterAndSignInCustomerAsync(capturedFactory, email);
         var mobile = await ReadMobileAsync(customer);

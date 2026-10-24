@@ -41,12 +41,12 @@ public sealed class UpdateProductDetailsCommandHandler(
                 return Violation(BusinessViolationCodes.InvalidProductCategory, nameof(command.Subcategory), $"'{command.Subcategory}' is not a known subcategory.");
         }
 
-        var healthFocus = new List<HealthFocus>();
-        foreach (var raw in command.HealthFocus)
+        var certifications = new List<Certification>();
+        foreach (var raw in command.Certifications)
         {
-            if (!EnumerationParsing.TryParse<HealthFocus>(raw, out var focus) || focus is null)
-                return Violation(BusinessViolationCodes.InvalidProductCategory, nameof(command.HealthFocus), $"'{raw}' is not a known health focus.");
-            healthFocus.Add(focus);
+            if (!EnumerationParsing.TryParse<Certification>(raw, out var certification) || certification is null)
+                return Violation(BusinessViolationCodes.InvalidProductCategory, nameof(command.Certifications), $"'{raw}' is not a known certification.");
+            certifications.Add(certification);
         }
 
         if (command.TaxClassId != product.TaxClassId)
@@ -58,7 +58,7 @@ public sealed class UpdateProductDetailsCommandHandler(
 
         try
         {
-            product.UpdateDetails(command.ToDomainDto(category, subcategory, healthFocus));
+            product.UpdateDetails(command.ToDomainDto(category, subcategory, certifications));
         }
         catch (DomainRuleViolationException ex)
         {

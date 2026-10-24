@@ -21,15 +21,15 @@ public sealed class ProductAggregateFoodTests
         return product;
     }
 
-    private static ProductDetailsUpdateDto DetailsDto(ProductAggregate product, string? countryCode, bool isExpiryTracked = false, IReadOnlyList<HealthFocus>? healthFocus = null) =>
+    private static ProductDetailsUpdateDto DetailsDto(ProductAggregate product, string? countryCode, bool isExpiryTracked = false, IReadOnlyList<Certification>? certifications = null) =>
         new(product.Name, product.Brand, product.Description, product.Category, product.Subcategory, product.Tags,
-            product.TaxClassId, countryCode, product.ListedOnStorefront, isExpiryTracked, healthFocus ?? [], TestUserContext.Create(), Guid.NewGuid());
+            product.TaxClassId, countryCode, product.ListedOnStorefront, isExpiryTracked, certifications ?? [], TestUserContext.Create(), Guid.NewGuid());
 
     [Fact]
     public void SetFoodDetails_OnNonFoodProduct_ThrowsFoodDetailsOnlyForFood()
     {
-        var product = CreateProduct(ProductCategory.Litter, ProductSubcategory.Clumping);
-        var details = new FoodDetails(null, null, null, null, null, null);
+        var product = CreateProduct(ProductCategory.HouseholdAndCare, ProductSubcategory.JuteAndBags);
+        var details = new FoodDetails(null, null, null, null, null, null, null);
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.SetFoodDetails(details, TestUserContext.Create(), Guid.NewGuid()));
         Assert.Equal(BusinessViolationCodes.FoodDetailsOnlyForFood, ex.ErrorCode);
@@ -38,9 +38,9 @@ public sealed class ProductAggregateFoodTests
     [Fact]
     public void Publish_FoodProductMissingCountryOfOrigin_MessageMentionsCountryOfOrigin()
     {
-        var product = CreateProduct(ProductCategory.CatFood);
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetFoodDetails(new FoodDetails("Royal Canin", ProteinSource.Chicken, "Chicken", null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails("Basmati rice", null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
         var facts = new PublicationFacts([product.Skus.Single().Id], true, []);
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid()));
@@ -56,9 +56,9 @@ public sealed class ProductAggregateFoodTests
     [Fact]
     public void UpdateDetails_ClearCountryOfOriginOnActiveFoodProduct_Throws()
     {
-        var product = CreateProduct(ProductCategory.CatFood);
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetFoodDetails(new FoodDetails(null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails(null, null, null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         product.UpdateDetails(DetailsDto(product, "DE"));
         var facts = new PublicationFacts([product.Skus.Single().Id], true, []);
         product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid());
@@ -72,7 +72,7 @@ public sealed class ProductAggregateFoodTests
     [InlineData("de", "DE")]
     public void UpdateDetails_CountryCodeNormalised(string input, string expected)
     {
-        var product = CreateProduct(ProductCategory.CatFood);
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
         product.UpdateDetails(DetailsDto(product, input));
         Assert.Equal(expected, product.CountryOfOriginCode);
     }
@@ -80,7 +80,7 @@ public sealed class ProductAggregateFoodTests
     [Fact]
     public void UpdateDetails_UnknownCountryCode_ThrowsInvalidCountryCode()
     {
-        var product = CreateProduct(ProductCategory.CatFood);
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.UpdateDetails(DetailsDto(product, "XX")));
         Assert.Equal(BusinessViolationCodes.InvalidCountryCode, ex.ErrorCode);
     }
@@ -88,17 +88,17 @@ public sealed class ProductAggregateFoodTests
     [Fact]
     public void UpdateDetails_FoodProductWithExpiryTrackingFalseRequested_StoresTrue()
     {
-        var product = CreateProduct(ProductCategory.CatFood);
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
         product.UpdateDetails(DetailsDto(product, "DE", isExpiryTracked: false));
         Assert.True(product.IsExpiryTracked);
     }
 
     [Fact]
-    public void PublicationChecklist_FoodMissingIngredientsAndAnalysis_LabellingWarningOnly_StillPublishable()
+    public void PublicationChecklist_FoodMissingIngredientsAndShelfLife_LabellingWarningOnly_StillPublishable()
     {
-        var product = CreateProduct(ProductCategory.CatFood);
+        var product = CreateProduct(ProductCategory.RiceAndGrains);
         product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-1", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
-        product.SetFoodDetails(new FoodDetails("Royal Canin", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.SetFoodDetails(new FoodDetails(null, "Keep cool and dry", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         product.UpdateDetails(DetailsDto(product, "DE"));
 
         var facts = new PublicationFacts([product.Skus.Single().Id], true, []);

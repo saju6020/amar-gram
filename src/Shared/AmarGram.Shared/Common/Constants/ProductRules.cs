@@ -6,7 +6,8 @@ public static class ProductRules
     public const int MaxSkus = 100;
     public const int MaxImages = 40;
     public const int MaxTags = 20;
-    public const int MaxHealthFocus = 6;
+    /// <summary>HO-P2 §1.3: every certification at most once (there are four).</summary>
+    public const int MaxCertifications = 4;
 
     public const int NameMaxLength = 200;
     public const int BrandMaxLength = 100;
@@ -14,9 +15,12 @@ public static class ProductRules
     public const int SlugMaxLength = 120;
     public const int TagMaxLength = 40;
     public const int IngredientListMaxLength = 4000;
-    public const int FeedingGuideMaxLength = 4000;
     public const int StorageInstructionsMaxLength = 1000;
-    public const int ManufacturerMaxLength = 200;
+    public const int ShelfLifeMaxLength = 100;
+    public const int NetWeightMaxLength = 50;
+    public const int AllergensMaxLength = 500;
+    public const int OrganicCertifierMaxLength = 200;
+    public const int OrganicCertificateNumberMaxLength = 100;
 
     public const int SkuCodeMaxLength = 40;
     public const int BarcodeMinLength = 4;

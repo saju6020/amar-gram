@@ -26,7 +26,7 @@ public sealed class ShopBacklogFixesCatalogueApplicationTests
     private static ProductAggregate NewProduct(string slug = "scratch-post")
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.ToysAndFurniture,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), slug, null, null, Ctx(), Guid.NewGuid()));
         return product;
     }
@@ -47,7 +47,7 @@ public sealed class ShopBacklogFixesCatalogueApplicationTests
 
     private static StorefrontCatalogueEntry Entry(decimal? minPrice, string? currency) => new()
     {
-        ProductId = Guid.NewGuid(), Slug = "s", Name = "N", Brand = "B", Category = ProductCategory.CatFood.Value, Kind = ProductKind.Standard.Value,
+        ProductId = Guid.NewGuid(), Slug = "s", Name = "N", Brand = "B", Category = ProductCategory.RiceAndGrains.Value, Kind = ProductKind.Standard.Value,
         SearchText = "n b", MinPrice = minPrice, MaxPrice = minPrice, CurrencyCode = currency
     };
 

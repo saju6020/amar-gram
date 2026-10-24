@@ -119,7 +119,7 @@ public sealed class ProductReviewEndpointTests(ShopApiFactory factory) : ShopInt
         var slug = UniqueSlug("reviewed-product");
 
         var create = await staffClient.PostAsJsonAsync("/api/staff/shop/products", new
-        { kind = "Standard", name = "Reviewed Product", brand = "Acme", category = "ToysAndFurniture", taxClassId, slug }, Json);
+        { kind = "Standard", name = "Reviewed Product", brand = "Acme", category = "HouseholdAndCare", taxClassId, slug }, Json);
         var createBody = await create.Content.ReadFromJsonAsync<JsonElement>(Json);
         var productId = createBody.GetProperty("productId").GetGuid();
 

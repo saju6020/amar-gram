@@ -38,7 +38,7 @@ public sealed class SkuRow
     public bool HasAnyAxis => !string.IsNullOrWhiteSpace(SizeOrWeight) || !string.IsNullOrWhiteSpace(Flavour) || !string.IsNullOrWhiteSpace(Colour) || PackQuantity is not null;
     public bool ProductOnSale => ProductStatus == ProductStatus.Active && ListedOnStorefront;
     public bool SkuOnSale => ProductOnSale && SkuStatus == SkuStatus.Active;
-    public bool IsFood => Category == ProductCategory.CatFood;
+    public bool IsFood => Category.IsFood;
 }
 
 /// <summary>One bundle component (a projected owned row).</summary>

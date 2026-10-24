@@ -93,7 +93,7 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
             ProductId = productId, ExpectedVersion = request.ExpectedVersion, Name = request.Name, Brand = request.Brand,
             Description = request.Description, Category = request.Category, Subcategory = request.Subcategory,
             Tags = request.Tags, TaxClassId = request.TaxClassId, CountryOfOriginCode = request.CountryOfOriginCode,
-            ListedOnStorefront = request.ListedOnStorefront, IsExpiryTracked = request.IsExpiryTracked, HealthFocus = request.HealthFocus,
+            ListedOnStorefront = request.ListedOnStorefront, IsExpiryTracked = request.IsExpiryTracked, Certifications = request.Certifications,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 
@@ -121,14 +121,10 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
     {
         var command = new SetFoodDetailsCommand
         {
-            ProductId = productId, ExpectedVersion = request.ExpectedVersion, Manufacturer = request.Manufacturer,
-            ProteinSource = request.ProteinSource, IngredientList = request.IngredientList,
-            GuaranteedAnalysis = request.GuaranteedAnalysis is null ? null : new GuaranteedAnalysisInput
-            {
-                ProteinPercent = request.GuaranteedAnalysis.ProteinPercent, FatPercent = request.GuaranteedAnalysis.FatPercent,
-                FibrePercent = request.GuaranteedAnalysis.FibrePercent, MoisturePercent = request.GuaranteedAnalysis.MoisturePercent
-            },
-            FeedingGuide = request.FeedingGuide, StorageInstructions = request.StorageInstructions,
+            ProductId = productId, ExpectedVersion = request.ExpectedVersion,
+            IngredientList = request.IngredientList, StorageInstructions = request.StorageInstructions,
+            ShelfLife = request.ShelfLife, NetWeight = request.NetWeight, Allergens = request.Allergens,
+            OrganicCertifier = request.OrganicCertifier, OrganicCertificateNumber = request.OrganicCertificateNumber,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 
@@ -138,7 +134,7 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
 
     /// <summary>US-SHP-14 AC3 -- a shop manager enters content per enabled language. A locale that
     /// is not enabled is <c>400 LocaleNotEnabled</c>; the default locale is
-    /// <c>400 DefaultLocaleNotTranslatable</c>; a translation with all four fields empty removes
+    /// <c>400 DefaultLocaleNotTranslatable</c>; a translation with all three fields empty removes
     /// the locale.</summary>
     [HttpPut("{productId:guid}/translations/{locale}")]
     [RequireAction(Actions.Shop.ProductsManage)]
@@ -147,7 +143,7 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
         var command = new SetProductTranslationCommand
         {
             ProductId = productId, ExpectedVersion = request.ExpectedVersion, Locale = locale, Name = request.Name,
-            Description = request.Description, IngredientList = request.IngredientList, FeedingGuide = request.FeedingGuide,
+            Description = request.Description, IngredientList = request.IngredientList,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 

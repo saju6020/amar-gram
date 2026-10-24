@@ -8,22 +8,21 @@ public sealed record LocalisedProductContent(
     string Name,
     string Description,
     string? IngredientList,
-    string? FeedingGuide,
     string Locale,
     IReadOnlyDictionary<string, string> FieldLocales);
 
 /// <summary>
 /// HO-SHP-001 section 8.14 / ADR-090 -- pure. Per field, the requested locale's value when it is
 /// present and non-empty, else the default language's (US-SHP-14 AC2: "never an empty field").
-/// <c>FieldLocales</c> names, for <c>name</c>, <c>description</c>, <c>ingredientList</c> and
-/// <c>feedingGuide</c>, the locale the field actually came from. A requested locale that is unknown,
+/// <c>FieldLocales</c> names, for <c>name</c>, <c>description</c> and <c>ingredientList</c>,
+/// the locale the field actually came from. A requested locale that is unknown,
 /// disabled or the default itself resolves to the default language and is never an error on a
 /// public read.
 /// </summary>
 public static class ProductContentLocalisation
 {
     public static LocalisedProductContent Resolve(
-        string defaultName, string defaultDescription, string? defaultIngredientList, string? defaultFeedingGuide,
+        string defaultName, string defaultDescription, string? defaultIngredientList,
         IReadOnlyList<ProductTranslation> translations, string? requestedLocale,
         string defaultLocale, IReadOnlyList<string> enabledLocales)
     {
@@ -40,14 +39,12 @@ public static class ProductContentLocalisation
             ["name"] = translation?.Name is { Length: > 0 } ? effectiveLocale : defaultLocale,
             ["description"] = translation?.Description is { Length: > 0 } ? effectiveLocale : defaultLocale,
             ["ingredientList"] = translation?.IngredientList is { Length: > 0 } ? effectiveLocale : defaultLocale,
-            ["feedingGuide"] = translation?.FeedingGuide is { Length: > 0 } ? effectiveLocale : defaultLocale,
         };
 
         return new LocalisedProductContent(
             translation?.Name is { Length: > 0 } name ? name : defaultName,
             translation?.Description is { Length: > 0 } description ? description : defaultDescription,
             translation?.IngredientList is { Length: > 0 } ingredients ? ingredients : defaultIngredientList,
-            translation?.FeedingGuide is { Length: > 0 } feeding ? feeding : defaultFeedingGuide,
             effectiveLocale,
             fieldLocales);
     }

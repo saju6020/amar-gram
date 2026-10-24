@@ -18,15 +18,24 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
         var setFood = await client.PutAsJsonAsync($"/api/staff/shop/products/{productId}/food", new
         {
             expectedVersion = await GetVersionAsync(client, productId),
-            manufacturer = "Royal Canin", proteinSource = "Chicken",
-            ingredientList = "Chicken, rice", guaranteedAnalysis = new { proteinPercent = 32.0m, fatPercent = 15.0m, fibrePercent = 4.0m, moisturePercent = 10.0m },
-            feedingGuide = "Feed twice daily.", storageInstructions = "Store in a cool, dry place."
+            ingredientList = "Basmati rice", storageInstructions = "Store in a cool, dry place.",
+            shelfLife = "12 months", netWeight = "5 kg", allergens = "None",
+            organicCertifier = "Bangladesh Organic Board", organicCertificateNumber = "BOB-1042"
         }, Json);
         Assert.Equal(HttpStatusCode.NoContent, setFood.StatusCode);
 
         var detail = await client.GetAsync($"/api/staff/shop/products/{productId}");
         var body = await detail.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.Equal("DE", body.GetProperty("countryOfOriginCode").GetString());
+
+        var food = body.GetProperty("food");
+        Assert.Equal("Basmati rice", food.GetProperty("ingredientList").GetString());
+        Assert.Equal("Store in a cool, dry place.", food.GetProperty("storageInstructions").GetString());
+        Assert.Equal("12 months", food.GetProperty("shelfLife").GetString());
+        Assert.Equal("5 kg", food.GetProperty("netWeight").GetString());
+        Assert.Equal("None", food.GetProperty("allergens").GetString());
+        Assert.Equal("Bangladesh Organic Board", food.GetProperty("organicCertifier").GetString());
+        Assert.Equal("BOB-1042", food.GetProperty("organicCertificateNumber").GetString());
     }
 
     [Fact]
@@ -38,7 +47,7 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
 
         var create = await client.PostAsJsonAsync("/api/staff/shop/products", new
         {
-            kind = "Standard", name = "No Country Food", brand = "Acme", category = "CatFood", taxClassId, slug
+            kind = "Standard", name = "No Country Food", brand = "Acme", category = "RiceAndGrains", taxClassId, slug
         }, Json);
         var createBody = await create.Content.ReadFromJsonAsync<JsonElement>(Json);
         var productId = createBody.GetProperty("productId").GetGuid();
@@ -64,7 +73,7 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
         await client.PutAsJsonAsync($"/api/staff/shop/products/{productId}", new
         {
             expectedVersion = await GetVersionAsync(client, productId), name = "No Country Food", brand = "Acme",
-            category = "CatFood", taxClassId, countryOfOriginCode = "DE"
+            category = "RiceAndGrains", taxClassId, countryOfOriginCode = "DE"
         }, Json);
 
         var publishWithCountry = await client.PostAsJsonAsync($"/api/staff/shop/products/{productId}/publish",
@@ -101,7 +110,7 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
     {
         var response = await client.PostAsJsonAsync("/api/staff/shop/products", new
         {
-            kind = "Standard", name = "Food Product " + slug, brand = "Acme", category = "CatFood", taxClassId, slug
+            kind = "Standard", name = "Food Product " + slug, brand = "Acme", category = "RiceAndGrains", taxClassId, slug
         }, Json);
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(Json);
@@ -110,7 +119,7 @@ public sealed class ProductFoodAndOriginEndpointTests(ShopApiFactory factory) : 
         await client.PutAsJsonAsync($"/api/staff/shop/products/{productId}", new
         {
             expectedVersion = await GetVersionAsync(client, productId), name = "Food Product " + slug, brand = "Acme",
-            category = "CatFood", taxClassId, countryOfOriginCode = "DE"
+            category = "RiceAndGrains", taxClassId, countryOfOriginCode = "DE"
         }, Json);
 
         return productId;

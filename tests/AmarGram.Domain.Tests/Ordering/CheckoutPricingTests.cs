@@ -120,7 +120,7 @@ public sealed class CheckoutPricingTests
     [Fact]
     public void TheDeliveryCharge_AddsTheWeightBandSurcharge_ForTheCartsTotalShippingWeight()
     {
-        var heavy = Sku("Litter 10 kg", 500m) with { ShippingWeightGrams = 10_000 };
+        var heavy = Sku("Jute bag 10 kg", 500m) with { ShippingWeightGrams = 10_000 };
         var light = Sku("Toy", 100m) with { ShippingWeightGrams = 200 };
         var zone = new DeliveryZoneFacts(ZoneId, "Dhaka city", BranchId, true, null,
         [
@@ -138,7 +138,7 @@ public sealed class CheckoutPricingTests
     [Fact]
     public void ASkuWithoutAShippingWeight_CountsAsZeroGrams_SoNoSurchargeApplies()
     {
-        var unknown = Sku("Litter 10 kg", 500m);
+        var unknown = Sku("Jute bag 10 kg", 500m);
         var zone = new DeliveryZoneFacts(ZoneId, "Dhaka city", BranchId, true, null,
             [new ZoneServiceFacts(DeliveryServiceLevel.Standard, true, new ZoneChargeRules(60m, null, [new WeightBand(2000, 0m), new WeightBand(null, 100m)]), 1, [])]);
 
@@ -477,18 +477,18 @@ public sealed class CheckoutPricingTests
     [Fact]
     public void AScopedCode_GivesLineDiscounts_AndTaxIsOnTheDiscountedBase()
     {
-        var litter = Line(Sku("Litter", 1000m, category: ProductCategory.Litter.Value), 1, rate: 15m);
-        var toy = Line(Sku("Toy", 500m, category: ProductCategory.ToysAndFurniture.Value), 1, rate: 15m);
-        var code = Percent10Order() with { Scope = DiscountScope.Categories, CategoryIds = new HashSet<int> { ProductCategory.Litter.Value } };
+        var household = Line(Sku("Jute bag", 1000m, category: ProductCategory.HouseholdAndCare.Value), 1, rate: 15m);
+        var rice = Line(Sku("Basmati rice", 500m, category: ProductCategory.RiceAndGrains.Value), 1, rate: 15m);
+        var code = Percent10Order() with { Scope = DiscountScope.Categories, CategoryIds = new HashSet<int> { ProductCategory.HouseholdAndCare.Value } };
 
-        var quote = CheckoutPricing.Quote(Inputs([litter, toy], discount: code, discountText: "SAVE10"));
+        var quote = CheckoutPricing.Quote(Inputs([household, rice], discount: code, discountText: "SAVE10"));
 
         Assert.Equal(10_000L, quote.Totals.LineDiscountTotal.Value);
         Assert.Equal(0L, quote.Totals.OrderDiscount.Value);
-        var litterLine = quote.Lines.Single(l => l.LineRef == litter.LineId);
-        Assert.Equal(10_000L, litterLine.LineDiscount.Value);
-        Assert.Equal(13_500L, litterLine.TaxAmount.Value);
-        Assert.Equal(7_500L, quote.Lines.Single(l => l.LineRef == toy.LineId).TaxAmount.Value);
+        var householdLine = quote.Lines.Single(l => l.LineRef == household.LineId);
+        Assert.Equal(10_000L, householdLine.LineDiscount.Value);
+        Assert.Equal(13_500L, householdLine.TaxAmount.Value);
+        Assert.Equal(7_500L, quote.Lines.Single(l => l.LineRef == rice.LineId).TaxAmount.Value);
     }
 
     [Fact]

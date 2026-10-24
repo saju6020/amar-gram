@@ -82,7 +82,7 @@ public sealed class InventoryRecallDeliveryEndpointTests(InventoryApiFactory fac
             await port.CommitAsync();
         }
 
-        Assert.Equal(HttpStatusCode.Created, (await keeper.Client.PostAsJsonAsync($"/api/staff/inventory/batches/{batchId}/recall", new { confirmLotNumber = lot, reason = "Salmonella.", customerAdvice = "Stop feeding it." }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await keeper.Client.PostAsJsonAsync($"/api/staff/inventory/batches/{batchId}/recall", new { confirmLotNumber = lot, reason = "Salmonella.", customerAdvice = "Stop using it." }, Json)).StatusCode);
         Assert.Equal(2, (await JsonOkAsync(await keeper.Client.PostAsync($"/api/staff/inventory/recalls/{batchId}/notify", null))).GetProperty("requested").GetInt32());
 
         await DrainAsync(batchId, 2);
