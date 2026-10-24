@@ -60,6 +60,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<OrderAggregate
         builder.Property(x => x.CancelledByCustomer).HasColumnName("cancelled_by_customer").IsRequired();
         builder.Property(x => x.ConfirmedOn).HasInstant("confirmed_on");
         builder.Property(x => x.PackingStartedOn).HasInstant("packing_started_on");
+        builder.Property(x => x.PackedOn).HasInstant("marked_packed_on"); // HO-P4 BG-4 (not "packed_on": rv_order already aliases packing_started_on as that)
         builder.Property(x => x.CustomerAnonymised).HasColumnName("customer_anonymised").IsRequired();
 
         builder.OwnsOne(x => x.Fulfilment, f =>
@@ -108,7 +109,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<OrderAggregate
 
         builder.OwnsOne(x => x.Shipment, s =>
         {
-            s.Property(p => p.CourierId).HasColumnName("shipment_courier_id").IsRequired();
+            s.Property(p => p.CourierId).HasColumnName("shipment_courier_id"); // null for an in-house rider dispatch (HO-P4 BG-5)
             s.Property(p => p.CourierName).HasColumnName("shipment_courier_name").HasMaxLength(OrderRules.MaxNameLength).IsRequired();
             s.Property(p => p.TrackingNumber).HasColumnName("shipment_tracking_number").HasMaxLength(OrderRules.MaxTrackingNumberLength);
             s.Property(p => p.TrackingUrl).HasColumnName("shipment_tracking_url").HasMaxLength(700);
@@ -116,6 +117,10 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<OrderAggregate
             s.Property(p => p.DispatchedBy).HasColumnName("shipment_dispatched_by").IsRequired();
             s.Property(p => p.LastTrackingStatus).HasColumnName("shipment_last_status").HasMaxLength(100);
             s.Property(p => p.LastTrackingEventOn).HasInstant("shipment_last_event_on");
+            s.Property(p => p.RiderId).HasColumnName("shipment_rider_id"); // HO-P4 BG-5
+            s.Property(p => p.RiderName).HasColumnName("shipment_rider_name").HasMaxLength(OrderRules.MaxNameLength);
+            s.Ignore(p => p.IsRiderDelivery);
+            s.HasIndex(p => p.RiderId).HasDatabaseName("ix_sales_order_rider").HasFilter("shipment_rider_id IS NOT NULL");
             s.HasIndex(p => p.TrackingNumber).HasDatabaseName("ix_sales_order_tracking").HasFilter("shipment_tracking_number IS NOT NULL");
         });
 
@@ -153,6 +158,9 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<OrderAggregate
             line.Property(l => l.TaxAmount).HasMoney("tax_amount").IsRequired();
             line.Property(l => l.LineTotal).HasMoney("line_total").IsRequired();
             line.Property(l => l.QuantityReturned).HasColumnName("quantity_returned").IsRequired();
+            line.Property(l => l.IsPicked).HasColumnName("is_picked").IsRequired(); // HO-P4 BG-4
+            line.Property(l => l.PickedOn).HasInstant("picked_on");
+            line.Property(l => l.PickedBy).HasColumnName("picked_by");
             line.Property(l => l.Components).HasJsonbList("components");
 
             line.OwnsMany(l => l.Allocations, allocation =>

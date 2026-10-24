@@ -37,6 +37,51 @@ public sealed class StartPackingCommandHandler(IAggregateRootRepository<OrderAgg
     }
 }
 
+/// <summary>HO-P4 BG-4 -- <c>Packing -> Packed</c> ("packed, waiting for rider"). An invalid move names both states; an order with unallocated lines is <c>OrderNotFullyAllocated</c>.</summary>
+public sealed class MarkOrderPackedCommandHandler(IAggregateRootRepository<OrderAggregate> orders, TimeProvider timeProvider) : ICommandHandlerAsync<MarkOrderPackedCommand>
+{
+    public async Task<CommandResponse> HandleAsync(MarkOrderPackedCommand command)
+    {
+        var order = await OrderAccess.ForBranchAsync(orders, command.OrderId, command.BranchId);
+        if (order is null) return OrderAccess.NotFound();
+
+        try
+        {
+            order.MarkPacked(command.UserContext!, timeProvider.GetUtcNow(), command.CorrelationId);
+        }
+        catch (DomainRuleViolationException ex)
+        {
+            return Violation(ex.ErrorCode, ex.PropertyName, ex.Message);
+        }
+
+        await orders.UpdateAsync(order, EventPublishOption.InMemoryPublishOnly);
+        return Success();
+    }
+}
+
+/// <summary>HO-P4 BG-4 -- the persisted pick-list tick of one order line. Idempotent; the order's version moves only when the tick actually changed.</summary>
+public sealed class SetOrderLinePickedCommandHandler(IAggregateRootRepository<OrderAggregate> orders, TimeProvider timeProvider) : ICommandHandlerAsync<SetOrderLinePickedCommand>
+{
+    public async Task<CommandResponse> HandleAsync(SetOrderLinePickedCommand command)
+    {
+        var order = await OrderAccess.ForBranchAsync(orders, command.OrderId, command.BranchId);
+        if (order is null) return OrderAccess.NotFound();
+
+        bool changed;
+        try
+        {
+            changed = order.SetLinePicked(command.LineId, command.Picked, command.UserContext!, timeProvider.GetUtcNow());
+        }
+        catch (DomainRuleViolationException ex)
+        {
+            return Violation(ex.ErrorCode, ex.PropertyName, ex.Message);
+        }
+
+        if (changed) await orders.UpdateAsync(order, EventPublishOption.InMemoryPublishOnly);
+        return Success();
+    }
+}
+
 /// <summary>
 /// C16 (US-ORD-11, US-ORD-09, BR-14, US-IMP-11 AC4) -- dispatch a packed delivery order. The aggregate checks the move (<c>Packing -> Dispatched</c>) and that
 /// every line is allocated; the handler checks the courier is active (<c>CourierNotFound</c>) and that no allocated batch was recalled or has expired
@@ -47,6 +92,7 @@ public sealed class StartPackingCommandHandler(IAggregateRootRepository<OrderAgg
 public sealed class DispatchOrderCommandHandler(
     IAggregateRootRepository<OrderAggregate> orders,
     IAggregateRootRepository<CourierAggregate> couriers,
+    IAggregateRootRepository<RiderAggregate> riders,
     IStockLedger stock,
     INotificationOutbox outbox,
     INotificationLinkBuilder links,
@@ -58,16 +104,33 @@ public sealed class DispatchOrderCommandHandler(
         var order = await OrderAccess.ForBranchAsync(orders, command.OrderId, command.BranchId);
         if (order is null) return OrderAccess.NotFound();
 
-        var courier = await couriers.GetByIdAsync(command.CourierId);
-        if (courier is not { IsActive: true })
-            return Violation(BusinessViolationCodes.CourierNotFound, nameof(command.CourierId), "That courier is not available.");
+        // HO-P4 BG-5: a courier or an in-house rider of the order's own branch -- never both, never neither.
+        if ((command.CourierId is null) == (command.RiderId is null))
+            return Violation(BusinessViolationCodes.DispatchTargetInvalid, nameof(command.CourierId), OrderMessages.DispatchTargetInvalid);
 
         var now = timeProvider.GetUtcNow();
-        var tracking = string.IsNullOrWhiteSpace(command.TrackingNumber) ? null : command.TrackingNumber.Trim();
+        Shipment shipment;
+        if (command.RiderId is { } riderId)
+        {
+            var rider = await riders.GetByIdAsync(riderId);
+            if (rider is not { IsActive: true } || rider.BranchId != order.BranchId)
+                return Violation(BusinessViolationCodes.RiderNotFound, nameof(command.RiderId), "That rider is not available.");
+
+            shipment = Shipment.ForRider(rider.Id, rider.Name, now, command.UserContext!.UserId);
+        }
+        else
+        {
+            var courier = await couriers.GetByIdAsync(command.CourierId!.Value);
+            if (courier is not { IsActive: true })
+                return Violation(BusinessViolationCodes.CourierNotFound, nameof(command.CourierId), "That courier is not available.");
+
+            var tracking = string.IsNullOrWhiteSpace(command.TrackingNumber) ? null : command.TrackingNumber.Trim();
+            shipment = new Shipment(courier.Id, courier.Name, tracking, courier.BuildTrackingUrl(tracking), now, command.UserContext!.UserId, null, null);
+        }
+
         try
         {
-            order.Dispatch(
-                new Shipment(courier.Id, courier.Name, tracking, courier.BuildTrackingUrl(tracking), now, command.UserContext!.UserId, null, null), now, command.UserContext, command.CorrelationId);
+            order.Dispatch(shipment, now, command.UserContext, command.CorrelationId);
         }
         catch (DomainRuleViolationException ex)
         {
@@ -135,7 +198,7 @@ public sealed class RecordTrackingNumberCommandHandler(
         var order = await OrderAccess.ForBranchAsync(orders, command.OrderId, command.BranchId);
         if (order is null) return OrderAccess.NotFound();
 
-        var courier = order.Shipment is { } shipment ? await couriers.GetByIdAsync(shipment.CourierId) : null;
+        var courier = order.Shipment is { CourierId: { } courierId } ? await couriers.GetByIdAsync(courierId) : null;
         bool first;
         try
         {
@@ -229,7 +292,7 @@ public sealed class RecordDeliveryCommandHandler(
             (string method, string? reference, PaymentCollectorInput? collector) = cod is not null
                 ? ("CashOnDelivery", order.Shipment?.TrackingNumber ?? order.OrderNumber,
                     new PaymentCollectorInput(
-                        cod.CollectorKind.DisplayName, cod.CollectorStaffId, $"C-{(order.Shipment?.CourierId ?? Guid.Empty).ToString("N")[..8]}", cod.CollectorName))
+                        cod.CollectorKind.DisplayName, cod.CollectorStaffId, $"C-{(order.Shipment?.CourierId ?? order.Shipment?.RiderId ?? Guid.Empty).ToString("N")[..8]}", cod.CollectorName))
                 : (payment!.Method == TenderMethod.InStoreCard ? "CardInStore" : "CashInStore", payment.Reference, (PaymentCollectorInput?)null);
 
             var paymentId = await OrderBillingMoney.RecordPaymentAsync(dispatcher, order, invoiceId, method, amount, receivedOn, reference, collector, user, command.CorrelationId, approvalWaiverReason: cod is not null ? ApprovalWaiverReasons.CodCollection : ApprovalWaiverReasons.CounterTender);

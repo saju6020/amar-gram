@@ -90,8 +90,11 @@ public sealed class CompleteCounterSaleCommandValidator : AbstractValidator<Comp
         RuleFor(x => x.OrderId).NotEmpty();
         RuleFor(x => x.IdempotencyKey).NotEmpty();
         RuleFor(x => x.BranchId).NotEmpty();
-        RuleFor(x => x.CustomerName).NotEmpty().MaximumLength(OrderRules.MaxNameLength).NoControlCharacters();
-        RuleFor(x => x.CustomerMobile).NotEmpty().MaximumLength(30).NoControlCharacters();
+        // HO-P4 BG-8: the buyer's details are given together or not at all. Neither = an anonymous walk-in sale.
+        RuleFor(x => x.CustomerName).MaximumLength(OrderRules.MaxNameLength).NoControlCharacters();
+        RuleFor(x => x.CustomerMobile).MaximumLength(30).NoControlCharacters();
+        RuleFor(x => x.CustomerName).NotEmpty().When(x => !string.IsNullOrWhiteSpace(x.CustomerMobile)).WithMessage("must be given with the mobile number (or leave both empty for a sale without customer details).");
+        RuleFor(x => x.CustomerMobile).NotEmpty().When(x => !string.IsNullOrWhiteSpace(x.CustomerName)).WithMessage("must be given with the name (or leave both empty for a sale without customer details).");
         RuleFor(x => x.DiscountCode).MaximumLength(DiscountCodeRules.MaxCodeLength + 10).NoControlCharacters();
         RuleFor(x => x.Lines).NotEmpty().Must(l => l.Count <= OrderRules.MaxLines).WithMessage($"must have at most {OrderRules.MaxLines} lines.")
             .Must(l => l.Select(x => x.SkuId).Distinct().Count() == l.Count).WithMessage("must name each item once; raise its quantity instead.");

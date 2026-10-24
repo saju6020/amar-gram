@@ -16,9 +16,14 @@ public sealed class OrderTransitionRulesTests
         (OrderStatus.Confirmed, OrderTransitionAction.StartPacking, OrderStatus.Packing),
         (OrderStatus.Confirmed, OrderTransitionAction.Cancel, OrderStatus.Cancelled),
         (OrderStatus.Confirmed, OrderTransitionAction.CollectAtCounter, OrderStatus.Delivered),
+        (OrderStatus.Packing, OrderTransitionAction.MarkPacked, OrderStatus.Packed),
         (OrderStatus.Packing, OrderTransitionAction.Dispatch, OrderStatus.Dispatched),
         (OrderStatus.Packing, OrderTransitionAction.MarkReadyForCollection, OrderStatus.Dispatched),
         (OrderStatus.Packing, OrderTransitionAction.Cancel, OrderStatus.Cancelled),
+        // HO-P4 BG-4: the optional "packed, waiting for rider" step
+        (OrderStatus.Packed, OrderTransitionAction.Dispatch, OrderStatus.Dispatched),
+        (OrderStatus.Packed, OrderTransitionAction.MarkReadyForCollection, OrderStatus.Dispatched),
+        (OrderStatus.Packed, OrderTransitionAction.Cancel, OrderStatus.Cancelled),
         (OrderStatus.Dispatched, OrderTransitionAction.RecordDelivery, OrderStatus.Delivered),
         (OrderStatus.Dispatched, OrderTransitionAction.RecordDeliveryFailure, OrderStatus.Returned),
         (OrderStatus.Delivered, OrderTransitionAction.CompleteReturn, OrderStatus.Returned),
@@ -57,12 +62,13 @@ public sealed class OrderTransitionRulesTests
     }
 
     [Fact]
-    public void U_A5_TheTableHasExactlyTheFourteenArrows_AndNoNinthState()
+    public void U_A5_TheTableHasExactlyTheEighteenArrows_AndNoTenthState()
     {
         Assert.Equal(Expected.Count, OrderTransitionRules.AllTransitions.Count);
-        Assert.Equal(8, Enumeration.GetAll<OrderStatus>().Count());
+        Assert.Equal(18, Expected.Count);
+        Assert.Equal(9, Enumeration.GetAll<OrderStatus>().Count()); // Appendix C's eight, plus HO-P4 BG-4's Packed
         Assert.Equal(
-            ["PendingPayment", "Confirmed", "Packing", "Dispatched", "Delivered", "Cancelled", "Returned", "Refunded"],
+            ["PendingPayment", "Confirmed", "Packing", "Dispatched", "Delivered", "Cancelled", "Returned", "Refunded", "Packed"],
             Enumeration.GetAll<OrderStatus>().OrderBy(s => s.Value).Select(s => s.DisplayName));
     }
 
@@ -87,6 +93,8 @@ public sealed class OrderTransitionRulesTests
     [InlineData(nameof(OrderStatus.Confirmed), true, true)]
     [InlineData(nameof(OrderStatus.Packing), true, false)]   // US-ORD-12 AC2: the customer may not cancel once packing began...
     [InlineData(nameof(OrderStatus.Packing), false, true)]   // ...staff may
+    [InlineData(nameof(OrderStatus.Packed), true, false)]    // HO-P4 BG-4: packed is past the point of an online cancel too...
+    [InlineData(nameof(OrderStatus.Packed), false, true)]    // ...staff may still cancel
     [InlineData(nameof(OrderStatus.Dispatched), true, false)]
     [InlineData(nameof(OrderStatus.Dispatched), false, false)]
     [InlineData(nameof(OrderStatus.Delivered), false, false)]
@@ -122,5 +130,33 @@ public sealed class OrderTransitionRulesTests
 
         var cod = OrderTransitionRules.AllowedActions(OrderStatus.PendingPayment, FulfilmentMethod.Delivery, OrderPaymentMethod.CashOnDelivery);
         Assert.DoesNotContain(OrderTransitionAction.ConfirmPayment, cod);
+    }
+
+    [Fact]
+    public void HoP4_Bg4_Packing_OffersMarkPackedBesideDispatch_AndPackedOffersDispatchOrReadyButNotPackedAgain()
+    {
+        var packing = OrderTransitionRules.AllowedActions(OrderStatus.Packing, FulfilmentMethod.Delivery, OrderPaymentMethod.CashOnDelivery);
+        Assert.Contains(OrderTransitionAction.MarkPacked, packing);
+        Assert.Contains(OrderTransitionAction.Dispatch, packing); // optional step: the old straight-through path stays
+
+        var packedDelivery = OrderTransitionRules.AllowedActions(OrderStatus.Packed, FulfilmentMethod.Delivery, OrderPaymentMethod.CashOnDelivery);
+        Assert.Equal(2, packedDelivery.Count);
+        Assert.Contains(OrderTransitionAction.Dispatch, packedDelivery);
+        Assert.Contains(OrderTransitionAction.Cancel, packedDelivery);
+
+        var packedPickup = OrderTransitionRules.AllowedActions(OrderStatus.Packed, FulfilmentMethod.Pickup, OrderPaymentMethod.PayOnCollection);
+        Assert.Contains(OrderTransitionAction.MarkReadyForCollection, packedPickup);
+        Assert.DoesNotContain(OrderTransitionAction.MarkPacked, packedPickup);
+        Assert.DoesNotContain(OrderTransitionAction.StartPacking, packedPickup);
+    }
+
+    [Fact]
+    public void HoP4_Bg4_AConfirmedOrderCannotSkipToPacked_AndThePackedStateIsNamedInTheRefusal()
+    {
+        var ex = Assert.Throws<DomainRuleViolationException>(() => OrderTransitionRules.Require(OrderStatus.Confirmed, OrderTransitionAction.MarkPacked));
+        Assert.Equal("A confirmed order cannot be marked as packed.", ex.Message);
+
+        var packed = Assert.Throws<DomainRuleViolationException>(() => OrderTransitionRules.Require(OrderStatus.Packed, OrderTransitionAction.StartPacking));
+        Assert.Equal("A packed order cannot be packed.", packed.Message);
     }
 }

@@ -13,13 +13,31 @@ public sealed class StartPackingCommand : Command
     public required Guid BranchId { get; init; }
 }
 
+/// <summary>HO-P4 BG-4 -- the order is packed and waits for a rider (or the customer): <c>Packing -> Packed</c>. Optional step.</summary>
+public sealed class MarkOrderPackedCommand : Command
+{
+    public required Guid OrderId { get; init; }
+    public required Guid BranchId { get; init; }
+}
+
+/// <summary>HO-P4 BG-4 -- tick or untick one line of the pick list; persisted on the order line. Informational, never gates a transition.</summary>
+public sealed class SetOrderLinePickedCommand : Command
+{
+    public required Guid OrderId { get; init; }
+    public required Guid BranchId { get; init; }
+    public required Guid LineId { get; init; }
+    public required bool Picked { get; init; }
+}
+
 /// <summary>C16 (US-ORD-11) -- dispatch a packed delivery order with a courier and, optionally, a tracking number (it may be added later, C17). Checks the batches
-/// (BR-14) and turns the reservation into the sale (<c>ConsumeReservationAsync</c>).</summary>
+/// (BR-14) and turns the reservation into the sale (<c>ConsumeReservationAsync</c>). HO-P4 BG-5: <b>exactly one</b> of <see cref="CourierId"/> and
+/// <see cref="RiderId"/> (an in-house rider of the order's branch; no tracking number then).</summary>
 public sealed class DispatchOrderCommand : Command
 {
     public required Guid OrderId { get; init; }
     public required Guid BranchId { get; init; }
-    public required Guid CourierId { get; init; }
+    public Guid? CourierId { get; init; }
+    public Guid? RiderId { get; init; }
     public string? TrackingNumber { get; init; }
 }
 

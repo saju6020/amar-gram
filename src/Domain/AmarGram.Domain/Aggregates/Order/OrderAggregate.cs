@@ -73,6 +73,9 @@ public sealed class OrderAggregate : AggregateRoot
     public bool CancelledByCustomer { get; private set; }
     public DateTimeOffset? ConfirmedOn { get; private set; }
     public DateTimeOffset? PackingStartedOn { get; private set; }
+
+    /// <summary>HO-P4 BG-4: when the order was marked packed ("packed, waiting for rider"); null if it went straight from packing to dispatch.</summary>
+    public DateTimeOffset? PackedOn { get; private set; }
     public bool CustomerAnonymised { get; private set; }
 
     public IReadOnlyList<OrderLine> Lines => _lines;
@@ -396,7 +399,40 @@ public sealed class OrderAggregate : AggregateRoot
         UpdateVersion();
     }
 
-    /// <summary>Dispatch a delivery order (<c>Packing -> Dispatched</c>). The caller has already checked the batches are neither recalled nor expired (BR-14).</summary>
+    /// <summary>
+    /// HO-P4 BG-4 -- the order is packed and waits for a rider (or the customer): <c>Packing -> Packed</c>. Optional: dispatch and ready-for-collection also
+    /// work straight from <c>Packing</c>. Every line must be allocated, as for dispatch (<c>OrderNotFullyAllocated</c>); the pick ticks are informational and never gate it.
+    /// </summary>
+    public void MarkPacked(UserContext user, DateTimeOffset now, Guid correlationId)
+    {
+        OrderTransitionRules.Require(Status, OrderTransitionAction.MarkPacked); // anything but Packing -> InvalidOrderTransition, naming the state
+        EnsureFullyAllocated();
+        Transition(OrderTransitionAction.MarkPacked, user.UserId, now, null);
+        PackedOn = now;
+
+        AddDomainEvent(new OrderPackedEvent { OrderId = Id, CorrelationId = correlationId, UserContext = user });
+        UpdateVersion();
+    }
+
+    /// <summary>
+    /// HO-P4 BG-4 -- the persisted pick-list tick of one line. Allowed while the order is being prepared (<c>Confirmed</c>, <c>Packing</c>, <c>Packed</c>); a line that does not
+    /// exist is <c>OrderLineNotFound</c>. Idempotent: ticking a ticked line (or unticking an unticked one) changes nothing and returns false. The tick is informational -- it never gates a transition.
+    /// </summary>
+    public bool SetLinePicked(Guid lineId, bool picked, UserContext user, DateTimeOffset now)
+    {
+        if (Status != OrderStatus.Confirmed && Status != OrderStatus.Packing && Status != OrderStatus.Packed)
+            throw new DomainRuleViolationException(BusinessViolationCodes.InvalidOrderTransition, "Pick ticks can only be changed while the order is being prepared.", nameof(Status));
+
+        var line = _lines.FirstOrDefault(l => l.Id == lineId)
+            ?? throw new DomainRuleViolationException(BusinessViolationCodes.OrderLineNotFound, "That order line was not found.", nameof(lineId));
+
+        if (!line.SetPicked(picked, user.UserId, now)) return false;
+
+        UpdateVersion();
+        return true;
+    }
+
+    /// <summary>Dispatch a delivery order (<c>Packing | Packed -> Dispatched</c>), with a courier or (HO-P4 BG-5) an in-house rider. The caller has already checked the batches are neither recalled nor expired (BR-14).</summary>
     public void Dispatch(Shipment shipment, DateTimeOffset now, UserContext user, Guid correlationId)
     {
         if (FulfilmentMethod != FulfilmentMethod.Delivery)
@@ -406,7 +442,7 @@ public sealed class OrderAggregate : AggregateRoot
         Transition(OrderTransitionAction.Dispatch, user.UserId, now, null);
         Shipment = shipment;
 
-        AddDomainEvent(new OrderDispatchedEvent { OrderId = Id, CourierId = shipment.CourierId, HasTracking = !string.IsNullOrWhiteSpace(shipment.TrackingNumber), CorrelationId = correlationId, UserContext = user });
+        AddDomainEvent(new OrderDispatchedEvent { OrderId = Id, CourierId = shipment.CourierId, RiderId = shipment.RiderId, HasTracking = !string.IsNullOrWhiteSpace(shipment.TrackingNumber), CorrelationId = correlationId, UserContext = user });
         UpdateVersion();
     }
 
@@ -430,6 +466,9 @@ public sealed class OrderAggregate : AggregateRoot
     {
         if (Status != OrderStatus.Dispatched || Shipment is null)
             throw new DomainRuleViolationException(BusinessViolationCodes.InvalidOrderTransition, "Only a dispatched order can have a tracking number.", nameof(Status));
+
+        if (Shipment.IsRiderDelivery)
+            throw new DomainRuleViolationException(BusinessViolationCodes.InvalidOrderTransition, "An order delivered by an in-house rider has no tracking number.", nameof(Shipment));
 
         if (string.IsNullOrWhiteSpace(trackingNumber) || trackingNumber.Trim().Length > OrderRules.MaxTrackingNumberLength)
             throw new DomainRuleViolationException(BusinessViolationCodes.InvalidOrderTransition, $"A tracking number is required (up to {OrderRules.MaxTrackingNumberLength} characters).", nameof(trackingNumber));

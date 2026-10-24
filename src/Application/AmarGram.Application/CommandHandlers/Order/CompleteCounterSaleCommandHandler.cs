@@ -47,10 +47,14 @@ public sealed class CompleteCounterSaleCommandHandler(
         var branch = await branches.GetByIdAsync(command.BranchId);
         if (branch is not { IsActive: true }) return Violation(BusinessViolationCodes.BranchNotFound, nameof(command.BranchId), "Branch not found.");
 
+        // HO-P4 BG-8: no name and no mobile = an anonymous walk-in sale. The order has no customer; Billing's invoice and payments go to the counter-sale system account,
+        // found (or registered the first time) by its reserved number through the very same buyer path below.
+        var anonymous = string.IsNullOrWhiteSpace(command.CustomerName) && string.IsNullOrWhiteSpace(command.CustomerMobile);
+        var fullName = anonymous ? AnonymousCounterCustomer.FullName : command.CustomerName;
         string mobile;
         try
         {
-            mobile = MobileNumber.Create(command.CustomerMobile).Value;
+            mobile = anonymous ? AnonymousCounterCustomer.NormalisedMobile : MobileNumber.Create(command.CustomerMobile).Value;
         }
         catch (DomainRuleViolationException ex)
         {
@@ -64,13 +68,18 @@ public sealed class CompleteCounterSaleCommandHandler(
         var customer = await customerFinder.FindActiveByPrimaryMobileAsync(mobile, default);
         if (customer is null)
         {
-            var resolution = await buyerRegistrar.FindOrRegisterAsync(mobile, command.CustomerName, command.UserContext!, command.CorrelationId, default);
+            var resolution = await buyerRegistrar.FindOrRegisterAsync(mobile, fullName, command.UserContext!, command.CorrelationId, default);
             if (resolution.Buyer is null) return Violation(resolution.RefusalCode!, resolution.RefusalProperty!, resolution.RefusalMessage!);
             customer = resolution.Buyer;
         }
 
         var inputs = await inputsLoader.LoadCounterAsync(
-            branch.Id, customer.CustomerId, command.Lines.Select(l => new CounterLineRequest(l.SkuId, l.Quantity)).ToList(), command.DiscountCode, now, default);
+            branch.Id, anonymous ? null : customer.CustomerId, command.Lines.Select(l => new CounterLineRequest(l.SkuId, l.Quantity)).ToList(), command.DiscountCode, now, default);
+
+        // A code that is limited per customer (or to a first order) cannot be policed without a customer on the order.
+        if (anonymous && inputs.Discount is { } limited && (limited.PerCustomerLimit is not null || limited.FirstOrderOnly))
+            return Violation(BusinessViolationCodes.DiscountCustomerLimitReached, nameof(command.DiscountCode), OrderMessages.DiscountNeedsCustomerDetails);
+
         var quote = CheckoutPricing.Quote(inputs);
 
         if (!quote.CanPlace) return OrderPlacement.RefusalFor(quote);
@@ -89,7 +98,7 @@ public sealed class CompleteCounterSaleCommandHandler(
 
         try
         {
-            return await transaction.RunAsync(() => SellAsync(command, now, inputs, quote, tenders, customer, branch), response => response.IsSuccess);
+            return await transaction.RunAsync(() => SellAsync(command, now, inputs, quote, tenders, customer, branch, anonymous), response => response.IsSuccess);
         }
         catch (DomainRuleViolationException ex)
         {
@@ -128,17 +137,18 @@ public sealed class CompleteCounterSaleCommandHandler(
     }
 
     private async Task<CommandResponse> SellAsync(
-        CompleteCounterSaleCommand command, DateTimeOffset now, CheckoutInputs inputs, CheckoutQuote quote, TenderOutcome tenders, CustomerContactFacts buyer, BranchAggregate branch)
+        CompleteCounterSaleCommand command, DateTimeOffset now, CheckoutInputs inputs, CheckoutQuote quote, TenderOutcome tenders, CustomerContactFacts buyer, BranchAggregate branch,
+        bool anonymous)
     {
         var user = command.UserContext!;
         var appliedDiscount = quote.Discount is { Applied: true } && inputs.Discount is not null ? inputs.Discount : null;
 
-        var billingCustomerId = buyer.CustomerId;
+        var billingCustomerId = buyer.CustomerId; // the buyer, or (anonymous) the counter-sale system account: the order itself carries no customer then
 
         var order = new OrderAggregate(command.OrderId);
         order.Place(new PlaceOrderDto(
-            await numbers.NextAsync(now), OrderChannel.Counter, buyer.CustomerId, branch.Id, FulfilmentMethod.Counter, OrderPaymentMethod.InStore, quote.CurrencyCode,
-            new FulfilmentDetails(buyer.FullName, buyer.Mobile, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
+            await numbers.NextAsync(now), OrderChannel.Counter, anonymous ? null : buyer.CustomerId, branch.Id, FulfilmentMethod.Counter, OrderPaymentMethod.InStore, quote.CurrencyCode,
+            new FulfilmentDetails(anonymous ? AnonymousCounterCustomer.RecipientName : buyer.FullName, anonymous ? null : buyer.Mobile, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
             quote.Lines.ToDomainDtos(), quote.Totals.ToOrderTotals(), appliedDiscount?.DiscountCodeId, appliedDiscount?.Code, quote.Fingerprint, command.IdempotencyKey, now, user,
             command.CorrelationId));
 

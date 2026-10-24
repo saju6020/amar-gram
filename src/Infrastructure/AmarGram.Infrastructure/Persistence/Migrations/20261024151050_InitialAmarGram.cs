@@ -1908,6 +1908,34 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "rider",
+                schema: "ordering",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    branch_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    mobile_number = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Language = table.Column<string>(type: "text", nullable: true),
+                    LastUpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tags = table.Column<string[]>(type: "text[]", nullable: true),
+                    VerticalId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServiceId = table.Column<string>(type: "text", nullable: true),
+                    IsMarkedToDelete = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_rider", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "roster_exception",
                 schema: "admin",
                 columns: table => new
@@ -2006,6 +2034,8 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     shipment_dispatched_by = table.Column<Guid>(type: "uuid", nullable: true),
                     shipment_last_status = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     shipment_last_event_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    shipment_rider_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    shipment_rider_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     ready_for_collection_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     collect_by_date = table.Column<DateOnly>(type: "date", nullable: true),
                     delivered_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
@@ -2024,6 +2054,7 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     cancelled_by_customer = table.Column<bool>(type: "boolean", nullable: false),
                     confirmed_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     packing_started_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    marked_packed_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     customer_anonymised = table.Column<bool>(type: "boolean", nullable: false),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
@@ -3663,6 +3694,9 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     tax_amount = table.Column<decimal>(type: "numeric(12,2)", nullable: false),
                     line_total = table.Column<decimal>(type: "numeric(12,2)", nullable: false),
                     quantity_returned = table.Column<int>(type: "integer", nullable: false),
+                    is_picked = table.Column<bool>(type: "boolean", nullable: false),
+                    picked_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    picked_by = table.Column<Guid>(type: "uuid", nullable: true),
                     components = table.Column<string>(type: "jsonb", nullable: false),
                     order_id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
@@ -5157,6 +5191,19 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 columns: new[] { "status", "requested_on" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_rider_branch_active",
+                schema: "ordering",
+                table: "rider",
+                columns: new[] { "branch_id", "is_active" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_rider_branch_name",
+                schema: "ordering",
+                table: "rider",
+                columns: new[] { "branch_id", "name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_roster_exception_branch_date",
                 schema: "admin",
                 table: "roster_exception",
@@ -5207,6 +5254,13 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 schema: "ordering",
                 table: "sales_order",
                 columns: new[] { "branch_id", "status", "placed_on" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_sales_order_rider",
+                schema: "ordering",
+                table: "sales_order",
+                column: "shipment_rider_id",
+                filter: "shipment_rider_id IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "ix_sales_order_tracking",
@@ -5871,6 +5925,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "return_line",
+                schema: "ordering");
+
+            migrationBuilder.DropTable(
+                name: "rider",
                 schema: "ordering");
 
             migrationBuilder.DropTable(

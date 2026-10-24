@@ -21,6 +21,7 @@ public static partial class RecordClassification
         new TableClassification("ordering", "delivery_zone_coverage", RecordClass.CurrentState, HardDeletePolicy.AggregateOnly, "HO-ORD-001 §8.8 -- an owned collection the zone replaces wholesale (CurrentState carve-out, C-ALL-1)"),
         new TableClassification("ordering", "delivery_zone_service", RecordClass.CurrentState, HardDeletePolicy.AggregateOnly, "HO-ORD-001 §8.8 -- an owned collection the zone replaces wholesale (CurrentState carve-out, C-ALL-1)"),
         new TableClassification("ordering", "courier", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-ORD-001 §8.14 -- master data an order's shipment names; deactivated, never deleted"),
+        new TableClassification("ordering", "rider", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-P4 BG-5 -- the branch's in-house rider registry; an order's shipment names a rider, so one is deactivated, never deleted"),
         new TableClassification("ordering", "bank_transfer_account", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-ORD-001 §20.8 -- the shop's own account, entered as data; shown on orders"),
         new TableClassification("ordering", "discount_code", RecordClass.Financial, HardDeletePolicy.Forbidden, "HO-ORD-001 ADR-207 -- a price rule in force whose redemption counter orders rely on (D-9)"),
 

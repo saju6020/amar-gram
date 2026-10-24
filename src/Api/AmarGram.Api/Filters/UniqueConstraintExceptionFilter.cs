@@ -102,6 +102,7 @@ public sealed class UniqueConstraintExceptionFilter : IExceptionFilter, IAsyncEx
         ["ix_discount_code_code"] = (400, BusinessViolationCodes.DiscountCodeAlreadyExists, OrderMessages.DiscountCodeAlreadyExists, "Code"),
         ["ix_delivery_zone_name"] = (400, BusinessViolationCodes.DeliveryZoneNameAlreadyExists, OrderMessages.DeliveryZoneNameAlreadyExists, "Name"),
         ["ix_courier_name"] = (400, BusinessViolationCodes.CourierNameAlreadyExists, OrderMessages.CourierNameAlreadyExists, "Name"),
+        ["ix_rider_branch_name"] = (400, BusinessViolationCodes.RiderNameAlreadyExists, OrderMessages.RiderNameAlreadyExists, "Name"), // HO-P4 BG-5
         // Two first adds raced (or two devices): the unique index kept ONE active cart; the loser retries and finds it (HO-ORD-001 §12.5).
         ["ix_cart_active_customer"] = (409, BusinessViolationCodes.DuplicateSubmission, OrderMessages.CartChangedOnAnotherDevice, "CustomerId"),
         ["ix_cart_guest_token"] = (409, BusinessViolationCodes.DuplicateSubmission, OrderMessages.CartChangedOnAnotherDevice, "GuestToken"),

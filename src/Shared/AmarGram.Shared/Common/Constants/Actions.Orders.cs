@@ -32,6 +32,9 @@ public static partial class Actions
 
     public static class Couriers { public const string Manage = "Couriers.Manage"; }
 
+    /// <summary>HO-P4 BG-5 -- the branch's in-house rider registry.</summary>
+    public static class Riders { public const string Manage = "Riders.Manage"; }
+
     public static class Discounts
     {
         public const string View = "Discounts.View";

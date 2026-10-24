@@ -71,7 +71,8 @@ public sealed class AccountRecipientDirectory(AmarGramDbContext db) : INotificat
 
         if (current is null) return null;
 
-        var isActive = current.Status == CustomerAccountStatus.Active;
+        // HO-P4 BG-8: the counter-sale system account is invoiced for anonymous sales; there is nobody to tell, so it resolves as not-active and no message is sent.
+        var isActive = current.Status == CustomerAccountStatus.Active && !AmarGram.Shared.Common.Constants.AnonymousCounterCustomer.IsReservedMobile(current.MobileNumber);
         return await BuildCustomerProfileAsync(current, isActive, ct);
     }
 

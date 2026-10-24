@@ -136,6 +136,27 @@ public sealed class StaffOrdersController(IInMemoryDispatcher dispatcher, IUserC
         return Ok((await dispatcher.GetResultAsync(query)).Result);
     }
 
+    /// <summary>HO-P4 BG-2 -- the order count in every status for the active branch, in one call, under the queue's own filters (bar <c>status</c>). Every status is listed, zeros included.</summary>
+    [HttpGet("status-counts")]
+    [RequireAction(Actions.Orders.View)]
+    public async Task<IActionResult> StatusCounts(
+        [FromQuery] string? fulfilment, [FromQuery] string? paymentMethod, [FromQuery] string? channel, [FromQuery] DateTimeOffset? from, [FromQuery] DateTimeOffset? to, [FromQuery] string? search)
+    {
+        if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
+
+        if (!EnumQueryParameter.TryParse<FulfilmentMethod>(fulfilment, out var parsedFulfilment)) return BadRequest(new { error = "fulfilment is not a fulfilment method." });
+        if (!EnumQueryParameter.TryParse<OrderPaymentMethod>(paymentMethod, out var parsedPayment)) return BadRequest(new { error = "paymentMethod is not a payment method." });
+        if (!EnumQueryParameter.TryParse<OrderChannel>(channel, out var parsedChannel)) return BadRequest(new { error = "channel is not an order channel." });
+        if (search is { Length: > 100 }) return BadRequest(new { error = "search is too long." });
+
+        var response = await dispatcher.GetResultAsync(new GetStaffOrderStatusCountsQuery
+        {
+            BranchId = branchId, Fulfilment = parsedFulfilment, PaymentMethod = parsedPayment, Channel = parsedChannel, From = from?.ToUniversalTime(), To = to?.ToUniversalTime(), Search = search,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
+        });
+        return Ok(response.Result);
+    }
+
     [HttpGet("{orderId:guid}")]
     [RequireAction(Actions.Orders.View)]
     public async Task<IActionResult> Get(Guid orderId)
@@ -170,7 +191,37 @@ public sealed class StaffOrdersController(IInMemoryDispatcher dispatcher, IUserC
         return response.IsSuccess ? NoContent() : OrderingResults.Failure(this, response);
     }
 
-    /// <summary>US-ORD-11 -- dispatch with a courier (tracking optional); <c>400 BatchRecalled</c> / <c>BatchExpired</c> / <c>OrderNotFullyAllocated</c> (BR-14).</summary>
+    /// <summary>HO-P4 BG-4 -- the order is packed and waits for a rider (or the customer): <c>Packing -> Packed</c>. Optional: dispatch and ready-for-collection also work from <c>Packing</c>. <c>204</c>.</summary>
+    [HttpPost("{orderId:guid}/packed")]
+    [RequireAction(Actions.Orders.Fulfil)]
+    public async Task<IActionResult> MarkPacked(Guid orderId)
+    {
+        if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
+
+        var response = await dispatcher.SendAsync(new MarkOrderPackedCommand
+        { OrderId = orderId, BranchId = branchId, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true });
+
+        return response.IsSuccess ? NoContent() : OrderingResults.Failure(this, response);
+    }
+
+    /// <summary>HO-P4 BG-4 -- tick or untick one line of the pick list; persisted (everyone who opens the order sees it). Idempotent. <c>204</c>; <c>404</c> for an unknown order or line;
+    /// <c>400 InvalidOrderTransition</c> once the order has left the shelf.</summary>
+    [HttpPut("{orderId:guid}/lines/{lineId:guid}/picked")]
+    [RequireAction(Actions.Orders.Fulfil)]
+    public async Task<IActionResult> SetLinePicked(Guid orderId, Guid lineId, [FromBody] SetLinePickedRequest request)
+    {
+        if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
+
+        var response = await dispatcher.SendAsync(new SetOrderLinePickedCommand
+        {
+            OrderId = orderId, BranchId = branchId, LineId = lineId, Picked = request.Picked, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
+        });
+
+        return response.IsSuccess ? NoContent() : OrderingResults.Failure(this, response);
+    }
+
+    /// <summary>US-ORD-11 -- dispatch with a courier (tracking optional) or (HO-P4 BG-5) an in-house rider; <c>400 BatchRecalled</c> / <c>BatchExpired</c> / <c>OrderNotFullyAllocated</c> (BR-14),
+    /// <c>400 DispatchTargetInvalid</c> (both or neither of <c>courierId</c>/<c>riderId</c>), <c>404</c> for an unknown courier or rider.</summary>
     [HttpPost("{orderId:guid}/dispatch")]
     [RequireAction(Actions.Orders.Fulfil)]
     public async Task<IActionResult> Dispatch(Guid orderId, [FromBody] DispatchOrderRequest request)
@@ -179,7 +230,7 @@ public sealed class StaffOrdersController(IInMemoryDispatcher dispatcher, IUserC
 
         var response = await dispatcher.SendAsync(new DispatchOrderCommand
         {
-            OrderId = orderId, BranchId = branchId, CourierId = request.CourierId, TrackingNumber = request.TrackingNumber, UserContext = userContextProvider.GetUserContext(),
+            OrderId = orderId, BranchId = branchId, CourierId = request.CourierId, RiderId = request.RiderId, TrackingNumber = request.TrackingNumber, UserContext = userContextProvider.GetUserContext(),
             CorrelationId = Guid.NewGuid(), ValidateCommand = true
         });
 

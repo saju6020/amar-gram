@@ -41,8 +41,15 @@ public sealed class CustomerAccountAggregate : AggregateRoot
 
     public CustomerAccountAggregate(Guid id) : base(id) { }
 
+    /// <summary>HO-P4 BG-8: the system account anonymous counter sales are invoiced to is the account holding the reserved mobile number (<see cref="AnonymousCounterCustomer"/>).</summary>
+    public bool IsCounterSystemAccount => MobileNumber is { } mobile && AnonymousCounterCustomer.IsReservedMobile(mobile.Value);
+
     public void Register(CustomerRegistrationDto dto)
     {
+        // HO-P4 BG-8: nobody can pre-empt the reserved number by registering it (the refusal looks like any invalid number -- it reveals nothing).
+        if (dto.MobileNumber is { } reserved && AnonymousCounterCustomer.IsReservedMobile(reserved.Value))
+            throw Violation(BusinessViolationCodes.InvalidMobileNumber, "This does not look like a valid mobile number.", nameof(MobileNumber));
+
         if (string.IsNullOrWhiteSpace(dto.FullName) || dto.FullName.Length > 200)
             throw Violation(BusinessViolationCodes.NameRequired, "A name is required.", nameof(FullName));
 
@@ -73,6 +80,10 @@ public sealed class CustomerAccountAggregate : AggregateRoot
 
     public void RegisterWalkIn(WalkInCustomerRegistrationDto dto)
     {
+        // HO-P4 BG-8: the reserved number belongs to the counter-sale system account alone, under its one name.
+        if (dto.MobileNumber is { } reserved && AnonymousCounterCustomer.IsReservedMobile(reserved.Value) && dto.FullName != AnonymousCounterCustomer.FullName)
+            throw Violation(BusinessViolationCodes.InvalidMobileNumber, "This does not look like a valid mobile number.", nameof(MobileNumber));
+
         if (string.IsNullOrWhiteSpace(dto.FullName) || dto.FullName.Length > 200)
             throw Violation(BusinessViolationCodes.NameRequired, "A name is required.", nameof(FullName));
 
@@ -139,6 +150,7 @@ public sealed class CustomerAccountAggregate : AggregateRoot
 
     public void SetPassword(PasswordSetDto dto)
     {
+        EnsureNotCounterSystemAccount();
         if (Status != CustomerAccountStatus.Active)
             throw Violation(BusinessViolationCodes.AccountNotActive, "This account is not active.", nameof(Status));
 
@@ -161,6 +173,7 @@ public sealed class CustomerAccountAggregate : AggregateRoot
 
     public void UpdateContactDetails(CustomerContactDetailsDto dto)
     {
+        EnsureNotCounterSystemAccount();
         if (string.IsNullOrWhiteSpace(dto.FullName) || dto.FullName.Length > 200)
             throw Violation(BusinessViolationCodes.NameRequired, "A name is required.", nameof(FullName));
 
@@ -212,6 +225,10 @@ public sealed class CustomerAccountAggregate : AggregateRoot
 
     public void MergeInto(CustomerMergeDto dto)
     {
+        EnsureNotCounterSystemAccount();
+        if (dto.SurvivorMobile is { } survivorMobile && AnonymousCounterCustomer.IsReservedMobile(survivorMobile.Value))
+            throw Violation(BusinessViolationCodes.CustomersNotDuplicates, "These customer records do not share a contact number or email address.", nameof(dto.SurvivingCustomerId));
+
         if (dto.SurvivingCustomerId == Id)
             throw Violation(
                 BusinessViolationCodes.CannotMergeCustomerIntoItself,
@@ -279,6 +296,7 @@ public sealed class CustomerAccountAggregate : AggregateRoot
 
     public void Anonymise(CustomerAnonymisationDto dto)
     {
+        EnsureNotCounterSystemAccount();
         if (Status == CustomerAccountStatus.Anonymised)
             throw Violation(BusinessViolationCodes.AccountAlreadyAnonymised, "This account has already been anonymised.", nameof(Status));
 
@@ -339,6 +357,13 @@ public sealed class CustomerAccountAggregate : AggregateRoot
 
         if (LoginThrottle.IsLocked(asOf))
             throw Violation(BusinessViolationCodes.AccountLocked, "This account is temporarily locked.", nameof(LoginThrottle));
+    }
+
+    /// <summary>HO-P4 BG-8: the counter-sale system account is frozen -- no password, contact edit, merge or erasure can change who anonymous sales are invoiced to.</summary>
+    private void EnsureNotCounterSystemAccount()
+    {
+        if (IsCounterSystemAccount)
+            throw Violation(BusinessViolationCodes.AccountNotActive, "This is a system account used for counter sales without customer details; it cannot be changed.", nameof(Status));
     }
 
     private void EnsureHasIdentifier()

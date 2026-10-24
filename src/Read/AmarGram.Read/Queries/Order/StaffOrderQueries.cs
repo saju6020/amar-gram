@@ -17,6 +17,18 @@ public sealed class GetStaffOrderQueueQuery : Query<PagedResult<StaffOrderRowVie
     public string? Search { get; init; }
 }
 
+/// <summary>HO-P4 BG-2 -- the count of the active branch's orders in every status in one call, honouring the queue's filters except <c>Status</c> (the tab strip's counts).</summary>
+public sealed class GetStaffOrderStatusCountsQuery : Query<StaffOrderStatusCountsViewModel>
+{
+    public required Guid BranchId { get; init; }
+    public FulfilmentMethod? Fulfilment { get; init; }
+    public OrderPaymentMethod? PaymentMethod { get; init; }
+    public OrderChannel? Channel { get; init; }
+    public DateTimeOffset? From { get; init; }
+    public DateTimeOffset? To { get; init; }
+    public string? Search { get; init; }
+}
+
 /// <summary>Null (-> <c>404</c>) when the order is not found at the branch.</summary>
 public sealed class GetStaffOrderDetailQuery : Query<StaffOrderDetailViewModel?>
 {

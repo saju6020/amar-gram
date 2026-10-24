@@ -2,6 +2,7 @@ using System.Globalization;
 using AmarGram.Domain.Aggregates.Account;
 using AmarGram.Domain.Aggregates.Administration;
 using AmarGram.Domain.Aggregates.Inventory;
+using AmarGram.Domain.Aggregates.Order;
 using AmarGram.Domain.DomainServices;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Read.Queries.Order;
@@ -13,6 +14,28 @@ using Platform.Infrastructure.Core.Queries;
 
 namespace AmarGram.Read.QueryHandlers.Order;
 
+/// <summary>The queue's filters (everything but <c>status</c>), shared by the queue and HO-P4 BG-2's status counts so the two cannot disagree.</summary>
+internal static class StaffOrderFilter
+{
+    public static IQueryable<OrderAggregate> Apply(
+        IQueryable<OrderAggregate> orders, FulfilmentMethod? fulfilment, OrderPaymentMethod? payment, OrderChannel? channel, DateTimeOffset? from, DateTimeOffset? to, string? search)
+    {
+        if (fulfilment is not null) orders = orders.Where(o => o.FulfilmentMethod == fulfilment);
+        if (payment is not null) orders = orders.Where(o => o.PaymentMethod == payment);
+        if (channel is not null) orders = orders.Where(o => o.Channel == channel);
+        if (from is { } start) orders = orders.Where(o => o.PlacedOn >= start);
+        if (to is { } end) orders = orders.Where(o => o.PlacedOn <= end);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = "%" + search.Trim().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
+            orders = orders.Where(o => EF.Functions.ILike(o.OrderNumber, pattern) || EF.Functions.ILike(o.Fulfilment.RecipientName, pattern)
+                || (o.Fulfilment.RecipientPhone != null && EF.Functions.ILike(o.Fulfilment.RecipientPhone, pattern)));
+        }
+
+        return orders;
+    }
+}
+
 /// <summary>HO-ORD-001 §12.4 -- the staff order queue: a paged projection with the highlights staff act on (<c>flags[]</c>).</summary>
 public sealed class GetStaffOrderQueueQueryHandler(AmarGramDbContext db, TimeProvider timeProvider)
     : IQueryHandlerAsync<GetStaffOrderQueueQuery, PagedResult<StaffOrderRowViewModel>>
@@ -23,17 +46,7 @@ public sealed class GetStaffOrderQueueQueryHandler(AmarGramDbContext db, TimePro
         var orders = db.Orders.AsNoTracking().Where(o => o.BranchId == query.BranchId);
 
         if (query.Status is { } status) orders = orders.Where(o => o.Status == status);
-        if (query.Fulfilment is { } fulfilment) orders = orders.Where(o => o.FulfilmentMethod == fulfilment);
-        if (query.PaymentMethod is { } payment) orders = orders.Where(o => o.PaymentMethod == payment);
-        if (query.Channel is { } channel) orders = orders.Where(o => o.Channel == channel);
-        if (query.From is { } from) orders = orders.Where(o => o.PlacedOn >= from);
-        if (query.To is { } to) orders = orders.Where(o => o.PlacedOn <= to);
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var pattern = "%" + query.Search.Trim().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
-            orders = orders.Where(o => EF.Functions.ILike(o.OrderNumber, pattern) || EF.Functions.ILike(o.Fulfilment.RecipientName, pattern)
-                || (o.Fulfilment.RecipientPhone != null && EF.Functions.ILike(o.Fulfilment.RecipientPhone, pattern)));
-        }
+        orders = StaffOrderFilter.Apply(orders, query.Fulfilment, query.PaymentMethod, query.Channel, query.From, query.To, query.Search);
 
         var timeZoneId = await db.Set<BranchAggregate>().AsNoTracking().Where(b => b.Id == query.BranchId).Select(b => b.TimeZoneId).FirstOrDefaultAsync() ?? "UTC";
         var now = timeProvider.GetUtcNow();
@@ -46,6 +59,7 @@ public sealed class GetStaffOrderQueueQueryHandler(AmarGramDbContext db, TimePro
                 o.Id, o.OrderNumber, o.PlacedOn, CustomerName = o.Fulfilment.RecipientName, o.Status, o.FulfilmentMethod, o.PaymentMethod, o.Channel, o.CurrencyCode,
                 o.Totals.GrandTotal, Held = o.HeldPayment != null, o.CustomerTransferReference, o.CollectByDate, o.CustomerAnonymised,
                 TrackingStatus = o.Shipment != null ? o.Shipment.LastTrackingStatus : null,
+                o.Fulfilment.ZoneName, o.Fulfilment.District, o.Fulfilment.SlotDate, o.Fulfilment.SlotWindowLabel,
             })
             .ToListAsync();
 
@@ -60,10 +74,34 @@ public sealed class GetStaffOrderQueueQueryHandler(AmarGramDbContext db, TimePro
 
             return new StaffOrderRowViewModel(
                 r.Id, r.OrderNumber, r.PlacedOn, r.CustomerName, r.Status.DisplayName, r.FulfilmentMethod.DisplayName, r.PaymentMethod.DisplayName, r.Channel.DisplayName,
-                OrderMoney.Of(r.GrandTotal, r.CurrencyCode), (long)Math.Max(0, (now - r.PlacedOn).TotalMinutes), flags, timeZoneId);
+                OrderMoney.Of(r.GrandTotal, r.CurrencyCode), (long)Math.Max(0, (now - r.PlacedOn).TotalMinutes), flags, timeZoneId,
+                r.ZoneName, r.District, r.SlotDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), r.SlotWindowLabel);
         }).ToList();
 
         return new QueryResponse<PagedResult<StaffOrderRowViewModel>> { Result = new PagedResult<StaffOrderRowViewModel>(items, pageNumber, pageSize, total) };
+    }
+}
+
+/// <summary>HO-P4 BG-2 -- the order count in every status for the active branch in one query, under the queue's filters (bar <c>status</c>). Every status is listed, zeros included,
+/// in pipeline order, so the tab strip needs no client-side gap filling.</summary>
+public sealed class GetStaffOrderStatusCountsQueryHandler(AmarGramDbContext db) : IQueryHandlerAsync<GetStaffOrderStatusCountsQuery, StaffOrderStatusCountsViewModel>
+{
+    private static readonly OrderStatus[] PipelineOrder =
+    [
+        OrderStatus.PendingPayment, OrderStatus.Confirmed, OrderStatus.Packing, OrderStatus.Packed, OrderStatus.Dispatched,
+        OrderStatus.Delivered, OrderStatus.Cancelled, OrderStatus.Returned, OrderStatus.Refunded,
+    ];
+
+    public async Task<QueryResponse<StaffOrderStatusCountsViewModel>> HandleAsync(GetStaffOrderStatusCountsQuery query)
+    {
+        var orders = StaffOrderFilter.Apply(
+            db.Orders.AsNoTracking().Where(o => o.BranchId == query.BranchId), query.Fulfilment, query.PaymentMethod, query.Channel, query.From, query.To, query.Search);
+
+        var grouped = await orders.GroupBy(o => o.Status).Select(g => new { Status = g.Key, Count = g.Count() }).ToListAsync();
+        var byStatus = grouped.ToDictionary(g => g.Status.Value, g => g.Count);
+
+        var counts = PipelineOrder.Select(s => new StaffOrderStatusCountViewModel(s.DisplayName, byStatus.GetValueOrDefault(s.Value))).ToList();
+        return new QueryResponse<StaffOrderStatusCountsViewModel> { Result = new StaffOrderStatusCountsViewModel(counts.Sum(c => c.Count), counts) };
     }
 }
 
@@ -79,7 +117,7 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
             {
                 o.Id, o.Version, o.OrderNumber, o.PlacedOn, o.Channel, o.CustomerId, o.Status, o.FulfilmentMethod, o.PaymentMethod, o.CurrencyCode, o.PaymentDueBy,
                 o.CustomerTransferReference, o.CollectByDate, o.InvoiceId, o.InvoiceNumber, o.CreditNoteIds, o.AmountPaid, o.AmountRefunded, o.RefundDue, o.DiscountCodeText,
-                o.CustomerAnonymised,
+                o.CustomerAnonymised, o.PackedOn,
                 Totals = new { o.Totals.Subtotal, o.Totals.LineDiscountTotal, o.Totals.OrderDiscount, o.Totals.DeliveryCharge, o.Totals.TaxTotal, o.Totals.GrandTotal },
                 F = new
                 {
@@ -91,11 +129,11 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
                 Ship = o.Shipment == null ? null : new
                 {
                     o.Shipment.CourierId, o.Shipment.CourierName, o.Shipment.TrackingNumber, o.Shipment.TrackingUrl, o.Shipment.DispatchedOn, o.Shipment.LastTrackingStatus,
-                    o.Shipment.LastTrackingEventOn,
+                    o.Shipment.LastTrackingEventOn, o.Shipment.RiderId, o.Shipment.RiderName,
                 },
                 Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new
                 {
-                    l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.Quantity, l.UnitPrice, l.LineTotal, l.QuantityReturned,
+                    l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.Quantity, l.UnitPrice, l.LineTotal, l.QuantityReturned, l.IsPicked, l.PickedOn, l.PickedBy,
                     Allocations = l.Allocations.Select(a => new { a.BatchId, a.LotNumber, a.BatchExpiresOn, a.LocationId, a.Quantity }).ToList(),
                 }).ToList(),
                 History = o.StatusHistory.OrderBy(h => h.ChangedOn).Select(h => new { h.From, h.To, h.ChangedOn, h.ChangedBy, h.Note }).ToList(),
@@ -136,7 +174,8 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
             head.Lines.Select(l => new StaffOrderLineViewModel(
                 l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel, l.Quantity,
                 Money(l.UnitPrice), Money(l.LineTotal), l.QuantityReturned,
-                l.Allocations.Select(a => new StaffAllocationViewModel(a.BatchId, a.LotNumber, a.BatchExpiresOn, a.LocationId, locations.GetValueOrDefault(a.LocationId, string.Empty), a.Quantity)).ToList())).ToList(),
+                l.Allocations.Select(a => new StaffAllocationViewModel(a.BatchId, a.LotNumber, a.BatchExpiresOn, a.LocationId, locations.GetValueOrDefault(a.LocationId, string.Empty), a.Quantity)).ToList(),
+                l.IsPicked, l.PickedOn, l.PickedBy)).ToList(),
             new OrderTotalsViewModel(
                 Money(head.Totals.Subtotal), Money(head.Totals.LineDiscountTotal), Money(head.Totals.OrderDiscount), Money(head.Totals.DeliveryCharge), Money(head.Totals.TaxTotal), Money(head.Totals.GrandTotal)),
             new OrderFulfilmentViewModel(
@@ -146,10 +185,10 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
             head.PaymentDueBy, head.CustomerTransferReference,
             head.Held is null ? null : new HeldPaymentViewModel(Money(head.Held.Amount), head.Held.RecordedBy, head.Held.RecordedOn),
             head.Cod is null ? null : new StaffCodCollectionViewModel(Money(head.Cod.Amount), head.Cod.CollectorKind.DisplayName, head.Cod.CollectorName, head.Cod.CollectedOn, head.Cod.RecordedBy),
-            head.Ship is null ? null : new StaffShipmentViewModel(head.Ship.CourierId, head.Ship.CourierName, head.Ship.TrackingNumber, head.Ship.TrackingUrl, head.Ship.DispatchedOn, head.Ship.LastTrackingStatus, head.Ship.LastTrackingEventOn),
+            head.Ship is null ? null : new StaffShipmentViewModel(head.Ship.CourierId, head.Ship.CourierName, head.Ship.TrackingNumber, head.Ship.TrackingUrl, head.Ship.DispatchedOn, head.Ship.LastTrackingStatus, head.Ship.LastTrackingEventOn, head.Ship.RiderId, head.Ship.RiderName),
             head.CollectByDate, head.InvoiceId, head.InvoiceNumber,
             head.Payments.Select(p => new StaffPaymentRefViewModel(p.PaymentId, p.Method, Money(p.Amount), p.RecordedOn)).ToList(), head.CreditNoteIds,
-            Money(head.AmountPaid), Money(head.AmountRefunded), Money(head.RefundDue), head.DiscountCodeText, head.CustomerAnonymised, allowed);
+            Money(head.AmountPaid), Money(head.AmountRefunded), Money(head.RefundDue), head.DiscountCodeText, head.CustomerAnonymised, allowed, head.PackedOn);
 
         return new QueryResponse<StaffOrderDetailViewModel?> { Result = view };
     }
@@ -158,7 +197,7 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
     {
         OrderTransitionAction.ConfirmPayment => Actions.Orders.ConfirmPayment,
         OrderTransitionAction.Cancel => Actions.Orders.Cancel,
-        OrderTransitionAction.StartPacking or OrderTransitionAction.Dispatch or OrderTransitionAction.MarkReadyForCollection or OrderTransitionAction.RecordDeliveryFailure => Actions.Orders.Fulfil,
+        OrderTransitionAction.StartPacking or OrderTransitionAction.MarkPacked or OrderTransitionAction.Dispatch or OrderTransitionAction.MarkReadyForCollection or OrderTransitionAction.RecordDeliveryFailure => Actions.Orders.Fulfil,
         OrderTransitionAction.RecordDelivery => Actions.Orders.RecordDelivery,
         OrderTransitionAction.Refund => Actions.Refunds.Issue,
         _ => null, // Expire is the worker's; CompleteReturn and CollectAtCounter are driven by other flows, never chosen

@@ -31,6 +31,11 @@ public sealed class OrderLine
     public decimal LineTotal { get; private set; }
     public int QuantityReturned { get; private set; }
 
+    /// <summary>HO-P4 BG-4: the pick-list tick -- the picker has taken this line off the shelf. Informational (it never gates a transition); persisted so it survives a reload and is shared by everyone who opens the order.</summary>
+    public bool IsPicked { get; private set; }
+    public DateTimeOffset? PickedOn { get; private set; }
+    public Guid? PickedBy { get; private set; }
+
     /// <summary>The components a bundle line is made of (SKU and quantity per bundle), kept so allocation can be checked per component.</summary>
     public IReadOnlyList<OrderLineComponent> Components { get; private set; } = [];
 
@@ -77,6 +82,17 @@ public sealed class OrderLine
     }
 
     internal void AddReturned(int quantity) => QuantityReturned += quantity;
+
+    /// <summary>Returns whether anything changed (ticking a ticked line is a no-op).</summary>
+    internal bool SetPicked(bool picked, Guid by, DateTimeOffset now)
+    {
+        if (IsPicked == picked) return false;
+
+        IsPicked = picked;
+        PickedOn = picked ? now : null;
+        PickedBy = picked ? by : null;
+        return true;
+    }
 
 }
 

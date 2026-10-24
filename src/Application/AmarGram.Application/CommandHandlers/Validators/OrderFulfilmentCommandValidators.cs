@@ -16,13 +16,38 @@ public sealed class StartPackingCommandValidator : AbstractValidator<StartPackin
     }
 }
 
+/// <summary>HO-P4 BG-4.</summary>
+public sealed class MarkOrderPackedCommandValidator : AbstractValidator<MarkOrderPackedCommand>
+{
+    public MarkOrderPackedCommandValidator()
+    {
+        RuleFor(x => x.OrderId).NotEmpty();
+        RuleFor(x => x.BranchId).NotEmpty();
+    }
+}
+
+/// <summary>HO-P4 BG-4.</summary>
+public sealed class SetOrderLinePickedCommandValidator : AbstractValidator<SetOrderLinePickedCommand>
+{
+    public SetOrderLinePickedCommandValidator()
+    {
+        RuleFor(x => x.OrderId).NotEmpty();
+        RuleFor(x => x.BranchId).NotEmpty();
+        RuleFor(x => x.LineId).NotEmpty();
+    }
+}
+
 public sealed class DispatchOrderCommandValidator : AbstractValidator<DispatchOrderCommand>
 {
     public DispatchOrderCommandValidator()
     {
         RuleFor(x => x.OrderId).NotEmpty();
         RuleFor(x => x.BranchId).NotEmpty();
-        RuleFor(x => x.CourierId).NotEmpty();
+        // HO-P4 BG-5: a courier or a rider -- never both, never neither; a rider delivery has no tracking number.
+        RuleFor(x => x).Must(x => (x.CourierId is { } c && c != Guid.Empty) != (x.RiderId is { } r && r != Guid.Empty))
+            .WithMessage(OrderMessages.DispatchTargetInvalid).WithName("CourierId").WithErrorCode(BusinessViolationCodes.DispatchTargetInvalid);
+        RuleFor(x => x.TrackingNumber).Must(t => string.IsNullOrWhiteSpace(t)).When(x => x.RiderId is not null)
+            .WithMessage("A rider delivery has no tracking number.").WithErrorCode(BusinessViolationCodes.DispatchTargetInvalid);
         RuleFor(x => x.TrackingNumber).MaximumLength(OrderRules.MaxTrackingNumberLength).NoControlCharacters();
     }
 }

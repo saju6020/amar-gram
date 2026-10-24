@@ -14,9 +14,9 @@ public sealed class DashboardTilesTests
     {
         Assert.Empty(Keys(StaffRoles.Reception));
         Assert.Equal(["stock.expiry", "stock.low", "stock.consignments-open"], Keys(StaffRoles.Inventory));
-        Assert.Equal(["orders.today", "orders.awaiting-transfer", "orders.returns-pending", "revenue.shop-today"], Keys(StaffRoles.ShopManager));
-        Assert.Equal(["orders.awaiting-transfer", "payments.today", "payments.unreconciled", "billing.cash-up", "billing.receivables"], Keys(StaffRoles.Accountant));
-        Assert.Equal(["stock.expiry", "orders.today", "payments.today", "billing.receivables", "revenue.today-by-line"], Keys(StaffRoles.Administrator));
+        Assert.Equal(["orders.today", "orders.awaiting-transfer", "orders.returns-pending", "orders.cod-with-riders", "revenue.shop-today"], Keys(StaffRoles.ShopManager));
+        Assert.Equal(["orders.awaiting-transfer", "orders.cod-with-riders", "payments.today", "payments.unreconciled", "billing.cash-up", "billing.receivables"], Keys(StaffRoles.Accountant));
+        Assert.Equal(["stock.expiry", "orders.today", "orders.cod-with-riders", "payments.today", "billing.receivables", "revenue.today-by-line"], Keys(StaffRoles.Administrator));
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public sealed class DashboardTilesTests
     public void U_E4_OnlyBuiltModulesHaveTiles_AndEveryTileNamesAGateAction()
     {
         Assert.All(DashboardTiles.All, t => Assert.Matches("^(stock|orders|revenue|payments|billing)\\.", t.Key));
-        Assert.Equal(12, DashboardTiles.All.Count);
+        Assert.Equal(13, DashboardTiles.All.Count); // HO-P4 BG-5 added orders.cod-with-riders
         Assert.All(DashboardTiles.All, t => Assert.True(ActionRoles.TryGetRoles(t.GateAction, out _), t.Key));
         Assert.Equal(DashboardTiles.All.Count, DashboardTiles.All.Select(t => t.Key).Distinct().Count());
     }

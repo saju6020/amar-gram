@@ -19,6 +19,9 @@ public static class OrderRules
     public const int MaxNameLength = 100;
     public const int MaxTerminalReferenceLength = 50;
 
+    /// <summary>HO-P4 BG-5 -- the carrier name a rider dispatch shows the customer (the rider's own name is staff-only).</summary>
+    public const string RiderCarrierName = "Our delivery rider";
+
     /// <summary>The order number: <c>ORD-{yyyy}-{n:D6}</c> from <c>ordering.order_number_seq</c> (gaps are allowed -- an order number
     /// is not an invoice number).</summary>
     public const string OrderNumberFormat = "ORD-{0:D4}-{1:D6}";

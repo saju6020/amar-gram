@@ -122,6 +122,13 @@ public static class OrdersModule
         services.AddScoped<ICommandHandlerAsync<UpdateCourierCommand>, UpdateCourierCommandHandler>();
         services.AddScoped<IValidator<UpdateCourierCommand>, UpdateCourierCommandValidator>();
 
+        // HO-P4 BG-5: the in-house rider registry
+        services.AddScoped<ICommandHandlerAsync<CreateRiderCommand>, CreateRiderCommandHandler>();
+        services.AddScoped<IValidator<CreateRiderCommand>, CreateRiderCommandValidator>();
+
+        services.AddScoped<ICommandHandlerAsync<UpdateRiderCommand>, UpdateRiderCommandHandler>();
+        services.AddScoped<IValidator<UpdateRiderCommand>, UpdateRiderCommandValidator>();
+
         services.AddScoped<ICommandHandlerAsync<SetBankTransferAccountCommand>, SetBankTransferAccountCommandHandler>();
         services.AddScoped<IValidator<SetBankTransferAccountCommand>, SetBankTransferAccountCommandValidator>();
 
@@ -167,6 +174,13 @@ public static class OrdersModule
         // ── Phase F: fulfilment (C16-C21) ──
         services.AddScoped<ICommandHandlerAsync<StartPackingCommand>, StartPackingCommandHandler>();
         services.AddScoped<IValidator<StartPackingCommand>, StartPackingCommandValidator>();
+
+        // HO-P4 BG-4: packed ("waiting for rider") and the persisted pick-list ticks
+        services.AddScoped<ICommandHandlerAsync<MarkOrderPackedCommand>, MarkOrderPackedCommandHandler>();
+        services.AddScoped<IValidator<MarkOrderPackedCommand>, MarkOrderPackedCommandValidator>();
+
+        services.AddScoped<ICommandHandlerAsync<SetOrderLinePickedCommand>, SetOrderLinePickedCommandHandler>();
+        services.AddScoped<IValidator<SetOrderLinePickedCommand>, SetOrderLinePickedCommandValidator>();
 
         services.AddScoped<ICommandHandlerAsync<DispatchOrderCommand>, DispatchOrderCommandHandler>();
         services.AddScoped<IValidator<DispatchOrderCommand>, DispatchOrderCommandValidator>();
@@ -235,6 +249,7 @@ public static class OrdersModule
         services.AddScoped<IQueryHandlerAsync<GetDeliveryZoneQuery, DeliveryZoneViewModel?>, GetDeliveryZoneQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<ResolveDeliveryZoneQuery, ResolvedDeliveryZoneViewModel>, ResolveDeliveryZoneQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetCouriersQuery, IReadOnlyList<CourierViewModel>>, GetCouriersQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<GetRidersQuery, IReadOnlyList<RiderViewModel>>, GetRidersQueryHandler>(); // HO-P4 BG-5
         services.AddScoped<IQueryHandlerAsync<GetBankTransferAccountQuery, BankTransferAccountViewModel>, GetBankTransferAccountQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetDiscountCodesQuery, IReadOnlyList<DiscountCodeViewModel>>, GetDiscountCodesQueryHandler>();
 
@@ -247,6 +262,7 @@ public static class OrdersModule
         services.AddScoped<IQueryHandlerAsync<GetReturnDetailQuery, StaffReturnDetailViewModel?>, GetReturnDetailQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetPosSkuQuery, PosSkuViewModel?>, GetPosSkuQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<SearchPosSkusQuery, IReadOnlyList<PosSkuViewModel>>, SearchPosSkusQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<BrowsePosSkusQuery, PagedResult<PosSkuViewModel>>, BrowsePosSkusQueryHandler>(); // HO-P4 BG-6
         services.AddScoped<IQueryHandlerAsync<GetCounterQuoteQuery, CounterQuoteViewModel>, GetCounterQuoteQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetReceiptQuery, ReceiptViewModel?>, GetReceiptQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRefundOptionsQuery, RefundOptionsViewModel?>, GetRefundOptionsQueryHandler>();
@@ -254,6 +270,7 @@ public static class OrdersModule
         // ── Phase F: the staff reads ──
         services.AddScoped<IQueryHandlerAsync<GetStaffOrderQueueQuery, PagedResult<StaffOrderRowViewModel>>, GetStaffOrderQueueQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetStaffCustomerOrdersQuery, PagedResult<StaffCustomerOrderRowViewModel>?>, GetStaffCustomerOrdersQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<GetStaffOrderStatusCountsQuery, StaffOrderStatusCountsViewModel>, GetStaffOrderStatusCountsQueryHandler>(); // HO-P4 BG-2
         services.AddScoped<IQueryHandlerAsync<GetStaffOrderDetailQuery, StaffOrderDetailViewModel?>, GetStaffOrderDetailQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetPickListQuery, PickListViewModel>, GetPickListQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetPackingSlipQuery, PackingSlipViewModel?>, GetPackingSlipQueryHandler>();

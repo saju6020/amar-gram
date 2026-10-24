@@ -23,6 +23,7 @@ public static partial class ActionRoles
         (Actions.DeliveryZones.View, [StaffRoles.ShopManager, StaffRoles.Accountant, StaffRoles.Administrator]),
         (Actions.DeliveryZones.Manage, [StaffRoles.ShopManager, StaffRoles.Administrator]),
         (Actions.Couriers.Manage, [StaffRoles.ShopManager, StaffRoles.Administrator]),
+        (Actions.Riders.Manage, [StaffRoles.ShopManager, StaffRoles.Administrator]), // HO-P4 BG-5
         (Actions.Discounts.View, [StaffRoles.ShopManager, StaffRoles.Accountant, StaffRoles.Administrator]),
         (Actions.Discounts.Manage, [StaffRoles.ShopManager, StaffRoles.Administrator]),
         (Actions.Orders.ManagePaymentSettings, [StaffRoles.Administrator]),

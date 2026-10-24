@@ -17,6 +17,9 @@ public static class OrderMessages
     public const string CartChangedOnAnotherDevice = "Your cart changed on another device - please retry.";
     public const string DeliveryZoneNameAlreadyExists = "A delivery zone with this name already exists.";
     public const string CourierNameAlreadyExists = "A courier with this name already exists.";
+    public const string DiscountNeedsCustomerDetails = "This discount code is limited per customer or to a first order, so it needs the customer's name and mobile number.";
+    public const string RiderNameAlreadyExists = "A rider with this name already exists at this branch.";
+    public const string DispatchTargetInvalid = "Choose either a courier or a rider to dispatch with, not both and not neither.";
     public const string DiscountCodeAlreadyExists = "A discount code with this code already exists.";
     public const string IdempotencyKeyRequired = "Send an Idempotency-Key header containing a UUID.";
     public const string IdempotencyKeyReused = "This Idempotency-Key was already used with a different request.";

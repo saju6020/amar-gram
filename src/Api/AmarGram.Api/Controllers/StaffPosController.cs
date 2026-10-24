@@ -47,18 +47,35 @@ public sealed class StaffPosController(IInMemoryDispatcher dispatcher, IUserCont
         return Ok(response.Result);
     }
 
+    /// <summary>HO-P4 BG-6 -- the counter grid: sellable SKUs by name, paged (<c>pageNumber</c>, <c>pageSize</c>), optionally within one <c>category</c> (a product category name, e.g. <c>FreshProduce</c>).
+    /// Same row shape as the search; <c>fefoBatches</c> is empty here.</summary>
+    [HttpGet("browse")]
+    [RequireAction(Actions.Pos.Sell)]
+    public async Task<IActionResult> Browse([FromQuery] string? category, [FromQuery] int? pageNumber, [FromQuery] int? pageSize)
+    {
+        if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
+        if (!EnumQueryParameter.TryParse<ProductCategory>(category, out var parsedCategory)) return BadRequest(new { error = "category is not a product category." });
+
+        var query = new BrowsePosSkusQuery { BranchId = branchId, Category = parsedCategory, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() };
+        if (PagingHelper.ApplyPaging(query, pageNumber, pageSize) is { } invalid) return invalid;
+
+        return Ok((await dispatcher.GetResultAsync(query)).Result);
+    }
+
     [HttpPost("quote")]
     [RequireAction(Actions.Pos.Sell)]
     public async Task<IActionResult> Quote([FromBody] PosQuoteRequest request)
     {
         if (!TryResolveBranch(out var branchId, out var refusal)) return refusal!;
+        if (request.TenderedCash is { } tendered && (tendered <= 0m || tendered > 9_999_999_999.99m || decimal.Round(tendered, 2) != tendered))
+            return BadRequest(new { error = "tenderedCash must be above zero with at most two decimal places." });
         if (request.Lines.Count is 0 or > OrderRules.MaxLines || request.Lines.Any(l => l.Quantity < 1 || l.Quantity > OrderRules.MaxQuantityPerLineHardCap))
             return BadRequest(new { error = $"lines must have 1 to {OrderRules.MaxLines} items, each with a quantity of at least 1." });
 
         var response = await dispatcher.GetResultAsync(new GetCounterQuoteQuery
         {
             BranchId = branchId, CustomerId = request.CustomerId, Lines = request.Lines.Select(l => new CounterQuoteLine(l.SkuId, l.Quantity)).ToList(),
-            DiscountCode = request.DiscountCode, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
+            DiscountCode = request.DiscountCode, TenderedCash = request.TenderedCash, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
         });
 
         return Ok(response.Result);

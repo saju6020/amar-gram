@@ -17,6 +17,7 @@ public sealed partial class AmarGramDbContext
     // ── Phase B: configuration roots ──
     public DbSet<DeliveryZoneAggregate> DeliveryZones => Set<DeliveryZoneAggregate>();
     public DbSet<CourierAggregate> Couriers => Set<CourierAggregate>();
+    public DbSet<RiderAggregate> Riders => Set<RiderAggregate>(); // HO-P4 BG-5
     public DbSet<BankTransferAccountAggregate> BankTransferAccounts => Set<BankTransferAccountAggregate>();
     public DbSet<DiscountCodeAggregate> DiscountCodes => Set<DiscountCodeAggregate>();
 

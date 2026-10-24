@@ -213,3 +213,34 @@ public sealed class RevenueTodayByLineTile : IDashboardTileSource
         return new DashboardTileResult(figures, DrillFrom: c.Today, DrillTo: c.Today);
     }
 }
+
+/// <summary>
+/// HO-P4 BG-5 -- orders.cod-with-riders: the cash on delivery that is out on the road with the branch's in-house riders -- the dispatched, not yet delivered cash-on-delivery orders
+/// assigned to a rider. <c>riders</c> counts the distinct riders carrying at least one such order, <c>orders</c> the orders, and <c>amount</c> what those orders still owe (grand total less
+/// anything already paid). Live: the moment a delivery is recorded (and its cash booked) the order leaves the figure.
+/// </summary>
+public sealed class CodWithRidersTile : IDashboardTileSource
+{
+    public string Key => "orders.cod-with-riders";
+
+    public async Task<DashboardTileResult> RunAsync(DashboardContext c, CancellationToken ct)
+    {
+        var dispatched = OrderStatus.Dispatched;
+        var cod = OrderPaymentMethod.CashOnDelivery;
+        var outWithRiders = await c.Db.Orders.AsNoTracking()
+            .Where(o => o.BranchId == c.BranchId && o.Status == dispatched && o.PaymentMethod == cod && o.Shipment != null && o.Shipment.RiderId != null)
+            .Select(o => new { RiderId = o.Shipment!.RiderId!.Value, Due = o.Totals.GrandTotal - o.AmountPaid, o.CurrencyCode })
+            .ToListAsync(ct);
+
+        var amount = outWithRiders.Count == 0
+            ? new ReportMoney(0m, c.CurrencyCode)
+            : TileQueries.OneCurrency(outWithRiders.GroupBy(o => o.CurrencyCode).Select(g => (ReportMoney?)new ReportMoney(g.Sum(o => Math.Max(0m, o.Due)), g.Key)));
+
+        return new DashboardTileResult(
+        [
+            DashboardFigure.Count("riders", "Riders carrying cash", outWithRiders.Select(o => o.RiderId).Distinct().Count()),
+            DashboardFigure.Count("orders", "Orders out with riders", outWithRiders.Count),
+            DashboardFigure.Amount("amount", "Cash on delivery out", amount),
+        ]);
+    }
+}
