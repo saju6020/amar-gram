@@ -27,7 +27,7 @@ public sealed class AuditCustomerStaffNoteAddedHandler(
         var entry = new AuditEntryAggregate(Guid.NewGuid());
         entry.Record(new AuditEntryDto(
             EntityType: "CustomerAccount", EntityId: @event.CustomerId, Action: "CustomerNoteAdded",
-            Reason: null, ActorUserId: @event.AuthorStaffId, OccurredOn: timeProvider.GetUtcNow(),
+            Reason: "Staff note added", ActorUserId: @event.AuthorStaffId, OccurredOn: timeProvider.GetUtcNow(),
             BeforeValue: null, AfterValue: $"NoteId={@event.NoteId}",
             UserContext: @event.UserContext, CorrelationId: @event.CorrelationId,
             Category: AuditCategory.BusinessEvent, IpAddress: clientIpAccessor.GetClientIpAddress()));
@@ -51,7 +51,7 @@ public sealed class AuditCustomerTagsChangedHandler(
         var entry = new AuditEntryAggregate(Guid.NewGuid());
         entry.Record(new AuditEntryDto(
             EntityType: "CustomerAccount", EntityId: @event.CustomerId, Action: "CustomerTagsChanged",
-            Reason: null, ActorUserId: @event.UserContext.UserId, OccurredOn: timeProvider.GetUtcNow(),
+            Reason: "Staff tags changed", ActorUserId: @event.UserContext.UserId, OccurredOn: timeProvider.GetUtcNow(),
             BeforeValue: null, AfterValue: $"TagCount={@event.TagCount}",
             UserContext: @event.UserContext, CorrelationId: @event.CorrelationId,
             Category: AuditCategory.BusinessEvent, IpAddress: clientIpAccessor.GetClientIpAddress()));

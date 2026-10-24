@@ -351,8 +351,8 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
             migrationBuilder.InsertData(
                 schema: "admin",
                 table: "branch",
-                columns: ["Id", "code", "name", "time_zone_id", "address_line", "phone_number", "email", "is_active", .. bookkeeping],
-                values: [AdministrationSeed.MainBranchId, "MAIN", "Main outlet", "Asia/Dhaka", null, null, null, true, .. bookkeepingValues]);
+                columns: ["Id", "code", "name", "time_zone_id", "address_line", "phone_number", "email", "is_active", "type", .. bookkeeping],
+                values: [AdministrationSeed.MainBranchId, "MAIN", "Main outlet", "Asia/Dhaka", null, null, null, true, BranchType.Outlet.Value, .. bookkeepingValues]); // HO-P4 BG-21: type Outlet
 
             var locations = new (Guid Id, string Code, string Name, StockLocationKind Kind)[]
             {

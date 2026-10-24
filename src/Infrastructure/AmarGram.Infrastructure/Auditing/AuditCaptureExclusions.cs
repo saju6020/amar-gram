@@ -26,6 +26,10 @@ public static class AuditCaptureExclusions
         // HO-XCT-001 section 5.3 / ADR-309 -- one row per page view must not write one audit row per page view; the batch is anonymous and holds no identity.
         typeof(AmarGram.Domain.Aggregates.Operations.WebVitalBatchAggregate),
 
+        // HO-P4 BG-19 -- staff notes are free text about a customer. A DataChange row would copy the text into the immutable audit table, where erasure
+        // could never remove it; the BusinessEvent rows (CustomerNoteAdded / CustomerTagsChanged: who, which note id, when) are the audit trail.
+        typeof(AmarGram.Domain.Aggregates.Account.CustomerStaffRecordAggregate),
+
         // HO-IMP-001 ADR-098 -- every ledger row already records who, what, when and why; auditing it twice would double the busiest table.
         typeof(StockLedgerEntryAggregate),
         typeof(StockReservationEntryAggregate),
