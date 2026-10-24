@@ -61,6 +61,10 @@ public sealed class CompleteCounterSaleCommandHandler(
             return Violation(ex.ErrorCode, nameof(command.CustomerMobile), ex.Message);
         }
 
+        // The reserved number is the system account's alone: a cashier cannot name it as a buyer (that would put an order on the system account).
+        if (!anonymous && AnonymousCounterCustomer.IsReservedMobile(mobile))
+            return Violation(BusinessViolationCodes.InvalidMobileNumber, nameof(command.CustomerMobile), "This does not look like a valid mobile number.");
+
         // ADR-216 (amended 2026-10-10, ORD 42/43; FU1 D2): the buyer is found or registered in its own short transaction BEFORE any business check and before the
         // sale's scope opens. A shape-valid name + mobile therefore always leaves the walk-in stored, even when the sale is then refused (stock, tenders...);
         // the account intentionally outlives a refused sale and the retry reuses it. A lost race on the unique mobile cannot abort the sale. FU1 D1: a mobile held by a

@@ -112,7 +112,8 @@ public sealed class GetCounterQuoteQueryHandler(ICheckoutInputsLoader loader, Ti
 
         // HO-P4 BG-7: the change for the cash the customer hands over, by the very rule the sale applies (TenderCalculator) -- never worked out in the browser.
         MoneyViewModel? changeDue = null, cashShort = null;
-        if (query.TenderedCash is { } tendered && canSell)
+        // A sale whose quantity the quote had to cut down is refused at completion (a counter sale is never silently reduced), so there is no change to show for it.
+        if (query.TenderedCash is { } tendered && canSell && quote.Changes.All(c => c.Kind != CheckoutChangeKind.QuantityReduced))
         {
             var handed = MinorUnits.FromAmount(tendered);
             var outcome = TenderCalculator.Evaluate(quote.Totals.GrandTotal, [new CounterTender(TenderMethod.Cash, handed, null)]);
