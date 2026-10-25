@@ -26,8 +26,10 @@ public sealed class BrowseCustomersQueryHandler(AmarGramDbContext db)
             var term = query.Search.Trim();
             var pattern = "%" + EscapeLike(term) + "%";
             var digits = new string(term.Where(char.IsDigit).ToArray());
+            // Match mobiles only for a phone-like term ("01711 000", "+880-17..."): a name or email with digits in it must not hit random mobiles.
+            var phoneLike = term.All(ch => char.IsDigit(ch) || ch is ' ' or '+' or '-');
 
-            customers = digits.Length >= 3
+            customers = phoneLike && digits.Length >= 3
                 ? customers.Where(c => EF.Functions.ILike(c.FullName, pattern, "\\")
                     || (c.EmailAddress != null && EF.Functions.ILike(c.EmailAddress.Value, pattern, "\\"))
                     || (c.MobileNumber != null && c.MobileNumber.Value.Contains(digits)))

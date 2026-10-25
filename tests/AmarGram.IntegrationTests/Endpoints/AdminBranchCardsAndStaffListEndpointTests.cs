@@ -172,10 +172,17 @@ public sealed class AdminBranchCardsAndStaffListEndpointTests(AdministrationApiF
 
     // ── BG-22 ────────────────────────────────────────────────────────────────────────────────────
 
-    private async Task<JsonElement> StaffRowAsync(HttpClient admin, Guid staffId, string? search = null)
+    private async Task<JsonElement> StaffRowAsync(HttpClient admin, Guid staffId)
     {
-        var page = await JsonOf(await admin.GetAsync("/api/staff-accounts?pageSize=100" + (search is null ? "" : $"&search={Uri.EscapeDataString(search)}")));
-        return page.GetProperty("items").EnumerateArray().Single(r => r.GetProperty("id").GetGuid() == staffId);
+        // Page until this account turns up: the shared database holds many pages of identically named staff (README §16.1).
+        for (var pageNumber = 1; ; pageNumber++)
+        {
+            var page = await JsonOf(await admin.GetAsync($"/api/staff-accounts?pageSize=100&pageNumber={pageNumber}"));
+            var items = page.GetProperty("items").EnumerateArray().ToList();
+            var row = items.Where(r => r.GetProperty("id").GetGuid() == staffId).ToList();
+            if (row.Count == 1) return row[0];
+            Assert.True(items.Count == 100, $"Staff account {staffId} is not in the staff list.");
+        }
     }
 
     [Fact]
@@ -215,7 +222,7 @@ public sealed class AdminBranchCardsAndStaffListEndpointTests(AdministrationApiF
 
         // Created through the API: no password yet.
         var mobile = NewMobile();
-        var created = await client.PostAsJsonAsync("/api/staff-accounts", new { fullName = "Not Yet", mobileNumber = mobile, roleIds = new[] { StaffRoles.Reception } }, Json);
+        var created = await client.PostAsJsonAsync("/api/staff-accounts", new { fullName = "Not Yet " + Guid.NewGuid().ToString("N")[..8], mobileNumber = mobile, roleIds = new[] { StaffRoles.Reception } }, Json);
         Assert.True(created.StatusCode == HttpStatusCode.Created, await created.Content.ReadAsStringAsync());
         var newId = (await JsonOf(created)).GetProperty("staffAccountId").GetGuid();
         var notSetUp = await StaffRowAsync(client, newId);
