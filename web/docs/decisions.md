@@ -1888,3 +1888,95 @@ Appended; the entries above are left as written.
 **Why.** One look for every customer screen without forking components, and no risk to staff screens. Owner decisions of 2026-10-16 in `docs/design/shop/README.md` and `docs/design/orders/README.md`
 
 **Status.** Foundation built. `FreeDeliveryProgress` renders only when the server sends the amount still to go (the quote needs a threshold field; the browser never computes one, ADR-FE-105). `PillSteps` and `OrderTracker` take their statuses from the caller, never infer them. Shop and order pages are restyled on top of this in follow-up work.
+
+## ADR-FE-174 … ADR-FE-179 — Store front rebuilt to the approved design (HO-P3)
+
+### ADR-FE-174
+
+**Decision.** **Customer-facing copy says "basket"**: "Basket · 3", "Add to basket", "Your basket". The route stays `/cart`, and code identifiers, hooks, API clients and file names keep `cart`
+
+**Why.** The approved design (`docs/design/store/`) uses "basket" on every screen; renaming code would touch files outside the phase. Owner confirmed D-1 on 2026-10-25
+
+**Status.** Built (S0 shell, product card and quick add; the other slices follow).
+
+### ADR-FE-175
+
+**Decision.** **Checkout is one page** with three numbered sections (Deliver to · Delivery time · Payment) beside an order-summary aside. The customer's choices stay in URL search params and the quote stays the single source of truth; `step` is retired and ignored when present. Amends ADR-FE-090 ("one route with a stepper"); its data rules stand
+
+**Why.** Matches `Checkout.dc.html`. Owner confirmed D-2 on 2026-10-25
+
+**Status.** Decided; built by HO-P3 S3.
+
+### ADR-FE-176
+
+**Decision.** **Store-front shell**: the leaf top strip carries the first `Shop` banner (and is not rendered without one; `BannerStrip` shows the rest); a phone tab bar on `(shop)` pages below `md`, not on `/cart`; a "Secure checkout" header variant on `/checkout`. Amends ADR-FE-173 (header)
+
+**Why.** HO-P3 D-1 … D-7 and `Home.dc.html` / `HomePhone.dc.html`
+
+**Status.** Built. See `ShopTopStrip`, `MobileTabBar`, `PortalHeader`.
+
+### ADR-FE-177
+
+**Decision.** **Design content without API data is omitted, not faked.** Static copy is limited to the design's own headings and promises and states nothing the system does not do. Restates the existing "nothing invented" rule (ADR-FE-105) for this phase
+
+**Why.** HO-P3 D-4; each omission is a HO-P3 §21 backend gap and appears when its gap closes
+
+**Status.** Binding for every HO-P3 slice.
+
+### ADR-FE-178
+
+**Decision.** **A product card whose size is in the basket shows a leaf quantity stepper in place of Add**, on every width. The stepper uses the existing cart-line update; at quantity 1, "−" removes the line and announces it
+
+**Why.** HO-P3 D-7, `HomePhone.dc.html`
+
+**Status.** Built. See `ProductCard`, `QuantityStepper`.
+
+### ADR-FE-179
+
+**Decision.** **The account keeps separate routes** for the order list, order detail, return, and the four profile tabs. The overview, sidebar and pages take the design's look. The account menu keeps Wishlist, My reviews, Billing and Messages; Subscriptions is not added until its API exists
+
+**Why.** Deep links, `UnsavedChangesGuard` and the password-confirmed deletion page depend on separate routes (HO-P3 D-5, D-6)
+
+**Status.** Decided; built by HO-P3 S4.
+
+## ADR-FE-180 … ADR-FE-184 — Back office rebuilt to the approved design (HO-P4)
+
+### ADR-FE-180
+
+**Decision.** **Back-office primitives live in `components/back-office/`** (`PageHeader`, `Panel`, `KpiTile`, `StatusPill`, `PillTabs`, `UnderlineTabs`, `SplitView`, `TableFrame`, `SearchField`, `ActionLink`, `AttentionRow`). Area components restyle by composing them, not by editing `components/billing/{PageHeader,ResponsiveTable,Fields,Amount}`, which customer screens also render
+
+**Why.** HO-P4 runs in parallel with HO-P3; no file is shared between the two
+
+**Status.** Built (HO-P4 S0).
+
+### ADR-FE-181
+
+**Decision.** **The staff sidebar's labels and grouping come from `staff-nav-groups.ts`** (label overrides), not from renaming area nav files, so a presentation change never touches a file another area owns
+
+**Why.** HO-P4 §8.2
+
+**Status.** Built.
+
+### ADR-FE-182
+
+**Decision.** **The active-branch picker renders in the sidebar** (`variant="sidebar"`) and is still mounted on every staff navigation
+
+**Why.** `docs/design/back-office/` places it under the logo; every staff request still needs `X-Branch-Id`
+
+**Status.** Built.
+
+### ADR-FE-183
+
+**Decision.** **List+detail screens keep the selected record in the URL query** and fall back to the detail route below 1024 px
+
+**Why.** Deep links and the back button keep working; the split view does not fit a phone
+
+**Status.** Decided; built by HO-P4 S2 (`SplitView`).
+
+### ADR-FE-184
+
+**Decision.** **Design elements whose data the API lacks are left out, never stubbed**, and listed in HO-P4's Backend gaps
+
+**Why.** The "nothing invented" rule (ADR-FE-105, ADR-FE-177)
+
+**Status.** Binding for every HO-P4 slice.

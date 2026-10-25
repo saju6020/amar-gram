@@ -113,11 +113,14 @@ reached.
 | ADR-FE-139 … ADR-FE-148 | `HO-XCT-002` (139–148 used) |
 | ADR-FE-149 … ADR-FE-158 | `HO-FIL-002` (all used) |
 | ADR-FE-170 … ADR-FE-172 | HO-ADM-002-FU1 (170–171 used) |
+| ADR-FE-173 | HO-Hearth customer layer (used) |
+| ADR-FE-174 … ADR-FE-180 | `HO-P3-STORE-FRONT` (174–179 used; 180 lent to HO-P4) |
+| ADR-FE-180 … ADR-FE-184 | `HO-P4-BACK-OFFICE` (180–184 used) |
 
 A range is that handover's to spend. Unused numbers inside a range stay with it for later
 amendments; they are not handed to the next area. **ADR-317 … ADR-320** and **ADR-342** are
 cross-cutting decisions recorded in `.ai/decisions/adr.md` rather than in any one handover, because
-more than one area is bound by each. The next new area starts at **ADR-347** (ADR-344 to ADR-346 are HO-BIL-001 Phase J) / **ADR-FE-173** (ADR-FE-164 was used by the HO-CAT-002 photo follow-up; 170–172 are reserved by HO-ADM-002-FU1).
+more than one area is bound by each. The next new area starts at **ADR-347** (ADR-344 to ADR-346 are HO-BIL-001 Phase J) / **ADR-FE-185** (ADR-FE-173 is Hearth, 174–179 HO-P3, 180–184 HO-P4; ADR-FE-164 was used by the HO-CAT-002 photo follow-up; 170–172 are reserved by HO-ADM-002-FU1).
 
 ## Open conflicts between written handovers
 
