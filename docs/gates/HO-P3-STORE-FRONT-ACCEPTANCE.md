@@ -1,96 +1,66 @@
 GATE: ACCEPTANCE
 HANDOVER: HO-P3-STORE-FRONT
-COMMITS: e29a0ae (S0), c908c35 (ADRs), c38bb9d / 860cd03 (S1), 5c5af0e / 2d0d351 (S2), 24ad5f7 / c7c660f (S3), b1b237c / bfb3c28 (S4), f7fe2af, 3c98022, 7cdfd78, 5bd5508, 4713d6a, 889d81f, ed1e892 (HEAD); baseline 46929be
+COMMITS: e29a0ae (S0), c908c35 (ADRs), c38bb9d / 860cd03 (S1), 5c5af0e / 2d0d351 (S2), 24ad5f7 / c7c660f (S3), b1b237c / bfb3c28 (S4), f7fe2af, 3c98022, 7cdfd78, 5bd5508, 4713d6a, 889d81f, ed1e892, 318a35f (HEAD); baseline 46929be
 DATE: 2026-10-25
 STATUS: BLOCKED
 
-Run 1. Prior gate records are all present and say PASS: ARCHITECTURE (run 2), SECURITY, CODE_REVIEW, TEST (run 2). The TEST sheet is docs/test-cases/TC-HO-P3-STORE-FRONT.md: 75 rows, 73 PASS, 2 BLOCKED (E16, E-J).
+Run 2. Run 1 (same date, HEAD ed1e892) was BLOCKED on three owner decisions, D-A, D-B and D-C, plus a MEDIUM on S1's origin copy. Commit 318a35f carries the owner's answers and the copy change.
 
-Why BLOCKED and not PASS: three things need an owner decision that no document records. The only source for them is the TEST gate's statement "owner decision". The owner-ratified amendments in §1 are (a) to (g), and none of these three is among them. Without the decisions, A17 is NOT MET as written, and A8 and A16 rest on narrowed evidence. Each one is fixed by a §1 Amended row (h) or by the work named below. Every other criterion has evidence.
+RESOLVED SINCE RUN 1 (the content)
+- D-A. The (h) text ratifies the shop-product.spec.ts draft-slug change (200 + noindex) and the no-JS change (delivered HTML).
+  - The unverified "a production build answers 404" comment is gone. web/tests/e2e/shop-product.spec.ts now cites "owner-ratified, HO-P3 Amended (h)".
+  - So A17's weakening clause and E5's "draft 404" are covered by an owner ratification.
+- D-B. The idle-lock axe case (accounts-a11y-responsive "E-X1 (idle lock open)") and shop-staff E-C1 pass to HO-P4.
+  - This is recorded in docs/handover/HO-P4-BACK-OFFICE.md §1 Amended (line 42), which names both specs and test names.
+- D-C. E16 is waived to the HO-P3 spec set (518 pass; the only 4 failures are the D-B tests).
+  - HO-P4's Amended row takes the full `npm run test:e2e` at HO-P4 integration.
+- Copy MEDIUM. All three places are softened:
+  - web/components/shop/ShopHero.tsx: "origin named on our products".
+  - web/components/shop/home/GrowersBand.tsx: "Our products name their origin." and "We name the country of origin on our foods…".
+  - web/app/(shop)/shop/countries/page.tsx: likewise.
+  - `git grep` at HEAD finds no remaining "every product" / "every food we sell" claims in web/.
+  - This gate re-ran `npx vitest run tests/components/shop`: 13 files, 282/282 pass. eslint --max-warnings 0 is clean on the 5 changed web files.
+  - The 318a35f web files are all in §13: S1 owns countries/page.tsx, ShopHero.tsx, home/** and home.test.tsx; S2 owns shop-product.spec.ts.
 
-OWNER DECISIONS NEEDED
-- D-A (A17, A8/E5). web/tests/e2e/shop-product.spec.ts:176-190 and :195-205. The draft-slug case no longer requires HTTP 404: it accepts 200 plus noindex. The no-JS case now checks the delivered HTML instead of a visible h1. Neither change is a copy or layout replacement, which is the only kind of weakening A17 allows, and §16 E5 names "draft 404" explicitly.
-  - Commit 5c5af0e's message does not declare the change. This is an undeclared S2 deviation that the TEST gate found.
-  - It is pre-existing, not a regression: app/(shop)/loading.tsx is at baseline 46929be, and TEST run 1 sampled the strict forms failing at baseline.
-  - The test comment says "a production build answers 404". That is unverified, and probably false. In Next 15, notFound() thrown after a loading boundary has started streaming answers 200 with noindex in production too.
-  - Options: (1) ratify as an Amended row, or (2) restore the strict assertions and run the case against `next build` + `next start`.
-  - Lines :145-163 (the hero-image attributes, checked only when a photo URL exists) do follow S2's layout change: with no photo it now shows pack art instead of the placeholder img. I accept that as a layout replacement, but it means NFR-PRF-1 "first image is the LCP element" is no longer exercised by any test.
-- D-B (A16/E12). accounts-a11y-responsive "E-X1 (idle lock open)" fails on both projects, and so does shop-staff E-C1.
-  - Both are staff-area tests, and both failed at baseline (TEST run 1, sampled). §13 also forbids S4 from changing the staff assertions. So HO-P3 cannot fix them in scope.
-  - A16 reads "every a11y spec passes". The handoff to HO-P4 that TEST cites appears in no handover, including HO-P4-BACK-OFFICE.md.
-  - I treat A16 as MET on E12's own wording ("on the account routes"). The owner should record the handoff in HO-P4 so this is not lost.
-- D-C (A17/A4 evidence, E16). The whole `npm run test:e2e` suite was not run. The TC row is BLOCKED, and a BLOCKED row is not a pass. A4 and A17 both cite E16.
-  - A4's text is met by SP1–SP8 and the ADRs. A17's typecheck/lint/Vitest clause is met by TEST's recorded results.
-  - The §16 E16 requirement itself (whole suite green on the integration branch) has no evidence.
-  - Options: run it (the integrator), or have the owner waive it to the HO-P3 spec set that did run (530 runs: 518 pass, 4 fail, all four are D-B).
+WHY STILL BLOCKED (one document defect, mechanical fix)
+- [HIGH] docs/handover/HO-P3-STORE-FRONT.md:67. The "(h)" amendment text was inserted into the §3.1 table's header row, inside the "Stories" header cell. It is not in the §1 Amended row (line 42), which still ends at "(g) … (E4).|".
+  - The handover says amendments live in §1 and the coordinator reports "§1 Amended (h)", but §1 contains no (h).
+  - §3.1's scope table now has a paragraph of amendment prose as a column heading.
+  - The decisions are written down, but not where the handover's own amendment mechanism puts them. The final gate cannot certify against a malformed governing document.
+  - Fix: move the text "**2026-10-25 (owner-ratified, ACCEPTANCE gate run 1).** (h) D-A: … (a bundle has no single country)." from line 67 to the end of the line-42 Amended cell, before its closing `|`. Restore line 67 to `| Design screen | Route(s) today | Slice | Stories |`.
+  - No code change is needed. Once that one doc edit is made, every criterion below is MET and ACCEPTANCE can PASS.
 
-CRITERIA
-- A1 MET. U1–U3 and U8 pass in shell-p3.test.tsx (TC rows U1–U3, U8). E1 shop-shell passes on both projects.
-  - Screenshots home-360 and cart-360: tab bar on /shop and absent on /cart; the footer's Contact column (OQ-3 placeholders) is visible and not covered.
-  - No leaf strip appears because the mocks have no Shop banner. That is the §8.3 rule for a missing banner, and the design's free-delivery strip is G5.
-- A2 MET. U4–U6 in product-card.test.tsx: one POST {skuId, quantity:1}; PUT quantity 3; "−" at 1 removes; fromPrice kept; no Organic badge (G8). E1 and E3 pass on both projects.
-- A3 MET. U7 x2 in portal-header.test.tsx. checkout-1280 screenshot: logo plus "Secure checkout", with no search or menu. E9 and E13 pass. ARCHITECTURE confirms the guard, policy prompt and frame are still mounted.
-- A4 MET. ADR-FE-174..179 are at web/docs/decisions.md:1892-1934, and the range is in docs/handover/README.md:117. SP1–SP8 counts are equal, or higher only by listed additions (TC §17.1 table). E16 is part of D-C.
-- A5 MET.
-  - U10–U14 (home-hero.test.tsx, home.test.tsx). E3 passes on both projects.
-  - Screenshots home-1280 vs Home.dc.html, and home-360 vs HomePhone.dc.html. Same hero band, "Shop the pantry" tiles, "Fresh from the haat", growers band, promises and footer.
-  - Omissions, each matching §21/D-4: the strip (G5); district eyebrows (G1); grower photos (no invented content); "Village on every pack" (G1); the staples box and the footer "Staples box" link (G2); the phone "Delivering to…" line (§4.1).
-  - The phone seasonal card is absent because the mocks have no Home banner (§11 says "if any").
-- A6 MET. U12; countries-load-error.test.tsx (SP5); E6 passes. The countries-360/1280 screenshots render with no overflow.
-- A7 MET.
-  - U15–U18 (catalogue-p3, catalogue-view-503, results-states). E4 passes, with E-A4 under Amended (g). E6 covers the 2/3/4 grid.
-  - catalogue-1280 vs Catalogue.dc.html: band with count, filter card, "Certified organic only" switch, segmented sort, circle pagination.
-  - Omissions: the District group (G1) and card Organic badges (G8).
-- A8 MET, subject to D-A for E5's draft-404 case.
-  - U19–U22 (product-p3, product-page). E5, E7 pass.
-  - product-1280 vs Product.dc.html: badge, eyebrow, Pack size cards with server prices, "400 g pack" note, stepper, Add to basket, tabs, "Goes well with". Wishlist and reviews are kept.
-  - Omissions: "Grown in Birganj" becomes producer · country (G1); "Repeat monthly" (G2); "[DAYS]" (G5); "Origin & batch" becomes "Origin & producer" (G9).
-- A9 MET. U23 and U24 in cart.test.tsx; E8 passes.
-  - cart-360 vs BasketPhone.dc.html: "Your basket", Step 1 of 2, line card with stepper, server subtotal, "Delivery and total are worked out at checkout", sticky footer.
-  - Omitted: Delivery, Total and the free-delivery hint (§4.3, G5).
-- A10 MET.
-  - U25–U31 in checkout.test.tsx. E8 and E9 pass. U30's network-error retry is proved at hook level (TC LOW).
-  - checkout-1280 vs Checkout.dc.html: three numbered sections plus the "Your basket" aside, server reasons on disabled payment cards.
-  - Omitted: the rider note (G4).
-- A11 MET. U32 in account-p3.test.tsx; E10, E12 pass.
-  - signin-1280 vs SignIn.dc.html: leaf panel, "Welcome home.", three reasons, staff link, Sign in / Create link switch.
-  - Omitted: the prototype skip link (§4.2) and the subscription reason (G2).
-- A12 MET. U33 and U34 in account-p3.test.tsx; E13, E14 pass.
-  - portal-1280: sidebar labels per D-6, live order card, default address, tiles kept. No Subscriptions link and no staples box (G2).
-  - The mock serves no order detail for the dashboard's fixture orders, so the tracker and Buy again do not render in the screenshot. U34 asserts both.
-- A13 MET. U35–U37; E9 and E15 pass.
-  - orders-1280 and order-placed-1280 vs MyOrders.dc.html within D-5: order cards with status pills, single-status select (G6), "Thank you! Your order is in.", tracker, Order again, "Invoice INV-…" link (G10), Return an item.
-  - Omitted: batch numbers (G3).
-- A14 MET. U38; E11, E12 pass. data-1280: pill tabs; "Delete my account" is a link (U38 asserts the /portal/account/data/delete href). SECURITY confirms the delete page is the only caller of useDeleteAccount.
-- A15 MET. The §17.2 rg run by this gate at HEAD has 0 hits. no-hex-literals.test.ts is green (it was extended in 4713d6a).
-- A16 MET on E12's wording (see D-B). E1, E3, E6, E9, E12 (account routes), E14 pass on both projects. Every screenshot above has scrollWidth − clientWidth = 0 at 360 and at 1280.
-- A17 NOT MET as written. typecheck, lint and Vitest pass, with 7 load timeouts that pass when run alone (reported by name). But W2 records two weakenings beyond copy or layout (D-A). E16 is not run (D-C). S1–S4 have no slice report listing their test edits; TEST W2's audit is the only listing.
-- A18 Not met by design: deferred (G2, §4.1). No subscription UI was found.
+CRITERIA (evidence as in run 1; changes noted)
+- A1 MET — U1–U3, U8 (shell-p3.test.tsx); E1 on both projects; screenshots home-360/cart-360.
+- A2 MET — U4–U6 (product-card.test.tsx); E1, E3.
+- A3 MET — U7 (portal-header.test.tsx); checkout-1280 screenshot; E9, E13.
+- A4 MET — ADR-FE-174..179 at web/docs/decisions.md:1892-1934 and docs/handover/README.md:117; SP1–SP8 counts. E16 waived (D-C).
+- A5 MET — U10–U14; E3; Home/HomePhone screenshots compared. Omissions are exactly G1, G2 and G5, plus §4.1. The copy is now softened (282/282).
+- A6 MET — U12, countries-load-error.test.tsx, E6. The countries copy is softened.
+- A7 MET — U15–U18, E4 (E-A4 per (g)), E6; Catalogue screenshot. Omissions: G1, G8.
+- A8 MET — U19–U22, E5, E7; Product screenshot. Omissions: G1, G2, G5, G9. E5's draft-slug assertion is per the D-A ratification in the (h) text.
+- A9 MET — U23, U24, E8; BasketPhone screenshot. No client totals (G5, §4.3).
+- A10 MET — U25–U31, E8, E9; Checkout screenshot. The rider note is omitted (G4).
+- A11 MET — U32, E10, E12; SignIn screenshot.
+- A12 MET — U33, U34, E13, E14; portal screenshot. The staples box is omitted (G2).
+- A13 MET — U35–U37, E9, E15; MyOrders screenshots. The G3, G6 and G10 interim versions are in place.
+- A14 MET — U38, E11, E12; deletion goes through /portal/account/data/delete.
+- A15 MET — §17.2 rg at HEAD returns 0 hits; no-hex-literals.test.ts is green.
+- A16 MET — E1, E3, E6, E9, E12 (account routes), E14 pass. The staff idle-lock case is HO-P4's (D-B, recorded in HO-P4 §1). Screenshots show zero overflow at 360 and 1280.
+- A17 MET, given (h) — typecheck, lint and Vitest pass (load timeouts pass alone, reported by name). The two beyond-copy weakenings are owner-ratified (D-A). E16 is waived (D-C).
+- A18 Not met by design (G2, §4.1). No subscription UI was built.
 
 FINDINGS
-- [MEDIUM] web/tests/e2e/shop-product.spec.ts:176-205 — weakened beyond copy or layout and undeclared in 5c5af0e (D-A).
-- [MEDIUM] web/components/shop/home/GrowersBand.tsx and web/components/shop/ShopHero.tsx — S1's replacement copy ("the origin named on every product" / "We name the country of origin on every food we sell") overclaims slightly.
-  - The Breakfast Starter Kit card shows only "AMAR GRAM", with no country.
-  - ADR-FE-177 requires that static copy "states nothing the system does not do".
-  - The deviation is otherwise sound. Owner to accept, or soften to "on our products".
-- [LOW] 4713d6a and 889d81f landed after ARCHITECTURE, SECURITY and CODE_REVIEW ran. Their records do not list them, and only TEST run 2 executed them.
-  - This gate checked them against §13 and the Amended rows. The web files belong to S0/S3/S4. src/** is the SECURITY LOW remediation on the OQ-4 backend change. The mocks are under (f), shop-catalogue under (g).
-  - The diff is small and correct: dl grouping, the Remove name, the text-warm fixes, the settling guard and prune in CheckoutScreen, and ZoneName dropped.
-- [LOW] web/components/checkout — with no address and no payment chosen, the "To place your order" list shows overlapping items ("Choose a delivery address." and "Choose or add a delivery address.") and "That payment method isn't available" before any method is chosen (checkout-1280).
-- [LOW] web/components/product/ProductHeading.tsx — plainExcerpt joins description lines without punctuation ("…rich in fibre No artificial additives Read…").
-- [LOW] web/components/portal/dashboard/BuyAgain.tsx — the added state is an icon plus aria-label only. The design shows "✓ added" text, and U34 says it "turns into 'added'".
+- [HIGH] docs/handover/HO-P3-STORE-FRONT.md:67 — amendment (h) is misplaced in the §3.1 table header, not in the §1 Amended row (line 42). See above.
+- [LOW] web/tests/e2e/shop-product.spec.ts:145-163 — the hero-image LCP attribute checks run only when a photo URL exists, and the mock sends none. NFR-PRF-1's "first image is the LCP element" is therefore not exercised by any test. It is a layout replacement, so it was accepted in run 1. Suggested: a mock product with a photo URL.
+- [LOW] 4713d6a and 889d81f were not seen by ARCHITECTURE, SECURITY or CODE_REVIEW. This gate checked both against §13 and Amended (f)/(g) in run 1: in scope and correct.
+- [LOW] web/components/checkout — the "To place your order" hints overlap, and they name a payment method as unavailable before any method is chosen.
+- [LOW] web/components/product/ProductHeading.tsx — plainExcerpt joins description lines without punctuation.
+- [LOW] web/components/portal/dashboard/BuyAgain.tsx — the added state is an icon plus aria-label only; the design shows "✓ added" text.
 
-Deliberate copy deviations judged (none fails):
-- S1 hero/growers: acceptable, with the MEDIUM above.
-- S1 fourth promise card: it is §11's own "existing delivery/pickup fact".
-- S4 "Welcome back, {name}" and "Create an account": required by the frozen §14 specs portal-real-api.spec.ts and journey-real-api.spec.ts.
-- S2 Details tab name "Details, ingredients & certification": it starts with the visible label, so it passes WCAG 2.5.3.
-- S2 price note "400 g pack" / "3 × 2 kg": exactly §11 and U19. The CODE_REVIEW concern that it may read as a total is a design question for the owner.
-- G1/G4/G5/G8 UI wiring was correctly not done (no riderNote or district reads in web/; OQ-4 follow-up).
-
-Screenshots (scratch, not committed): C:\Users\SHAHJA~1\AppData\Local\Temp\claude\d--my-repo-amar-gram\69818e0e-bfd2-4e52-9fe9-0a7c1dc949c0\scratchpad\shots (18 routes x 360/1280), and the design renders in ...\scratchpad\design.
+Deliberate copy deviations (judged in run 1; none fails): S1 hero/growers (now softened); S1 fourth promise card (§11's delivery/pickup fact); S4 "Welcome back, {name}" / "Create an account" (frozen §14 specs); S2 Details tab name (passes 2.5.3); S2 price note (§11, U19).
 
 SCOPE CHECK
-- files in allowed scope: 157/157 per ARCHITECTURE run 2, plus 4713d6a (10 web files, all §13; 2 src + 1 test under the OQ-4 backend change) and 889d81f (mocks under Amended (f), shop-catalogue.spec under (g)). Since 46929be, no HO-P3 commit touches web/lib, nav, globals.css or package.json.
+- files in allowed scope: run 1's set, plus 318a35f's 5 web files (all §13 S1/S2) and its docs (handover §1 rows, this gate file).
 - files outside allowed scope: none
-- out-of-scope work (§4) found: none. No subscriptions, district, rider note, free-delivery figure, card UI or client money arithmetic.
+- out-of-scope work (§4) found: none
