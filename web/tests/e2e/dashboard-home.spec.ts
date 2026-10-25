@@ -30,7 +30,14 @@ test('E-A2: an accountant sees money tiles; an inventory clerk sees stock but no
 
   await openReportsAs(page, 'Inventory', '/staff');
   await expect(page.getByRole('heading', { level: 2, name: 'Expiring stock' })).toBeVisible();
-  await expect(page.getByText(/payments|receivables|revenue/i)).toHaveCount(0);
+  // The figures the server sent carry no money for this role. (Scoped to the tiles: the "Latest
+  // orders" panel below can legitimately say "Waiting for payment" in an order's status.)
+  await expect(
+    page.locator('section[aria-labelledby^="tile-"]').getByText(/payments|receivables|revenue/i),
+  ).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 2, name: /payments|receivables/i })).toHaveCount(0);
+  // ...and the approvals row is dropped for a role without Billing (its 403 is not a banner).
+  await expect(page.getByRole('link', { name: /waiting for approval/i })).toHaveCount(0);
 });
 
 test('E-X1/E-X2: the dashboard is axe-clean and never scrolls sideways', async ({ page }) => {

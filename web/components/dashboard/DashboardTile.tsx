@@ -13,10 +13,12 @@ export function drillDownHref(drillDown: NonNullable<DashboardTileData['drillDow
 }
 
 /**
- * `components/dashboard/DashboardTile.tsx` — HO-RPT-002 §11.2. A card: title, one to four figures,
- * an optional note and an optional "View report →". The link is rendered ONLY when the server sent
- * a `drillDown` (it sends `null` when the caller may not open the report, OQ-4); the page never
- * decides that itself.
+ * `components/dashboard/DashboardTile.tsx` — HO-RPT-002 §11.2, HO-P4 §11.2.2. A card in the design's
+ * KPI look (16 px radius, muted label, large figure): title, one to four figures, an optional note
+ * and an optional "View report →". The server sends one to four figures per tile, so the card lays
+ * them out itself rather than going through the single-value `KpiTile`. The link is rendered ONLY
+ * when the server sent a `drillDown` (it sends `null` when the caller may not open the report,
+ * OQ-4); the page never decides that itself.
  */
 export function DashboardTile({
   tile,
@@ -29,9 +31,9 @@ export function DashboardTile({
   return (
     <section
       aria-labelledby={headingId}
-      className="flex min-w-0 flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-4"
+      className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-surface p-[18px]"
     >
-      <h2 id={headingId} className="text-sm font-bold text-ink">
+      <h2 id={headingId} className="text-sm font-semibold text-ink-muted">
         {tile.title}
       </h2>
       <dl className="m-0 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
@@ -39,7 +41,7 @@ export function DashboardTile({
           <TileFigure key={figure.key} figure={figure} timeZoneId={timeZoneId} />
         ))}
       </dl>
-      {tile.note && <p className="m-0 text-xs text-ink-muted">{tile.note}</p>}
+      {tile.note && <p className="m-0 text-[13px] text-ink-muted">{tile.note}</p>}
       {tile.drillDown && (
         <Link
           href={drillDownHref(tile.drillDown)}

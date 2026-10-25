@@ -59,10 +59,10 @@ export function ReportFilterBar({
         event.preventDefault();
         onApply(draft);
       }}
-      className="flex flex-col gap-4 rounded-[var(--radius-md)] border border-border bg-surface p-4"
+      className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4"
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
+      <div className="grid grid-cols-1 items-end gap-x-4 gap-y-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="flex flex-col gap-1 sm:col-span-2 xl:col-span-4">
           <span id="range-presets" className="text-sm font-semibold text-ink">
             Date range
           </span>
@@ -73,7 +73,7 @@ export function ReportFilterBar({
               onClick={() =>
                 update({ from: definition.defaultRange.from, to: definition.defaultRange.to })
               }
-              className="rounded-full border border-border-strong px-3 py-1 text-sm font-semibold text-ink aria-pressed:bg-accent aria-pressed:text-white"
+              className="rounded-full border border-border-strong px-3 py-1 text-sm font-semibold text-ink aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-surface"
             >
               Default: {periodLabel(definition.defaultPeriod)}
             </button>

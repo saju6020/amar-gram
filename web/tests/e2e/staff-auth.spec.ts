@@ -1,5 +1,6 @@
 import { test, expect, signInAsStaff, secondStaff } from './fixtures';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
+import { expectAxeClean } from './reports-helpers';
 
 /**
  * `tests/e2e/staff-auth.spec.ts` — US-ACC-08/US-ACC-14, HO-ACC-002 §16. §13 names this file. The
@@ -269,4 +270,19 @@ test('ARCHITECTURE gate fifth pass, MEDIUM: locking while genuinely offline does
 
   await expect(dialog).toBeHidden();
   await expect(fullNameField).toHaveValue('Unsaved draft while offline');
+});
+
+test('E6: the staff sign-in page is the leaf full-bleed frame with the h1 "Staff sign in"', async ({
+  page,
+}) => {
+  await page.goto('/staff/sign-in');
+  await expect(page.getByRole('heading', { level: 1, name: 'Staff sign in' })).toBeVisible();
+  await expect(page.getByTestId('staff-auth-frame')).toHaveClass(/bg-leaf-ink/);
+  await expect(page.getByText(/Staff and customer accounts are separate/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  await expectAxeClean(page);
 });
