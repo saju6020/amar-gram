@@ -33,8 +33,8 @@ export function PortalHeader({ sessionActions }: { sessionActions?: React.ReactN
     return (
       <header className="border-b-[1.5px] border-border bg-surface">
         <div className="mx-auto flex w-full max-w-[1224px] items-center justify-between gap-3 px-4 py-3 md:px-8 md:py-4">
-          <HearthLogo variant="portal" href="/" />
-          <p className="m-0 inline-flex items-center gap-2 text-sm font-semibold text-leaf-ink">
+          <HearthLogo variant="portal" href="/" className="text-xl sm:text-2xl" tagClassName="hidden sm:inline-block" />
+          <p className="m-0 inline-flex flex-none items-center gap-2 text-sm font-semibold text-leaf-ink">
             <Lock size={16} aria-hidden="true" />
             Secure checkout
           </p>
@@ -46,7 +46,8 @@ export function PortalHeader({ sessionActions }: { sessionActions?: React.ReactN
   return (
     <header className="border-b-[1.5px] border-border bg-surface">
       <div className="flex w-full items-center gap-3 px-3.5 py-3 md:gap-4 md:px-[22px] md:py-3.5">
-        <HearthLogo variant="portal" href="/" />
+        {/* At 360 px the full logo, basket, inbox and account button overflow; the logo shrinks and drops its tag below sm. */}
+        <HearthLogo variant="portal" href="/" className="text-xl sm:text-2xl" tagClassName="hidden sm:inline-block" />
         <div className="hidden min-w-0 flex-1 md:flex">
           <SearchForm />
         </div>
