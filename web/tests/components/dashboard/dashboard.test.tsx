@@ -8,7 +8,20 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { dashboardControl, resetReportsMockData } from '@/mocks/handlers/reports';
 import { useDashboard } from '@/lib/hooks/useReports';
 import type { Dashboard, DashboardTile } from '@/lib/api/dashboard';
-import { renderWithClient } from '../reports/helpers';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { asAdministrator, renderWithClient } from '../reports/helpers';
+
+/**
+ * The page's "Needs attention" and "Latest orders" panels use branch-scoped queries, whose hook seeds
+ * the active branch (the staff shell does this in the app, before any page mounts). Seeding it
+ * up front keeps the dashboard's query key still, so the poll counts below are the page's own.
+ */
+function renderWithActiveBranch(ui: React.ReactElement) {
+  asAdministrator();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(['staff', 'active-branch'], 'b0000000-0000-0000-0000-00000000a001');
+  return { client, ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>) };
+}
 
 const money = (amount: string) => ({ amount, currencyCode: 'BDT' });
 
@@ -74,7 +87,10 @@ describe('DashboardView — U-A series', () => {
   it('U-A4: no link without a drillDown, a link with one', () => {
     const without = { ...ordersToday, key: 'n', title: 'No link', drillDown: null };
     render(<DashboardView dashboard={payload([without, ordersToday])} updatedAt={1} />);
-    expect(screen.getAllByRole('link')).toHaveLength(1);
+    // Same strength as before, scoped to the tile links: the header now also carries the two
+    // shortcut actions ("New counter sale", "Receive goods"), which are not tile links.
+    expect(screen.getAllByRole('link', { name: /View report/ })).toHaveLength(1);
+    expect(screen.getAllByRole('link')).toHaveLength(3);
     expect(screen.getByRole('link', { name: /View report/ })).toHaveAttribute(
       'href',
       '/staff/reports/order-fulfilment?from=2026-10-14&to=2026-10-14',
@@ -127,7 +143,7 @@ describe('DashboardView — U-A series', () => {
 
   it('U-A5: a real refetch of /staff updates the figures, keeps the dialog open and focus where it was, and announces politely', async () => {
     resetReportsMockData();
-    const { client } = renderWithClient(
+    const { client } = renderWithActiveBranch(
       <>
         <StaffHomePage />
         <ConfirmDialog

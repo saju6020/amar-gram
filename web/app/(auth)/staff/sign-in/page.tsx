@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { AuthCard } from '@/components/auth/AuthCard';
+import { StaffAuthFrame } from '@/components/back-office-overview/StaffAuthFrame';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { useSignInStaff } from '@/lib/hooks/useStaffAuthMutations';
 import { restorePreservedBranch } from '@/lib/branch';
@@ -14,11 +14,14 @@ import { sanitizeNextPath } from '@/lib/validation/nextPath';
 // staff screen, never the warm customer layer.
 export default function StaffSignInPage() {
   return (
-    <AuthCard title="Staff sign in">
+    <StaffAuthFrame
+      title="Staff sign in"
+      helper="Use your staff mobile number or email. Staff and customer accounts are separate."
+    >
       <Suspense fallback={null}>
         <StaffSignInPageContent />
       </Suspense>
-    </AuthCard>
+    </StaffAuthFrame>
   );
 }
 

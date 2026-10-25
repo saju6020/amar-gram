@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { PageHeader } from '@/components/back-office/PageHeader';
 import {
   DuplicateGroupList,
   DUPLICATE_GROUPS_PAGE_SIZE,
@@ -14,8 +15,11 @@ import { useDuplicateCustomerGroups } from '@/lib/hooks/useStaffCustomers';
 // moves down to wrap the content that actually calls useSearchParams() now.
 export default function DuplicatesPage() {
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="font-display text-xl font-semibold text-ink">Duplicate customers</h1>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="Duplicate customers"
+        description="Records that look like the same person. Review a group to merge it."
+      />
       <Suspense fallback={null}>
         <DuplicatesPageContent />
       </Suspense>

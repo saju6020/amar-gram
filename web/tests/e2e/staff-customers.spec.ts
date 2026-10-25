@@ -1,5 +1,6 @@
 import { test, expect, signInAsStaff } from './fixtures';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
+import { expectAxeClean, expectNoHorizontalScroll } from './reports-helpers';
 
 /** Walk-in registration and duplicate merge — HO-ACC-002 §16 E-H/E-I series, run against MSW. */
 
@@ -46,4 +47,28 @@ test('E-I1: merge a duplicate pair — the chosen record survives', async ({ pag
   await expect(page.getByText(/the records have been merged/i)).toBeVisible();
   await page.getByRole('link', { name: 'View the surviving record' }).click();
   await expect(page.getByText('Duplicate Alpha').first()).toBeVisible();
+});
+
+test('E5: /staff/customers — search by mobile, select, see the profile, "New order" opens the counter for that customer', async ({
+  page,
+}) => {
+  await page.goto('/staff/customers');
+  await expect(page.getByRole('heading', { level: 1, name: 'Customers' })).toBeVisible();
+  await expect(page.getByText('Search by mobile number or email.')).toBeVisible();
+
+  await page.getByLabel('Mobile number or email').fill(accountsFixtureIds.customerMobile);
+  await page.getByLabel('Mobile number or email').press('Enter');
+  await expect(page).toHaveURL(/q=01799999999/);
+
+  await page.getByRole('button', { name: /Sam Rahman/ }).click();
+  await expect(page).toHaveURL(new RegExp(`customer=${accountsFixtureIds.customerId}`));
+  await expect(page.getByRole('heading', { level: 2, name: 'Sam Rahman' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Orders' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Billing' })).toBeVisible();
+
+  await expectAxeClean(page);
+  await expectNoHorizontalScroll(page);
+
+  await page.getByRole('link', { name: 'New order' }).click();
+  await expect(page).toHaveURL(/\/staff\/pos\?customerId=/);
 });

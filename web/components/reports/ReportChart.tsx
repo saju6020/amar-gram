@@ -41,6 +41,7 @@ export function ReportChart({
   const [open, setOpen] = useState(false);
   const series = useMemo(() => columns.filter((c) => SERIES_TYPES.includes(c.type)), [columns]);
   const [seriesKey, setSeriesKey] = useState('');
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const regionId = useId();
 
   const labelColumns = columns.filter((c) => !SERIES_TYPES.includes(c.type));
@@ -99,7 +100,7 @@ export function ReportChart({
       {open && (
         <div
           id={regionId}
-          className="rounded-[var(--radius-md)] border border-border bg-surface p-3"
+          className="relative overflow-hidden rounded-2xl border border-border bg-surface p-3"
         >
           <Suspense
             fallback={
@@ -114,8 +115,14 @@ export function ReportChart({
               axisLabel={axisLabel}
               seriesLabel={active.label}
               formatTick={(value) => formatAxisTick(value, currency)}
+              onActivePoint={setActiveIndex}
             />
           </Suspense>
+          <p aria-live="polite" className="mt-2 min-h-5 text-sm text-ink-muted">
+            {activeIndex !== null && points[activeIndex]
+              ? `${points[activeIndex].label}: ${points[activeIndex].text}`
+              : ''}
+          </p>
           <table className="sr-only" data-testid="chart-data-table">
             <caption>
               {title}: {columnHeading(active)}
