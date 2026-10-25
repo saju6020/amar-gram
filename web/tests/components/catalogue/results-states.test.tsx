@@ -45,7 +45,7 @@ describe('NoResults — HO-SHP-002 §11.2, US-SHP-06 AC3', () => {
     render(
       <NoResults q="" suggestions={null} hrefForQuery={() => ''} clearHref="/shop/products" />,
     );
-    expect(screen.getByText('Nothing matches these filters')).toBeInTheDocument();
+    expect(screen.getByText('Nothing matches those filters')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Clear filters' })).toHaveAttribute(
       'href',
       '/shop/products',

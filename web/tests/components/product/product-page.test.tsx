@@ -64,7 +64,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
   it('U-B2: an out-of-stock variant offers the alert while the others still read In stock', async () => {
     const user = userEvent.setup();
     purchase();
-    const selector = within(screen.getByRole('group', { name: 'Choose a size' }));
+    const selector = within(screen.getByRole('group', { name: 'Pack size' }));
     await user.click(screen.getByRole('radio', { name: /4 kg/ }));
 
     const buyBox = within(screen.getByRole('region', { name: 'Price and availability' }));
@@ -178,12 +178,12 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
     expect(price().getByText('৳650.00')).toBeInTheDocument();
   });
 
-  it('puts the Add to cart button in the action slot (HO-ORD-002)', () => {
+  it('puts the Add to basket button in the action slot (HO-ORD-002)', () => {
     const { container } = purchase();
     const slot = container.querySelector('[data-slot="buy-box-actions"]');
     expect(slot).toBeInTheDocument();
     expect(slot).not.toBeEmptyDOMElement();
-    expect(screen.getByRole('button', { name: /add to cart/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /add to basket/i })).toBeEnabled();
   });
 
   it('handles every SKU being out of stock (fail-closed availability) with honest messaging', () => {
@@ -204,16 +204,16 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
         heading={<h1>x</h1>}
       />,
     );
-    const group = within(screen.getByRole('group', { name: 'Choose a size' }));
+    const group = within(screen.getByRole('group', { name: 'Pack size' }));
     expect(group.getAllByText('Out of stock')).toHaveLength(3);
     expect(screen.getAllByText('Out of stock').length).toBeGreaterThan(3);
-    expect(screen.getByRole('button', { name: /add to cart/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /add to basket/i })).toBeDisabled();
     expect(screen.getByText('This variant is out of stock.')).toBeInTheDocument();
   });
 });
 
 describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
-  it('U-B4: ingredients as text, certifications and certificate, storage and labelling, origin', async () => {
+  it('U-B4: details as text (ingredients, certifications, certificate, storage) and the origin tab', async () => {
     const user = userEvent.setup();
     render(
       <ProductDetailsTabs
@@ -222,21 +222,20 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Ingredients & certification' }));
-    const panel = screen.getByRole('tabpanel', { name: 'Ingredients & certification' });
+    // HO-P3 S2: three tabs - Description, Origin & producer, Details.
+    await user.click(screen.getByRole('tab', { name: /^Details/ }));
+    const panel = screen.getByRole('tabpanel', { name: /^Details/ });
     expect(within(panel).getByText(/Whole grain rolled oats/)).toBeInTheDocument();
     expect(within(panel).getByText('Certified organic')).toBeInTheDocument();
     expect(within(panel).getByText('Pesticide-free')).toBeInTheDocument();
     expect(panel).toHaveTextContent('Organic certifier: Bangladesh Organic Council');
+    expect(panel).toHaveTextContent(/cool, dry place/);
+    expect(panel).toHaveTextContent('Shelf life: 12 months from packing');
 
-    await user.click(screen.getByRole('tab', { name: 'Storage & labelling' }));
-    const storage = screen.getByRole('tabpanel', { name: 'Storage & labelling' });
-    expect(storage).toHaveTextContent(/cool, dry place/);
-    expect(storage).toHaveTextContent('Shelf life: 12 months from packing');
-
-    await user.click(screen.getByRole('tab', { name: 'Origin' }));
-    const origin = screen.getByRole('tabpanel', { name: 'Origin' });
+    await user.click(screen.getByRole('tab', { name: 'Origin & producer' }));
+    const origin = screen.getByRole('tabpanel', { name: 'Origin & producer' });
     expect(origin).toHaveTextContent('Country of origin: Bangladesh');
+    expect(origin).toHaveTextContent('Producer:');
     expect(within(origin).getByText('here').tagName).toBe('STRONG');
   });
 
@@ -245,13 +244,13 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
     render(<ProductDetailsTabs detail={mockDetail(shopFixtureIds.multiVariantSlug)} />);
     screen.getByRole('tab', { name: 'Description' }).focus();
     await user.keyboard('{ArrowRight}');
-    expect(screen.getByRole('tab', { name: 'Ingredients & certification' })).toHaveFocus();
-    expect(screen.getByRole('tab', { name: 'Ingredients & certification' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Origin & producer' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Origin & producer' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
     await user.keyboard('{End}');
-    expect(screen.getByRole('tab', { name: 'Origin' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: /^Details/ })).toHaveFocus();
     await user.keyboard('{Home}');
     expect(screen.getByRole('tab', { name: 'Description' })).toHaveFocus();
   });
@@ -285,7 +284,7 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveAttribute('lang', 'bn');
     expect(container.querySelector('[role="tabpanel"] [lang="bn"]')).not.toBeNull(); // description
     // Ingredients are in bn.
-    const ingredients = container.querySelector('[role="tabpanel"][id$="panel-ingredients"]')!;
+    const ingredients = container.querySelector('[role="tabpanel"][id$="panel-details"]')!;
     expect(ingredients.querySelector('p[lang="bn"]')).not.toBeNull();
   });
 });

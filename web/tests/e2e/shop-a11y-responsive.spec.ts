@@ -20,13 +20,14 @@ const p = shopFixtureIds;
 const EDITOR = `/staff/shop/products/${p.multiVariantProductId}`;
 
 const ROUTES: RouteCase[] = [
-  { path: '/shop', audience: 'none', heading: /fresh from the village/i },
+  { path: '/shop', audience: 'none', heading: /honest food|fresh from the haat/i },
   { path: '/shop/products', audience: 'none', heading: /all products/i },
   { path: '/shop/products?q=zzqqxx', audience: 'none', heading: /results for/i },
   {
     path: '/shop/products?brand=Green%20Valley&availability=inStock&sort=price_asc',
     audience: 'none',
-    heading: /all products/i,
+    // A single chosen producer titles the page (the page's own rule, 2026-10-16).
+    heading: /green valley/i,
   },
   { path: '/shop/countries', audience: 'none', heading: /shop by country/i },
   { path: '/shop/countries/TH', audience: 'none', heading: /thailand/i },

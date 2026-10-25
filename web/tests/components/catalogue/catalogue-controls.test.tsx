@@ -47,8 +47,8 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
     const view = setup('pageNumber=3');
     const aside = () => within(screen.getByRole('complementary', { name: 'Filters' }));
 
-    // Only Category is open on arrival (owner, 2026-10-17): the shopper opens Country first.
-    await user.click(aside().getByRole('button', { name: 'Country of origin' }));
+    // Only Category is open on arrival (owner, 2026-10-17): the shopper opens Origin first.
+    await user.click(aside().getByRole('button', { name: 'Origin' }));
     await user.click(aside().getByRole('checkbox', { name: /Thailand/ }));
     expect(lastUrl()).toBe('/shop/products?origin=TH');
 
@@ -67,17 +67,12 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
 
   it('U-A1: the filter groups are real fieldsets with legends', () => {
     setup();
-    for (const legend of [
-      'Category',
-      'Country of origin',
-      'Producer',
-      'Certification',
-      'Price',
-      'Availability',
-      'Rating',
-    ]) {
+    // HO-P3 S2: "Origin" (was "Country of origin"); the fixture's only certification is Certified
+    // organic, which has its own switch row instead of a Certification group.
+    for (const legend of ['Category', 'Origin', 'Producer', 'Price', 'Availability', 'Rating']) {
       expect(screen.getByRole('group', { name: legend })).toBeInTheDocument();
     }
+    expect(screen.queryByRole('group', { name: 'Certification' })).not.toBeInTheDocument();
   });
 
   it('2026-10-17: on arrival only Category is open; a group holding a choice starts open', async () => {
@@ -86,12 +81,11 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
     const aside = within(screen.getByRole('complementary', { name: 'Filters' }));
     for (const open of ['Category', 'Availability'])
       expect(aside.getByRole('button', { name: open })).toHaveAttribute('aria-expanded', 'true');
-    for (const closed of ['Country of origin', 'Producer', 'Price', 'Certification', 'Rating'])
+    for (const closed of ['Origin', 'Producer', 'Price', 'Rating'])
       expect(aside.getByRole('button', { name: closed })).toHaveAttribute('aria-expanded', 'false');
-    expect(aside.queryByRole('checkbox', { name: /Certified organic/ })).not.toBeInTheDocument();
 
-    await user.click(aside.getByRole('button', { name: 'Certification' }));
-    expect(aside.getByRole('checkbox', { name: /Certified organic/ })).toBeVisible();
+    await user.click(aside.getByRole('button', { name: 'Origin' }));
+    expect(aside.getByRole('checkbox', { name: /Thailand/ })).toBeVisible();
     await user.click(aside.getByRole('button', { name: 'Category' }));
     expect(aside.getByRole('button', { name: 'Category' })).toHaveAttribute(
       'aria-expanded',
@@ -130,11 +124,11 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
     await user.click(button);
 
     const dialog = screen.getByRole('dialog', { name: 'Filters' });
-    // Availability and Certification start closed (2026-10-16); the shopper opens them first.
+    // Availability starts closed (2026-10-16); the shopper opens it first. The organic switch is
+    // always in view (HO-P3 S2).
     await user.click(within(dialog).getByRole('button', { name: 'Availability' }));
     await user.click(within(dialog).getByRole('checkbox', { name: /In stock only/ }));
-    await user.click(within(dialog).getByRole('button', { name: 'Certification' }));
-    await user.click(within(dialog).getByRole('checkbox', { name: /Certified organic/ }));
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Certified organic only' }));
     expect(replace).not.toHaveBeenCalled();
 
     await user.click(within(dialog).getByRole('button', { name: 'Show results' }));
@@ -153,6 +147,8 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
     setup();
     await user.click(screen.getByRole('button', { name: /^Filters/ }));
     const dialog = screen.getByRole('dialog', { name: 'Filters' });
+    // Price starts closed, as on the page.
+    await user.click(within(dialog).getByRole('button', { name: 'Price' }));
     const min = within(dialog).getByLabelText(/Minimum/);
     await user.click(min);
     await user.keyboard('1200');
@@ -165,23 +161,26 @@ describe('CatalogueControls — HO-SHP-002 §11.2', () => {
 
   it('U-C2: an origin page fixes the country and keeps every other filter group', () => {
     setup('', { origin: ['TH'] });
-    expect(screen.queryByRole('group', { name: 'Country of origin' })).not.toBeInTheDocument();
-    for (const legend of ['Producer', 'Certification', 'Price', 'Availability']) {
+    expect(screen.queryByRole('group', { name: 'Origin' })).not.toBeInTheDocument();
+    for (const legend of ['Producer', 'Price', 'Availability']) {
       expect(screen.getByRole('group', { name: legend })).toBeInTheDocument();
     }
+    expect(screen.getByRole('checkbox', { name: 'Certified organic only' })).toBeInTheDocument();
     // The fixed country is neither counted nor offered as a removable chip.
     expect(screen.getByRole('button', { name: 'Filters (0)' })).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Remove filter: Thailand/ }),
+      screen.queryByRole('button', { name: /Remove filter Thailand/ }),
     ).not.toBeInTheDocument();
   });
 
-  it('removing a chip keeps the others; Clear all keeps the search text', async () => {
+  it('removing a chip keeps the others; Clear filters keeps the search text', async () => {
     const user = userEvent.setup();
     setup('q=oats&brand=Sunfield&origin=TH');
-    await user.click(screen.getByRole('button', { name: 'Remove filter: Thailand' }));
+    await user.click(screen.getByRole('button', { name: 'Remove filter Thailand' }));
     expect(lastUrl()).toBe('/shop/products?q=oats&brand=Sunfield');
-    await user.click(screen.getByRole('button', { name: 'Clear all' }));
+    // The filter card's own pill (the chips row has one for phones, where the card is a sheet).
+    const aside = within(screen.getByRole('complementary', { name: 'Filters' }));
+    await user.click(aside.getByRole('button', { name: 'Clear filters' }));
     expect(lastUrl()).toBe('/shop/products?q=oats');
   });
 });

@@ -14,15 +14,15 @@ export function BundleContents({
 }) {
   if (components.length === 0) return null;
   return (
-    <section aria-labelledby="bundle-heading" className="flex flex-col gap-2">
-      <h2 id="bundle-heading" className="font-display text-xl font-semibold text-ink">
+    <section aria-labelledby="bundle-heading" className="flex flex-col gap-3">
+      <h2 id="bundle-heading" className="m-0 font-display text-2xl font-bold text-ink">
         This kit contains
       </h2>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {components.map((component) => (
           <li
             key={`${component.productSlug}-${component.skuLabel}`}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-sm)] border border-border bg-surface px-3 py-2 text-sm"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border-[1.5px] border-border bg-surface px-4 py-3 text-sm"
           >
             <span>
               {component.quantity} ×{' '}

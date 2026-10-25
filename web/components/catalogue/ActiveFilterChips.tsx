@@ -105,17 +105,18 @@ export function ActiveFilterChips({
           <button
             type="button"
             onClick={() => onChange(chip.patch)}
-            aria-label={`Remove filter: ${chip.label}`}
-            className="inline-flex items-center gap-1.5 min-h-11 rounded-pill border border-accent bg-accent-tint px-4 text-sm font-semibold text-ink hover:bg-surface-sunken"
+            aria-label={`Remove filter ${chip.label}`}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-pill border-0 bg-leaf px-4 text-sm font-semibold text-leaf-soft hover:bg-leaf-ink"
           >
             {chip.label}
             <X size={12} aria-hidden="true" />
           </button>
         </li>
       ))}
-      <li>
+      {/* On a phone the filter card is a sheet, so the chips row offers the clear-all; from 768 px the card has it. */}
+      <li className="md:hidden">
         <Button variant="pillSecondary" size="pillMd" onClick={onClearAll}>
-          Clear all
+          Clear filters
         </Button>
       </li>
     </ul>

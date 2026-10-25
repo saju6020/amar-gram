@@ -13,6 +13,8 @@ export interface ProductGalleryProps {
   productName: string;
   /** The product's catalogue category; picks the placeholder tint. */
   category?: string;
+  /** Draws the "Certified organic" badge. Pass it ONLY when the product detail says `CertifiedOrganic`. */
+  organic?: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface ProductGalleryProps {
  * variant with no photo shows the tinted pack drawing instead. Key it by variant so a variant
  * change starts at its first image.
  */
-export function ProductGallery({ images, productName, category }: ProductGalleryProps) {
+export function ProductGallery({ images, productName, category, organic }: ProductGalleryProps) {
   const tone = packToneForCategory(category);
   const [index, setIndex] = useState(0);
   // Photos that fail to load (expired link, rate limit) fall back to the pack drawing, not a broken image.
@@ -41,17 +43,22 @@ export function ProductGallery({ images, productName, category }: ProductGallery
     <div className="flex flex-col gap-3.5">
       <div
         className={cn(
-          'relative grid h-[340px] place-items-center overflow-hidden rounded-band sm:h-[440px] lg:h-[520px]',
+          'relative grid aspect-square w-full place-items-center overflow-hidden rounded-band',
           PACK_BG[tone],
         )}
       >
+        {organic && (
+          <span className="absolute left-5 top-5 z-10 rounded-pill bg-leaf px-3.5 py-1.5 text-[13px] font-semibold text-leaf-soft">
+            Certified organic
+          </span>
+        )}
         {currentSrc ? (
           // eslint-disable-next-line @next/next/no-img-element -- ADR-FE-035: no next/image remote config
           <img
             src={currentSrc}
             alt={currentAlt}
             width={600}
-            height={520}
+            height={600}
             fetchPriority="high"
             onError={() => markFailed(currentSrc)}
             className="size-full object-cover"
@@ -72,18 +79,17 @@ export function ProductGallery({ images, productName, category }: ProductGallery
       {list.length > 1 && (
         <ul aria-label="Product photos" className="m-0 grid list-none grid-cols-4 gap-3 p-0">
           {list.map((image, i) => {
-            const alt = image?.altText || `${productName}, photo ${i + 1}`;
             return (
               <li key={`${image?.url ?? 'placeholder'}-${i}`}>
                 <button
                   type="button"
-                  aria-label={alt}
+                  aria-label={`Show photo ${i + 1}`}
                   aria-pressed={i === index}
                   onClick={() => setIndex(i)}
                   className={cn(
-                    'grid h-24 w-full place-items-center overflow-hidden rounded-[18px] p-0',
+                    'grid aspect-square w-full place-items-center overflow-hidden rounded-[18px] p-0',
                     PACK_BG[tone],
-                    i === index ? 'border-2 border-accent' : 'border border-border',
+                    i === index ? 'border-2 border-accent' : 'border-2 border-transparent',
                   )}
                 >
                   {srcOf(image?.url) ? (

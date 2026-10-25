@@ -2,6 +2,7 @@
 
 import { useId, useState } from 'react';
 import { Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { pillInputClass } from '@/components/hearth/fields';
 import { countryFlag } from '@/lib/format/shop';
 import { categoryLabel, certificationLabel, subcategoryLabel } from '@/lib/shop/labels';
@@ -19,9 +20,13 @@ export interface CatalogueFiltersProps {
   hideOrigin?: boolean;
   priceMode: 'button' | 'live';
   onChange: (patch: Partial<CatalogueParams>) => void;
+  /** Drops every filter (keeps the search). Offered as the outline *Clear filters* pill when given. */
+  onClear?: () => void;
 }
 
 const RATINGS = [4, 3, 2] as const;
+/** The one certification with its own switch row; the others stay as checkboxes. */
+const ORGANIC = 'CertifiedOrganic';
 /** Producers shown before "Show all" — the facet list arrives most-products-first. */
 const BRANDS_COLLAPSED = 8;
 
@@ -40,6 +45,7 @@ export function CatalogueFilters({
   hideOrigin,
   priceMode,
   onChange,
+  onClear,
 }: CatalogueFiltersProps) {
   const uid = useId();
   const [brandSearch, setBrandSearch] = useState('');
@@ -52,6 +58,9 @@ export function CatalogueFilters({
     ? matchingBrands.filter((b, i) => i < BRANDS_COLLAPSED || value.brand.includes(b.name))
     : matchingBrands;
   const selectedCategory = categories.find((c) => c.value === value.category);
+  const organicOffered =
+    facets.certifications.some((c) => c.value === ORGANIC) || value.certification.includes(ORGANIC);
+  const otherCertifications = facets.certifications.filter((c) => c.value !== ORGANIC);
 
   return (
     <div className="flex flex-col gap-3">
@@ -93,11 +102,7 @@ export function CatalogueFilters({
       </FilterGroup>
 
       {!hideOrigin && facets.origins.length > 0 && (
-        <FilterGroup
-          legend="Country of origin"
-          defaultOpen={false}
-          active={value.origin.length > 0}
-        >
+        <FilterGroup legend="Origin" defaultOpen={false} active={value.origin.length > 0}>
           {facets.origins.map((origin) => {
             const flag = countryFlag(origin.code);
             return (
@@ -165,13 +170,13 @@ export function CatalogueFilters({
         </FilterGroup>
       )}
 
-      {facets.certifications.length > 0 && (
+      {otherCertifications.length > 0 && (
         <FilterGroup
           legend="Certification"
           defaultOpen={false}
-          active={value.certification.length > 0}
+          active={value.certification.some((c) => c !== ORGANIC)}
         >
-          {facets.certifications.map((certification) => (
+          {otherCertifications.map((certification) => (
             <CheckOption
               key={certification.value}
               id={`${uid}-certification-${certification.value}`}
@@ -224,6 +229,28 @@ export function CatalogueFilters({
           />
         ))}
       </FilterGroup>
+
+      {organicOffered && (
+        <label
+          htmlFor={`${uid}-organic`}
+          className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-2xl bg-leaf-soft px-3.5 text-leaf-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+        >
+          <span className="font-semibold">Certified organic only</span>
+          <input
+            id={`${uid}-organic`}
+            type="checkbox"
+            checked={value.certification.includes(ORGANIC)}
+            onChange={() => onChange({ certification: toggleValue(value.certification, ORGANIC) })}
+            className="size-[22px] flex-none accent-leaf"
+          />
+        </label>
+      )}
+
+      {onClear && (
+        <Button variant="secondary" size="pillMd" className="border-ink" onClick={onClear}>
+          Clear filters
+        </Button>
+      )}
     </div>
   );
 }

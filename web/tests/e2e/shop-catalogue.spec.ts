@@ -1,5 +1,6 @@
+import type { Locator, Page } from '@playwright/test';
 import { test, expect as baseExpect, signInAsStaff } from './fixtures';
-import { setMaintenance, withFilters } from './shop-helpers';
+import { isMobile, setMaintenance, withFilters } from './shop-helpers';
 
 // First visits compile routes in `next dev`: allow for that.
 const expect = baseExpect.configure({ timeout: 20_000 });
@@ -10,17 +11,44 @@ const expect = baseExpect.configure({ timeout: 20_000 });
  * because it ends on the product page.
  */
 
+/** Only Category is open on arrival (owner, 2026-10-17): open the group, then tick the option. */
+async function tickFilter(scope: Locator, group: string, option: RegExp) {
+  const toggle = scope.getByRole('button', { name: group, exact: true });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await scope.getByRole('checkbox', { name: option }).check();
+}
+
+/**
+ * HO-P3 S2: from 768 px the sort is a segmented radio group; on a phone it stays the native select
+ * ("Sort by"). Both are in the page and CSS shows one, so the spec drives whichever is visible.
+ */
+async function chooseSortPriceAsc(page: Page) {
+  if (isMobile(page)) {
+    await page.getByLabel('Sort by').selectOption('price_asc');
+  } else {
+    await page.getByRole('radiogroup', { name: 'Sort' }).getByText('Price: low to high').click();
+  }
+}
+
+async function expectSortPriceAsc(page: Page) {
+  if (isMobile(page)) {
+    await expect(page.getByLabel('Sort by')).toHaveValue('price_asc');
+  } else {
+    await expect(page.getByRole('radio', { name: 'Price: low to high' })).toBeChecked();
+  }
+}
+
 test.describe('catalogue state lives in the URL', () => {
   test('E-A2: filter, sort, go to page 2, reload, press Back', async ({ page }) => {
     await page.goto('/shop/products');
     await expect(page.getByRole('heading', { level: 1, name: 'All products' })).toBeVisible();
 
     await withFilters(page, async (scope) => {
-      await scope.getByRole('checkbox', { name: /In stock only/ }).check();
+      await tickFilter(scope, 'Availability', /In stock only/);
     });
     await expect(page).toHaveURL(/availability=inStock/);
 
-    await page.getByLabel('Sort by').selectOption('price_asc');
+    await chooseSortPriceAsc(page);
     await expect(page).toHaveURL(/sort=price_asc/);
     await expect(page).toHaveURL(/availability=inStock/);
 
@@ -39,7 +67,7 @@ test.describe('catalogue state lives in the URL', () => {
     await expect(page).toHaveURL(/availability=inStock/);
     await expect(page).toHaveURL(/sort=price_asc/);
     await expect(page).toHaveURL(/pageNumber=2/);
-    await expect(page.getByLabel('Sort by')).toHaveValue('price_asc');
+    await expectSortPriceAsc(page);
 
     // Back restores the previous state of the same filtered, sorted results. (Back immediately
     // after a hard reload bounces in the dev server even for plain links — a framework behaviour, see
@@ -69,10 +97,35 @@ test.describe('catalogue state lives in the URL', () => {
     await expect(status).toBeVisible();
     const before = await status.innerText();
     await withFilters(page, async (scope) => {
-      await scope.getByRole('checkbox', { name: /Thailand/ }).check();
+      await tickFilter(scope, 'Origin', /Thailand/);
     });
     await expect(status).not.toHaveText(before);
     await expect(status).toHaveAttribute('aria-live', 'polite');
+  });
+});
+
+test.describe('the design controls (HO-P3 S2)', () => {
+  test('S2: "Certified organic only" sets the filter, shows a chip and clears again', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products');
+    await withFilters(page, async (scope) => {
+      await scope.getByRole('checkbox', { name: 'Certified organic only' }).check();
+    });
+    await expect(page).toHaveURL(/certification=CertifiedOrganic/);
+    await page.getByRole('button', { name: 'Remove filter Certified organic' }).click();
+    await expect(page).not.toHaveURL(/certification=/);
+  });
+
+  test('S2: the heading band carries the h1 and the count; there is no District filter', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products');
+    const band = page
+      .locator('main header')
+      .filter({ has: page.getByRole('heading', { level: 1 }) });
+    await expect(band.getByRole('status')).toHaveText(/\d+ products?/);
+    await expect(page.getByText('District')).toHaveCount(0);
   });
 });
 

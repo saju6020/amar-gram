@@ -2,24 +2,22 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { useQuickAdd } from '@/components/catalogue/ProductCard';
-import { HearthEyebrow } from '@/components/hearth/HearthBand';
 import { ProductPackArt } from '@/components/hearth/ProductPackArt';
 import { formatPriceRange } from '@/lib/format/shop';
-import { availabilityText } from '@/lib/shop/labels';
 import { productHref } from '@/lib/shop/helpers';
 import { cn } from '@/lib/utils';
 import type { CatalogueItem } from '@/lib/api/shop-catalogue';
 
-const ROW_TONES = ['warm', 'sunken', 'teal'] as const;
+const TONES = ['warm', 'sunken', 'teal'] as const;
 const TILE_BG = {
   warm: 'bg-warm-soft',
   sunken: 'bg-surface-sunken',
   teal: 'bg-accent-tint',
 } as const;
 
-function Row({
+function Tile({
   item,
   index,
   lang,
@@ -32,75 +30,86 @@ function Row({
 }) {
   const href = productHref(item.slug, { lang });
   const quickAdd = useQuickAdd(item, href, onMessage);
-  const tone = ROW_TONES[index % ROW_TONES.length]!;
+  const tone = TONES[index % TONES.length]!;
   const outOfStock = item.availability === 'OutOfStock';
+  const title = item.sizeLabel ? `${item.name} · ${item.sizeLabel}` : item.name;
   return (
-    <li className="flex items-center gap-3 rounded-2xl bg-surface p-3">
-      <span
+    <li className="flex min-w-0 flex-col gap-2.5">
+      <Link
+        href={href}
+        tabIndex={-1}
         aria-hidden="true"
-        className={cn('grid size-[52px] flex-none place-items-center rounded-xl', TILE_BG[tone])}
+        className={cn(
+          'grid aspect-[4/3] place-items-center overflow-hidden rounded-[20px]',
+          TILE_BG[tone],
+        )}
       >
         <ProductPackArt
           tone={tone}
-          className="size-full rounded-none bg-transparent [&>svg]:h-[62%]"
+          className="size-full rounded-none bg-transparent [&>svg]:h-[70%]"
         />
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm">
+      </Link>
+      <div className="flex min-w-0 flex-col gap-0.5">
         <Link
           href={href}
-          className="font-semibold text-ink no-underline hover:text-accent hover:underline"
+          className="text-base font-semibold text-ink no-underline hover:text-accent hover:underline"
         >
           {item.name}
         </Link>
-        <small className="text-[13px] text-ink-muted">
-          {formatPriceRange(item.fromPrice, item.priceVaries)} ·{' '}
-          {availabilityText(item.availability)}
-        </small>
-      </span>
+        <span className="text-[15px] text-ink-muted">
+          {formatPriceRange(item.fromPrice, item.priceVaries)}
+          {item.sizeLabel ? ` · ${item.sizeLabel}` : ''}
+          {outOfStock ? ' · Out of stock' : ''}
+        </span>
+      </div>
       {outOfStock ? (
         <Link
           href={`${href}#stock-alert`}
           aria-label={`Tell me when ${item.name} is back`}
-          className="inline-flex min-h-11 flex-none items-center rounded-pill border border-border-strong bg-surface px-3 text-[13px] font-semibold text-accent-ink no-underline hover:bg-accent-tint"
+          className={buttonVariants({
+            variant: 'pillSecondary',
+            size: 'pillMd',
+            className: 'self-start px-4',
+          })}
         >
           Alert me
         </Link>
       ) : (
-        <button
-          type="button"
+        <Button
+          variant="pill"
+          size="pillMd"
+          className="self-start bg-warm px-5 font-bold text-ink hover:bg-warm-soft"
           aria-busy={quickAdd.busy || undefined}
           aria-label={
-            quickAdd.chooseOnPage ? `Add ${item.name}: choose options` : `Add ${item.name} to cart`
+            quickAdd.chooseOnPage ? `Add ${title}: choose options` : `Add ${title} to basket`
           }
           onClick={() => void quickAdd.run()}
-          className="grid size-11 flex-none place-items-center rounded-pill border border-border-strong bg-surface p-0 text-accent hover:bg-accent-tint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
-          <Plus size={20} aria-hidden="true" />
-        </button>
+          {quickAdd.busy ? 'Adding…' : 'Add'}
+        </Button>
       )}
     </li>
   );
 }
 
 /**
- * HO-SHP-002 §11.3, US-SHP-08 — "Often bought together": the server's frequently-bought-together
- * list as a warm card beside the product details, each row with a 44px *Add* (+) button that follows
- * the same rules as a catalogue card. Renders nothing when the list is empty.
+ * HO-SHP-002 §11.3, US-SHP-08, restyled for HO-P3 S2 — "Goes well with": the server's
+ * frequently-bought-together list as the design's compact tiles (pack drawing, name, "price · size",
+ * Add). Each Add follows the catalogue card's quick-add rule (one size adds straight to the basket,
+ * several sizes go to the product page, an out-of-stock item offers Alert me). Renders nothing when
+ * the list is empty.
  */
 export function OftenBoughtTogether({ items, lang }: { items: CatalogueItem[]; lang?: string }) {
   const [note, setNote] = React.useState<{ text: string; kind: 'ok' | 'problem' } | null>(null);
   if (items.length === 0) return null;
   return (
-    <section
-      aria-labelledby="fbt-title"
-      className="flex flex-col gap-3 rounded-[24px] bg-warm-soft p-7"
-    >
-      <h2 id="fbt-title" className="m-0">
-        <HearthEyebrow className="tracking-[0.08em]">Often bought together</HearthEyebrow>
+    <section aria-labelledby="fbt-title" className="flex flex-col gap-5">
+      <h2 id="fbt-title" className="m-0 font-display text-[30px] font-bold text-ink">
+        Goes well with
       </h2>
-      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+      <ul className="m-0 grid list-none grid-cols-2 gap-5 p-0 md:grid-cols-4">
         {items.slice(0, 4).map((item, index) => (
-          <Row
+          <Tile
             key={item.productId}
             item={item}
             index={index}
@@ -113,7 +122,7 @@ export function OftenBoughtTogether({ items, lang }: { items: CatalogueItem[]; l
         role={note?.kind === 'problem' ? 'alert' : 'status'}
         className={cn(
           'm-0 text-sm font-semibold empty:hidden',
-          note?.kind === 'problem' ? 'text-danger-ink' : 'text-warm-ink',
+          note?.kind === 'problem' ? 'text-danger-ink' : 'text-leaf-ink',
         )}
       >
         {note?.text}
@@ -121,7 +130,7 @@ export function OftenBoughtTogether({ items, lang }: { items: CatalogueItem[]; l
           <>
             {' '}
             <Link href="/cart" className="underline">
-              View cart
+              View basket
             </Link>
           </>
         )}

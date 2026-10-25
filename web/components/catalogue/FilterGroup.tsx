@@ -35,7 +35,7 @@ export function FilterGroup({
           aria-expanded={open}
           aria-controls={bodyId}
           onClick={() => setOpen((current) => !current)}
-          className="-mx-2 flex h-9 w-[calc(100%+1rem)] items-center justify-between gap-2 rounded-[10px] px-2 text-left text-sm font-bold text-ink hover:bg-surface-sunken"
+          className="-mx-2 flex h-11 w-[calc(100%+1rem)] items-center justify-between gap-2 rounded-[10px] px-2 text-left text-[15px] font-semibold text-ink hover:bg-surface-sunken"
         >
           <span className="flex items-center gap-2">
             {legend}
@@ -73,7 +73,7 @@ function Count({ value }: { value: number }) {
 }
 
 const optionRow =
-  'flex min-h-9 cursor-pointer items-center gap-2.5 rounded-[10px] px-2 -mx-2 text-sm text-ink hover:bg-surface-sunken';
+  'flex min-h-11 cursor-pointer items-center gap-2.5 rounded-[10px] px-2 -mx-2 text-sm text-ink hover:bg-surface-sunken';
 
 export function CheckOption({
   id,
@@ -97,7 +97,7 @@ export function CheckOption({
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 flex-none accent-[var(--accent)]"
+        className="size-5 flex-none accent-leaf"
       />
       {icon}
       <span className="min-w-0 flex-1 py-1.5 leading-snug [overflow-wrap:anywhere]">{label}</span>
@@ -126,7 +126,7 @@ export function RadioOption({
       htmlFor={id}
       className={cn(
         optionRow,
-        checked && 'bg-accent-soft font-semibold text-accent-ink hover:bg-accent-soft',
+        checked && 'bg-leaf-soft font-semibold text-leaf-ink hover:bg-leaf-soft',
       )}
     >
       <input
@@ -135,7 +135,7 @@ export function RadioOption({
         name={name}
         checked={checked}
         onChange={onSelect}
-        className="h-4 w-4 flex-none accent-[var(--accent)]"
+        className="size-5 flex-none accent-leaf"
       />
       <span className="min-w-0 flex-1 py-1.5 leading-snug [overflow-wrap:anywhere]">{label}</span>
       {count !== undefined && <Count value={count} />}
