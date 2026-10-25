@@ -17,10 +17,10 @@ namespace AmarGram.Application.DataMappers;
 public static class AdministrationMapper
 {
     public static BranchCreateDto ToDomainDto(this CreateBranchCommand c) =>
-        new(c.Code, c.Name, c.TimeZoneId, c.AddressLine, c.PhoneNumber, c.Email, c.UserContext!, c.CorrelationId);
+        new(c.Code, c.Name, c.TimeZoneId, c.AddressLine, c.PhoneNumber, c.Email, c.UserContext!, c.CorrelationId, ParseNullableEnum<BranchType>(c.Type));
 
     public static BranchDetailsUpdateDto ToDomainDto(this UpdateBranchDetailsCommand c) =>
-        new(c.Name, c.TimeZoneId, c.AddressLine, c.PhoneNumber, c.Email, c.UserContext!, c.CorrelationId);
+        new(c.Name, c.TimeZoneId, c.AddressLine, c.PhoneNumber, c.Email, c.UserContext!, c.CorrelationId, ParseNullableEnum<BranchType>(c.Type));
 
     public static BranchWeeklyHoursDto ToDomainDto(this SetBranchWeeklyHoursCommand c) =>
         new(c.Intervals, c.UserContext!, c.CorrelationId);

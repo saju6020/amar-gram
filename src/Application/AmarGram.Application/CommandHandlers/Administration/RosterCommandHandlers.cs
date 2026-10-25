@@ -6,6 +6,7 @@ using AmarGram.Domain.DomainServices;
 using AmarGram.Domain.Exceptions;
 using AmarGram.Domain.Models;
 using AmarGram.Shared.Common.Constants;
+using AmarGram.Shared.Common.Enums;
 using Platform.Infrastructure.Core.Commands;
 using Platform.Infrastructure.Core.Domain;
 
@@ -63,9 +64,17 @@ public sealed class SetRosterPatternCommandHandler(
         return new CommandResponse { IsSuccess = true, Result = roster.Id };
     }
 
+    private Task<CommandResponse?> CheckBranchAssignmentAsync(Guid staffAccountId, Guid branchId) =>
+        RosterHandlerSupport.CheckBranchAssignmentAsync(assignmentRepository, branchRepository, staffAccountId, branchId);
+}
+
+internal static class RosterHandlerSupport
+{
     /// <summary>ADR-046's sole-branch rule, reused here (§11.4): assigned explicitly, or the only
     /// active branch exists and it is this one.</summary>
-    private async Task<CommandResponse?> CheckBranchAssignmentAsync(Guid staffAccountId, Guid branchId)
+    public static async Task<CommandResponse?> CheckBranchAssignmentAsync(
+        IAggregateRootRepository<StaffBranchAssignmentAggregate> assignmentRepository,
+        IAggregateRootRepository<BranchAggregate> branchRepository, Guid staffAccountId, Guid branchId)
     {
         var assignment = await assignmentRepository.GetByIdAsync(staffAccountId);
         if (assignment is not null && assignment.BranchIds.Contains(branchId)) return null;

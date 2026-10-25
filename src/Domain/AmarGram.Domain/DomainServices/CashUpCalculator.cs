@@ -19,7 +19,7 @@ public enum CashUpRowKind
 /// </summary>
 public sealed record CashUpRow(
     Guid Id, CashUpRowKind Kind, PaymentMethod? Method, CollectorKind? Collector, RefundMethod? RefundMethod,
-    decimal Amount, bool CarriedIn, string? Label = null);
+    decimal Amount, bool CarriedIn, string? Label = null, string? SourceKey = null, string? SourceLabel = null);
 
 /// <summary>
 /// HO-BIL-001 §8.10 (ADR-188) -- pure. <c>expectedCash = Σ accepted cash-in-store + Σ staff-collected COD
@@ -79,4 +79,35 @@ public static class CashUpCalculator
     };
 
     public static decimal Variance(decimal countedCash, decimal expectedCash) => countedCash - expectedCash;
+
+    /// <summary>
+    /// HO-P4 BG-20. The expected cash per source -- the signed cash effect of every row (carried-in items included, exactly as
+    /// <see cref="Calculate"/> folds them into <c>ExpectedCash</c>), grouped by <see cref="CashUpRow.SourceKey"/> (a row with none is the
+    /// till). The till is always listed. Rows that move no cash (card, transfer, courier-held) belong to no source. The amounts sum to
+    /// <c>ExpectedCash</c>, so a per-source count and the overall count can never disagree about what was expected.
+    /// </summary>
+    public static IReadOnlyList<CashUpSourceExpected> CalculateSources(IEnumerable<CashUpRow> rows)
+    {
+        var totals = new Dictionary<string, (string Label, decimal Expected)>(StringComparer.Ordinal)
+        {
+            [CashUpSources.TillKey] = (CashUpSources.TillLabel, 0m),
+        };
+
+        foreach (var row in rows)
+        {
+            var signed = SignedCashEffect(row);
+            if (signed == 0m) continue;
+
+            var key = row.SourceKey ?? CashUpSources.TillKey;
+            var label = row.SourceLabel ?? (key == CashUpSources.TillKey ? CashUpSources.TillLabel : key);
+            totals[key] = totals.TryGetValue(key, out var existing)
+                ? (existing.Label == key && label != key ? label : existing.Label, existing.Expected + signed)
+                : (label, signed);
+        }
+
+        return totals
+            .Select(t => new CashUpSourceExpected(t.Key, t.Value.Label, t.Value.Expected))
+            .OrderBy(t => t.Key == CashUpSources.TillKey ? 0 : 1).ThenBy(t => t.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 }

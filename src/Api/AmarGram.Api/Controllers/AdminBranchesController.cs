@@ -39,7 +39,7 @@ public sealed class AdminBranchesController(IInMemoryDispatcher dispatcher, IUse
         var command = new CreateBranchCommand
         {
             BranchId = branchId, Code = request.Code, Name = request.Name, TimeZoneId = request.TimeZoneId,
-            AddressLine = request.AddressLine, PhoneNumber = request.PhoneNumber, Email = request.Email,
+            AddressLine = request.AddressLine, PhoneNumber = request.PhoneNumber, Email = request.Email, Type = request.Type,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 
@@ -54,7 +54,7 @@ public sealed class AdminBranchesController(IInMemoryDispatcher dispatcher, IUse
         var command = new UpdateBranchDetailsCommand
         {
             BranchId = branchId, Name = request.Name, TimeZoneId = request.TimeZoneId,
-            AddressLine = request.AddressLine, PhoneNumber = request.PhoneNumber, Email = request.Email,
+            AddressLine = request.AddressLine, PhoneNumber = request.PhoneNumber, Email = request.Email, Type = request.Type,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 

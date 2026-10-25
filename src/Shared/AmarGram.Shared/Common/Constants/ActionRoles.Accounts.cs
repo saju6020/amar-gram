@@ -29,5 +29,9 @@ public static partial class ActionRoles
         (Actions.Customers.View, [StaffRoles.Reception, StaffRoles.Administrator]),
         (Actions.Customers.RegisterWalkIn, [StaffRoles.Reception, StaffRoles.Administrator]),
         (Actions.Customers.Merge, [StaffRoles.Administrator]),
+        // HO-P4 BG-19: the staff who can look a customer up can annotate and help them back in.
+        (Actions.Customers.AddNote, [StaffRoles.Reception, StaffRoles.Administrator]),
+        (Actions.Customers.SetTags, [StaffRoles.Reception, StaffRoles.Administrator]),
+        (Actions.Customers.RequestPasswordReset, [StaffRoles.Reception, StaffRoles.Administrator]),
     ];
 }

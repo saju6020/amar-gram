@@ -26,8 +26,8 @@ public sealed class AuditPasswordResetRequestedHandler(
 
         var entry = new AuditEntryAggregate(Guid.NewGuid());
         entry.Record(new AuditEntryDto(
-            EntityType: @event.AccountKind.DisplayName + "Account", EntityId: @event.AccountId, Action: "PasswordResetRequested",
-            Reason: @event.Channel.DisplayName, ActorUserId: @event.AccountId, OccurredOn: timeProvider.GetUtcNow(),
+            EntityType: @event.AccountKind.DisplayName + "Account", EntityId: @event.AccountId, Action: @event.InitiatedByStaffId is null ? "PasswordResetRequested" : "PasswordResetRequestedByStaff",
+            Reason: @event.Channel.DisplayName, ActorUserId: @event.InitiatedByStaffId ?? @event.AccountId, OccurredOn: timeProvider.GetUtcNow(),
             BeforeValue: null, AfterValue: $"ExpiresOn={@event.ExpiresOn}",
             UserContext: @event.UserContext, CorrelationId: @event.CorrelationId,
             Category: AuditCategory.AuthenticationEvent, IpAddress: clientIpAccessor.GetClientIpAddress()));

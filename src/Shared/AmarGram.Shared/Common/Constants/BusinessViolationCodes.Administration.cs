@@ -42,4 +42,5 @@ public static partial class BusinessViolationCodes
     public const string UnknownStaffRoleReferenced = nameof(UnknownStaffRoleReferenced);
     public const string ContentNotFound = nameof(ContentNotFound);
     public const string InvalidClosureWindow = nameof(InvalidClosureWindow);
+    public const string ShiftDateInPast = nameof(ShiftDateInPast); // HO-P4 BG-23
 }

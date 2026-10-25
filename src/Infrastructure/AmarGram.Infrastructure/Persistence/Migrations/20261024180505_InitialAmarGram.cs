@@ -283,6 +283,7 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     phone_number = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
                     email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    type = table.Column<int>(type: "integer", nullable: false),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -413,6 +414,8 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     expected_cash_reversals = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
                     expected_carried_in = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
                     expected_cash = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
+                    source_counts = table.Column<string>(type: "jsonb", nullable: false),
+                    expected_sources = table.Column<string>(type: "jsonb", nullable: false),
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -777,6 +780,31 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_customer_session", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "customer_staff_record",
+                schema: "account",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    labels = table.Column<string[]>(type: "character varying(30)[]", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Language = table.Column<string>(type: "text", nullable: true),
+                    LastUpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tags = table.Column<string[]>(type: "text[]", nullable: true),
+                    VerticalId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServiceId = table.Column<string>(type: "text", nullable: true),
+                    IsMarkedToDelete = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_customer_staff_record", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -3127,6 +3155,29 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "customer_staff_note",
+                schema: "account",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    author_staff_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    text = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
+                    created_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_customer_staff_note", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_customer_staff_note_customer_staff_record_customer_id",
+                        column: x => x.customer_id,
+                        principalSchema: "account",
+                        principalTable: "customer_staff_record",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "delivery_zone_coverage",
                 schema: "ordering",
                 columns: table => new
@@ -4522,6 +4573,19 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_customer_staff_note_customer_id",
+                schema: "account",
+                table: "customer_staff_note",
+                column: "customer_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_customer_staff_record_labels",
+                schema: "account",
+                table: "customer_staff_record",
+                column: "labels")
+                .Annotation("Npgsql:IndexMethod", "GIN");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_delivery_zone_branch_active",
                 schema: "ordering",
                 table: "delivery_zone",
@@ -5774,6 +5838,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 schema: "account");
 
             migrationBuilder.DropTable(
+                name: "customer_staff_note",
+                schema: "account");
+
+            migrationBuilder.DropTable(
                 name: "delivery_zone_coverage",
                 schema: "ordering");
 
@@ -6071,6 +6139,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "customer_notification_preferences",
+                schema: "account");
+
+            migrationBuilder.DropTable(
+                name: "customer_staff_record",
                 schema: "account");
 
             migrationBuilder.DropTable(

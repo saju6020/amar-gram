@@ -29,6 +29,15 @@ public sealed class CreateRosterExceptionCommand : Command
     public required string Reason { get; init; }
 }
 
+/// <summary>HO-P4 BG-23 -- one roster-grid cell: <see cref="Shift"/> is Morning, Evening or Off.</summary>
+public sealed class SetRosterShiftCommand : Command
+{
+    public required Guid StaffAccountId { get; init; }
+    public required Guid BranchId { get; init; }
+    public required DateOnly Date { get; init; }
+    public required string Shift { get; init; }
+}
+
 public sealed class CancelRosterExceptionCommand : Command
 {
     public required Guid BranchId { get; init; }

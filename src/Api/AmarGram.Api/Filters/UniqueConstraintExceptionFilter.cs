@@ -27,7 +27,7 @@ public sealed class UniqueConstraintExceptionFilter : IExceptionFilter, IAsyncEx
 {
     private static readonly HashSet<string> MobileIndexes = ["ix_customer_account_mobile_number", "ix_staff_account_mobile_number"];
     private static readonly HashSet<string> EmailIndexes = ["ix_customer_account_email_address", "ix_staff_account_email_address"];
-    private static readonly HashSet<string> FirstWriteRaceTables = ["customer_address_book", "customer_notification_preferences", "business_settings"];
+    private static readonly HashSet<string> FirstWriteRaceTables = ["customer_address_book", "customer_notification_preferences", "business_settings", "customer_staff_record"];
     // HO-NTF-001 §12.5 (deviation from §13's file list, recorded in the implementation report):
     // "ix_notification_template_key" -- a first-save race on a template's own aggregate creation
     // (two admins customising the same not-yet-customised template at once) -> 409, same shape as

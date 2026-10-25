@@ -112,6 +112,10 @@ public static class AdministrationModule
         services.AddScoped<ICommandHandlerAsync<CancelScheduledRosterPatternCommand>, CancelScheduledRosterPatternCommandHandler>();
         services.AddScoped<IValidator<CancelScheduledRosterPatternCommand>, CancelScheduledRosterPatternCommandValidator>();
 
+        // HO-P4 BG-23: one roster-grid cell.
+        services.AddScoped<ICommandHandlerAsync<SetRosterShiftCommand>, SetRosterShiftCommandHandler>();
+        services.AddScoped<IValidator<SetRosterShiftCommand>, SetRosterShiftCommandValidator>();
+
         services.AddScoped<ICommandHandlerAsync<CreateRosterExceptionCommand>, CreateRosterExceptionCommandHandler>();
         services.AddScoped<IValidator<CreateRosterExceptionCommand>, CreateRosterExceptionCommandValidator>();
 
@@ -184,6 +188,7 @@ public static class AdministrationModule
         services.AddScoped<IQueryHandlerAsync<GetMyBranchesQuery, StaffBranchAssignmentViewModel?>, GetMyBranchesQueryHandler>();
 
         services.AddScoped<IQueryHandlerAsync<GetBranchRostersQuery, IReadOnlyList<StaffRosterViewModel>>, GetBranchRostersQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<GetRosterCellsQuery, IReadOnlyList<RosterCellViewModel>>, GetRosterCellsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetRosterExceptionsQuery, IReadOnlyList<RosterExceptionViewModel>>, GetRosterExceptionsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetStaffAvailabilityQuery, IReadOnlyList<StaffAvailableIntervalViewModel>>, GetStaffAvailabilityQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetMyLeaveRequestsQuery, IReadOnlyList<LeaveRequestViewModel>>, GetMyLeaveRequestsQueryHandler>();

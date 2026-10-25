@@ -1,5 +1,6 @@
 using AmarGram.Domain.Aggregates.Billing;
 using AmarGram.Domain.DomainServices;
+using AmarGram.Domain.ValueObjects;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Shared.Common.Constants;
 using AmarGram.Shared.Common.Enums;
@@ -26,7 +27,7 @@ public static class CashUpRows
             .Where(p => p.BranchId == branchId && p.BusinessDate == date && p.AcceptedOn != null)
             .Select(p => new { p.Id, p.Method, p.Collector, p.Amount, p.ReceiptNumber })
             .ToListAsync(ct);
-        rows.AddRange(payments.Select(p => new CashUpRow(p.Id, CashUpRowKind.Payment, p.Method, p.Collector?.Kind, null, p.Amount, false, Receipt(p.ReceiptNumber))));
+        rows.AddRange(payments.Select(p => new CashUpRow(p.Id, CashUpRowKind.Payment, p.Method, p.Collector?.Kind, null, p.Amount, false, Receipt(p.ReceiptNumber), SourceOf(p.Collector))));
 
         var refunds = await db.Set<RefundAggregate>().AsNoTracking()
             .Where(r => r.BranchId == branchId && r.BusinessDate == date)
@@ -38,10 +39,30 @@ public static class CashUpRows
             .Where(p => p.BranchId == branchId && p.ReversalBusinessDate == date)
             .Select(p => new { p.Id, p.Method, p.Collector, p.Amount, p.ReceiptNumber })
             .ToListAsync(ct);
-        rows.AddRange(reversals.Select(p => new CashUpRow(p.Id, CashUpRowKind.Reversal, p.Method, p.Collector?.Kind, null, p.Amount, false, Receipt(p.ReceiptNumber))));
+        rows.AddRange(reversals.Select(p => new CashUpRow(p.Id, CashUpRowKind.Reversal, p.Method, p.Collector?.Kind, null, p.Amount, false, Receipt(p.ReceiptNumber), SourceOf(p.Collector))));
 
         rows.AddRange(await LateItemsAsync(db, branchId, date, ct));
-        return rows;
+        return await LabelStaffSourcesAsync(db, rows, ct);
+    }
+
+    /// <summary>HO-P4 BG-20. A staff-collected cash-on-delivery payment is its own cash source (the collector holds that cash until it is
+    /// banked); everything else that moves cash is the till. Only the key here -- the label needs the staff name, see <see cref="LabelStaffSourcesAsync"/>.</summary>
+    private static string? SourceOf(AmarGram.Domain.ValueObjects.PaymentCollector? collector) =>
+        collector is { StaffAccountId: { } staffId } && collector.Kind == CollectorKind.Staff ? CashUpSources.StaffKey(staffId) : null;
+
+    private static async Task<IReadOnlyList<CashUpRow>> LabelStaffSourcesAsync(AmarGramDbContext db, List<CashUpRow> rows, CancellationToken ct)
+    {
+        var staffIds = rows.Select(r => CashUpSources.TryParseStaffKey(r.SourceKey, out var id) ? id : (Guid?)null).Where(id => id is not null).Select(id => id!.Value).Distinct().ToList();
+        if (staffIds.Count == 0) return rows;
+
+        var names = await db.Set<AmarGram.Domain.Aggregates.Account.StaffAccountAggregate>().AsNoTracking()
+            .Where(s => staffIds.Contains(s.Id))
+            .Select(s => new { s.Id, s.FullName })
+            .ToDictionaryAsync(s => s.Id, s => s.FullName, ct);
+
+        return rows.Select(r => CashUpSources.TryParseStaffKey(r.SourceKey, out var id)
+            ? r with { SourceLabel = names.GetValueOrDefault(id, "Staff collector") }
+            : r).ToList();
     }
 
     /// <summary>Pending payments the day cannot be closed over: received that day, or recorded that day in branch time.</summary>
@@ -79,7 +100,7 @@ public static class CashUpRows
             .Select(p => new { p.Id, p.Method, p.Collector, p.Amount, p.ReceiptNumber, p.BusinessDate, p.AcceptedOn })
             .ToListAsync(ct);
         rows.AddRange(payments.Where(p => Unclaimed(p.BusinessDate!.Value, p.AcceptedOn!.Value))
-            .Select(p => new CashUpRow(p.Id, CashUpRowKind.Payment, p.Method, p.Collector?.Kind, null, p.Amount, true, Receipt(p.ReceiptNumber))));
+            .Select(p => new CashUpRow(p.Id, CashUpRowKind.Payment, p.Method, p.Collector?.Kind, null, p.Amount, true, Receipt(p.ReceiptNumber), SourceOf(p.Collector))));
 
         var refunds = await db.Set<RefundAggregate>().AsNoTracking()
             .Where(r => r.BranchId == branchId && dates.Contains(r.BusinessDate))
@@ -93,7 +114,7 @@ public static class CashUpRows
             .Select(p => new { p.Id, p.Method, p.Collector, p.Amount, p.ReceiptNumber, p.ReversalBusinessDate, p.ReversedOn })
             .ToListAsync(ct);
         rows.AddRange(reversals.Where(p => Unclaimed(p.ReversalBusinessDate!.Value, p.ReversedOn!.Value))
-            .Select(p => new CashUpRow(p.Id, CashUpRowKind.Reversal, p.Method, p.Collector?.Kind, null, p.Amount, true, Receipt(p.ReceiptNumber))));
+            .Select(p => new CashUpRow(p.Id, CashUpRowKind.Reversal, p.Method, p.Collector?.Kind, null, p.Amount, true, Receipt(p.ReceiptNumber), SourceOf(p.Collector))));
 
         return rows;
     }

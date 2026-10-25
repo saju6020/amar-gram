@@ -1,5 +1,6 @@
 using AmarGram.Application.Commands.Administration;
 using AmarGram.Shared.Common.Constants;
+using AmarGram.Shared.Common.Enums;
 using FluentValidation;
 
 namespace AmarGram.Application.CommandHandlers.Validators;
@@ -20,6 +21,7 @@ public sealed class CreateBranchCommandValidator : AbstractValidator<CreateBranc
         // Gate fix 2026-09-26 (SEC LOW, hardening round): a NUL byte previously reached Postgres
         // unfiltered.
         RuleFor(x => x.PhoneNumber).MaximumLength(BranchRules.PhoneMaxLength).NoControlCharacters();
+        RuleFor(x => x.Type).MustBeValidEnumeration<CreateBranchCommand, BranchType>(); // HO-P4 BG-21
     }
 }
 
@@ -32,6 +34,7 @@ public sealed class UpdateBranchDetailsCommandValidator : AbstractValidator<Upda
         RuleFor(x => x.TimeZoneId).NotEmpty();
         RuleFor(x => x.AddressLine).MaximumLength(BranchRules.AddressMaxLength).NoControlCharacters();
         RuleFor(x => x.PhoneNumber).MaximumLength(BranchRules.PhoneMaxLength).NoControlCharacters();
+        RuleFor(x => x.Type).MustBeValidEnumeration<UpdateBranchDetailsCommand, BranchType>(); // HO-P4 BG-21
     }
 }
 

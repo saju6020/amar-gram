@@ -33,6 +33,10 @@ public static partial class RecordClassification
         new TableClassification("account", "customer_notification_preferences", RecordClass.CustomerPersonal, HardDeletePolicy.AggregateOnly, "Clear / remove address"),
         new TableClassification("account", "customer_marketing_consent", RecordClass.CustomerPersonal, HardDeletePolicy.AggregateOnly, "Clear / remove address"),
 
+        // HO-P4 BG-19: staff notes and tags are free text about a customer -- personal data, cleared through the aggregate on anonymisation.
+        new TableClassification("account", "customer_staff_record", RecordClass.CustomerPersonal, HardDeletePolicy.AggregateOnly, "HO-P4 BG-19: cleared on anonymisation"),
+        new TableClassification("account", "customer_staff_note", RecordClass.CustomerPersonal, HardDeletePolicy.AggregateOnly, "HO-P4 BG-19: cleared on anonymisation"),
+
         new TableClassification("account", "customer_session", RecordClass.Security, HardDeletePolicy.Purgeable, "§8.2 Security: purged retention.securityArtefactDays after expiry or end"),
         new TableClassification("account", "staff_session", RecordClass.Security, HardDeletePolicy.Purgeable, "§8.2 Security: purged retention.securityArtefactDays after expiry or end"),
         new TableClassification("account", "password_reset_token", RecordClass.Security, HardDeletePolicy.Purgeable, "§8.2 Security: purged retention.securityArtefactDays after expiry or end"),

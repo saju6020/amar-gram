@@ -32,6 +32,7 @@ public sealed partial class AmarGramDbContext
     public DbSet<CustomerSessionAggregate> CustomerSessions => Set<CustomerSessionAggregate>();
     public DbSet<PasswordResetTokenAggregate> PasswordResetTokens => Set<PasswordResetTokenAggregate>();
     public DbSet<CustomerAddressBookAggregate> CustomerAddressBooks => Set<CustomerAddressBookAggregate>();
+    public DbSet<CustomerStaffRecordAggregate> CustomerStaffRecords => Set<CustomerStaffRecordAggregate>(); // HO-P4 BG-19
     public DbSet<CustomerNotificationPreferencesAggregate> CustomerNotificationPreferences => Set<CustomerNotificationPreferencesAggregate>();
     public DbSet<StaffAccountAggregate> StaffAccounts => Set<StaffAccountAggregate>();
     public DbSet<StaffSessionAggregate> StaffSessions => Set<StaffSessionAggregate>();

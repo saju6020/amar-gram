@@ -22,6 +22,7 @@ public sealed class BranchConfiguration : IEntityTypeConfiguration<BranchAggrega
         builder.Property(x => x.PhoneNumber).HasColumnName("phone_number").HasMaxLength(30);
         builder.Property(x => x.Email).HasColumnName("email").HasMaxLength(256);
         builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired();
+        builder.Property(x => x.Type).HasColumnName("type").HasEnumerationConversion().IsRequired(); // HO-P4 BG-21
 
         builder.OwnsMany(x => x.WeeklyHours, w =>
         {

@@ -24,5 +24,9 @@ public static partial class Actions
         public const string View = "Customers.View";
         public const string RegisterWalkIn = "Customers.RegisterWalkIn";
         public const string Merge = "Customers.Merge";
+        /// <summary>HO-P4 BG-19: the paged customer list is <see cref="View"/>; these three are the new writes.</summary>
+        public const string AddNote = "Customers.AddNote";
+        public const string SetTags = "Customers.SetTags";
+        public const string RequestPasswordReset = "Customers.RequestPasswordReset";
     }
 }

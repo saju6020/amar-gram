@@ -8,6 +8,8 @@ public sealed class CreateBranchRequest
     public string? AddressLine { get; init; }
     public string? PhoneNumber { get; init; }
     public string? Email { get; init; }
+    /// <summary>HO-P4 BG-21: "Outlet" or "Warehouse"; absent means Outlet.</summary>
+    public string? Type { get; init; }
 }
 
 public sealed class UpdateBranchDetailsRequest
@@ -17,6 +19,8 @@ public sealed class UpdateBranchDetailsRequest
     public string? AddressLine { get; init; }
     public string? PhoneNumber { get; init; }
     public string? Email { get; init; }
+    /// <summary>HO-P4 BG-21: "Outlet" or "Warehouse"; absent leaves the type unchanged.</summary>
+    public string? Type { get; init; }
 }
 
 public sealed class OpeningIntervalRequest

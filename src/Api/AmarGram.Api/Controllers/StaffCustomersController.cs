@@ -49,6 +49,30 @@ public sealed class StaffCustomersController(IInMemoryDispatcher dispatcher, IUs
         return Ok(response.Result);
     }
 
+    /// <summary>HO-P4 BG-19 -- the browsable, paged list of active customers. <c>search</c> matches name, email (a term with '@') or mobile (a term
+    /// with three or more digits); <c>tag</c> filters to one tag; <c>sort</c> is <c>recent</c> (default) or <c>name</c>.</summary>
+    [HttpGet("browse")]
+    [RequireAction(Actions.Customers.View)]
+    public async Task<IActionResult> Browse(
+        [FromQuery] string? search, [FromQuery] string? tag, [FromQuery] string? sort, [FromQuery] int? pageNumber, [FromQuery] int? pageSize)
+    {
+        if (pageNumber is > PagingRules.MaxPageNumber) return BadRequest(new { error = $"pageNumber cannot exceed {PagingRules.MaxPageNumber}." });
+        if (pageSize is > PagingRules.MaxPageSize) return BadRequest(new { error = $"pageSize cannot exceed {PagingRules.MaxPageSize}." });
+        if (!CustomerListSorts.IsKnown(sort)) return BadRequest(new { error = "sort must be 'recent' or 'name'." });
+        if (search is { Length: > 100 } || tag is { Length: > 100 }) return BadRequest(new { error = "search and tag cannot exceed 100 characters." });
+
+        var query = new BrowseCustomersQuery
+        {
+            Search = search, Tag = tag, Sort = sort ?? CustomerListSorts.Recent,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
+        };
+        if (pageNumber is > 0) query.PageNumber = pageNumber.Value;
+        if (pageSize is > 0) query.PageSize = pageSize.Value;
+
+        var response = await dispatcher.GetResultAsync(query);
+        return Ok(response.Result);
+    }
+
     [HttpGet("duplicates")]
     [RequireAction(Actions.Customers.Merge)]
     public async Task<IActionResult> GetDuplicates([FromQuery] int? pageNumber, [FromQuery] int? pageSize)
@@ -86,6 +110,63 @@ public sealed class StaffCustomersController(IInMemoryDispatcher dispatcher, IUs
         });
 
         return response.Result is null ? NotFound() : Ok(response.Result);
+    }
+
+    /// <summary>HO-P4 BG-19 -- the customer's staff notes, newest first.</summary>
+    [HttpGet("{customerId:guid}/notes")]
+    [RequireAction(Actions.Customers.View)]
+    public async Task<IActionResult> GetNotes(Guid customerId)
+    {
+        var response = await dispatcher.GetResultAsync(new GetCustomerNotesQuery
+        {
+            CustomerId = customerId, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
+        });
+
+        return Ok(response.Result);
+    }
+
+    /// <summary>HO-P4 BG-19 -- add a staff note; the author is the signed-in staff member. 201 <c>{ noteId }</c>.</summary>
+    [HttpPost("{customerId:guid}/notes")]
+    [RequireAction(Actions.Customers.AddNote)]
+    public async Task<IActionResult> AddNote(Guid customerId, [FromBody] AddCustomerNoteRequest request)
+    {
+        var noteId = Guid.NewGuid();
+        var response = await dispatcher.SendAsync(new AddCustomerNoteCommand
+        {
+            CustomerId = customerId, NoteId = noteId, Text = request.Text ?? string.Empty,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
+        });
+
+        return response.IsSuccess ? StatusCode(201, new { noteId }) : BadRequest(response.ValidationResult);
+    }
+
+    /// <summary>HO-P4 BG-19 -- replace the customer's tag set. 200 <c>{ tags }</c> as stored (trimmed, de-duplicated).</summary>
+    [HttpPut("{customerId:guid}/tags")]
+    [RequireAction(Actions.Customers.SetTags)]
+    public async Task<IActionResult> SetTags(Guid customerId, [FromBody] SetCustomerTagsRequest request)
+    {
+        var response = await dispatcher.SendAsync(new SetCustomerTagsCommand
+        {
+            CustomerId = customerId, Tags = request.Tags ?? [],
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
+        });
+
+        return response.IsSuccess ? Ok(response.Result) : BadRequest(response.ValidationResult);
+    }
+
+    /// <summary>HO-P4 BG-19 -- start a password reset for the customer. The link goes to the customer's own mobile (else email); the response says
+    /// which channel and a masked destination, never the token. 200 <c>{ channel, maskedDestination, expiresOn }</c>.</summary>
+    [HttpPost("{customerId:guid}/password-reset")]
+    [RequireAction(Actions.Customers.RequestPasswordReset)]
+    public async Task<IActionResult> RequestPasswordReset(Guid customerId)
+    {
+        var response = await dispatcher.SendAsync(new RequestCustomerPasswordResetCommand
+        {
+            CustomerId = customerId, TokenId = Guid.NewGuid(),
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
+        });
+
+        return response.IsSuccess ? Ok(response.Result) : BadRequest(response.ValidationResult);
     }
 
     [HttpPost("{duplicateId:guid}/merge")]

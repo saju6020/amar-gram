@@ -33,28 +33,7 @@ public static class StaffAvailability
             // the caller only supplies Approved leave.
             if (approvedLeave.Any(l => l.StartsOn <= date && date <= l.EndsOn)) continue;
 
-            // Rule 3: NextPattern wins once its effective date has arrived.
-            var pattern = roster.NextPatternEffectiveFrom is not null && roster.NextPatternEffectiveFrom <= date
-                ? roster.NextPattern
-                : roster.CurrentPattern;
-
-            var daySlots = pattern
-                .Where(s => s.DayOfWeek == date.DayOfWeek)
-                .Select(s => (Starts: s.Starts, Ends: s.Ends))
-                .ToList();
-
-            // Rule 4: ExtraShift adds; ShiftCancelled subtracts.
-            foreach (var exception in exceptions.Where(e => !e.IsCancelled && e.Date == date))
-            {
-                if (exception.Kind == RosterExceptionKind.ExtraShift)
-                {
-                    daySlots.Add((exception.Starts, exception.Ends));
-                }
-                else
-                {
-                    daySlots = daySlots.SelectMany(s => Subtract(s, exception.Starts, exception.Ends)).ToList();
-                }
-            }
+            var daySlots = EffectiveSlots(roster, exceptions, date);
 
             foreach (var slot in daySlots)
             {
@@ -82,6 +61,36 @@ public static class StaffAvailability
         }
 
         return Merge(results);
+    }
+
+    /// <summary>
+    /// The day's shifts in branch-local time, before leave and opening hours: the pattern in force (rule 3), minus
+    /// <c>ShiftCancelled</c> cuts, plus <c>ExtraShift</c> additions (rule 4). HO-P4 BG-23: cuts are applied to the pattern first and
+    /// extras added after, so the outcome no longer depends on the order the exceptions are stored in -- a roster-grid cell is a
+    /// whole-day cut plus one extra shift, and the extra must survive its own cut.
+    /// </summary>
+    public static List<(TimeOnly Starts, TimeOnly Ends)> EffectiveSlots(
+        StaffRosterAggregate roster, IReadOnlyList<RosterExceptionAggregate> exceptions, DateOnly date)
+    {
+        // Rule 3: NextPattern wins once its effective date has arrived.
+        var pattern = roster.NextPatternEffectiveFrom is not null && roster.NextPatternEffectiveFrom <= date
+            ? roster.NextPattern
+            : roster.CurrentPattern;
+
+        var daySlots = pattern
+            .Where(s => s.DayOfWeek == date.DayOfWeek)
+            .Select(s => (Starts: s.Starts, Ends: s.Ends))
+            .ToList();
+
+        var active = exceptions.Where(e => !e.IsCancelled && e.Date == date).ToList();
+
+        foreach (var cut in active.Where(e => e.Kind == RosterExceptionKind.ShiftCancelled))
+            daySlots = daySlots.SelectMany(s => Subtract(s, cut.Starts, cut.Ends)).ToList();
+
+        foreach (var extra in active.Where(e => e.Kind == RosterExceptionKind.ExtraShift))
+            daySlots.Add((extra.Starts, extra.Ends));
+
+        return daySlots;
     }
 
     private static IEnumerable<(TimeOnly Starts, TimeOnly Ends)> Subtract(

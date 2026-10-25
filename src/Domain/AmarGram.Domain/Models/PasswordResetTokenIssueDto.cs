@@ -12,4 +12,5 @@ public sealed record PasswordResetTokenIssueDto(
     DateTimeOffset ExpiresOn,
     PasswordResetChannel Channel,
     UserContext UserContext,
-    Guid CorrelationId);
+    Guid CorrelationId,
+    Guid? InitiatedByStaffId = null); // HO-P4 BG-19: set when a staff member started the reset for the account holder

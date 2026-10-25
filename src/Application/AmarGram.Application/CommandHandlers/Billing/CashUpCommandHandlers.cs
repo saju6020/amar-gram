@@ -4,6 +4,7 @@ using AmarGram.Domain.Aggregates.Administration;
 using AmarGram.Domain.Aggregates.Billing;
 using AmarGram.Domain.DomainServices;
 using AmarGram.Domain.Exceptions;
+using AmarGram.Domain.ValueObjects;
 using AmarGram.Shared.Common.Constants;
 using Platform.Infrastructure.Core.Commands;
 using Platform.Infrastructure.Core.Domain;
@@ -18,6 +19,7 @@ namespace AmarGram.Application.CommandHandlers.Billing;
 public sealed class RecordCashCountCommandHandler(
     IAggregateRootRepository<CashUpAggregate> cashUpRepository,
     IAggregateRootRepository<BranchAggregate> branchRepository,
+    IBillingFinder finder,
     TimeProvider timeProvider)
     : ICommandHandlerAsync<RecordCashCountCommand>
 {
@@ -41,7 +43,19 @@ public sealed class RecordCashCountCommandHandler(
 
         try
         {
-            cashUp.RecordCount(command.CountedCash, command.Explanation, todayLocal, now, command.ToBillingActor());
+            if (command.Counts is { Count: > 0 } counts)
+            {
+                // HO-P4 BG-20: the sources a count may name are the ones the day's own expected lines have.
+                var sources = CashUpCalculator.CalculateSources(await finder.GetCashUpRowsAsync(command.BranchId, command.BusinessDate));
+                var labelOf = sources.ToDictionary(x => x.Key, x => x.Label, StringComparer.Ordinal);
+                cashUp.RecordSourceCounts(
+                    counts.Select(c => new CashUpSourceCount(c.SourceKey, labelOf.GetValueOrDefault(c.SourceKey, c.SourceKey), c.CountedCash)).ToList(),
+                    labelOf.Keys.ToList(), command.Explanation, todayLocal, now, command.ToBillingActor());
+            }
+            else
+            {
+                cashUp.RecordCount(command.CountedCash, command.Explanation, todayLocal, now, command.ToBillingActor());
+            }
         }
         catch (DomainRuleViolationException ex)
         {
@@ -83,10 +97,11 @@ public sealed class CloseCashUpCommandHandler(
         if (await finder.CountPendingApprovalsAsync(command.BranchId, command.BusinessDate, branch.TimeZoneId) > 0)
             return Violation(BusinessViolationCodes.PendingApprovalsExist, nameof(command.BusinessDate), "Payments waiting for approval must be approved or rejected before the day is closed.");
 
-        var snapshot = CashUpCalculator.Calculate(await finder.GetCashUpRowsAsync(command.BranchId, command.BusinessDate));
+        var rows = await finder.GetCashUpRowsAsync(command.BranchId, command.BusinessDate);
+        var snapshot = CashUpCalculator.Calculate(rows);
         try
         {
-            cashUp.Close(snapshot, timeProvider.GetUtcNow(), command.ToBillingActor());
+            cashUp.Close(snapshot, timeProvider.GetUtcNow(), command.ToBillingActor(), CashUpCalculator.CalculateSources(rows));
         }
         catch (DomainRuleViolationException ex)
         {
