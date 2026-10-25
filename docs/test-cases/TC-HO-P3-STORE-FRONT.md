@@ -1,8 +1,8 @@
 # TC-HO-P3-STORE-FRONT — Store front screens rebuilt to the approved design (S0–S4)
 
 Handover: `docs/handover/HO-P3-STORE-FRONT.md` (§15 U1–U38, §16 E1–E16, §17.1 splits, §18 A1–A18)
-Commit(s) under test: HEAD `5bd5508` on `feat/phase2-catalogue-theme` (S0 `e29a0ae`, S1 `c38bb9d`, S4 `b1b237c`, S2 `5c5af0e`, S3 `24ad5f7`, `f7fe2af`, integration `3c98022`); baseline `46929be`
-Written: 2026-10-25  ·  Executed: 2026-10-25
+Commit(s) under test (run 2): HEAD `889d81f` (fixes `4713d6a`, `889d81f` on top of run 1's `5bd5508`) on `feat/phase2-catalogue-theme` (S0 `e29a0ae`, S1 `c38bb9d`, S4 `b1b237c`, S2 `5c5af0e`, S3 `24ad5f7`, `f7fe2af`, integration `3c98022`); baseline `46929be`
+Written: 2026-10-25  ·  Executed: run 1 2026-10-25, run 2 2026-10-25 (this sheet is run 2; run 1 results are in git history of this file)
 
 > Statuses record what was **observed**, not inferred. The Evidence column names what was actually
 > seen. `BLOCKED` marks a case that could not be executed or whose result was reasoned about rather
@@ -14,34 +14,33 @@ Written: 2026-10-25  ·  Executed: 2026-10-25
 > re-worded after seeing a result. Unit rows are one row per U-case; each e2e row is one row per
 > E-case with a status per project.
 
-## Summary
+## Summary (run 2)
 
 | | Count (rows) |
 |---|---|
-| Total | 70 |
-| PASS | 61 |
-| FAIL | 8 |
-| BLOCKED | 1 |
+| Total | 75 |
+| PASS | 73 |
+| FAIL | 0 |
+| BLOCKED | 2 |
 | NOT RUN | 0 |
 
-Rows: U1–U38 and U-S1 (39, all PASS); SP1–SP8 (8, all PASS); E1–E16 and E-J (17: 10 PASS, 6 FAIL = E4, E9, E12, E13, E14, E16; 1 BLOCKED = E-J); R1–R3 (2 PASS, 1 FAIL = R2); W1–W3 (2 PASS, 1 FAIL = W2). An e2e row is FAIL if either project has a failing case in that spec; the Evidence column gives the exact tests.
+BLOCKED: E-J (needs a live API) and E16 (the whole `npm run test:e2e` suite was not run; only the HO-P3 spec set). Row changes since run 1: E4, E9, E13, E14, R2 are now PASS. E12 is PASS for every account route; its one failing case (staff idle-lock axe) and shop-staff E-C1 are recorded as OUT OF HO-P3 SCOPE by owner decision (handed to HO-P4), not as HO-P3 failures. W2 is PASS with the three shop-product loosenings recorded as MEDIUM (owner: dev-server accommodations).
 
-Raw run totals:
+Raw run totals (run 2, HEAD 889d81f):
 
-* typecheck: exit 0. lint (`--max-warnings 0`): exit 0.
-* Vitest `npm test`: 200 files, 1670 tests: 1612 passed, 13 failed, 45 skipped. The 13 failures are in 5 files (`inventory/control`, `inventory/goods-receipt-form`, `inventory/shared-pieces`, `pos/pos`, `reports/viewer`), all 20 s timeouts under load. Re-run alone: 5 files, 73/73 pass. 45 skipped = `tests/contract/mock-vs-real` (`describe.skipIf(!REAL)`).
-* Vitest, HO-P3 areas alone (`shop catalogue product cart checkout hearth portal orders account`): 44 files, 415 tests, all pass.
-* Playwright, one worker, 530 test runs (265 per project): 487 passed, 4 flaky (failed first try, passed on retry), 31 failed, 8 skipped. The 31 failures were re-run with `--last-failed`: 10 passed alone, 21 failed again. Final: 501 pass (487 + 4 + 10), 21 fail, 8 skipped (4 `portal-real-api` real-API gates, 4 viewport-gated halves of `shop-home` / `shop-shell`).
-* All 21 final failures were also run against baseline `46929be` where listed as sampled below: they fail there too.
+* typecheck: exit 0. lint (--max-warnings 0): exit 0.
+* Vitest `npm test`: 200 files, 1850 tests: 1798 passed, 7 failed, 45 skipped. The 7 failures are 20 s timeouts in goods-receipt-form (4), shared-pieces (2) and reports/viewer (1), the known load-sensitive files; re-run alone those 3 files pass 43/43. 45 skipped = contract suite (real API only).
+* Playwright, one worker, HO-P3 spec set, chromium + mobile-360, 530 runs: 501 passed, 4 flaky (failed first try, passed on retry), 17 failed, 8 skipped. The 17 failures re-run with --last-failed: 13 passed alone, 4 failed again. Final: 518 pass (501 + 4 + 13), 4 fail, 8 skipped (4 portal-real-api real-API gates, 4 phone-only / desktop-only halves of shop-home and shop-shell).
+* The 4 final failures are staff-area tests: accounts-a11y-responsive "E-X1 (idle lock open)" (chromium + mobile-360) and shop-staff E-C1 (chromium + mobile-360). Handed to HO-P4 by the owner; out of HO-P3 scope.
+* Flaky by name (failed first attempt, passed on retry): ordering-customer E-B1/E-B8 (chromium and mobile-360), ordering-a11y-responsive "/staff/orders" (mobile-360), ordering-customer-orders E-D1 (mobile-360).
+* Failed in the full run, passed alone: ordering-a11y "?placed=1" (both projects), portal-dashboard E-A4 (both), shop-portal E-D1 (both), account-area E-E1 (mobile), accounts-auth E-B1 and E-C2 (mobile), home a11y and home staff redirect (mobile), shop-catalogue E-E1 maintenance (mobile), shop-shell phone case (mobile).
 
 ## Environment
 
-* Windows 11, Node 24, `web/` suites. Branch `feat/phase2-catalogue-theme`, HEAD `5bd5508`.
-* Playwright: `PORT=3140 NEXT_PUBLIC_USE_MOCKS=true NEXT_PUBLIC_API_BASE_URL=http://localhost:5005`, `--project=chromium --project=mobile-360 --workers=1`, dev server (`next dev`), MSW mocks. No backend, no database, no broker was reachable or started. The run took 1.9 h.
-* Spec set: `shop-*`, `home`, `ordering-customer*`, `ordering-a11y-responsive`, `account*`, `portal*` (includes `shop-staff`, `portal-real-api`).
-* Baseline comparison used the existing worktree `.claude/worktrees/baseline-46929be` on port 3150 (chromium only, retries 0 for the sample).
-* `journey-real-api.spec.ts` needs `JOURNEY_REAL_API=1` and a live API: not run.
-* Not run: production build (`next build` / `next start`).
+* Windows 11, Node 24, `web/` suites. Branch feat/phase2-catalogue-theme, HEAD 889d81f.
+* Playwright: PORT=3140 NEXT_PUBLIC_USE_MOCKS=true NEXT_PUBLIC_API_BASE_URL=http://localhost:5005, --project=chromium --project=mobile-360 --workers=1, next dev, MSW mocks. No backend, database or broker. Run took 1.5 h.
+* Spec set: shop-*, home, ordering-customer*, ordering-a11y-responsive, account*, portal*.
+* journey-real-api.spec.ts not run (needs JOURNEY_REAL_API=1 and a live API). No production build run.
 
 ## Unit cases (§15)
 
@@ -106,46 +105,51 @@ Counts are `it(` / `test(` declarations at `46929be` vs HEAD. The split commit i
 
 ## End-to-end cases (§16), chromium and mobile-360
 
-"Phone half" / "desktop half" tests in `shop-home` and `shop-shell` are viewport-gated by design (`test.skip(widthOf(page) ...)`), so each such test runs on one project only.
+Phone / desktop halves in shop-home and shop-shell are viewport-gated by design, so each such test runs on one project only.
 
-| ID | Slice | Spec | chromium | mobile-360 | Evidence |
+| ID | Slice | Spec | chromium | mobile-360 | Evidence (run 2) |
 |---|---|---|---|---|---|
-| E1 | S0 | `shop-shell.spec.ts` | PASS | PASS | chromium: desktop-no-tab-bar + add-item pass, phone test skipped by design; mobile-360: phone test (tab bar, /cart, footer not covered) + add-item pass, desktop test skipped by design |
-| E2 | S0 | `home.spec.ts` | PASS | PASS | root redirects pass. First full run: staff-redirect failed on both projects and a11y failed on mobile-360; re-run alone: all pass (load flake, reported as flaky) |
-| E3 | S1 | `shop-home.spec.ts` | PASS | PASS | axe, no h-scroll at 4 widths, Add -> stepper, See all pass on both; phone/desktop halves split by project |
-| E4 | S2 | `shop-catalogue.spec.ts` | FAIL | FAIL | E-A4 "an ingredient and a tag find matching products" fails (30 s timeout, heading "Date Palm Gur" absent) on both. Fails identically at baseline (sampled): the mock has no ingredient/tag search. §16 E4 says "every existing case ... Pass"; HO-P3 did not close it. All other cases pass (E-E1 maintenance was a first-run flake, passes alone) |
-| E5 | S2 | `shop-product.spec.ts` | PASS | PASS | 7/7 each (incl. the new S2 buy-box case). Note weakened assertions, W2 |
-| E6 | S2 | `shop-a11y-responsive.spec.ts` | PASS | PASS | axe on every route, no h-scroll, grid. One chromium timeout (stock-alert confirmation, 1.5 m) passed alone |
-| E7 | S2 | `shop-portal.spec.ts` | PASS | PASS | 3/3 each |
-| E8 | S3 | `ordering-customer.spec.ts` | PASS | PASS | 7/7 each. mobile-360 E-B3, E-B4/E-C1, E-B5 failed their first attempt (30 s timeouts) and passed on retry: flaky under load |
-| E9 | S3 | `ordering-a11y-responsive.spec.ts` | FAIL | FAIL | See findings 1-3. `/cart`, `/checkout` (price-change panel; mobile-360 passes alone at 28.8 s), staff routes pass. FAIL: `/portal/orders/{101,107}` (axe `definition-list`/`dlitem` in the bank-transfer `<dl>`; chromium also 106 overflow of 48 px @360 and 108 fine), and `/portal/orders/{id}?placed=1` (stale copy assertion at line 157; behind it the same axe violation, probed) |
-| E10 | S4 | `accounts-auth.spec.ts` | PASS | PASS | 9/9 chromium; mobile-360 E-C2 reload failed first run, passed alone |
-| E11 | S4 | `account-area.spec.ts` | PASS | PASS | 6/6 chromium; mobile-360 E-E1 timed out in the full run, passed alone (5.2 s). E-E2 and the unsaved-changes cases pass (known baseline E-E2 failure did not reproduce) |
-| E12 | S4 | `accounts-a11y-responsive.spec.ts` | PASS (customer) / FAIL (staff idle lock) | PASS (customer) / FAIL (staff idle lock) | 72 of 73 per project pass; the one failure is `E-X1 (idle lock open)`, a staff-area test. Fails at baseline (sampled). §16 E12: "staff assertions untouched" |
-| E13 | S4 | `portal-dashboard.spec.ts` | FAIL | FAIL | E-B1, E-B2, E-B3 (re-order) fail on both; E-A1..A5 and E-B4 pass (E-A4 on mobile-360 failed in the full run, passed alone). Fail at baseline (sampled): the ordering mock does not know the portal fixture order ids. §16 E13 lists E-B1..B4 as must-pass |
-| E14 | S4 | `portal-a11y-responsive.spec.ts` | FAIL | FAIL | one case, `/portal with the re-order result dialog open` (same cause as E-B1; fails at baseline, sampled). The other 16 per project pass |
-| E15 | S4 | `ordering-customer-orders.spec.ts` | PASS | PASS | E-C2 and E-D1 pass; mobile-360 E-C2 failed first try (30 s) and passed on retry (flaky) |
-| E16 | all | whole suite | FAIL | FAIL | Not run as `npm run test:e2e` (the whole `tests/e2e` set). The HO-P3 spec set (530 runs) is red: 21 final failures, all listed under findings. Flaky by name: ordering-customer mobile-360 E-B3, E-B4/E-C1, E-B5; ordering-customer-orders mobile-360 E-C2 |
-| E-J | — | `journey-real-api.spec.ts` | BLOCKED | BLOCKED | needs `JOURNEY_REAL_API=1` and a live API; not run |
+| E1 | S0 | shop-shell.spec.ts | PASS | PASS | phone case ran on mobile-360 (failed once under load, passed alone); desktop + add-item pass |
+| E2 | S0 | home.spec.ts | PASS | PASS | mobile-360 a11y and staff redirect failed in the full run, passed alone |
+| E3 | S1 | shop-home.spec.ts | PASS | PASS | |
+| E4 | S2 | shop-catalogue.spec.ts | PASS | PASS | E-A4 now passes (searches "sap"); E-E1 maintenance failed once on mobile-360 under load, passed alone |
+| E5 | S2 | shop-product.spec.ts | PASS | PASS | 7/7 each; see W2 for the recorded loosenings |
+| E6 | S2 | shop-a11y-responsive.spec.ts | PASS | PASS | |
+| E7 | S2 | shop-portal.spec.ts | PASS | PASS | E-D1 failed once in the full run (both), passed alone |
+| E8 | S3 | ordering-customer.spec.ts | PASS | PASS | E-B1/E-B8 flaky on both (retry passed) |
+| E9 | S3 | ordering-a11y-responsive.spec.ts | PASS | PASS | /portal/orders/{101,106,107} axe and 360 px overflow now pass; ?placed=1 passes (failed in the full run, passed alone on both); /checkout price change passes. mobile-360 /staff/orders flaky (retry passed) |
+| E10 | S4 | accounts-auth.spec.ts | PASS | PASS | mobile-360 E-B1, E-C2 failed once in the full run, passed alone |
+| E11 | S4 | account-area.spec.ts | PASS | PASS | mobile-360 E-E1 timed out once, passed alone (5.5 s) |
+| E12 | S4 | accounts-a11y-responsive.spec.ts | PASS | PASS | all account routes pass. Only "E-X1 (idle lock open)" (staff idle-lock dialog) fails on both projects: OUT OF HO-P3 SCOPE, handed to HO-P4 |
+| E13 | S4 | portal-dashboard.spec.ts | PASS | PASS | E-B1..B3 now pass (mock falls through); E-A4 tile links failed once in the full run (both), passed alone |
+| E14 | S4 | portal-a11y-responsive.spec.ts | PASS | PASS | re-order dialog axe now passes |
+| E15 | S4 | ordering-customer-orders.spec.ts | PASS | PASS | mobile-360 E-D1 flaky (retry passed) |
+| E16 | all | npm run test:e2e (whole suite) | BLOCKED | BLOCKED | not run; only the HO-P3 spec set (530 runs: 518 pass, 4 fail, 8 skipped). The 4 failures are the staff-area tests above and shop-staff E-C1 |
+| E-J | — | journey-real-api.spec.ts | BLOCKED | BLOCKED | needs JOURNEY_REAL_API=1 and a live API |
 
-Also in the Playwright set and not in §16: `shop-staff.spec.ts` E-C1 fails on both projects (also fails at baseline, sampled; staff catalogue editor, HO-P3 §16 does not list it), E-F1 flaked and passed alone. `portal-real-api.spec.ts`: 4 skipped by their real-API gate.
+Outside §16: shop-staff.spec.ts E-C1 fails on both projects (staff catalogue editor): OUT OF HO-P3 SCOPE, handed to HO-P4. portal-real-api: 4 skipped by their real-API gate.
 
 ## Regression cases from earlier gates
 
-Gate files present for HO-P3: ARCHITECTURE PASS, SECURITY PASS, CODE_REVIEW PASS. They record no fixed HIGH/BLOCKER finding, so there is no fixed finding that needs a regression row. Their open MEDIUM items (BuyBox price note wording, `CartLineRow` accessible name vs visible text, `ShopHeader` `text-warm` size, `HearthAuthShell` `text-warm`) are not fixed and have no test. Rows below come from the handover's own Amended list.
+Earlier HO-P3 gates (ARCHITECTURE, SECURITY, CODE_REVIEW) and TEST run 1 were all fixed in 4713d6a / 889d81f.
 
 | ID | Gate | Finding | Case | Status | Evidence |
 |---|---|---|---|---|---|
-| R1 | ARCH run 1 (d) | portal header fits 360 px | no h-scroll on `/portal` family at 360 | PASS | `portal-a11y-responsive` and `accounts-a11y-responsive` no-overflow cases pass on both projects; `/portal/orders` and `/portal/orders/108` now pass where baseline overflowed |
-| R2 | ARCH run 1 (a)(b) | e2e specs follow single-page checkout | E8, E15 | FAIL | E8 and E15 pass. The same edit pass left `ordering-a11y-responsive.spec.ts:157` asserting the pre-S4 copy "your order .* is placed", so E9's `?placed=1` case fails before reaching axe (finding 2) |
-| R3 | ARCH run 1 (c) | `HearthLogo` `accentClassName` default unchanged | Vitest hearth and staff-shell units | PASS | `tests/components/hearth` and `tests/unit/staff-shell` green in the full run |
+| R1 | ARCH (d) | portal header fits 360 px | no h-scroll on portal routes at 360 | PASS | portal and ordering a11y/responsive pass on both projects |
+| R2 | ARCH (a)(b) / TEST run 1 | E9 spec asserted the pre-S4 banner | ordering-a11y ?placed=1 | PASS | passes on both projects (alone, after one load failure in the full run) |
+| R3 | ARCH (c) | HearthLogo default unchanged | hearth and staff-shell units | PASS | green in the full Vitest run |
+| R4 | TEST run 1 | dlitem / definition-list in BankTransferInstructions and OrderPanels | ordering-a11y /portal/orders/{101,107} and ?placed=1 axe | PASS | pass on both projects |
+| R5 | TEST run 1 | 48 px overflow on /portal/orders/…0106 at 360 | ordering-a11y route 106 | PASS | passes on chromium |
+| R6 | TEST run 1 | re-order mock (E-B1..B3, E14) and E-A4 search | portal-dashboard, portal-a11y, shop-catalogue | PASS | pass on both projects |
+| R7 | CODE_REVIEW | "Remove from basket, {item}" accessible name | cart.test.tsx and ordering-customer remove/Undo | PASS | cart.test green; E8 remove/Undo passes |
+| R8 | TEST run 1 | colour-literal guard covers every customer folder | no-hex-literals / §17.2 rg | PASS | Vitest guard green in the full run (see U9 row); not re-counted file by file in this run |
 
 ## Weakening audit (A17, §19 row 4)
 
 | ID | Check | Status | Evidence |
 |---|---|---|---|
 | W1 | No skipped test added | PASS | `git diff 46929be HEAD` of `web/tests`: the only added `skip` lines are four viewport gates in `shop-home` and `shop-shell` (phone-only / desktop-only halves). No `.only`, `.fixme`, `.todo`, `xit`. Existing real-API skips unchanged |
-| W2 | Removed assertions are copy / layout replacements | FAIL (LOW to MEDIUM) | Compared every removed `expect` line in the 17 touched pre-existing spec/test files. All map to replaced copy ("cart" to "basket", "Request a return" to "Return an item", "Country of origin" to "Origin", the stepper checkout to a single page, tabs 3 + 3 to Description / Origin / Details). Three e2e edits in `shop-product.spec.ts` are weaker than copy: (a) the hero-image `fetchpriority`/`loading`/`width`/`height`/`alt` assertions now run only if a photo URL exists (the mock sends none, so they never run in this suite); (b) the draft-slug case no longer requires HTTP 404 (accepts 200 plus `noindex`); (c) the no-JS case asserts the delivered HTML instead of a visible `h1`. The file's comments say `next dev` streams behind `loading.tsx` and that production answers 404. Baseline (sampled): the strict forms of (b) and (c) fail at `46929be` too, so these are dev-server accommodations, but the "production answers 404" claim has no test (gap G1) |
+| W2 | Removed assertions are copy / layout replacements | PASS (owner-accepted, MEDIUM recorded) | Unchanged from run 1: all removed assertions map to copy or layout, except three loosenings in shop-product.spec.ts (hero-image attributes only checked when a photo URL exists; draft slug accepts 200 + noindex; no-JS case asserts HTML text). Baseline fails the strict forms of the last two in next dev. Owner decision: dev-server accommodations, recorded as MEDIUM; the production-404 claim remains untested (no production build run) |
 | W3 | Test count did not fall outside listed splits | PASS | per touched file: `checkout` 24 to 31, `my-orders` 22 to 22, `catalogue-controls` 9 to 9, `product-page` 16 to 16, `address-list` 4 to 4, `shop-catalogue` 7 to 9, `shop-product` 6 to 7, `accounts-auth` 8 to 9, others equal. `checkout.test` lost the `SlotStep`, `PaymentStep`, `ReviewStep`, stepper and greeting cases with the components; U25–U29 and the 7 added cases replace them. Vitest `it(` count: baseline checkout 24, now 31 |
 
 ## Acceptance-criteria coverage
@@ -154,21 +158,21 @@ Gate files present for HO-P3: ARCHITECTURE PASS, SECURITY PASS, CODE_REVIEW PASS
 |---|---|---|
 | A1 | U1–U3, U8, E1 | PASS |
 | A2 | U4–U6, E1, E3 | PASS |
-| A3 | U7, E9, E13 | FAIL (E9 and E13 red, see findings) |
+| A3 | U7, E9, E13 | PASS |
 | A4 | SP1–SP8; ADR-FE-174..179 are not tested here | PASS for the splits; ADR text not checked by this gate |
 | A5 | U10–U14, E3 | PASS |
 | A6 | U12, countries-load-error, E6 | PASS |
-| A7 | U15–U18, E4, E6 | FAIL (E4 E-A4 red, pre-existing) |
+| A7 | U15–U18, E4, E6 | PASS |
 | A8 | U19–U22, E5, E7 | PASS (with W2 caveat) |
 | A9 | U23, U24, E8 | PASS |
-| A10 | U25–U31, E8, E9 | FAIL (E9 red) |
-| A11 | U32, E10, E12 | PASS (E12 staff idle-lock excluded, pre-existing) |
-| A12 | U33, U34, E13, E14 | FAIL (E13 E-B1..B3, E14 re-order dialog red, pre-existing) |
-| A13 | U35–U37, E9, E15 | FAIL (E9 `?placed=1` and order-detail axe) |
+| A10 | U25–U31, E8, E9 | PASS |
+| A11 | U32, E10, E12 | PASS |
+| A12 | U33, U34, E13, E14 | PASS |
+| A13 | U35–U37, E9, E15 | PASS |
 | A14 | U38, E11, E12 | PASS |
 | A15 | U9 + §17.2 `rg` | PASS (0 hits); automated scan covers S0 and S1 only |
-| A16 | E1, E3, E6, E9, E12, E14 | FAIL (E9, E12 staff, E14 dialog) |
-| A17 | typecheck, lint, Vitest, W1–W3 | PASS for typecheck, lint, Vitest; W2 has LOW/MEDIUM weakenings; e2e not green |
+| A16 | E1, E3, E6, E9, E12, E14 | PASS for all HO-P3 routes; the staff idle-lock axe case is out of scope (HO-P4) |
+| A17 | typecheck, lint, Vitest, W1–W3 | PASS (W2 MEDIUM recorded); Vitest load-timeouts rerun alone |
 
 ## Cases I could not run
 
@@ -183,8 +187,8 @@ Gate files present for HO-P3: ARCHITECTURE PASS, SECURITY PASS, CODE_REVIEW PASS
 
 | Gap | Why not covered | Suggested owner |
 |---|---|---|
-| G1 draft-slug 404 / hero LCP attributes / no-JS `h1` weakened or conditional in `shop-product.spec.ts` | environment (dev streaming; mock sends no photo URL) | S2 owner: add a mock product with a photo URL and run the 404 case against a production build |
-| G2 `ordering-a11y-responsive.spec.ts:157` stale copy | test defect, not product code | S3/S4 owner: assert the S4 confirmation ("Thank you! Your order is in.") |
-| G3 automated U9 scan covers S0 (`shop/no-hex-literals.test.ts`) and S1 (`home.test.tsx`) only; S2, S3, S4 owned files have none | each later slice was to add its own list; S2–S4 did not | slice owners |
-| G4 U30 network-error retry through `CheckoutScreen` | covered at hook level and via 409 in component | S3 owner |
-| G5 `/portal/orders/106` @360 overflow (48 px) on chromium | pre-existing at baseline | S4 owner |
+| G1 shop-product loosenings (hero attributes, draft-slug status, no-JS h1) | dev-server / mock limits; owner accepted as MEDIUM | S2 owner: add a photo URL to the mock and a production-build 404 run |
+| G3 automated colour-literal guard | now scans every customer folder (4713d6a); not re-verified file by file | slice owners |
+| G4 U30 network-error retry through CheckoutScreen | covered at hook level and via 409 RequestInProgress | S3 owner |
+| G6 staff idle-lock axe and shop-staff E-C1 | owner: handed to HO-P4 | HO-P4 |
+| G7 E16 whole e2e suite | not run in this gate | integrator |
