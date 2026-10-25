@@ -1,10 +1,26 @@
 namespace AmarGram.Api.Contracts.Order;
 
-/// <summary><c>POST /api/staff/orders/{orderId}/dispatch</c>. The tracking number may follow later (<c>PUT …/tracking</c>).</summary>
+/// <summary><c>POST /api/staff/orders/{orderId}/dispatch</c>. The tracking number may follow later (<c>PUT …/tracking</c>). HO-P4 BG-5: send <b>exactly one</b> of <c>courierId</c> and
+/// <c>riderId</c> (an in-house rider of the active branch; a rider delivery has no tracking number).</summary>
 public sealed class DispatchOrderRequest
 {
-    public Guid CourierId { get; init; }
+    public Guid? CourierId { get; init; }
+    public Guid? RiderId { get; init; }
     public string? TrackingNumber { get; init; }
+}
+
+/// <summary><c>PUT /api/staff/orders/{orderId}/lines/{lineId}/picked</c> (HO-P4 BG-4) -- tick or untick a line of the pick list.</summary>
+public sealed class SetLinePickedRequest
+{
+    public bool Picked { get; init; }
+}
+
+/// <summary><c>POST /api/staff/riders</c> and <c>PUT /api/staff/riders/{riderId}</c> (HO-P4 BG-5). The mobile number is optional.</summary>
+public sealed class RiderRequest
+{
+    public string Name { get; init; } = default!;
+    public string? MobileNumber { get; init; }
+    public bool IsActive { get; init; } = true;
 }
 
 public sealed class RecordTrackingNumberRequest

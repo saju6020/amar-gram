@@ -17,6 +17,9 @@ public enum OrderTransitionAction
     Cancel,
 
     StartPacking,
+
+    /// <summary>HO-P4 BG-4: the order is packed and waits for a rider or the customer: <c>Packing → Packed</c>. An optional step -- <c>Packing</c> may still go straight to dispatch.</summary>
+    MarkPacked,
     Dispatch,
     MarkReadyForCollection,
     RecordDelivery,
@@ -34,7 +37,7 @@ public enum OrderTransitionAction
 
 /// <summary>
 /// HO-ORD-001 §8.4 (ADR-197), US-ORD-09 -- the one table of Appendix C's transitions, pure. The aggregate enforces it on every mutation and
-/// the read side's <c>allowedActions</c> derive from the same table, so the two cannot drift. <b>No state is added to Appendix C</b>: an
+/// the read side's <c>allowedActions</c> derive from the same table, so the two cannot drift. <b>No state is added to Appendix C</b> (bar HO-P4 BG-4's optional <c>Packed</c>, "packed, waiting for rider"): an
 /// expired transfer order is <c>Cancelled</c>, and a pickup order reuses <c>Dispatched</c> (ready for collection) and <c>Delivered</c> (collected).
 /// </summary>
 public static class OrderTransitionRules
@@ -50,9 +53,15 @@ public static class OrderTransitionRules
             [(OrderStatus.Confirmed, OrderTransitionAction.Cancel)] = OrderStatus.Cancelled,
             [(OrderStatus.Confirmed, OrderTransitionAction.CollectAtCounter)] = OrderStatus.Delivered,
 
+            [(OrderStatus.Packing, OrderTransitionAction.MarkPacked)] = OrderStatus.Packed,
             [(OrderStatus.Packing, OrderTransitionAction.Dispatch)] = OrderStatus.Dispatched,
             [(OrderStatus.Packing, OrderTransitionAction.MarkReadyForCollection)] = OrderStatus.Dispatched,
             [(OrderStatus.Packing, OrderTransitionAction.Cancel)] = OrderStatus.Cancelled,
+
+            // HO-P4 BG-4: packed, waiting for the rider (or the customer, for a pickup).
+            [(OrderStatus.Packed, OrderTransitionAction.Dispatch)] = OrderStatus.Dispatched,
+            [(OrderStatus.Packed, OrderTransitionAction.MarkReadyForCollection)] = OrderStatus.Dispatched,
+            [(OrderStatus.Packed, OrderTransitionAction.Cancel)] = OrderStatus.Cancelled,
 
             [(OrderStatus.Dispatched, OrderTransitionAction.RecordDelivery)] = OrderStatus.Delivered,
             [(OrderStatus.Dispatched, OrderTransitionAction.RecordDeliveryFailure)] = OrderStatus.Returned,
@@ -78,7 +87,7 @@ public static class OrderTransitionRules
 
     /// <summary>The customer may cancel before packing starts (US-ORD-12 AC1); staff may also cancel while packing. Everything else is refused.</summary>
     public static bool CanCancel(OrderStatus from, bool byCustomer) =>
-        IsAllowed(from, OrderTransitionAction.Cancel) && !(byCustomer && from == OrderStatus.Packing);
+        IsAllowed(from, OrderTransitionAction.Cancel) && !(byCustomer && (from == OrderStatus.Packing || from == OrderStatus.Packed));
 
     /// <summary>Returns the target state or throws <c>InvalidOrderTransition</c> naming both states (US-ORD-09 AC2).</summary>
     public static OrderStatus Require(OrderStatus from, OrderTransitionAction action) =>
@@ -116,6 +125,7 @@ public static class OrderTransitionRules
         OrderTransitionAction.Expire => "expired",
         OrderTransitionAction.Cancel => "cancelled",
         OrderTransitionAction.StartPacking => "packed",
+        OrderTransitionAction.MarkPacked => "marked as packed",
         OrderTransitionAction.Dispatch => "dispatched",
         OrderTransitionAction.MarkReadyForCollection => "marked ready for collection",
         OrderTransitionAction.RecordDelivery => "marked delivered",

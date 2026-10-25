@@ -102,6 +102,7 @@ public static class ReportingModule
     private static void RegisterDashboard(IServiceCollection services)
     {
         services.AddScoped<IQueryHandlerAsync<GetDashboardQuery, DashboardOutcome>, GetDashboardQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<GetSalesSeriesQuery, SalesSeriesOutcome>, GetSalesSeriesQueryHandler>(); // HO-P4 BG-1
 
         services.AddScoped<IDashboardTileSource, StockExpiryTile>();
         services.AddScoped<IDashboardTileSource, StockLowTile>();
@@ -109,6 +110,7 @@ public static class ReportingModule
         services.AddScoped<IDashboardTileSource, OrdersTodayTile>();
         services.AddScoped<IDashboardTileSource, OrdersAwaitingTransferTile>();
         services.AddScoped<IDashboardTileSource, OrdersReturnsPendingTile>();
+        services.AddScoped<IDashboardTileSource, CodWithRidersTile>(); // HO-P4 BG-5
         services.AddScoped<IDashboardTileSource, ShopRevenueTodayTile>();
         services.AddScoped<IDashboardTileSource, PaymentsTodayTile>();
         services.AddScoped<IDashboardTileSource, PaymentsUnreconciledTile>();

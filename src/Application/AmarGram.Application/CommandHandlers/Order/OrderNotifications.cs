@@ -128,7 +128,7 @@ public static class OrderNotifications
             {
                 ["orderNumber"] = order.OrderNumber,
                 ["courierName"] = order.Shipment!.CourierName,
-                ["trackingNumber"] = string.IsNullOrWhiteSpace(order.Shipment.TrackingNumber) ? "to follow" : order.Shipment.TrackingNumber,
+                ["trackingNumber"] = order.Shipment.IsRiderDelivery ? "not needed - hand delivery" : string.IsNullOrWhiteSpace(order.Shipment.TrackingNumber) ? "to follow" : order.Shipment.TrackingNumber,
                 ["orderLink"] = links.OrderLink(order.Id),
             },
             BranchId: order.BranchId, DeduplicationKey: $"order.dispatched:{order.Id:N}", CorrelationId: correlationId, UserContext: user));

@@ -20,8 +20,9 @@ public sealed class CompleteCounterSaleCommand : Command
     public required Guid OrderId { get; init; }
     public required Guid IdempotencyKey { get; init; }
     public required Guid BranchId { get; init; }
-    /// <summary>The customer's name and mobile number, both required (ADR-216, owner decision 6 of 2026-10-09). An active customer with this primary mobile is the buyer; otherwise a
-    /// passwordless customer is registered with this name.</summary>
+    /// <summary>The customer's name and mobile number, <b>both or neither</b> (ADR-216, owner decision 6 of 2026-10-09; HO-P4 BG-8, owner approved 2026-10-25: neither = an anonymous
+    /// walk-in sale, an order with no customer invoiced to the counter-sale system account, <see cref="AmarGram.Shared.Common.Constants.AnonymousCounterCustomer"/>). An active customer with this
+    /// primary mobile is the buyer; otherwise a passwordless customer is registered with this name.</summary>
     public required string CustomerName { get; init; }
     public required string CustomerMobile { get; init; }
     public required IReadOnlyList<CounterSaleLineInput> Lines { get; init; }

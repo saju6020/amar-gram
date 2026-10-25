@@ -73,6 +73,23 @@ public sealed class CourierConfiguration : IEntityTypeConfiguration<CourierAggre
     }
 }
 
+/// <summary>HO-P4 BG-5 -- <c>ordering.rider</c>, the branch's in-house riders; the name is unique within a branch (<c>ix_rider_branch_name</c> -> 400 <c>RiderNameAlreadyExists</c>).</summary>
+public sealed class RiderConfiguration : IEntityTypeConfiguration<RiderAggregate>
+{
+    public void Configure(EntityTypeBuilder<RiderAggregate> builder)
+    {
+        builder.ConfigureOrderingRoot("rider");
+
+        builder.Property(x => x.BranchId).HasColumnName("branch_id").IsRequired();
+        builder.Property(x => x.Name).HasColumnName("name").HasMaxLength(OrderRules.MaxNameLength).IsRequired();
+        builder.Property(x => x.MobileNumber).HasColumnName("mobile_number").HasMaxLength(AmarGram.Domain.ValueObjects.MobileNumber.MaxLength);
+        builder.Property(x => x.IsActive).HasColumnName("is_active").IsRequired();
+
+        builder.HasIndex(x => new { x.BranchId, x.Name }).IsUnique().HasDatabaseName("ix_rider_branch_name");
+        builder.HasIndex(x => new { x.BranchId, x.IsActive }).HasDatabaseName("ix_rider_branch_active");
+    }
+}
+
 /// <summary>HO-ORD-001 §12.1 (Phase B) -- <c>ordering.bank_transfer_account</c>, a singleton (one fixed id). Data, never configuration (§20.8).</summary>
 public sealed class BankTransferAccountConfiguration : IEntityTypeConfiguration<BankTransferAccountAggregate>
 {

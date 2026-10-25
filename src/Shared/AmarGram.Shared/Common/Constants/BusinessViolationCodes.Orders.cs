@@ -64,6 +64,13 @@ public static partial class BusinessViolationCodes
     public const string TendersDoNotCoverTotal = nameof(TendersDoNotCoverTotal);
     public const string ReallocationReasonRequired = nameof(ReallocationReasonRequired);
 
+    // HO-P4 BG-4/BG-5: packed state, pick ticks, in-house riders
+    public const string RiderNotFound = nameof(RiderNotFound);
+    public const string RiderNameAlreadyExists = nameof(RiderNameAlreadyExists);
+    public const string InvalidRider = nameof(InvalidRider);
+    public const string DispatchTargetInvalid = nameof(DispatchTargetInvalid);
+    public const string OrderLineNotFound = nameof(OrderLineNotFound);
+
     // Returns and refunds
     public const string ReturnNotFound = nameof(ReturnNotFound);
     public const string ReturnWindowClosed = nameof(ReturnWindowClosed);

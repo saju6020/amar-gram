@@ -34,4 +34,29 @@ public sealed class StaffDashboardController(IInMemoryDispatcher dispatcher, IUs
 
         return Ok(response.Result.Result);
     }
+
+    /// <summary>HO-P4 BG-1 -- the per-day sales series for the dashboard chart: the last <c>days</c> (14 by default, 1 to 31) branch-local days at the active branch, oldest first, every day present
+    /// with its net revenue and placed-order count. <c>Reports.SalesView</c> (Shop Manager, Accountant, Administrator).</summary>
+    [HttpGet("sales-series")]
+    [RequireAction(Actions.Reports.SalesView)]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(AmarGram.Api.RateLimiting.ReportRateLimitPolicies.Dashboard)]
+    public async Task<IActionResult> SalesSeries([FromQuery] int? days)
+    {
+        if (days is < 1 or > GetSalesSeriesQuery.MaxDays) return BadRequest(new { error = $"days must be 1 to {GetSalesSeriesQuery.MaxDays}." });
+
+        var caller = HttpContext.Items[ResolvedCaller.HttpContextItemsKey] as ResolvedCaller;
+        var active = activeBranchAccessor.GetActiveBranchId();
+
+        var response = await dispatcher.GetResultAsync(new GetSalesSeriesQuery
+        {
+            CallerId = caller?.AccountId ?? Guid.Empty, ActiveBranchId = active.BranchId, Days = days ?? GetSalesSeriesQuery.DefaultDays,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
+        });
+
+        Response.Headers.CacheControl = "no-store";
+        if (response.Result!.IsRefused)
+            return StatusCode(403, new { error = BusinessViolationCodes.BranchNotAssigned, errors = new[] { new { errorCode = BusinessViolationCodes.BranchNotAssigned, errorMessage = ReportingMessages.BranchNotAssigned } } });
+
+        return Ok(response.Result.Result);
+    }
 }

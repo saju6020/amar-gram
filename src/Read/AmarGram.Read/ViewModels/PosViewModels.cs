@@ -9,9 +9,12 @@ public sealed record PosSkuViewModel(
     Guid SkuId, Guid ProductId, string ProductName, string VariantLabel, string? Barcode, MoneyViewModel? UnitPrice, int Sellable, bool IsBundle,
     IReadOnlyList<PosFefoBatchViewModel> FefoBatches);
 
+/// <summary>The counter quote. HO-P4 BG-7: when the request carried <c>tenderedCash</c> and the sale can be made, exactly one of <c>ChangeDue</c> (cash covers the total; zero when exact)
+/// and <c>CashShort</c> (what is still missing) is set; both are null without a tendered amount. Computed by the tender rule the sale itself uses -- no arithmetic in the browser.</summary>
 public sealed record CounterQuoteViewModel(
     IReadOnlyList<CheckoutQuoteLineViewModel> Lines, IReadOnlyList<ExcludedLineViewModel> ExcludedLines, IReadOnlyList<CheckoutChangeViewModel> Changes,
-    QuoteDiscountViewModel? Discount, QuoteTotalsViewModel Totals, bool CanSell, IReadOnlyList<string> BlockingReasons, string CurrencyCode);
+    QuoteDiscountViewModel? Discount, QuoteTotalsViewModel Totals, bool CanSell, IReadOnlyList<string> BlockingReasons, string CurrencyCode,
+    MoneyViewModel? ChangeDue = null, MoneyViewModel? CashShort = null);
 
 public sealed record ReceiptLineViewModel(
     string Description, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineDiscount, decimal TaxRatePercent, MoneyViewModel TaxAmount, MoneyViewModel LineTotal);

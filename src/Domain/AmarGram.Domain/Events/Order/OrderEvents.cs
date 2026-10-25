@@ -54,11 +54,19 @@ public sealed class OrderPackingStartedEvent : Event
     public required Guid OrderId { get; init; }
 }
 
+/// <summary>HO-P4 BG-5: exactly one of <c>CourierId</c> / <c>RiderId</c> is set -- the order left with a courier or with an in-house rider.</summary>
 public sealed class OrderDispatchedEvent : Event
 {
     public required Guid OrderId { get; init; }
-    public required Guid CourierId { get; init; }
+    public Guid? CourierId { get; init; }
+    public Guid? RiderId { get; init; }
     public required bool HasTracking { get; init; }
+}
+
+/// <summary>HO-P4 BG-4: the order is packed and waits for a rider (or the customer).</summary>
+public sealed class OrderPackedEvent : Event
+{
+    public required Guid OrderId { get; init; }
 }
 
 public sealed class OrderReadyForCollectionEvent : Event

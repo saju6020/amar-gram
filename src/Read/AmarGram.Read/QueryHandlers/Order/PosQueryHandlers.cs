@@ -3,6 +3,7 @@ using AmarGram.Domain.Aggregates.Administration;
 using AmarGram.Domain.DomainServices;
 using AmarGram.Domain.Models;
 using AmarGram.Infrastructure.Ordering;
+using AmarGram.Infrastructure.Product;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Read.Queries.Order;
 using AmarGram.Read.ViewModels;
@@ -17,7 +18,7 @@ namespace AmarGram.Read.QueryHandlers.Order;
 internal static class PosSkuLookup
 {
     public static async Task<IReadOnlyList<PosSkuViewModel>> ViewsAsync(
-        AmarGramDbContext db, IStockLedger ledger, IReadOnlyList<OrderCatalogueSku> skus, Guid branchId, CancellationToken ct)
+        AmarGramDbContext db, IStockLedger ledger, IReadOnlyList<OrderCatalogueSku> skus, Guid branchId, CancellationToken ct, bool withFefoPreview = true)
     {
         if (skus.Count == 0) return [];
 
@@ -27,7 +28,7 @@ internal static class PosSkuLookup
         {
             var quantity = (int)Math.Floor(Math.Min(sellable.GetValueOrDefault(sku.SkuId), int.MaxValue));
             var batches = new List<PosFefoBatchViewModel>();
-            if (!sku.IsBundle && quantity > 0)
+            if (withFefoPreview && !sku.IsBundle && quantity > 0)
             {
                 var plan = await ledger.PlanAsync(new StockDemand(branchId, sku.SkuId, 1m, MovementKind.Sale, null, null, null), ct);
                 if (plan.IsSuccess) batches.AddRange(plan.Value!.Lines.Select(l => new PosFefoBatchViewModel(l.BatchId, l.LotNumber, l.ExpiresOn, l.LocationId, l.Quantity.ToString("0.###", CultureInfo.InvariantCulture))));
@@ -66,6 +67,37 @@ public sealed class SearchPosSkusQueryHandler(AmarGramDbContext db, ICatalogueLo
     }
 }
 
+/// <summary>
+/// HO-P4 BG-6 -- the counter-sale browse grid: sellable SKUs, name order, paged (<c>pageNumber</c>/<c>pageSize</c>, 20 by default, 100 at most), optionally within one category. The page
+/// is chosen in SQL by the catalogue's own sellability rule (Active SKU of an Active, listed product with a price in force); each row is then priced and stocked exactly as a search hit
+/// is, bar the FEFO batch preview (<c>fefoBatches</c> is empty here -- scan or search the item for that). A bundle whose component is not sellable is dropped from its page, so a page can be
+/// one or two rows short of <c>pageSize</c>.
+/// </summary>
+public sealed class BrowsePosSkusQueryHandler(AmarGramDbContext db, ICatalogueLookup catalogue, IStockLedger ledger, TimeProvider timeProvider)
+    : IQueryHandlerAsync<BrowsePosSkusQuery, PagedResult<PosSkuViewModel>>
+{
+    public async Task<QueryResponse<PagedResult<PosSkuViewModel>>> HandleAsync(BrowsePosSkusQuery query)
+    {
+        var (pageNumber, pageSize) = OrderPaging.Of(query.PageNumber, query.PageSize);
+        var now = timeProvider.GetUtcNow();
+
+        var rows = db.SkuRows().Where(r =>
+            r.SkuStatus == SkuStatus.Active && r.ProductStatus == ProductStatus.Active && r.ListedOnStorefront
+            && db.SkuPrices.Any(p => p.SkuId == r.SkuId && p.EffectiveFrom <= now));
+        if (query.Category is { } category) rows = rows.Where(r => r.Category == category);
+
+        var total = await rows.CountAsync();
+        var pageIds = await rows.OrderBy(r => r.ProductName).ThenBy(r => r.SkuCode).ThenBy(r => r.SkuId)
+            .Skip((pageNumber - 1) * pageSize).Take(pageSize).Select(r => r.SkuId).ToListAsync();
+
+        var snapshots = await catalogue.GetSkusAsync(pageIds, now, default);
+        var purchasable = pageIds.Where(snapshots.ContainsKey).Select(id => snapshots[id]).Where(s => s.IsPurchasable).ToList();
+        var items = await PosSkuLookup.ViewsAsync(db, ledger, purchasable, query.BranchId, default, withFefoPreview: false);
+
+        return new QueryResponse<PagedResult<PosSkuViewModel>> { Result = new PagedResult<PosSkuViewModel>(items, pageNumber, pageSize, total) };
+    }
+}
+
 public sealed class GetCounterQuoteQueryHandler(ICheckoutInputsLoader loader, TimeProvider timeProvider) : IQueryHandlerAsync<GetCounterQuoteQuery, CounterQuoteViewModel>
 {
     public async Task<QueryResponse<CounterQuoteViewModel>> HandleAsync(GetCounterQuoteQuery query)
@@ -75,6 +107,19 @@ public sealed class GetCounterQuoteQueryHandler(ICheckoutInputsLoader loader, Ti
         var quote = CheckoutPricing.Quote(inputs);
         var currency = quote.CurrencyCode;
         MoneyViewModel Money(MinorUnits amount) => OrderMoney.Of(amount.ToAmount(), currency);
+
+        var canSell = quote.CanPlace && quote.ExcludedLines.Count == 0 && inputs.Lines.Count == query.Lines.Count;
+
+        // HO-P4 BG-7: the change for the cash the customer hands over, by the very rule the sale applies (TenderCalculator) -- never worked out in the browser.
+        MoneyViewModel? changeDue = null, cashShort = null;
+        // A sale whose quantity the quote had to cut down is refused at completion (a counter sale is never silently reduced), so there is no change to show for it.
+        if (query.TenderedCash is { } tendered && canSell && quote.Changes.All(c => c.Kind != CheckoutChangeKind.QuantityReduced))
+        {
+            var handed = MinorUnits.FromAmount(tendered);
+            var outcome = TenderCalculator.Evaluate(quote.Totals.GrandTotal, [new CounterTender(TenderMethod.Cash, handed, null)]);
+            if (outcome.IsSuccess) changeDue = Money(outcome.ChangeDue);
+            else if (handed < quote.Totals.GrandTotal) cashShort = Money(quote.Totals.GrandTotal - handed);
+        }
 
         var view = new CounterQuoteViewModel(
             quote.Lines.Select(l => new CheckoutQuoteLineViewModel(
@@ -86,7 +131,7 @@ public sealed class GetCounterQuoteQueryHandler(ICheckoutInputsLoader loader, Ti
             new QuoteTotalsViewModel(
                 Money(quote.Totals.Subtotal), Money(quote.Totals.LineDiscountTotal), Money(quote.Totals.OrderDiscount), Money(quote.Totals.DeliveryCharge), Money(quote.Totals.TaxTotal),
                 Money(quote.Totals.GrandTotal)),
-            quote.CanPlace && quote.ExcludedLines.Count == 0 && inputs.Lines.Count == query.Lines.Count, quote.BlockingReasons, currency);
+            canSell, quote.BlockingReasons, currency, changeDue, cashShort);
 
         return new QueryResponse<CounterQuoteViewModel> { Result = view };
     }

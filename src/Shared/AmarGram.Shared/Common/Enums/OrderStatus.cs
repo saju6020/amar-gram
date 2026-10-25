@@ -11,4 +11,7 @@ public sealed class OrderStatus(int value, string displayName) : Enumeration(val
     public static readonly OrderStatus Cancelled = new(6, nameof(Cancelled));
     public static readonly OrderStatus Returned = new(7, nameof(Returned));
     public static readonly OrderStatus Refunded = new(8, nameof(Refunded));
+
+    /// <summary>HO-P4 BG-4 -- "packed, waiting for rider": between <see cref="Packing"/> and <see cref="Dispatched"/>. An optional step; value 9 so no stored value moves.</summary>
+    public static readonly OrderStatus Packed = new(9, nameof(Packed));
 }

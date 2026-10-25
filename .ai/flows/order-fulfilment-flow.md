@@ -64,7 +64,14 @@ Pick list (by location + batch) ──► Pack ──► Dispatch (tracking) ─
   by a person
 
 ## Decisions made
--
+- **HO-P4 back-office gaps BG-1..BG-8 (2026-10-25, owner approved). Status: Complete (backend).**
+  - BG-4 `OrderStatus.Packed` (9, "packed, waiting for rider") via `MarkPacked` (`POST /api/staff/orders/{id}/packed`); an **optional** step -- `Packing` may still dispatch or be marked ready directly; from `Packed`: Dispatch, MarkReadyForCollection, staff Cancel. Pick ticks are `order_line.is_picked/picked_on/picked_by` (`PUT .../lines/{lineId}/picked`), informational, never gate a transition.
+  - BG-5 `RiderAggregate` (`ordering.rider`, per branch, unique name per branch, never deleted) at `/api/staff/riders`; `DispatchOrderCommand` takes exactly one of `CourierId` / `RiderId`; `Shipment.CourierId` is now nullable, `Shipment.RiderId/RiderName` added, the customer sees the fixed carrier name `OrderRules.RiderCarrierName`. Dashboard tile `orders.cod-with-riders` (riders, orders, amount).
+  - BG-2 `GET /api/staff/orders/status-counts` (same filters as the queue bar `status`, shared `StaffOrderFilter`); BG-3 queue rows carry `deliveryZone`, `deliveryDistrict`, `slotDate`, `slotWindowLabel`.
+  - BG-1 `GET /api/staff/dashboard/sales-series` (`GetSalesSeriesQueryHandler`, net revenue from the revenue reports' own `RevenueLoader`/`RevenueBuilder`).
+  - BG-6 `GET /api/staff/pos/browse`; BG-7 `tenderedCash` on the POS quote -> `changeDue` / `cashShort` from `TenderCalculator`; BG-8 anonymous sale, see ADR-216 amendment 2026-10-25.
+  - Migrations: `InitialAmarGram` regenerated with the new columns/table; `AddRiderRetentionGuard` attaches the retention triggers to `ordering.rider` (C-ALL-1).
+  - Key files: `src/Domain/.../DomainServices/OrderTransitionRules.cs`, `Aggregates/Order/{OrderAggregate,RiderAggregate}.cs`, `ValueObjects/Shipment.cs`; `src/Application/.../CommandHandlers/Order/{OrderFulfilmentCommandHandlers,RiderCommandHandlers,CompleteCounterSaleCommandHandler}.cs`; `src/Read/.../QueryHandlers/Order/{StaffOrderQueryHandlers,PosQueryHandlers,RiderQueryHandlers}.cs`, `QueryHandlers/Reporting/Dashboard/{GetSalesSeriesQueryHandler,DashboardTileSources}.cs`; `src/Api/.../Controllers/{StaffOrders,StaffRiders,StaffPos,StaffDashboard}Controller.cs`; tests `tests/AmarGram.IntegrationTests/Endpoints/OrderingBackOfficeGapsEndpointTests.cs`, `tests/AmarGram.Domain.Tests/Ordering/HoP4BackOfficeGapsTests.cs`.
 
 ## Remaining work
 - Concurrent checkout on the last unit: exactly one succeeds (needs a reservation transaction)

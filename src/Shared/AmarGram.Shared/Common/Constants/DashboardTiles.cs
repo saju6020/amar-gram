@@ -17,6 +17,7 @@ public static class DashboardTiles
         new("orders.today", "Orders today", [StaffRoles.ShopManager, StaffRoles.Administrator], Actions.Reports.SalesView, null),
         new("orders.awaiting-transfer", "Bank transfers awaited", [StaffRoles.ShopManager, StaffRoles.Accountant], Actions.Reports.SalesView, null, [Actions.Reports.FinancialView]),
         new("orders.returns-pending", "Returns to decide", [StaffRoles.ShopManager], Actions.Reports.SalesView, null),
+        new("orders.cod-with-riders", "Cash on delivery out with riders", [StaffRoles.ShopManager, StaffRoles.Accountant, StaffRoles.Administrator], Actions.Reports.SalesView, null), // HO-P4 BG-5
         new("revenue.shop-today", "Shop revenue today", [StaffRoles.ShopManager], Actions.Reports.SalesView, ReportCatalogue.RevenueShopByCategoryKey),
         new("payments.today", "Payments today", [StaffRoles.Accountant, StaffRoles.Administrator], Actions.Reports.FinancialView, ReportCatalogue.PaymentReconciliationKey),
         new("payments.unreconciled", "Unreconciled payments", [StaffRoles.Accountant], Actions.Reports.FinancialView, ReportCatalogue.PaymentReconciliationKey),

@@ -6469,6 +6469,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("order_number");
 
+                    b.Property<DateTimeOffset?>("PackedOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("marked_packed_on");
+
                     b.Property<DateTimeOffset?>("PackingStartedOn")
                         .HasColumnType("timestamptz")
                         .HasColumnName("packing_started_on");
@@ -6884,6 +6888,81 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_return_request_status_requested");
 
                     b.ToTable("return_request", "ordering");
+                });
+
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Order.RiderAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsMarkedToDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Language")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("LastUpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MobileNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("mobile_number");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("ServiceId")
+                        .HasColumnType("text");
+
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("VerticalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "IsActive")
+                        .HasDatabaseName("ix_rider_branch_active");
+
+                    b.HasIndex("BranchId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_rider_branch_name");
+
+                    b.ToTable("rider", "ordering");
                 });
 
             modelBuilder.Entity("AmarGram.Domain.Aggregates.Product.ProductAggregate", b =>
@@ -11915,7 +11994,7 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                             b1.Property<Guid>("OrderAggregateId")
                                 .HasColumnType("uuid");
 
-                            b1.Property<Guid>("CourierId")
+                            b1.Property<Guid?>("CourierId")
                                 .HasColumnType("uuid")
                                 .HasColumnName("shipment_courier_id");
 
@@ -11942,6 +12021,15 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasColumnType("character varying(100)")
                                 .HasColumnName("shipment_last_status");
 
+                            b1.Property<Guid?>("RiderId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("shipment_rider_id");
+
+                            b1.Property<string>("RiderName")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("shipment_rider_name");
+
                             b1.Property<string>("TrackingNumber")
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)")
@@ -11953,6 +12041,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasColumnName("shipment_tracking_url");
 
                             b1.HasKey("OrderAggregateId");
+
+                            b1.HasIndex("RiderId")
+                                .HasDatabaseName("ix_sales_order_rider")
+                                .HasFilter("shipment_rider_id IS NOT NULL");
 
                             b1.HasIndex("TrackingNumber")
                                 .HasDatabaseName("ix_sales_order_tracking")
@@ -11984,6 +12076,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasColumnType("boolean")
                                 .HasColumnName("is_bundle");
 
+                            b1.Property<bool>("IsPicked")
+                                .HasColumnType("boolean")
+                                .HasColumnName("is_picked");
+
                             b1.Property<decimal>("LineDiscount")
                                 .HasColumnType("numeric(12,2)")
                                 .HasColumnName("line_discount");
@@ -12003,6 +12099,14 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                             b1.Property<decimal>("OrderDiscountShare")
                                 .HasColumnType("numeric(12,2)")
                                 .HasColumnName("order_discount_share");
+
+                            b1.Property<Guid?>("PickedBy")
+                                .HasColumnType("uuid")
+                                .HasColumnName("picked_by");
+
+                            b1.Property<DateTimeOffset?>("PickedOn")
+                                .HasColumnType("timestamptz")
+                                .HasColumnName("picked_on");
 
                             b1.Property<Guid>("ProductId")
                                 .HasColumnType("uuid")
