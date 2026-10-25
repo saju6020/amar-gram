@@ -15,7 +15,7 @@ export function FlagOrGlobe({ code, size = 28 }: { code: string; size?: number }
       alt=""
       width={size}
       height={Math.round((size * 2) / 3)}
-      className="flex-none rounded-[3px] shadow-[0_0_0_1px_rgba(0,0,0,0.14)]"
+      className="flex-none rounded-[3px] ring-1 ring-border-strong"
     />
   ) : (
     <Globe size={size - 4} aria-hidden="true" className="flex-none text-ink-muted" />
@@ -57,7 +57,7 @@ export function OriginGrid({
           <li key={origin.code}>
             <article
               className={cn(
-                'relative flex h-full rounded-card border border-border bg-surface p-5 hover:border-accent',
+                'relative flex h-full rounded-card border-[1.5px] border-border bg-surface p-5 hover:border-accent',
                 compact ? 'items-center gap-3.5' : 'flex-col gap-2.5',
               )}
             >

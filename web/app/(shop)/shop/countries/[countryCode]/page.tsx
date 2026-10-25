@@ -54,11 +54,11 @@ export default async function OriginPage({ params, searchParams }: Props) {
         <div className="flex items-center gap-4">
           <span
             aria-hidden="true"
-            className="grid size-16 flex-none place-items-center rounded-pill bg-surface"
+            className="grid size-16 flex-none place-items-center rounded-pill border-[1.5px] border-border bg-surface"
           >
             <FlagOrGlobe code={origin.value.code} size={36} />
           </span>
-          <h1 className="m-0 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-tight text-ink">
+          <h1 className="m-0 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold leading-tight tracking-[-0.02em] text-ink">
             {origin.value.name}
           </h1>
         </div>

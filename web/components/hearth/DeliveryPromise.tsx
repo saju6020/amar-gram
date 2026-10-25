@@ -1,4 +1,4 @@
-import { Banknote, MapPin, Truck } from 'lucide-react';
+import { Banknote, Check, MapPin, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -40,7 +40,10 @@ export function DeliveryPromiseCard({ className }: { className?: string }) {
   return (
     <section
       aria-label="Delivery and payment"
-      className={cn('rounded-[22px] border border-border bg-surface px-[18px] py-1.5', className)}
+      className={cn(
+        'rounded-card border-[1.5px] border-border bg-surface px-[18px] py-1.5',
+        className,
+      )}
     >
       <ul className="m-0 list-none p-0">
         {FACTS.map(({ key, icon: Icon, title, text, tone }) => (
@@ -68,35 +71,37 @@ export function DeliveryPromiseCard({ className }: { className?: string }) {
   );
 }
 
-/** The storefront home's promise strip: the same facts, plus the origin rule the shop is built on. */
+/**
+ * The storefront home's promise strip (Home.dc.html): dashed cards with a leaf tick. True facts
+ * only: certified items are marked, payment is cash on delivery, returns are for eligible items, and
+ * delivery or branch pickup is chosen at checkout. No origin-village claim (G1), no free-delivery
+ * amount (G5).
+ */
+const PROMISES = [
+  { key: 'organic', title: 'Organic where we say so', text: 'Certified items are marked' },
+  { key: 'cod', title: 'Cash on delivery', text: 'Pay when it reaches you' },
+  { key: 'returns', title: 'Returns on eligible items', text: 'Ask from your order page' },
+  { key: 'delivery', title: 'Delivery or branch pickup', text: 'Choose at checkout' },
+] as const;
+
 export function PromiseStrip({ className }: { className?: string }) {
-  const cards = [
-    ...FACTS,
-    {
-      key: 'origin',
-      icon: MapPin,
-      title: 'Origin on every food',
-      text: 'Every food names its country of origin, so you can shop by country.',
-      tone: 'teal',
-    },
-  ] as const;
   return (
     <section aria-label="Why shop with us" className={className}>
       <ul className="m-0 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map(({ key, icon: Icon, title, text }) => (
+        {PROMISES.map(({ key, title, text }) => (
           <li
             key={key}
-            className="flex items-start gap-3.5 rounded-card border border-border bg-surface p-5"
+            className="flex items-start gap-3.5 rounded-card border-[1.5px] border-dashed border-border-strong p-5"
           >
             <span
               aria-hidden="true"
-              className="grid size-11 flex-none place-items-center rounded-[14px] bg-accent-tint text-accent"
+              className="grid size-10 flex-none place-items-center rounded-pill bg-leaf-soft text-leaf-ink"
             >
-              <Icon size={20} />
+              <Check size={20} strokeWidth={2} />
             </span>
-            <span className="flex flex-col gap-1">
-              <strong className="text-[15px] text-ink">{title}</strong>
-              <span className="text-[13px] leading-snug text-ink-muted">{text}</span>
+            <span className="flex flex-col">
+              <strong className="text-base text-ink">{title}</strong>
+              <span className="text-sm text-ink-muted">{text}</span>
             </span>
           </li>
         ))}
