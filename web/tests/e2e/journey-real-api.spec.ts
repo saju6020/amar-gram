@@ -210,16 +210,16 @@ test.describe('a new visitor', () => {
       .click();
     await expect(visitor).toHaveURL(/\/shop\/products\/kalijira-rice/);
     await expect(visitor.getByRole('heading', { level: 1, name: /Kalijira Rice/ })).toBeVisible();
-    await visitor.getByRole('button', { name: 'Add to cart' }).click();
+    await visitor.getByRole('button', { name: 'Add to basket' }).click();
     await expect(visitor.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
     await expect(visitor.getByTestId('cart-count').first()).toHaveText('1');
   });
 
   test('2. checkout as a new visitor: sign-in with ?next, create an account, sign in, land on checkout', async () => {
     await visitor.getByRole('banner').getByRole('link', { name: /^Basket/ }).click();
-    await expect(visitor.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
+    await expect(visitor.getByRole('heading', { level: 1, name: 'Your basket' })).toBeVisible();
     await expect(
-      visitor.getByRole('region', { name: 'Items in your cart' }).getByRole('listitem'),
+      visitor.getByRole('region', { name: 'Items in your basket' }).getByRole('listitem'),
     ).toHaveCount(1);
     // Signed out, the Checkout pill reads "Sign in to check out" and goes to sign-in first.
     await visitor.getByRole('link', { name: /Sign in to check out/ }).click();
@@ -251,9 +251,10 @@ test.describe('a new visitor', () => {
     // with the guest cart merged in.
     await expect(visitor).toHaveURL(/\/checkout/);
     await expect(
-      visitor.getByRole('heading', { level: 1, name: /How should we get it to you/ }),
+      visitor.getByRole('heading', { level: 1, name: /^Checkout$/ }),
     ).toBeVisible();
-    await expect(visitor.getByRole('list', { name: 'Checkout steps' })).toBeVisible();
+    // D-2: one page with three numbered sections, no stepper.
+    await expect(visitor.getByRole('region', { name: /Deliver to/ })).toBeVisible();
   });
 
   test('3. policy popup: Privacy Policy, "Read the full text" opens the real text, Accept closes it', async () => {
@@ -311,35 +312,31 @@ test.describe('the seeded customer', () => {
     // Add one ৳850 item through the product page.
     await page.goto('/shop/products/pure-mustard-oil');
     await expect(page.getByRole('heading', { level: 1, name: /Pure Mustard Oil/ })).toBeVisible();
-    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await page.getByRole('button', { name: 'Add to basket' }).click();
     await expect(page.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
     await page.goto('/cart');
     await expect(
-      page.getByRole('region', { name: 'Items in your cart' }).getByRole('listitem'),
+      page.getByRole('region', { name: 'Items in your basket' }).getByRole('listitem'),
     ).toHaveCount(1);
     await page.getByRole('link', { name: 'Checkout' }).click();
     await expect(
-      page.getByRole('heading', { level: 1, name: /How should we get it to you/ }),
+      page.getByRole('heading', { level: 1, name: /^Checkout$/ }),
     ).toBeVisible();
-    await expect(page.getByRole('list', { name: 'Checkout steps' })).toBeVisible();
     await acceptPoliciesIfAsked(page);
 
     // Delivery -> the saved Dhaka address.
     await expect(page.getByLabel(/Home/)).toBeChecked();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Standard delivery, and a delivery window if asked.
     await expect(page.getByRole('radio', { name: /Standard delivery/ })).toBeChecked();
     const windows = page.getByRole('radiogroup', { name: 'Time window' });
     if (await windows.isVisible().catch(() => false))
       await windows.getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Cash on delivery.
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
-    // Review: every line priced, the six summary rows, delivery ৳60 below ৳2,000, tax ৳0.00.
+    // The aside: every line priced, the six summary rows, delivery ৳60 below ৳2,000, tax ৳0.00.
     const lines = page.getByRole('list', { name: 'Items in this order' }).getByRole('listitem');
     await expect(lines).toHaveCount(1);
     for (const line of await lines.all()) await expect(line).toContainText(/৳\s?[\d,]+\.\d{2}/);

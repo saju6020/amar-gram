@@ -38,7 +38,7 @@ test.describe('cart (US-ORD-01)', () => {
     page,
   }) => {
     await resetMock(page);
-    await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await addFromProduct(page, rice, /Added 1 ×/);
 
     await signInAsCustomer(page);
@@ -54,7 +54,7 @@ test.describe('cart (US-ORD-01)', () => {
     await page.goto(oats);
     await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
     await expect(
-      page.getByRole('status').filter({ hasText: /Added 1 × Organic Rolled Oats/ }),
+      page.getByRole('status').filter({ hasText: /Added 1 × 2 kg to your basket/ }),
     ).toBeVisible();
     await page.goto('/cart');
     await expect(items).toHaveCount(2);
@@ -67,7 +67,7 @@ test.describe('cart (US-ORD-01)', () => {
     page,
   }) => {
     await resetMock(page);
-    await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await page.goto('/cart');
     await page
       .getByRole('button', { name: /Remove Organic Rolled Oats/ })
@@ -89,7 +89,7 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   test('E-B1/E-B8: COD delivery order is placed once, even on a double click', async ({ page }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await startCheckoutDelivery(page);
 
     // Section 1: delivery to the saved address.
@@ -127,7 +127,7 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await control(page, 'setPrice', ids.skuOats2kg, '3000.00');
     await startCheckoutDelivery(page);
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
@@ -148,7 +148,7 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await addAddress(page, { label: 'Gazipur home', district: 'Gazipur', postalCode: '1700' });
     await page.goto('/checkout');
     await expect(
@@ -198,7 +198,7 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await startCheckoutDelivery(page);
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();

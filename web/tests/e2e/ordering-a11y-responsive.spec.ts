@@ -136,7 +136,7 @@ test.describe('flows that need set-up', () => {
     await signInAsCustomer(page);
     await page.goto(OATS);
     await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Organic Rolled Oats/ })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /Added 1 × 2 kg to your basket/ })).toBeVisible();
     await control(page, 'setPrice', shopIds.skuOats2kg, '3000.00');
     await auditViewports(page, REVIEW, async () => {
       await expect(page.getByRole('region', { name: 'What changed since you added these items' })).toBeVisible();
@@ -150,7 +150,7 @@ test.describe('flows that need set-up', () => {
     await signInAsCustomer(page);
     await page.goto(OATS);
     await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Organic Rolled Oats/ })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: /Added 1 × 2 kg to your basket/ })).toBeVisible();
     await page.goto(REVIEW);
     await page.getByRole('button', { name: 'Place order' }).click();
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();

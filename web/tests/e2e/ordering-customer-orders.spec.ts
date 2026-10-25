@@ -27,7 +27,7 @@ async function startCheckoutDelivery(page: import('@playwright/test').Page) {
   await addAddress(page);
   await page.goto('/checkout');
   await expect(
-    page.getByRole('heading', { level: 1, name: /How should we get it to you/ }),
+    page.getByRole('heading', { level: 1, name: /^Checkout$/ }),
   ).toBeVisible();
 }
 
@@ -38,13 +38,11 @@ test.describe('bank transfer expiry and cancel (US-ORD-12, US-ORD-19)', () => {
     await resetMock(page);
     await signInAsCustomer(page);
     await control(page, 'setTransferWindowSeconds', 3);
-    await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
+    // D-2: one page. The default address already fills "Deliver to"; pick a window and the payment, then place.
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radio', { name: /Bank transfer/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Place order' }).click();
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
     // D-3 (owner, 2026-10-19): placing lands on the order page itself, so there is no "View your order" link; the
