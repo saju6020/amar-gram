@@ -308,8 +308,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
       screen.getAllByLabelText('Alt text (required)').map((i) => (i as HTMLInputElement).value),
     ).toEqual(['Front of pack', 'Side of pack']);
     expect(screen.getAllByRole('radio', { name: 'Primary image' })[1]).toBeChecked();
-    expect(screen.getByText(/Image upload isn.t available yet/)).toBeInTheDocument();
-    expect(screen.queryByText(/saving replaces the set/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/scanned for viruses/)).toBeInTheDocument();
     await user.type(screen.getAllByLabelText('Alt text (required)')[0]!, '!');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(onSave).toHaveBeenCalled());
@@ -479,14 +478,12 @@ describe('VariantsTable — US-SHP-02, ADR-FE-032', () => {
 });
 
 describe('ImagesEditor — ADR-FE-035', () => {
-  it('U-D5: an image without alt text is a field error; the honest upload note is visible', async () => {
+  it('U-D5: an image without alt text is a field error; the upload tile and the virus-scan note are visible', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<ImagesEditor product={PRODUCT()} onSave={onSave} onReload={() => {}} />);
-    expect(
-      screen.getByText(/Image upload isn.t available yet — enter the stored file.s key/),
-    ).toBeInTheDocument();
-    expect(screen.queryByLabelText(/upload/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/scanned for viruses/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '+ Upload photo' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Add image' }));
     await user.type(
       screen.getByLabelText('Stored file id'),
@@ -571,7 +568,7 @@ describe('Sections keep their values — NFR-USA-5', () => {
     await user.type(tags, ' Grain-Free, organic,GRAIN-FREE ');
     expect(screen.getByText(/Saved as: grain-free, organic/)).toBeInTheDocument();
     // Food: expiry tracking is locked on; slug is editable before first publication.
-    expect(screen.getByRole('checkbox', { name: /Track expiry/ })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: /Track batches and expiry/ })).toBeDisabled();
   });
 });
 
@@ -618,8 +615,8 @@ describe('StaffProductTable via the page — UI-4, HW-2', () => {
   it('U-D8: a barcode typed and confirmed with Enter searches with that value and updates the URL', async () => {
     const user = userEvent.setup();
     renderWithClient(<StaffProductsPage />);
-    const barcode = await screen.findByLabelText('Barcode');
-    await user.type(barcode, '8900000000101{Enter}');
+    const search = await screen.findByLabelText('Name, SKU or barcode');
+    await user.type(search, '8900000000101{Enter}');
     await waitFor(() =>
       expect(push.mock.calls.some(([url]) => String(url).includes('barcode=8900000000101'))).toBe(
         true,

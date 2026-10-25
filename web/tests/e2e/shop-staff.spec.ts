@@ -12,7 +12,7 @@ const expect = baseExpect.configure({ timeout: 20_000 });
  */
 
 test.describe('catalogue back office (US-SHP-01…03)', () => {
-  test('E-C1: create a food product, add a SKU and price, publish without origin (refused), add it, publish', async ({
+  test('E-C1: create a food product, add a SKU and price, publish without origin (refused), add origin and labelling, publish', async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -40,7 +40,7 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
     // A SKU and its price.
     const editorUrl = page.url();
     await page.goto(`${editorUrl}/variants`);
-    await page.getByRole('button', { name: 'Add SKU' }).click();
+    await page.getByRole('button', { name: 'Add pack size' }).click();
     const addDialog = page.getByRole('dialog', { name: 'Add SKU' });
     await addDialog.getByLabel('SKU code').fill(`E2E-${stamp}`);
     await addDialog.getByLabel('Size or weight').fill('1 kg');
@@ -76,7 +76,19 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
     await page.goto(editorUrl);
     await page.getByLabel('Country of origin').selectOption('TH');
     await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByRole('list', { name: 'Publish checklist' })).toContainText('Done:');
+    await expect(page.getByRole('list', { name: 'Publish checklist' })).toContainText(
+      'Done: Country of origin is set.',
+    );
+
+    // A food product also needs its labelling before it can be published (HO-P2 §1.3): the
+    // checklist still blocks on the ingredient list until the Food & labelling section is saved.
+    await expect(page.getByRole('list', { name: 'Publish checklist' })).toContainText('Blocking:');
+    await page.goto(`${editorUrl}/food`);
+    await page.getByLabel('Ingredient list').fill('Thai jasmine rice');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('list', { name: 'Publish checklist' })).not.toContainText(
+      'Blocking:',
+    );
     await page.getByRole('button', { name: 'Publish', exact: true }).click();
     await page
       .getByRole('dialog', { name: 'Publish this product?' })
@@ -87,8 +99,12 @@ test.describe('catalogue back office (US-SHP-01…03)', () => {
     // The staff list shows it as Active; a draft's public URL is a not-found page.
     await page.goto(`/staff/shop/products?q=${encodeURIComponent(name)}`);
     await expect(page.getByRole('row', { name: new RegExp(name) })).toContainText('Active');
-    const draft = await page.goto(`/shop/products/${shopFixtureIds.draftSlug}`);
-    expect(draft?.status()).toBe(404);
+    // `(shop)/loading.tsx` makes the route stream, and a `notFound()` after the first flush cannot
+    // change the HTTP status (it stays 200 for any unknown slug, not only a draft). Next marks such
+    // a response `noindex` and renders the shop's not-found page, so that is what is asserted.
+    await page.goto(`/shop/products/${shopFixtureIds.draftSlug}`);
+    await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+    await expect(page.locator('head meta[name="robots"]')).toHaveAttribute('content', /noindex/);
   });
 
   test('E-C2: a price scheduled for tomorrow is listed under Scheduled; the storefront still shows today’s', async ({

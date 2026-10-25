@@ -4,6 +4,7 @@ import * as React from 'react';
 import type { FieldErrors } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
+import { Panel } from '@/components/back-office/Panel';
 
 export interface SectionFrameProps {
   title: string;
@@ -16,6 +17,8 @@ export interface SectionFrameProps {
   /** Reloads the product after a `409`; the typed values stay in the form. */
   onReload: () => void;
   saveLabel?: string;
+  /** A second column at 1024 px and up (Details' "Organise" card). It stays inside the one form. */
+  aside?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -34,31 +37,44 @@ export function SectionFrame({
   onSubmit,
   onReload,
   saveLabel = 'Save',
+  aside,
   children,
 }: SectionFrameProps) {
   const root = errors.root;
   return (
-    <form onSubmit={onSubmit} noValidate className="flex max-w-3xl flex-col gap-4">
+    <form onSubmit={onSubmit} noValidate>
       <UnsavedChangesGuard when={isDirty && !isSubmitting && !isSubmitSuccessful} />
-      <h2 className="font-display text-xl font-semibold text-ink">{title}</h2>
-      {description && <div className="text-sm text-ink-muted">{description}</div>}
-      {root?.message && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink"
-        >
-          <span>{String(root.message)}</span>
-          {root.type === 'conflict' && (
-            <Button type="button" variant="secondary" size="sm" onClick={onReload}>
-              Reload
+      <div
+        className={
+          aside
+            ? 'grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]'
+            : 'flex max-w-4xl flex-col'
+        }
+      >
+        <Panel title={title}>
+          <div className="flex flex-col gap-4">
+            {description && <div className="text-sm text-ink-muted">{description}</div>}
+            {root?.message && (
+              <div
+                role="alert"
+                className="flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink"
+              >
+                <span>{String(root.message)}</span>
+                {root.type === 'conflict' && (
+                  <Button type="button" variant="secondary" size="sm" onClick={onReload}>
+                    Reload
+                  </Button>
+                )}
+              </div>
+            )}
+            {children}
+            <Button type="submit" disabled={isSubmitting} className="self-start">
+              {isSubmitting ? 'Saving…' : saveLabel}
             </Button>
-          )}
-        </div>
-      )}
-      {children}
-      <Button type="submit" disabled={isSubmitting} className="self-start">
-        {isSubmitting ? 'Saving…' : saveLabel}
-      </Button>
+          </div>
+        </Panel>
+        {aside}
+      </div>
     </form>
   );
 }
@@ -73,7 +89,7 @@ export function FieldError({ message }: { message?: string }) {
 }
 
 export const inputClass =
-  'w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink aria-[invalid=true]:border-danger-ink';
+  'w-full rounded-[var(--radius-md)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink aria-[invalid=true]:border-danger-ink';
 
 export function Field({
   id,
