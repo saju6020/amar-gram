@@ -99,9 +99,9 @@ describe('GrowersBand — U12', () => {
     const band = document.getElementById('growers')!;
     expect(band).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
-      'Every product names its origin.',
+      'Our products name their origin.',
     );
-    expect(screen.getByText(/We name the country of origin on every food we sell/)).toBeVisible();
+    expect(screen.getByText(/We name the country of origin on our foods/)).toBeVisible();
     expect(screen.getByRole('link', { name: 'Read our sourcing story' })).toHaveAttribute(
       'href',
       '/shop/countries',

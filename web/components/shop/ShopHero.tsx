@@ -64,7 +64,7 @@ export function ShopHero({
           !bannerHeadline && (
             <p className="m-0 max-w-[460px] text-lg text-ink-muted">
               Rice, honey, oils and spices bought straight from the families who grow them, with the
-              origin named on every product.
+              origin named on our products.
             </p>
           )
         )}

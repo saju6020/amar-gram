@@ -64,7 +64,7 @@ Where the design shows data the API does not have, the screen leaves it out and 
 
 ### 3.1 Design screen → existing route → slice
 
-| Design screen | Route(s) today | Slice | Stories |
+| Design screen | Route(s) today | Slice | Stories **2026-10-25 (owner-ratified, ACCEPTANCE gate run 1).** (h) D-A: `shop-product.spec.ts`'s draft-slug case accepts 200 + `noindex` (streaming behind `loading.tsx` commits 200 before the not-found boundary) and the no-JS case checks the delivered HTML; the unverified "production answers 404" comment is removed. D-B: the two staff-area failures (`accounts-a11y-responsive` "E-X1 (idle lock open)", `shop-staff` E-C1; both failed at baseline) pass to HO-P4 (recorded there). D-C: E16 is waived to the HO-P3 spec set (518 pass; 4 failures = D-B); the full `npm run test:e2e` runs at HO-P4 integration. Copy: the S1 home and countries pages say the origin is named "on our products" / "on our foods" (a bundle has no single country). |
 |---|---|---|---|
 | Shell: leaf top strip, header, category pills, footer, phone tab bar, account header | `app/(shop)/layout.tsx`, `app/(portal)/layout.tsx` | **S0** | (all) |
 | `Home.dc.html` + `HomePhone.dc.html` | `/shop` (`app/(shop)/shop/page.tsx`); also `/shop/countries`, `/shop/countries/[countryCode]` (the footer's "Shop by region") | **S1** | US-SHP-05, US-ORD-01 (quick add) |

@@ -190,8 +190,8 @@ test.describe('Rendering structure (NFR-PRF-1, E-X3 structure)', () => {
 
   test('a draft product slug is a not-found page', async ({ page }) => {
     const response = await page.goto(`/shop/products/${shopFixtureIds.draftSlug}`);
-    // `next dev` streams the page behind loading.tsx, so the status can already be 200 when the
-    // not-found boundary renders; it is then marked noindex. A production build answers 404.
+    // The page streams behind loading.tsx, so the status can already be 200 when the not-found
+    // boundary renders; it is then marked noindex (owner-ratified, HO-P3 Amended (h)).
     if (response?.status() !== 404) {
       await expect(page.locator('head meta[name="robots"]')).toHaveAttribute('content', /noindex/);
     }

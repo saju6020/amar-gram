@@ -30,7 +30,7 @@ export default async function CountriesPage({ searchParams }: { searchParams: Se
           Shop by country
         </h1>
         <p className="m-0 max-w-prose text-base text-ink-muted">
-          We name the country of origin on every food we sell. Pick a country to see its products.
+          We name the country of origin on our foods. Pick a country to see its products.
         </p>
       </HearthBand>
       {origins.value.length === 0 ? (

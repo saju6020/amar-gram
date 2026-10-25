@@ -6,7 +6,7 @@ const MAX_ORIGINS = 2;
 
 /**
  * The leaf "growers" band (Home.dc.html). The heading and paragraph state only what the shop does
- * (it names the country of origin on every food); the tiles are up to two featured origins from the
+ * (it names the country of origin on our foods); the tiles are up to two featured origins from the
  * API (name, product count, link). No grower names or photos are invented (D-4); with no featured
  * origin the band is text only.
  */
@@ -24,11 +24,10 @@ export function GrowersBand({ origins, lang }: { origins: Origin[]; lang?: strin
           id="home-growers"
           className="m-0 font-display text-[clamp(1.75rem,3vw,2.25rem)] font-bold leading-[1.1] tracking-[-0.02em] text-leaf-soft"
         >
-          Every product names its origin.
+          Our products name their origin.
         </h2>
         <p className="m-0 text-leaf-soft">
-          We name the country of origin on every food we sell, so you can shop by where it was
-          grown.
+          We name the country of origin on our foods, so you can shop by where they were grown.
         </p>
         <Link href={`/shop/countries${query}`} className="font-semibold text-leaf-soft underline">
           Read our sourcing story
