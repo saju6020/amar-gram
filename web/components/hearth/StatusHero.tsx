@@ -46,7 +46,7 @@ export function StatusHero({
       </div>
       <div
         aria-hidden="true"
-        className="hidden size-[200px] place-items-center rounded-pill bg-surface text-warm-ink md:grid"
+        className="hidden size-[200px] place-items-center rounded-pill bg-surface text-leaf md:grid"
       >
         <LineArtBasket width={112} height={123} />
       </div>

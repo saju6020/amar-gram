@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/common/EmptyState';
+import { cardClass } from '@/components/hearth/card';
 import { AddressCard } from './AddressCard';
 import { AddressForm } from './AddressForm';
 import type {
@@ -10,10 +10,11 @@ import type {
   DeliveryAddressBook,
   DeliveryAddressRequest,
 } from '@/lib/api/account';
+import { cn } from '@/lib/utils';
 
 /**
- * `components/account/AddressList.tsx` — US-ACC-06. Limit reached → the add button explains why
- * rather than disappearing.
+ * `components/account/AddressList.tsx` — US-ACC-06, restyled to docs/design/store/Profile.dc.html "Delivery
+ * addresses" (HO-P3 S4). Limit reached → the add button explains why rather than disappearing.
  *
  * ARCH gate HIGH 3 (first pass) — takes `onAdd`/`onUpdate`/`onRemove`/`onSetDefault`/
  * `settingDefaultAddressId` as props; the page (`app/(portal)/portal/account/addresses/page.tsx`)
@@ -57,20 +58,21 @@ export function AddressList({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <section aria-labelledby="pf-addr" className={cn(cardClass, 'flex flex-col gap-4 sm:p-6')}>
+      <h2 id="pf-addr" className="m-0 text-xl font-semibold text-ink">
+        Delivery addresses
+      </h2>
       {book.addresses.length === 0 ? (
-        <EmptyState
-          title="No addresses yet"
-          description="Add a delivery address to use at checkout."
-          action={
-            <Button onClick={openAdd} disabled={limitReached}>
-              Add address
-            </Button>
-          }
-        />
+        <div className="flex flex-col items-center gap-2 rounded-[18px] border-[1.5px] border-dashed border-border-strong p-6 text-center">
+          <p className="m-0 font-semibold text-ink">No addresses yet</p>
+          <p className="m-0 text-sm text-ink-muted">Add a delivery address to use at checkout.</p>
+          <Button variant="pill" size="pillMd" onClick={openAdd} disabled={limitReached}>
+            Add address
+          </Button>
+        </div>
       ) : (
         <>
-          <div className="flex flex-col gap-3">
+          <div className="grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))]">
             {book.addresses.map((address) => (
               <AddressCard
                 key={address.id}
@@ -83,11 +85,17 @@ export function AddressList({
             ))}
           </div>
           <div className="flex flex-col gap-1">
-            <Button onClick={openAdd} disabled={limitReached} className="w-fit">
+            <Button
+              variant="pill"
+              size="pillMd"
+              onClick={openAdd}
+              disabled={limitReached}
+              className="w-fit"
+            >
               Add address
             </Button>
             {limitReached && (
-              <p className="text-xs text-ink-muted">
+              <p className="m-0 text-xs text-ink-muted">
                 You have reached the maximum of {book.maxAddresses} addresses. Remove one to add
                 another.
               </p>
@@ -102,6 +110,6 @@ export function AddressList({
         address={editingAddress}
         onSubmit={handleSubmit}
       />
-    </div>
+    </section>
   );
 }

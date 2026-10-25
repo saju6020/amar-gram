@@ -1,19 +1,24 @@
 'use client';
 
 import { ErrorState } from '@/components/common/ErrorState';
+import { GreetingHeader } from '@/components/hearth/GreetingHeader';
 import { usePortalDashboard } from '@/lib/hooks/usePortalDashboard';
 import type { PortalDashboard as PortalDashboardData } from '@/lib/api/portal';
 import { PORTAL_BILLING, PORTAL_ORDERS } from '@/lib/routing/portal-links';
 import { BalancesTile } from './BalancesTile';
+import { BuyAgain, newestDeliveredOrder } from './BuyAgain';
 import { DashboardSection } from './DashboardSection';
 import { DashboardSkeleton } from './DashboardSkeleton';
+import { DefaultAddressCard } from './DefaultAddressCard';
+import { LiveOrderCard, newestOpenOrder } from './LiveOrderCard';
 import { OrdersTile } from './OrdersTile';
 
 /**
- * `components/portal/dashboard/PortalDashboard.tsx` — HO-POR-002 §2, US-POR-01. One request, two
- * tiles: recent orders and balances. There is NO subscriptions tile (not even a placeholder).
- * Each tile goes through `DashboardSection`, so an absent key, an `Unavailable` section and a
- * `Ready` one can never be confused.
+ * `components/portal/dashboard/PortalDashboard.tsx` — HO-POR-002 §2, US-POR-01, restyled to
+ * docs/design/store/Account.dc.html (HO-P3 S4). One dashboard request, then: the greeting, the live order card (the
+ * newest open order), the default address, Buy again (interim, gap G7), and the orders and balances tiles. There is
+ * NO subscriptions tile or "next staples box" (gap G2), not even a placeholder. Each tile goes through
+ * `DashboardSection`, so an absent key, an `Unavailable` section and a `Ready` one can never be confused.
  */
 function greetingFor(data: PortalDashboardData): string {
   const fullName = data.customer?.state === 'Ready' ? data.customer.data?.fullName : undefined;
@@ -40,17 +45,25 @@ export function PortalDashboard() {
   const data = query.data;
   const retry = () => void query.refetch();
   const retrying = query.isFetching;
+  const orderItems = data.orders?.state === 'Ready' ? (data.orders.data?.items ?? []) : [];
+  const openOrder = newestOpenOrder(orderItems);
+  const deliveredOrder = newestDeliveredOrder(orderItems);
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-[var(--radius-md)] bg-warm-soft px-6 py-5">
-        <div className="min-w-0 flex-[1_1_320px]">
-          <h1 className="font-display text-[26px] font-semibold text-ink">{greetingFor(data)}</h1>
-          <p className="mt-1 text-sm text-ink">Everything we hold for you, on one page.</p>
-        </div>
+      <GreetingHeader title={greetingFor(data)}>
+        Everything we hold for you, on one page.
+      </GreetingHeader>
+
+      {openOrder && <LiveOrderCard order={openOrder} />}
+
+      <div className="grid items-stretch gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
+        <DefaultAddressCard />
       </div>
 
-      <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))]">
+      {deliveredOrder && <BuyAgain order={deliveredOrder} />}
+
+      <div className="grid items-start gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))]">
         <DashboardSection
           id="orders"
           title="Recent orders"

@@ -32,9 +32,9 @@ test('E-E1: add three addresses, change default, remove one — one default thro
   const officeCard = page
     .locator('div')
     .filter({ hasText: 'Office' })
-    .filter({ hasText: 'Set as default' })
+    .filter({ hasText: 'Make default' })
     .last();
-  await officeCard.getByRole('button', { name: 'Set as default' }).click();
+  await officeCard.getByRole('button', { name: 'Make default' }).click();
   await expect(page.getByText('Default', { exact: true })).toHaveCount(1);
 
   const homeCard = page

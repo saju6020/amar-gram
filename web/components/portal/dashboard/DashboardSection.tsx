@@ -48,7 +48,7 @@ export function DashboardSection<T>({
       aria-labelledby={headingId}
       data-testid={`tile-${id}`}
       className={cn(
-        'min-w-0 rounded-[var(--radius-md)] border border-border bg-surface',
+        'min-w-0 rounded-card border-[1.5px] border-border bg-surface',
         className,
       )}
     >

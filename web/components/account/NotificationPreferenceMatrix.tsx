@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { cardClass } from '@/components/hearth/card';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { RetryNotice } from '@/components/auth/RetryNotice';
 import { UnsavedChangesGuard } from './UnsavedChangesGuard';
 import { describeApiError } from '@/lib/api/errors';
@@ -110,6 +112,7 @@ export function NotificationPreferenceMatrix({
     }
   }
 
+  const hasAlwaysOn = preferences.cells.some((cell) => cell.isAlwaysOn);
   const isDirty =
     extraDirty ||
     preferences.cells.some(
@@ -117,7 +120,10 @@ export function NotificationPreferenceMatrix({
     );
 
   return (
-    <div className="flex flex-col gap-4">
+    <section aria-labelledby="pf-ntf" className={cn(cardClass, 'flex flex-col gap-4 sm:p-6')}>
+      <h2 id="pf-ntf" className="m-0 text-xl font-semibold text-ink">
+        Messages we send you
+      </h2>
       <UnsavedChangesGuard when={isDirty} />
       {errorMessage && (
         <p role="alert" aria-live="polite" className="text-sm font-semibold text-danger-ink">
@@ -137,14 +143,17 @@ export function NotificationPreferenceMatrix({
         <caption className="sr-only">Notification preferences by category and channel</caption>
         <thead>
           <tr>
-            <th scope="col" className="border-b border-border p-2 text-left font-semibold text-ink">
+            <th
+              scope="col"
+              className="border-b-[1.5px] border-border p-2 text-left font-semibold text-ink-muted"
+            >
               Category
             </th>
             {channels.map((channel) => (
               <th
                 key={channel}
                 scope="col"
-                className="border-b border-border p-2 text-left font-semibold text-ink"
+                className="border-b-[1.5px] border-border p-2 text-left font-semibold text-ink-muted"
               >
                 {channel}
               </th>
@@ -164,10 +173,11 @@ export function NotificationPreferenceMatrix({
                 const inputId = `pref-${category}-${channel}`;
                 return (
                   <td key={channel} className="border-b border-border p-2">
-                    <label htmlFor={inputId} className="flex items-center gap-2">
+                    <label htmlFor={inputId} className="flex min-h-11 items-center gap-2">
                       <input
                         id={inputId}
                         type="checkbox"
+                        className="size-5 accent-leaf"
                         checked={checked}
                         disabled={cell.isAlwaysOn}
                         onChange={() => toggle(category, channel)}
@@ -188,9 +198,23 @@ export function NotificationPreferenceMatrix({
         </tbody>
       </table>
 
-      <Button onClick={handleSave} disabled={isPending} aria-busy={isPending} className="w-fit">
+      {hasAlwaysOn && (
+        <p className="m-0 text-[13px] text-ink-muted">
+          Messages marked “Always on” can’t be turned off: we need them to reach you about your
+          orders and account.
+        </p>
+      )}
+
+      <Button
+        variant="pill"
+        size="pillMd"
+        onClick={handleSave}
+        disabled={isPending}
+        aria-busy={isPending}
+        className="w-fit"
+      >
         {isPending ? 'Saving…' : 'Save changes'}
       </Button>
-    </div>
+    </section>
   );
 }

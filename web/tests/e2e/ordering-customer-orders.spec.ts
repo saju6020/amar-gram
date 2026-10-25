@@ -18,7 +18,8 @@ async function resetMock(page: import('@playwright/test').Page) {
 
 async function addFromProduct(page: import('@playwright/test').Page, path: string, name: RegExp) {
   await page.goto(path);
-  await page.getByRole('button', { name: 'Add to cart' }).click();
+  // D-1: "basket" (S2 renames the button); both words are accepted while the slices land.
+  await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
   await expect(page.getByRole('status').filter({ hasText: name })).toBeVisible();
 }
 
@@ -46,16 +47,22 @@ test.describe('bank transfer expiry and cancel (US-ORD-12, US-ORD-19)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Place order' }).click();
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
+    // D-3 (owner, 2026-10-19): placing lands on the order page itself, so there is no "View your order" link; the
+    // countdown keeps asking the server after the deadline and the page turns into the expired card on its own.
     await page.waitForTimeout(3500);
-    await page.getByRole('link', { name: 'View your order' }).click();
-    await expect(page.getByRole('heading', { name: 'This order has expired' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'This order has expired' })).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(
       page.getByText(/We couldn.t confirm your transfer in time, so the items were released./),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Order again' }).click();
-    await expect(page.getByText(/1 item was added to your cart\./)).toBeVisible();
-    await page.getByRole('link', { name: 'Go to your cart' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
+    await expect(page.getByText(/1 item was added to your basket\./)).toBeVisible();
+    await page.getByRole('link', { name: 'Go to your basket' }).click();
+    // S3 renames the heading "Your cart" to "Your basket" (D-1).
+    await expect(
+      page.getByRole('heading', { level: 1, name: /Your (cart|basket)/ }),
+    ).toBeVisible();
     await expect(
       page.getByRole('spinbutton', { name: /Quantity of Organic Rolled Oats/ }),
     ).toBeVisible();
