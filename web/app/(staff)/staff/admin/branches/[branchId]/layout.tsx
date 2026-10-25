@@ -1,14 +1,14 @@
 'use client';
 
 import { use } from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { PageHeader } from '@/components/back-office/PageHeader';
+import { UnderlineTabs } from '@/components/back-office/UnderlineTabs';
 import { useAdminBranch } from '@/lib/hooks/useAdminBranches';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState';
 import { ApiForbiddenError, ApiNotFoundError } from '@/lib/api/client';
-import { cn } from '@/lib/utils';
 
 const TABS = [
   { segment: '', label: 'Details' },
@@ -44,39 +44,24 @@ export default function BranchDetailLayout({
   }
   if (!branch) return null;
 
+  const currentTab = TABS.find(
+    (tab) => (tab.segment ? `${basePath}/${tab.segment}` : basePath) === pathname,
+  );
+
   return (
     <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="font-display text-xl font-semibold text-ink">{branch.name}</h1>
-        <p className="text-sm text-ink-muted">
-          {branch.code} · {branch.timeZoneId}
-        </p>
-      </div>
+      <PageHeader title={branch.name} description={`${branch.code} · ${branch.timeZoneId}`} />
 
-      <nav
-        aria-label="Branch sections"
-        className="flex flex-wrap gap-1 border-b border-border pb-2"
-      >
-        {TABS.map((tab) => {
-          const href = tab.segment ? `${basePath}/${tab.segment}` : basePath;
-          const isActive = pathname === href;
-          return (
-            <Link
-              key={tab.segment || 'details'}
-              href={href}
-              aria-current={isActive ? 'page' : undefined}
-              className={cn(
-                'rounded-[var(--radius-sm)] px-3 py-1.5 text-sm font-semibold no-underline',
-                isActive
-                  ? 'bg-accent-soft text-accent-ink'
-                  : 'text-ink-muted hover:bg-surface-sunken',
-              )}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <UnderlineTabs
+        mode="link"
+        label="Branch sections"
+        value={currentTab ? currentTab.segment || 'details' : undefined}
+        items={TABS.map((tab) => ({
+          key: tab.segment || 'details',
+          label: tab.label,
+          href: tab.segment ? `${basePath}/${tab.segment}` : basePath,
+        }))}
+      />
 
       {children}
     </div>

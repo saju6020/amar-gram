@@ -13,6 +13,7 @@ import {
 } from '@/lib/hooks/useAdminRosters';
 import { useAdminLeaveRequests } from '@/lib/hooks/useLeave';
 import { useStaffAccounts } from '@/lib/hooks/useStaffAdmin';
+import { Panel } from '@/components/back-office/Panel';
 import { RosterWeekView, type RosterDayCell } from '@/components/roster/RosterWeekView';
 import { RosterPatternEditor } from '@/components/roster/RosterPatternEditor';
 import { RosterExceptionForm } from '@/components/roster/RosterExceptionForm';
@@ -100,9 +101,13 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
   if (!branch) return <LoadingState rows={6} />;
 
   return (
-    <div className="flex flex-col gap-8">
-      <h2 className="font-display text-lg font-semibold text-ink">Roster</h2>
-      <p className="text-sm text-ink-muted">Times shown in {branch.timeZoneId}.</p>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h2 className="font-display text-xl font-semibold text-ink">Roster</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          {branch.name} · times shown in {branch.timeZoneId}.
+        </p>
+      </div>
 
       <RosterWeekView
         weekDates={weekDates}
@@ -119,8 +124,8 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
         }}
       />
 
-      <div className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-ink">Shift patterns</h2>
+      <Panel title="Shift patterns">
+       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="pattern-staff" className="text-sm font-semibold text-ink">
             Staff member
@@ -129,7 +134,7 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
             id="pattern-staff"
             value={selectedStaffId ?? ''}
             onChange={(e) => setSelectedStaffId(e.target.value || null)}
-            className="w-fit rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink"
+            className="w-fit max-w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink"
           >
             <option value="">Choose…</option>
             {patternOptions.map((r) => (
@@ -155,10 +160,11 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
             onCancelScheduled={() => cancelPatternMutation.mutateAsync()}
           />
         )}
-      </div>
+       </div>
+      </Panel>
 
-      <div className="flex flex-col gap-3">
-        <h2 className="font-display text-lg font-semibold text-ink">Roster exceptions</h2>
+      <Panel title="Roster exceptions">
+       <div className="flex flex-col gap-3">
         <RosterExceptionForm
           timeZoneId={branch.timeZoneId}
           staffOptions={rows}
@@ -169,7 +175,7 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
           {(exceptions.data ?? []).map((exception) => (
             <li
               key={exception.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] border border-border p-3 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] border border-surface-sunken bg-surface-page p-3 text-sm"
             >
               <span>
                 {nameById.get(exception.staffAccountId) ?? exception.staffAccountId} ·{' '}
@@ -187,7 +193,8 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
             </li>
           ))}
         </ul>
-      </div>
+       </div>
+      </Panel>
 
       <ConfirmDialog
         open={!!pendingCancelException}

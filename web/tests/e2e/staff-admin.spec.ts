@@ -17,10 +17,13 @@ test('E-G1 (partial): an administrator creates a staff account, pointed at "Set 
   await page.goto('/staff/admin/staff-accounts/new');
   await page.getByLabel(/full name/i).fill('New Cashier');
   await page.getByLabel(/mobile number/i).fill('01788877766');
+  await page.getByLabel(/^password/i).fill('Start-pass-2027');
   await page.getByRole('checkbox', { name: 'Reception' }).check();
   await page.getByRole('button', { name: 'Create account' }).click();
 
-  await expect(page.getByText(/ask new cashier to choose .set or reset password./i)).toBeVisible();
+  // The administrator now sets the starting password and shares it (owner, 2026-10-20), so the
+  // hand-off message is "Share the password with {name}" and names the sign-in ID.
+  await expect(page.getByText(/Account created. Share the password with New Cashier/)).toBeVisible();
 
   await page.goto('/staff/admin/staff-accounts');
   await expect(page.getByText('New Cashier')).toBeVisible();

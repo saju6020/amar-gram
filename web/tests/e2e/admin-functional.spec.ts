@@ -112,6 +112,16 @@ test('E-B1: create a branch in Europe/London, set hours, add a holiday', async (
   ).toHaveAccessibleName(/Closed \(regular weekly closure\)/);
 });
 
+/** The sidebar's outlet picker: in the aside from `sm` up, at the top of the nav sheet below it. */
+async function outletPicker(page: Page) {
+  const width = page.viewportSize()?.width ?? 1280;
+  if (width < 640) {
+    await page.getByRole('button', { name: 'Expand menu' }).click();
+    return page.getByRole('dialog').getByRole('combobox', { name: 'Outlet' });
+  }
+  return page.locator('aside').getByRole('combobox', { name: 'Outlet' });
+}
+
 test('E-B2: a staff member assigned to two branches sees the picker, and switching sends the new branch header', async ({
   page,
 }) => {
@@ -132,7 +142,8 @@ test('E-B2: a staff member assigned to two branches sees the picker, and switchi
   // from the primary branch, not prove anything about switching — the request to watch for is the
   // one `useSetActiveBranch`'s own `['admin']` query invalidation fires immediately on selection.
   await page.goto('/staff/admin/tax-classes');
-  const picker = page.getByLabel(/^branch$/i);
+  // HO-P4 S0 (ADR-FE-182): the picker is the sidebar's "Outlet" select (in the nav sheet below `sm`).
+  const picker = await outletPicker(page);
   await expect(picker).toBeVisible();
   await page.waitForLoadState('networkidle');
 
@@ -402,26 +413,26 @@ test('E-B3: long branch names keep the picker row inside the viewport (360/768/1
   // One navigation only: a second full page load drops the in-browser MSW session, and the layout
   // is CSS-responsive, so resizing the viewport is enough.
   await page.goto('/staff/admin/leave');
-  const picker = page.getByLabel(/^branch$/i);
-  await expect(picker).toBeVisible();
-  await expect(picker).toHaveAttribute('title', /^Dhanmondi outlet and warehouse of Dhaka!$/);
-  for (const width of [360, 768, 1024, 1440]) {
+  // HO-P4 S0 (ADR-FE-182): the picker lives in the sidebar ("Outlet"), or in the nav sheet below `sm`.
+  // At each width the select must stay inside the surface that holds it and inside the viewport.
+  for (const width of [1440, 1024, 768]) {
     await page.setViewportSize({ width, height: 800 });
-    // Not `documentElement.scrollWidth`: several staff pages (tables, forms) overflow at 360 on
-    // their own, which is outside this picker's scope. The shell parts this follow-up owns are
-    // measured directly: the picker row must stay inside the viewport and inside <main>'s padding.
+    const picker = page.locator('aside').getByRole('combobox', { name: 'Outlet' });
+    await expect(picker).toBeVisible();
+    await expect(picker).toHaveAttribute('title', /^Dhanmondi outlet and warehouse of Dhaka!$/);
     const box = await page.evaluate(() => {
-      const row = document.getElementById('active-branch-picker')!.parentElement!;
-      const rect = row.getBoundingClientRect();
-      return {
-        left: rect.left,
-        right: rect.right,
-        rowOverflow: row.scrollWidth - row.clientWidth,
-        inner: window.innerWidth,
-      };
+      const select = document.querySelector('aside select')!;
+      const rect = select.getBoundingClientRect();
+      const aside = document.querySelector('aside')!.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, asideRight: aside.right, inner: window.innerWidth };
     });
-    expect(box.right, `picker row right edge at ${width}`).toBeLessThanOrEqual(box.inner);
-    expect(box.rowOverflow, `picker row overflow at ${width}`).toBeLessThanOrEqual(0);
-    expect(box.right - box.left).toBeLessThanOrEqual(448 + 0.5); // max-w-md
+    expect(box.right, `picker right edge at ${width}`).toBeLessThanOrEqual(box.asideRight + 0.5);
+    expect(box.right, `picker right edge at ${width}`).toBeLessThanOrEqual(box.inner);
   }
+  await page.setViewportSize({ width: 360, height: 800 });
+  const sheetPicker = await outletPicker(page);
+  await expect(sheetPicker).toBeVisible();
+  await expect(sheetPicker).toHaveAttribute('title', /^Dhanmondi outlet and warehouse of Dhaka!$/);
+  const sheetBox = (await sheetPicker.boundingBox())!;
+  expect(sheetBox.x + sheetBox.width, 'picker right edge in the sheet at 360').toBeLessThanOrEqual(360);
 });

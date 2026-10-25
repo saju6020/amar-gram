@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -140,11 +140,20 @@ describe('ApprovalsQueue — U-C9', () => {
     setUrl('/staff/billing/approvals');
   });
 
-  it('disables Approve with the reason for a payment the user recorded; a forced request is mapped', async () => {
+  it('U35: swaps Approve and Reject for the words for a payment the user recorded; a forced request is mapped', async () => {
     renderWithClient(<ApprovalsQueue />);
-    expect(await screen.findByText('You recorded this payment')).toBeInTheDocument();
+    // HO-P4 §11.6.2 (rewritten): was "You recorded this payment" plus a disabled Approve button; the
+    // warning now replaces the Approve button on that card (Reject stays, see ApprovalsQueue), so the
+    // only Approve buttons left are the other cards' and none is disabled.
+    expect(await screen.findByText('You recorded this one. Another staff member must approve it.')).toBeInTheDocument();
     const approves = screen.getAllByRole('button', { name: /^Approve/ });
-    expect(approves.filter((b) => (b as HTMLButtonElement).disabled)).toHaveLength(1);
+    expect(approves.length).toBeGreaterThan(0);
+    expect(approves.filter((b) => (b as HTMLButtonElement).disabled)).toHaveLength(0);
+    const cards = screen.getAllByRole('listitem').filter((li) => li.textContent?.includes('recorded by'));
+    const ownCards = cards.filter((li) => li.textContent?.includes('You recorded this one.'));
+    expect(ownCards).toHaveLength(1);
+    expect(within(ownCards[0]!).queryByRole('button', { name: /^Approve/ })).not.toBeInTheDocument();
+    expect(within(ownCards[0]!).getByRole('button', { name: /^Reject/ })).toBeInTheDocument();
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/staff/billing/payments/${ids.pendingOwnPaymentId}/approve`, { method: 'POST' });
     expect(res.status).toBe(400);
     const body = (await res.json()) as { errors: Array<{ errorCode: string }> };

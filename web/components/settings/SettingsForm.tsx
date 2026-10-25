@@ -133,7 +133,7 @@ export function SettingsForm({
                         id={inputId}
                         readOnly
                         value={definition.effectiveValue}
-                        className="w-64 rounded-[var(--radius-sm)] border border-border bg-surface-sunken px-3 py-2 text-sm text-ink-muted"
+                        className="w-full max-w-64 rounded-[var(--radius-sm)] border border-border bg-surface-sunken px-3 py-2 text-sm text-ink-muted"
                       />
                       <p className="text-xs text-ink-muted">
                         This setting cannot be overridden per branch.
@@ -159,7 +159,7 @@ export function SettingsForm({
                       max={definition.max ?? undefined}
                       value={draft}
                       onChange={(e) => setDraft(definition.key, e.target.value)}
-                      className="w-64 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink"
+                      className="w-full max-w-64 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink"
                     />
                   )}
 

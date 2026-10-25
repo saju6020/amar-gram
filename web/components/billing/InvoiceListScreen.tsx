@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { CircleCheck, Clock, FileText } from 'lucide-react';
+import { Panel } from '@/components/back-office/Panel';
+import { StatusPill } from '@/components/back-office/StatusPill';
 import { Button } from '@/components/ui/button';
 import { BUSINESS_LINES, invoicesCsvPath, type InvoiceSummary, type InvoicesParams } from '@/lib/api/billing-staff';
 import { formatDateOnly } from '@/lib/format/time';
@@ -14,7 +17,7 @@ import { DownloadButton } from './DownloadButton';
 import { TextField, SelectField } from './Fields';
 import { PageHeader } from './PageHeader';
 import { ResponsiveTable, type Column } from './ResponsiveTable';
-import { InvoiceStatusPill } from './StatusPill';
+import { invoiceStatusLabel } from './StatusPill';
 
 /**
  * `components/billing/InvoiceListScreen.tsx` — HO-BIL-002 §3.2 (US-BIL-01, 02, 05), UI-4. Filter by
@@ -26,6 +29,15 @@ const FIELDS = ['status', 'number', 'from', 'to', 'businessLine', 'page'] as con
 const PAGE_SIZE = 25;
 const STATUSES = ['Draft', 'Issued', 'PartPaid', 'Paid', 'Credited', 'Discarded'];
 const STATUS_LABELS: Record<string, string> = { PartPaid: 'Part-paid' };
+
+/** HO-P4 §11.6.4 — status is text plus a tone (and a glyph for the live states); the word carries it. */
+function InvoiceStatus({ status }: { status: string }) {
+  const label = invoiceStatusLabel(status);
+  if (status === 'Paid') return <StatusPill tone="success" icon={<CircleCheck size={12} />}>{label}</StatusPill>;
+  if (status === 'PartPaid') return <StatusPill tone="warning" icon={<Clock size={12} />}>{label}</StatusPill>;
+  if (status === 'Issued') return <StatusPill tone="warning" icon={<FileText size={12} />}>{label}</StatusPill>;
+  return <StatusPill tone="neutral">{label}</StatusPill>;
+}
 
 export function InvoiceListScreen() {
   const { values, setValue } = useUrlFilterState(FIELDS, {}, ['number']);
@@ -47,8 +59,8 @@ export function InvoiceListScreen() {
   const columns: Array<Column<InvoiceSummary>> = [
     { id: 'number', header: 'Invoice', primary: true, sortValue: (i) => i.number ?? '~', cell: (i) => i.number ?? 'Draft' },
     { id: 'customer', header: 'Customer', sortValue: (i) => i.customerName, cell: (i) => i.customerName },
-    { id: 'status', header: 'Status', cell: (i) => <InvoiceStatusPill status={i.status} /> },
-    { id: 'issued', header: 'Issued', sortValue: (i) => i.issueDate ?? '', cell: (i) => (i.issueDate ? formatDateOnly(i.issueDate) : '—') },
+    { id: 'issued', header: 'Date', sortValue: (i) => i.issueDate ?? '', cell: (i) => (i.issueDate ? formatDateOnly(i.issueDate) : '—') },
+    { id: 'status', header: 'Status', cell: (i) => <InvoiceStatus status={i.status} /> },
     { id: 'due', header: 'Due', sortValue: (i) => i.dueOn ?? '', cell: (i) => (i.dueOn ? formatDateOnly(i.dueOn) : '—') },
     { id: 'total', header: 'Total', numeric: true, cell: (i) => <Amount money={i.total} /> },
     { id: 'paid', header: 'Paid', numeric: true, cell: (i) => <Amount money={i.paid} /> },
@@ -66,6 +78,7 @@ export function InvoiceListScreen() {
           <DownloadButton path={invoicesCsvPath(filters)} fallbackName="invoices.csv" label="Export CSV" />
         }
       />
+      <Panel as="div"><div className="flex flex-col gap-3">
       <form
         role="search"
         aria-label="Invoice filters"
@@ -118,6 +131,7 @@ export function InvoiceListScreen() {
           </Button>
         </div>
       )}
+      </div></Panel>
       <ResponsiveTable
         caption="Invoices"
         columns={columns}

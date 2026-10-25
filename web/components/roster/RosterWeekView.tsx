@@ -1,3 +1,4 @@
+import { StatusPill } from '@/components/back-office/StatusPill';
 import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/common/LoadingState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -40,29 +41,32 @@ export interface RosterWeekViewProps {
   onRetry: () => void;
 }
 
+/** A shift is a pill with its times as text; leave, exceptions and "outside opening hours" are words too. */
 function CellContents({ cell }: { cell: RosterDayCell }) {
   if (cell.isOnLeave) {
-    return <p className="text-xs font-semibold text-ink">On leave</p>;
+    return <StatusPill tone="neutral">On leave</StatusPill>;
   }
   if (cell.intervals.length === 0 && cell.exceptionLabels.length === 0) {
     return <p className="text-xs text-ink-faint">—</p>;
   }
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col items-start gap-1">
       {cell.intervals.map((interval, index) => (
-        <p key={index} className="text-xs text-ink">
-          {interval.label}
+        <div key={index} className="flex flex-col items-start gap-0.5">
+          <StatusPill tone={interval.outsideOpeningHours ? 'warning' : 'success'}>
+            {interval.label}
+          </StatusPill>
           {interval.outsideOpeningHours && (
             <span className="block text-xs font-semibold text-warning-ink">
               Outside opening hours
             </span>
           )}
-        </p>
+        </div>
       ))}
       {cell.exceptionLabels.map((label, index) => (
-        <p key={index} className="text-xs font-semibold text-ink-muted">
+        <StatusPill key={index} tone="warning">
           {label}
-        </p>
+        </StatusPill>
       ))}
     </div>
   );
@@ -114,15 +118,15 @@ export function RosterWeekView({
             role="region"
             aria-label="Roster (scrolls horizontally)"
             tabIndex={0}
-            className="hidden overflow-x-auto rounded-[var(--radius-md)] border border-border md:block"
+            className="hidden overflow-x-auto rounded-2xl border border-border bg-surface md:block"
           >
-            <table className="w-full border-collapse bg-surface text-sm">
+            <table className="w-full min-w-[820px] border-collapse text-sm">
               <caption className="sr-only">Weekly roster</caption>
               <thead>
                 <tr>
                   <th
                     scope="col"
-                    className="border-b border-border p-2 text-left text-xs font-bold uppercase text-ink-muted"
+                    className="p-3 text-left text-[13px] font-semibold text-ink-muted"
                   >
                     Staff
                   </th>
@@ -130,7 +134,7 @@ export function RosterWeekView({
                     <th
                       key={date}
                       scope="col"
-                      className="border-b border-border p-2 text-left text-xs font-bold uppercase text-ink-muted"
+                      className="p-3 text-left text-[13px] font-semibold text-ink-muted"
                     >
                       {formatDateOnly(date)}
                     </th>
@@ -142,12 +146,12 @@ export function RosterWeekView({
                   <tr key={row.staffAccountId}>
                     <th
                       scope="row"
-                      className="border-b border-border p-2 text-left text-sm font-semibold text-ink"
+                      className="border-t border-surface-sunken p-3 text-left text-sm font-semibold text-ink"
                     >
                       {row.staffFullName}
                     </th>
                     {weekDates.map((date) => (
-                      <td key={date} className="border-b border-border p-2 align-top">
+                      <td key={date} className="border-t border-surface-sunken p-2 align-top">
                         <CellContents cell={cellFor(row.staffAccountId, date)} />
                       </td>
                     ))}
@@ -166,7 +170,7 @@ export function RosterWeekView({
                   {rows.map((row) => (
                     <li
                       key={row.staffAccountId}
-                      className="rounded-[var(--radius-md)] border border-border p-3"
+                      className="rounded-2xl border border-border bg-surface p-3"
                     >
                       <p className="text-sm font-semibold text-ink">{row.staffFullName}</p>
                       <CellContents cell={cellFor(row.staffAccountId, date)} />

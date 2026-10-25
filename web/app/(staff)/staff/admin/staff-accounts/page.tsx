@@ -3,7 +3,10 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { Plus } from 'lucide-react';
+import { PageHeader } from '@/components/back-office/PageHeader';
 import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { StaffAccountTable } from '@/components/admin/StaffAccountTable';
 import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState';
 import { useStaffAccounts, useStaffRoleCatalogue } from '@/lib/hooks/useStaffAdmin';
@@ -52,15 +55,19 @@ function StaffAccountsPageContent() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-xl font-semibold text-ink">Staff accounts</h1>
-        <Link
-          href="/staff/admin/staff-accounts/new"
-          className={buttonVariants({ variant: 'primary' })}
-        >
-          New staff account
-        </Link>
-      </div>
+      <PageHeader
+        title="Staff & roles"
+        description="Staff accounts, their sign-in IDs and roles."
+        actions={
+          <Link
+            href="/staff/admin/staff-accounts/new"
+            className={cn(buttonVariants({ variant: 'primary' }), 'min-h-11 px-4')}
+          >
+            <Plus size={16} aria-hidden="true" />
+            Add staff member
+          </Link>
+        }
+      />
 
       <StaffAccountTable
         rows={accounts.data?.items}
