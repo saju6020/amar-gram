@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { PageHeader } from '@/components/back-office/PageHeader';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { AmountCell } from '@/components/billing/Amount';
 import { SelectField } from '@/components/billing/Fields';
-import { PageHeader } from '@/components/billing/PageHeader';
 import { type Column, ResponsiveTable } from '@/components/billing/ResponsiveTable';
 import { Button } from '@/components/ui/button';
 import { ApiForbiddenError } from '@/lib/api/client';

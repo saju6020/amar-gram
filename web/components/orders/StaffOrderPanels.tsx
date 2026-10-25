@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Amount } from '@/components/billing/Amount';
-import { Section } from '@/components/billing/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
 import { Button } from '@/components/ui/button';
 import type { StaffOrderDetail, StaffOrderLine } from '@/lib/api/staff-orders';
 import { fulfilmentLabel, formatOrderWhen, paymentMethodLabel } from '@/lib/format/orders';
@@ -28,7 +28,7 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
   const f = order.fulfilment;
   const address = [f.line1, f.line2, f.city, f.district, f.postalCode].filter(Boolean).join(', ');
   return (
-    <Section title="Customer and fulfilment">
+    <Panel title="Customer and fulfilment">
       <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
         <Row label="Customer">
           {order.customerAnonymised ? (
@@ -52,7 +52,7 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
         <Row label="Payment">{paymentMethodLabel(order.paymentMethod)}</Row>
         {order.discountCode && <Row label="Discount code">{order.discountCode}</Row>}
       </dl>
-    </Section>
+    </Panel>
   );
 }
 
@@ -73,7 +73,7 @@ export function StaffLinesPanel({
     lineTotal: l.lineTotal,
   }));
   return (
-    <Section title="Items">
+    <Panel title="Items">
       <OrderLines
         caption="Items on this order"
         lines={lines}
@@ -104,13 +104,13 @@ export function StaffLinesPanel({
           );
         }}
       />
-    </Section>
+    </Panel>
   );
 }
 
 export function PaymentsPanel({ order }: { order: StaffOrderDetail }) {
   return (
-    <Section title="Money">
+    <Panel title="Money">
       <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
         <Row label="Paid"><Amount money={order.amountPaid} /></Row>
         <Row label="Refunded"><Amount money={order.amountRefunded} /></Row>
@@ -138,7 +138,7 @@ export function PaymentsPanel({ order }: { order: StaffOrderDetail }) {
         )}
         {order.creditNoteIds.length > 0 && <Row label="Credit notes">{order.creditNoteIds.length}</Row>}
       </dl>
-    </Section>
+    </Panel>
   );
 }
 
@@ -146,7 +146,7 @@ export function ShipmentPanel({ order, onEditTracking }: { order: StaffOrderDeta
   const s = order.shipment;
   if (!s) return null;
   return (
-    <Section
+    <Panel
       title="Shipment"
       actions={
         <Button variant="secondary" size="sm" onClick={onEditTracking}>
@@ -172,13 +172,13 @@ export function ShipmentPanel({ order, onEditTracking }: { order: StaffOrderDeta
         <Row label="Dispatched">{formatOrderWhen(s.dispatchedOn, order.branchTimeZoneId)}</Row>
         {s.lastTrackingStatus && <Row label="Courier status">{s.lastTrackingStatus}</Row>}
       </dl>
-    </Section>
+    </Panel>
   );
 }
 
 export function StaffHistoryPanel({ order }: { order: StaffOrderDetail }) {
   return (
-    <Section title="History">
+    <Panel title="History">
       <ol aria-label="Status history" className="m-0 flex list-none flex-col gap-2 p-0 text-sm">
         {order.statusHistory.map((entry, index) => (
           <li key={`${entry.changedOn}-${index}`} className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -189,6 +189,6 @@ export function StaffHistoryPanel({ order }: { order: StaffOrderDetail }) {
           </li>
         ))}
       </ol>
-    </Section>
+    </Panel>
   );
 }

@@ -21,6 +21,30 @@ async function start(page: Page) {
 }
 
 test.describe('fulfilment (US-ORD-09 to US-ORD-11, US-ORD-20)', () => {
+  test('E7: on desktop, select an order in the list, tick the pick list, Start packing enables', async ({ page }) => {
+    await start(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/staff/orders');
+    await page.getByRole('button', { name: 'ORD-2026-000104', exact: true }).click();
+    await expect(page).toHaveURL(/[?&]order=/);
+    const panel = page.getByRole('region', { name: 'Selected order' });
+    await expect(panel.getByRole('heading', { name: 'Order ORD-2026-000104' })).toBeVisible();
+    const pickList = panel.getByRole('list', { name: 'Pick list' });
+    await expect(pickList).toBeVisible();
+    const startPacking = panel.getByRole('button', { name: 'Start packing' });
+    await expect(startPacking).toBeDisabled();
+    for (const box of await pickList.getByRole('checkbox').all()) await box.check();
+    await expect(startPacking).toBeEnabled();
+    // The selection is the URL's, so a reload keeps it.
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Selected order' }).getByRole('heading', { name: 'Order ORD-2026-000104' })).toBeVisible();
+    // Below 1024 px the row links to the full order page instead.
+    await page.setViewportSize({ width: 800, height: 900 });
+    await page.goto('/staff/orders');
+    await page.getByRole('link', { name: 'ORD-2026-000104' }).click();
+    await expect(page).toHaveURL(/\/staff\/orders\/f0000000-0000-0000-0000-000000000104$/);
+  });
+
   test('E-B1: pack, dispatch with tracking, record the COD cash with its collector', async ({ page }) => {
     await start(page);
     await page.goto(`/staff/orders/${O.confirmedCod}`);
