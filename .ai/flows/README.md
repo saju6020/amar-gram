@@ -7,6 +7,7 @@ involved, the aggregates, the invariants that must hold, and the cross-module ru
 |---|---|---|
 | `order-fulfilment-flow.md` | §4.9 | Cart, FEFO allocation, dispatch, returns |
 | `import-to-shelf-flow.md` | §4.8 | Consignments, batches, expiry lifecycle, landed cost |
+| `subscriptions-flow.md` | FR-SUB-1..6 | Recurring orders: schedule and cut-off, worker passes, unpaid streak, staff reinstatement |
 
 ## Retired flows
 

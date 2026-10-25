@@ -17,6 +17,9 @@ public sealed class FakeAggregateRootRepository<TAggregate> : IAggregateRootRepo
     public List<TAggregate> Saved { get; } = [];
     public List<TAggregate> Updated { get; } = [];
 
+    /// <summary>Everything currently held (seeded or saved), for fakes that must enumerate.</summary>
+    public IReadOnlyCollection<TAggregate> All => _store.Values;
+
     public void Seed(TAggregate aggregate) => _store[aggregate.Id] = aggregate;
 
     public Task<TAggregate> GetByIdAsync(Guid id) =>
