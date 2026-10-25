@@ -198,6 +198,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           <HearthLogo
             variant="portal"
             href="/staff"
+            accentClassName="text-leaf-soft"
             className={cn(
               'sr-only min-w-0 gap-2 text-base text-leaf-soft focus-visible:outline-leaf-soft',
               !collapsed && 'sm:not-sr-only',

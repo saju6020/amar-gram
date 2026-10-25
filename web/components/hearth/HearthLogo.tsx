@@ -42,10 +42,12 @@ function SproutBadgeLogo({
   href,
   className,
   tagClassName,
+  accentClassName = 'text-leaf',
 }: {
   href: string;
   className?: string;
   tagClassName?: string;
+  accentClassName?: string;
 }) {
   return (
     <Link
@@ -62,7 +64,7 @@ function SproutBadgeLogo({
         <Sprout />
       </span>
       <span className="font-display text-[1.12em] font-bold leading-none tracking-[-0.02em]">
-        Amar <span className="text-leaf">Gram</span>
+        Amar <span className={accentClassName}>Gram</span>
       </span>{' '}
       <span
         className={cn(
@@ -84,18 +86,27 @@ export interface HearthLogoProps {
   className?: string;
   /** Override the "Shop" tag's fill, e.g. `bg-surface` where the logo sits on a warm-soft panel. */
   tagClassName?: string;
+  /** The colour of "Gram"; `text-leaf` by default. On a leaf background use a light tone (leaf on leaf-ink is ~1.4:1). */
+  accentClassName?: string;
 }
 
 /**
  * The Amar Gram logo. One logo everywhere (owner, 2026-10-19, kept through the 2026-10-23 rebrand): the shop's
  * badge with its "Shop" tag is used in the shop, sign-in pages, the customer account area and the staff area.
  */
-export function HearthLogo({ variant = 'shop', href, className, tagClassName }: HearthLogoProps) {
+export function HearthLogo({
+  variant = 'shop',
+  href,
+  className,
+  tagClassName,
+  accentClassName,
+}: HearthLogoProps) {
   return (
     <SproutBadgeLogo
       href={href ?? (variant === 'shop' ? '/shop' : '/')}
       className={className}
       tagClassName={tagClassName}
+      accentClassName={accentClassName}
     />
   );
 }
