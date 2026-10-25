@@ -37,7 +37,7 @@ export function ManifestDownload() {
   }
 
   return (
-    <details className="rounded-[var(--radius-md)] border border-border bg-surface p-3">
+    <details className="rounded-2xl border border-border bg-surface p-3">
       <summary className="cursor-pointer text-sm font-semibold text-ink">Courier manifest (CSV)</summary>
       <div className="mt-3 grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <SelectField id="manifest-courier" label="Courier" value={courierId} onChange={(e) => setCourierId(e.target.value)}>

@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { PageHeader } from '@/components/back-office/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { Amount, AmountCell } from '@/components/billing/Amount';
-import { PageHeader, Section } from '@/components/billing/PageHeader';
 import { type Column, ResponsiveTable } from '@/components/billing/ResponsiveTable';
 import { Button } from '@/components/ui/button';
 import { ApiForbiddenError } from '@/lib/api/client';
@@ -92,7 +93,7 @@ export function AwaitingPaymentList() {
           {notice}
         </p>
       )}
-      <Section title="Waiting for the transfer">
+      <Panel title="Waiting for the transfer">
         <ResponsiveTable
           caption="Orders waiting for a bank transfer"
           columns={columns}
@@ -104,9 +105,11 @@ export function AwaitingPaymentList() {
           onRetry={() => void query.refetch()}
           emptyState={{ title: 'Nothing is waiting for a transfer.', description: 'Orders paid by bank transfer appear here until the money is confirmed.' }}
         />
-      </Section>
+      </Panel>
       {held.length > 0 && (
-        <Section title="Awaiting approval" description="Recorded, but a second staff member must approve each one on its order page.">
+        <Panel title="Awaiting approval">
+          <div className="flex flex-col gap-3">
+          <p className="text-sm text-ink-muted">Recorded, but a second staff member must approve each one on its order page.</p>
           <ResponsiveTable
             caption="Transfers awaiting approval"
             columns={heldColumns}
@@ -118,7 +121,8 @@ export function AwaitingPaymentList() {
           <p className="text-sm text-ink-muted">
             Open an order to <Link href={`/staff/orders/${held[0]!.id}`} className="text-accent-ink underline">approve or reject</Link> its payment.
           </p>
-        </Section>
+          </div>
+        </Panel>
       )}
       {target && (
         <ConfirmTransferDialog

@@ -6,6 +6,7 @@ import { Amount } from '@/components/billing/Amount';
 import { Button } from '@/components/ui/button';
 import type { CounterQuote } from '@/lib/api/pos';
 import { describeExcludedReason } from '@/lib/api/errors';
+import { formatMoney } from '@/lib/format/money';
 import type { BasketLine } from './types';
 
 /**
@@ -48,7 +49,7 @@ function QuantityInput({ name, quantity, onCommit }: { name: string; quantity: n
           commit();
         }
       }}
-      className="h-8 w-14 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 text-center text-sm text-ink"
+      className="h-10 w-14 rounded-[var(--radius-sm)] border-0 bg-transparent px-1 text-center text-base font-semibold text-ink"
     />
   );
 }
@@ -65,7 +66,7 @@ export function PosBasket({
   onRemove: (skuId: string) => void;
 }) {
   if (lines.length === 0) {
-    return <p className="rounded-[var(--radius-md)] border border-dashed border-border p-6 text-center text-sm text-ink-muted">The basket is empty. Scan an item to start the sale.</p>;
+    return <p className="rounded-[var(--radius-md)] border border-dashed border-border p-6 text-center text-sm text-ink-muted">Scan or tap a product to start.</p>;
   }
   return (
     <ul aria-label="Basket" className="m-0 flex list-none flex-col p-0">
@@ -74,27 +75,28 @@ export function PosBasket({
         const priced = quote?.lines.find((q) => q.skuId === line.skuId);
         const excluded = quote?.excludedLines.find((q) => q.skuId === line.skuId);
         return (
-          <li key={line.skuId} className="flex flex-col gap-2 border-b border-border py-3 last:border-0">
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0 flex-1 basis-48">
-                <p className="font-semibold text-ink [overflow-wrap:anywhere]">{name}</p>
+          <li key={line.skuId} className="flex flex-col gap-1 border-b border-surface-sunken py-3 last:border-0">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="min-w-0 flex-1 basis-40 leading-snug">
+                <p className="text-sm font-semibold text-ink [overflow-wrap:anywhere]">{name}</p>
+                {line.unitPrice && <p className="text-xs text-ink-muted">{formatMoney(line.unitPrice)} each</p>}
                 {line.batchLabel && <p className="text-xs text-ink-muted">{line.batchLabel}</p>}
-                {excluded && <p className="text-sm font-semibold text-danger-ink">{describeExcludedReason(excluded.reasonCode)}</p>}
               </div>
-              <div className="flex items-center gap-1">
-                <Button variant="secondary" size="icon" aria-label={`Decrease quantity of ${name}`} disabled={line.quantity <= 1} onClick={() => onQuantity(line.skuId, line.quantity - 1)}>
-                  <Minus size={14} aria-hidden="true" />
+              <div role="group" aria-label={`Quantity controls for ${name}`} className="flex items-center rounded-lg bg-surface-page">
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-lg" aria-label={`Decrease quantity of ${name}`} disabled={line.quantity <= 1} onClick={() => onQuantity(line.skuId, line.quantity - 1)}>
+                  <Minus size={16} aria-hidden="true" />
                 </Button>
                 <QuantityInput name={name} quantity={line.quantity} onCommit={(quantity) => onQuantity(line.skuId, quantity)} />
-                <Button variant="secondary" size="icon" aria-label={`Increase quantity of ${name}`} onClick={() => onQuantity(line.skuId, line.quantity + 1)}>
-                  <Plus size={14} aria-hidden="true" />
-                </Button>
-                <Button variant="ghost" size="icon" aria-label={`Remove ${name}`} onClick={() => onRemove(line.skuId)}>
-                  <Trash2 size={14} aria-hidden="true" />
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-lg" aria-label={`Increase quantity of ${name}`} onClick={() => onQuantity(line.skuId, line.quantity + 1)}>
+                  <Plus size={16} aria-hidden="true" />
                 </Button>
               </div>
-              <p className="w-24 text-right font-semibold">{priced ? <Amount money={priced.lineTotal} /> : <span className="text-ink-muted">…</span>}</p>
+              <p className="min-w-16 text-right font-semibold">{priced ? <Amount money={priced.lineTotal} /> : <span className="text-ink-muted">…</span>}</p>
+              <Button variant="ghost" size="icon" className="h-10 w-10" aria-label={`Remove ${name}`} onClick={() => onRemove(line.skuId)}>
+                <Trash2 size={16} aria-hidden="true" />
+              </Button>
             </div>
+            {excluded && <p className="text-sm font-semibold text-danger-ink">{describeExcludedReason(excluded.reasonCode)}</p>}
           </li>
         );
       })}

@@ -34,14 +34,17 @@ async function scan(user: ReturnType<typeof userEvent.setup>, code: string) {
 }
 
 async function fillCustomer(user: ReturnType<typeof userEvent.setup>) {
+  // HO-P4 S2: the buyer's fields sit behind the ticket's customer chip (the API still needs name and mobile, BG-8).
+  await user.click(screen.getByRole('button', { name: 'Walk-in · add customer' }));
   await user.type(screen.getByLabelText(/Customer name/), 'Walk-in Buyer');
   await user.type(screen.getByLabelText(/Mobile number/), '01711112222');
 }
 
 async function takePayment(user: ReturnType<typeof userEvent.setup>, method: 'Cash' | 'InStoreCard', amount: string, slip?: string) {
-  await user.selectOptions(screen.getByLabelText('Paid with'), method);
+  // HO-P4 S2: the tender is a radiogroup ("Cash" / "Card (terminal)") instead of a "Paid with" select.
+  await user.click(screen.getByRole('radio', { name: method === 'Cash' ? 'Cash' : 'Card (terminal)' }));
   await user.type(screen.getByLabelText(/handed over|charged/), amount);
-  if (slip) await user.type(screen.getByLabelText('Terminal slip reference'), slip);
+  if (slip) await user.type(screen.getByLabelText('Terminal slip number'), slip);
   await user.click(screen.getByRole('button', { name: 'Add payment' }));
 }
 
@@ -249,6 +252,8 @@ describe('Review gating and keyboard path - gate fix', () => {
     await user.keyboard('1000{Enter}');
     expect(await screen.findByText(/Enter the customer.s name and mobile/)).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // The missing fields are put in front of the cashier.
+    expect(await screen.findByLabelText(/Customer name/)).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Payments taken' })).toBeInTheDocument();
   });
 
@@ -301,6 +306,8 @@ describe('Review gating and keyboard path - gate fix', () => {
     await scan(user, OATS_400);
     const summary = await screen.findByRole('region', { name: 'Sale total' });
     await waitFor(() => expect(within(summary).getAllByRole('definition').at(-1)).toHaveTextContent(/1,?430\.00/));
+    // The lines and the discount/tax rows stay one tap away under "Price breakdown".
+    expect(screen.getByText('Price breakdown', { selector: 'summary' })).toBeInTheDocument();
   });
 });
 

@@ -112,7 +112,7 @@ export function PickListPage() {
       controls={
         <div className="flex flex-col gap-4">
           <StaffOrdersTabs />
-          <details className="rounded-[var(--radius-md)] border border-border bg-surface p-3">
+          <details className="rounded-2xl border border-border bg-surface p-3">
             <summary className="cursor-pointer text-sm font-semibold text-ink">
               Choose orders {chosen.length > 0 ? `(${chosen.length} chosen)` : '(all confirmed and packing orders)'}
             </summary>

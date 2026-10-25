@@ -3,7 +3,9 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
-import { PageHeader, Section } from '@/components/billing/PageHeader';
+import { PageHeader } from '@/components/back-office/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
+import { Amount } from '@/components/billing/Amount';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { OrderSummary } from '@/components/orders/OrderSummary';
 import { Button } from '@/components/ui/button';
@@ -24,12 +26,16 @@ import { PosTenderPanel } from './PosTenderPanel';
 import { basketLineFromSku, type BasketLine, type PosCustomer, type PosTender } from './types';
 
 /**
- * `components/pos/PosScreen.tsx` — ⭐ HO-ORD-002 §11.11, US-ORD-16. The counter sale. The basket, the
- * customer, the payments and the scan buffer are **this component's state** (never storage); the totals
- * come from the server's counter quote (debounced 300 ms) and the change from the sale response. Scan
- * returns focus here after each item; `F2` jumps to the payment amount; Enter adds the payment and opens
- * a review whose **Complete sale** is focused. One idempotency key per attempt, kept while the payload
- * is unchanged, so a double Enter or a retry after a lost response records one sale.
+ * `components/pos/PosScreen.tsx` — ⭐ HO-ORD-002 §11.11, US-ORD-16; HO-P4 S2 (§11.3.6) laid it out as the
+ * design's two columns from 1024 px (scan and product tiles | the ticket), stacked below. The counter sale.
+ * The basket, the customer, the payments and the scan buffer are **this component's state** (never
+ * storage); the totals come from the server's counter quote (debounced 300 ms) and the change from the
+ * sale response. Scan returns focus here after each item; `F2` jumps to the payment amount; Enter adds the
+ * payment and opens a review whose **Complete sale** is focused. One idempotency key per attempt, kept
+ * while the payload is unchanged, so a double Enter or a retry after a lost response records one sale.
+ *
+ * The buyer's name and mobile are still required (the API has no anonymous sale, BG-8), so the ticket's
+ * "Walk-in · add customer" chip opens the existing customer fields. Nothing here adds up money.
  */
 const EMPTY_CUSTOMER: PosCustomer = { name: '', mobile: '', customerId: null };
 
@@ -46,6 +52,7 @@ export function PosScreen() {
     setLinesState(next);
   };
   const [customer, setCustomer] = useState<PosCustomer>(EMPTY_CUSTOMER);
+  const [customerOpen, setCustomerOpen] = useState(false);
   const [tenders, setTenders] = useState<PosTender[]>([]);
   const [discountCode, setDiscountCode] = useState('');
   const [sale, setSale] = useState<CounterSale | null>(null);
@@ -72,7 +79,8 @@ export function PosScreen() {
   // Settled = the quote on screen is for the basket on screen (not the debounce window, not a refetch in flight,
   // not the previous basket's quote kept as placeholder data).
   const settled = !quote.isSettling && !quote.isFetching && !quote.isPlaceholderData;
-  const ready = lines.length > 0 && tenders.length > 0 && !!quote.data?.canSell && settled && customer.name.trim() !== '' && customer.mobile.trim() !== '';
+  const customerMissing = customer.name.trim() === '' || customer.mobile.trim() === '';
+  const ready = lines.length > 0 && tenders.length > 0 && !!quote.data?.canSell && settled && !customerMissing;
   // Enter in the amount field adds the payment and asks for the review. The payment lands in state a render
   // later, so the request waits here until the quote has settled, then opens the review only if the sale is ready.
   const [reviewRequested, setReviewRequested] = useState(false);
@@ -80,7 +88,9 @@ export function PosScreen() {
     if (!reviewRequested || !settled) return;
     setReviewRequested(false);
     if (ready) setReviewOpen(true);
-  }, [reviewRequested, settled, ready]);
+    // The review needs the buyer's name and mobile: show the fields so the missing part is in front of the cashier.
+    else if (customerMissing) setCustomerOpen(true);
+  }, [reviewRequested, settled, ready, customerMissing]);
 
   function addSku(sku: PosSku): string {
     const existing = linesRef.current.find((l) => l.skuId === sku.skuId);
@@ -124,6 +134,7 @@ export function PosScreen() {
         }
       }
       setFieldErrors(perField);
+      if (Object.keys(perField).length > 0) setCustomerOpen(true);
       setRootError(other.length > 0 ? other.join(' ') : Object.keys(perField).length > 0 ? 'Check the customer’s details.' : describeOrderingError(error));
     }
   }
@@ -131,6 +142,7 @@ export function PosScreen() {
   function reset() {
     setLines([]);
     setCustomer(EMPTY_CUSTOMER);
+    setCustomerOpen(false);
     setTenders([]);
     setDiscountCode('');
     setSale(null);
@@ -147,11 +159,16 @@ export function PosScreen() {
   if (sale) {
     return (
       <div className="flex flex-col gap-5">
-        <PageHeader title="Point of sale" />
+        <PageHeader title="Counter sale" />
         <PosSaleComplete sale={sale} onNewSale={reset} />
       </div>
     );
   }
+
+  const customerLabel =
+    customer.name.trim() !== '' || customer.mobile.trim() !== ''
+      ? [customer.name.trim(), customer.mobile.trim()].filter(Boolean).join(' · ')
+      : 'Walk-in · add customer';
 
   return (
     <div
@@ -165,34 +182,42 @@ export function PosScreen() {
     >
       <UnsavedChangesGuard when={lines.length > 0} />
       <PageHeader
-        title="Point of sale"
+        title="Counter sale"
         description="Scan items, take payment, print the receipt."
         actions={
-          <Button variant="secondary" size="sm" disabled={lines.length === 0} onClick={() => setVoidOpen(true)}>
+          <Button variant="secondary" disabled={lines.length === 0} onClick={() => setVoidOpen(true)}>
             Void basket
           </Button>
         }
       />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <div className="flex min-w-0 flex-col gap-5">
-          <PosScanField ref={scanRef} onAdd={addSku} />
-          <Section title="Basket">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
+        <div className="min-w-0">
+          <PosScanField inputRef={scanRef} onAdd={addSku} />
+        </div>
+        <Panel
+          title="Ticket"
+          actions={
+            <button
+              type="button"
+              aria-expanded={customerOpen}
+              aria-controls="pos-customer"
+              onClick={() => setCustomerOpen((open) => !open)}
+              className="min-h-9 max-w-full rounded-full border border-dashed border-ink-muted px-3 text-[13px] text-ink-muted [overflow-wrap:anywhere] hover:bg-surface-sunken"
+            >
+              {customerLabel}
+            </button>
+          }
+        >
+          <div className="flex flex-col gap-4">
+            <div id="pos-customer">
+              {customerOpen && <PosCustomerPanel customer={customer} onChange={setCustomer} errors={fieldErrors} />}
+            </div>
             <PosBasket
               lines={lines}
               quote={quote.data}
               onQuantity={(skuId, quantity) => setLines((cur) => cur.map((l) => (l.skuId === skuId ? { ...l, quantity } : l)))}
               onRemove={(skuId) => setLines((cur) => cur.filter((l) => l.skuId !== skuId))}
             />
-          </Section>
-          <PosCustomerPanel customer={customer} onChange={setCustomer} errors={fieldErrors} />
-        </div>
-        <div className="flex min-w-0 flex-col gap-5">
-          <Section title="Summary">
-            {quote.data ? (
-              <OrderSummary totals={quote.data.totals} fulfilment="Counter" heading="Sale total" discountCode={discountCode.trim().toUpperCase() || null} />
-            ) : (
-              <p className="text-sm text-ink-muted">{lines.length === 0 ? 'Totals appear when you scan an item.' : 'Working out the total…'}</p>
-            )}
             {quote.data && quote.data.blockingReasons.length > 0 && (
               <ul aria-label="Why this sale can’t be completed" className="m-0 list-none rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink">
                 {quote.data.blockingReasons.map((code) => (
@@ -201,30 +226,51 @@ export function PosScreen() {
               </ul>
             )}
             <div className="flex flex-col gap-1">
-              <label htmlFor="pos-discount" className="text-sm font-semibold">Discount code (optional)</label>
-              <input id="pos-discount" value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} maxLength={40} className="w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink" />
+              <label htmlFor="pos-discount" className="text-[13px] font-semibold text-ink-muted">Discount code (optional)</label>
+              <input id="pos-discount" value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} maxLength={40} className="w-full rounded-[var(--radius-md)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink" />
             </div>
-          </Section>
-          <PosTenderPanel
-            ref={amountRef}
-            tenders={tenders}
-            currencyCode={currency}
-            disabled={lines.length === 0}
-            onAdd={(t) => setTenders((cur) => [...cur, { ...t, id: crypto.randomUUID() }])}
-            onRemove={(id) => setTenders((cur) => cur.filter((t) => t.id !== id))}
-            onReview={() => setReviewRequested(true)}
-          />
-          {rootError && <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink">{rootError}</p>}
-          <Button size="md" disabled={!ready || complete.isPending} onClick={() => setReviewOpen(true)}>
-            Complete sale
-          </Button>
-          {!ready && lines.length > 0 && (
-            <p className="text-sm text-ink-muted">
-              {customer.name.trim() === '' || customer.mobile.trim() === '' ? 'Enter the customer’s name and mobile. ' : ''}
-              {tenders.length === 0 ? 'Add a payment.' : ''}
-            </p>
-          )}
-        </div>
+            <section aria-label="Sale total" className="border-t-2 border-ink pt-3">
+              {quote.data ? (
+                <dl className="m-0 flex items-baseline justify-between gap-3">
+                  <dt className="font-bold text-ink">Total</dt>
+                  <dd className="m-0 font-display text-[30px] font-bold leading-tight text-ink">
+                    <Amount money={quote.data.totals.grandTotal} />
+                  </dd>
+                </dl>
+              ) : (
+                <p className="text-sm text-ink-muted">{lines.length === 0 ? 'Totals appear when you scan an item.' : 'Working out the total…'}</p>
+              )}
+            </section>
+            {quote.data && (
+              <details className="text-sm">
+                <summary className="cursor-pointer font-semibold text-ink-muted">Price breakdown</summary>
+                <div className="mt-2">
+                  <OrderSummary totals={quote.data.totals} fulfilment="Counter" heading="Price breakdown" discountCode={discountCode.trim().toUpperCase() || null} />
+                </div>
+              </details>
+            )}
+            <PosTenderPanel
+              ref={amountRef}
+              tenders={tenders}
+              currencyCode={currency}
+              exactAmount={quote.data?.totals.grandTotal.amount ?? null}
+              disabled={lines.length === 0}
+              onAdd={(t) => setTenders((cur) => [...cur, { ...t, id: crypto.randomUUID() }])}
+              onRemove={(id) => setTenders((cur) => cur.filter((t) => t.id !== id))}
+              onReview={() => setReviewRequested(true)}
+            />
+            {rootError && <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink">{rootError}</p>}
+            <Button className="h-14 w-full rounded-xl text-[17px]" disabled={!ready || complete.isPending} onClick={() => setReviewOpen(true)}>
+              Complete sale
+            </Button>
+            {!ready && lines.length > 0 && (
+              <p className="text-sm text-ink-muted">
+                {customerMissing ? 'Enter the customer’s name and mobile. ' : ''}
+                {tenders.length === 0 ? 'Add a payment.' : ''}
+              </p>
+            )}
+          </div>
+        </Panel>
       </div>
       <PosReviewDialog open={reviewOpen} onOpenChange={setReviewOpen} summary={reviewText} pending={complete.isPending} onConfirm={() => void send()} />
       <ConfirmDialog

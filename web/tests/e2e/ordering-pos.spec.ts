@@ -18,7 +18,14 @@ async function start(page: import('@playwright/test').Page) {
   await control(page, 'reset');
   await signInAsStaff(page);
   await page.goto('/staff/pos');
-  await expect(page.getByRole('heading', { level: 1, name: 'Point of sale' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Counter sale' })).toBeVisible();
+}
+
+/** HO-P4 S2: the buyer's name and mobile sit behind the ticket's customer chip. */
+async function fillCustomer(page: import('@playwright/test').Page, mobile: string) {
+  await page.getByRole('button', { name: 'Walk-in · add customer' }).click();
+  await page.getByLabel(/Customer name/).fill('Walk-in Buyer');
+  await page.getByLabel(/Mobile number/).fill(mobile);
 }
 
 async function scan(page: import('@playwright/test').Page, code: string) {
@@ -30,8 +37,7 @@ async function scan(page: import('@playwright/test').Page, code: string) {
 test.describe('point of sale (US-ORD-16)', () => {
   test('E-F1: three scanned items, a cash tender, the receipt — keyboard only, under 60 s', async ({ page }) => {
     await start(page);
-    await page.getByLabel(/Customer name/).fill('Walk-in Buyer');
-    await page.getByLabel(/Mobile number/).fill('01711112222');
+    await fillCustomer(page, '01711112222');
     const began = Date.now();
 
     for (const code of [OATS_400, OATS_2KG, JASMINE_RICE]) await scan(page, code);
@@ -86,8 +92,7 @@ test.describe('point of sale (US-ORD-16)', () => {
 
   test('a double Enter on the review records one sale', async ({ page }) => {
     await start(page);
-    await page.getByLabel(/Customer name/).fill('Walk-in Buyer');
-    await page.getByLabel(/Mobile number/).fill('01711113333');
+    await fillCustomer(page, '01711113333');
     await scan(page, JASMINE_RICE);
     await page.locator('#pos-tender-amount').fill('2000');
     await page.keyboard.press('Enter');

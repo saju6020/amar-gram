@@ -1,12 +1,11 @@
 'use client';
 
-import { Section } from '@/components/billing/PageHeader';
 import { Button } from '@/components/ui/button';
 import { usePosCustomerLookup } from '@/lib/hooks/usePos';
 import type { PosCustomer } from './types';
 
 /**
- * `components/pos/PosCustomerPanel.tsx` — HO-ORD-002 §11.11, OQ-5, Amended (2) / ADR-216. A counter sale
+ * `components/pos/PosCustomerPanel.tsx` — HO-ORD-002 §11.11, OQ-5, Amended (2) / ADR-216; HO-P4 S2: opened from the ticket's customer chip (the API has no anonymous sale, BG-8). A counter sale
  * needs the buyer's **name and mobile number** (the person is found by mobile or created). **Find an
  * existing customer** looks the mobile up and attaches the match. Errors from the server for either field arrive on the screen's message.
  */
@@ -22,8 +21,9 @@ export function PosCustomerPanel({
   const lookup = usePosCustomerLookup();
   const field = 'w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
   return (
-    <Section title="Customer" description="Needed for every sale.">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <div role="group" aria-label="Customer" className="flex flex-col gap-3 rounded-[var(--radius-md)] bg-surface-page p-3">
+      <p className="text-sm text-ink-muted">A name and mobile number are needed for every sale.</p>
+      <div className="grid gap-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="pos-cust-name" className="text-sm font-semibold">Customer name <span aria-hidden="true">*</span></label>
           <input id="pos-cust-name" className={field} value={customer.name} maxLength={200} aria-invalid={!!errors.name} onChange={(e) => onChange({ ...customer, name: e.target.value, customerId: null })} />
@@ -55,6 +55,6 @@ export function PosCustomerPanel({
           ))}
         </ul>
       )}
-    </Section>
+    </div>
   );
 }
