@@ -6,7 +6,7 @@ import { buttonVariants } from '@/components/ui/button';
 export default function ShopNotFound() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="m-0 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-tight text-ink">
+      <h1 className="m-0 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold leading-tight tracking-[-0.02em] text-ink">
         Page not found
       </h1>
       <EmptyState

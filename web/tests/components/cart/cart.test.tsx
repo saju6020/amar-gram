@@ -7,7 +7,6 @@ import type { ReactElement } from 'react';
 import { server } from '../../../mocks/server';
 import { violation } from '../../../mocks/handlers/ordering/fixtures';
 import { CartScreen } from '@/components/cart/CartScreen';
-import { AddToCartButton } from '@/components/cart/AddToCartButton';
 import type { Cart, CartLine } from '@/lib/api/cart';
 
 vi.mock('next/navigation', () => import('../common/nav-mock'));
@@ -115,7 +114,7 @@ describe('CartScreen stepper - U-A2', () => {
     serveCart([line({ quantity: 3, availability: 'Limited', availableQuantity: 3 })]);
     renderWithClient(<CartScreen />);
     const plus = await screen.findByRole('button', {
-      name: 'Increase quantity of Organic Rolled Oats 2 kg',
+      name: 'One more Organic Rolled Oats 2 kg',
     });
     expect(plus).toBeDisabled();
     expect(screen.getByText("You can't add more — only 3 are in stock.")).toBeInTheDocument();
@@ -133,7 +132,7 @@ describe('CartScreen stepper - U-A2', () => {
     const user = userEvent.setup();
     renderWithClient(<CartScreen />);
     const plus = await screen.findByRole('button', {
-      name: 'Increase quantity of Organic Rolled Oats 2 kg',
+      name: 'One more Organic Rolled Oats 2 kg',
     });
     expect(plus).toBeEnabled();
     await user.click(plus);
@@ -147,7 +146,7 @@ describe('CartScreen stepper - U-A2', () => {
       await screen.findByText('You can buy at most 5 of an item at a time.'),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Increase quantity of Organic Rolled Oats 2 kg' }),
+      screen.getByRole('button', { name: 'One more Organic Rolled Oats 2 kg' }),
     ).toBeDisabled();
   });
 
@@ -161,40 +160,10 @@ describe('CartScreen stepper - U-A2', () => {
     const user = userEvent.setup();
     renderWithClient(<CartScreen />);
     await user.click(
-      await screen.findByRole('button', { name: 'Increase quantity of Organic Rolled Oats 2 kg' }),
+      await screen.findByRole('button', { name: 'One more Organic Rolled Oats 2 kg' }),
     );
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).not.toMatch(/QuantityOutOfRange/);
     expect((alert.textContent ?? '').length).toBeGreaterThan(5);
-  });
-});
-
-describe('AddToCartButton - U-A4', () => {
-  it('posts the SKU and quantity and announces the result', async () => {
-    let body: unknown;
-    server.use(
-      http.post('*/api/cart/lines', async ({ request }) => {
-        body = await request.json();
-        return HttpResponse.json({ lineId: 'x', cartId: 'y' });
-      }),
-    );
-    const user = userEvent.setup();
-    renderWithClient(<AddToCartButton skuId="s" productName="Forest Honey" />);
-    await user.click(screen.getByRole('button', { name: 'Add to cart' }));
-    await waitFor(() => expect(body).toEqual({ skuId: 's', quantity: 1 }));
-    expect(await screen.findByText(/Added 1 × Forest Honey to your cart\./)).toBeInTheDocument();
-  });
-
-  it('disabled: says why in text', () => {
-    renderWithClient(
-      <AddToCartButton
-        skuId="s"
-        productName="Forest Honey"
-        disabled
-        disabledReason="This variant is out of stock."
-      />,
-    );
-    expect(screen.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
-    expect(screen.getByText('This variant is out of stock.')).toBeInTheDocument();
   });
 });

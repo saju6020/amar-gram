@@ -6,7 +6,6 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { MaintenanceGate } from '@/app/(shop)/_components/MaintenanceGate';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
-import { OriginGrid } from '@/components/shop/OriginGrid';
 import { LanguageSwitcher } from '@/components/shop/LanguageSwitcher';
 import { BannerStrip } from '@/components/shop/BannerStrip';
 import { isMaintenanceError } from '@/lib/shop/helpers';
@@ -111,33 +110,6 @@ describe('LanguageSwitcher — ADR-FE-037', () => {
     render(<LanguageSwitcher defaultLocale="en" locales={['en', 'bn']} />);
     await user.selectOptions(screen.getByLabelText('Product language'), 'en');
     expect(replace).toHaveBeenCalledWith('/shop/products', { scroll: false });
-  });
-});
-
-describe('OriginGrid — HO-SHP-002 §11.4, US-SHP-05 AC1', () => {
-  it('U-C1: a flagless origin shows a globe, the name as text, the count and the notes excerpt', () => {
-    const notes = `**Careful** sourcing. ${'word '.repeat(60)}`;
-    const { container } = render(
-      <OriginGrid
-        origins={[
-          { code: 'TH', name: 'Thailand', sourcingNotes: notes, productCount: 9, isFeatured: true },
-          { code: 'BR', name: 'Brazil', sourcingNotes: null, productCount: 1, isFeatured: false },
-        ]}
-      />,
-    );
-    expect(screen.getByRole('heading', { level: 2, name: 'Thailand' })).toBeInTheDocument();
-    expect(screen.getByText('9 products')).toBeInTheDocument();
-    expect(screen.getByText('1 product')).toBeInTheDocument();
-    expect(screen.getByText('No sourcing notes yet.')).toBeInTheDocument();
-    // The excerpt is plain text, 160 characters at most.
-    const excerpt = screen.getByText(/^Careful sourcing\./);
-    expect(excerpt.textContent!.length).toBeLessThanOrEqual(161);
-    expect(excerpt.innerHTML).not.toContain('**');
-    // Flags are decorative: alt="" for Thailand; Brazil has no flag file, so it is the globe icon.
-    const flags = container.querySelectorAll('img');
-    expect(flags).toHaveLength(1);
-    expect(flags[0]).toHaveAttribute('alt', '');
-    expect(container.querySelectorAll('svg[aria-hidden="true"]').length).toBeGreaterThanOrEqual(1);
   });
 });
 

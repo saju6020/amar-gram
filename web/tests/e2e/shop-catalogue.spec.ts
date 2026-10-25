@@ -83,7 +83,7 @@ test.describe('search (US-SHP-06)', () => {
     await page.goto('/shop');
     await page
       .getByRole('search', { name: 'Products' })
-      .getByLabel('Search products')
+      .getByLabel('Search the shop')
       .fill('greem valey');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page).toHaveURL(/q=greem([+]|%20)valey/);
@@ -91,7 +91,7 @@ test.describe('search (US-SHP-06)', () => {
 
     await page
       .getByRole('search', { name: 'Products' })
-      .getByLabel('Search products')
+      .getByLabel('Search the shop')
       .fill('zzqqxx');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText(/No products match/)).toBeVisible();
@@ -156,7 +156,7 @@ test.describe('the shell without JavaScript (S4)', () => {
       await expect(page.getByRole('link', { name: 'Amar Gram Shop' })).toBeVisible();
       await expect(page.getByRole('navigation', { name: 'Shop categories' })).toBeVisible();
       await expect(page.getByRole('search', { name: 'Products' })).toBeVisible();
-      await expect(page.getByRole('searchbox', { name: 'Search products' })).toBeVisible();
+      await expect(page.getByRole('searchbox', { name: 'Search the shop' })).toBeVisible();
       await context.close();
     });
   }

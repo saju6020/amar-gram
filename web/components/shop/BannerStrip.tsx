@@ -5,7 +5,7 @@ import { isSafeLink } from '@/lib/shop/helpers';
 import type { StorefrontBanner } from '@/lib/api/shop-catalogue';
 
 /**
- * HO-SHP-002 §11.1 `BannerStrip` — FR-ADM-7. Each banner's title and body go through HO-ADM-002's
+ * HO-SHP-002 §11.1 `BannerStrip` — FR-ADM-7. The REMAINING `Shop` banners (the first is in the top strip, `ShopTopStrip`). Each banner's title and body go through HO-ADM-002's
  * `LimitedMarkup`; a link only when one is present (and safe); no auto-rotation, no carousel.
  */
 export function BannerStrip({ banners }: { banners: StorefrontBanner[] }) {
@@ -15,7 +15,7 @@ export function BannerStrip({ banners }: { banners: StorefrontBanner[] }) {
       {banners.map((banner) => (
         <div
           key={banner.slug}
-          className="flex items-start gap-2.5 rounded-[28px] bg-warning-bg px-5 py-3 text-sm text-warning-ink"
+          className="flex items-start gap-2.5 rounded-3xl bg-warning-bg px-5 py-3 text-sm text-warning-ink"
         >
           <Info size={18} className="mt-0.5 flex-none" aria-hidden="true" />
           <div className="min-w-0">

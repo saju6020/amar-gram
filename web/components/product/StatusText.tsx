@@ -11,7 +11,7 @@ export function AvailabilityText({ availability }: { availability: Availability 
     <span
       className={cn(
         'inline-flex items-center gap-1.5 text-[13px] font-medium',
-        inStock ? 'text-accent-ink' : 'text-danger-ink',
+        inStock ? 'text-leaf-ink' : 'text-danger-ink',
       )}
     >
       {inStock ? (

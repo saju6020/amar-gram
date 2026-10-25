@@ -170,7 +170,7 @@ test.describe('a new visitor', () => {
     await expect(visitor.getByText('Free delivery in Dhaka on orders over ৳2,000')).toHaveCount(1);
 
     // The header carries the Cart link for a guest.
-    await expect(visitor.getByRole('banner').getByRole('link', { name: /^Cart/ })).toBeVisible();
+    await expect(visitor.getByRole('banner').getByRole('link', { name: /^Basket/ })).toBeVisible();
 
     // Following a link shows the top progress bar. Wait for hydration first: a click before React has attached the
     // listener is a plain full-page load (the browser shows its own loading indicator then).
@@ -216,7 +216,7 @@ test.describe('a new visitor', () => {
   });
 
   test('2. checkout as a new visitor: sign-in with ?next, create an account, sign in, land on checkout', async () => {
-    await visitor.getByRole('banner').getByRole('link', { name: /^Cart/ }).click();
+    await visitor.getByRole('banner').getByRole('link', { name: /^Basket/ }).click();
     await expect(visitor.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
     await expect(
       visitor.getByRole('region', { name: 'Items in your cart' }).getByRole('listitem'),

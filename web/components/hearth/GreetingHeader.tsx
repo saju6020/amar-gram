@@ -13,7 +13,7 @@ export function GreetingHeader({
 }) {
   return (
     <header className={cn('flex flex-col gap-2', className)}>
-      <h1 className="m-0 font-display text-[32px] font-semibold leading-[1.1] text-ink md:text-[40px]">
+      <h1 className="m-0 font-display text-[32px] font-bold leading-[1.1] tracking-[-0.02em] text-ink md:text-[40px]">
         {title}
       </h1>
       {children && <p className="m-0 text-[15px] text-ink-muted">{children}</p>}

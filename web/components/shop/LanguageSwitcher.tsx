@@ -34,7 +34,7 @@ export function LanguageSwitcher({ defaultLocale, locales }: LanguageSwitcherPro
   }
 
   return (
-    <div className="flex items-center gap-1.5 text-ink-muted">
+    <div className="flex items-center gap-1.5 text-ink-muted max-md:text-leaf-soft">
       <Globe size={18} aria-hidden="true" />
       <label htmlFor={id} className="sr-only">
         Product language
@@ -43,7 +43,7 @@ export function LanguageSwitcher({ defaultLocale, locales }: LanguageSwitcherPro
         id={id}
         value={current}
         onChange={(event) => change(event.target.value)}
-        className="min-h-11 rounded-pill border border-border bg-surface px-3 text-[13px] font-semibold text-ink"
+        className="min-h-11 rounded-pill border-[1.5px] border-border bg-surface px-3 text-[13px] font-semibold text-ink"
       >
         {locales.map((locale) => (
           <option key={locale} value={locale} lang={locale}>

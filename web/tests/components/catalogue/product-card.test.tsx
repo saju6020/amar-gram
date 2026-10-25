@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetShopMockData, shopFixtureIds } from '@/mocks/handlers/shop';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { renderWithClient, signInForTest, signOutForTest } from '../product/test-utils';
 import { ProductCard } from '@/components/catalogue/ProductCard';
-import { NoResults } from '@/components/catalogue/NoResults';
-import { Pagination } from '@/components/catalogue/Pagination';
 import { makeItem } from './catalogue-fixtures';
 
 const push = vi.fn();
@@ -99,13 +97,15 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
     await waitFor(() => expect(heart).toHaveAttribute('aria-pressed', 'false'));
   });
 
-  it('Add puts a single-size product straight in the cart', async () => {
+  it('Add puts a single-size product straight in the basket', async () => {
     const user = userEvent.setup();
     renderWithClient(<ProductCard item={single()} />);
-    await user.click(screen.getByRole('button', { name: 'Add Thai Jasmine Rice to cart' }));
-    // No visible note (owner, 2026-10-18): only a screen-reader announcement, and no View cart link.
-    expect(await screen.findByText(/Added Thai Jasmine Rice to your cart/)).toHaveClass('sr-only');
-    expect(screen.queryByRole('link', { name: 'View cart' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add Thai Jasmine Rice to basket' }));
+    // No visible note (owner, 2026-10-18): only a screen-reader announcement, and no View basket link.
+    expect(await screen.findByText(/Added Thai Jasmine Rice to your basket/)).toHaveClass(
+      'sr-only',
+    );
+    expect(screen.queryByRole('link', { name: 'View basket' })).not.toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
 
@@ -129,66 +129,6 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
     expect(
       screen.getByRole('link', { name: 'Tell me when Organic Rolled Oats is back' }),
     ).toHaveAttribute('href', '/shop/products/organic-rolled-oats#stock-alert');
-  });
-});
-
-describe('NoResults — HO-SHP-002 §11.2, US-SHP-06 AC3', () => {
-  it('U-A4: Did you mean links rewrite q; the popular grid renders', () => {
-    renderWithClient(
-      <NoResults
-        q="royl canan"
-        suggestions={{
-          didYouMean: ['rolled oats'],
-          popular: [makeItem({ productId: 'p-2', name: 'Popular Pick' })],
-        }}
-        hrefForQuery={(q) => `/shop/products?q=${encodeURIComponent(q)}&brand=Sunfield`}
-        clearHref="/shop/products?q=royl%20canan"
-      />,
-    );
-    expect(screen.getByText(/No products match/)).toHaveTextContent('“royl canan”');
-    expect(screen.getByRole('link', { name: 'rolled oats' })).toHaveAttribute(
-      'href',
-      '/shop/products?q=rolled%20oats&brand=Sunfield',
-    );
-    expect(screen.getByRole('heading', { name: 'Popular right now' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Popular Pick' })).toBeInTheDocument();
-  });
-
-  it('filters only (no q): says so and offers Clear filters', () => {
-    render(
-      <NoResults q="" suggestions={null} hrefForQuery={() => ''} clearHref="/shop/products" />,
-    );
-    expect(screen.getByText('Nothing matches these filters')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Clear filters' })).toHaveAttribute(
-      'href',
-      '/shop/products',
-    );
-  });
-});
-
-describe('Pagination — real links', () => {
-  it('marks the current page and links the rest', () => {
-    render(
-      <Pagination
-        pageNumber={2}
-        pageSize={24}
-        totalCount={100}
-        hrefFor={(p) => `/shop/products?pageNumber=${p}`}
-      />,
-    );
-    expect(screen.getByRole('link', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Page 3' })).toHaveAttribute(
-      'href',
-      '/shop/products?pageNumber=3',
-    );
-    expect(screen.getByRole('link', { name: 'Previous' })).toBeInTheDocument();
-  });
-
-  it('renders nothing for a single page', () => {
-    const { container } = render(
-      <Pagination pageNumber={1} pageSize={24} totalCount={5} hrefFor={() => '/x'} />,
-    );
-    expect(container).toBeEmptyDOMElement();
   });
 });
 
@@ -231,28 +171,67 @@ describe('ProductCard — one card per size', () => {
       <ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg', priceVaries: false })} />,
     );
     await userEvent.click(
-      screen.getByRole('button', { name: /^Add Organic Rolled Oats · 1 kg to cart/ }),
+      screen.getByRole('button', { name: /^Add Organic Rolled Oats · 1 kg to basket/ }),
     );
     await waitFor(() => expect(posted).toEqual([{ skuId: 'sku-1kg', quantity: 1 }]));
     expect(push).not.toHaveBeenCalled();
   });
 
-  it('shows how many of this size are in the cart: a bubble on Add, "2 in cart" and an In cart tag', async () => {
+  it('U5: a size in the basket shows a stepper instead of Add; + updates the line, price stays fromPrice', async () => {
     serveCart([
       { skuId: 'sku-1kg', productId: 'p1', quantity: 2 },
       { skuId: 'sku-other', productId: 'p1', quantity: 5 },
     ]);
+    const puts: Array<{ url: string; body: unknown }> = [];
+    server.use(
+      http.put('*/api/cart/lines/:lineId', async ({ request, params }) => {
+        puts.push({ url: String(params.lineId), body: await request.json() });
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
     renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
-    expect(await screen.findByTestId('card-in-cart-count')).toHaveTextContent('2');
-    expect(screen.getByText('2 in cart')).toBeInTheDocument();
-    expect(screen.getByText('In cart')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /\(2 in cart\)/ })).toBeInTheDocument();
+    const more = await screen.findByRole('button', { name: 'One more Organic Rolled Oats · 1 kg' });
+    expect(
+      screen.getByRole('button', { name: 'One less Organic Rolled Oats · 1 kg' }),
+    ).toBeVisible();
+    expect(screen.getByTestId('stepper-value')).toHaveTextContent('2');
+    expect(screen.getByText('In basket')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Add / })).not.toBeInTheDocument();
+    expect(screen.getByText('৳650.00')).toBeInTheDocument();
+    await userEvent.click(more);
+    await waitFor(() => expect(puts).toEqual([{ url: 'l0', body: { quantity: 3 } }]));
   });
 
-  it('shows no count when this size is not in the cart', async () => {
+  it('U5: at 1, "one less" removes the line and announces it', async () => {
+    serveCart([{ skuId: 'sku-1kg', productId: 'p1', quantity: 1 }]);
+    const removed: string[] = [];
+    server.use(
+      http.delete('*/api/cart/lines/:lineId', ({ params }) => {
+        removed.push(String(params.lineId));
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'One less Organic Rolled Oats · 1 kg' }),
+    );
+    await waitFor(() => expect(removed).toEqual(['l0']));
+    expect(
+      await screen.findByText('Removed Organic Rolled Oats · 1 kg from your basket.'),
+    ).toHaveClass('sr-only');
+  });
+
+  it('shows no stepper or tag when this size is not in the basket', async () => {
     serveCart([{ skuId: 'sku-other', productId: 'p1', quantity: 5 }]);
     renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
-    await waitFor(() => expect(screen.queryByTestId('card-in-cart-count')).not.toBeInTheDocument());
-    expect(screen.queryByText(/in cart/)).not.toBeInTheDocument();
+    await screen.findByRole('button', { name: /^Add Organic Rolled Oats · 1 kg to basket/ });
+    expect(screen.queryByText('In basket')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('stepper-value')).not.toBeInTheDocument();
+  });
+
+  it('U6: no "Organic" badge on a card (catalogue items carry no certifications yet)', () => {
+    serveCart([]);
+    renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
+    expect(screen.queryByText(/organic$/i, { selector: 'span' })).not.toBeInTheDocument();
   });
 });

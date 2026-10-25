@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface IconTileProps extends React.HTMLAttributes<HTMLSpanElement> {
-  /** `warm` = warm-soft with a warm-ink icon; `teal` = accent-tint with a teal icon. */
+  /** `warm` = warm-soft with a warm-ink icon; `teal` = leaf-soft with a leaf icon (the name is kept for callers). */
   tone?: 'warm' | 'teal';
   /** `disc` is round (40-64px); `tile` is the 14px-radius square. */
   shape?: 'disc' | 'tile';
@@ -26,7 +26,7 @@ export function IconTile({
         'grid flex-none place-items-center',
         SIZES[size],
         shape === 'disc' ? 'rounded-pill' : 'rounded-[14px]',
-        tone === 'warm' ? 'bg-warm-soft text-warm-ink' : 'bg-accent-tint text-accent',
+        tone === 'warm' ? 'bg-warm-soft text-warm-ink' : 'bg-leaf-soft text-leaf-ink',
         className,
       )}
       {...props}

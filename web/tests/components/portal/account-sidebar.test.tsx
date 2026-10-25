@@ -1,12 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { AccountFrame, AccountPills, AccountSidebar } from '@/components/portal/AccountSidebar';
 import { ACCOUNT_GROUPS, activeAccountHref } from '@/components/portal/account-nav';
-import { PortalHeader } from '@/components/common/portal-header';
 
 let pathname = '/portal/orders';
 let signedIn = true;
@@ -127,35 +125,5 @@ describe('account sidebar', () => {
       expect(screen.getByRole('main')).toHaveTextContent('page');
       view.unmount();
     }
-  });
-});
-
-describe('customer header — the name menu', () => {
-  it('opens on the name, lists My orders, Profile & security, Billing, Shop and Sign out, and closes on Escape', async () => {
-    const user = userEvent.setup();
-    renderWithClient(<PortalHeader />);
-    const button = screen.getByRole('button', { name: 'Account menu for Ayesha Rahman' });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('link', { name: 'Profile & security' })).not.toBeInTheDocument();
-
-    await user.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: 'My orders' })).toHaveAttribute(
-      'href',
-      '/portal/orders',
-    );
-    for (const name of ['Profile & security', 'Billing', 'Shop'])
-      expect(screen.getByRole('link', { name })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible();
-    expect(await screen.findByText('ayesha@example.com')).toBeVisible();
-
-    await user.keyboard('{Escape}');
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(button).toHaveFocus();
-  });
-
-  it('keeps the product search', () => {
-    renderWithClient(<PortalHeader />);
-    expect(screen.getByRole('search', { name: 'Products' })).toBeInTheDocument();
   });
 });

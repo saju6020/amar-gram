@@ -11,6 +11,9 @@ import { AccountFrame } from '@/components/portal/AccountSidebar';
 // pages also apply it directly, at the page level, for the customer-facing auth screens — see
 // that route group's own pages).
 //
+// HO-P3 (ADR-FE-176): `PortalHeader` shows the focused "Secure checkout" header on /checkout and the
+// restyled account header everywhere else; the guard, policy prompt and account frame are unchanged.
+//
 // HO-ACC-002 §11.5 / ADR-FE-001: `CustomerSessionGuard` now wraps every portal PAGE's content —
 // the header renders regardless (it is chrome, not "portal content"), but `{children}` (the actual
 // page) never renders until a session is confirmed present.

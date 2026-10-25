@@ -10,8 +10,10 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ProductPackArt } from '@/components/hearth/ProductPackArt';
 import { PACK_BG, packToneForCategory } from '@/components/hearth/packTone';
 import { AvailabilityText, RatingText } from '@/components/product/StatusText';
+import type { CartLine } from '@/lib/api/cart';
 import { getProductDetail, type CatalogueItem } from '@/lib/api/shop-catalogue';
-import { useAddCartLine, useCart } from '@/lib/hooks/useCart';
+import { QuantityStepper } from '@/components/cart/QuantityStepper';
+import { useAddCartLine, useCart, useRemoveCartLine, useUpdateCartLine } from '@/lib/hooks/useCart';
 import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import { useSetWishlistItem, useWishlist } from '@/lib/hooks/useShopCustomer';
@@ -52,18 +54,25 @@ function cardTitle(item: CatalogueItem): string {
 }
 
 /**
- * How many of this card are in the cart, from the cart the header already loads (no extra request):
- * this size's quantity, or — for a card that is not a single size — the product's.
+ * This card's line in the basket, from the cart the header already loads (no extra request): the line for
+ * this size, or - for a card that is not a single size - the product's line when it has exactly one. `null`
+ * when it is not in the basket (or a product has several lines, which only the product page can edit).
  */
-function useInCartCount(item: CatalogueItem): number {
+function useBasketLine(item: CatalogueItem) {
   const cart = useCart();
   // The cart can already be cached when the page hydrates; count from the next render so the first
   // client render matches the server HTML (the /cart fix, 2026-10-16).
   const hydrated = useHydrated();
   const lines = hydrated ? (cart.data?.lines ?? []) : [];
-  return lines
-    .filter((line) => (item.skuId ? line.skuId === item.skuId : line.productId === item.productId))
-    .reduce((sum, line) => sum + line.quantity, 0);
+  const matching = lines.filter((line) =>
+    item.skuId ? line.skuId === item.skuId : line.productId === item.productId,
+  );
+  const line = matching.length === 1 ? matching[0]! : null;
+  return {
+    line,
+    inBasket: matching.reduce((sum, entry) => sum + entry.quantity, 0),
+    maxPerLine: cart.data?.maxQuantityPerLine ?? 10,
+  };
 }
 
 /**
@@ -143,7 +152,7 @@ function CardWishlistButton({
 
 /**
  * The quick-add rule for a catalogue item (owner rule 2026-10-16). One size adds straight to the
- * cart (the existing cart mutation); several sizes go to the product page, where the size choice
+ * cart (the existing basket mutation); several sizes go to the product page, where the size choice
  * already lives. A card carries no SKU id, so a product that might have one size is read first.
  */
 export function useQuickAdd(
@@ -172,7 +181,7 @@ export function useQuickAdd(
           onMessage(`${item.name} is not available to add right now.`, 'problem');
         } else {
           await add.mutateAsync({ skuId: item.skuId, quantity: 1 });
-          onMessage(`Added ${cardTitle(item)} to your cart.`, 'ok');
+          onMessage(`Added ${cardTitle(item)} to your basket.`, 'ok');
         }
         return;
       }
@@ -184,10 +193,10 @@ export function useQuickAdd(
         onMessage(`${item.name} is not available to add right now.`, 'problem');
       } else {
         await add.mutateAsync({ skuId: only.skuId, quantity: 1 });
-        onMessage(`Added ${item.name} to your cart.`, 'ok');
+        onMessage(`Added ${item.name} to your basket.`, 'ok');
       }
     } catch {
-      onMessage('Could not add this to your cart. Please try again.', 'problem');
+      onMessage('Could not add this to your basket. Please try again.', 'problem');
     } finally {
       setBusy(false);
     }
@@ -195,20 +204,80 @@ export function useQuickAdd(
   return { run, busy, chooseOnPage };
 }
 
-/** The card's action: *Add*, or *Alert me* (the stock alert lives on the product page). */
+/** The leaf quantity stepper that replaces Add once this size is in the basket (D-7, ADR-FE-178). */
+function CardStepper({
+  item,
+  line,
+  maxPerLine,
+  onMessage,
+}: {
+  item: CatalogueItem;
+  line: CartLine;
+  maxPerLine: number;
+  onMessage: (text: string, kind: 'ok' | 'problem') => void;
+}) {
+  const update = useUpdateCartLine();
+  const remove = useRemoveCartLine();
+  const busy = update.isPending || remove.isPending;
+  const title = cardTitle(item);
+  const available = line.availableQuantity;
+  const limited = typeof available === 'number' && available < maxPerLine;
+  const max = limited ? available : maxPerLine;
+  const maxReason =
+    typeof available === 'number' && available <= maxPerLine
+      ? `You can’t add more: only ${available} in stock.`
+      : `You can add up to ${maxPerLine} of one item.`;
+  const problem = () => onMessage('Could not change your basket. Please try again.', 'problem');
+
+  function change(quantity: number) {
+    if (busy) return;
+    if (quantity <= 0) {
+      // At 1, "−" removes the line (the existing remove call) and says so.
+      remove.mutate(line.lineId, {
+        onSuccess: () => onMessage(`Removed ${title} from your basket.`, 'ok'),
+        onError: problem,
+      });
+      return;
+    }
+    update.mutate({ lineId: line.lineId, quantity }, { onError: problem });
+  }
+
+  return (
+    <QuantityStepper
+      label={title}
+      value={line.quantity}
+      min={0}
+      max={max}
+      maxReason={maxReason}
+      tone="leaf"
+      display="text"
+      disabled={busy}
+      onChange={change}
+    />
+  );
+}
+
+/** The card's action: *Add*, the stepper once it is in the basket, or *Alert me* (the stock alert lives on the product page). */
 function CardAction({
   item,
   href,
-  inCart,
+  basketLine,
+  maxPerLine,
   onMessage,
 }: {
   item: CatalogueItem;
   href: string;
-  /** How many of this card's size (or, for a card that is not a size, this product) are in the cart. */
-  inCart: number;
+  /** This card's single basket line, when it has one. */
+  basketLine: CartLine | null;
+  maxPerLine: number;
   onMessage: (text: string, kind: 'ok' | 'problem') => void;
 }) {
   const quickAdd = useQuickAdd(item, href, onMessage);
+  if (basketLine) {
+    return (
+      <CardStepper item={item} line={basketLine} maxPerLine={maxPerLine} onMessage={onMessage} />
+    );
+  }
   if (item.availability === 'OutOfStock') {
     return (
       <Link
@@ -224,35 +293,26 @@ function CardAction({
     <Button
       variant="pill"
       size="pillMd"
-      className={cn('relative px-4', inCart > 0 && 'mr-1.5 pr-6')}
+      className="bg-warm px-5 font-bold text-ink hover:bg-warm-soft"
       aria-busy={quickAdd.busy || undefined}
       aria-label={
         quickAdd.chooseOnPage
           ? `Add ${cardTitle(item)}: choose options`
-          : `Add ${cardTitle(item)} to cart${inCart > 0 ? ` (${inCart} in cart)` : ''}`
+          : `Add ${cardTitle(item)} to basket`
       }
       onClick={() => void quickAdd.run()}
     >
       {quickAdd.busy ? 'Adding…' : 'Add'}
-      {inCart > 0 && (
-        // The approved design (owner, 2026-10-18): how many are in the cart, until it leaves the cart.
-        <span
-          aria-hidden="true"
-          data-testid="card-in-cart-count"
-          className="absolute -right-3 -top-2.5 grid h-6 min-w-6 place-items-center rounded-full bg-warm px-1.5 text-xs font-extrabold text-ink shadow-[0_0_0_3px_var(--surface)]"
-        >
-          {inCart}
-        </span>
-      )}
     </Button>
   );
 }
 
+/** Producer and country (G1: there is no district yet), in the leaf eyebrow. */
 function Eyebrow({ item }: { item: CatalogueItem }) {
   const country = item.countryOfOrigin;
   const flag = country ? countryFlag(country.code) : null;
   return (
-    <p className="m-0 flex items-center gap-1.5 text-[11px] font-semibold uppercase leading-tight tracking-[0.06em] text-ink-muted">
+    <p className="m-0 flex items-center gap-1.5 text-xs font-semibold uppercase leading-tight tracking-[0.06em] text-leaf">
       {country &&
         (flag ? (
           // eslint-disable-next-line @next/next/no-img-element -- ADR-FE-035: in-repo SVG flag
@@ -266,16 +326,18 @@ function Eyebrow({ item }: { item: CatalogueItem }) {
 }
 
 /**
- * HO-SHP-002 §11.2 `ProductCard`, in the approved Hearth look: a tinted image area (the product's
- * photo, or the pack placeholder), a white pill badge, the 44px wishlist heart, brand and origin
- * eyebrow, the name (the heading link), rating, availability, a 20px price and the *Add* pill.
- * Everything the shopper needs is text; names and brands are PLAIN TEXT.
+ * HO-SHP-002 §11.2 `ProductCard`, in the approved store design (HO-P3 §8.3): a square tinted or photo
+ * area, a white badge, the 44px wishlist heart, the producer and country eyebrow, the name (the heading
+ * link) with its size, rating, a Fraunces price (`fromPrice`, as sent) and a mango *Add* pill. Once this
+ * size is in the basket a leaf quantity stepper takes the Add button's place (D-7). Everything the
+ * shopper needs is text; names and brands are PLAIN TEXT. No "Organic" badge: the catalogue items do
+ * not carry certifications yet (G8).
  */
 export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProps) {
   const Heading = headingLevel;
   // A size card opens the product page with that size selected (`?sku=`).
   const href = productHref(item.slug, { sku: item.skuId ?? undefined, lang: lang || undefined });
-  const inCart = useInCartCount(item);
+  const { line: basketLine, inBasket, maxPerLine } = useBasketLine(item);
   const [note, setNote] = React.useState<{ text: string; kind: 'ok' | 'problem' } | null>(null);
   const tone = packToneForCategory(item.category);
   const bg = PACK_BG[tone];
@@ -288,7 +350,7 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
   const imageAlt = item.primaryImage?.altText || `${item.name} — photo coming soon`;
   const badges = [
     item.kind === 'Bundle' && (
-      <span key="kit" className="inline-flex items-center gap-1.5 text-warm-ink">
+      <span key="kit" className="inline-flex items-center gap-1.5 text-leaf-ink">
         <Package size={13} aria-hidden="true" />
         Kit
       </span>
@@ -296,11 +358,11 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
   ].filter(Boolean);
 
   return (
-    <article className="relative flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface">
+    <article className="relative flex h-full flex-col overflow-hidden rounded-3xl border-[1.5px] border-border bg-surface">
       {/* A photo (white-backed pack shots) sits on white; the drawn pack keeps its tinted tile (2026-10-16). */}
       <div
         className={cn(
-          'relative grid h-[220px] place-items-center overflow-hidden',
+          'relative grid aspect-square w-full place-items-center overflow-hidden',
           imageUrl ? 'border-b border-border bg-surface' : bg,
         )}
       >
@@ -310,20 +372,20 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
             src={imageUrl}
             alt={imageAlt}
             width={240}
-            height={220}
+            height={240}
             loading="lazy"
             decoding="async"
             onError={() => setFailedSrc(imageUrl)}
-            // Kept inside the 220px box: a tall pack photo must not spill over the name below.
+            // Kept inside the square: a tall pack photo must not spill over the name below.
             className="absolute inset-0 size-full object-contain p-3"
           />
         ) : (
           <span role="img" aria-label={imageAlt} className="grid size-full place-items-center">
-            <ProductPackArt tone={tone} className="size-[150px] rounded-none bg-transparent" />
+            <ProductPackArt tone={tone} className="size-3/5 rounded-none bg-transparent" />
           </span>
         )}
-        {badges.length > 0 && (
-          <div className="absolute left-3.5 top-3.5 flex max-w-[calc(100%-84px)] flex-col items-start gap-1.5">
+        {(badges.length > 0 || inBasket > 0) && (
+          <div className="absolute left-3 top-3 flex max-w-[calc(100%-72px)] flex-col items-start gap-1.5">
             {badges.map((badge, i) => (
               <span
                 key={i}
@@ -332,13 +394,13 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
                 {badge}
               </span>
             ))}
+            {inBasket > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-pill bg-leaf px-2.5 py-1 text-xs font-bold text-leaf-soft">
+                <Check size={13} strokeWidth={2.6} aria-hidden="true" />
+                In basket
+              </span>
+            )}
           </div>
-        )}
-        {inCart > 0 && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-white">
-            <Check size={13} strokeWidth={2.6} aria-hidden="true" />
-            In cart
-          </span>
         )}
         <CardWishlistButton
           item={item}
@@ -346,7 +408,7 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
           onProblem={(text) => setNote({ text, kind: 'problem' })}
         />
       </div>
-      <div className="flex flex-1 flex-col gap-2 px-[18px] pb-5 pt-[18px]">
+      <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-4 md:px-[18px] md:pb-5">
         <Eyebrow item={item} />
         <Heading className="m-0 text-base font-semibold leading-snug text-ink">
           <Link href={href} className="text-ink no-underline hover:text-accent hover:underline">
@@ -354,7 +416,7 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
             {item.sizeLabel && (
               // The size with the title (owner, 2026-10-18), on its own line so a long name can never
               // hide it; read as "<name> · 1 kg".
-              <span className="mt-0.5 block font-bold text-accent">
+              <span className="mt-0.5 block font-medium text-ink-muted">
                 <span className="sr-only"> · </span>
                 {item.sizeLabel}
               </span>
@@ -362,27 +424,21 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
           </Link>
         </Heading>
         <RatingText rating={item.rating} />
-        {inCart > 0 ? (
-          <p className="m-0 flex items-center gap-1.5 text-[13px] font-semibold text-accent-ink">
-            <Check size={14} aria-hidden="true" />
-            {inCart} in cart
-          </p>
-        ) : (
-          <AvailabilityText availability={item.availability} />
-        )}
+        {item.availability !== 'InStock' && <AvailabilityText availability={item.availability} />}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2.5 gap-y-2 pt-1.5">
-          <p className="m-0 text-xl font-bold leading-tight text-ink">
+          <p className="m-0 font-display text-xl font-bold leading-tight text-ink">
             {formatPriceRange(item.fromPrice, item.priceVaries)}
           </p>
           <CardAction
             item={item}
             href={href}
-            inCart={inCart}
+            basketLine={basketLine}
+            maxPerLine={maxPerLine}
             onMessage={(text, kind) => setNote({ text, kind })}
           />
         </div>
-        {/* A successful add shows nothing on the card (owner, 2026-10-18): the Add count and "In cart"
-            say it. It is still announced to screen readers; only problems are shown. */}
+        {/* A successful add or removal shows nothing on the card: the stepper and the "In basket" tag say
+            it. It is still announced to screen readers; only problems are shown. */}
         <p
           role={note?.kind === 'problem' ? 'alert' : 'status'}
           className={cn(
