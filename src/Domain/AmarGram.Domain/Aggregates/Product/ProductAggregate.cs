@@ -170,7 +170,12 @@ public sealed partial class ProductAggregate : AggregateRoot
         if (blocking.Count > 0)
         {
             var message = "This product can't be published yet: " + string.Join("; ", blocking.Select(i => i.Message));
-            throw new DomainRuleViolationException(BusinessViolationCodes.ProductNotPublishable, message, nameof(Status));
+
+            // HO-P4 BG-14: an expired organic certificate has its own code so a screen can point at the certificate.
+            var code = blocking.Any(i => i.Item == ProductPublicationRules.OrganicCertificateNotExpired)
+                ? BusinessViolationCodes.OrganicCertificateExpired
+                : BusinessViolationCodes.ProductNotPublishable;
+            throw new DomainRuleViolationException(code, message, nameof(Status));
         }
 
         var firstPublication = FirstPublishedOn is null;

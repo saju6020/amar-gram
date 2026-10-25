@@ -4,7 +4,9 @@ using AmarGram.Domain.Models;
 using AmarGram.Domain.ValueObjects;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Infrastructure.Product;
+using AmarGram.Shared.Common.Constants;
 using AmarGram.Read.Queries.Product;
+using AmarGram.Read.QueryHandlers.StoredFile;
 using AmarGram.Read.ViewModels;
 using AmarGram.Shared.Common.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +22,8 @@ namespace AmarGram.Read.QueryHandlers.Product;
 /// and that pure rule takes the aggregate. Everything else here (component SKUs, prices, related
 /// products, the tax class) is a column projection (.ai/read-side-pattern.md section 4).</summary>
 public sealed class GetStaffProductDetailQueryHandler(
-    AmarGramDbContext db, TimeProvider timeProvider, Microsoft.Extensions.Options.IOptions<AmarGram.Infrastructure.Configuration.ShopOptions> shopOptions)
+    AmarGramDbContext db, TimeProvider timeProvider, Microsoft.Extensions.Options.IOptions<AmarGram.Infrastructure.Configuration.ShopOptions> shopOptions,
+    IStoredFileSigningBatcher fileSigner)
     : IQueryHandlerAsync<GetStaffProductDetailQuery, StaffProductDetailViewModel?>
 {
     public async Task<QueryResponse<StaffProductDetailViewModel?>> HandleAsync(GetStaffProductDetailQuery query)
@@ -51,7 +54,9 @@ public sealed class GetStaffProductDetailQueryHandler(
                 row?.ProductStatus == ProductStatus.Active, row?.Kind == ProductKind.Bundle);
         }).ToList();
 
-        var facts = new PublicationFacts(pricedSkuIds, taxClassActive, componentFacts);
+        // HO-P4 BG-14: the same UTC date the publish command judges the organic certificate's expiry against.
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
+        var facts = new PublicationFacts(pricedSkuIds, taxClassActive, componentFacts, today);
         var checklist = ProductPublicationRules.Evaluate(product, facts)
             .Select(i => new PublicationChecklistItemViewModel(i.Item, i.IsBlocking, i.IsMet, i.Message))
             .ToList();
@@ -71,7 +76,8 @@ public sealed class GetStaffProductDetailQueryHandler(
                 scheduled is null ? null : new Money(scheduled.Amount, scheduled.CurrencyCode).ToViewModel(),
                 s.Label(product.Name),
                 stockBySku.TryGetValue(s.Id, out var stock) ? new StaffSkuStockViewModel(stock.SellableQuantity, stock.NextExpiresOn, now) : null,
-                s.ShippingWeightGrams);
+                s.ShippingWeightGrams,
+                CompareAtOf(current), CompareAtOf(scheduled));
         }).ToList();
 
         var relatedIds = product.RelatedProducts.Select(l => l.RelatedProductId).ToList();
@@ -86,9 +92,17 @@ public sealed class GetStaffProductDetailQueryHandler(
         }).ToList();
 
         var fd = product.FoodDetails;
-        var food = fd is null ? null : new FoodDetailViewModel(
+        string? certificateUrl = null;
+        if (fd?.OrganicCertificateFileId is { } certificateFileId)
+        {
+            var signed = await ProductImageUrls.SignAsync(fileSigner, [certificateFileId]);
+            certificateUrl = signed.GetValueOrDefault(certificateFileId);
+        }
+
+        var food = fd is null ? null : new StaffFoodDetailViewModel(
             fd.IngredientList, fd.StorageInstructions, fd.ShelfLife, fd.NetWeight, fd.Allergens,
-            fd.OrganicCertifier, fd.OrganicCertificateNumber);
+            fd.OrganicCertifier, fd.OrganicCertificateNumber,
+            fd.OrganicCertificateExpiresOn, fd.OrganicCertificateExpiredOn(today), fd.OrganicCertificateFileId, certificateUrl);
 
         var images = product.Images.OrderBy(i => i.SortOrder)
             .Select(i => new StaffProductImageViewModel(i.FileId, null, i.AltText, i.SortOrder, i.IsPrimary, i.SkuId)).ToList();
@@ -110,4 +124,8 @@ public sealed class GetStaffProductDetailQueryHandler(
 
         return new QueryResponse<StaffProductDetailViewModel?> { Result = viewModel };
     }
+
+    /// <summary>HO-P4 BG-13 -- the "Was" price of a price row, in that row's currency.</summary>
+    private static MoneyViewModel? CompareAtOf(PriceRow? price) =>
+        price?.CompareAtAmount is { } compareAt ? new Money(compareAt, price.CurrencyCode).ToViewModel() : null;
 }

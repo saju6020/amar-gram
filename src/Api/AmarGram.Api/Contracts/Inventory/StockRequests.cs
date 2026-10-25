@@ -26,6 +26,13 @@ public sealed class GoodsReceiptLineRequest
 
 public sealed class PostGoodsReceiptRequest
 {
+    /// <summary>HO-P4 BG-18 -- the branch to receive into, when it is not the active one. The caller must be assigned to it (403 <c>BranchNotAssigned</c> otherwise); the
+    /// purchase order, consignment and every line location are then checked against THIS branch.</summary>
+    public Guid? BranchId { get; init; }
+
+    /// <summary>HO-P4 BG-18 -- the caller's own draft this receipt was filled in from; closed once the receipt is posted.</summary>
+    public Guid? DraftId { get; init; }
+
     public Guid? SupplierId { get; init; }
     public Guid? PurchaseOrderId { get; init; }
     public Guid? ConsignmentId { get; init; }
@@ -35,6 +42,42 @@ public sealed class PostGoodsReceiptRequest
     public IReadOnlyList<GoodsReceiptLineInput> ToLines() => Lines.Select(l => new GoodsReceiptLineInput(
         Guid.NewGuid(), l.SkuId, l.PurchaseOrderLineId, l.LotNumber ?? string.Empty, l.ManufacturedOn, l.ExpiresOn, l.QuantityAccepted, l.QuantityRejected,
         l.RejectionReason, l.RejectionNote, l.LocationId, l.HoldForInspection, l.UnitCostAmount, l.UnitCostCurrency, l.ExchangeRateToBase, Guid.NewGuid())).ToList();
+}
+
+/// <summary>HO-P4 BG-18 -- the receiving form as it stands. Every field is optional except each line's item; nothing is checked against the stock rules until posting.</summary>
+public sealed class SaveGoodsReceiptDraftRequest
+{
+    /// <summary>The branch being received into; omit for the active branch.</summary>
+    public Guid? BranchId { get; init; }
+    public Guid? SupplierId { get; init; }
+    public Guid? PurchaseOrderId { get; init; }
+    public Guid? ConsignmentId { get; init; }
+    public string? DeliveryReference { get; init; }
+    public DateOnly? ReceivedOn { get; init; }
+    public string? Note { get; init; }
+    public IReadOnlyList<GoodsReceiptDraftLineRequest> Lines { get; init; } = [];
+
+    public IReadOnlyList<GoodsReceiptDraftLineInput> ToLines() => Lines.Select(l => new GoodsReceiptDraftLineInput(
+        l.SkuId, l.PurchaseOrderLineId, l.LotNumber, l.ManufacturedOn, l.ExpiresOn, l.QuantityAccepted, l.QuantityRejected, l.RejectionReason, l.RejectionNote,
+        l.LocationId, l.HoldForInspection, l.UnitCostAmount, l.UnitCostCurrency, l.ExchangeRateToBase)).ToList();
+}
+
+public sealed class GoodsReceiptDraftLineRequest
+{
+    public required Guid SkuId { get; init; }
+    public Guid? PurchaseOrderLineId { get; init; }
+    public string? LotNumber { get; init; }
+    public DateOnly? ManufacturedOn { get; init; }
+    public DateOnly? ExpiresOn { get; init; }
+    public decimal QuantityAccepted { get; init; }
+    public decimal QuantityRejected { get; init; }
+    public string? RejectionReason { get; init; }
+    public string? RejectionNote { get; init; }
+    public Guid? LocationId { get; init; }
+    public bool HoldForInspection { get; init; }
+    public decimal? UnitCostAmount { get; init; }
+    public string? UnitCostCurrency { get; init; }
+    public decimal? ExchangeRateToBase { get; init; }
 }
 
 public sealed class BatchReasonRequest

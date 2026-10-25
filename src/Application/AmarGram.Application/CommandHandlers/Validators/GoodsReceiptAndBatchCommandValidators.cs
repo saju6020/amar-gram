@@ -27,6 +27,42 @@ public sealed class GoodsReceiptLineInputValidator : AbstractValidator<GoodsRece
     }
 }
 
+/// <summary>HO-P4 BG-18 -- a draft line is checked for SHAPE only (lengths, precision). Missing lot, expiry, location or cost are legal in a draft.</summary>
+public sealed class GoodsReceiptDraftLineInputValidator : AbstractValidator<GoodsReceiptDraftLineInput>
+{
+    public GoodsReceiptDraftLineInputValidator()
+    {
+        RuleFor(l => l.SkuId).NotEmpty();
+        RuleFor(l => l.LotNumber).MaximumLength(InventoryRules.MaxLotNumberLength).NoControlCharacters();
+        RuleFor(l => l.QuantityAccepted).ScalePrecision(3, 12, true);
+        RuleFor(l => l.QuantityRejected).ScalePrecision(3, 12, true);
+        RuleFor(l => l.RejectionReason).MaximumLength(40).NoControlCharacters();
+        RuleFor(l => l.RejectionNote).MaximumLength(InventoryRules.NoteMaxLength).NoControlCharacters();
+        RuleFor(l => l.UnitCostAmount).ScalePrecision(4, 14, true).When(l => l.UnitCostAmount is not null);
+        RuleFor(l => l.UnitCostCurrency).MaximumLength(3).When(l => l.UnitCostCurrency is not null);
+        RuleFor(l => l.ExchangeRateToBase).ScalePrecision(6, 18, true).When(l => l.ExchangeRateToBase is not null);
+    }
+}
+
+public sealed class SaveGoodsReceiptDraftCommandValidator : AbstractValidator<SaveGoodsReceiptDraftCommand>
+{
+    public SaveGoodsReceiptDraftCommandValidator()
+    {
+        RuleFor(x => x.DraftId).NotEmpty();
+        RuleFor(x => x.BranchId).NotEmpty();
+        RuleFor(x => x.DeliveryReference).MaximumLength(60).NoControlCharacters();
+        RuleFor(x => x.Note).MaximumLength(InventoryRules.MaxDraftNoteLength).NoControlCharacters();
+        RuleFor(x => x.Lines).NotNull().Must(l => l is { Count: <= InventoryRules.MaxReceiptLines })
+            .WithMessage($"A goods receipt has at most {InventoryRules.MaxReceiptLines} lines.");
+        RuleForEach(x => x.Lines).SetValidator(new GoodsReceiptDraftLineInputValidator());
+    }
+}
+
+public sealed class DiscardGoodsReceiptDraftCommandValidator : AbstractValidator<DiscardGoodsReceiptDraftCommand>
+{
+    public DiscardGoodsReceiptDraftCommandValidator() => RuleFor(x => x.DraftId).NotEmpty();
+}
+
 public sealed class PostGoodsReceiptCommandValidator : AbstractValidator<PostGoodsReceiptCommand>
 {
     public PostGoodsReceiptCommandValidator()

@@ -25,6 +25,9 @@ public static class ProductRules
     public const int OrganicCertifierMaxLength = 200;
     public const int OrganicCertificateNumberMaxLength = 100;
 
+    /// <summary>HO-P4 BG-10 -- products per bulk publish/hide request.</summary>
+    public const int MaxBulkProducts = 100;
+
     public const int SkuCodeMaxLength = 40;
     public const int BarcodeMinLength = 4;
     public const int BarcodeMaxLength = 32;

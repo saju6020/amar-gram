@@ -93,6 +93,11 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<AmarGram.Dom
             food.Property(f => f.Allergens).HasColumnName("food_allergens").HasMaxLength(ProductRules.AllergensMaxLength);
             food.Property(f => f.OrganicCertifier).HasColumnName("food_organic_certifier").HasMaxLength(ProductRules.OrganicCertifierMaxLength);
             food.Property(f => f.OrganicCertificateNumber).HasColumnName("food_organic_certificate_number").HasMaxLength(ProductRules.OrganicCertificateNumberMaxLength);
+            // HO-P4 BG-14: the certificate's last valid day and the scanned file (a files.stored_file id; one file belongs to one product).
+            food.Property(f => f.OrganicCertificateExpiresOn).HasColumnName("food_organic_certificate_expires_on");
+            food.Property(f => f.OrganicCertificateFileId).HasColumnName("food_organic_certificate_file_id");
+            food.HasIndex(f => f.OrganicCertificateFileId).IsUnique().HasDatabaseName("ux_product_organic_certificate_file")
+                .HasFilter("food_organic_certificate_file_id IS NOT NULL");
         });
     }
 

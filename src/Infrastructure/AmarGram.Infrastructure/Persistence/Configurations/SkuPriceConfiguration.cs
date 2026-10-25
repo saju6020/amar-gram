@@ -16,6 +16,8 @@ public sealed class SkuPriceConfiguration : IEntityTypeConfiguration<SkuPriceAgg
         builder.Property(x => x.SkuId).HasColumnName("sku_id").IsRequired();
         builder.Property(x => x.EffectiveFrom).HasColumnName("effective_from").HasColumnType("timestamptz").IsRequired();
         builder.Property(x => x.SetBy).HasColumnName("set_by").IsRequired();
+        // HO-P4 BG-13: optional compare-at ("Was") amount, same currency as the price; the aggregate keeps it above the price.
+        builder.Property(x => x.CompareAtAmount).HasColumnName("compare_at_amount").HasColumnType("numeric(12,2)");
 
         builder.OwnsOne(x => x.Amount, money =>
         {

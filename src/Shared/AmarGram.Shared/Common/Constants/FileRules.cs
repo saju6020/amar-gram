@@ -30,6 +30,12 @@ public static class FileRules
                 ["image/jpeg", "image/png", "image/webp"],
                 5 * OneMb),
 
+            // HO-P4 BG-14: the certifier's scan or photo of the organic certificate.
+            [FilePurpose.OrganicCertificate] = new(
+                FilePurpose.OrganicCertificate,
+                ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+                10 * OneMb),
+
             [FilePurpose.ReportExport] = new(
                 FilePurpose.ReportExport,
                 ["application/pdf", "text/csv", "application/zip"],

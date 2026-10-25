@@ -19,7 +19,18 @@ public sealed record StaffSkuViewModel(
     MoneyViewModel? ScheduledPrice,
     string? Label = null,
     StaffSkuStockViewModel? Stock = null,
-    int? ShippingWeightGrams = null);
+    int? ShippingWeightGrams = null,
+    // HO-P4 BG-13: the compare-at ("Was") price of the CURRENT price row and of the scheduled one; null when none.
+    MoneyViewModel? CompareAtPrice = null,
+    MoneyViewModel? ScheduledCompareAtPrice = null);
+
+/// <summary>HO-P4 BG-14 -- staff-only food details: the shop's <see cref="FoodDetailViewModel"/> fields plus the organic certificate's last
+/// valid day, whether it has expired (UTC today), and the scanned file (<c>OrganicCertificateFileId</c> with a signed, time-limited
+/// <c>OrganicCertificateUrl</c>; null when no file or the file no longer exists). Not exposed on the public product read.</summary>
+public sealed record StaffFoodDetailViewModel(
+    string? IngredientList, string? StorageInstructions, string? ShelfLife, string? NetWeight, string? Allergens,
+    string? OrganicCertifier, string? OrganicCertificateNumber,
+    DateOnly? OrganicCertificateExpiresOn, bool OrganicCertificateExpired, Guid? OrganicCertificateFileId, string? OrganicCertificateUrl);
 
 /// <summary>HO-SHP-001 section 12.4 -- full staff detail, including drafts, version and the
 /// publication checklist (section 8.4).</summary>
@@ -46,7 +57,7 @@ public sealed record StaffProductDetailViewModel(
     IReadOnlyList<StaffBundleComponentViewModel>? BundleComponents = null,
     IReadOnlyList<StaffRelatedProductViewModel>? RelatedProducts = null,
     IReadOnlyList<StaffTranslationViewModel>? Translations = null,
-    FoodDetailViewModel? Food = null,
+    StaffFoodDetailViewModel? Food = null,
     IReadOnlyList<StaffProductImageViewModel>? Images = null,
     IReadOnlyList<string>? Certifications = null);
 

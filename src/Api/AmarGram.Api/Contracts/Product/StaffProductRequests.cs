@@ -83,6 +83,16 @@ public sealed class ScheduleSkuPriceRequest
     public required decimal Amount { get; init; }
     public required string CurrencyCode { get; init; }
     public required DateTimeOffset EffectiveFrom { get; init; }
+
+    /// <summary>HO-P4 BG-13 -- optional "Was" amount; must exceed <c>amount</c> (400 <c>CompareAtMustExceedPrice</c>).</summary>
+    public decimal? CompareAtAmount { get; init; }
+}
+
+/// <summary>HO-P4 BG-10 -- <c>action</c> is <c>Publish</c> or <c>Unpublish</c> (hide).</summary>
+public sealed class BulkProductStatusRequest
+{
+    public required IReadOnlyList<Guid> ProductIds { get; init; }
+    public required string Action { get; init; }
 }
 
 public sealed class BundleComponentRequest

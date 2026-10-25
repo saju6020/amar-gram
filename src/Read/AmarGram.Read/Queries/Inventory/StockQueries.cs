@@ -22,6 +22,19 @@ public sealed class GetGoodsReceiptQuery : Query<GoodsReceiptDetailViewModel?>
     public bool IncludeCosts { get; init; }
 }
 
+/// <summary>HO-P4 BG-18 -- the caller's own open goods-receipt drafts, newest first; <c>BranchId</c> (optional) narrows to one branch.</summary>
+public sealed class GetGoodsReceiptDraftsQuery : Query<IReadOnlyList<GoodsReceiptDraftSummaryViewModel>>
+{
+    public required Guid OwnerId { get; init; }
+    public Guid? BranchId { get; init; }
+}
+
+public sealed class GetGoodsReceiptDraftQuery : Query<GoodsReceiptDraftViewModel?>
+{
+    public required Guid DraftId { get; init; }
+    public required Guid OwnerId { get; init; }
+}
+
 public sealed class GetStockSummaryQuery : Query<PagedResult<StockSummaryViewModel>>
 {
     public required Guid BranchId { get; init; }

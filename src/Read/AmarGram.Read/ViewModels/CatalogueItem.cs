@@ -27,7 +27,9 @@ public sealed record CatalogueItem(
     string? SizeLabel = null,
     // HO-P3 G1: optional district of origin (free text). HO-P3 G8: certification names, as the product detail carries.
     string? DistrictOfOrigin = null,
-    IReadOnlyList<string>? Certifications = null);
+    IReadOnlyList<string>? Certifications = null,
+    // HO-P4 BG-13: the SKU's compare-at ("Was") price beside FromPrice, only on a single-size card; null when none.
+    MoneyViewModel? CompareAtPrice = null);
 
 public sealed record CatalogueResult(
     IReadOnlyList<CatalogueItem> Items,

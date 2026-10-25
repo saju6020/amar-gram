@@ -228,7 +228,7 @@ public sealed class GetStockAlertsQueryHandler(AmarGramDbContext db) : IQueryHan
     }
 }
 
-public sealed class GetStockAlertSummaryQueryHandler(AmarGramDbContext db) : IQueryHandlerAsync<GetStockAlertSummaryQuery, StockAlertSummaryViewModel>
+public sealed class GetStockAlertSummaryQueryHandler(AmarGramDbContext db, IInventoryClock clock) : IQueryHandlerAsync<GetStockAlertSummaryQuery, StockAlertSummaryViewModel>
 {
     public async Task<QueryResponse<StockAlertSummaryViewModel>> HandleAsync(GetStockAlertSummaryQuery query)
     {
@@ -237,7 +237,14 @@ public sealed class GetStockAlertSummaryQueryHandler(AmarGramDbContext db) : IQu
             .GroupBy(a => a.Kind).Select(g => new { Kind = g.Key, Count = g.Count() }).ToListAsync();
 
         var byKind = rows.ToDictionary(r => r.Kind.DisplayName, r => r.Count);
-        return new QueryResponse<StockAlertSummaryViewModel> { Result = new StockAlertSummaryViewModel(new OpenAlertSummaryViewModel(byKind.Values.Sum(), byKind)) };
+        // HO-P4 BG-17: the overview's "consignments arriving this week" tile.
+        var window = Math.Clamp(query.ArrivalWindowDays ?? InventoryRules.DefaultArrivalWindowDays, 1, InventoryRules.MaxArrivalWindowDays);
+        var arriving = await ConsignmentReads.ArrivingWithin(db, db.Consignments.AsNoTracking().Where(c => c.BranchId == query.BranchId), await clock.LocalTodayAsync(query.BranchId, CancellationToken.None), window).CountAsync();
+
+        return new QueryResponse<StockAlertSummaryViewModel>
+        {
+            Result = new StockAlertSummaryViewModel(new OpenAlertSummaryViewModel(byKind.Values.Sum(), byKind), new ArrivingConsignmentsViewModel(window, arriving))
+        };
     }
 }
 

@@ -2,6 +2,7 @@ using System.Text;
 using AmarGram.Api.Authorization;
 using AmarGram.Api.Contracts.Product;
 using AmarGram.Application.Commands.Product;
+using AmarGram.Domain.DomainServices;
 using AmarGram.Read.Queries.Product;
 using AmarGram.Read.ViewModels;
 using AmarGram.Shared.Common.Constants;
@@ -16,7 +17,8 @@ namespace AmarGram.Api.Controllers;
 /// to 409 through <c>ConcurrencyExceptionFilter</c> (ADR-016).</summary>
 [ApiController]
 [Route("api/staff/shop/products")]
-public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUserContextProvider userContextProvider) : ControllerBase
+public sealed class StaffProductsController(
+    IInMemoryDispatcher dispatcher, IUserContextProvider userContextProvider, IActiveBranchAccessor activeBranchAccessor) : ControllerBase
 {
     [HttpGet]
     [RequireAction(Actions.Shop.ProductsView)]
@@ -27,6 +29,8 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
         var query = new GetStaffProductsQuery
         {
             Q = q, Status = status, Category = category, Brand = brand, Barcode = barcode, Kind = kind, Listed = listed, Sort = sort,
+            // HO-P4 BG-9: the catalogue is not branch-scoped, but the list's stock figure is the active branch's; none resolved = no figure, never a refusal.
+            BranchId = activeBranchAccessor.GetActiveBranchId().BranchId,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
         };
 
@@ -45,7 +49,7 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
         var query = new GetStaffProductsQuery
         {
             Q = q, Status = status, Category = category, Brand = brand, Kind = kind, Listed = listed, Sort = sort,
-            PageNumber = 1, PageSize = 50_000,
+            PageNumber = 1, PageSize = 50_000, IncludeExtras = false,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
         };
 
@@ -125,6 +129,7 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
             IngredientList = request.IngredientList, StorageInstructions = request.StorageInstructions,
             ShelfLife = request.ShelfLife, NetWeight = request.NetWeight, Allergens = request.Allergens,
             OrganicCertifier = request.OrganicCertifier, OrganicCertificateNumber = request.OrganicCertificateNumber,
+            OrganicCertificateExpiresOn = request.OrganicCertificateExpiresOn, OrganicCertificateFileId = request.OrganicCertificateFileId,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 
@@ -269,6 +274,24 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
 
         var response = await dispatcher.SendAsync(command);
         return response.IsSuccess ? NoContent() : ToErrorResult(response);
+    }
+
+    /// <summary>HO-P4 BG-10 -- publish or hide (unpublish) up to 100 products at once. <b>200</b> with a per-product result whatever the mix of
+    /// outcomes ({ action, succeededCount, failedCount, items: [{ productId, succeeded, status, errorCode, propertyName, message }] }); a violation of one
+    /// product (e.g. <c>ProductNotPublishable</c>, <c>OrganicCertificateExpired</c>, <c>InvalidProductTransition</c>, <c>ProductNotFound</c>) never blocks the
+    /// others. 400 only when the request itself is malformed (no ids, over 100, unknown action). No versions are sent -- see the command.</summary>
+    [HttpPost("bulk-status")]
+    [RequireAction(Actions.Shop.ProductsManage)]
+    public async Task<IActionResult> BulkStatus([FromBody] BulkProductStatusRequest request)
+    {
+        var command = new BulkChangeProductStatusCommand
+        {
+            ProductIds = request.ProductIds, Action = request.Action,
+            UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
+        };
+
+        var response = await dispatcher.SendAsync(command);
+        return response.IsSuccess ? Ok(response.Result) : BadRequest(response.ValidationResult);
     }
 
     [HttpPost("{productId:guid}/publish")]

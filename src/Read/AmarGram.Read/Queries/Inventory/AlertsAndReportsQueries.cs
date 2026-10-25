@@ -37,6 +37,9 @@ public sealed class GetStockAlertsQuery : Query<PagedResult<InventoryAlertViewMo
 public sealed class GetStockAlertSummaryQuery : Query<StockAlertSummaryViewModel>
 {
     public required Guid BranchId { get; init; }
+
+    /// <summary>HO-P4 BG-17 -- the window of the "consignments arriving" count, in days from today (<c>InventoryRules.DefaultArrivalWindowDays</c> when null).</summary>
+    public int? ArrivalWindowDays { get; init; }
 }
 
 public sealed class GetReorderPoliciesQuery : Query<PagedResult<ReorderPolicyViewModel>>

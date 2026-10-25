@@ -14,4 +14,10 @@ public sealed class SetFoodDetailsCommand : Command
     public string? Allergens { get; init; }
     public string? OrganicCertifier { get; init; }
     public string? OrganicCertificateNumber { get; init; }
+
+    /// <summary>HO-P4 BG-14 -- last day the organic certificate is valid (inclusive).</summary>
+    public DateOnly? OrganicCertificateExpiresOn { get; init; }
+
+    /// <summary>HO-P4 BG-14 -- a stored file of purpose <c>OrganicCertificate</c> (the id the upload returned); null removes the file.</summary>
+    public Guid? OrganicCertificateFileId { get; init; }
 }

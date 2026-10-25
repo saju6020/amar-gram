@@ -20,6 +20,12 @@ public sealed record FoodDetails
     public string? OrganicCertifier { get; private set; }
     public string? OrganicCertificateNumber { get; private set; }
 
+    /// <summary>HO-P4 BG-14 -- the last day the organic certificate is valid (inclusive); null when not recorded.</summary>
+    public DateOnly? OrganicCertificateExpiresOn { get; private set; }
+
+    /// <summary>HO-P4 BG-14 -- the scanned certificate, a stored file of purpose <c>OrganicCertificate</c> (the files module owns the bytes).</summary>
+    public Guid? OrganicCertificateFileId { get; private set; }
+
     /// <summary>EF Core materialises this owned type by property injection (a parameterless
     /// constructor), not constructor binding.</summary>
     private FoodDetails()
@@ -27,7 +33,8 @@ public sealed record FoodDetails
     }
 
     public FoodDetails(string? ingredientList, string? storageInstructions, string? shelfLife, string? netWeight,
-        string? allergens, string? organicCertifier, string? organicCertificateNumber)
+        string? allergens, string? organicCertifier, string? organicCertificateNumber,
+        DateOnly? organicCertificateExpiresOn = null, Guid? organicCertificateFileId = null)
     {
         IngredientList = Checked(ingredientList, ProductRules.IngredientListMaxLength, "Ingredient list", nameof(IngredientList));
         StorageInstructions = Checked(storageInstructions, ProductRules.StorageInstructionsMaxLength, "Storage instructions", nameof(StorageInstructions));
@@ -36,6 +43,8 @@ public sealed record FoodDetails
         Allergens = Checked(allergens, ProductRules.AllergensMaxLength, "Allergens", nameof(Allergens));
         OrganicCertifier = Checked(organicCertifier, ProductRules.OrganicCertifierMaxLength, "Organic certifier", nameof(OrganicCertifier));
         OrganicCertificateNumber = Checked(organicCertificateNumber, ProductRules.OrganicCertificateNumberMaxLength, "Organic certificate number", nameof(OrganicCertificateNumber));
+        OrganicCertificateExpiresOn = organicCertificateExpiresOn;
+        OrganicCertificateFileId = organicCertificateFileId == Guid.Empty ? null : organicCertificateFileId;
     }
 
     /// <summary>US-SHP-03 AC1's labelling checklist (OQ-3) -- which fields are present, for the
@@ -45,6 +54,9 @@ public sealed record FoodDetails
 
     /// <summary>HO-P2 §1.3 -- both the certifier and the certificate number are present.</summary>
     public bool HasOrganicCertificate => OrganicCertifier is not null && OrganicCertificateNumber is not null;
+
+    /// <summary>HO-P4 BG-14 -- the certificate has a recorded expiry date that is before <paramref name="today"/> (valid through its expiry date).</summary>
+    public bool OrganicCertificateExpiredOn(DateOnly today) => OrganicCertificateExpiresOn is { } expires && expires < today;
 
     private static string? Checked(string? value, int maxLength, string label, string property)
     {

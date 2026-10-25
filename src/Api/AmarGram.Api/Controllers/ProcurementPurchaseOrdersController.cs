@@ -21,9 +21,10 @@ public sealed class ProcurementPurchaseOrdersController(
     [RequireAction(Actions.Procurement.View)]
     public async Task<IActionResult> List(
         [FromQuery] string? status, [FromQuery] Guid? supplierId, [FromQuery] string? receiptState, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to,
-        [FromQuery] int? pageNumber, [FromQuery] int? pageSize)
+        [FromQuery] int? pageNumber, [FromQuery] int? pageSize, [FromQuery(Name = "branchId")] Guid? forBranchId = null)
     {
-        if (!this.TryResolveBranch(activeBranchAccessor, out var branchId, out var refusal)) return refusal!;
+        // HO-P4 BG-18: the receiving form lists the purchase orders of the branch it is receiving into.
+        if (!this.TryResolveBranch(activeBranchAccessor, forBranchId, out var branchId, out var refusal)) return refusal!;
 
         var query = new GetPurchaseOrdersQuery
         {

@@ -35,5 +35,6 @@ public sealed class GetSkuPriceHistoryQueryHandler(AmarGramDbContext db, TimePro
     }
 
     private static SkuPriceHistoryEntryViewModel ToEntry(PriceRow price) =>
-        new(price.Id, new Money(price.Amount, price.CurrencyCode).ToViewModel(), price.EffectiveFrom, price.SetBy);
+        new(price.Id, new Money(price.Amount, price.CurrencyCode).ToViewModel(), price.EffectiveFrom, price.SetBy,
+            price.CompareAtAmount is { } compareAt ? new Money(compareAt, price.CurrencyCode).ToViewModel() : null);
 }

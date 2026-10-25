@@ -60,7 +60,8 @@ public sealed class PublishProductCommandHandler(
                 owner?.Kind == ProductKind.Bundle));
         }
 
-        var facts = new PublicationFacts(pricedSkuIds, taxClass?.IsActive ?? false, bundleComponentFacts);
+        // HO-P4 BG-14: the UTC date the organic certificate's expiry is judged against (the staff detail checklist uses the same date).
+        var facts = new PublicationFacts(pricedSkuIds, taxClass?.IsActive ?? false, bundleComponentFacts, DateOnly.FromDateTime(now.UtcDateTime));
 
         try
         {

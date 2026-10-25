@@ -7,6 +7,7 @@ involved, the aggregates, the invariants that must hold, and the cross-module ru
 |---|---|---|
 | `order-fulfilment-flow.md` | §4.9 | Cart, FEFO allocation, dispatch, returns |
 | `import-to-shelf-flow.md` | §4.8 | Consignments, batches, expiry lifecycle, landed cost |
+| `back-office-gaps-flow.md` | HO-P4 | BG-9/10/13/14/16/17/18: staff list extras, bulk publish/hide, compare-at price, organic certificate, reorder level, arriving consignments, receipt drafts |
 
 ## Retired flows
 

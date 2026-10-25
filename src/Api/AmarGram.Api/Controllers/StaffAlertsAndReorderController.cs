@@ -33,15 +33,18 @@ public sealed class StaffAlertsController(
         return Ok((await dispatcher.GetResultAsync(query)).Result);
     }
 
-    /// <summary>The navigation badge: <c>{ open: { total, byKind } }</c>.</summary>
+    /// <summary>The navigation badge and the overview's tiles: <c>{ open: { total, byKind }, consignmentsArriving: { withinDays, count } }</c>
+    /// (HO-P4 BG-17; the window defaults to 7 days and <c>arrivalWindowDays</c> may widen it to 90).</summary>
     [HttpGet("summary")]
     [RequireAction(Actions.Stock.View)]
-    public async Task<IActionResult> Summary()
+    public async Task<IActionResult> Summary([FromQuery] int? arrivalWindowDays)
     {
         if (!this.TryResolveBranch(activeBranchAccessor, out var branchId, out var refusal)) return refusal!;
+        if (arrivalWindowDays is < 1 or > InventoryRules.MaxArrivalWindowDays)
+            return this.InvalidQuery("arrivalWindowDays", $"arrivalWindowDays must be between 1 and {InventoryRules.MaxArrivalWindowDays}.");
 
         var response = await dispatcher.GetResultAsync(new GetStockAlertSummaryQuery
-        { BranchId = branchId, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
+        { BranchId = branchId, ArrivalWindowDays = arrivalWindowDays, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
         return Ok(response.Result);
     }
 

@@ -75,4 +75,14 @@ public static partial class BusinessViolationCodes
     public const string InvalidBrand = nameof(InvalidBrand);
     public const string InvalidProductDescription = nameof(InvalidProductDescription);
     public const string InvalidSkuCode = nameof(InvalidSkuCode);
+
+    // HO-P4 BG-13 / BG-14 / BG-10 (owner approved 2026-10-25).
+    /// <summary>BG-13 -- a compare-at ("Was") price must be greater than the price it sits beside.</summary>
+    public const string CompareAtMustExceedPrice = nameof(CompareAtMustExceedPrice);
+    /// <summary>BG-14 -- a CertifiedOrganic product cannot be published while its organic certificate has expired.</summary>
+    public const string OrganicCertificateExpired = nameof(OrganicCertificateExpired);
+    /// <summary>BG-14 -- the uploaded certificate file could not be attached (unknown, not an OrganicCertificate upload, not the caller's, or too old).</summary>
+    public const string InvalidCertificateFile = nameof(InvalidCertificateFile);
+    /// <summary>BG-10 -- a bulk publish/hide was given an unknown action.</summary>
+    public const string InvalidBulkAction = nameof(InvalidBulkAction);
 }

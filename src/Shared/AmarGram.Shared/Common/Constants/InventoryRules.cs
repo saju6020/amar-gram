@@ -25,6 +25,14 @@ public static partial class InventoryRules
     public const int LedgerCsvMaxRows = 50_000;
     public const int MaxPageSize = 100;
 
+    /// <summary>HO-P4 BG-17 -- the overview's "consignments arriving this week" window, in days from today (inclusive); a caller may widen it up to <see cref="MaxArrivalWindowDays"/>.</summary>
+    public const int DefaultArrivalWindowDays = 7;
+    public const int MaxArrivalWindowDays = 90;
+
+    /// <summary>HO-P4 BG-18 -- a staff member keeps at most this many goods-receipt drafts open at once.</summary>
+    public const int MaxGoodsReceiptDraftsPerStaff = 20;
+    public const int MaxDraftNoteLength = 500;
+
     /// <summary>The <c>resourceName</c> a handler puts on the error that means "the record this request ADDRESSES does not exist (or is another branch's)" -- the
     /// one failure an endpoint answers with 404. A missing record merely REFERENCED in the body (a supplier, a deliver-to location) is a 400.</summary>
     public const string NotFoundResource = "Inventory.NotFound";

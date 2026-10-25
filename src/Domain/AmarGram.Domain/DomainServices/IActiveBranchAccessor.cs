@@ -43,4 +43,11 @@ public readonly record struct ActiveBranchResult(Guid? BranchId, ActiveBranchRef
 public interface IActiveBranchAccessor
 {
     ActiveBranchResult GetActiveBranchId();
+
+    /// <summary>
+    /// HO-P4 BG-18 -- the caller's right to work in a branch they NAME explicitly (a goods receipt posted into another branch than the active one):
+    /// exactly the rule a matching <c>X-Branch-Id</c> header would get -- assigned to it, or an Administrator and the branch is active, or unassigned with
+    /// that single active branch. Resolved when allowed; <see cref="ActiveBranchRefusal.BranchNotAssigned"/> otherwise; no branch for a customer/anonymous.
+    /// </summary>
+    ActiveBranchResult ResolveBranch(Guid requestedBranchId);
 }

@@ -31,6 +31,7 @@ public static class InventoryModule
         services.AddScoped<IInventoryClock, InventoryClock>();
         services.AddScoped<IDocumentNumberGenerator, SequenceDocumentNumberGenerator>();
         services.AddScoped<IStockPositionReader, EfStockPositionReader>();
+        services.AddScoped<IGoodsReceiptDraftCounter, EfGoodsReceiptDraftCounter>();
         services.AddScoped<IBatchRegistry, EfBatchRegistry>();
         services.AddScoped<IInventoryAlertEnlister, EfInventoryAlertEnlister>();
         services.AddScoped<IInventoryAuditEnlister, EfInventoryAuditEnlister>();
@@ -163,6 +164,10 @@ public static class InventoryModule
         services.AddScoped<IValidator<ReplaceConsignmentCostsCommand>, ReplaceConsignmentCostsCommandValidator>();
 
         // ── Phase D: goods receipt (C8) and batch status (C9). ──
+        services.AddScoped<ICommandHandlerAsync<SaveGoodsReceiptDraftCommand>, SaveGoodsReceiptDraftCommandHandler>();
+        services.AddScoped<IValidator<SaveGoodsReceiptDraftCommand>, SaveGoodsReceiptDraftCommandValidator>();
+        services.AddScoped<ICommandHandlerAsync<DiscardGoodsReceiptDraftCommand>, DiscardGoodsReceiptDraftCommandHandler>();
+        services.AddScoped<IValidator<DiscardGoodsReceiptDraftCommand>, DiscardGoodsReceiptDraftCommandValidator>();
         services.AddScoped<ICommandHandlerAsync<PostGoodsReceiptCommand>, PostGoodsReceiptCommandHandler>();
         services.AddScoped<IValidator<PostGoodsReceiptCommand>, PostGoodsReceiptCommandValidator>();
 
@@ -232,6 +237,8 @@ public static class InventoryModule
         services.AddScoped<IQueryHandlerAsync<GetInspectionPackQuery, InspectionPackViewModel?>, GetInspectionPackQueryHandler>();
 
         // ── Phase D. ──
+        services.AddScoped<IQueryHandlerAsync<GetGoodsReceiptDraftsQuery, IReadOnlyList<GoodsReceiptDraftSummaryViewModel>>, GetGoodsReceiptDraftsQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<GetGoodsReceiptDraftQuery, GoodsReceiptDraftViewModel?>, GetGoodsReceiptDraftQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetGoodsReceiptsQuery, PagedResult<GoodsReceiptSummaryViewModel>>, GetGoodsReceiptsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetGoodsReceiptQuery, GoodsReceiptDetailViewModel?>, GetGoodsReceiptQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetStockSummaryQuery, PagedResult<StockSummaryViewModel>>, GetStockSummaryQueryHandler>();
