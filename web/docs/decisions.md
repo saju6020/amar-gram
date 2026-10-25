@@ -1905,7 +1905,7 @@ Appended; the entries above are left as written.
 
 **Why.** Matches `Checkout.dc.html`. Owner confirmed D-2 on 2026-10-25
 
-**Status.** Decided; built by HO-P3 S3.
+**Status.** Built (HO-P3 S3). `lib/hooks/useCheckout.ts` still parses `step` (frozen in this phase); `CheckoutScreen` never reads it.
 
 ### ADR-FE-176
 
@@ -1937,7 +1937,7 @@ Appended; the entries above are left as written.
 
 **Why.** Deep links, `UnsavedChangesGuard` and the password-confirmed deletion page depend on separate routes (HO-P3 D-5, D-6)
 
-**Status.** Decided; built by HO-P3 S4.
+**Status.** Built (HO-P3 S4).
 
 ## ADR-FE-180 … ADR-FE-184 — Back office rebuilt to the approved design (HO-P4)
 

@@ -20,7 +20,7 @@ Owner decisions (2026-10-24):
 | Approved design | [`docs/design/back-office/`](../design/back-office/README.md): `StaffSignIn`, `Dashboard`, `Orders`, `CounterSale`, `Products`, `ProductEditor`, `Inventory`, `Receiving`, `Customers`, `Billing`, `Reports`, `Administration` (`*.dc.html`), plus `index.css` |
 | Area handovers whose behaviour stays binding | [HO-ACC-002](HO-ACC-002.md), [HO-ADM-002](HO-ADM-002.md), [HO-SHP-002](HO-SHP-002.md), [HO-IMP-002](HO-IMP-002.md), [HO-BIL-002](HO-BIL-002.md), [HO-ORD-002](HO-ORD-002.md), [HO-RPT-002](HO-RPT-002.md), [HO-XCT-002](HO-XCT-002.md) |
 | Baseline commit | `46929be` (branch `feat/phase2-catalogue-theme`) |
-| Amended | *(append-only; none yet)* |
+| Amended | **2026-10-25 (owner-ratified).** The staff sidebar wordmark failed WCAG 1.4.3 ("Gram" leaf on leaf-ink, 1.42:1). `components/common/staff-shell.tsx` (S0) passes `accentClassName="text-leaf-soft"` to `HearthLogo`, which gains that optional prop (default `text-leaf`); `HearthLogo.tsx` is in no §13 block and is waived for this one prop (also recorded on HO-P3) (`7cdfd78`). Reviewed by HO-P4's gates. |
 
 ## 2. Objective
 
