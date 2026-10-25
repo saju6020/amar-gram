@@ -9,6 +9,9 @@ import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Panel } from '@/components/back-office/Panel';
+import { StatusPill } from '@/components/back-office/StatusPill';
+import { TableFrame } from '@/components/back-office/TableFrame';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import type { CashUp } from '@/lib/api/billing-cashup';
@@ -17,13 +20,15 @@ import { describeBillingError, submitBillingForm } from '@/lib/api/errors';
 import { formatDateOnly, formatInZone, todayInZone } from '@/lib/format/time';
 import { MONEY_FORMAT_MESSAGE, MONEY_PATTERN, a11yMoney, moneySign, normaliseMoney, withoutSign } from '@/lib/money';
 import { useActiveBranchZone } from '@/lib/hooks/billing/useActiveBranchZone';
+import { useActiveBranchId } from '@/lib/hooks/useActiveBranch';
+import { useAdminBranches } from '@/lib/hooks/useAdminBranches';
 import { useCashUp } from '@/lib/hooks/billing/useBillingQueries';
 import { useCloseCashUp, useRecordCashCount } from '@/lib/hooks/billing/useBillingMutations';
 import { useUrlFilterState } from '@/lib/hooks/useUrlFilterState';
 import { Amount } from './Amount';
 import { FormRootError, MoneyField, TextAreaField, TextField } from './Fields';
 import { humanise } from './labels';
-import { PageHeader, Section, Stat } from './PageHeader';
+import { PageHeader, Stat } from './PageHeader';
 import { QueryBoundary } from './QueryBoundary';
 import { guardedText } from './schemas';
 
@@ -43,17 +48,17 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 function VarianceText({ view }: { view: CashUp }) {
-  if (!view.variance) return <span>Not counted yet</span>;
+  if (!view.variance) return <StatusPill tone="neutral">Not counted yet</StatusPill>;
   const sign = moneySign(view.variance.amount);
-  if (sign === 'zero') return <span className="font-semibold text-accent-ink">Balanced</span>;
+  if (sign === 'zero') return <StatusPill tone="success">Balanced</StatusPill>;
   return (
-    <span className="font-semibold text-danger-ink">
+    <StatusPill tone={sign === 'negative' ? 'danger' : 'warning'}>
       {sign === 'negative' ? 'Short' : 'Over'} {a11yMoney(withoutSign(view.variance))}
-    </span>
+    </StatusPill>
   );
 }
 
-function CashUpBody({ view, date, zone }: { view: CashUp; date: string; zone: string }) {
+function CashUpBody({ view, date, zone, branchName }: { view: CashUp; date: string; zone: string; branchName: string | undefined }) {
   const { toast } = useToast();
   const count = useRecordCashCount(date);
   const close = useCloseCashUp(date);
@@ -119,7 +124,10 @@ function CashUpBody({ view, date, zone }: { view: CashUp; date: string; zone: st
         </p>
       )}
 
-      <Section title="Expected">
+      <Panel title={`End-of-day cash-up${branchName ? ` · ${branchName}` : ''} · ${formatDateOnly(date)}`}>
+       <div className="flex flex-col gap-6">
+       <section aria-labelledby="cashup-expected" className="flex flex-col gap-3">
+        <h3 id="cashup-expected" className="text-base font-semibold text-ink">Expected</h3>
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Stat label={`Cash payments (${view.expected.cashCount})`}><Amount money={view.expected.cash} /></Stat>
           <Stat label={`Card payments (${view.expected.cardCount})`}><Amount money={view.expected.card} /></Stat>
@@ -141,28 +149,39 @@ function CashUpBody({ view, date, zone }: { view: CashUp; date: string; zone: st
             </ul>
           </div>
         )}
-        <details className="text-sm">
-          <summary className="cursor-pointer font-semibold text-accent-ink">
-            Show the {lines.length === 1 ? '1 line' : `${lines.length} lines`} behind these totals
-          </summary>
-          <ul className="mt-2 flex flex-col gap-1">
-            {lines.map((l) => (
-              <li key={l.id} className="flex flex-wrap justify-between gap-2 border-b border-border pb-1">
-                <span className="[overflow-wrap:anywhere]">
-                  {humanise(l.kind)}
-                  {l.method ? ` · ${humanise(l.method)}` : ''}
-                  {l.label ? ` · ${l.label}` : ''}
-                  {l.carriedIn ? ' · carried in' : ''}
-                  {l.countsInCash ? '' : ' · not cash'}
-                </span>
-                <Amount money={l.amount} />
-              </li>
-            ))}
-          </ul>
-        </details>
-      </Section>
+        <TableFrame label="Cash-up lines by source" minWidth={520}>
+          <table className="w-full border-collapse text-sm">
+            <caption className="sr-only">
+              The {lines.length === 1 ? '1 line' : `${lines.length} lines`} behind these totals
+            </caption>
+            <thead>
+              <tr className="text-left text-[13px] text-ink-muted">
+                <th scope="col" className="px-3 py-2.5 font-semibold">Source</th>
+                <th scope="col" className="px-3 py-2.5 font-semibold">Collected by</th>
+                <th scope="col" className="px-3 py-2.5 text-right font-semibold">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((l) => (
+                <tr key={l.id} className="border-t border-surface-sunken">
+                  <th scope="row" className="px-3 py-2.5 text-left font-normal text-ink [overflow-wrap:anywhere]">
+                    {humanise(l.kind)}
+                    {l.method ? ` · ${humanise(l.method)}` : ''}
+                    {l.label ? ` · ${l.label}` : ''}
+                    {l.carriedIn ? ' · carried in' : ''}
+                    {l.countsInCash ? '' : ' · not cash'}
+                  </th>
+                  <td className="px-3 py-2.5 text-ink-muted">{l.collector ?? '—'}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums"><Amount money={l.amount} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableFrame>
+       </section>
 
-      <Section title="Count">
+       <section aria-labelledby="cashup-count" className="flex flex-col gap-3">
+        <h3 id="cashup-count" className="text-base font-semibold text-ink">Count</h3>
         {closed ? (
           <dl className="grid gap-3 sm:grid-cols-3">
             <Stat label="Counted cash">{view.counted ? <Amount money={view.counted} /> : '—'}</Stat>
@@ -174,7 +193,7 @@ function CashUpBody({ view, date, zone }: { view: CashUp; date: string; zone: st
             <FormRootError message={errors.root?.message} />
             <MoneyField id="cashup-counted" label="Counted cash" required error={errors.countedCash?.message} {...register('countedCash')} />
             {view.variance && (
-              <p aria-live="polite" role="status" className="text-sm">
+              <p aria-live="polite" role="status" className="flex items-center gap-2 text-sm">
                 Variance: <VarianceText view={view} />
               </p>
             )}
@@ -202,7 +221,9 @@ function CashUpBody({ view, date, zone }: { view: CashUp; date: string; zone: st
         ) : closeError ? (
           <p role="alert" className="text-sm font-semibold text-danger-ink">{describeBillingError(closeError)}</p>
         ) : null}
-      </Section>
+       </section>
+       </div>
+      </Panel>
 
       <ConfirmDialog
         open={closeOpen}
@@ -224,6 +245,9 @@ export function CashUpScreen() {
   const today = todayInZone(zone);
   const date = values.date || (ready ? today : '');
   const query = useCashUp(date);
+  const branches = useAdminBranches();
+  const activeBranchId = useActiveBranchId();
+  const branchName = branches.data?.find((b) => b.id === activeBranchId)?.name;
 
   if (query.error instanceof ApiForbiddenError) return <AccessRefusedState error={query.error} />;
   return (
@@ -234,7 +258,7 @@ export function CashUpScreen() {
       </form>
       {date === '' ? null : (
         <QueryBoundary query={query} loadingLabel="Loading the cash-up…">
-          {(view) => <CashUpBody key={view.businessDate} view={view} date={date} zone={zone} />}
+          {(view) => <CashUpBody key={view.businessDate} view={view} date={date} zone={zone} branchName={branchName} />}
         </QueryBoundary>
       )}
     </div>

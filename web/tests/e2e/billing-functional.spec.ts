@@ -88,7 +88,7 @@ test.describe('staff — invoices and payments', () => {
 
   test('E-B2: a payment above the limit is pending; approval by another user works', async ({ page }) => {
     await page.goto('/staff/billing/approvals');
-    await expect(page.getByText('You recorded this payment')).toBeVisible();
+    await expect(page.getByText('You recorded this one. Another staff member must approve it.')).toBeVisible();
     await page.locator('button:not([disabled])', { hasText: /^Approve/ }).first().click();
     await expect(page.getByText(/approved\./)).toBeVisible();
   });
