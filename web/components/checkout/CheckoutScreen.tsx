@@ -52,6 +52,8 @@ function useMergedUrlUpdate(
   const pending = useRef<NonNullable<UrlPatch>>({});
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [settling, setSettling] = useState(false);
+  const landed = useRef(state);
+  landed.current = state;
 
   const settle = useCallback(() => {
     pending.current = {};
@@ -86,8 +88,18 @@ function useMergedUrlUpdate(
         ([key, value]) => (inUrl.get(key) ?? undefined) !== (value === '' ? undefined : value),
       );
       if (!changes && Object.keys(pending.current).length === 0) return;
-      pending.current = { ...pending.current, ...patch };
-      rawUpdate(pending.current);
+      const merged = { ...pending.current, ...patch };
+      rawUpdate(merged);
+      // Only what still differs from the landed state is waited for: a choice reverted before it reached
+      // the URL changes nothing on screen, so the effect above would never clear it.
+      const current = landed.current as unknown as Record<string, string | undefined>;
+      pending.current = Object.fromEntries(
+        Object.entries(merged).filter(([key, value]) => current[key] !== (value === '' ? undefined : value)),
+      );
+      if (Object.keys(pending.current).length === 0) {
+        settle();
+        return;
+      }
       setSettling(true);
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(settle, URL_SETTLE_TIMEOUT_MS);
@@ -296,7 +308,8 @@ export function CheckoutScreen() {
   };
 
   async function handlePlace() {
-    if (!quote || submitting.current) return;
+    // The button is disabled while settling; this keeps a stale-quote place impossible even if it is not.
+    if (!quote || submitting.current || settling) return;
     submitting.current = true;
     setPlaceError(null);
     const request: PlaceOrderRequest = {

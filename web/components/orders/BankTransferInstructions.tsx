@@ -28,12 +28,13 @@ const MAX_REFERENCE = 100;
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-2.5 border-b border-dashed border-border py-2.5 last:border-0">
-      <div className="flex min-w-0 flex-col">
-        <dt className="text-xs text-ink-muted">{label}</dt>
-        <dd className="m-0 text-sm font-semibold text-ink [overflow-wrap:anywhere]">{value}</dd>
-      </div>
-      <CopyButton value={value} label={label.toLowerCase()} />
+    // dl > div > (dt, dd) is the only valid grouping (axe dlitem), so the copy button lives in the dd.
+    <div className="border-b border-dashed border-border py-2.5 last:border-0">
+      <dt className="text-xs text-ink-muted">{label}</dt>
+      <dd className="m-0 flex items-center justify-between gap-2.5">
+        <span className="min-w-0 text-sm font-semibold text-ink [overflow-wrap:anywhere]">{value}</span>
+        <CopyButton value={value} label={label.toLowerCase()} />
+      </dd>
     </div>
   );
 }

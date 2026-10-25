@@ -108,12 +108,13 @@ function Row({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2.5 border-b border-dashed border-border py-2.5 last:border-0">
-      <div className="flex min-w-0 flex-col">
-        <dt className={SUB_LABEL}>{label}</dt>
-        <dd className="m-0 text-sm [overflow-wrap:anywhere]">{children}</dd>
-      </div>
-      {action}
+    // dl > div > (dt, dd) is the only valid grouping (axe dlitem), so the action lives in the dd.
+    <div className="border-b border-dashed border-border py-2.5 last:border-0">
+      <dt className={SUB_LABEL}>{label}</dt>
+      <dd className="m-0 flex items-center justify-between gap-2.5 text-sm">
+        <span className="min-w-0 [overflow-wrap:anywhere]">{children}</span>
+        {action}
+      </dd>
     </div>
   );
 }

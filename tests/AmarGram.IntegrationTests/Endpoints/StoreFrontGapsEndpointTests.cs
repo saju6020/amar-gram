@@ -241,7 +241,8 @@ public sealed class StoreFrontOrderingGapsEndpointTests(OrderingApiFactory facto
         Assert.Equal("3500.00", promise.GetProperty("freeOver").GetProperty("amount").GetString());
         Assert.Equal("BDT", promise.GetProperty("freeOver").GetProperty("currencyCode").GetString());
         Assert.Equal(2, promise.GetProperty("leadTimeDays").GetInt32());
-        Assert.False(string.IsNullOrWhiteSpace(promise.GetProperty("zoneName").GetString()));
+        // Zone names are staff labels and stay private (HO-P3 SECURITY gate, LOW).
+        Assert.False(promise.TryGetProperty("zoneName", out _));
 
         // the signed-in quote for the same zone says the same thing
         var quote = await QuoteAsync(shop.Customer, QuoteUrl(shop));
@@ -261,6 +262,5 @@ public sealed class StoreFrontOrderingGapsEndpointTests(OrderingApiFactory facto
         Assert.Equal(JsonValueKind.Null, promise.GetProperty("currencyCode").ValueKind);
         Assert.Equal(JsonValueKind.Null, promise.GetProperty("freeOver").ValueKind);
         Assert.Equal(JsonValueKind.Null, promise.GetProperty("leadTimeDays").ValueKind);
-        Assert.Equal(JsonValueKind.Null, promise.GetProperty("zoneName").ValueKind);
     }
 }

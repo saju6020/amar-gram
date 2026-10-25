@@ -88,7 +88,7 @@ describe('CartScreen lines - HO-ORD-002 U-A1', () => {
     expect(screen.queryByRole('link', { name: /check ?out/i })).not.toBeInTheDocument();
     expect(screen.getByText('Disabled: Forest Honey is unavailable.')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Remove Forest Honey 1.5 kg from basket' }),
+      screen.getByRole('button', { name: 'Remove from basket, Forest Honey 1.5 kg' }),
     ).toBeEnabled();
     expect(screen.getByRole('heading', { level: 1, name: 'Your basket' })).toBeInTheDocument();
   });

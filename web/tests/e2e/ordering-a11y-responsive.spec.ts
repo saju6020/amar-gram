@@ -154,7 +154,8 @@ test.describe('flows that need set-up', () => {
     await page.goto(REVIEW);
     await page.getByRole('button', { name: 'Place order' }).click();
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
-    await expect(page.getByRole('status').filter({ hasText: /your order .* is placed/i })).toBeVisible();
+    // S4 / D-3: the order page's confirmation block.
+    await expect(page.getByRole('heading', { name: 'Thank you! Your order is in.' })).toBeVisible();
     const complete = new URL(page.url()).pathname;
     expect(complete).toMatch(/^\/portal\/orders\/[0-9a-f-]{36}$/);
     expect(new URL(page.url()).search).toBe('?placed=1');

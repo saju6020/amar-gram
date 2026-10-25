@@ -11,4 +11,4 @@ namespace AmarGram.Read.Queries.Order;
 public sealed class GetDeliveryPromiseQuery : Query<DeliveryPromiseViewModel>;
 
 /// <summary><c>FreeOver</c> is null when the primary zone's Standard level has no free-delivery threshold.</summary>
-public sealed record DeliveryPromiseViewModel(string? CurrencyCode, MoneyViewModel? FreeOver, int? LeadTimeDays, string? ZoneName);
+public sealed record DeliveryPromiseViewModel(string? CurrencyCode, MoneyViewModel? FreeOver, int? LeadTimeDays);

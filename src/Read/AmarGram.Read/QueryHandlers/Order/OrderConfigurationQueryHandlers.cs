@@ -149,14 +149,14 @@ public sealed class GetDeliveryPromiseQueryHandler(AmarGramDbContext db, Microso
             .OrderBy(z => z.Priority).ThenBy(z => z.Name)
             .Select(z => new
             {
-                z.Name, z.CurrencyCode,
-                Service = z.Services.Where(s => s.ServiceLevel == standard).Select(s => new { s.FreeOverOrderValue, s.LeadTimeDays }).First(),
+                z.CurrencyCode,
+                Service = z.Services.Where(s => s.IsActive && s.ServiceLevel == standard).Select(s => new { s.FreeOverOrderValue, s.LeadTimeDays }).First(),
             })
             .FirstOrDefaultAsync();
 
         var result = row is null
-            ? new DeliveryPromiseViewModel(null, null, null, null)
-            : new DeliveryPromiseViewModel(row.CurrencyCode, OrderMoney.Of(row.Service.FreeOverOrderValue, row.CurrencyCode), row.Service.LeadTimeDays, row.Name);
+            ? new DeliveryPromiseViewModel(null, null, null)
+            : new DeliveryPromiseViewModel(row.CurrencyCode, OrderMoney.Of(row.Service.FreeOverOrderValue, row.CurrencyCode), row.Service.LeadTimeDays);
 
         return new QueryResponse<DeliveryPromiseViewModel> { Result = result };
     }

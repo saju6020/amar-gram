@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -53,6 +53,40 @@ const COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(|\[#/;
 
 describe('no colour literals in the shell and shared card files (HO-P3 U9)', () => {
   it.each(FILES)('%s', (file) => {
+    const code = stripComments(readFileSync(path.join(ROOT, file), 'utf8'));
+    const hit = code.split('\n').find((line) => COLOUR.test(line));
+    expect(hit, `colour literal in ${file}: ${hit}`).toBeUndefined();
+  });
+});
+
+/**
+ * HO-P3 A15 (TEST gate run 1, LOW) - the same rule over every customer-facing folder S1-S4 rebuilt, scanned
+ * recursively so a new file is covered without being listed.
+ */
+const CUSTOMER_DIRS = [
+  'app/(shop)',
+  'app/(portal)',
+  'app/(auth)',
+  'components/shop',
+  'components/catalogue',
+  'components/product',
+  'components/recommendations',
+  'components/cart',
+  'components/checkout',
+  'components/orders',
+  'components/portal',
+  'components/account',
+  'components/hearth',
+];
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(path.join(ROOT, dir), { recursive: true, encoding: 'utf8' })
+    .filter((file) => /\.(tsx?|css)$/.test(file))
+    .map((file) => path.join(dir, file));
+}
+
+describe('no colour literals in any customer-facing folder (HO-P3 A15)', () => {
+  it.each(CUSTOMER_DIRS.flatMap(sourceFiles))('%s', (file) => {
     const code = stripComments(readFileSync(path.join(ROOT, file), 'utf8'));
     const hit = code.split('\n').find((line) => COLOUR.test(line));
     expect(hit, `colour literal in ${file}: ${hit}`).toBeUndefined();

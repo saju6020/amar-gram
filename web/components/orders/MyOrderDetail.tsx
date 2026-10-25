@@ -224,7 +224,8 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
                   href={trackHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={buttonVariants({ variant: 'pill', size: 'pillMd' })}
+                  // The courier name and number can be long: let the pill wrap at 360 px instead of widening the page.
+                  className={cn(buttonVariants({ variant: 'pill', size: 'pillMd' }), 'h-auto max-w-full whitespace-normal py-2 text-center')}
                 >
                   {`Track parcel · ${order.shipment.courierName}${order.shipment.trackingNumber ? ` ${order.shipment.trackingNumber}` : ''}`}
                   <ArrowUpRight size={14} aria-hidden="true" />

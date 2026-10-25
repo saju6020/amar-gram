@@ -111,7 +111,7 @@ export function CartLineRow({
               size="pillMd"
               disabled={busy}
               onClick={onRemove}
-              aria-label={`Remove ${label} from basket`}
+              aria-label={`Remove from basket, ${label}`}
             >
               Remove from basket
             </Button>

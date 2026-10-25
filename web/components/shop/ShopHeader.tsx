@@ -42,7 +42,7 @@ export function ShopHeader({ categories, accountSlot, languageSlot }: ShopHeader
         <div className="mx-auto flex max-w-[1224px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5 md:gap-x-6 md:gap-y-3 md:px-8 md:py-4">
           <HearthLogo
             variant="shop"
-            className="text-xl max-md:text-leaf-soft max-md:[&>span:first-child]:bg-leaf-soft max-md:[&>span:first-child]:text-leaf max-md:[&>span>span]:text-warm md:text-2xl"
+            className="text-xl max-md:text-leaf-soft max-md:[&>span:first-child]:bg-leaf-soft max-md:[&>span:first-child]:text-leaf max-md:[&>span>span]:text-leaf-soft md:text-2xl"
           />
           <div className="order-3 w-full md:order-none md:w-auto md:flex-1">
             <Suspense fallback={<SearchForm />}>

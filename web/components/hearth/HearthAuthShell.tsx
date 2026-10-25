@@ -75,7 +75,7 @@ export function HearthAuthShell({
         </Link>
         <div className="flex max-w-[460px] flex-col gap-3 md:gap-4">
           <p className="m-0 font-display text-[38px] font-bold leading-[1.05] tracking-[-0.03em] md:text-5xl">
-            {headline} <em className="font-medium text-warm">{highlight}</em>.
+            {headline} <em className="font-medium text-leaf-soft">{highlight}</em>.
           </p>
           <p className="m-0 text-sm leading-relaxed text-leaf-soft md:text-lg">{intro}</p>
           {reasons && (
@@ -84,7 +84,7 @@ export function HearthAuthShell({
                 <li key={text} className="flex items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="grid size-9 flex-none place-items-center rounded-full bg-leaf-ink text-warm"
+                    className="grid size-9 flex-none place-items-center rounded-full bg-leaf-ink text-leaf-soft"
                   >
                     <Check size={18} strokeWidth={2.4} />
                   </span>
@@ -99,7 +99,7 @@ export function HearthAuthShell({
                 <li key={text} className="flex items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="grid size-9 flex-none place-items-center rounded-full bg-leaf-ink text-sm font-bold text-warm"
+                    className="grid size-9 flex-none place-items-center rounded-full bg-leaf-ink text-sm font-bold text-leaf-soft"
                   >
                     {index + 1}
                   </span>
