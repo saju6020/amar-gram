@@ -26,6 +26,15 @@ public interface INotificationLinkBuilder
     /// <summary>HO-ORD-001 §8.12 -- <c>{WebBaseUrl}/portal/orders/{orderId}</c>. Used for <c>orderLink</c> on every <c>order.*</c> message.</summary>
     string OrderLink(Guid orderId);
 
+    /// <summary>HO-SUB-001 §8.11 -- <c>{WebBaseUrl}/portal/subscriptions/{id}</c>. Used for <c>manageLink</c> on the subscription messages.</summary>
+    string SubscriptionLink(Guid subscriptionId) => throw new NotSupportedException("This link builder does not build subscription links.");
+
+    /// <summary>HO-SUB-001 §8.11 -- <c>{WebBaseUrl}/portal/subscriptions/{id}?skip=yyyy-MM-dd</c>. Used for <c>skipLink</c> on <c>subscription.pre-charge</c>.</summary>
+    string SubscriptionSkipLink(Guid subscriptionId, DateOnly cycleOn) => throw new NotSupportedException("This link builder does not build subscription links.");
+
+    /// <summary>HO-SUB-001 §8.11 -- <c>{WebBaseUrl}/portal/subscriptions</c>. Used for <c>subscriptionsLink</c> on <c>subscription.cancelled</c>.</summary>
+    string SubscriptionsLink() => throw new NotSupportedException("This link builder does not build subscription links.");
+
     /// <summary>HO-RPT-001 section 11.7: a staff link to the report the scheduled email is about. branchId null means every branch.</summary>
     string ReportLink(string reportKey, DateOnly from, DateOnly to, Guid? branchId) => throw new NotSupportedException("This link builder does not build report links.");
 }

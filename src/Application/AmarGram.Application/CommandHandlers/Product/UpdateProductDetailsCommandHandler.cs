@@ -59,6 +59,7 @@ public sealed class UpdateProductDetailsCommandHandler(
         try
         {
             product.UpdateDetails(command.ToDomainDto(category, subcategory, certifications));
+            if (command.IsSubscribable is { } subscribable) product.SetSubscribable(subscribable); // HO-SUB-001 (BG-15)
         }
         catch (DomainRuleViolationException ex)
         {

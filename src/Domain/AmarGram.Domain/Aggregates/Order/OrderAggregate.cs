@@ -622,10 +622,12 @@ public sealed class OrderAggregate : AggregateRoot
 
     private static void ValidatePairing(PlaceOrderDto dto)
     {
+        // HO-SUB-001 §3: a subscription order is paid and fulfilled exactly like an online one -- only the channel differs (reports split by it).
+        var online = dto.Channel == OrderChannel.Online || dto.Channel == OrderChannel.Subscription;
         var valid =
-            (dto.PaymentMethod == OrderPaymentMethod.CashOnDelivery && dto.Fulfilment == FulfilmentMethod.Delivery && dto.Channel == OrderChannel.Online) ||
-            (dto.PaymentMethod == OrderPaymentMethod.PayOnCollection && dto.Fulfilment == FulfilmentMethod.Pickup && dto.Channel == OrderChannel.Online) ||
-            (dto.PaymentMethod == OrderPaymentMethod.BankTransfer && dto.Fulfilment != FulfilmentMethod.Counter && dto.Channel == OrderChannel.Online) ||
+            (dto.PaymentMethod == OrderPaymentMethod.CashOnDelivery && dto.Fulfilment == FulfilmentMethod.Delivery && online) ||
+            (dto.PaymentMethod == OrderPaymentMethod.PayOnCollection && dto.Fulfilment == FulfilmentMethod.Pickup && online) ||
+            (dto.PaymentMethod == OrderPaymentMethod.BankTransfer && dto.Fulfilment != FulfilmentMethod.Counter && online) ||
             (dto.PaymentMethod == OrderPaymentMethod.InStore && dto.Fulfilment == FulfilmentMethod.Counter && dto.Channel == OrderChannel.Counter);
 
         if (!valid)

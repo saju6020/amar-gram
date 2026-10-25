@@ -26,6 +26,9 @@ public sealed class UpdateProductDetailsRequest
     public bool ListedOnStorefront { get; init; } = true;
     public bool IsExpiryTracked { get; init; }
     public IReadOnlyList<string> Certifications { get; init; } = [];
+
+    /// <summary>HO-SUB-001 (BG-15) -- "Can be subscribed to"; omitted leaves it unchanged.</summary>
+    public bool? IsSubscribable { get; init; }
 }
 
 public sealed class ChangeProductSlugRequest

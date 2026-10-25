@@ -193,6 +193,7 @@ public static partial class NotificationTemplateCatalogue
             ]),
 
         .. OrderDefinitions(),
+        .. SubscriptionDefinitions(),
         .. ReportingDefinitions(),
     ];
 

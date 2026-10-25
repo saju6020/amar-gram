@@ -94,6 +94,7 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
             Description = request.Description, Category = request.Category, Subcategory = request.Subcategory,
             Tags = request.Tags, TaxClassId = request.TaxClassId, CountryOfOriginCode = request.CountryOfOriginCode,
             ListedOnStorefront = request.ListedOnStorefront, IsExpiryTracked = request.IsExpiryTracked, Certifications = request.Certifications,
+            IsSubscribable = request.IsSubscribable,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 

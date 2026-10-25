@@ -51,7 +51,7 @@ DO $privileges$
 DECLARE
   -- Every schema of the solution's EF model, plus 'retention' (the trigger function). Keep in step with
   -- RecordClassification (RolesSqlConventionTests).
-  solution_schemas text[] := ARRAY['account','admin','audit','billing','files','inventory','notify','ops','ordering','product','report','retention'];
+  solution_schemas text[] := ARRAY['account','admin','audit','billing','files','inventory','notify','ops','ordering','product','report','retention','subscription'];
   s text;
   r record;
 BEGIN

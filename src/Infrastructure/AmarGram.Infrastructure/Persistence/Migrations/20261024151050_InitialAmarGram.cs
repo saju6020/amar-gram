@@ -46,6 +46,9 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
             migrationBuilder.EnsureSchema(
                 name: "files");
 
+            migrationBuilder.EnsureSchema(
+                name: "subscription");
+
             // Hand-added (HO-P1 §5): payment.receipt_number defaults to nextval of this sequence, so it must exist before the table.
             // Every raw-SQL object of the baseline is in InitialAmarGramSql.
             migrationBuilder.CreateSequence<long>(
@@ -1506,6 +1509,7 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     country_of_origin_code = table.Column<string>(type: "character(2)", fixedLength: true, maxLength: 2, nullable: true),
                     is_expiry_tracked = table.Column<bool>(type: "boolean", nullable: false),
                     listed_on_storefront = table.Column<bool>(type: "boolean", nullable: false),
+                    is_subscribable = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     search_text = table.Column<string>(type: "text", nullable: false),
                     food_ingredient_list = table.Column<string>(type: "character varying(4000)", maxLength: 4000, nullable: true),
                     food_storage_instructions = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
@@ -4059,6 +4063,106 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "subscription",
+                schema: "subscription",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    product_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    variant_label = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    terms_quantity = table.Column<int>(type: "integer", nullable: false),
+                    terms_interval_weeks = table.Column<int>(type: "integer", nullable: false),
+                    terms_fulfilment = table.Column<int>(type: "integer", nullable: false),
+                    terms_delivery_address_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    terms_pickup_branch_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    terms_payment_method = table.Column<int>(type: "integer", nullable: false),
+                    pending_terms_quantity = table.Column<int>(type: "integer", nullable: true),
+                    pending_terms_interval_weeks = table.Column<int>(type: "integer", nullable: true),
+                    pending_terms_fulfilment = table.Column<int>(type: "integer", nullable: true),
+                    pending_terms_delivery_address_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    pending_terms_pickup_branch_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    pending_terms_payment_method = table.Column<int>(type: "integer", nullable: true),
+                    pending_skip = table.Column<bool>(type: "boolean", nullable: false),
+                    pending_status_change = table.Column<int>(type: "integer", nullable: true),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    suspension_reason = table.Column<int>(type: "integer", nullable: true),
+                    suspended_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    next_delivery_on = table.Column<DateOnly>(type: "date", nullable: true),
+                    next_delivery_set_on = table.Column<DateOnly>(type: "date", nullable: true),
+                    started_on = table.Column<DateOnly>(type: "date", nullable: false),
+                    last_cycle_on = table.Column<DateOnly>(type: "date", nullable: true),
+                    last_skipped_on = table.Column<DateOnly>(type: "date", nullable: true),
+                    paused_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    cancelled_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    cancelled_by = table.Column<Guid>(type: "uuid", nullable: true),
+                    cancellation_reason = table.Column<int>(type: "integer", nullable: true),
+                    cancellation_note = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    reinstated_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    reinstated_by = table.Column<Guid>(type: "uuid", nullable: true),
+                    reinstatement_reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Language = table.Column<string>(type: "text", nullable: true),
+                    LastUpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tags = table.Column<string[]>(type: "text[]", nullable: true),
+                    VerticalId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServiceId = table.Column<string>(type: "text", nullable: true),
+                    IsMarkedToDelete = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_subscription", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "subscription_cycle",
+                schema: "subscription",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    subscription_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    cycle_on = table.Column<DateOnly>(type: "date", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    quantity = table.Column<int>(type: "integer", nullable: false),
+                    fulfilment = table.Column<int>(type: "integer", nullable: false),
+                    payment_method = table.Column<int>(type: "integer", nullable: false),
+                    discount_percent = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
+                    idempotency_key = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    outcome = table.Column<int>(type: "integer", nullable: false),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    order_number = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: true),
+                    order_state = table.Column<int>(type: "integer", nullable: true),
+                    payment_expires_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    failure_reason = table.Column<int>(type: "integer", nullable: true),
+                    failure_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    processed_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    order_state_changed_on = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Language = table.Column<string>(type: "text", nullable: true),
+                    LastUpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Tags = table.Column<string[]>(type: "text[]", nullable: true),
+                    VerticalId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ServiceId = table.Column<string>(type: "text", nullable: true),
+                    IsMarkedToDelete = table.Column<bool>(type: "boolean", nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_subscription_cycle", x => x.Id);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "ix_accounting_export_run_run_on",
                 schema: "billing",
@@ -5596,11 +5700,72 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 schema: "product",
                 table: "wishlist_item",
                 column: "sku_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_customer_status",
+                schema: "subscription",
+                table: "subscription",
+                columns: new[] { "customer_id", "status" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_live_per_sku",
+                schema: "subscription",
+                table: "subscription",
+                columns: new[] { "customer_id", "sku_id" },
+                unique: true,
+                filter: "status IN (1, 2, 3)");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_sku",
+                schema: "subscription",
+                table: "subscription",
+                column: "sku_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_status_next_delivery",
+                schema: "subscription",
+                table: "subscription",
+                columns: new[] { "status", "next_delivery_on" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_status_suspension",
+                schema: "subscription",
+                table: "subscription",
+                columns: new[] { "status", "suspension_reason" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_cycle_customer",
+                schema: "subscription",
+                table: "subscription_cycle",
+                columns: new[] { "customer_id", "cycle_on" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_cycle_order",
+                schema: "subscription",
+                table: "subscription_cycle",
+                column: "order_id",
+                unique: true,
+                filter: "order_id IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_subscription_cycle_per_date",
+                schema: "subscription",
+                table: "subscription_cycle",
+                columns: new[] { "subscription_id", "cycle_on" },
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "subscription_cycle",
+                schema: "subscription");
+
+            migrationBuilder.DropTable(
+                name: "subscription",
+                schema: "subscription");
+
             migrationBuilder.DropTable(
                 name: "accounting_export_run",
                 schema: "billing");

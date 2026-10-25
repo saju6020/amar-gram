@@ -16,4 +16,10 @@ public sealed class NotificationSubjectKind(int value, string displayName) : Enu
     public static readonly NotificationSubjectKind BatchRecall = new(6, nameof(BatchRecall));
 
     public static readonly NotificationSubjectKind ScheduledReport = new(10, nameof(ScheduledReport));
+
+    /// <summary>HO-SUB-001 §8.8 -- valid while the subscription (<c>SubjectId</c>) is Active, the recipient's, and its next delivery is still <c>SubjectDueOn</c> (<c>SubscriptionCycleDueGuard</c>).</summary>
+    public static readonly NotificationSubjectKind SubscriptionCycleDue = new(12, nameof(SubscriptionCycleDue));
+
+    /// <summary>HO-SUB-001 §8.9 -- valid while the cycle (<c>SubjectId</c>) is still <c>AwaitingPayment</c> (<c>SubscriptionPaymentDueGuard</c>).</summary>
+    public static readonly NotificationSubjectKind SubscriptionOrderAwaitingPayment = new(13, nameof(SubscriptionOrderAwaitingPayment));
 }

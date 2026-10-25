@@ -33,6 +33,7 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<AmarGram.Dom
         builder.Property(x => x.CountryOfOriginCode).HasColumnName("country_of_origin_code").HasMaxLength(2).IsFixedLength();
         builder.Property(x => x.IsExpiryTracked).HasColumnName("is_expiry_tracked").IsRequired();
         builder.Property(x => x.ListedOnStorefront).HasColumnName("listed_on_storefront").IsRequired();
+        builder.Property(x => x.IsSubscribable).HasColumnName("is_subscribable").HasDefaultValue(false).IsRequired(); // HO-SUB-001 (BG-15)
         builder.Property(x => x.SearchText).HasColumnName("search_text").HasColumnType("text").IsRequired();
 
         builder.Property(x => x.Tags).HasColumnName("tags").HasColumnType("text[]").IsRequired()

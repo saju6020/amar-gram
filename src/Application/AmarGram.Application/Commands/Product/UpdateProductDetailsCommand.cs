@@ -18,4 +18,7 @@ public sealed class UpdateProductDetailsCommand : Command
     public bool ListedOnStorefront { get; init; } = true;
     public bool IsExpiryTracked { get; init; }
     public IReadOnlyList<string> Certifications { get; init; } = [];
+
+    /// <summary>HO-SUB-001 (BG-15) -- "Can be subscribed to". Null leaves the flag as it is, so an older client's PUT never clears it.</summary>
+    public bool? IsSubscribable { get; init; }
 }

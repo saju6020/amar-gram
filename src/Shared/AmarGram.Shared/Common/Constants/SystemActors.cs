@@ -18,6 +18,9 @@ public static class SystemActors
     /// <summary>HO-XCT-001 §12.2 -- the <c>RetentionWorker</c>'s identity (erasure pass, purges, redaction).</summary>
     public static readonly Guid RetentionWorker = new("00000000-0000-0000-0000-000000000ff6");
 
+    /// <summary>HO-SUB-001 ADR-249 -- the <c>SubscriptionWorker</c>'s identity (generation, notice and unpaid passes). A system actor, never a customer session.</summary>
+    public static readonly Guid SubscriptionWorker = new("00000000-0000-0000-0000-000000000ff7");
+
     /// <summary>HO-XCT-001 ADR-309 -- the identity stored on anonymous telemetry: nobody (the empty id), whoever called.</summary>
     public static readonly Guid Anonymous = Guid.Empty;
 }
