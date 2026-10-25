@@ -120,9 +120,17 @@ export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormPr
       >
         <textarea id="fd-allergens" rows={2} className={inputClass} {...register('allergens')} />
       </Field>
-      <fieldset className="m-0 border-0 p-0">
-        <legend className="mb-2 p-0 text-sm font-semibold text-ink">Organic certification</legend>
-        <p className="mb-3 text-xs text-ink-muted">
+      <fieldset
+        className={
+          organic
+            ? 'm-0 rounded-[var(--radius-md)] border border-leaf-soft bg-leaf-soft p-4 text-leaf-ink'
+            : 'm-0 border-0 p-0'
+        }
+      >
+        <legend className="mb-2 p-0 text-sm font-semibold text-ink">
+          {organic ? 'Certified organic' : 'Organic certification'}
+        </legend>
+        <p className={organic ? 'mb-3 text-xs text-leaf-ink' : 'mb-3 text-xs text-ink-muted'}>
           {organic
             ? 'This product is marked Certified organic: both fields are needed before it can be published.'
             : 'Optional. Needed only when the product is marked Certified organic.'}

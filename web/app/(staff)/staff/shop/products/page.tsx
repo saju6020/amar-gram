@@ -13,16 +13,15 @@ import { staffProductsExportUrl, type StaffProductListParams } from '@/lib/api/s
 import { useStaffProducts } from '@/lib/hooks/useStaffShop';
 import { useUrlFilterState } from '@/lib/hooks/useUrlFilterState';
 
-const FIELDS = ['status', 'category', 'brand', 'kind', 'listed', 'barcode', 'sort'] as const;
+const FIELDS = ['q', 'status', 'category', 'brand', 'kind', 'listed', 'barcode', 'sort'] as const;
 const PAGE_SIZE = 25;
 
 function ProductListContent() {
-  const { values, setValue, flush } = useUrlFilterState(FIELDS, {}, ['brand', 'barcode']);
+  const { values, setValue, flush } = useUrlFilterState(FIELDS, {}, ['q', 'brand', 'barcode']);
   const searchParams = useSearchParams();
-  const q = searchParams.get('q') ?? '';
   const pageNumber = Math.max(1, Number(searchParams.get('page')) || 1);
   const params: StaffProductListParams = {
-    q,
+    q: values.q,
     status: values.status,
     category: values.category,
     brand: values.brand,

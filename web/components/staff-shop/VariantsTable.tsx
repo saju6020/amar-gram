@@ -1,7 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { StatusPill } from '@/components/back-office/StatusPill';
+import { TableFrame } from '@/components/back-office/TableFrame';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -22,6 +24,11 @@ import { EditSkuDialog, type EditSkuValues } from './EditSkuDialog';
 
 export function skuLabel(sku: StaffSku): string {
   return [sku.code, sku.sizeOrWeight, sku.flavour, sku.colour].filter(Boolean).join(' · ');
+}
+
+/** The pack column: the attributes without the code (the SKU code has its own column). */
+function skuAttributes(sku: StaffSku): string {
+  return [sku.sizeOrWeight, sku.flavour, sku.colour].filter(Boolean).join(' · ') || sku.label;
 }
 
 /** The label repeats the attributes the row already shows; it adds the product name only when none is set. */
@@ -96,30 +103,30 @@ export function VariantsTable(props: VariantsTableProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-xl font-semibold text-ink">Variants & prices</h2>
-        <Button onClick={() => setAdding(true)}>Add SKU</Button>
+        <h2 className="font-display text-xl font-semibold text-ink">Pack sizes & prices</h2>
+        <Button onClick={() => setAdding(true)}>Add pack size</Button>
       </div>
       {statusError && (
         <p role="alert" className="text-sm font-semibold text-danger-ink">
           {statusError}
         </p>
       )}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px] border-collapse text-sm">
-          <caption className="sr-only">SKUs</caption>
+      <TableFrame label="Pack sizes (scrolls horizontally)" minWidth={900}>
+        <table className="w-full border-collapse text-sm">
+          <caption className="sr-only">Pack sizes</caption>
           <thead>
-            <tr className="border-b border-border text-left text-xs text-ink-muted">
+            <tr className="border-b border-surface-sunken text-left text-[13px] text-ink-muted">
               {[
-                'SKU',
+                'Pack',
+                'SKU code',
+                'Price',
                 'Barcode',
                 'Shipping weight',
                 'Status',
-                'Current price',
-                'Scheduled price',
                 'Stock',
                 'Actions',
               ].map((h) => (
-                <th key={h} scope="col" className="py-2 pr-3 font-semibold">
+                <th key={h} scope="col" className="px-4 py-3 font-semibold">
                   {h}
                 </th>
               ))}
@@ -127,30 +134,34 @@ export function VariantsTable(props: VariantsTableProps) {
           </thead>
           <tbody>
             {product.skus.map((sku) => (
-              <tr key={sku.skuId} className="border-b border-border align-top">
-                <th scope="row" className="py-2 pr-3 text-left font-semibold text-ink">
-                  {skuLabel(sku)}
-                  {!hasAttributes(sku) && (
-                    <span className="block text-xs font-normal text-ink-muted">{sku.label}</span>
-                  )}
+              <tr key={sku.skuId} className="border-b border-surface-sunken align-top">
+                <td className="px-4 py-3 font-semibold text-ink">
+                  {hasAttributes(sku) ? skuAttributes(sku) : sku.label}
+                </td>
+                <th scope="row" className="px-4 py-3 text-left font-semibold text-ink">
+                  {sku.code}
                 </th>
-                <td className="py-2 pr-3">{sku.barcode ?? '—'}</td>
-                <td className="py-2 pr-3">
+                <td className="px-4 py-3">
+                  <span className="font-semibold text-ink">
+                    {sku.currentPrice ? formatMoney(sku.currentPrice) : 'Not priced'}
+                  </span>
+                  {sku.scheduledPrice && (
+                    <span className="block text-xs text-ink-muted">
+                      Scheduled {formatMoney(sku.scheduledPrice)}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3">{sku.barcode ?? '—'}</td>
+                <td className="px-4 py-3">
                   {sku.shippingWeightGrams == null ? '—' : `${sku.shippingWeightGrams} g`}
                 </td>
-                <td className="py-2 pr-3">
-                  <Badge variant={sku.status === 'Active' ? 'success' : 'neutral'}>
+                <td className="px-4 py-3">
+                  <StatusPill tone={sku.status === 'Active' ? 'success' : 'neutral'}>
                     {sku.status}
-                  </Badge>
+                  </StatusPill>
                 </td>
-                <td className="py-2 pr-3">
-                  {sku.currentPrice ? formatMoney(sku.currentPrice) : 'Not priced'}
-                </td>
-                <td className="py-2 pr-3">
-                  {sku.scheduledPrice ? formatMoney(sku.scheduledPrice) : '—'}
-                </td>
-                <td className="py-2 pr-3">{stockText(sku.stock)}</td>
-                <td className="py-2">
+                <td className="px-4 py-3">{stockText(sku.stock)}</td>
+                <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="secondary"
@@ -181,12 +192,19 @@ export function VariantsTable(props: VariantsTableProps) {
             ))}
           </tbody>
         </table>
-      </div>
+      </TableFrame>
+      <p className="text-sm text-ink-muted">
+        The level at which a pack size is reordered is set under{' '}
+        <Link href="/staff/inventory/reorder-policies" className="font-semibold text-accent">
+          Inventory, Reorder policies
+        </Link>
+        .
+      </p>
 
       {priceSku && (
         <section
           aria-label={`Price history for ${priceSku.code}`}
-          className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-4"
+          className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-base font-bold text-ink">Prices — {priceSku.code}</h3>
