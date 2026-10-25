@@ -178,7 +178,7 @@ public sealed class OrderingConventionTests
 
         Has<CartOwnerKind>("Guest", "Customer");
         Has<CartStatus>("Active", "Merged", "Abandoned");
-        Has<OrderChannel>("Online", "Counter");
+        Has<OrderChannel>("Online", "Counter", "Subscription"); // HO-SUB-001 §3 appends Subscription
         Has<FulfilmentMethod>("Delivery", "Pickup", "Counter");
         Has<OrderPaymentMethod>("CashOnDelivery", "BankTransfer", "PayOnCollection", "InStore");
         Has<TenderMethod>("Cash", "InStoreCard");

@@ -98,6 +98,7 @@ public sealed class StaffProductsController(
             Description = request.Description, Category = request.Category, Subcategory = request.Subcategory,
             Tags = request.Tags, TaxClassId = request.TaxClassId, CountryOfOriginCode = request.CountryOfOriginCode, DistrictOfOrigin = request.DistrictOfOrigin,
             ListedOnStorefront = request.ListedOnStorefront, IsExpiryTracked = request.IsExpiryTracked, Certifications = request.Certifications,
+            IsSubscribable = request.IsSubscribable,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 

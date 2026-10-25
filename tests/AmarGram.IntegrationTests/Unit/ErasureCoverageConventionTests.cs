@@ -34,6 +34,7 @@ public sealed class ErasureCoverageConventionTests : IClassFixture<XctApiFactory
         ["Order"] = "orders",
         ["Product"] = "shop",
         ["StoredFile"] = "files",
+        ["Subscription"] = "subscription",   // HO-SUB-001: exempted in ErasureExemptions.Subscriptions.cs (ids only; account deletion cancels, ADR-247)
         // No customer personal data by construction: the audit log keeps actor ids (and is itself immutable, D-5); the erasure ledger IS the
         // customer id and nothing else; the Operations roots hold no customer reference.
         ["Audit"] = "exempt-by-design",

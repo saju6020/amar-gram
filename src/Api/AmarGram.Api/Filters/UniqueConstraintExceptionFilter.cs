@@ -110,6 +110,13 @@ public sealed class UniqueConstraintExceptionFilter : IExceptionFilter, IAsyncEx
         ["ix_sales_order_customer_idempotency"] = (409, BusinessViolationCodes.DuplicateSubmission, OrderMessages.DuplicateSubmission, "IdempotencyKey"),
     };
 
+    // HO-SUB-001 §12.5 -- a parallel double-subscribe: the unique "one live subscription per customer and SKU" index kept ONE; the loser gets the same 400 the handler's
+    // own pre-check returns (SubscriptionMessages is shared, so the two paths cannot drift). ix_subscription_cycle_per_date is handled inside C8 and never reaches here.
+    private static readonly Dictionary<string, (string Code, string Message, string Property)> SubscriptionBadRequestIndexes = new()
+    {
+        ["ix_subscription_live_per_sku"] = (BusinessViolationCodes.SubscriptionAlreadyExists, SubscriptionMessages.SubscriptionAlreadyExists, "SkuId"),
+    };
+
     // A first-write race on the bank-transfer account's one fixed id -> 409.
     private static readonly HashSet<string> OrderingFirstWriteTables = ["bank_transfer_account"];
 
@@ -219,6 +226,13 @@ public sealed class UniqueConstraintExceptionFilter : IExceptionFilter, IAsyncEx
             context.Result = ordering.Status == 409
                 ? Conflict(ordering.Code, ordering.Message, ordering.Property, "Order")
                 : BadRequest(ordering.Code, ordering.Message, ordering.Property, "Order");
+            context.ExceptionHandled = true;
+            return;
+        }
+
+        if (pg.ConstraintName is not null && SubscriptionBadRequestIndexes.TryGetValue(pg.ConstraintName, out var subscription))
+        {
+            context.Result = BadRequest(subscription.Code, subscription.Message, subscription.Property, "Subscription");
             context.ExceptionHandled = true;
             return;
         }

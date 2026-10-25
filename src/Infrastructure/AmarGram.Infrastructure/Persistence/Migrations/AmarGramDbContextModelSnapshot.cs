@@ -7186,6 +7186,12 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsMarkedToDelete")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsSubscribable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_subscribable");
+
                     b.Property<int>("Kind")
                         .HasColumnType("integer")
                         .HasColumnName("kind");
@@ -8081,6 +8087,291 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.HasIndex("Purpose", "UploadedOn");
 
                     b.ToTable("stored_file", "files");
+                });
+
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Subscription.SubscriptionAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CancellationNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("cancellation_note");
+
+                    b.Property<int?>("CancellationReason")
+                        .HasColumnType("integer")
+                        .HasColumnName("cancellation_reason");
+
+                    b.Property<Guid?>("CancelledBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelled_by");
+
+                    b.Property<DateTimeOffset?>("CancelledOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("cancelled_on");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<bool>("IsMarkedToDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Language")
+                        .HasColumnType("text");
+
+                    b.Property<DateOnly?>("LastCycleOn")
+                        .HasColumnType("date")
+                        .HasColumnName("last_cycle_on");
+
+                    b.Property<DateOnly?>("LastSkippedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("last_skipped_on");
+
+                    b.Property<Guid>("LastUpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("NextDeliveryOn")
+                        .HasColumnType("date")
+                        .HasColumnName("next_delivery_on");
+
+                    b.Property<DateOnly?>("NextDeliverySetOn")
+                        .HasColumnType("date")
+                        .HasColumnName("next_delivery_set_on");
+
+                    b.Property<DateTimeOffset?>("PausedOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("paused_on");
+
+                    b.Property<bool>("PendingSkip")
+                        .HasColumnType("boolean")
+                        .HasColumnName("pending_skip");
+
+                    b.Property<int?>("PendingStatusChange")
+                        .HasColumnType("integer")
+                        .HasColumnName("pending_status_change");
+
+                    b.Property<Guid?>("ReinstatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reinstated_by");
+
+                    b.Property<DateTimeOffset?>("ReinstatedOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("reinstated_on");
+
+                    b.Property<string>("ReinstatementReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reinstatement_reason");
+
+                    b.Property<string>("ServiceId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sku_id");
+
+                    b.Property<DateOnly>("StartedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("started_on");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("SuspendedOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("suspended_on");
+
+                    b.Property<int?>("SuspensionReason")
+                        .HasColumnType("integer")
+                        .HasColumnName("suspension_reason");
+
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("VerticalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkuId")
+                        .HasDatabaseName("ix_subscription_sku");
+
+                    b.HasIndex("CustomerId", "SkuId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_subscription_live_per_sku")
+                        .HasFilter("status IN (1, 2, 3)");
+
+                    b.HasIndex("CustomerId", "Status")
+                        .HasDatabaseName("ix_subscription_customer_status");
+
+                    b.HasIndex("Status", "NextDeliveryOn")
+                        .HasDatabaseName("ix_subscription_status_next_delivery");
+
+                    b.HasIndex("Status", "SuspensionReason")
+                        .HasDatabaseName("ix_subscription_status_suspension");
+
+                    b.ToTable("subscription", "subscription");
+                });
+
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Subscription.SubscriptionCycleAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateOnly>("CycleOn")
+                        .HasColumnType("date")
+                        .HasColumnName("cycle_on");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("discount_percent");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("failure_code");
+
+                    b.Property<int?>("FailureReason")
+                        .HasColumnType("integer")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<int>("Fulfilment")
+                        .HasColumnType("integer")
+                        .HasColumnName("fulfilment");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<bool>("IsMarkedToDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Language")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("LastUpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<string>("OrderNumber")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("order_number");
+
+                    b.Property<int?>("OrderState")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_state");
+
+                    b.Property<DateTimeOffset?>("OrderStateChangedOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("order_state_changed_on");
+
+                    b.Property<int>("Outcome")
+                        .HasColumnType("integer")
+                        .HasColumnName("outcome");
+
+                    b.Property<DateTimeOffset?>("PaymentExpiresOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("payment_expires_on");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("integer")
+                        .HasColumnName("payment_method");
+
+                    b.Property<DateTimeOffset>("ProcessedOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("processed_on");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("ServiceId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sku_id");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subscription_id");
+
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("VerticalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_subscription_cycle_order")
+                        .HasFilter("order_id IS NOT NULL");
+
+                    b.HasIndex("CustomerId", "CycleOn")
+                        .HasDatabaseName("ix_subscription_cycle_customer");
+
+                    b.HasIndex("SubscriptionId", "CycleOn")
+                        .IsUnique()
+                        .HasDatabaseName("ix_subscription_cycle_per_date");
+
+                    b.ToTable("subscription_cycle", "subscription");
                 });
 
             modelBuilder.Entity("AmarGram.Domain.Entities.IdempotencyRecord", b =>
@@ -13025,6 +13316,116 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Subscription.SubscriptionAggregate", b =>
+                {
+                    b.OwnsOne("AmarGram.Domain.ValueObjects.SubscriptionTerms", "PendingTerms", b1 =>
+                        {
+                            b1.Property<Guid>("SubscriptionAggregateId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid?>("DeliveryAddressId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("pending_terms_delivery_address_id");
+
+                            b1.Property<int>("Fulfilment")
+                                .HasColumnType("integer")
+                                .HasColumnName("pending_terms_fulfilment");
+
+                            b1.Property<int>("IntervalWeeks")
+                                .HasColumnType("integer")
+                                .HasColumnName("pending_terms_interval_weeks");
+
+                            b1.Property<int>("PaymentMethod")
+                                .HasColumnType("integer")
+                                .HasColumnName("pending_terms_payment_method");
+
+                            b1.Property<Guid?>("PickupBranchId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("pending_terms_pickup_branch_id");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("integer")
+                                .HasColumnName("pending_terms_quantity");
+
+                            b1.HasKey("SubscriptionAggregateId");
+
+                            b1.ToTable("subscription", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubscriptionAggregateId");
+                        });
+
+                    b.OwnsOne("AmarGram.Domain.ValueObjects.SubscriptionTerms", "Terms", b1 =>
+                        {
+                            b1.Property<Guid>("SubscriptionAggregateId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid?>("DeliveryAddressId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("terms_delivery_address_id");
+
+                            b1.Property<int>("Fulfilment")
+                                .HasColumnType("integer")
+                                .HasColumnName("terms_fulfilment");
+
+                            b1.Property<int>("IntervalWeeks")
+                                .HasColumnType("integer")
+                                .HasColumnName("terms_interval_weeks");
+
+                            b1.Property<int>("PaymentMethod")
+                                .HasColumnType("integer")
+                                .HasColumnName("terms_payment_method");
+
+                            b1.Property<Guid?>("PickupBranchId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("terms_pickup_branch_id");
+
+                            b1.Property<int>("Quantity")
+                                .HasColumnType("integer")
+                                .HasColumnName("terms_quantity");
+
+                            b1.HasKey("SubscriptionAggregateId");
+
+                            b1.ToTable("subscription", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubscriptionAggregateId");
+                        });
+
+                    b.OwnsOne("AmarGram.Domain.ValueObjects.SubscribedProduct", "Product", b1 =>
+                        {
+                            b1.Property<Guid>("SubscriptionAggregateId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("ProductName")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("product_name");
+
+                            b1.Property<string>("VariantLabel")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("variant_label");
+
+                            b1.HasKey("SubscriptionAggregateId");
+
+                            b1.ToTable("subscription", "subscription");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubscriptionAggregateId");
+                        });
+
+                    b.Navigation("PendingTerms");
+
+                    b.Navigation("Product")
+                        .IsRequired();
+
+                    b.Navigation("Terms")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

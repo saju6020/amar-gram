@@ -120,7 +120,7 @@ public sealed class GetStaffProductDetailQueryHandler(
             }).ToList(),
             relatedViewModels,
             product.Translations.OrderBy(t => t.Locale).Select(t => new StaffTranslationViewModel(t.Locale, t.Name, t.Description, t.IngredientList)).ToList(),
-            food, images, product.Certifications.Select(c => c.DisplayName).ToList());
+            food, images, product.Certifications.Select(c => c.DisplayName).ToList(), product.IsSubscribable);
 
         return new QueryResponse<StaffProductDetailViewModel?> { Result = viewModel };
     }

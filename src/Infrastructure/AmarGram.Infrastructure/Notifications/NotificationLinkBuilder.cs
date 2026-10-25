@@ -19,6 +19,14 @@ public sealed class NotificationLinkBuilder(IOptions<NotificationOptions> option
 
     public string OrderLink(Guid orderId) => $"{Base()}/portal/orders/{orderId}";
 
+    /// <summary>HO-SUB-001 §8.11.</summary>
+    public string SubscriptionLink(Guid subscriptionId) => $"{Base()}/portal/subscriptions/{subscriptionId}";
+
+    public string SubscriptionSkipLink(Guid subscriptionId, DateOnly cycleOn) =>
+        $"{Base()}/portal/subscriptions/{subscriptionId}?skip={cycleOn.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)}";
+
+    public string SubscriptionsLink() => $"{Base()}/portal/subscriptions";
+
     public string ProductLink(string slug, Guid skuId) => $"{Base()}/shop/products/{Uri.EscapeDataString(slug)}?sku={skuId}";
 
     /// <summary>HO-RPT-001 section 11.7 item 7: the staff link to the report a scheduled email is about; <c>all</c> when the schedule covers every branch.</summary>

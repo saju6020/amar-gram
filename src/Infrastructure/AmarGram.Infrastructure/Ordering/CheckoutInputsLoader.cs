@@ -35,13 +35,28 @@ public sealed class CheckoutInputsLoader(
 
     public async Task<CheckoutInputs> LoadAsync(Guid customerId, FulfilmentChoice choice, DateTimeOffset now, CancellationToken ct)
     {
-        var currency = settings.GetString(SettingKeys.CommerceCurrencyCode);
-
         var cartLines = await db.Carts.AsNoTracking()
             .Where(c => c.CustomerId == customerId && c.Status == CartStatus.Active)
             .SelectMany(c => c.Lines.OrderBy(l => l.AddedOn).ThenBy(l => l.Id))
-            .Select(l => new { l.Id, l.SkuId, l.Quantity, l.PriceWhenAdded })
+            .Select(l => new LoadLine(l.Id, l.SkuId, l.Quantity, l.PriceWhenAdded))
             .ToListAsync(ct);
+
+        return await LoadCoreAsync(customerId, choice, cartLines, null, now, ct);
+    }
+
+    /// <summary>HO-SUB-001 §8.12 -- the lines are the cycle's, priced at the price in force now; see <see cref="ICheckoutInputsLoader.LoadSubscriptionAsync"/>.</summary>
+    public Task<CheckoutInputs> LoadSubscriptionAsync(
+        Guid customerId, IReadOnlyList<CounterLineRequest> lines, FulfilmentChoice choice, decimal discountPercent, DateTimeOffset now, CancellationToken ct) =>
+        LoadCoreAsync(customerId, choice, lines.Select(l => new LoadLine(Guid.NewGuid(), l.SkuId, l.Quantity, null)).ToList(), discountPercent, now, ct);
+
+    /// <summary>One line to price: a cart line (with the price it was added at) or a subscription line (priced at the price in force).</summary>
+    private sealed record LoadLine(Guid Id, Guid SkuId, int Quantity, decimal? PriceWhenAdded);
+
+    private async Task<CheckoutInputs> LoadCoreAsync(
+        Guid customerId, FulfilmentChoice choice, IReadOnlyList<LoadLine> cartLines, decimal? subscriptionDiscountPercent, DateTimeOffset now, CancellationToken ct)
+    {
+        var currency = settings.GetString(SettingKeys.CommerceCurrencyCode);
+        var isSubscription = subscriptionDiscountPercent is not null;
 
         var address = choice.AddressId is { } addressId ? await customers.GetAddressAsync(customerId, addressId, ct) : null;
         var zone = address is null ? null : await ResolveZoneAsync(address, ct);
@@ -70,7 +85,24 @@ public sealed class CheckoutInputsLoader(
             if (!skus.TryGetValue(line.SkuId, out var sku)) continue; // a SKU that no longer exists at all drops out of the quote; the cart keeps the line
 
             lines.Add(new CheckoutLineInput(
-                line.Id, sku, line.Quantity, line.PriceWhenAdded, sellable.GetValueOrDefault(sku.SkuId), rates.TryGetValue(sku.TaxClassId, out var rate) ? rate : null));
+                line.Id, sku, line.Quantity, line.PriceWhenAdded ?? sku.CurrentPrice ?? 0m, sellable.GetValueOrDefault(sku.SkuId), rates.TryGetValue(sku.TaxClassId, out var rate) ? rate : null));
+        }
+
+        if (isSubscription)
+        {
+            // HO-SUB-001 ADR-242: the subscriber discount is a synthetic, product-scoped, unlimited percentage rule -> a labelled line discount on each line.
+            // It is never a stored code, so no redemption is counted and nothing is released on cancellation.
+            var subscriptionChoice = choice with { DiscountCode = subscriptionDiscountPercent > 0m ? SubscriptionMessages.DiscountLabel : null };
+            DiscountRuleSet? rule = subscriptionDiscountPercent > 0m
+                ? new DiscountRuleSet(
+                    Guid.Empty, SubscriptionMessages.DiscountLabel, DiscountKind.Percentage, MinorUnits.PercentToHundredths(subscriptionDiscountPercent!.Value), null, null,
+                    DiscountScope.Products, skus.Values.Select(s => s.ProductId).ToHashSet(), new HashSet<int>(), false, null, 0, null, null, null, true, currency)
+                : null;
+
+            return new CheckoutInputs(
+                now, todayLocal, currency, lines, subscriptionChoice, address, zone, openDates, pickupBranches, subscriptionChoice.DiscountCode, rule,
+                new CustomerDiscountFacts(0, false), await PaymentSettingsAsync(fulfilmentBranchId, ct), [], fulfilmentBranchId,
+                choice.Method == FulfilmentMethod.Delivery ? await billingReader.GetDeliveryTaxAsync(now, ct) : null);
         }
 
         var (discount, facts) = await DiscountAsync(customerId, choice.DiscountCode, ct);
