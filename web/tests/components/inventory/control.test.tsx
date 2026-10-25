@@ -76,7 +76,7 @@ describe('U-E1 / U-E2 — AdjustmentForm', () => {
       />,
     );
     await user.selectOptions(screen.getByLabelText(/^location/i), ids.warehouseId);
-    await user.click(screen.getByRole('radio', { name: /theft or loss/i }));
+    await user.click(screen.getByRole('button', { name: /^theft or loss/i }));
     await addLineWithPicker(user, /or find an item/i);
     expect((await screen.findAllByText(/\(removes stock\)/i)).length).toBeGreaterThan(0);
     await waitFor(() =>
@@ -132,7 +132,7 @@ describe('U-E1 / U-E2 — AdjustmentForm', () => {
       />,
     );
     await user.selectOptions(screen.getByLabelText(/^location/i), ids.warehouseId);
-    await user.click(screen.getByRole('radio', { name: /damaged/i }));
+    await user.click(screen.getByRole('button', { name: /^damaged/i }));
     await user.type(screen.getByLabelText(/^note/i), 'Split open');
     await addLineWithPicker(user, /or find an item/i);
     await waitFor(() =>

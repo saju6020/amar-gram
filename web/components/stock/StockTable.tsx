@@ -1,15 +1,106 @@
 'use client';
 
-import { DataTable } from '@/components/common/DataTable';
+import * as React from 'react';
+import Link from 'next/link';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { TableFrame } from '@/components/back-office/TableFrame';
+import { AdjustStockDialog } from '@/components/back-office-stock/AdjustStockDialog';
+import { StockItemBatches } from '@/components/back-office-stock/StockItemBatches';
+import { StockPager } from '@/components/back-office-stock/StockPager';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ErrorState } from '@/components/common/ErrorState';
+import { LoadingState } from '@/components/common/LoadingState';
 import { StorageChip } from '@/components/inventory/StorageChip';
+import { Button } from '@/components/ui/button';
 import { formatDateOrDash, formatQuantity } from '@/lib/format/inventory';
 import type { StockSummary } from '@/lib/api/inventory-stock';
 
+const TH = 'px-4 py-3 text-[13px] font-semibold text-ink-muted';
+const NUMERIC = 'px-4 py-2.5 text-right tabular-nums';
+
+/** One item plus, once first opened, its batch matrix in a row beneath it. */
+function StockRow({
+  row,
+  onAdjust,
+}: {
+  row: StockSummary;
+  onAdjust: (row: StockSummary, trigger: HTMLElement) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  // The batch query starts on the FIRST expand and the row stays mounted (hidden) after a collapse,
+  // so re-opening it never refetches on its own.
+  const [opened, setOpened] = React.useState(false);
+  const detailId = `stock-batches-${row.skuId}`;
+  return (
+    <>
+      <tr className="border-t border-surface-sunken align-top">
+        <th scope="row" className="px-4 py-2.5 text-left font-normal">
+          <div className="flex items-start gap-1">
+            <button
+              type="button"
+              aria-expanded={open}
+              aria-controls={detailId}
+              aria-label={`Batches of ${row.displayName}`}
+              onClick={() => {
+                setOpen((current) => !current);
+                setOpened(true);
+              }}
+              className="mt-0.5 inline-flex h-8 w-8 flex-none items-center justify-center rounded-[var(--radius-sm)] text-ink-muted hover:bg-surface-sunken"
+            >
+              {open ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
+            </button>
+            <div className="min-w-0">
+              <Link
+                href={`/staff/inventory/stock/${row.skuId}`}
+                className="font-semibold text-ink no-underline hover:underline"
+              >
+                {row.displayName}
+              </Link>
+              <div className="text-xs text-ink-muted">
+                {row.skuCode}
+                {row.storage && (
+                  <span className="ml-2 inline-block align-middle">
+                    <StorageChip storage={row.storage} />
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </th>
+        <td className={NUMERIC}>{formatQuantity(row.onHand, row.stockUnit)}</td>
+        <td className={NUMERIC}>{formatQuantity(row.reserved, row.stockUnit)}</td>
+        <td className={`${NUMERIC} font-semibold text-ink`}>{formatQuantity(row.sellable, row.stockUnit)}</td>
+        <td className="px-4 py-2.5">{formatDateOrDash(row.nextExpiresOn, 'No expiry date')}</td>
+        <td className="px-4 py-2.5 text-right">
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label={`Adjust ${row.displayName}`}
+            onClick={(event) => onAdjust(row, event.currentTarget)}
+          >
+            Adjust
+          </Button>
+        </td>
+      </tr>
+      {opened && (
+        <tr id={detailId} hidden={!open} className="bg-surface-page">
+          <td colSpan={6} className="px-4 pb-4 pt-1 sm:pl-14">
+            <StockItemBatches skuId={row.skuId} />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
 /**
- * `components/stock/StockTable.tsx` — HO-IMP-002 §11.4, US-IMP-06/08. One row per item: on hand,
- * reserved, USABLE, SELLABLE, held, expired and the next expiry — each the server's figure, each with
- * the item's unit (UI-8). Filters (text, location, class, below reorder point) live in the URL above
- * this table; a row opens the item's batch × location matrix.
+ * `components/stock/StockTable.tsx` — HO-IMP-002 §11.4, US-IMP-06/08, restyled by HO-P4 S4 (11.5.3).
+ * One row per item: Item (name + code), On hand, Reserved, Available (the server's `sellable`) and
+ * Next expiry — each the server's figure with the item's unit (UI-8) — and an "Adjust" action. A
+ * disclosure button on each row (`aria-expanded`) opens that item's batches, loaded on first
+ * expand. Filters live in the URL above this table; the name still opens the item's page (batch ×
+ * location matrix, FEFO preview, figures such as usable / held / expired). "Reorder at" and the
+ * batch "Received" / "Supplier" columns are not built: the API sends neither (BG-16).
  */
 export function StockTable({
   rows,
@@ -26,41 +117,50 @@ export function StockTable({
   isError: boolean;
   onRetry: () => void;
 }) {
+  const [adjusting, setAdjusting] = React.useState<StockSummary | null>(null);
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
+
+  if (isLoading) return <LoadingState variant="table" rows={Math.min(pageSize, 8)} />;
+  if (isError) return <ErrorState onRetry={onRetry} />;
+  if (!rows || rows.length === 0) {
+    return <EmptyState title="No stock matches" description="Receive goods, or clear the filters." />;
+  }
+
   return (
-    <DataTable
-      caption="Stock by item"
-      rows={rows}
-      getRowId={(row) => row.skuId}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={onRetry}
-      pagination={{ totalCount, pageSize }}
-      rowHref={(row) => `/staff/inventory/stock/${row.skuId}`}
-      emptyState={{ title: 'No stock matches', description: 'Receive goods, or clear the filters.' }}
-      columns={[
-        {
-          id: 'item',
-          header: 'Item',
-          cell: (row) => (
-            <span>
-              {row.displayName} <span className="font-normal text-ink-muted">— {row.skuCode}</span>
-            </span>
-          ),
-        },
-        { id: 'storage', header: 'Storage', cell: (row) => <StorageChip storage={row.storage} /> },
-        { id: 'onHand', header: 'On hand', cell: (row) => formatQuantity(row.onHand, row.stockUnit), cellClassName: 'tabular-nums' },
-        { id: 'reserved', header: 'Reserved', cell: (row) => formatQuantity(row.reserved, row.stockUnit), cellClassName: 'tabular-nums' },
-        { id: 'usable', header: 'Usable', cell: (row) => formatQuantity(row.usable, row.stockUnit), cellClassName: 'tabular-nums' },
-        {
-          id: 'sellable',
-          header: 'Sellable',
-          cell: (row) => <strong>{formatQuantity(row.sellable, row.stockUnit)}</strong>,
-          cellClassName: 'tabular-nums',
-        },
-        { id: 'held', header: 'Held', cell: (row) => formatQuantity(row.heldQuantity, row.stockUnit), cellClassName: 'tabular-nums' },
-        { id: 'expired', header: 'Expired', cell: (row) => formatQuantity(row.expiredQuantity, row.stockUnit), cellClassName: 'tabular-nums' },
-        { id: 'next', header: 'Next expiry', cell: (row) => formatDateOrDash(row.nextExpiresOn, 'No expiry date') },
-      ]}
-    />
+    <div className="flex flex-col gap-3">
+      <TableFrame label="Stock by item (scrolls horizontally)" minWidth={760}>
+        <table className="relative w-full border-collapse text-sm">
+          <caption className="sr-only">Stock by item</caption>
+          <thead>
+            <tr className="text-left">
+              <th scope="col" className={TH}>Item</th>
+              <th scope="col" className={`${TH} text-right`}>On hand</th>
+              <th scope="col" className={`${TH} text-right`}>Reserved</th>
+              <th scope="col" className={`${TH} text-right`}>Available</th>
+              <th scope="col" className={TH}>Next expiry</th>
+              <th scope="col" className={TH}>
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <StockRow
+                key={row.skuId}
+                row={row}
+                onAdjust={(target, trigger) => {
+                  returnFocusRef.current = trigger;
+                  setAdjusting(target);
+                }}
+              />
+            ))}
+          </tbody>
+        </table>
+      </TableFrame>
+      <StockPager totalCount={totalCount} pageSize={pageSize} />
+      {adjusting && (
+        <AdjustStockDialog row={adjusting} onClose={() => setAdjusting(null)} returnFocusRef={returnFocusRef} />
+      )}
+    </div>
   );
 }

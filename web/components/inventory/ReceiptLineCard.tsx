@@ -8,6 +8,7 @@ import { CheckboxField, SelectField, TextAreaField, TextField } from './fields';
 import { LocationSelect } from './LocationSelect';
 import { MoneyInput, QuantityInput } from './QuantityInput';
 import { REJECTION_REASONS } from './labels';
+import { formatQuantity } from '@/lib/format/inventory';
 
 export const RECEIPT_ID_PREFIX = 'receipt';
 
@@ -23,6 +24,7 @@ export function ReceiptLineCard({
   index,
   errors,
   locations,
+  expected,
   onChange,
   onRemove,
 }: {
@@ -30,6 +32,8 @@ export function ReceiptLineCard({
   index: number;
   errors: Record<string, string>;
   locations: StockLocation[] | undefined;
+  /** The chosen purchase order's outstanding quantity for this line (the server's string), if any. */
+  expected?: string;
   onChange: (patch: Partial<ReceiptDraftLine>) => void;
   onRemove: () => void;
 }) {
@@ -37,7 +41,7 @@ export function ReceiptLineCard({
   const rejecting = line.quantityRejected.trim() !== '' && !/^0*(\.0*)?$/.test(line.quantityRejected.trim());
 
   return (
-    <li className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-4" aria-label={`Line ${index + 1}: ${line.skuLabel}`}>
+    <li className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4 sm:p-5" aria-label={`Line ${index + 1}: ${line.skuLabel}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="break-words text-sm font-semibold text-ink">
@@ -49,15 +53,21 @@ export function ReceiptLineCard({
             </p>
           )}
         </div>
+        {expected !== undefined && (
+          <p className="text-sm text-ink-muted">
+            Expected <span className="font-semibold text-ink">{formatQuantity(expected, line.stockUnit)}</span>
+          </p>
+        )}
         <Button variant="ghost" size="sm" onClick={onRemove} aria-label={`Remove line ${index + 1}, ${line.skuLabel}`}>
           <Trash2 size={14} aria-hidden="true" />
           Remove
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <QuantityInput id={id('quantityAccepted')} label="Accepted" required value={line.quantityAccepted} stockUnit={line.stockUnit} allowsFractional={line.allowsFractional} error={errors.quantityAccepted} onValueChange={(v) => onChange({ quantityAccepted: v })} />
+        <QuantityInput id={id('quantityRejected')} label="Rejected" value={line.quantityRejected} stockUnit={line.stockUnit} allowsFractional={line.allowsFractional} error={errors.quantityRejected} onValueChange={(v) => onChange({ quantityRejected: v })} />
         <TextField id={id('lotNumber')} label="Lot number" required value={line.lotNumber} maxLength={60} error={errors.lotNumber} onChange={(e) => onChange({ lotNumber: e.target.value })} />
-        <TextField id={id('manufacturedOn')} label="Manufactured" type="date" value={line.manufacturedOn} error={errors.manufacturedOn} onChange={(e) => onChange({ manufacturedOn: e.target.value })} />
         <TextField
           id={id('expiresOn')}
           label="Expiry date"
@@ -68,8 +78,6 @@ export function ReceiptLineCard({
           error={errors.expiresOn}
           onChange={(e) => onChange({ expiresOn: e.target.value })}
         />
-        <QuantityInput id={id('quantityAccepted')} label="Accepted" required value={line.quantityAccepted} stockUnit={line.stockUnit} allowsFractional={line.allowsFractional} error={errors.quantityAccepted} onValueChange={(v) => onChange({ quantityAccepted: v })} />
-        <QuantityInput id={id('quantityRejected')} label="Rejected" value={line.quantityRejected} stockUnit={line.stockUnit} allowsFractional={line.allowsFractional} error={errors.quantityRejected} onValueChange={(v) => onChange({ quantityRejected: v })} />
         <LocationSelect id={id('locationId')} label="Location" required locations={locations} movement="Receipt" value={line.locationId} error={errors.locationId} onChange={(v) => onChange({ locationId: v })} />
       </div>
 
@@ -83,7 +91,8 @@ export function ReceiptLineCard({
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 border-t border-surface-sunken pt-3 sm:grid-cols-2 lg:grid-cols-4">
+        <TextField id={id('manufacturedOn')} label="Manufactured" type="date" value={line.manufacturedOn} error={errors.manufacturedOn} onChange={(e) => onChange({ manufacturedOn: e.target.value })} />
         {line.costFromPurchaseOrder ? (
           <MoneyInput id={id('unitCostAmount')} label="Unit cost" decimals={4} perUnit={line.stockUnit} currencyCode={line.unitCostCurrency} value={line.unitCostAmount} readOnly onValueChange={() => undefined} hint="From the purchase order." />
         ) : (

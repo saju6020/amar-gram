@@ -219,7 +219,7 @@ test('E-B1: plan a consignment, add documents, clear it, receive against it, all
   await expect(page.getByText('IP-E2E').first()).toBeVisible();
   await expect(page.getByText('bol-e2e.pdf')).toBeVisible();
   await expect(page.getByText('L-B1-1')).toBeVisible();
-  await page.getByRole('link', { name: 'Batches' }).click();
+  await page.getByRole('link', { name: 'Batches', exact: true }).click();
   await expect(page.getByText(/480\.0000.*\(landed\)/)).toBeVisible();
 });
 

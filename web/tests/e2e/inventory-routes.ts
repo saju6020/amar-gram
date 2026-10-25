@@ -11,7 +11,7 @@ export interface InventoryRoute {
 }
 
 export const INVENTORY_ROUTES: InventoryRoute[] = [
-  { path: '/staff/inventory', heading: /^inventory$/i },
+  { path: '/staff/inventory', heading: /^inventory & batches$/i },
   { path: '/staff/inventory/stock', heading: /^stock$/i },
   { path: `/staff/inventory/stock/${ids.foodSkuId}`, heading: /organic rice 5 kg/i },
   { path: '/staff/inventory/batches', heading: /^batches$/i },

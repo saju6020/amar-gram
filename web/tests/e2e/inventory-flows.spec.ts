@@ -80,7 +80,7 @@ test('E-D1: an adjustment above the limit waits for approval; the requester cann
 }) => {
   await page.goto('/staff/inventory/adjustments/new');
   await page.getByLabel(/^location/i).selectOption(ids.warehouseId);
-  await page.getByRole('radio', { name: /theft or loss/i }).check();
+  await page.getByRole('button', { name: /^theft or loss/i }).click();
   await page.getByLabel(/^note/i).fill('Pallet short at the monthly check');
   await pickSku(page, /or find an item/i, 'rice', /organic rice 5 kg/i);
   // 12 bags at 462.5 is above the approval limit; 10 would not be.
@@ -165,6 +165,25 @@ test('E-E1: an expiry alert is visible without looking for it, and the near-expi
   await expect(page.locator('main')).toContainText('expired 3 days ago');
   await expect(page.getByText(/total value at risk/i).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /export csv/i })).toBeVisible();
+});
+
+test('E10: expanding a stock row shows its batches, and Adjust opens the adjustment dialog for that item', async ({
+  page,
+}) => {
+  await page.goto('/staff/inventory/stock');
+  const toggle = page.getByRole('button', { name: /batches of organic rice 5 kg/i });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('link', { name: 'Lot L2409E' })).toBeVisible();
+  await page.getByRole('button', { name: /^adjust organic rice 5 kg$/i }).click();
+  const adjust = await dialog(page);
+  await expect(adjust).toContainText('Adjust stock · Organic rice 5 kg');
+  await expect(adjust.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
+  await adjust.getByRole('button', { name: /^theft or loss$/i }).click();
+  await expect(adjust.getByRole('button', { name: /^theft or loss$/i })).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 test('E-E2: a low-stock alert and a reorder suggestion lead to a pre-filled purchase order', async ({

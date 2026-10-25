@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { GoodsReceiptForm } from '@/components/inventory/GoodsReceiptForm';
-import { PageHeading } from '@/components/inventory/fields';
+import { ActionLink } from '@/components/back-office/ActionLink';
+import { PageHeader } from '@/components/back-office/PageHeader';
 import { linesFromPurchaseOrder } from '@/components/inventory/receiptModel';
 import { ApiForbiddenError } from '@/lib/api/client';
 import type { SkuLookup } from '@/lib/api/inventory-lookup';
@@ -48,9 +49,14 @@ function NewReceiptContent() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeading
+      <PageHeader
         title="Receive goods"
-        description="Scan or pick each item, enter the lot and dates, then post the receipt in one action."
+        description="Scan or pick each item, enter the lot and dates, then post the receipt in one action. Goods are received at the branch shown in the sidebar."
+        actions={
+          <ActionLink href="/staff/inventory/receipts" variant="outline">
+            All receipts
+          </ActionLink>
+        }
       />
       <GoodsReceiptForm
         staffAccountId={staffAccountId}

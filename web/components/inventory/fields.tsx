@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/back-office/PageHeader';
+import { Panel as BackOfficePanel } from '@/components/back-office/Panel';
 
 /**
  * `components/inventory/fields.tsx` — HO-IMP-002. The labelled inputs every Inventory and
@@ -204,6 +206,7 @@ export function Banner({
   );
 }
 
+/** The page heading block — HO-P4 S4 composes the back-office `PageHeader` (ADR-FE-180). */
 export function PageHeading({
   title,
   description,
@@ -213,18 +216,10 @@ export function PageHeading({
   description?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
-  return (
-    <div className="flex flex-wrap items-start justify-between gap-3">
-      <div className="min-w-0">
-        <h1 className="font-display text-xl font-semibold text-ink">{title}</h1>
-        {description && <p className="mt-1 max-w-2xl text-sm text-ink-muted">{description}</p>}
-      </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-    </div>
-  );
+  return <PageHeader title={title} description={description} actions={actions} />;
 }
 
-/** A bordered, titled group for a detail page. */
+/** A bordered, titled group for a detail page — the back-office `Panel` (white card, 16 px radius). */
 export function Panel({
   title,
   children,
@@ -238,23 +233,12 @@ export function Panel({
   className?: string;
   headingId?: string;
 }) {
-  return (
-    <section
-      aria-labelledby={headingId}
-      className={cn(
-        'min-w-0 rounded-[var(--radius-md)] border border-border bg-surface p-4',
-        className,
-      )}
-    >
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 id={headingId} className="text-sm font-bold uppercase tracking-wide text-ink-muted">
-          {title}
-        </h2>
-        {actions}
-      </div>
+  const panel = (
+    <BackOfficePanel title={title} titleId={headingId} actions={actions}>
       {children}
-    </section>
+    </BackOfficePanel>
   );
+  return className ? <div className={className}>{panel}</div> : panel;
 }
 
 /** Label/value pairs as a definition list (stacks on a phone). */

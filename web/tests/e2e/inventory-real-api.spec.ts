@@ -189,7 +189,7 @@ test('R-C2: a transfer writes both ends to the ledger', async ({ page }) => {
 test('R-D1: a small adjustment posts; a decimal quantity for a whole-only item is refused in words', async ({ page }) => {
   await page.goto('/staff/inventory/adjustments/new');
   await selectByText(page.getByLabel(/^location/i), /cold store/i);
-  await page.getByRole('radio', { name: /damaged|theft or loss|wastage/i }).first().check();
+  await page.getByRole('button', { name: /^(damaged|theft or loss|sampling)/i }).first().click();
   await page.getByLabel(/^note/i).fill('Tin dented while shelving');
   await pickSku(page, /or find an item/i, 'E2E Organic', /e2e organic rice/i);
   await selectByText(page.getByLabel(/^batch/i), new RegExp(coldStoreLot));
