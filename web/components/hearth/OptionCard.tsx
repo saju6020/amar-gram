@@ -51,7 +51,7 @@ export function OptionCard({
         disabled
           ? 'cursor-not-allowed border-border bg-surface-sunken'
           : checked
-            ? 'cursor-pointer border-accent ring-1 ring-accent'
+            ? 'cursor-pointer border-leaf bg-leaf-soft ring-1 ring-leaf'
             : 'cursor-pointer border-border hover:border-border-strong',
         className,
       )}
@@ -102,7 +102,7 @@ export function OptionCard({
         className={cn(
           'mt-0.5 size-6 flex-none border-2 border-border-strong bg-surface',
           type === 'radio' ? 'rounded-pill' : 'rounded-md',
-          checked && 'border-accent bg-accent shadow-[inset_0_0_0_4px_var(--surface)]',
+          checked && 'border-leaf bg-leaf shadow-[inset_0_0_0_4px_var(--surface)]',
         )}
       />
     </label>

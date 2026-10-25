@@ -7,7 +7,7 @@ import type { MergeCartResult } from '@/lib/api/cart';
 
 /**
  * `components/cart/CartMergeNotice.tsx` — HO-ORD-002 §11.1, US-ORD-01 AC1. After a guest cart was merged
- * on sign-in: *"We've added the items from your cart before you signed in."* plus any dropped lines by
+ * on sign-in: *"We've added the items from your basket before you signed in."* plus any dropped lines by
  * name and reason. Dismissible; **never auto-hides**.
  */
 export function CartMergeNotice({
@@ -22,7 +22,7 @@ export function CartMergeNotice({
       <Info size={18} aria-hidden="true" className="mt-px flex-none" />
       <div className="min-w-0 flex-1">
         <p className="m-0 font-bold">
-          We&rsquo;ve added the items from your cart before you signed in.
+          We&rsquo;ve added the items from your basket before you signed in.
         </p>
         {result.droppedLines.length > 0 && (
           <>

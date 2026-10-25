@@ -9,9 +9,9 @@ import { violation } from '../../../mocks/handlers/ordering/fixtures';
 import { CheckoutScreen } from '@/components/checkout/CheckoutScreen';
 import { ChangesPanel } from '@/components/checkout/ChangesPanel';
 import { DiscountCodeField } from '@/components/checkout/DiscountCodeField';
-import { PaymentStep } from '@/components/checkout/PaymentStep';
-import { ReviewStep } from '@/components/checkout/ReviewStep';
-import { SlotStep } from '@/components/checkout/SlotStep';
+import { PaymentSection } from '@/components/checkout/PaymentSection';
+import { OrderAside } from '@/components/checkout/OrderAside';
+import { DeliveryTimeSection } from '@/components/checkout/DeliveryTimeSection';
 import { OrderSummary } from '@/components/orders/OrderSummary';
 import type { CheckoutChange, CheckoutQuote, QuoteServiceLevel } from '@/lib/api/checkout';
 import type { Cart } from '@/lib/api/cart';
@@ -143,7 +143,7 @@ beforeEach(() => {
 const REVIEW_URL =
   '/checkout?step=review&fulfilment=Pickup&pickupBranchId=br1&paymentMethod=PayOnCollection';
 
-describe('SlotStep - U-B2', () => {
+describe('DeliveryTimeSection - U-B2, U27', () => {
   const standard: QuoteServiceLevel = {
     level: 'Standard',
     charge: money('60.00'),
@@ -167,7 +167,10 @@ describe('SlotStep - U-B2', () => {
   it('shows each level with the server charge and lead time, and the windows of the chosen level', async () => {
     const onSlot = vi.fn();
     render(
-      <SlotStep
+      <DeliveryTimeSection
+        fulfilment="Delivery"
+        ready
+        loading={false}
         levels={[standard, express]}
         selectedLevel="Express"
         onLevel={() => undefined}
@@ -175,8 +178,6 @@ describe('SlotStep - U-B2', () => {
         slotWindowStart={undefined}
         onSlot={onSlot}
         zone="Asia/Dhaka"
-        onContinue={() => undefined}
-        continueDisabledReason="Choose a delivery time to continue."
       />,
     );
     expect(screen.getByText(/Delivery in about 2 days/)).toBeInTheDocument();
@@ -189,15 +190,17 @@ describe('SlotStep - U-B2', () => {
     const windows = screen.getByRole('radiogroup', { name: 'Time window' });
     expect(within(windows).getByRole('radio', { name: '10:00–12:00' })).toBeInTheDocument();
     expect(within(windows).getByRole('radio', { name: '14:00–16:00' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
-    expect(screen.getByText('Choose a delivery time to continue.')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Delivery time' })).toBeInTheDocument();
     await userEvent.setup().click(within(windows).getByRole('radio', { name: '14:00–16:00' }));
     expect(onSlot).toHaveBeenCalledWith('2026-10-14', '14:00');
   });
 
-  it('a level without windows asks for no time choice', () => {
+  it('a level without windows asks for no time choice and says why', () => {
     render(
-      <SlotStep
+      <DeliveryTimeSection
+        fulfilment="Delivery"
+        ready
+        loading={false}
         levels={[standard]}
         selectedLevel="Standard"
         onLevel={() => undefined}
@@ -205,15 +208,32 @@ describe('SlotStep - U-B2', () => {
         slotWindowStart={undefined}
         onSlot={() => undefined}
         zone="Asia/Dhaka"
-        onContinue={() => undefined}
-        continueDisabledReason={null}
       />,
     );
     expect(screen.queryByRole('radiogroup', { name: 'Time window' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
+    expect(screen.getByText(/no time windows to choose from/)).toBeInTheDocument();
   });
 
-  it('on the checkout screen the slot step is marked not needed when there are no windows', async () => {
+  it('collection needs no time; a delivery without a usable address says what is missing', () => {
+    const props = {
+      loading: false,
+      levels: [],
+      selectedLevel: null,
+      onLevel: () => undefined,
+      slotDate: undefined,
+      slotWindowStart: undefined,
+      onSlot: () => undefined,
+      zone: 'Asia/Dhaka',
+    };
+    const { rerender } = render(
+      <DeliveryTimeSection fulfilment="Pickup" ready={false} {...props} />,
+    );
+    expect(screen.getByText(/Not needed for collection/)).toBeInTheDocument();
+    rerender(<DeliveryTimeSection fulfilment="Delivery" ready={false} {...props} />);
+    expect(screen.getByText(/Choose an address we can deliver to/)).toBeInTheDocument();
+  });
+
+  it('on the checkout screen, payment stays reachable and Place order is not held up by a level with no windows', async () => {
     serveCheckout(() =>
       quote({
         delivery: {
@@ -246,13 +266,16 @@ describe('SlotStep - U-B2', () => {
         }),
       ),
     );
-    setCheckoutUrl('/checkout?step=payment&fulfilment=Delivery&addressId=a1');
+    setCheckoutUrl('/checkout?fulfilment=Delivery&addressId=a1&paymentMethod=PayOnCollection');
     renderWithClient(<CheckoutScreen />);
-    const steps = await screen.findByRole('list', { name: 'Checkout steps' });
-    // The slot step is skipped: its pill says why and carries the server's lead time.
-    const skipped = await within(steps).findByText(/Standard.*Delivery in about 2 days/);
-    expect(skipped.closest('li')).toHaveAttribute('data-status', 'skipped');
-    expect(skipped.closest('li')).toHaveTextContent('Delivery time');
+    const time = await screen.findByRole('region', { name: 'Delivery time' });
+    // The level has no windows: the section carries the server's lead time and says nothing is to be chosen.
+    expect(await within(time).findByText(/Delivery in about 2 days/)).toBeInTheDocument();
+    expect(within(time).getByText(/no time windows to choose from/)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Payment' })).toBeInTheDocument();
+    // No "choose a delivery time" reason is listed for it.
+    await screen.findByRole('button', { name: /^Place order/ });
+    expect(screen.queryByText('Choose a delivery time.')).not.toBeInTheDocument();
   });
 });
 
@@ -269,9 +292,10 @@ describe('Checkout has no card input - U-B4', () => {
     );
   });
 
-  it('PaymentStep renders exactly the options it is given, disabled ones with the server message', () => {
+  it('PaymentSection renders exactly the options it is given, disabled ones with the server message', () => {
     render(
-      <PaymentStep
+      <PaymentSection
+        loading={false}
         options={[
           {
             method: 'CashOnDelivery',
@@ -283,8 +307,6 @@ describe('Checkout has no card input - U-B4', () => {
         ]}
         selected={undefined}
         onSelect={() => undefined}
-        onContinue={() => undefined}
-        continueDisabledReason="Choose how you will pay to continue."
       />,
     );
     expect(screen.getAllByRole('radio')).toHaveLength(2);
@@ -293,6 +315,27 @@ describe('Checkout has no card input - U-B4', () => {
       screen.getByText('Cash on delivery is available for orders up to BDT 5,000.00'),
     ).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Bank transfer/ })).toBeEnabled();
+  });
+
+  it('U28: a chosen bank transfer shows the option’s own server message as a notice', () => {
+    const options = [
+      {
+        method: 'BankTransfer' as const,
+        available: true,
+        unavailableReason: null,
+        message: 'We dispatch once a staff member confirms the transfer.',
+      },
+    ];
+    const { rerender } = render(
+      <PaymentSection loading={false} options={options} selected={undefined} onSelect={() => undefined} />,
+    );
+    expect(screen.queryByText(/staff member confirms the transfer/)).not.toBeInTheDocument();
+    rerender(
+      <PaymentSection loading={false} options={options} selected="BankTransfer" onSelect={() => undefined} />,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'We dispatch once a staff member confirms the transfer.',
+    );
   });
 });
 
@@ -351,6 +394,7 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
       quote: quote({ changes: [change] }),
       fulfilment: 'Pickup',
       settling: false,
+      choiceReasons: [],
       changesPanel: null,
       policiesPanel: null,
       discountField: null,
@@ -360,20 +404,21 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
       placeError: null,
       onPlace: () => undefined,
     };
-    const { rerender } = render(<ReviewStep {...base} acknowledged={false} />);
+    const { rerender } = render(<OrderAside {...base} acknowledged={false} />);
     const button = screen.getByRole('button', { name: /^Place order/ });
     expect(button).toBeDisabled();
     expect(screen.getByText(/Tick .I.ve reviewed these changes\./)).toBeInTheDocument();
-    rerender(<ReviewStep {...base} acknowledged />);
+    rerender(<OrderAside {...base} acknowledged />);
     expect(screen.getByRole('button', { name: /^Place order/ })).toBeEnabled();
   });
 
   it('Issues.md #9: when every line is left out, it says so instead of a summary of 0.00s', () => {
     render(
-      <ReviewStep
+      <OrderAside
         quote={quote({ lines: [], canPlace: false })}
         fulfilment="Pickup"
         settling={false}
+        choiceReasons={[]}
         changesPanel={null}
         policiesPanel={null}
         discountField={<p>discount field</p>}
@@ -386,9 +431,9 @@ describe('ChangesPanel acknowledgement - U-B6', () => {
       />,
     );
     expect(
-      screen.getByText(/None of the items in your cart can be ordered right now/),
+      screen.getByText(/None of the items in your basket can be ordered right now/),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to your cart' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Back to your basket' })).toHaveAttribute(
       'href',
       '/cart',
     );
@@ -476,8 +521,130 @@ describe('DiscountCodeField minimum spend - U-B8', () => {
   });
 });
 
+describe('Single-page checkout - U25, U26, U31', () => {
+  const address = {
+    id: 'a1',
+    label: 'Home',
+    line1: '1 Road',
+    line2: null,
+    city: 'Dhaka',
+    district: 'Dhaka',
+    postalCode: null,
+    deliveryInstructions: null,
+    isDefault: true,
+  };
+
+  it('U25: three numbered regions are on the page together beside the "Your basket" aside', async () => {
+    serveCheckout(() => quote());
+    server.use(
+      http.get('*/api/customers/me/addresses', () =>
+        HttpResponse.json({ addresses: [address], maxAddresses: 5 }),
+      ),
+    );
+    setCheckoutUrl('/checkout');
+    renderWithClient(<CheckoutScreen />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Checkout' })).toBeInTheDocument();
+    const names = ['Deliver to', 'Delivery time', 'Payment'];
+    const regions = names.map((name) => screen.getByRole('region', { name }));
+    regions.forEach((region, index) => {
+      expect(region.querySelector('h2')).toHaveTextContent(new RegExp(`^${index + 1}${names[index]}$`));
+    });
+    await screen.findByRole('button', { name: /^Place order/ });
+    expect(screen.getByRole('complementary', { name: 'Your basket' })).toBeInTheDocument();
+    // The Delivery / Pickup choice, and the saved addresses as a radio group of cards.
+    expect(screen.getByRole('radio', { name: /Delivery/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Collect from a branch/ })).not.toBeChecked();
+    const group = screen.getByRole('radiogroup', { name: 'Delivery address' });
+    expect(await within(group).findByRole('radio', { name: /Home/ })).toBeChecked();
+    // No stepper, no Continue buttons, no rider note.
+    expect(screen.queryByRole('list', { name: 'Checkout steps' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Continue/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/note for the rider/i)).not.toBeInTheDocument();
+  });
+
+  it('U26: an address outside every zone preselects collection and says why', async () => {
+    serveCheckout(() =>
+      quote({
+        delivery: {
+          available: false,
+          unavailableReason: 'AddressOutsideServedZones',
+          zoneId: null,
+          zoneName: null,
+          serviceLevels: [],
+        },
+      }),
+    );
+    server.use(
+      http.get('*/api/customers/me/addresses', () =>
+        HttpResponse.json({ addresses: [address], maxAddresses: 5 }),
+      ),
+    );
+    setCheckoutUrl('/checkout');
+    renderWithClient(<CheckoutScreen />);
+    expect(
+      await screen.findByText(/We don.t deliver to Dhaka yet\. You can collect your order instead\./),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: /Collect from a branch/ })).toBeChecked(),
+    );
+    expect(window.location.search).toMatch(/fulfilment=Pickup/);
+  });
+
+  it('U31: a stale ?step= is ignored: every section renders with the URL’s other choices applied', async () => {
+    const urls = serveCheckout(() => quote());
+    setCheckoutUrl(
+      '/checkout?step=review&fulfilment=Pickup&pickupBranchId=br1&paymentMethod=PayOnCollection',
+    );
+    renderWithClient(<CheckoutScreen />);
+    await screen.findByRole('button', { name: /^Place order/ });
+    ['Deliver to', 'Delivery time', 'Payment'].forEach((name) =>
+      expect(screen.getByRole('region', { name })).toBeInTheDocument(),
+    );
+    expect(screen.getByRole('radio', { name: /Collect from a branch/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Main shop/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /Pay when you collect/ })).toBeChecked();
+    expect(urls.at(-1)!.searchParams.get('step')).toBeNull();
+  });
+
+  it('Place order is held back, with the reasons listed, until payment is chosen', async () => {
+    serveCheckout(() => quote());
+    setCheckoutUrl('/checkout?fulfilment=Pickup&pickupBranchId=br1');
+    const user = userEvent.setup();
+    renderWithClient(<CheckoutScreen />);
+    const place = await screen.findByRole('button', { name: /^Place order/ });
+    expect(place).toBeDisabled();
+    expect(screen.getByText('Choose how you will pay.')).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: /Pay when you collect/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Place order/ })).toBeEnabled());
+  });
+
+  it('U29: with changes in the quote, Place order waits for the acknowledgement', async () => {
+    serveCheckout(() =>
+      quote({
+        changes: [
+          {
+            kind: 'PriceIncreased',
+            lineRef: 'q1',
+            productName: 'Organic Rolled Oats',
+            before: '2400.00',
+            after: '2450.00',
+            message: 'Organic Rolled Oats 2 kg now costs 2,450.00.',
+          },
+        ],
+      }),
+    );
+    setCheckoutUrl(REVIEW_URL);
+    const user = userEvent.setup();
+    renderWithClient(<CheckoutScreen />);
+    const place = await screen.findByRole('button', { name: /^Place order/ });
+    expect(place).toBeDisabled();
+    await user.click(screen.getByRole('checkbox', { name: /reviewed these changes/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Place order/ })).toBeEnabled());
+  });
+});
+
 describe('Checkout choices live in the URL - U-B10', () => {
-  it('a reload on the review URL restores every choice: the quote is asked with them and the review step is open', async () => {
+  it('a reload on the review URL restores every choice: the quote is asked with them and the choices are shown', async () => {
     const urls = serveCheckout(() =>
       quote({ discount: { code: 'WELCOME', applied: true, reasonCode: null, message: null } }),
     );
@@ -490,14 +657,17 @@ describe('Checkout choices live in the URL - U-B10', () => {
     expect(asked.get('paymentMethod')).toBe('PayOnCollection');
     expect(asked.get('discountCode')).toBe('WELCOME');
     expect(screen.getByText('WELCOME')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Collect from a branch/ })).toBeChecked();
     expect(
-      within(screen.getByRole('region', { name: 'Collection' })).getByText(
-        /Collect from Main shop/,
-      ),
-    ).toBeInTheDocument();
+      within(screen.getByRole('region', { name: 'Deliver to' })).getByRole('radio', {
+        name: /Main shop/,
+      }),
+    ).toBeChecked();
     expect(
-      within(screen.getByRole('region', { name: 'Payment' })).getByText('Pay when you collect'),
-    ).toBeInTheDocument();
+      within(screen.getByRole('region', { name: 'Payment' })).getByRole('radio', {
+        name: /Pay when you collect/,
+      }),
+    ).toBeChecked();
   });
 });
 
@@ -729,18 +899,17 @@ describe('Placing an order - gate fixes', () => {
       ),
     );
     setCheckoutUrl(
-      '/checkout?step=payment&fulfilment=Delivery&addressId=a1&serviceLevel=Express&slotDate=2026-10-14&slotWindowStart=10:00',
+      '/checkout?fulfilment=Delivery&addressId=a1&serviceLevel=Express&slotDate=2026-10-14&slotWindowStart=10:00',
     );
     renderWithClient(<CheckoutScreen />);
-    const steps = await screen.findByRole('list', { name: 'Checkout steps' });
-    const summary = (await within(steps).findByText(/Express delivery/)).closest('li')!;
-    expect(summary).toHaveAttribute('data-status', 'done');
-    expect(summary).toHaveTextContent('Wed 14 Oct, 10:00–12:00 (Asia/Dhaka)');
-    expect(summary).not.toHaveTextContent('2026-10-14');
+    const time = await screen.findByRole('region', { name: 'Delivery time' });
+    const selected = await within(time).findByText(/^Selected:/);
+    expect(selected).toHaveTextContent('Selected: Wed 14 Oct, 10:00–12:00 (Asia/Dhaka)');
+    expect(selected).not.toHaveTextContent('2026-10-14');
   });
 });
 
-describe('Hearth checkout: greeting and the free-delivery card', () => {
+describe('Hearth checkout: title and the free-delivery card', () => {
   const address = {
     id: 'a1',
     label: 'Home',
@@ -763,7 +932,7 @@ describe('Hearth checkout: greeting and the free-delivery card', () => {
     slots: [],
   });
   const DELIVERY_REVIEW =
-    '/checkout?step=review&fulfilment=Delivery&addressId=a1&serviceLevel=Standard&paymentMethod=BankTransfer';
+    '/checkout?fulfilment=Delivery&addressId=a1&serviceLevel=Standard&paymentMethod=BankTransfer';
 
   function serveDelivery(level: QuoteServiceLevel) {
     serveCheckout(() =>
@@ -786,13 +955,11 @@ describe('Hearth checkout: greeting and the free-delivery card', () => {
     setCheckoutUrl(DELIVERY_REVIEW);
   }
 
-  it('greets the customer by first name and puts the quote total on Place order', async () => {
+  it('titles the page "Checkout" and puts the quote total on Place order', async () => {
     serveCheckout(() => quote());
     setCheckoutUrl(REVIEW_URL);
     renderWithClient(<CheckoutScreen />);
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Almost there, Sam' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Checkout' })).toBeInTheDocument();
     const place = await screen.findByRole('button', { name: /^Place order/ });
     expect(place).toHaveTextContent('Place order · ৳4,900.00');
   });
@@ -821,13 +988,28 @@ describe('Hearth checkout: greeting and the free-delivery card', () => {
     expect(screen.queryByText(/for free delivery/)).not.toBeInTheDocument();
   });
 
-  it('an earlier step can be re-opened from the strip under the pills', async () => {
+  it('U30: a double click on Place order places one order and lands on it', async () => {
+    let posts = 0;
     serveCheckout(() => quote());
-    setCheckoutUrl('/checkout?step=payment&fulfilment=Pickup&pickupBranchId=br1');
+    server.use(
+      http.post('*/api/customers/me/orders', async () => {
+        posts += 1;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return HttpResponse.json({
+          orderId: 'o2',
+          orderNumber: 'ORD-2',
+          status: 'Confirmed',
+          grandTotal: money('4900.00'),
+          paymentDueBy: null,
+          transferInstructions: null,
+        });
+      }),
+    );
+    setCheckoutUrl(REVIEW_URL);
     const user = userEvent.setup();
     renderWithClient(<CheckoutScreen />);
-    await screen.findByRole('heading', { level: 1, name: 'How would you like to pay?' });
-    await user.click(await screen.findByRole('button', { name: 'Change delivery or collection' }));
-    await waitFor(() => expect(window.location.search).toMatch(/step=fulfilment/));
+    await user.dblClick(await screen.findByRole('button', { name: /^Place order/ }));
+    await waitFor(() => expect(pushed).toEqual(['/portal/orders/o2?placed=1']));
+    expect(posts).toBe(1);
   });
 });
