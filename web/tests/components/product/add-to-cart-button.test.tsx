@@ -27,9 +27,10 @@ describe('AddToCartButton - U-A4', () => {
     );
     const user = userEvent.setup();
     renderWithClient(<AddToCartButton skuId="s" productName="Forest Honey" />);
-    await user.click(screen.getByRole('button', { name: 'Add to cart' }));
+    await user.click(screen.getByRole('button', { name: 'Add to basket' }));
     await waitFor(() => expect(body).toEqual({ skuId: 's', quantity: 1 }));
-    expect(await screen.findByText(/Added 1 × Forest Honey to your cart\./)).toBeInTheDocument();
+    expect(await screen.findByText(/Added 1 × Forest Honey to your basket\./)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View basket' })).toHaveAttribute('href', '/cart');
   });
 
   it('disabled: says why in text', () => {
@@ -41,7 +42,7 @@ describe('AddToCartButton - U-A4', () => {
         disabledReason="This variant is out of stock."
       />,
     );
-    expect(screen.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add to basket' })).toBeDisabled();
     expect(screen.getByText('This variant is out of stock.')).toBeInTheDocument();
   });
 });

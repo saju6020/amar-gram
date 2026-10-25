@@ -28,7 +28,7 @@ export interface ProductPurchaseProps {
   lang: string;
   /** The server-rendered heading block, laid out beside the gallery. */
   heading: React.ReactNode;
-  /** An override for the buy box action slot; by default the quantity / *Add to cart* / wishlist row (§3.3). */
+  /** An override for the buy box action slot; by default the quantity / *Add to basket* / wishlist row (§3.3). */
   actions?: React.ReactNode;
 }
 
@@ -55,6 +55,8 @@ export function ProductPurchase({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [skuId, setSkuId] = React.useState(initialSkuId);
+  // The quantity in the buy row; it only words the note beside the price ("2 × 1 kg"), never the price.
+  const [quantity, setQuantity] = React.useState(1);
   const urlSku = searchParams.get('sku');
   // The URL is the source of truth, including when `?sku=` goes away (Back to the first variant's
   // URL): then the default variant applies again (S8). On first render an absent `?sku=` keeps
@@ -122,12 +124,14 @@ export function ProductPurchase({
         images={[...sku.images, ...detail.images]}
         productName={detail.name}
         category={detail.category}
+        organic={!!detail.certifications?.includes('CertifiedOrganic')}
       />
       <div className="flex min-w-0 flex-col gap-5">
         {heading}
         <BuyBox
           sku={sku}
           pricesIncludeTax={detail.pricesIncludeTax}
+          quantity={quantity}
           variants={
             <VariantSelector skus={detail.skus} selectedSkuId={sku.skuId} onSelect={select} />
           }
@@ -137,6 +141,8 @@ export function ProductPurchase({
                 key={sku.skuId}
                 skuId={sku.skuId}
                 productName={detail.name}
+                skuLabel={sku.label}
+                onQuantityChange={setQuantity}
                 disabled={outOfStock || !sku.price}
                 disabledReason={
                   outOfStock ? 'This variant is out of stock.' : 'This variant has no price yet.'

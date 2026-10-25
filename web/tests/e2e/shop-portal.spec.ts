@@ -16,19 +16,18 @@ test.describe('wishlist and stock alerts (US-SHP-13)', () => {
       `/shop/products/${shopFixtureIds.multiVariantSlug}?sku=${shopFixtureIds.skuOats2kg}`,
     );
 
-    const buyBox = page.getByRole('region', { name: 'Price and availability' });
-    await buyBox.getByRole('button', { name: 'Save' }).click();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     // The label carries the state (no aria-pressed as well: it announced the state twice, S15).
-    const saved = buyBox.getByRole('button', { name: 'Saved' });
+    const saved = page.getByRole('button', { name: 'Saved', exact: true });
     await expect(saved).toBeVisible();
     await expect(saved).not.toHaveAttribute('aria-pressed');
 
     // An out-of-stock size whose alert WILL be delivered: names the channels.
     await page.getByRole('radio', { name: /4 kg/ }).check();
     // The seeded session already has a pending alert here; cancel it, then ask again.
-    await buyBox.getByRole('button', { name: 'Cancel alert' }).click();
-    await buyBox.getByRole('button', { name: /Tell me when it.s back/ }).click();
-    await expect(buyBox.getByRole('status')).toContainText(
+    await page.getByRole('button', { name: 'Cancel alert' }).click();
+    await page.getByRole('button', { name: /Tell me when it.s back/ }).click();
+    await expect(page.getByRole('status').filter({ hasText: /send one message/ })).toContainText(
       /We.ll send one message by in-app notification and SMS/,
     );
 

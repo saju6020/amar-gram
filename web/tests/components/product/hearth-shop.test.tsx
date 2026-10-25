@@ -33,15 +33,16 @@ function purchase(skuId: string) {
 }
 
 describe('Product page buy row — Hearth', () => {
-  it('has a pill quantity stepper, Add to cart and the wishlist button; the quantity is sent', async () => {
+  it('has a pill quantity stepper, Add to basket and the wishlist button; the quantity is sent', async () => {
     const user = userEvent.setup();
     purchase(shopFixtureIds.skuOats2kg);
     const quantity = screen.getByRole('spinbutton', { name: 'Quantity' });
     expect(screen.getAllByLabelText('Quantity')).toHaveLength(1);
-    await user.click(screen.getByRole('button', { name: 'One more' }));
-    await user.click(screen.getByRole('button', { name: 'One more' }));
+    // UI-6: each stepper button is named with the product.
+    await user.click(screen.getByRole('button', { name: 'One more Organic Rolled Oats' }));
+    await user.click(screen.getByRole('button', { name: 'One more Organic Rolled Oats' }));
     expect(quantity).toHaveValue(3);
-    expect(screen.getByRole('button', { name: 'One fewer' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'One less Organic Rolled Oats' })).toBeEnabled();
     // Direct entry works and is clamped to 1..max.
     await user.clear(quantity);
     await user.type(quantity, '5');
@@ -51,39 +52,38 @@ describe('Product page buy row — Hearth', () => {
     expect(quantity).toHaveValue(20);
     await user.clear(quantity);
     await user.type(quantity, '3');
-    await user.click(screen.getByRole('button', { name: /add to cart/i }));
-    expect(
-      await screen.findByText(/Added 3 × Organic Rolled Oats to your cart/),
-    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /add to basket/i }));
+    expect(await screen.findByText('Added 3 × 2 kg to your basket.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View basket' })).toHaveAttribute('href', '/cart');
     // The wishlist control is present (a guest gets the sign-in link).
     expect(await screen.findByRole('link', { name: 'Save' })).toBeInTheDocument();
   });
 
-  it('an out-of-stock size disables the stepper and Add to cart, with the reason written out', () => {
+  it('an out-of-stock size disables the stepper and Add to basket, with the reason written out', () => {
     purchase(shopFixtureIds.skuOats4kg);
     expect(screen.getByRole('spinbutton', { name: 'Quantity' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'One more' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'One fewer' })).toBeDisabled();
-    const add = screen.getByRole('button', { name: /add to cart/i });
+    expect(screen.getByRole('button', { name: 'One more Organic Rolled Oats' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'One less Organic Rolled Oats' })).toBeDisabled();
+    const add = screen.getByRole('button', { name: /add to basket/i });
     expect(add).toBeDisabled();
     expect(add).toHaveAccessibleDescription('This variant is out of stock.');
   });
 
   it('the size options are cards in one radio group with price and stock', () => {
     purchase(shopFixtureIds.skuOats2kg);
-    const group = screen.getByRole('group', { name: 'Choose a size' });
+    const group = screen.getByRole('group', { name: 'Pack size' });
     expect(within(group).getAllByRole('radio')).toHaveLength(3);
     expect(within(group).getByRole('radio', { name: /2 kg/ })).toBeChecked();
   });
 });
 
-describe('Often bought together', () => {
+describe('Goes well with (was Often bought together)', () => {
   it('renders nothing for an empty list', () => {
     const { container } = renderWithClient(<OftenBoughtTogether items={[]} />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('lists the items with a 44px Add button each, following the card rules', async () => {
+  it('lists the items as tiles with a 44px Add button each, following the card rules', async () => {
     const user = userEvent.setup();
     renderWithClient(
       <OftenBoughtTogether
@@ -97,13 +97,13 @@ describe('Often bought together', () => {
         ]}
       />,
     );
-    expect(screen.getByRole('heading', { name: 'Often bought together' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Goes well with' })).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: 'Add Organic Rolled Oats: choose options' }),
     );
     expect(push).toHaveBeenCalledWith('/shop/products/organic-rolled-oats');
-    const add = screen.getByRole('button', { name: 'Add Thai Jasmine Rice to cart' });
-    expect(add).toHaveClass('size-11');
+    const add = screen.getByRole('button', { name: 'Add Thai Jasmine Rice to basket' });
+    expect(add).toHaveClass('min-h-11');
     await user.click(add);
     expect(await screen.findByText(/Added Thai Jasmine Rice to your basket/)).toBeInTheDocument();
   });
