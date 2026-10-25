@@ -21,7 +21,7 @@ async function resetMock(page: import('@playwright/test').Page) {
 
 async function addFromProduct(page: import('@playwright/test').Page, path: string, name: RegExp) {
   await page.goto(path);
-  await page.getByRole('button', { name: 'Add to cart' }).click();
+  await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
   await expect(page.getByRole('status').filter({ hasText: name })).toBeVisible();
 }
 
@@ -29,7 +29,7 @@ async function startCheckoutDelivery(page: import('@playwright/test').Page) {
   await addAddress(page);
   await page.goto('/checkout');
   await expect(
-    page.getByRole('heading', { level: 1, name: /How should we get it to you/ }),
+    page.getByRole('heading', { level: 1, name: /^Checkout$/ }),
   ).toBeVisible();
 }
 
@@ -43,16 +43,16 @@ test.describe('cart (US-ORD-01)', () => {
 
     await signInAsCustomer(page);
     await page.goto('/cart');
-    await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your basket' })).toBeVisible();
     await expect(
-      page.getByText(/We.ve added the items from your cart before you signed in./),
+      page.getByText(/We.ve added the items from your basket before you signed in./),
     ).toBeVisible();
-    const items = page.getByRole('region', { name: 'Items in your cart' }).getByRole('listitem');
+    const items = page.getByRole('region', { name: 'Items in your basket' }).getByRole('listitem');
     await expect(items).toHaveCount(2);
 
     // Adding the same item again raises its quantity; it does not create a second line.
     await page.goto(oats);
-    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
     await expect(
       page.getByRole('status').filter({ hasText: /Added 1 × Organic Rolled Oats/ }),
     ).toBeVisible();
@@ -63,7 +63,7 @@ test.describe('cart (US-ORD-01)', () => {
     ).toHaveValue('2');
   });
 
-  test('cart: remove offers an Undo, and Checkout while signed out goes to sign-in with ?next', async ({
+  test('basket: remove offers an Undo, and Checkout while signed out goes to sign-in with ?next', async ({
     page,
   }) => {
     await resetMock(page);
@@ -74,7 +74,7 @@ test.describe('cart (US-ORD-01)', () => {
       .first()
       .click();
     await expect(
-      page.getByText(/Removed Organic Rolled Oats .* from your cart./).first(),
+      page.getByText(/Removed Organic Rolled Oats .* from your basket./).first(),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Undo' }).click();
     await expect(
@@ -92,19 +92,16 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
     await startCheckoutDelivery(page);
 
-    // Step 1: delivery to the saved address.
+    // Section 1: delivery to the saved address.
     await expect(page.getByLabel('Home')).toBeChecked();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Step 2: service level and a time window, in branch time.
+    // Section 2: service level and a time window, in branch time.
     await expect(page.getByRole('radio', { name: /Standard delivery/ })).toBeChecked();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Step 3: payment — three options, no card.
+    // Section 3: payment — three options, no card.
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
     await expect(page.getByRole('radio', { name: /Pay when you collect/ })).toBeDisabled();
     await expect(page.locator('input[autocomplete^="cc-"]')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Step 4: review — the six rows, then place with a double click.
+    // Aside: the six server rows, then place with a double click.
     const summary = page.getByRole('region', { name: 'Order summary' });
     for (const row of [
       'Items subtotal',
@@ -117,8 +114,7 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
       await expect(summary.getByText(row, { exact: true })).toBeVisible();
     }
     await page.getByRole('button', { name: 'Place order' }).dblclick();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
-    await expect(page.getByText('Pay the courier in cash when your order arrives.')).toBeVisible();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
 
     await page.goto('/portal/orders');
     // Seeded orders are Sam's too; exactly one new order was created (numbers from ORD-2026-000200).
@@ -134,11 +130,8 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
     await control(page, 'setPrice', ids.skuOats2kg, '3000.00');
     await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     const panel = page.getByRole('region', { name: 'What changed since you added these items' });
     await expect(panel.getByText(/The price of 'Organic Rolled Oats' has increased/)).toBeVisible();
@@ -147,7 +140,7 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await panel.getByLabel(/I.ve reviewed these changes./).click();
     await expect(place).toBeEnabled();
     await place.click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
   });
 
   test('E-B3: an address outside every zone offers collection instead, and pickup completes', async ({
@@ -163,14 +156,11 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     ).toBeVisible();
     await expect(page.getByRole('radio', { name: /Collect from a branch/ })).toBeChecked();
     await expect(page.getByRole('radio', { name: /Amar Gram Dhanmondi/ })).toBeChecked();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Slot step is not needed for collection; payment is next.
+    // Delivery time is not needed for collection.
     await page.getByRole('radio', { name: /Pay when you collect/ }).click();
     await expect(page.getByRole('radio', { name: /Cash on delivery/ })).toBeDisabled();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Place order' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
-    await expect(page.getByText(/Collect and pay at Amar Gram Dhanmondi\./)).toBeVisible();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
   });
 
   test('E-B4/E-C1: COD is disabled above the ceiling with its reason; bank transfer shows instructions', async ({
@@ -181,19 +171,16 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     // 4 × BDT 2,450 is above the BDT 5,000 COD ceiling.
     await page.goto(oats);
     await page.getByLabel('Quantity').fill('4');
-    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
     await expect(page.getByRole('status').filter({ hasText: /Added 4 ×/ })).toBeVisible();
     await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     const cod = page.getByRole('radio', { name: /Cash on delivery/ });
     await expect(cod).toBeDisabled();
     await expect(
       page.getByText(/Cash on delivery is available for orders up to BDT 5,000\.00/),
     ).toBeVisible();
     await page.getByRole('radio', { name: /Bank transfer/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Place order' }).click();
 
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
@@ -213,11 +200,8 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await signInAsCustomer(page);
     await addFromProduct(page, oats, /Added 1 × Organic Rolled Oats/);
     await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     await page.getByLabel('Discount code', { exact: true }).fill('NOPE');
     await page.getByRole('button', { name: 'Apply' }).click();

@@ -16,7 +16,7 @@ export interface FreeDeliveryProgressProps {
   className?: string;
 }
 
-/** Warm-soft free-delivery progress card. Renders ONLY when the server sent a threshold. */
+/** Dashed free-delivery note (the store design's basket note). Renders ONLY when the server sent a threshold. */
 export function FreeDeliveryProgress({
   remaining,
   percent,
@@ -28,9 +28,9 @@ export function FreeDeliveryProgress({
   const value =
     typeof percent === 'number' ? Math.min(100, Math.max(0, Math.round(percent))) : null;
   return (
-    <div className={cn('flex flex-col gap-2.5 rounded-card bg-warm-soft px-5 py-4', className)}>
+    <div className={cn('flex flex-col gap-2.5 rounded-2xl border-[1.5px] border-dashed border-border-strong bg-surface px-4 py-3.5', className)}>
       <p className="m-0 text-sm">
-        <strong className="text-warm-ink">Add {remaining} more</strong> for free delivery in{' '}
+        <strong className="text-ink">Add {remaining} more</strong> for free delivery in{' '}
         {zoneLabel}.
       </p>
       {value !== null && (

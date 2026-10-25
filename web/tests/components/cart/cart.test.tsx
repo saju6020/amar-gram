@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import type { ReactElement } from 'react';
 import { server } from '../../../mocks/server';
 import { violation } from '../../../mocks/handlers/ordering/fixtures';
 import { CartScreen } from '@/components/cart/CartScreen';
+import { Toaster } from '@/components/ui/toaster';
 import type { Cart, CartLine } from '@/lib/api/cart';
 
 vi.mock('next/navigation', () => import('../common/nav-mock'));
@@ -87,8 +88,9 @@ describe('CartScreen lines - HO-ORD-002 U-A1', () => {
     expect(screen.queryByRole('link', { name: /check ?out/i })).not.toBeInTheDocument();
     expect(screen.getByText('Disabled: Forest Honey is unavailable.')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Remove Forest Honey 1.5 kg from cart' }),
+      screen.getByRole('button', { name: 'Remove Forest Honey 1.5 kg from basket' }),
     ).toBeEnabled();
+    expect(screen.getByRole('heading', { level: 1, name: 'Your basket' })).toBeInTheDocument();
   });
 
   it('offers Checkout as a link once nothing is unavailable', async () => {
@@ -101,11 +103,53 @@ describe('CartScreen lines - HO-ORD-002 U-A1', () => {
   it('shows the empty state, and an error with a retry', async () => {
     serveCart([], { itemCount: 0, subtotal: money('0.00') });
     const { unmount } = renderWithClient(<CartScreen />);
-    expect(await screen.findByText('Your cart is empty.')).toBeInTheDocument();
+    expect(await screen.findByText('Your basket is empty.')).toBeInTheDocument();
     unmount();
     server.use(http.get('*/api/cart', () => HttpResponse.json({ title: 'x' }, { status: 500 })));
     renderWithClient(<CartScreen />);
-    expect(await screen.findByText("We couldn't load your cart.")).toBeInTheDocument();
+    expect(await screen.findByText("We couldn't load your basket.")).toBeInTheDocument();
+  });
+});
+
+describe('CartScreen summary - U24', () => {
+  it('shows the server subtotal and says delivery and total come at checkout; it works out nothing else', async () => {
+    serveCart([line(), line({ lineId: 'b', skuId: 's2', productName: 'Mustard Oil' })], {
+      subtotal: money('7350.00'),
+    });
+    renderWithClient(<CartScreen />);
+    const summary = await screen.findByRole('complementary', { name: 'Basket summary' });
+    expect(within(summary).getAllByText(/7,?350\.00/).length).toBeGreaterThan(0);
+    expect(
+      within(summary).getByText('Delivery and total are worked out at checkout.'),
+    ).toBeInTheDocument();
+    expect(within(summary).queryByText(/^Total$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/free delivery/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Delivery$/)).not.toBeInTheDocument();
+  });
+
+  it('remove offers an Undo that puts the line back', async () => {
+    let added: unknown;
+    server.use(
+      http.delete('*/api/cart/lines/l1', () => new HttpResponse(null, { status: 204 })),
+      http.post('*/api/cart/lines', async ({ request }) => {
+        added = await request.json();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    serveCart([line()]);
+    const user = userEvent.setup();
+    renderWithClient(
+      <>
+        <CartScreen />
+        <Toaster />
+      </>,
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Remove Organic Rolled Oats 2 kg from your basket' }),
+    );
+    // fireEvent: Radix toast's pointer handling needs APIs jsdom lacks.
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(added).toEqual({ skuId: 's1', quantity: 2 }));
   });
 });
 
