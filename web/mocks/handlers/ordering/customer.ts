@@ -592,7 +592,9 @@ export const customerOrderingHandlers: HttpHandler[] = [
     const replay = db.idempotency[key];
     if (replay) return HttpResponse.json(replay.body as object, { status: replay.status });
     const order = mine(params.orderId);
-    if (!order) return notFound();
+    // Not one of this mock's orders: return nothing so MSW tries the next handler for the route (the
+    // portal mock owns the dashboard's fixture orders, HO-P3 TEST gate E13/E14). The last one answers 404.
+    if (!order) return;
     const unavailable: Array<{ productName: string; reason: string }> = [];
     let added = 0;
     for (const l of order.lines) {

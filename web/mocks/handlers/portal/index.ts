@@ -99,9 +99,11 @@ export const portalAreaHandlers: HttpHandler[] = [
 ];
 
 /**
- * Re-order scenario answers for the portal's own Vitest suite ONLY (`tests/components/portal/reorder.test.tsx`
- * calls `server.use(...portalReorderFixtureHandlers)`). Not registered in `mocks/handlers/index.ts`: the app's mock
- * re-order is HO-ORD-002's (`mocks/handlers/ordering/customer.ts`) -- POR backlog 31, deduped at merge 2026-10-13.
+ * Re-order scenario answers for the portal's fixture orders. The portal's Vitest suite puts them first
+ * (`tests/components/portal/reorder.test.tsx` calls `server.use(...portalReorderFixtureHandlers)`). In the app they
+ * are only a fallback: HO-ORD-002's handler (`mocks/handlers/ordering/customer.ts`) answers its own orders and returns
+ * nothing for any other id, so the dashboard's fixture orders reach this one (HO-P3 TEST gate E13/E14; before, the
+ * 2026-10-13 dedupe left them answered 404).
  */
 export const portalReorderFixtureHandlers: HttpHandler[] = [
   http.post('*/api/customers/me/orders/:orderId/reorder', ({ params, request }) => {
@@ -143,5 +145,8 @@ export const portalReorderFixtureHandlers: HttpHandler[] = [
       : new HttpResponse(null, { status: answer.status });
   }),
 ];
+
+// After the ordering mock in `mocks/handlers/index.ts`, so it only sees ids that mock does not own.
+portalAreaHandlers.push(...portalReorderFixtureHandlers);
 
 export { portalIds, reorderResults } from './fixtures';
