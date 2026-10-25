@@ -101,6 +101,71 @@ public sealed class GetGoodsReceiptQueryHandler(AmarGramDbContext db, ISkuDirect
     }
 }
 
+/// <summary>HO-P4 BG-18 -- the owner's open drafts. Another staff member's draft is never returned.</summary>
+public sealed class GetGoodsReceiptDraftsQueryHandler(AmarGramDbContext db)
+    : IQueryHandlerAsync<GetGoodsReceiptDraftsQuery, IReadOnlyList<GoodsReceiptDraftSummaryViewModel>>
+{
+    public async Task<QueryResponse<IReadOnlyList<GoodsReceiptDraftSummaryViewModel>>> HandleAsync(GetGoodsReceiptDraftsQuery query)
+    {
+        var open = db.GoodsReceiptDrafts.AsNoTracking().Where(d => d.OwnerId == query.OwnerId && d.DiscardedOn == null && d.PostedGoodsReceiptId == null);
+        if (query.BranchId is { } branchId) open = open.Where(d => d.BranchId == branchId);
+
+        var rows = await open.OrderByDescending(d => d.LastUpdatedDate).Take(InventoryRules.MaxGoodsReceiptDraftsPerStaff)
+            .Select(d => new { d.Id, d.BranchId, d.SupplierId, d.PurchaseOrderId, d.ConsignmentId, d.DeliveryReference, LineCount = d.Lines.Count, d.Version, d.LastUpdatedDate })
+            .ToListAsync();
+
+        var branchIds = rows.Select(r => r.BranchId).Distinct().ToList();
+        var supplierIds = rows.Where(r => r.SupplierId != null).Select(r => r.SupplierId!.Value).Distinct().ToList();
+        var branches = await db.Branches.AsNoTracking().Where(b => branchIds.Contains(b.Id)).Select(b => new { b.Id, b.Name }).ToDictionaryAsync(b => b.Id, b => b.Name);
+        var suppliers = await db.Suppliers.AsNoTracking().Where(s => supplierIds.Contains(s.Id)).Select(s => new { s.Id, s.Name }).ToDictionaryAsync(s => s.Id, s => s.Name);
+
+        IReadOnlyList<GoodsReceiptDraftSummaryViewModel> items = rows.Select(r => new GoodsReceiptDraftSummaryViewModel(
+            r.Id, r.BranchId, branches.GetValueOrDefault(r.BranchId), r.SupplierId, r.SupplierId is { } s ? suppliers.GetValueOrDefault(s) : null, r.PurchaseOrderId,
+            r.ConsignmentId, r.DeliveryReference, r.LineCount, r.Version, new DateTimeOffset(DateTime.SpecifyKind(r.LastUpdatedDate, DateTimeKind.Utc)))).ToList();
+
+        return new QueryResponse<IReadOnlyList<GoodsReceiptDraftSummaryViewModel>> { Result = items };
+    }
+}
+
+/// <summary>HO-P4 BG-18 -- one open draft of the owner, with its lines and the item names for display (404 for anyone else's or a closed one).</summary>
+public sealed class GetGoodsReceiptDraftQueryHandler(AmarGramDbContext db, ISkuDirectory skus)
+    : IQueryHandlerAsync<GetGoodsReceiptDraftQuery, GoodsReceiptDraftViewModel?>
+{
+    public async Task<QueryResponse<GoodsReceiptDraftViewModel?>> HandleAsync(GetGoodsReceiptDraftQuery query)
+    {
+        var draft = await db.GoodsReceiptDrafts.AsNoTracking()
+            .Where(d => d.Id == query.DraftId && d.OwnerId == query.OwnerId && d.DiscardedOn == null && d.PostedGoodsReceiptId == null)
+            .Select(d => new
+            {
+                d.Id, d.BranchId, d.SupplierId, d.PurchaseOrderId, d.ConsignmentId, d.DeliveryReference, d.ReceivedOn, d.Note, d.Version, d.LastUpdatedDate,
+                Lines = d.Lines.OrderBy(l => l.SortOrder).Select(l => new
+                {
+                    l.SkuId, l.PurchaseOrderLineId, l.LotNumber, l.ManufacturedOn, l.ExpiresOn, l.QuantityAccepted, l.QuantityRejected, l.RejectionReason,
+                    l.RejectionNote, l.LocationId, l.HoldForInspection, l.UnitCostAmount, l.UnitCostCurrency, l.ExchangeRateToBase
+                }).ToList()
+            })
+            .FirstOrDefaultAsync();
+
+        if (draft is null) return new QueryResponse<GoodsReceiptDraftViewModel?> { Result = null };
+
+        var branchName = await db.Branches.AsNoTracking().Where(b => b.Id == draft.BranchId).Select(b => b.Name).FirstOrDefaultAsync();
+        var profiles = (await skus.GetManyAsync(draft.Lines.Select(l => l.SkuId).Distinct().ToList(), CancellationToken.None)).ToDictionary(s => s.SkuId);
+
+        var lines = draft.Lines.Select(l => new GoodsReceiptDraftLineViewModel(
+            l.SkuId, profiles.GetValueOrDefault(l.SkuId)?.SkuCode, profiles.GetValueOrDefault(l.SkuId)?.DisplayName, l.PurchaseOrderLineId, l.LotNumber, l.ManufacturedOn,
+            l.ExpiresOn, InventoryViewFormat.Quantity(l.QuantityAccepted), InventoryViewFormat.Quantity(l.QuantityRejected), l.RejectionReason, l.RejectionNote,
+            l.LocationId, l.HoldForInspection, l.UnitCostAmount?.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture), l.UnitCostCurrency,
+            l.ExchangeRateToBase?.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture))).ToList();
+
+        return new QueryResponse<GoodsReceiptDraftViewModel?>
+        {
+            Result = new GoodsReceiptDraftViewModel(
+                draft.Id, draft.BranchId, branchName, draft.SupplierId, draft.PurchaseOrderId, draft.ConsignmentId, draft.DeliveryReference, draft.ReceivedOn, draft.Note,
+                draft.Version, new DateTimeOffset(DateTime.SpecifyKind(draft.LastUpdatedDate, DateTimeKind.Utc)), lines)
+        };
+    }
+}
+
 /// <summary>HO-IMP-001 §12.4 -- one row per SKU with stock in the branch. The positions are MATERIALISED and the buckets computed in C# with
 /// <see cref="BatchExpiryRules"/> against the branch's today: the read never has a second expiry rule of its own in LINQ (ADR-101).</summary>
 public sealed class GetStockSummaryQueryHandler(AmarGramDbContext db, ISkuDirectory skus, IInventoryClock clock, IBusinessSettings settings)
@@ -147,10 +212,14 @@ public sealed class GetStockSummaryQueryHandler(AmarGramDbContext db, ISkuDirect
             return new { SkuId = g.Key, OnHand = onHand, Reserved = reserved, Usable = usable, Sellable = sellable, Expired = expired, Held = held, Next = next };
         }).ToList();
 
+        // HO-P4 BG-16: the pairs are read once -- the "Reorder at" figure on every row and the belowReorderPoint filter share them.
+        var pairs = await ReorderReads.PairsAsync(db, clock, settings, query.BranchId, query.LocationId);
+        var pairsBySku = pairs.ToLookup(p => p.SkuId);
+
         if (query.BelowReorderPoint)
         {
             // US-IMP-12 -- a SKU with any pair (at the filtered location) whose usable stock is below its effective reorder point; one with nothing left at all is the lowest of them.
-            var low = (await ReorderReads.PairsAsync(db, clock, settings, query.BranchId, query.LocationId)).Where(p => p.Point > 0m && p.Usable < p.Point).Select(p => p.SkuId).ToHashSet();
+            var low = pairs.Where(p => p.Point > 0m && p.Usable < p.Point).Select(p => p.SkuId).ToHashSet();
             var present = summaries.Select(s => s.SkuId).ToHashSet();
             summaries = summaries.Where(s => low.Contains(s.SkuId))
                 .Concat(low.Where(id => !present.Contains(id)).Select(id => new { SkuId = id, OnHand = 0m, Reserved = 0m, Usable = 0m, Sellable = 0m, Expired = 0m, Held = 0m, Next = (DateOnly?)null })).ToList();
@@ -165,10 +234,15 @@ public sealed class GetStockSummaryQueryHandler(AmarGramDbContext db, ISkuDirect
         var items = page.Select(s =>
         {
             var p = profiles[s.SkuId];
+            var skuPairs = pairsBySku[s.SkuId].ToList();
+            var explicitPairs = skuPairs.Where(x => !x.IsDefaulted).ToList();
+            // Explicit policies add up; with none, the default point counts once (it is one rule, not one per location the SKU happens to sit in).
+            var level = explicitPairs.Count > 0 ? explicitPairs.Sum(x => x.Point) : skuPairs.Select(x => x.Point).DefaultIfEmpty(0m).Max();
             return new StockSummaryViewModel(
                 s.SkuId, p.SkuCode, p.DisplayName, p.StockUnit, p.StockClass.DisplayName, InventoryViewFormat.Quantity(s.OnHand), InventoryViewFormat.Quantity(s.Reserved),
                 InventoryViewFormat.Quantity(s.Usable), InventoryViewFormat.Quantity(s.Sellable), InventoryViewFormat.Quantity(s.Expired), InventoryViewFormat.Quantity(s.Held),
-                s.Next, storage.GetValueOrDefault(p.ProductId));
+                s.Next, storage.GetValueOrDefault(p.ProductId),
+                InventoryViewFormat.Quantity(level), explicitPairs.Count == 0, skuPairs.Any(x => x.Point > 0m && x.Usable < x.Point));
         }).ToList();
 
         return new QueryResponse<PagedResult<StockSummaryViewModel>>
@@ -190,8 +264,12 @@ public sealed class GetSkuStockMatrixQueryHandler(AmarGramDbContext db, ISkuDire
 
         var batches = await db.Batches.AsNoTracking()
             .Where(b => b.SkuId == query.SkuId && b.BranchId == query.BranchId)
-            .Select(b => new { b.Id, b.LotNumber, b.ExpiresOn, b.Status, b.ReceivedOn })
+            .Select(b => new { b.Id, b.LotNumber, b.ExpiresOn, b.Status, b.ReceivedOn, b.SupplierId })
             .ToListAsync();
+
+        // HO-P4 BG-16: the supplier's name, one read for the SKU's batches.
+        var supplierIds = batches.Where(b => b.SupplierId != null).Select(b => b.SupplierId!.Value).Distinct().ToList();
+        var supplierNames = await db.Suppliers.AsNoTracking().Where(s => supplierIds.Contains(s.Id)).Select(s => new { s.Id, s.Name }).ToDictionaryAsync(s => s.Id, s => s.Name);
 
         var batchIds = batches.Select(b => b.Id).ToList();
         var positions = await (
@@ -207,7 +285,8 @@ public sealed class GetSkuStockMatrixQueryHandler(AmarGramDbContext db, ISkuDire
                 b.Id, b.LotNumber, b.ExpiresOn, BatchExpiryRules.IsExpired(b.ExpiresOn, today), BatchExpiryRules.DaysToExpiry(b.ExpiresOn, today), b.Status.DisplayName,
                 positions.Where(p => p.BatchId == b.Id).OrderBy(p => p.Code)
                     .Select(p => new StockLocationQuantityViewModel(p.LocationId, p.Code, p.Kind.DisplayName, InventoryViewFormat.Quantity(p.OnHand), InventoryViewFormat.Quantity(p.Reserved)))
-                    .ToList()))
+                    .ToList(),
+                b.ReceivedOn, b.SupplierId, b.SupplierId is { } supplier ? supplierNames.GetValueOrDefault(supplier) : null))
             .Where(b => b.Locations.Count > 0 || b.Status != BatchStatus.WrittenOff.DisplayName)
             .ToList();
 

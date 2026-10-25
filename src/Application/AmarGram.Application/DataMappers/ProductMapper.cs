@@ -30,11 +30,12 @@ public static class ProductMapper
         command.Images.Select(i => new ProductImageInputDto(i.ImageId, i.SkuId, i.FileId, i.AltText, i.SortOrder, i.IsPrimary)).ToList();
 
     public static SkuPriceCreateDto ToDomainDto(this ScheduleSkuPriceCommand command, DateTimeOffset now) =>
-        new(command.SkuId, new Money(command.Amount, command.CurrencyCode), command.EffectiveFrom, command.UserContext.UserId, now, command.UserContext, command.CorrelationId);
+        new(command.SkuId, new Money(command.Amount, command.CurrencyCode), command.EffectiveFrom, command.UserContext.UserId, now, command.UserContext, command.CorrelationId, command.CompareAtAmount);
 
     public static FoodDetails ToDomainDto(this SetFoodDetailsCommand command) =>
         new(command.IngredientList, command.StorageInstructions, command.ShelfLife, command.NetWeight,
-            command.Allergens, command.OrganicCertifier, command.OrganicCertificateNumber);
+            command.Allergens, command.OrganicCertifier, command.OrganicCertificateNumber,
+            command.OrganicCertificateExpiresOn, command.OrganicCertificateFileId);
 
     public static SourcingOriginCreateDto ToDomainDto(this CreateSourcingOriginCommand command) =>
         new(command.CountryCode, command.SourcingNotes, command.IsFeatured, command.SortOrder, command.UserContext, command.CorrelationId);

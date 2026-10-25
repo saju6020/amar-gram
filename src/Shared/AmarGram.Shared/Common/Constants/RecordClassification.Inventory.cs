@@ -32,6 +32,10 @@ public static partial class RecordClassification
 
         new TableClassification("inventory", "goods_receipt", RecordClass.Financial, HardDeletePolicy.Forbidden, "D-9: goods received against a purchase order; immutable (ADR-105)"),
         new TableClassification("inventory", "goods_receipt_line", RecordClass.Financial, HardDeletePolicy.Forbidden, "D-9: goods received against a purchase order; immutable (ADR-105)"),
+        // HO-P4 BG-18: a staff member's autosaved receiving form -- a workspace, not a record of stock. Replaced on every save; a closed draft keeps a
+        // tombstone row with its content cleared (the platform repository has no delete).
+        new TableClassification("inventory", "goods_receipt_draft", RecordClass.CurrentState, HardDeletePolicy.AggregateOnly, "HO-P4 BG-18 -- the owner's working copy of a receiving form; closed drafts keep an empty tombstone"),
+        new TableClassification("inventory", "goods_receipt_draft_line", RecordClass.CurrentState, HardDeletePolicy.AggregateOnly, "HO-P4 BG-18 -- GoodsReceiptDraftAggregate.Save replaces the lines on every autosave"),
         new TableClassification("inventory", "batch", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-IMP-001 §8.6 -- recall traceability; written off, never deleted"),
         new TableClassification("inventory", "batch_status_change", RecordClass.Operational, HardDeletePolicy.Forbidden, "HO-IMP-001 §8.6.1 -- one row per transition, never trimmed"),
 

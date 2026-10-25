@@ -11,4 +11,6 @@ public sealed class FilePurpose(int value, string displayName) : Enumeration(val
 {
     public static readonly FilePurpose ProductImage = new(4, nameof(ProductImage));
     public static readonly FilePurpose ReportExport = new(7, nameof(ReportExport));
+    /// <summary>HO-P4 BG-14 -- a scanned organic certificate attached to a food product's details.</summary>
+    public static readonly FilePurpose OrganicCertificate = new(8, nameof(OrganicCertificate));
 }

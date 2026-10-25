@@ -17,7 +17,11 @@ public sealed record InventoryAlertViewModel(
 public sealed record OpenAlertSummaryViewModel(int Total, IReadOnlyDictionary<string, int> ByKind);
 
 /// <summary>The navigation badge: how many alerts need a person, by kind. <c>Open</c> and <c>Acknowledged</c> alerts are both live; only <c>Open</c> ones are counted.</summary>
-public sealed record StockAlertSummaryViewModel(OpenAlertSummaryViewModel Open);
+/// <summary>HO-P4 BG-17 -- consignments of the branch expected within <c>WithinDays</c> days (today through today + WithinDays, the branch's local date)
+/// that are not cancelled and have no goods receipt against them yet.</summary>
+public sealed record ArrivingConsignmentsViewModel(int WithinDays, int Count);
+
+public sealed record StockAlertSummaryViewModel(OpenAlertSummaryViewModel Open, ArrivingConsignmentsViewModel? ConsignmentsArriving = null);
 
 public sealed record LocationQuantityViewModel(Guid LocationId, string? LocationCode, string OnHand);
 

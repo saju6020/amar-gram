@@ -106,4 +106,9 @@ public static partial class BusinessViolationCodes
     public const string InvalidReorderPolicy = nameof(InvalidReorderPolicy);
     public const string InvalidDateRange = nameof(InvalidDateRange);
     public const string MovementKindNotAllowed = nameof(MovementKindNotAllowed);
+
+    // HO-P4 BG-18 -- server-side goods-receipt drafts.
+    public const string GoodsReceiptDraftNotFound = nameof(GoodsReceiptDraftNotFound);
+    public const string GoodsReceiptDraftLimitReached = nameof(GoodsReceiptDraftLimitReached);
+    public const string InvalidGoodsReceiptDraft = nameof(InvalidGoodsReceiptDraft);
 }

@@ -24,6 +24,10 @@ public sealed class SkuPriceAggregate : AggregateRoot
     public DateTimeOffset EffectiveFrom { get; private set; }
     public Guid SetBy { get; private set; }
 
+    /// <summary>HO-P4 BG-13 -- optional compare-at ("Was") amount, in the same currency as <see cref="Amount"/>; always greater than it.
+    /// It lives on the price row so it is effective-dated with the price it compares against.</summary>
+    public decimal? CompareAtAmount { get; private set; }
+
     private SkuPriceAggregate() { }
 
     public SkuPriceAggregate(Guid id) : base(id) { }
@@ -39,8 +43,12 @@ public sealed class SkuPriceAggregate : AggregateRoot
         if (dto.EffectiveFrom < dto.Now - BackdatingTolerance)
             throw new DomainRuleViolationException(BusinessViolationCodes.PriceCannotBeBackdated, "A price cannot be scheduled in the past.", nameof(dto.EffectiveFrom));
 
+        if (dto.CompareAtAmount is { } compareAt && compareAt <= dto.Amount.Amount)
+            throw new DomainRuleViolationException(BusinessViolationCodes.CompareAtMustExceedPrice, "The compare-at price must be greater than the price.", nameof(dto.CompareAtAmount));
+
         SkuId = dto.SkuId;
         Amount = dto.Amount;
+        CompareAtAmount = dto.CompareAtAmount;
         EffectiveFrom = dto.EffectiveFrom;
         SetBy = dto.SetBy;
 

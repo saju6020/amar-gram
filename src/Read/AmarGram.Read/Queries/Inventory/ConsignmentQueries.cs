@@ -11,6 +11,9 @@ public sealed class GetConsignmentsQuery : Query<PagedResult<ConsignmentSummaryV
     public string? OriginCountryCode { get; init; }
     public DateOnly? From { get; init; }
     public DateOnly? To { get; init; }
+
+    /// <summary>HO-P4 BG-17 -- only consignments arriving within this many days (not cancelled, not yet received); the set the overview counts.</summary>
+    public int? ArrivingWithinDays { get; init; }
 }
 
 public sealed class GetConsignmentQuery : Query<ConsignmentDetailViewModel?>

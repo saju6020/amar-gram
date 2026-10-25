@@ -32,7 +32,7 @@ public sealed class StaffSkusController(IInMemoryDispatcher dispatcher, IUserCon
         var command = new ScheduleSkuPriceCommand
         {
             SkuPriceId = skuPriceId, SkuId = skuId, Amount = request.Amount, CurrencyCode = request.CurrencyCode,
-            EffectiveFrom = request.EffectiveFrom, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
+            EffectiveFrom = request.EffectiveFrom, CompareAtAmount = request.CompareAtAmount, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };
 
         var response = await dispatcher.SendAsync(command);

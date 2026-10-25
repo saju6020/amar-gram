@@ -20,6 +20,9 @@ public sealed class PostGoodsReceiptCommand : Command
     public Guid? ConsignmentId { get; init; }
     public string? DeliveryReference { get; init; }
     public required IReadOnlyList<GoodsReceiptLineInput> Lines { get; init; }
+
+    /// <summary>HO-P4 BG-18 -- the caller's draft this receipt was filled in from; once the receipt is posted the draft is closed (best effort).</summary>
+    public Guid? DraftId { get; init; }
 }
 
 /// <summary>C9 -- <c>Batches.ManageStatus</c>.</summary>

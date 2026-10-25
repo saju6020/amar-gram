@@ -41,20 +41,20 @@ public sealed class StaffGoodsReceiptsController(
     [RequireAction(Actions.Stock.Receive)]
     public async Task<IActionResult> Post([FromBody] PostGoodsReceiptRequest request)
     {
-        if (!this.TryResolveBranch(activeBranchAccessor, out var branchId, out var refusal)) return refusal!;
+        if (!this.TryResolveBranch(activeBranchAccessor, request.BranchId, out var branchId, out var refusal)) return refusal!;
 
         var goodsReceiptId = Guid.NewGuid();
         var response = await dispatcher.SendAsync(new PostGoodsReceiptCommand
         {
             GoodsReceiptId = goodsReceiptId, BranchId = branchId, SupplierId = request.SupplierId, PurchaseOrderId = request.PurchaseOrderId,
-            ConsignmentId = request.ConsignmentId, DeliveryReference = request.DeliveryReference, Lines = request.ToLines(),
+            ConsignmentId = request.ConsignmentId, DeliveryReference = request.DeliveryReference, Lines = request.ToLines(), DraftId = request.DraftId,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         });
 
         if (!response.IsSuccess) return this.Failure(response);
 
         var posted = (PostedGoodsReceipt)response.Result!;
-        return StatusCode(201, new { goodsReceiptId, number = posted.Number, batchIds = posted.BatchIds });
+        return StatusCode(201, new { goodsReceiptId, branchId, number = posted.Number, batchIds = posted.BatchIds });
     }
 
     [HttpGet("{id:guid}")]

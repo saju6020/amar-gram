@@ -18,12 +18,13 @@ public sealed class StaffInventoryLocationsController(
 {
     [HttpGet]
     [RequireAction(Actions.Stock.View)]
-    public async Task<IActionResult> List()
+    public async Task<IActionResult> List([FromQuery] Guid? branchId = null)
     {
-        if (!this.TryResolveBranch(activeBranchAccessor, out var branchId, out var refusal)) return refusal!;
+        // HO-P4 BG-18: the receiving form lists the locations of the branch it is receiving into.
+        if (!this.TryResolveBranch(activeBranchAccessor, branchId, out var resolvedBranchId, out var refusal)) return refusal!;
 
         var response = await dispatcher.GetResultAsync(new GetStockLocationsQuery
-        { BranchId = branchId, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
+        { BranchId = resolvedBranchId, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
 
         return Ok(response.Result);
     }

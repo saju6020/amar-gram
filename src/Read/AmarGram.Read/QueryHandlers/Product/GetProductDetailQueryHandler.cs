@@ -72,7 +72,8 @@ public sealed class GetProductDetailQueryHandler(
             return new DetailSkuViewModel(
                 s.SkuId, s.SkuCode, s.Label, s.SizeOrWeight, s.Flavour, s.Colour, s.PackQuantity,
                 current is null ? null : new Money(current.Amount, current.CurrencyCode).ToViewModel(), availability.DisplayName,
-                expiryNoticeBySku.GetValueOrDefault(s.SkuId), images);
+                expiryNoticeBySku.GetValueOrDefault(s.SkuId), images,
+                current?.CompareAtAmount is { } compareAt ? new Money(compareAt, current.CurrencyCode).ToViewModel() : null);
         }).ToList();
 
         // US-SHP-14: per-field fallback to the default language; an unknown or disabled locale is the

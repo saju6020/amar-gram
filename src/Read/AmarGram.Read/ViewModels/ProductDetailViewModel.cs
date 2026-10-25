@@ -8,7 +8,9 @@ public sealed record ExpiryNoticeViewModel(DateOnly ExpiresOn);
 
 public sealed record DetailSkuViewModel(
     Guid SkuId, string Code, string Label, string? SizeOrWeight, string? Flavour, string? Colour, int? PackQuantity,
-    MoneyViewModel? Price, string Availability, ExpiryNoticeViewModel? ExpiryNotice, IReadOnlyList<ProductImageRef> Images);
+    MoneyViewModel? Price, string Availability, ExpiryNoticeViewModel? ExpiryNotice, IReadOnlyList<ProductImageRef> Images,
+    // HO-P4 BG-13: the compare-at ("Was") price of the current price; null when none.
+    MoneyViewModel? CompareAtPrice = null);
 
 public sealed record ProductDetailViewModel(
     Guid ProductId, string Slug, string Name, string Brand, string Description, string Category, string? Subcategory,

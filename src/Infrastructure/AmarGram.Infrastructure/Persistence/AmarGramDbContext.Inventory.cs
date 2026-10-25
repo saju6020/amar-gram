@@ -20,6 +20,9 @@ public sealed partial class AmarGramDbContext
     public DbSet<StockAdjustmentAggregate> StockAdjustments => Set<StockAdjustmentAggregate>();
     public DbSet<StockCountAggregate> StockCounts => Set<StockCountAggregate>();
 
+    /// <summary>HO-P4 BG-18 -- a staff member's server-side goods-receipt drafts (their own workspace; no stock, no events).</summary>
+    public DbSet<GoodsReceiptDraftAggregate> GoodsReceiptDrafts => Set<GoodsReceiptDraftAggregate>();
+
     /// <summary>Inventory's alerts (expiry, low stock, shortfall, breach, mismatch). Named apart from <c>StockAlerts</c>, which is Shop's back-in-stock alert.</summary>
     public DbSet<InventoryAlertAggregate> InventoryAlerts => Set<InventoryAlertAggregate>();
     public DbSet<ReorderPolicyAggregate> ReorderPolicies => Set<ReorderPolicyAggregate>();

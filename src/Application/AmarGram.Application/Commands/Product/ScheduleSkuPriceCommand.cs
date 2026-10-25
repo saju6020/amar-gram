@@ -10,4 +10,7 @@ public sealed class ScheduleSkuPriceCommand : Command
     public required decimal Amount { get; init; }
     public required string CurrencyCode { get; init; }
     public required DateTimeOffset EffectiveFrom { get; init; }
+
+    /// <summary>HO-P4 BG-13 -- optional compare-at ("Was") amount, same currency, must exceed <see cref="Amount"/>.</summary>
+    public decimal? CompareAtAmount { get; init; }
 }

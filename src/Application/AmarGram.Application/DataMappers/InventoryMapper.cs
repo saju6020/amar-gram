@@ -21,6 +21,14 @@ public static class InventoryMapper
     public static StorageProfileDto ToDomainDto(this SetProductStorageProfileCommand c) =>
         new(ParseEnum<StorageCondition>(c.Condition), c.MinTemperatureC, c.MaxTemperatureC, c.HandlingNotes, c.ToActor());
 
+    /// <summary>HO-P4 BG-18.</summary>
+    public static GoodsReceiptDraftSaveDto ToDomainDto(this SaveGoodsReceiptDraftCommand c) =>
+        new(c.UserContext!.UserId, c.BranchId, c.SupplierId, c.PurchaseOrderId, c.ConsignmentId, c.DeliveryReference, c.ReceivedOn, c.Note,
+            c.Lines.Select(l => new GoodsReceiptDraftLineDto(
+                l.SkuId, l.PurchaseOrderLineId, l.LotNumber, l.ManufacturedOn, l.ExpiresOn, l.QuantityAccepted, l.QuantityRejected, l.RejectionReason,
+                l.RejectionNote, l.LocationId, l.HoldForInspection, l.UnitCostAmount, l.UnitCostCurrency, l.ExchangeRateToBase)).ToList(),
+            c.UserContext!, c.CorrelationId);
+
     public static T ParseEnum<T>(string value) where T : Enumeration
     {
         if (!EnumerationParsing.TryParse<T>(value, out var result) || result is null)

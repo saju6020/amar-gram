@@ -36,6 +36,27 @@ public static class InventoryControllerSupport
         return false;
     }
 
+    /// <summary>
+    /// HO-P4 BG-18 -- the branch an inventory call works in: the explicitly named <paramref name="requestedBranchId"/> when given (the caller must be allowed to work in it,
+    /// else a 403 naming <c>BranchNotAssigned</c>), otherwise the active branch exactly as <see cref="TryResolveBranch(ControllerBase, IActiveBranchAccessor, out Guid, out IActionResult?)"/>.
+    /// </summary>
+    public static bool TryResolveBranch(this ControllerBase controller, IActiveBranchAccessor accessor, Guid? requestedBranchId, out Guid branchId, out IActionResult? refusal)
+    {
+        if (requestedBranchId is not { } requested) return controller.TryResolveBranch(accessor, out branchId, out refusal);
+
+        var resolved = accessor.ResolveBranch(requested);
+        if (resolved.BranchId is { } id)
+        {
+            branchId = id;
+            refusal = null;
+            return true;
+        }
+
+        branchId = default;
+        refusal = controller.StatusCode(403, new { error = resolved.Refusal?.ToString() ?? ActiveBranchRefusal.BranchNotAssigned.ToString() });
+        return false;
+    }
+
     /// <summary>The failure half of a command's response: 404, 409 or 400.</summary>
     public static IActionResult Failure(this ControllerBase controller, CommandResponse response)
     {

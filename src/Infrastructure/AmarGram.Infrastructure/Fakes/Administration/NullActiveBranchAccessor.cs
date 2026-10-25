@@ -12,4 +12,6 @@ namespace AmarGram.Infrastructure.Fakes.Administration;
 public sealed class NullActiveBranchAccessor : IActiveBranchAccessor
 {
     public ActiveBranchResult GetActiveBranchId() => ActiveBranchResult.NoBranch;
+
+    public ActiveBranchResult ResolveBranch(Guid requestedBranchId) => ActiveBranchResult.NoBranch;
 }

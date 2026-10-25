@@ -10,7 +10,7 @@ using Platform.Infrastructure.Core.Queries;
 namespace AmarGram.Read.QueryHandlers.Inventory;
 
 /// <summary>HO-IMP-001 §12.4 -- consignments of the active branch; filtering, sorting and paging in SQL (UI-4).</summary>
-public sealed class GetConsignmentsQueryHandler(AmarGramDbContext db)
+public sealed class GetConsignmentsQueryHandler(AmarGramDbContext db, IInventoryClock clock)
     : IQueryHandlerAsync<GetConsignmentsQuery, PagedResult<ConsignmentSummaryViewModel>>
 {
     public async Task<QueryResponse<PagedResult<ConsignmentSummaryViewModel>>> HandleAsync(GetConsignmentsQuery query)
@@ -24,6 +24,10 @@ public sealed class GetConsignmentsQueryHandler(AmarGramDbContext db)
             var country = query.OriginCountryCode.Trim().ToUpperInvariant();
             filtered = filtered.Where(c => c.OriginCountryCode == country);
         }
+
+        // HO-P4 BG-17: "arriving soon" -- the same set the overview counts.
+        if (query.ArrivingWithinDays is { } arrivingDays)
+            filtered = ConsignmentReads.ArrivingWithin(db, filtered, await clock.LocalTodayAsync(query.BranchId, CancellationToken.None), Math.Clamp(arrivingDays, 1, InventoryRules.MaxArrivalWindowDays));
 
         // From/To bound the day the consignment was planned (UTC), the only date every consignment has.
         if (query.From is { } from) filtered = filtered.Where(c => c.CreatedDate >= from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc));
@@ -46,6 +50,17 @@ public sealed class GetConsignmentsQueryHandler(AmarGramDbContext db)
 /// <summary>The pieces the detail and the inspection pack share -- one place, so the two cannot disagree about what a consignment holds.</summary>
 internal static class ConsignmentReads
 {
+    /// <summary>HO-P4 BG-17 -- the consignments of <paramref name="source"/> expected from <paramref name="today"/> through <paramref name="today"/> + <paramref name="windowDays"/>
+    /// (inclusive) that are not cancelled and have no goods receipt against them yet. A cleared one still counts until its goods are received: clearing is when it may be received.</summary>
+    public static IQueryable<AmarGram.Domain.Aggregates.Inventory.ConsignmentAggregate> ArrivingWithin(
+        AmarGramDbContext db, IQueryable<AmarGram.Domain.Aggregates.Inventory.ConsignmentAggregate> source, DateOnly today, int windowDays)
+    {
+        var last = today.AddDays(windowDays);
+        return source
+            .Where(c => c.Status != ConsignmentStatus.Cancelled && c.ExpectedArrivalOn != null && c.ExpectedArrivalOn >= today && c.ExpectedArrivalOn <= last)
+            .Where(c => !db.GoodsReceipts.Any(g => g.ConsignmentId == c.Id));
+    }
+
     public static async Task<IReadOnlyList<ConsignmentPurchaseOrderViewModel>> PurchaseOrdersAsync(AmarGramDbContext db, IReadOnlyCollection<Guid> ids)
     {
         if (ids.Count == 0) return [];

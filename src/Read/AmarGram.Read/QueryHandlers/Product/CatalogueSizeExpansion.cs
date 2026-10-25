@@ -61,7 +61,7 @@ internal static class CatalogueSizeExpansion
             {
                 // One size (or nothing priced): the product's own row, now naming its size.
                 var only = sizes.FirstOrDefault();
-                result.Add(only is null ? item : item with { SkuId = only.Sku.SkuId, SizeLabel = SizeLabelOf(only.Sku) });
+                result.Add(only is null ? item : item with { SkuId = only.Sku.SkuId, SizeLabel = SizeLabelOf(only.Sku), CompareAtPrice = CompareAtOf(only.Price!) });
                 continue;
             }
 
@@ -85,6 +85,7 @@ internal static class CatalogueSizeExpansion
                     SizeLabel = SizeLabelOf(size.Sku),
                     FromPrice = new MoneyViewModel(amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), size.Price.CurrencyCode),
                     PriceVaries = false,
+                    CompareAtPrice = CompareAtOf(size.Price),
                     Availability = inStock ? "InStock" : "OutOfStock",
                     PrimaryImage = primaryImage,
                 });
@@ -93,6 +94,11 @@ internal static class CatalogueSizeExpansion
 
         return result;
     }
+
+    /// <summary>HO-P4 BG-13 -- the "Was" price of the price row in force, in that row's currency.</summary>
+    private static MoneyViewModel? CompareAtOf(PriceRow price) => price.CompareAtAmount is { } compareAt
+        ? new MoneyViewModel(compareAt.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), price.CurrencyCode)
+        : null;
 
     /// <summary>The words that tell this size apart ("400 g", "Red", "Pack of 6"); null when the SKU has none.</summary>
     internal static string? SizeLabelOf(SkuRow sku) => sku.HasAnyAxis

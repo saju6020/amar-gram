@@ -14,4 +14,10 @@ public sealed class GetStaffProductsQuery : Query<PagedResult<StaffProductSummar
     public string? Kind { get; init; }
     public bool? Listed { get; init; }
     public string? Sort { get; init; }
+
+    /// <summary>HO-P4 BG-9 -- the caller's ACTIVE branch (the controller resolves it; null when the caller has none), for the stock figure only.</summary>
+    public Guid? BranchId { get; init; }
+
+    /// <summary>HO-P4 BG-9 -- false skips the per-page extras (pack sizes, price range, stock, thumbnail); the CSV export of up to 50,000 rows does not use them.</summary>
+    public bool IncludeExtras { get; init; } = true;
 }

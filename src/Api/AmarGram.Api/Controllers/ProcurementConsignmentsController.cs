@@ -24,13 +24,17 @@ public sealed class ProcurementConsignmentsController(
     [RequireAction(Actions.Procurement.View)]
     public async Task<IActionResult> List(
         [FromQuery] string? status, [FromQuery] string? originCountryCode, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to,
-        [FromQuery] int? pageNumber, [FromQuery] int? pageSize)
+        [FromQuery] int? arrivingWithinDays, [FromQuery] int? pageNumber, [FromQuery] int? pageSize,
+        [FromQuery(Name = "branchId")] Guid? forBranchId = null)
     {
-        if (!this.TryResolveBranch(activeBranchAccessor, out var branchId, out var refusal)) return refusal!;
+        // HO-P4 BG-18: the receiving form lists the cleared consignments of the branch it is receiving into.
+        if (!this.TryResolveBranch(activeBranchAccessor, forBranchId, out var branchId, out var refusal)) return refusal!;
+        if (arrivingWithinDays is < 1 or > InventoryRules.MaxArrivalWindowDays)
+            return this.InvalidQuery("arrivingWithinDays", $"arrivingWithinDays must be between 1 and {InventoryRules.MaxArrivalWindowDays}.");
 
         var query = new GetConsignmentsQuery
         {
-            BranchId = branchId, Status = status, OriginCountryCode = originCountryCode, From = from, To = to,
+            BranchId = branchId, Status = status, OriginCountryCode = originCountryCode, From = from, To = to, ArrivingWithinDays = arrivingWithinDays,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid()
         };
         if (PagingHelper.ApplyPaging(query, pageNumber, pageSize) is { } invalid) return invalid;

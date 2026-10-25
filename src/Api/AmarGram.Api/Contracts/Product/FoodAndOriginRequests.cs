@@ -10,6 +10,12 @@ public sealed class SetFoodDetailsRequest
     public string? Allergens { get; init; }
     public string? OrganicCertifier { get; init; }
     public string? OrganicCertificateNumber { get; init; }
+
+    /// <summary>HO-P4 BG-14 -- last valid day of the organic certificate (yyyy-MM-dd).</summary>
+    public DateOnly? OrganicCertificateExpiresOn { get; init; }
+
+    /// <summary>HO-P4 BG-14 -- id of an uploaded file of purpose <c>OrganicCertificate</c> (<c>POST /api/staff/files?purpose=OrganicCertificate</c>); null clears it.</summary>
+    public Guid? OrganicCertificateFileId { get; init; }
 }
 
 public sealed class SourcingOriginRequest

@@ -3723,6 +3723,100 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.ToTable("goods_receipt", "inventory");
                 });
 
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Inventory.GoodsReceiptDraftAggregate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("branch_id");
+
+                    b.Property<Guid?>("ConsignmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("consignment_id");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryReference")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("delivery_reference");
+
+                    b.Property<DateTimeOffset?>("DiscardedOn")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("discarded_on");
+
+                    b.Property<bool>("IsMarkedToDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Language")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("LastUpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<Guid?>("PostedGoodsReceiptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posted_goods_receipt_id");
+
+                    b.Property<Guid?>("PurchaseOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("purchase_order_id");
+
+                    b.Property<DateOnly?>("ReceivedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("received_on");
+
+                    b.Property<string>("ServiceId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("SupplierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("supplier_id");
+
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .HasColumnType("text[]");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("VerticalId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "DiscardedOn", "PostedGoodsReceiptId")
+                        .HasDatabaseName("ix_goods_receipt_draft_owner");
+
+                    b.ToTable("goods_receipt_draft", "inventory");
+                });
+
             modelBuilder.Entity("AmarGram.Domain.Aggregates.Inventory.InventoryAlertAggregate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -7201,6 +7295,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
+
+                    b.Property<decimal?>("CompareAtAmount")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("compare_at_amount");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -10972,6 +11070,98 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.Navigation("Lines");
                 });
 
+            modelBuilder.Entity("AmarGram.Domain.Aggregates.Inventory.GoodsReceiptDraftAggregate", b =>
+                {
+                    b.OwnsMany("AmarGram.Domain.Entities.GoodsReceiptDraftLine", "Lines", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal?>("ExchangeRateToBase")
+                                .HasPrecision(18, 6)
+                                .HasColumnType("numeric(18,6)")
+                                .HasColumnName("exchange_rate_to_base");
+
+                            b1.Property<DateOnly?>("ExpiresOn")
+                                .HasColumnType("date")
+                                .HasColumnName("expires_on");
+
+                            b1.Property<bool>("HoldForInspection")
+                                .HasColumnType("boolean")
+                                .HasColumnName("hold_for_inspection");
+
+                            b1.Property<Guid?>("LocationId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("location_id");
+
+                            b1.Property<string>("LotNumber")
+                                .HasMaxLength(60)
+                                .HasColumnType("character varying(60)")
+                                .HasColumnName("lot_number");
+
+                            b1.Property<DateOnly?>("ManufacturedOn")
+                                .HasColumnType("date")
+                                .HasColumnName("manufactured_on");
+
+                            b1.Property<Guid?>("PurchaseOrderLineId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("purchase_order_line_id");
+
+                            b1.Property<decimal>("QuantityAccepted")
+                                .HasPrecision(12, 3)
+                                .HasColumnType("numeric(12,3)")
+                                .HasColumnName("quantity_accepted");
+
+                            b1.Property<decimal>("QuantityRejected")
+                                .HasPrecision(12, 3)
+                                .HasColumnType("numeric(12,3)")
+                                .HasColumnName("quantity_rejected");
+
+                            b1.Property<string>("RejectionNote")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)")
+                                .HasColumnName("rejection_note");
+
+                            b1.Property<string>("RejectionReason")
+                                .HasMaxLength(40)
+                                .HasColumnType("character varying(40)")
+                                .HasColumnName("rejection_reason");
+
+                            b1.Property<Guid>("SkuId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("sku_id");
+
+                            b1.Property<int>("SortOrder")
+                                .HasColumnType("integer")
+                                .HasColumnName("sort_order");
+
+                            b1.Property<decimal?>("UnitCostAmount")
+                                .HasPrecision(14, 4)
+                                .HasColumnType("numeric(14,4)")
+                                .HasColumnName("unit_cost_amount");
+
+                            b1.Property<string>("UnitCostCurrency")
+                                .HasMaxLength(3)
+                                .HasColumnType("character(3)")
+                                .HasColumnName("unit_cost_currency")
+                                .IsFixedLength();
+
+                            b1.Property<Guid>("goods_receipt_draft_id")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("goods_receipt_draft_id");
+
+                            b1.ToTable("goods_receipt_draft_line", "inventory");
+
+                            b1.WithOwner()
+                                .HasForeignKey("goods_receipt_draft_id");
+                        });
+
+                    b.Navigation("Lines");
+                });
+
             modelBuilder.Entity("AmarGram.Domain.Aggregates.Inventory.PurchaseOrderAggregate", b =>
                 {
                     b.OwnsMany("AmarGram.Domain.Entities.PurchaseOrderLine", "Lines", b1 =>
@@ -12290,6 +12480,14 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasColumnType("character varying(50)")
                                 .HasColumnName("food_net_weight");
 
+                            b1.Property<DateOnly?>("OrganicCertificateExpiresOn")
+                                .HasColumnType("date")
+                                .HasColumnName("food_organic_certificate_expires_on");
+
+                            b1.Property<Guid?>("OrganicCertificateFileId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("food_organic_certificate_file_id");
+
                             b1.Property<string>("OrganicCertificateNumber")
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)")
@@ -12311,6 +12509,11 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasColumnName("food_storage_instructions");
 
                             b1.HasKey("ProductAggregateId");
+
+                            b1.HasIndex("OrganicCertificateFileId")
+                                .IsUnique()
+                                .HasDatabaseName("ux_product_organic_certificate_file")
+                                .HasFilter("food_organic_certificate_file_id IS NOT NULL");
 
                             b1.ToTable("product", "product");
 

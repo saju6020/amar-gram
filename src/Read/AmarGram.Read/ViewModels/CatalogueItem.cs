@@ -24,7 +24,9 @@ public sealed record CatalogueItem(
     // One card per size (owner, 2026-10-18), additive: the SKU this card is, and its size label
     // ("400 g"). Absent on rows that are not a single size (recommendations, suggestions).
     Guid? SkuId = null,
-    string? SizeLabel = null);
+    string? SizeLabel = null,
+    // HO-P4 BG-13: the SKU's compare-at ("Was") price beside FromPrice, only on a single-size card; null when none.
+    MoneyViewModel? CompareAtPrice = null);
 
 public sealed record CatalogueResult(
     IReadOnlyList<CatalogueItem> Items,

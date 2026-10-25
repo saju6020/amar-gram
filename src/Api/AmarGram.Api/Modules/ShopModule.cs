@@ -144,6 +144,10 @@ public static class ShopModule
         services.AddScoped<ICommandHandlerAsync<UnpublishProductCommand>, UnpublishProductCommandHandler>();
         services.AddScoped<IValidator<UnpublishProductCommand>, UnpublishProductCommandValidator>();
 
+        // HO-P4 BG-10: bulk publish/hide, built on the single-product handlers above.
+        services.AddScoped<ICommandHandlerAsync<BulkChangeProductStatusCommand>, BulkChangeProductStatusCommandHandler>();
+        services.AddScoped<IValidator<BulkChangeProductStatusCommand>, BulkChangeProductStatusCommandValidator>();
+
         services.AddScoped<ICommandHandlerAsync<ArchiveProductCommand>, ArchiveProductCommandHandler>();
         services.AddScoped<IValidator<ArchiveProductCommand>, ArchiveProductCommandValidator>();
 

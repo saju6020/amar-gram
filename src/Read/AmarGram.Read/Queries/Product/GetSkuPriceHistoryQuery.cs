@@ -2,7 +2,8 @@ using Platform.Infrastructure.Core.Queries;
 
 namespace AmarGram.Read.Queries.Product;
 
-public sealed record SkuPriceHistoryEntryViewModel(Guid SkuPriceId, AmarGram.Read.ViewModels.MoneyViewModel Amount, DateTimeOffset EffectiveFrom, Guid SetBy);
+public sealed record SkuPriceHistoryEntryViewModel(Guid SkuPriceId, AmarGram.Read.ViewModels.MoneyViewModel Amount, DateTimeOffset EffectiveFrom, Guid SetBy,
+    AmarGram.Read.ViewModels.MoneyViewModel? CompareAtPrice = null);
 
 public sealed record SkuPriceHistoryViewModel(
     SkuPriceHistoryEntryViewModel? Current,

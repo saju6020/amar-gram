@@ -20,5 +20,15 @@ public sealed class ScheduleSkuPriceCommandValidator : AbstractValidator<Schedul
         RuleFor(x => x.Amount).LessThanOrEqualTo(MaxAmount).WithMessage($"Amount cannot exceed {MaxAmount:0.00}.");
         RuleFor(x => x.Amount).Must(a => decimal.Round(a, 2) == a).WithMessage("Amount cannot have more than two decimal places.");
         RuleFor(x => x.CurrencyCode).NotEmpty().Length(3);
+
+        // HO-P4 BG-13: the optional compare-at ("Was") price has the same shape rules as the price; that it exceeds the price is the aggregate's rule.
+        When(x => x.CompareAtAmount is not null, () =>
+        {
+            RuleFor(x => x.CompareAtAmount!.Value).GreaterThanOrEqualTo(0.01m).WithName(nameof(ScheduleSkuPriceCommand.CompareAtAmount));
+            RuleFor(x => x.CompareAtAmount!.Value).LessThanOrEqualTo(MaxAmount).WithName(nameof(ScheduleSkuPriceCommand.CompareAtAmount))
+                .WithMessage($"CompareAtAmount cannot exceed {MaxAmount:0.00}.");
+            RuleFor(x => x.CompareAtAmount!.Value).Must(a => decimal.Round(a, 2) == a).WithName(nameof(ScheduleSkuPriceCommand.CompareAtAmount))
+                .WithMessage("CompareAtAmount cannot have more than two decimal places.");
+        });
     }
 }

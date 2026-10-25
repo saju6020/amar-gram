@@ -45,17 +45,7 @@ public sealed class HttpContextActiveBranchAccessor(IHttpContextAccessor httpCon
             if (!Guid.TryParse(headerValue.ToString(), out var requestedBranchId))
                 return ActiveBranchResult.RefusedBy(ActiveBranchRefusal.BranchNotAssigned);
 
-            if (assignment is not null && assignment.BranchIds.Contains(requestedBranchId))
-                return ActiveBranchResult.Resolved(requestedBranchId);
-
-            if (isAdministrator || assignment is null)
-            {
-                var activeIds = ActiveBranchIds();
-                var allowed = isAdministrator ? activeIds.Contains(requestedBranchId) : activeIds is [var only] && only == requestedBranchId;
-                if (allowed) return ActiveBranchResult.Resolved(requestedBranchId);
-            }
-
-            return ActiveBranchResult.RefusedBy(ActiveBranchRefusal.BranchNotAssigned);
+            return MayWorkIn(requestedBranchId, assignment, isAdministrator);
         }
 
         if (assignment is not null) return ActiveBranchResult.Resolved(assignment.PrimaryBranchId);
@@ -65,6 +55,36 @@ public sealed class HttpContextActiveBranchAccessor(IHttpContextAccessor httpCon
         return isAdministrator && activeBranchIds.Count > 0
             ? ActiveBranchResult.Resolved(activeBranchIds[0])
             : ActiveBranchResult.RefusedBy(ActiveBranchRefusal.BranchAssignmentRequired);
+    }
+
+    /// <summary>HO-P4 BG-18 -- the same rule for a branch named in a request body or query instead of the header.</summary>
+    public ActiveBranchResult ResolveBranch(Guid requestedBranchId)
+    {
+        var httpContext = httpContextAccessor.HttpContext;
+        if (httpContext is null) return ActiveBranchResult.NoBranch;
+
+        var caller = httpContext.Items[ResolvedCaller.HttpContextItemsKey] as ResolvedCaller ?? ResolvedCaller.Anonymous;
+        if (caller.Kind != ResolvedCallerKind.Staff) return ActiveBranchResult.NoBranch;
+
+        var assignment = db.Set<StaffBranchAssignmentAggregate>().Find(caller.AccountId);
+        return MayWorkIn(requestedBranchId, assignment, caller.RoleIds.Contains(StaffRoles.Administrator, StringComparer.Ordinal));
+    }
+
+    /// <summary>The one membership rule behind the header and an explicit branch: assigned; or an Administrator and the branch is active; or unassigned and it is the
+    /// single active branch.</summary>
+    private ActiveBranchResult MayWorkIn(Guid requestedBranchId, StaffBranchAssignmentAggregate? assignment, bool isAdministrator)
+    {
+        if (assignment is not null && assignment.BranchIds.Contains(requestedBranchId))
+            return ActiveBranchResult.Resolved(requestedBranchId);
+
+        if (isAdministrator || assignment is null)
+        {
+            var activeIds = ActiveBranchIds();
+            var allowed = isAdministrator ? activeIds.Contains(requestedBranchId) : activeIds is [var only] && only == requestedBranchId;
+            if (allowed) return ActiveBranchResult.Resolved(requestedBranchId);
+        }
+
+        return ActiveBranchResult.RefusedBy(ActiveBranchRefusal.BranchNotAssigned);
     }
 
     /// <summary>Active branches, first by name (the Administrator's default when unassigned).</summary>

@@ -17,6 +17,8 @@ public static class ProductPublicationRules
     public const string PrimaryImage = "PrimaryImage";
     public const string LabellingComplete = "LabellingComplete";
     public const string OrganicCertificate = "OrganicCertificate";
+    /// <summary>HO-P4 BG-14 -- the recorded organic certificate expiry date has not passed.</summary>
+    public const string OrganicCertificateNotExpired = "OrganicCertificateNotExpired";
     public const string BundleComposition = "BundleComposition";
 
     public static IReadOnlyList<PublicationChecklistItem> Evaluate(ProductAggregate product, PublicationFacts facts)
@@ -48,6 +50,14 @@ public static class ProductPublicationRules
         {
             items.Add(new PublicationChecklistItem(OrganicCertificate, true, product.FoodDetails?.HasOrganicCertificate ?? false,
                 "Add the organic certifier and certificate number before publishing a CertifiedOrganic product."));
+
+            // HO-P4 BG-14: a recorded expiry date in the past blocks publication until the certificate is renewed.
+            if (facts.Today is { } today)
+            {
+                var expired = product.FoodDetails?.OrganicCertificateExpiredOn(today) ?? false;
+                items.Add(new PublicationChecklistItem(OrganicCertificateNotExpired, true, !expired,
+                    "The organic certificate has expired. Record the renewed certificate's expiry date (and file) before publishing."));
+            }
         }
 
         if (product.Kind == ProductKind.Bundle)

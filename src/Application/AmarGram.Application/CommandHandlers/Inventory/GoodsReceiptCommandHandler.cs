@@ -38,7 +38,8 @@ public sealed class PostGoodsReceiptCommandHandler(
     IInventoryLedgerWriter ledgerWriter,
     IDocumentNumberGenerator numbers,
     IBusinessSettings settings,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    IAggregateRootRepository<GoodsReceiptDraftAggregate>? drafts = null)
     : ICommandHandlerAsync<PostGoodsReceiptCommand>
 {
     public async Task<CommandResponse> HandleAsync(PostGoodsReceiptCommand command)
@@ -92,7 +93,29 @@ public sealed class PostGoodsReceiptCommandHandler(
         if (!appended.IsSuccess) return InventoryResponses.Fail(appended);
 
         await receipts.SaveAsync(receipt, EventPublishOption.InMemoryPublishOnly);
+        await CloseDraftAsync(command, receipt.Id);
         return InventoryResponses.Ok(new PostedGoodsReceipt(receipt.Number, batchIds));
+    }
+
+    /// <summary>HO-P4 BG-18 -- closes the caller's draft the receipt was filled in from. The receipt is already committed, so a failure here is logged and
+    /// swallowed: it must never turn a posted receipt into an error (the staff member would post it twice).</summary>
+    private async Task CloseDraftAsync(PostGoodsReceiptCommand command, Guid goodsReceiptId)
+    {
+        if (command.DraftId is not { } draftId || drafts is null) return;
+
+        try
+        {
+            var draft = await drafts.GetByIdAsync(draftId);
+            if (draft is null || draft.OwnerId != command.UserContext!.UserId || !draft.IsOpen) return;
+
+            draft.MarkPosted(command.UserContext.UserId, goodsReceiptId);
+            await drafts.UpdateAsync(draft, EventPublishOption.InMemoryPublishOnly);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Goods receipt {GoodsReceiptId} was posted but its draft {DraftId} could not be closed. CorrelationId: {CorrelationId}",
+                goodsReceiptId, draftId, command.CorrelationId);
+        }
     }
 
     private sealed record Header(PurchaseOrderAggregate? Order, ConsignmentAggregate? Consignment, Guid? SupplierId, CommandResponse? Failure);

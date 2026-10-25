@@ -30,6 +30,8 @@ public static class FilePurposeAccess
             // fail-closed policy refused every staff role -- a product image could not be uploaded
             // in the real host. Same action that governs the product write that attaches it.
             [FilePurpose.ProductImage] = Actions.Shop.ProductsManage,
+            // HO-P4 BG-14: the same product write attaches the organic certificate file.
+            [FilePurpose.OrganicCertificate] = Actions.Shop.ProductsManage,
         };
 
     private static readonly IReadOnlySet<FilePurpose> CustomerPurposes = new HashSet<FilePurpose>();

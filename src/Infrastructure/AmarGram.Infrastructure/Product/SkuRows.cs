@@ -55,6 +55,8 @@ public sealed class PriceRow
     public Guid Id { get; set; }
     public Guid SkuId { get; set; }
     public decimal Amount { get; set; }
+    /// <summary>HO-P4 BG-13 -- the optional "Was" amount of this price row.</summary>
+    public decimal? CompareAtAmount { get; set; }
     public string CurrencyCode { get; set; } = default!;
     public DateTimeOffset EffectiveFrom { get; set; }
     public Guid SetBy { get; set; }
@@ -80,5 +82,5 @@ public static class ProductProjections
 
     public static IQueryable<PriceRow> PriceRows(this AmarGramDbContext db) =>
         db.SkuPrices.AsNoTracking().Select(p => new PriceRow
-        { Id = p.Id, SkuId = p.SkuId, Amount = p.Amount.Amount, CurrencyCode = p.Amount.CurrencyCode, EffectiveFrom = p.EffectiveFrom, SetBy = p.SetBy });
+        { Id = p.Id, SkuId = p.SkuId, Amount = p.Amount.Amount, CompareAtAmount = p.CompareAtAmount, CurrencyCode = p.Amount.CurrencyCode, EffectiveFrom = p.EffectiveFrom, SetBy = p.SetBy });
 }
