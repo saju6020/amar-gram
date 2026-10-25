@@ -17,6 +17,8 @@ export const inventoryNav: NavArea = {
     // in the Inventory section's own tab row (`app/(staff)/staff/inventory/layout.tsx`) because the
     // shared sidebar has no badge slot.
     { label: 'Inventory', href: '/staff/inventory', icon: 'boxes' },
+    // HO-P4 §11.1.4 — goods receiving is its own entry in the sidebar's "Catalogue & stock" group.
+    { label: 'Goods receiving', href: '/staff/inventory/receipts', icon: 'package-check' },
     { label: 'Procurement', href: '/staff/procurement/suppliers', icon: 'truck' },
   ],
 };

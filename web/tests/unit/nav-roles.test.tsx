@@ -44,9 +44,9 @@ describe('NavItem roles — Reports entry (owner 2026-10-14)', () => {
     },
   );
 
-  it('hides Reports from Reception, who still has Home', async () => {
+  it('hides Reports from Reception, who still has the Dashboard', async () => {
     asRoles(['Reception']);
-    expect((await screen.findAllByRole('link', { name: 'Home' })).length).toBeGreaterThan(0);
+    expect((await screen.findAllByRole('link', { name: 'Dashboard' })).length).toBeGreaterThan(0);
     await screen.findByText(/Test Person/);
     expect(screen.queryByRole('link', { name: 'Reports' })).not.toBeInTheDocument();
   });

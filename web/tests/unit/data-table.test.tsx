@@ -147,4 +147,26 @@ describe('DataTable', () => {
       expect.objectContaining({ scroll: false }),
     );
   });
+
+  // HO-P4 §11.1.7: the restyle changes the look only; the scroll region stays focusable and named.
+  it('keeps a focusable, named scroll region in the back-office card style', () => {
+    render(
+      <DataTable
+        caption="Orders"
+        columns={columns}
+        rows={rows}
+        getRowId={(r) => r.id}
+        emptyState={{ title: 'No orders' }}
+      />,
+    );
+    const region = screen.getByRole('region', { name: 'Orders (scrolls horizontally)' });
+    expect(region).toHaveAttribute('tabindex', '0');
+    expect(region).toHaveClass('rounded-2xl');
+    expect(screen.getByRole('columnheader', { name: /Name/ })).toHaveClass(
+      'text-[13px]',
+      'font-semibold',
+      'text-ink-muted',
+    );
+    expect(screen.getAllByRole('row')[1]).toHaveClass('border-surface-sunken');
+  });
 });

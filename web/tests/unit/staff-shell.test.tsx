@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
+import { server } from '@/mocks/server';
 import { StaffShell } from '@/components/common/staff-shell';
 
 // HO-ACC-002 §11.9: StaffShell now reads the staff session via `useStaffSession()` (TanStack
@@ -18,9 +20,10 @@ function renderShell(children: React.ReactNode) {
 // the browser's own Back/Forward (CODE_REVIEW gate MEDIUM, the scaffold handover 2nd pass) — see
 // `staff-shell-sheet-closes-on-back-navigation.spec.ts` for the route-change regression itself.
 // This file's own tests never navigate, so a fixed pathname is all they need.
-const pathname = '/staff/inventory';
+let pathname = '/staff/inventory';
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname,
+  useRouter: () => ({ push: () => {}, replace: () => {} }),
 }));
 
 /**
@@ -65,6 +68,7 @@ function stubMatchMedia() {
 }
 
 beforeEach(() => {
+  pathname = '/staff/inventory';
   stubMatchMedia();
 });
 
@@ -121,7 +125,7 @@ describe('StaffShell — below-sm nav sheet (Radix Dialog)', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAccessibleName(/menu/i);
-    expect(screen.getByRole('link', { name: 'Inventory' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Inventory & batches' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Procurement' })).toBeInTheDocument();
   });
 
@@ -130,7 +134,7 @@ describe('StaffShell — below-sm nav sheet (Radix Dialog)', () => {
     renderShell(<StaffShell>content</StaffShell>);
     await user.click(mobileTrigger());
 
-    await user.click(screen.getByRole('link', { name: 'Inventory' }));
+    await user.click(screen.getByRole('link', { name: 'Inventory & batches' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
@@ -165,7 +169,8 @@ describe('StaffShell — below-sm nav sheet (Radix Dialog)', () => {
 });
 
 // Owner, 2026-10-16: groups open and close; only the current page's group starts open, so the
-// menu needs no scrollbar at first. (pathname is /staff/inventory here, so Stock is the open group.)
+// menu needs no scrollbar at first. (pathname is /staff/inventory here, so Catalogue & stock is the
+// open group.) Group names follow the approved back-office design (HO-P4 §8.2).
 describe('StaffShell — expandable menu groups', () => {
   function asideGroup(name: string) {
     return within(document.querySelector('aside')!).getByRole('button', { name });
@@ -173,17 +178,17 @@ describe('StaffShell — expandable menu groups', () => {
 
   it("opens only the current page's group", () => {
     renderShell(<StaffShell>content</StaffShell>);
-    expect(asideGroup('Stock')).toHaveAttribute('aria-expanded', 'true');
-    for (const closed of ['Customers', 'Money & reports', 'Shop & orders', 'Team & settings'])
+    expect(asideGroup('Catalogue & stock')).toHaveAttribute('aria-expanded', 'true');
+    for (const closed of ['Overview', 'Sales', 'Money', 'Insight & admin'])
       expect(asideGroup(closed)).toHaveAttribute('aria-expanded', 'false');
     const current = document.querySelector('aside [aria-current="page"]');
-    expect(current).toHaveAttribute('aria-label', 'Inventory');
+    expect(current).toHaveAttribute('aria-label', 'Inventory & batches');
   });
 
   it('a group heading opens and closes its links, and says which list it controls', async () => {
     const user = userEvent.setup();
     renderShell(<StaffShell>content</StaffShell>);
-    const customers = asideGroup('Customers');
+    const customers = asideGroup('Sales');
     const list = document.getElementById(customers.getAttribute('aria-controls')!)!;
     expect(list).toHaveClass('sm:hidden');
 
@@ -202,7 +207,7 @@ describe('StaffShell — expandable menu groups', () => {
     const sheet = screen.getByRole('dialog');
     expect(within(sheet).queryByRole('link', { name: 'Orders' })).not.toBeInTheDocument();
 
-    await user.click(within(sheet).getByRole('button', { name: 'Shop & orders' }));
+    await user.click(within(sheet).getByRole('button', { name: 'Sales' }));
     expect(within(sheet).getByRole('link', { name: 'Orders' })).toBeVisible();
   });
 });
@@ -214,5 +219,135 @@ describe('StaffShell — the Amar Gram logo', () => {
     const logo = screen.getByRole('link', { name: 'Amar Gram Shop' });
     expect(logo).toHaveAttribute('href', '/staff');
     expect(logo.querySelector('[aria-hidden="true"].bg-leaf')).not.toBeNull();
+  });
+});
+
+// HO-P4 §8.2 / §15 (U1-U5): the groups, labels, active link and footer of the back-office sidebar.
+function signedInAs(fullName: string, roleIds: string[]) {
+  server.use(
+    http.get('*/api/staff/session', () =>
+      HttpResponse.json({
+        staffAccountId: 's1',
+        fullName,
+        roleIds,
+        issuedOn: '2026-10-14T00:00:00Z',
+        lastActivityOn: '2026-10-14T00:00:00Z',
+        idleExpiresOn: '2026-10-14T01:00:00Z',
+        absoluteExpiresOn: '2026-10-14T08:00:00Z',
+        idleTimeoutMinutes: 60,
+        serverTime: '2026-10-14T00:00:00Z',
+      }),
+    ),
+  );
+}
+
+describe('StaffShell — back-office sidebar (HO-P4 §8.2)', () => {
+  function aside() {
+    return within(document.querySelector('aside')!);
+  }
+
+  it('U1: shows the design groups in order', () => {
+    renderShell(<StaffShell>content</StaffShell>);
+    const headings = Array.from(document.querySelectorAll('aside button[aria-controls]')).map((b) =>
+      b.textContent?.trim(),
+    );
+    expect(headings).toEqual([
+      'Overview',
+      'Sales',
+      'Catalogue & stock',
+      'Money',
+      'Insight & admin',
+    ]);
+  });
+
+  it('U2: shows the label overrides', async () => {
+    const user = userEvent.setup();
+    pathname = '/staff';
+    renderShell(<StaffShell>content</StaffShell>);
+    expect(aside().getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/staff');
+    await user.click(aside().getByRole('button', { name: 'Sales' }));
+    expect(aside().getByRole('link', { name: 'Counter sale' })).toHaveAttribute(
+      'href',
+      '/staff/pos',
+    );
+    await user.click(aside().getByRole('button', { name: 'Money' }));
+    expect(aside().getByRole('link', { name: 'Billing & cash-up' })).toHaveAttribute(
+      'href',
+      '/staff/billing',
+    );
+  });
+
+  it('U3: the longest prefix wins on the goods-receiving form', () => {
+    pathname = '/staff/inventory/receipts/new';
+    renderShell(<StaffShell>content</StaffShell>);
+    expect(aside().getByRole('link', { name: 'Goods receiving' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(aside().getByRole('link', { name: 'Inventory & batches' })).not.toHaveAttribute(
+      'aria-current',
+    );
+  });
+
+  it('U4: the sidebar footer shows the person, their roles and Sign out; the slim top bar keeps Sign out below sm', async () => {
+    signedInAs('Rahima Akter', ['Administrator', 'Accountant']);
+    renderShell(<StaffShell>content</StaffShell>);
+    expect(await aside().findByText('Rahima Akter')).toBeInTheDocument();
+    expect(aside().getByText('Administrator, Accountant')).toBeInTheDocument();
+    expect(aside().getByText('RA')).toBeInTheDocument();
+    // Two "Sign out" buttons exist (footer at sm+, top bar below sm; CSS shows one of them).
+    const buttons = screen.getAllByRole('button', { name: 'Sign out' });
+    expect(buttons).toHaveLength(2);
+    const topBar = document.querySelector('header')!;
+    expect(topBar).toHaveClass('sm:hidden');
+    const topBarSignOut = within(topBar).getByRole('button', { name: 'Sign out' });
+    expect(topBarSignOut).toBeEnabled();
+    topBarSignOut.focus();
+    expect(topBarSignOut).toHaveFocus();
+  });
+
+  it('keeps the skip link, the main landmark and its padding', () => {
+    renderShell(<StaffShell>content</StaffShell>);
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute(
+      'href',
+      '#main-content',
+    );
+    expect(screen.getByRole('main')).toHaveClass('px-7', 'py-6');
+  });
+
+  it('shows the outlet picker at the top of the sheet when there are 2+ branches', async () => {
+    server.use(
+      http.get('*/api/staff/branches/mine', () =>
+        HttpResponse.json({
+          branchIds: ['b1', 'b2'],
+          primaryBranchId: 'b1',
+          activeBranchId: 'b1',
+          activeBranchRefusal: null,
+        }),
+      ),
+      http.get('*/api/admin/branches', () =>
+        HttpResponse.json([
+          {
+            id: 'b1',
+            code: 'A',
+            name: 'Dhanmondi outlet',
+            timeZoneId: 'Asia/Dhaka',
+            isActive: true,
+          },
+          {
+            id: 'b2',
+            code: 'B',
+            name: 'Chattogram warehouse',
+            timeZoneId: 'Asia/Dhaka',
+            isActive: true,
+          },
+        ]),
+      ),
+    );
+    const user = userEvent.setup();
+    renderShell(<StaffShell>content</StaffShell>);
+    await user.click(mobileTrigger());
+    const sheet = screen.getByRole('dialog');
+    expect(await within(sheet).findByRole('combobox', { name: 'Outlet' })).toBeInTheDocument();
   });
 });

@@ -13,16 +13,30 @@ const staffAreas: NavArea[] = navRegistry.map((area) => ({
 describe('groupStaffNav', () => {
   const groups = groupStaffNav(staffAreas);
 
-  it('puts Home first, with no heading, then the job groups in working order', () => {
-    expect(groups[0]).toMatchObject({ label: null, items: [{ href: '/staff', label: 'Home' }] });
+  it('puts the Dashboard first, then the design groups in working order', () => {
+    expect(groups[0]).toMatchObject({
+      label: 'Overview',
+      items: [{ href: '/staff', label: 'Dashboard' }],
+    });
     expect(groups.map((g) => g.label)).toEqual([
-      null,
-      'Customers',
-      'Shop & orders',
-      'Stock',
-      'Money & reports',
-      'Team & settings',
+      'Overview',
+      'Sales',
+      'Catalogue & stock',
+      'Money',
+      'Insight & admin',
     ]);
+  });
+
+  it('shows the design labels over the area files (ADR-FE-181)', () => {
+    const labelOf = (href: string) =>
+      groups.flatMap((g) => g.items).find((i) => i.href === href)?.label;
+    expect(labelOf('/staff/pos')).toBe('Counter sale');
+    expect(labelOf('/staff/notifications')).toBe('Messages');
+    expect(labelOf('/staff/inventory')).toBe('Inventory & batches');
+    expect(labelOf('/staff/inventory/receipts')).toBe('Goods receiving');
+    expect(labelOf('/staff/billing')).toBe('Billing & cash-up');
+    expect(labelOf('/staff/admin/branches')).toBe('Administration');
+    expect(labelOf('/staff/leave')).toBe('My leave');
   });
 
   it('keeps every staff link exactly once (none lost, none doubled)', () => {
@@ -55,7 +69,7 @@ describe('groupStaffNav', () => {
         items: [{ label: 'Register customer', href: '/staff/customers/new' }],
       },
     ]);
-    expect(onlyCustomers.map((g) => g.label)).toEqual(['Customers']);
+    expect(onlyCustomers.map((g) => g.label)).toEqual(['Sales']);
   });
 });
 
@@ -69,6 +83,10 @@ describe('activeStaffHref', () => {
     ['/staff/procurement/purchase-orders', '/staff/procurement/suppliers'],
     ['/staff/admin/settings', '/staff/admin/branches'],
     ['/staff/admin/staff-accounts/42', '/staff/admin/staff-accounts'],
+    ['/staff/inventory/receipts/new', '/staff/inventory/receipts'],
+    ['/staff/inventory/stock/abc', '/staff/inventory'],
+    ['/staff/customers', '/staff/customers'],
+    ['/staff/customers/new', '/staff/customers/new'],
     ['/staff/something-new', null],
   ];
   it.each(cases)('%s marks %s', (pathname, expected) => {

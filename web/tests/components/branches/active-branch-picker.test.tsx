@@ -123,4 +123,61 @@ describe('ActiveBranchPicker — HO-ADM-002 §11.2, ADR-FE-016', () => {
     expect(queryClient.getQueryData(ACTIVE_BRANCH_KEY)).toBe('b2');
     await waitFor(() => expect(select).toHaveAttribute('title', 'Dhanmondi outlet'));
   });
+
+  // HO-P4 §11.1.5 / U5, ADR-FE-182: the sidebar variant is the same component on leaf.
+  describe('variant="sidebar"', () => {
+    function branches(ids: string[]) {
+      server.use(
+        http.get('*/api/staff/branches/mine', () =>
+          HttpResponse.json({
+            branchIds: ids,
+            primaryBranchId: 'b1',
+            activeBranchId: 'b1',
+            activeBranchRefusal: null,
+          }),
+        ),
+        http.get('*/api/admin/branches', () =>
+          HttpResponse.json(
+            ids.map((id, i) => ({
+              id,
+              code: `C${i}`,
+              name: `Outlet ${id}`,
+              timeZoneId: 'Asia/Dhaka',
+              isActive: true,
+            })),
+          ),
+        ),
+      );
+    }
+
+    it('U5: with two branches it renders a labelled "Outlet" select and changes the active branch', async () => {
+      branches(['b1', 'b2']);
+      const user = userEvent.setup();
+      const { queryClient } = renderWithClient(<ActiveBranchPicker variant="sidebar" />);
+      const select = await screen.findByRole('combobox', { name: 'Outlet' });
+      await waitFor(() => expect(queryClient.getQueryData(ACTIVE_BRANCH_KEY)).toBe('b1'));
+      await user.selectOptions(select, 'b2');
+      expect(queryClient.getQueryData(ACTIVE_BRANCH_KEY)).toBe('b2');
+    });
+
+    it('U5: with one branch it renders nothing, but the seed effect still runs', async () => {
+      branches(['b1']);
+      const { queryClient, container } = renderWithClient(<ActiveBranchPicker variant="sidebar" />);
+      await waitFor(() => expect(queryClient.getQueryData(ACTIVE_BRANCH_KEY)).toBe('b1'));
+      expect(container).toBeEmptyDOMElement();
+    });
+
+    it('two sidebar pickers in one document do not share an id', async () => {
+      branches(['b1', 'b2']);
+      renderWithClient(
+        <>
+          <ActiveBranchPicker variant="sidebar" />
+          <ActiveBranchPicker variant="sidebar" />
+        </>,
+      );
+      const selects = await screen.findAllByRole('combobox', { name: 'Outlet' });
+      expect(selects).toHaveLength(2);
+      expect(selects[0]?.id).not.toBe(selects[1]?.id);
+    });
+  });
 });

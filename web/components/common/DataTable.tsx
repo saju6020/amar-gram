@@ -36,6 +36,9 @@ import { cn } from '@/lib/utils';
  * hook reads the same `useSearchParams` values and supplies `rows`, `totalCount`, `isLoading` and
  * `isError`.
  *
+ * HO-P4 §11.1.7 restyled the look only (header 13px semibold `text-ink-muted`, rows divided by
+ * `border-surface-sunken`, 16px card radius); props, URL behaviour and states are unchanged.
+ *
  * Next.js App Router note: a component that calls `useSearchParams` opts the page it's rendered
  * on out of static rendering unless wrapped in `<Suspense>` — wrap the page/route that renders a
  * `<DataTable>` if it would otherwise be statically generated.
@@ -227,14 +230,20 @@ export function DataTable<TRow>({
             role="region"
             aria-label={`${caption} (scrolls horizontally)`}
             tabIndex={0}
-            className="w-full overflow-x-auto rounded-[var(--radius-md)] border border-border"
+            className="w-full overflow-x-auto rounded-2xl border border-border"
           >
             <table className="w-full border-collapse bg-surface text-sm">
               <TableCaption>{caption}</TableCaption>
-              <TableHeader>
-                <TableRow>
+              <TableHeader className="border-b border-surface-sunken bg-surface">
+                <TableRow className="hover:bg-transparent">
                   {columns.map((column) => (
-                    <TableHead key={column.id} className={column.headerClassName}>
+                    <TableHead
+                      key={column.id}
+                      className={cn(
+                        'px-4 py-3 text-[13px] font-semibold normal-case tracking-normal',
+                        column.headerClassName,
+                      )}
+                    >
                       {column.sortable ? (
                         <button
                           type="button"
@@ -264,9 +273,9 @@ export function DataTable<TRow>({
                 {rows.map((row) => {
                   const href = rowHref?.(row);
                   return (
-                    <TableRow key={getRowId(row)}>
+                    <TableRow key={getRowId(row)} className="border-surface-sunken">
                       {columns.map((column, index) => (
-                        <TableCell key={column.id} className={column.cellClassName}>
+                        <TableCell key={column.id} className={cn('px-4', column.cellClassName)}>
                           {href && index === 0 ? (
                             <Link
                               href={href}

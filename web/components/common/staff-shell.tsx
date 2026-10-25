@@ -17,17 +17,20 @@ import {
   Mail,
   Menu,
   Package,
+  PackageCheck,
   PanelLeftClose,
   Receipt,
   Settings,
   Settings2,
   Shield,
+  ShoppingBasket,
   ShoppingCart,
   Sprout,
   Store,
   Truck,
   Undo2,
   UserPlus,
+  UserSearch,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -42,6 +45,7 @@ import { useStaffSession } from '@/lib/hooks/useSession';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { Button } from '@/components/ui/button';
 import { HearthLogo } from '@/components/hearth/HearthLogo';
+import { ActiveBranchPicker } from '@/components/branches/ActiveBranchPicker';
 import {
   Dialog,
   DialogContent,
@@ -74,6 +78,13 @@ import { cn } from '@/lib/utils';
 // classes, so its initial value (`false`, matching the CSS default `sm:w-64`) produces identical
 // server and first-client-render markup — no hydration mismatch, and no JS-decided default below
 // `sm` either.
+//
+// HO-P4 §8.2 (ADR-FE-181/182), the approved back-office design: the aside also carries the outlet
+// picker (`ActiveBranchPicker variant="sidebar"`, always mounted so the active-branch seed effect
+// runs on every staff page; hidden in the rail and when collapsed, shown at the top of the sheet)
+// and, at its foot, the signed-in person (initials, name, roles, Sign out). The old top header is
+// gone at `sm` and up. Below `sm` the 64px rail has no room for Sign out, so a slim top bar keeps
+// the page title and the same "Sign out" button; only one of the two is ever displayed.
 /** An item with no `roles` is for everyone; otherwise the member of staff needs one of them. */
 export function canSeeNavItem(
   item: { roles?: readonly string[] },
@@ -210,6 +221,10 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
               <DialogDescription className="sr-only">
                 Amar Gram staff navigation, every area.
               </DialogDescription>
+              {/* The sheet is light; the picker is styled for the leaf aside, so it sits on a leaf card. */}
+              <div className="mb-3 rounded-[var(--radius-md)] bg-leaf-ink pb-3 empty:hidden">
+                <ActiveBranchPicker variant="sidebar" />
+              </div>
               <NavSections
                 sections={groups}
                 activeHref={activeHref}
@@ -237,6 +252,16 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
+        {/* Back-office tag and outlet picker: no room in the rail, so only the expanded aside shows them. */}
+        <div className={cn('hidden', !collapsed && 'sm:block')}>
+          <p className="px-5 pt-3 text-xs font-semibold uppercase tracking-[0.1em] text-leaf-soft">
+            Back office
+          </p>
+          <div className="px-1">
+            <ActiveBranchPicker variant="sidebar" />
+          </div>
+        </div>
+
         <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
           <NavSections
             sections={groups}
@@ -247,45 +272,62 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
             collapsed={collapsed}
           />
         </div>
+
+        {session && (
+          <div
+            className={cn(
+              'flex flex-shrink-0 items-center justify-center gap-2.5 border-t border-leaf px-2 py-3',
+              !collapsed && 'sm:justify-start sm:px-4',
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className="grid size-9 flex-none place-items-center rounded-full bg-leaf-soft text-sm font-bold text-leaf-ink"
+            >
+              {initialsOf(session.fullName)}
+            </span>
+            <div
+              className={cn('hidden min-w-0 flex-1 items-center gap-2', !collapsed && 'sm:flex')}
+            >
+              <div className="flex min-w-0 flex-1 flex-col leading-tight">
+                <strong className="truncate text-sm text-surface">{session.fullName}</strong>
+                <span className="truncate text-xs text-leaf-soft">
+                  {session.roleIds.join(', ')}
+                </span>
+              </div>
+              <SignOutButton
+                audience="staff"
+                className="h-9 flex-none px-2 text-sm text-leaf-soft underline hover:bg-leaf hover:text-leaf-soft focus-visible:outline-leaf-soft"
+              />
+            </div>
+          </div>
+        )}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 flex-shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-6">
-          <nav aria-label="Breadcrumb" className="min-w-0 truncate text-sm text-ink-muted">
-            <span className={cn(activeLabel ? 'hidden sm:inline' : 'font-semibold text-ink')}>
-              Amar Gram staff
-            </span>
-            {activeLabel && (
-              <>
-                <span aria-hidden="true" className="mx-2 hidden text-ink-faint sm:inline">
-                  /
-                </span>
-                <span className="font-semibold text-ink">{activeLabel}</span>
-              </>
-            )}
-          </nav>
-          <div className="flex flex-shrink-0 items-center gap-3 text-sm text-ink-muted">
-            {session && (
-              <>
-                {/* Below `sm` (the same 640px floor the rail nav collapses at, UI-1), the header
-                    has no room left for the name+role text once the breadcrumb and the always-
-                    visible Sign out button are accounted for — hidden rather than truncated, since
-                    a cut-off role list reads worse than not showing it at all at this width. */}
-                <span className="hidden truncate sm:inline">
-                  {session.fullName} · {session.roleIds.join(', ')}
-                </span>
-                <SignOutButton audience="staff" />
-              </>
-            )}
-          </div>
+        {/* Below `sm` only: the rail has no room for the title or Sign out (the aside footer has them at sm+). */}
+        <header className="flex h-14 flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:hidden">
+          <p className="min-w-0 truncate font-display text-base font-semibold text-ink">
+            {activeLabel ?? 'Amar Gram staff'}
+          </p>
+          {session && <SignOutButton audience="staff" />}
         </header>
 
-        <main id="main-content" className="min-w-0 flex-1 px-6 py-7">
+        <main id="main-content" className="min-w-0 flex-1 px-7 py-6">
           {children}
         </main>
       </div>
     </div>
   );
+}
+
+/** Initials for the sidebar avatar: the first letters of the first and last words of the name. */
+function initialsOf(fullName: string): string {
+  const words = fullName.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '?';
+  const first = words[0]?.charAt(0) ?? '';
+  const last = words.length > 1 ? (words[words.length - 1]?.charAt(0) ?? '') : '';
+  return (first + last).toUpperCase();
 }
 
 /** Area files name their icons as lucide strings (nav/types.ts); the shell maps them here. */
@@ -302,15 +344,18 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   'layout-dashboard': LayoutDashboard,
   mail: Mail,
   package: Package,
+  'package-check': PackageCheck,
   receipt: Receipt,
   settings: Settings,
   'settings-2': Settings2,
   shield: Shield,
+  'shopping-basket': ShoppingBasket,
   'shopping-cart': ShoppingCart,
   store: Store,
   truck: Truck,
   undo: Undo2,
   'user-plus': UserPlus,
+  'user-search': UserSearch,
   users: Users,
 };
 
@@ -429,7 +474,7 @@ function NavSections({
                     // The accessible name is always the full label, whichever width is showing.
                     aria-label={mode === 'compact' ? item.label : undefined}
                     className={cn(
-                      'group flex h-9 items-center gap-3 rounded-[10px] px-2.5 text-sm font-medium no-underline transition-colors',
+                      'group flex min-h-10 items-center gap-3 rounded-[var(--radius-md)] px-2.5 text-sm font-medium no-underline transition-colors',
                       mode === 'compact' && cn('justify-center', !collapsed && 'sm:justify-start'),
                       dark && 'focus-visible:outline-leaf-soft',
                       active
