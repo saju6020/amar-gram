@@ -14,6 +14,7 @@ import { StockLineEditor, type StockLineState } from './StockLineEditor';
 import { stockLineFromSku } from './TransferForm';
 import { ADJUSTMENT_REASONS, ADJUSTMENT_STATUS_LABELS } from './labels';
 import { EMPTY_ERRORS, distributeError, errorsForRow, focusErrorTarget, renameLineField, stampRowKeys, type DistributedErrors } from './lineErrors';
+import { cn } from '@/lib/utils';
 import { formatQuantity } from '@/lib/format/inventory';
 import { formatMoney } from '@/lib/format/money';
 import { quantityProblem } from '@/lib/validation/inventory';
@@ -34,7 +35,10 @@ export function AdjustmentForm({
   onScan,
   onRequest,
   isPending,
+  initialSku,
 }: {
+  /** The item the adjustment starts with (the stock list's "Adjust" action). */
+  initialSku?: SkuLookup;
   locations: StockLocation[] | undefined;
   onScan: (barcode: string) => Promise<SkuLookup | null>;
   onRequest: (request: RequestAdjustmentRequest) => Promise<RequestedAdjustment>;
@@ -44,7 +48,7 @@ export function AdjustmentForm({
   const [reason, setReason] = React.useState<AdjustmentReason | ''>('');
   const [correctionDirection, setCorrectionDirection] = React.useState<'removes' | 'adds'>('removes');
   const [note, setNote] = React.useState('');
-  const [lines, setLines] = React.useState<StockLineState[]>([]);
+  const [lines, setLines] = React.useState<StockLineState[]>(() => (initialSku ? [stockLineFromSku(initialSku)] : []));
   const [errors, setErrors] = React.useState<DistributedErrors>(EMPTY_ERRORS);
   const [confirming, setConfirming] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
@@ -150,23 +154,31 @@ export function AdjustmentForm({
       />
       <fieldset className="flex flex-col gap-2" aria-describedby={errors.fields.reason ? 'adjustment-reason-error' : undefined}>
         <legend className="text-sm font-semibold text-ink">Reason *</legend>
-        {ADJUSTMENT_REASONS.map((r, index) => (
-          <label key={r.value} className="flex items-start gap-2 text-sm text-ink">
-            <input
+        <div className="flex flex-wrap gap-2">
+          {ADJUSTMENT_REASONS.map((r, index) => (
+            <button
+              key={r.value}
               id={index === 0 ? 'adjustment-reason' : undefined}
-              type="radio"
-              name="adjustment-reason"
-              value={r.value}
-              checked={reason === r.value}
-              onChange={() => { setReason(r.value); touch(); }}
-              className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
-            />
-            <span>
-              <span className="font-semibold">{r.label}</span> — {r.help}
-              {r.direction !== 'either' && <span className="text-ink-muted"> ({r.direction === 'removes' ? 'removes' : 'adds'} stock)</span>}
-            </span>
-          </label>
-        ))}
+              type="button"
+              aria-pressed={reason === r.value}
+              onClick={() => { setReason(r.value); touch(); }}
+              className={cn(
+                'min-h-10 rounded-full border px-4 text-sm font-semibold transition-colors',
+                reason === r.value
+                  ? 'border-2 border-leaf bg-leaf-soft text-leaf-ink'
+                  : 'border-border bg-surface text-ink hover:bg-surface-sunken',
+              )}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+        {meta && (
+          <p className="text-sm text-ink-muted">
+            {meta.help}
+            {meta.direction !== 'either' && <span> ({meta.direction === 'removes' ? 'removes' : 'adds'} stock)</span>}
+          </p>
+        )}
         {errors.fields.reason && <p id="adjustment-reason-error" role="alert" className="text-xs font-semibold text-danger-ink">{errors.fields.reason}</p>}
         {meta?.direction === 'either' && (
           <label className="mt-1 flex items-center gap-2 text-sm text-ink">

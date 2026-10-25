@@ -4,12 +4,13 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import { ScanField } from '@/components/common/ScanField';
+import { Panel } from '@/components/back-office/Panel';
 import { ActionDialog } from './ReasonDialog';
 import { Banner, SelectField, TextField } from './fields';
 import { SkuPicker } from './SkuPicker';
 import { ReceiptLineCard } from './ReceiptLineCard';
 import { ReceiptErrorSummary } from './ReceiptErrorSummary';
-import { EMPTY_ERRORS, distributeViolations, errorsForRow, focusErrorTarget, stampRowKeys, type DistributedErrors } from './lineErrors';
+import { EMPTY_ERRORS, distributeViolations, errorsForRow, focusErrorTarget, hasErrors, stampRowKeys, type DistributedErrors } from './lineErrors';
 import {
   EMPTY_RECEIPT,
   defaultReceiptLocation,
@@ -20,6 +21,7 @@ import {
 } from './receiptModel';
 import { formatQuantity } from '@/lib/format/inventory';
 import { formatDateOnly, timeOnlyInZone } from '@/lib/format/time';
+import Link from 'next/link';
 import { ApiValidationError } from '@/lib/api/client';
 import { describeUnexpectedError } from '@/lib/api/errors';
 import {
@@ -240,9 +242,16 @@ export function GoodsReceiptForm({
 
   const locationName = (id: string) => locations?.find((l) => l.id === id)?.name ?? 'the chosen location';
   const lineCount = state.lines.length;
+  const chosenOrder = purchaseOrders.find((po) => po.id === state.purchaseOrderId);
+  // "Expected" is what the chosen order still expects on this line: the server's outstanding
+  // quantity exactly as it pre-filled the line (never recomputed here).
+  const expectedFor = (line: ReceiptDraftLine): string | undefined =>
+    line.purchaseOrderLineId === ''
+      ? undefined
+      : purchaseOrderLines?.lines.find((l) => l.purchaseOrderLineId === line.purchaseOrderLineId)?.quantityAccepted;
 
   return (
-    <form onSubmit={review} noValidate className="flex max-w-5xl flex-col gap-5">
+    <form onSubmit={review} noValidate className="flex flex-col gap-4">
       <UnsavedChangesGuard when={dirty && !submitting} />
       {restorable && (
         <Banner tone="info" role="status">
@@ -258,84 +267,106 @@ export function GoodsReceiptForm({
       )}
       <ReceiptErrorSummary errors={errors} />
 
-      <section aria-labelledby="receipt-source-heading" className="grid gap-4 rounded-[var(--radius-md)] border border-border bg-surface p-4 sm:grid-cols-2">
-        <fieldset className="flex flex-col gap-2 sm:col-span-2">
-          <legend id="receipt-source-heading" className="text-sm font-semibold text-ink">Receiving</legend>
-          {(
-            [
-              ['purchase-order', 'Against a purchase order'],
-              ['consignment', 'Against a consignment (cleared ones only)'],
-              ['direct', 'Direct, with no order'],
-            ] as const
-          ).map(([value, label]) => (
-            <label key={value} className="flex items-center gap-2 text-sm text-ink">
-              <input
-                type="radio"
-                name="receipt-source"
-                value={value}
-                checked={state.source === value}
-                onChange={() => changeSource(value)}
-                className="h-4 w-4 accent-[var(--accent)]"
-              />
-              {label}
-            </label>
-          ))}
-        </fieldset>
-        {state.source === 'purchase-order' && (
-          <SelectField
-            id="receipt-purchaseOrderId"
-            label="Purchase order"
-            required
-            value={state.purchaseOrderId}
-            error={errors.fields.purchaseOrderId}
-            hint="Lines are filled in with what the order still expects."
-            onChange={(e) => chooseOrder(e.target.value)}
-          >
-            <option value="">Choose an issued order</option>
-            {purchaseOrders.map((po) => (
-              <option key={po.id} value={po.id}>
-                {po.number} · {po.supplierName} · due {formatDateOnly(po.expectedDeliveryOn)}
-              </option>
+      <Panel title="Delivery">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <fieldset className="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
+            <legend id="receipt-source-heading" className="mb-1 text-sm font-semibold text-ink">Receiving</legend>
+            {(
+              [
+                ['purchase-order', 'Against a purchase order'],
+                ['consignment', 'Against a consignment (cleared ones only)'],
+                ['direct', 'Direct, with no order'],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value} className="flex items-center gap-2 text-sm text-ink">
+                <input
+                  type="radio"
+                  name="receipt-source"
+                  value={value}
+                  checked={state.source === value}
+                  onChange={() => changeSource(value)}
+                  className="h-4 w-4 accent-leaf"
+                />
+                {label}
+              </label>
             ))}
-          </SelectField>
-        )}
-        {state.source === 'consignment' && (
-          <SelectField
-            id="receipt-consignmentId"
-            label="Consignment"
-            required
-            value={state.consignmentId}
-            error={errors.fields.consignmentId}
-            onChange={(e) => patch({ consignmentId: e.target.value })}
-          >
-            <option value="">Choose a cleared consignment</option>
-            {consignments.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.reference} · shipment {c.shipmentReference}
-              </option>
-            ))}
-          </SelectField>
-        )}
-        <TextField
-          id="receipt-deliveryReference"
-          label="Delivery reference"
-          maxLength={60}
-          value={state.deliveryReference}
-          error={errors.fields.deliveryReference}
-          onChange={(e) => patch({ deliveryReference: e.target.value })}
-        />
-        <p className="text-sm text-ink-muted sm:col-span-2">Received: now ({timeZoneLabel}) — the server records the time when you post.</p>
-      </section>
+          </fieldset>
+          {state.source === 'purchase-order' && (
+            <SelectField
+              id="receipt-purchaseOrderId"
+              label="Purchase order"
+              required
+              value={state.purchaseOrderId}
+              error={errors.fields.purchaseOrderId}
+              hint="Lines are filled in with what the order still expects."
+              onChange={(e) => chooseOrder(e.target.value)}
+            >
+              <option value="">Choose an issued order</option>
+              {purchaseOrders.map((po) => (
+                <option key={po.id} value={po.id}>
+                  {po.number} · {po.supplierName} · due {formatDateOnly(po.expectedDeliveryOn)}
+                </option>
+              ))}
+            </SelectField>
+          )}
+          {state.source === 'purchase-order' && chosenOrder && (
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-sm font-semibold text-ink">Supplier</span>
+              <p className="py-2 text-sm text-ink">{chosenOrder.supplierName}</p>
+            </div>
+          )}
+          {state.source === 'consignment' && (
+            <SelectField
+              id="receipt-consignmentId"
+              label="Consignment"
+              required
+              value={state.consignmentId}
+              error={errors.fields.consignmentId}
+              onChange={(e) => patch({ consignmentId: e.target.value })}
+            >
+              <option value="">Choose a cleared consignment</option>
+              {consignments.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.reference} · shipment {c.shipmentReference}
+                </option>
+              ))}
+            </SelectField>
+          )}
+          <TextField
+            id="receipt-deliveryReference"
+            label="Delivery reference"
+            maxLength={60}
+            value={state.deliveryReference}
+            error={errors.fields.deliveryReference}
+            onChange={(e) => patch({ deliveryReference: e.target.value })}
+          />
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <span className="text-sm font-semibold text-ink">Received on</span>
+            <p className="py-2 text-sm text-ink">Now ({timeZoneLabel}). The server records the time when you post.</p>
+          </div>
+          {state.source === 'consignment' && state.consignmentId && (
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[var(--radius-md)] border border-dashed border-leaf bg-leaf-soft px-3 py-3 text-sm text-leaf-ink sm:col-span-2 lg:col-span-3">
+              <span>Landed cost and documents belong to the consignment:</span>
+              <Link href={`/staff/procurement/consignments/${state.consignmentId}/documents`} className="font-semibold text-leaf-ink underline">
+                Documents
+              </Link>
+              <Link href={`/staff/procurement/consignments/${state.consignmentId}/costs`} className="font-semibold text-leaf-ink underline">
+                Costs
+              </Link>
+            </p>
+          )}
+        </div>
+      </Panel>
 
       <section aria-labelledby="receipt-add-heading" className="flex flex-col gap-3">
-        <h2 id="receipt-add-heading" className="text-sm font-bold uppercase tracking-wide text-ink-muted">Add lines</h2>
-        <ScanField id="receipt-scan" onScan={handleScan} />
+        <h2 id="receipt-add-heading" className="font-display text-lg font-semibold text-ink">Add lines</h2>
+        <ScanField id="receipt-scan" onScan={handleScan} className="rounded-xl border-leaf" />
         <SkuPicker id="receipt-sku-picker" label="Or find an item" onSelect={addSku} />
       </section>
 
       <section aria-labelledby="receipt-lines-heading" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="receipt-lines-heading" className="text-sm font-bold uppercase tracking-wide text-ink-muted">
+          <h2 id="receipt-lines-heading" className="font-display text-lg font-semibold text-ink">
             Lines ({lineCount})
           </h2>
           <p role="status" className="text-xs text-ink-muted">
@@ -343,7 +374,7 @@ export function GoodsReceiptForm({
           </p>
         </div>
         {lineCount === 0 ? (
-          <p className="rounded-[var(--radius-md)] border border-dashed border-border-strong p-4 text-sm text-ink-muted">
+          <p className="rounded-2xl border border-dashed border-border-strong bg-surface p-4 text-sm text-ink-muted">
             No lines yet. Scan a barcode, find an item above, or choose a purchase order to fill them in.
           </p>
         ) : (
@@ -355,6 +386,7 @@ export function GoodsReceiptForm({
                 index={index}
                 errors={errorsForRow(errors, line.key, index)}
                 locations={locations}
+                expected={expectedFor(line)}
                 onChange={(change) => patchLine(line.key, change)}
                 onRemove={() => patch({ lines: state.lines.filter((l) => l.key !== line.key) })}
               />
@@ -364,13 +396,19 @@ export function GoodsReceiptForm({
       </section>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-        <Button type="submit" disabled={isPosting || submitting || lineCount === 0}>
-          Review and post
-        </Button>
+        <p role="status" aria-live="polite" className={hasErrors(errors) ? 'min-w-0 flex-1 text-sm font-semibold text-danger-ink' : 'min-w-0 flex-1 text-sm text-ink-muted'}>
+          {submitting
+            ? 'Posting…'
+            : hasErrors(errors)
+              ? 'Nothing was posted. Fix the highlighted fields, then post again.'
+              : 'A posted receipt cannot be edited; corrections are adjustments.'}
+        </p>
         <Button variant="secondary" disabled={lineCount === 0 && !savedAt} onClick={() => setDiscarding(true)}>
           Discard draft
         </Button>
-        <p className="text-xs text-ink-muted">A posted receipt cannot be edited; corrections are adjustments.</p>
+        <Button type="submit" disabled={isPosting || submitting || lineCount === 0}>
+          Review and post
+        </Button>
       </div>
 
       <ActionDialog
