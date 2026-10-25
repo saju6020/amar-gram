@@ -15,15 +15,21 @@ describe('Delivery promise and promise strip — only true rules', () => {
     expect(card.textContent).not.toMatch(/next[- ]day|same[- ]day|free delivery|within \d/i);
   });
 
-  it('the home strip uses the same facts', () => {
+  // U13 (HO-P3): the home strip is the design's four dashed promise cards, true facts only.
+  it('U13: the home strip states the organic, cash-on-delivery, returns and delivery facts only', () => {
     render(<PromiseStrip />);
     const strip = screen.getByRole('region', { name: 'Why shop with us' });
     expect(within(strip).getAllByRole('listitem')).toHaveLength(4);
-    expect(strip.textContent).not.toMatch(/next[- ]day|same[- ]day|free delivery/i);
+    expect(strip).toHaveTextContent('Organic where we say so');
+    expect(strip).toHaveTextContent('Certified items are marked');
+    expect(strip).toHaveTextContent('Cash on delivery');
+    expect(strip).toHaveTextContent('Pay when it reaches you');
+    expect(strip).toHaveTextContent('Returns on eligible items');
+    expect(strip.textContent).not.toMatch(/village on every pack|free delivery|৳|next[- ]day/i);
   });
 });
 
-describe('ShopHero — built from the banner, nothing invented', () => {
+describe('ShopHero — built from the banner, nothing invented (U10)', () => {
   it('uses the banner title, body and link; draws no eyebrow', () => {
     render(
       <ShopHero
@@ -39,24 +45,37 @@ describe('ShopHero — built from the banner, nothing invented', () => {
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Harvest season');
     expect(screen.getByText('Everything a new kitchen needs.')).toBeInTheDocument();
+    expect(screen.queryByText(/from our village to your kitchen/i)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Find out more/ })).toHaveAttribute(
       'href',
       '/shop/products?category=RiceAndGrains',
     );
-    expect(screen.getByRole('link', { name: /Organic Rolled Oats/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Meet the growers' })).toHaveAttribute(
       'href',
-      '/shop/products/organic-rolled-oats',
+      '#growers',
     );
+    // The harvest card links to the newest product and shows "producer · country" from the API.
+    const harvest = screen.getByRole('link', { name: /This week.s harvest/ });
+    expect(harvest).toHaveAttribute('href', '/shop/products/organic-rolled-oats');
+    expect(harvest).toHaveTextContent('Organic Rolled Oats');
+    expect(harvest).toHaveTextContent('Amar Gram Farms · Bangladesh');
   });
 
-  it('with no banner it keeps the page headline and a shop button', () => {
+  it('with no banner it shows the design headline, intro and both buttons', () => {
     render(<ShopHero banner={null} featured={null} />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Fresh from the village, with the origin on every product',
+      'Honest food, grown the slow way.',
     );
-    expect(screen.getByRole('link', { name: /Shop all products/ })).toHaveAttribute(
+    expect(screen.getByText(/bought straight from the families who grow them/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Shop the harvest/ })).toHaveAttribute(
       'href',
       '/shop/products',
     );
+    expect(screen.getByRole('link', { name: 'Meet the growers' })).toHaveAttribute(
+      'href',
+      '#growers',
+    );
+    // No product yet: no harvest card.
+    expect(screen.queryByText(/This week.s harvest/)).not.toBeInTheDocument();
   });
 });

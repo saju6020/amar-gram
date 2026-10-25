@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BannerStrip } from '@/components/shop/BannerStrip';
-import { OriginGrid } from '@/components/shop/OriginGrid';
 import { ShopHero } from '@/components/shop/ShopHero';
+import { CategoryTiles } from '@/components/shop/home/CategoryTiles';
+import { GrowersBand } from '@/components/shop/home/GrowersBand';
+import { SeasonalCard } from '@/components/shop/home/SeasonalCard';
 import { ProductGrid } from '@/components/catalogue/ProductGrid';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
 import { PromiseStrip } from '@/components/hearth/DeliveryPromise';
-import { IconTile } from '@/components/hearth/IconTile';
-import { categoryIcon } from '@/components/shop/categoryIcons';
 import {
   getBannersServer,
   getCatalogueServer,
@@ -15,7 +15,6 @@ import {
   getOriginsServer,
 } from '@/lib/api/shop-catalogue';
 import { EMPTY_CATALOGUE_PARAMS } from '@/lib/shop/catalogueParams';
-import { categoryLabel } from '@/lib/shop/labels';
 import { isMaintenanceError, settle } from '@/lib/shop/helpers';
 
 export const metadata: Metadata = {
@@ -27,13 +26,15 @@ export const metadata: Metadata = {
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-const SECTION_HEADING = 'font-display text-[clamp(1.5rem,3vw,2rem)] font-semibold text-ink m-0';
+const SECTION_HEADING =
+  'm-0 font-display text-[clamp(1.75rem,3vw,2.125rem)] font-bold tracking-[-0.02em] text-ink';
 
 /**
- * `/shop` — HO-SHP-002 §3.2 storefront home in the Hearth layout: the Home banner as the hero,
- * new arrivals, category tiles, featured origins and the promise strip (order: owner, 2026-10-16). Server Component; every
- * block comes from a public endpoint and is simply omitted when its read fails or has nothing to
- * show.
+ * `/shop` — the storefront home to docs/design/store/Home.dc.html and HomePhone.dc.html (HO-P3 S1):
+ * hero band, "Shop the pantry" category tiles, "Fresh from the haat" (the newest eight), the growers
+ * band, then the promises. Below `md` the hero gives way to a seasonal card, the tiles become a
+ * scrolling circle row, and only the first three blocks show. No staples-box band (G2). Server
+ * Component; every block comes from a public endpoint and is omitted when its read fails or is empty.
  */
 export default async function ShopHomePage({ searchParams }: { searchParams: SearchParams }) {
   const rawLang = (await searchParams).lang;
@@ -52,81 +53,44 @@ export default async function ShopHomePage({ searchParams }: { searchParams: Sea
   const [heroBanner, ...otherBanners] = banners.ok ? banners.value : [];
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex min-w-0 flex-col gap-6 md:gap-16">
       <div className="flex flex-col gap-4">
         <ShopHero
           banner={heroBanner ?? null}
           featured={newest[0] ?? null}
           lang={lang || undefined}
         />
+        <SeasonalCard banner={heroBanner ?? null} />
         {otherBanners.length > 0 && <BannerStrip banners={otherBanners} />}
       </div>
 
+      {categories.ok && <CategoryTiles categories={categories.value} lang={lang || undefined} />}
+
       {newest.length > 0 && (
-        <section aria-labelledby="home-new" className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="home-new" className={SECTION_HEADING}>
-              New arrivals
+        <section aria-label="Fresh from the haat" className="flex flex-col gap-4 md:gap-6">
+          <div className="flex items-baseline justify-between gap-3">
+            {/* The phone's heading is the page's h1 (HomePhone); from md the hero holds the h1. */}
+            <h1 id="home-fresh" className={`${SECTION_HEADING} md:hidden`}>
+              Fresh from the haat
+            </h1>
+            <h2 id="home-fresh-wide" className={`${SECTION_HEADING} hidden md:block`}>
+              Fresh from the haat
             </h2>
-            <Link href="/shop/products" className="text-sm font-semibold text-accent-ink">
-              See all products
+            <Link
+              href="/shop/products"
+              className="text-sm font-semibold text-accent-ink md:text-base"
+            >
+              See all <span className="sr-only md:not-sr-only">products</span>
             </Link>
           </div>
           <ProductGrid items={newest} lang={lang || undefined} headingLevel="h3" wide />
         </section>
       )}
 
-      {categories.ok && categories.value.length > 0 && (
-        <section aria-labelledby="home-categories" className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="home-categories" className={SECTION_HEADING}>
-              Shop by category
-            </h2>
-            <Link href="/shop/products" className="text-sm font-semibold text-accent-ink">
-              All products
-            </Link>
-          </div>
-          <ul className="m-0 grid list-none grid-cols-2 gap-4 p-0 md:grid-cols-3 lg:grid-cols-6">
-            {categories.value.map((category) => {
-              const Icon = categoryIcon(category.value);
-              return (
-                <li key={category.value}>
-                  <Link
-                    href={`/shop/products?category=${encodeURIComponent(category.value)}${lang ? `&lang=${encodeURIComponent(lang)}` : ''}`}
-                    className="flex h-full flex-col items-center gap-3 rounded-[22px] border border-border bg-surface px-3.5 py-5 text-center text-ink no-underline hover:border-accent"
-                  >
-                    <IconTile size="lg">
-                      <Icon size={28} strokeWidth={1.8} />
-                    </IconTile>
-                    <span className="text-[15px] font-semibold">
-                      {categoryLabel(category.value)}
-                    </span>
-                    <span className="text-[13px] text-ink-muted">
-                      {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {featured.length > 0 && (
-        <section aria-labelledby="home-origins" className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="home-origins" className={SECTION_HEADING}>
-              Featured origins
-            </h2>
-            <Link href="/shop/countries" className="text-sm font-semibold text-accent-ink">
-              Shop by country
-            </Link>
-          </div>
-          <OriginGrid origins={featured} lang={lang || undefined} headingLevel="h3" compact />
-        </section>
-      )}
-
-      <PromiseStrip />
+      <div className="hidden flex-col gap-12 md:flex">
+        <GrowersBand origins={featured} lang={lang || undefined} />
+        <PromiseStrip />
+      </div>
     </div>
   );
 }

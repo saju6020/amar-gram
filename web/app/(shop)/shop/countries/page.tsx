@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { EmptyWarmIllustration, EmptyState } from '@/components/common/EmptyState';
+import { HearthBand } from '@/components/hearth/HearthBand';
 import { ShopLoadError } from '@/components/shop/ShopLoadError';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
 import { OriginGrid } from '@/components/shop/OriginGrid';
@@ -23,13 +24,15 @@ export default async function CountriesPage({ searchParams }: { searchParams: Se
     return <ShopLoadError retryHref="/shop/countries" error={origins.error} />;
   }
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="m-0 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-tight text-ink">
-        Shop by country
-      </h1>
-      <p className="m-0 max-w-prose text-base text-ink-muted">
-        We name the country of origin on every food we sell. Pick a country to see its products.
-      </p>
+    <div className="flex flex-col gap-6">
+      <HearthBand as="header" className="flex flex-col gap-3 md:p-10">
+        <h1 className="m-0 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold leading-tight tracking-[-0.02em] text-ink">
+          Shop by country
+        </h1>
+        <p className="m-0 max-w-prose text-base text-ink-muted">
+          We name the country of origin on every food we sell. Pick a country to see its products.
+        </p>
+      </HearthBand>
       {origins.value.length === 0 ? (
         <EmptyState
           icon={<EmptyWarmIllustration />}
