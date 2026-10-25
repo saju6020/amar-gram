@@ -1,13 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUpRight, Mail, Phone, TriangleAlert } from 'lucide-react';
+import { ArrowUpRight, Check, Mail, Phone, TriangleAlert } from 'lucide-react';
+import { Amount } from '@/components/billing/Amount';
 import { cardClass, flatCardClass } from '@/components/hearth/card';
 import { IconTile } from '@/components/hearth/IconTile';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { describeDroppedReason } from '@/lib/api/errors';
 import type { PublicBranch } from '@/lib/api/admin-branches';
-import type { CustomerShipment, CustomerStatusChange, ReorderResult } from '@/lib/api/my-orders';
+import type {
+  CustomerOrderDetail,
+  CustomerShipment,
+  CustomerStatusChange,
+  ReorderResult,
+} from '@/lib/api/my-orders';
 import { formatOrderWhen, orderStatusLabel } from '@/lib/format/orders';
 import { cn } from '@/lib/utils';
 import { CopyButton } from './CopyButton';
@@ -203,6 +209,80 @@ export function OrderTimeline({
 }
 
 /**
+ * `PlacedConfirmation` — the checkout confirmation block (docs/design/store/Checkout.dc.html "Thank you! Your order
+ * is in.", D-3), shown above the order at `/portal/orders/{id}?placed=1`: a leaf tick, the order number, when and
+ * where it arrives (from the order itself), what to do about payment (the server's own amounts), and the two ways
+ * on. Nothing here is computed or invented: the slot, address and amounts are what the server stored.
+ */
+export function PlacedConfirmation({ order }: { order: CustomerOrderDetail }) {
+  const f = order.fulfilment;
+  const pickup = order.fulfilmentMethod === 'Pickup';
+  const address = [f.line1, f.line2, f.city, f.district].filter(Boolean).join(', ');
+  const slot = f.slotWindow ?? f.slotDate;
+  const due = order.transferInstructions?.amountDue ?? order.totals.grandTotal;
+  return (
+    <section
+      aria-labelledby="placed-heading"
+      data-testid="order-placed"
+      className="flex flex-col items-center gap-4 rounded-band bg-leaf-soft px-5 py-10 text-center sm:px-10"
+    >
+      <span
+        aria-hidden="true"
+        className="grid size-20 place-items-center rounded-full bg-surface text-leaf sm:size-26"
+      >
+        <Check size={44} strokeWidth={2.2} />
+      </span>
+      <h2
+        id="placed-heading"
+        className="m-0 font-display text-4xl font-bold leading-[1.1] tracking-[-0.03em] text-ink sm:text-[44px]"
+      >
+        Thank you! Your order is in.
+      </h2>
+      <div role="status" className="flex max-w-xl flex-col gap-1 text-base text-ink sm:text-lg">
+        <p className="m-0">
+          {pickup
+            ? `Order ${order.orderNumber} will be ready to collect at ${f.pickupBranchName ?? 'the branch'}.`
+            : `Order ${order.orderNumber} arrives${slot ? ` ${slot}` : ''}${address ? ` at ${address}` : ''}.`}
+        </p>
+        {order.paymentMethod === 'CashOnDelivery' && (
+          <p className="m-0">
+            Please keep <Amount money={order.totals.grandTotal} /> in cash ready.
+          </p>
+        )}
+        {order.paymentMethod === 'PayOnCollection' && (
+          <p className="m-0">
+            Please bring <Amount money={order.totals.grandTotal} /> to pay when you collect.
+          </p>
+        )}
+        {order.paymentMethod === 'BankTransfer' && (
+          <p className="m-0">
+            Please transfer <Amount money={due} />; we dispatch once it is confirmed.
+          </p>
+        )}
+      </div>
+      <div className="flex flex-wrap justify-center gap-3">
+        <a
+          href="#order-detail"
+          className={buttonVariants({ variant: 'pill', size: 'pillLg', className: 'no-underline' })}
+        >
+          Track this order
+        </a>
+        <Link
+          href="/shop"
+          className={buttonVariants({
+            variant: 'pillSecondary',
+            size: 'pillLg',
+            className: 'no-underline',
+          })}
+        >
+          Keep shopping
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+/**
  * `ExpiredOrderCard` — HO-ORD-002 §11.6, US-ORD-19 AC3. *"We couldn't confirm your transfer in time, so
  * the items were released."* with **Order again** (the re-order endpoint puts what is still available
  * back in the cart at today's prices) and, after the call, a list of what could not be added. Neutral
@@ -240,8 +320,8 @@ export function ExpiredOrderCard({
           <div role="status" className="text-sm">
             <p className="m-0 font-semibold">
               {result.addedCount === 0
-                ? 'Nothing could be added to your cart.'
-                : `${result.addedCount} ${result.addedCount === 1 ? 'item was' : 'items were'} added to your cart.`}
+                ? 'Nothing could be added to your basket.'
+                : `${result.addedCount} ${result.addedCount === 1 ? 'item was' : 'items were'} added to your basket.`}
             </p>
             {result.unavailable.length > 0 && (
               <>
@@ -257,7 +337,7 @@ export function ExpiredOrderCard({
             )}
             <p className="m-0 mt-2">
               <Link href="/cart" className="font-semibold text-accent-ink underline">
-                Go to your cart
+                Go to your basket
               </Link>
             </p>
           </div>
@@ -273,10 +353,10 @@ export function ExpiredOrderCard({
                 aria-describedby="reorder-hint"
                 className="self-start"
               >
-                {pending ? 'Adding to your cart…' : 'Order again'}
+                {pending ? 'Adding to your basket…' : 'Order again'}
               </Button>
               <p id="reorder-hint" className="m-0 text-xs text-ink-muted">
-                Puts the same items back in your cart at today&rsquo;s prices. You check out as
+                Puts the same items back in your basket at today&rsquo;s prices. You check out as
                 normal.
               </p>
             </>

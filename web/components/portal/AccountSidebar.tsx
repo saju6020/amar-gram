@@ -51,10 +51,9 @@ function useOpenOrderCount(): number {
 }
 
 /**
- * Option A "Account sidebar" as approved by the owner (2026-10-17;
- * https://claude.ai/artifact/K3WKkwpv67BqLJJdSr3bUh): on desktop a left menu with the customer
- * ("Member since 2026"), Overview and two groups — Shopping (Orders
- * with its open count), Account (Billing, Profile & security, Sign out). The current page is teal.
+ * The account menu as a card (docs/design/store/Account.dc.html, HO-P3 S4): the customer's initials, name and
+ * "Member since", then the links (D-6 keeps Wishlist, My reviews and Billing). The current page is a leaf pill;
+ * Sign out is the last row, in the danger ink.
  */
 export function AccountSidebar() {
   const pathname = usePathname() ?? '';
@@ -64,52 +63,37 @@ export function AccountSidebar() {
   const openOrders = useOpenOrderCount();
 
   return (
-    <aside className="hidden w-[300px] flex-none border-r border-border bg-surface md:block">
-      <div className="sticky top-0 flex max-h-screen flex-col gap-[18px] overflow-y-auto px-5 py-[22px]">
+    <aside className="hidden w-[260px] flex-none md:block">
+      <div className="sticky top-4 flex flex-col gap-1 rounded-card border-[1.5px] border-border bg-surface p-4">
         {session && (
-          <div className="flex items-center gap-3.5 border-b border-border px-0.5 pb-5">
+          <div className="mb-2 flex items-center gap-3 border-b-[1.5px] border-dashed border-border-strong px-2 pb-4 pt-2">
             <span
               aria-hidden="true"
-              className="grid size-[58px] flex-none place-items-center rounded-full bg-accent text-[19px] font-bold text-white"
+              className="grid size-12 flex-none place-items-center rounded-full bg-leaf-soft font-display text-xl font-bold text-leaf-ink"
             >
               {initialsOf(session.fullName)}
             </span>
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate text-[19px] font-bold tracking-[-0.01em] text-ink">
-                {session.fullName}
-              </span>
-              {summary && (
-                <span className="text-[15px] leading-snug text-ink-muted">{summary}</span>
-              )}
+            <span className="flex min-w-0 flex-col leading-snug">
+              <strong className="truncate text-ink">{session.fullName}</strong>
+              {summary && <span className="text-[13px] text-ink-muted">{summary}</span>}
             </span>
           </div>
         )}
-        <nav aria-label="Main" className="flex flex-col gap-[18px]">
-          {ACCOUNT_GROUPS.map((group) => (
-            <div key={group.key} className="flex flex-col gap-1">
-              {group.label && (
-                <p className="m-0 mb-1.5 mt-1 px-[18px] text-[13px] font-bold uppercase tracking-[0.1em] text-ink-muted">
-                  {group.label}
-                </p>
-              )}
-              {group.links.map((link) => (
-                <SidebarLink
-                  key={link.href}
-                  link={link}
-                  current={link.href === active}
-                  count={link.href === '/portal/orders' ? openOrders : 0}
-                />
-              ))}
-              {group.key === 'account' && (
-                <SignOutButton
-                  audience="customer"
-                  className="h-12 w-full justify-start gap-3.5 rounded-xl px-[18px] text-[17px] font-medium text-ink-muted hover:text-ink [&_svg]:size-[22px]"
-                >
-                  <LogOut aria-hidden="true" />
-                </SignOutButton>
-              )}
-            </div>
+        <nav aria-label="Main" className="flex flex-col gap-1">
+          {ACCOUNT_GROUPS.flatMap((group) => group.links).map((link) => (
+            <SidebarLink
+              key={link.href}
+              link={link}
+              current={link.href === active}
+              count={link.href === '/portal/orders' ? openOrders : 0}
+            />
           ))}
+          <SignOutButton
+            audience="customer"
+            className="min-h-11 w-full justify-start gap-3 rounded-[14px] px-3.5 text-base font-medium text-danger-ink hover:bg-danger-bg [&_svg]:size-5"
+          >
+            <LogOut aria-hidden="true" />
+          </SignOutButton>
         </nav>
       </div>
     </aside>
@@ -131,13 +115,13 @@ function SidebarLink({
       href={link.href}
       aria-current={current ? 'page' : undefined}
       className={cn(
-        'flex h-12 items-center gap-3.5 rounded-xl px-[18px] text-[17px] font-medium no-underline transition-colors',
+        'flex min-h-11 items-center gap-3 rounded-[14px] px-3.5 text-base font-medium no-underline transition-colors',
         current
-          ? 'bg-accent-tint font-semibold text-accent'
-          : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
+          ? 'bg-leaf font-semibold text-leaf-soft'
+          : 'text-ink hover:bg-leaf-soft hover:text-leaf-ink',
       )}
     >
-      <Icon size={22} strokeWidth={current ? 2.1 : 1.8} aria-hidden="true" />
+      <Icon size={20} strokeWidth={current ? 2.1 : 1.8} aria-hidden="true" />
       {link.label}
       {count > 0 && (
         <span className="ml-auto grid h-[26px] min-w-[30px] place-items-center rounded-full bg-warm px-2 text-[13px] font-bold text-ink">
@@ -174,7 +158,7 @@ export function AccountPills() {
     <nav
       ref={rowRef}
       aria-label="Main"
-      className="flex gap-2 overflow-x-auto border-b border-border bg-surface px-3.5 py-2.5 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+      className="flex gap-2 overflow-x-auto border-b-[1.5px] border-border bg-surface px-3.5 py-2.5 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
     >
       {links.map((link) => {
         const Icon = ICONS[link.icon];
@@ -185,9 +169,9 @@ export function AccountPills() {
             href={link.href}
             aria-current={current ? 'page' : undefined}
             className={cn(
-              'inline-flex min-h-9 flex-none items-center gap-1.5 whitespace-nowrap rounded-full border px-[13px] text-[13.5px] font-semibold no-underline',
+              'inline-flex min-h-11 flex-none items-center gap-1.5 whitespace-nowrap rounded-full border-[1.5px] px-3.5 text-sm font-semibold no-underline',
               current
-                ? 'border-accent bg-accent text-white'
+                ? 'border-leaf bg-leaf text-leaf-soft'
                 : 'border-border bg-surface text-ink-muted',
             )}
           >
@@ -220,10 +204,10 @@ export function AccountFrame({ children }: { children: React.ReactNode }) {
   return (
     <>
       <AccountPills />
-      <div className="flex min-h-[calc(100vh-75px)]">
+      <div className="mx-auto flex w-full max-w-[1200px] items-start gap-8 px-3.5 py-5 md:px-6 md:py-8">
         <AccountSidebar />
-        <main id="main-content" className="min-w-0 flex-1 px-3.5 py-5 md:px-[34px] md:py-[30px]">
-          <div className="mx-auto w-full max-w-[1100px]">{children}</div>
+        <main id="main-content" className="min-w-0 flex-1">
+          {children}
         </main>
       </div>
     </>

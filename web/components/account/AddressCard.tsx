@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { describeApiError } from '@/lib/api/errors';
 import type { DeliveryAddress } from '@/lib/api/account';
+import { cn } from '@/lib/utils';
 
 /**
- * `components/account/AddressCard.tsx` — US-ACC-06, UI-3 (removal confirms, naming the label).
+ * `components/account/AddressCard.tsx` — US-ACC-06, UI-3 (removal confirms, naming the label), restyled to
+ * docs/design/store/Profile.dc.html (HO-P3 S4): the default address has a leaf border and a "Default" leaf pill;
+ * the others offer "Make default".
  *
  * ARCH gate HIGH 3 (first pass) — takes `onRemove`/`onSetDefault`/`isSettingDefault` as props
  * instead of calling `useRemoveDeliveryAddress()`/`useSetDefaultDeliveryAddress()` itself; the
@@ -46,43 +48,56 @@ export function AddressCard({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-border bg-surface p-4">
+    <div
+      className={cn(
+        'flex flex-col gap-1.5 rounded-[18px] bg-surface p-[18px]',
+        address.isDefault ? 'border-2 border-leaf' : 'border-[1.5px] border-border',
+      )}
+    >
       <div className="flex items-center justify-between gap-2">
-        <p className="font-semibold text-ink">{address.label}</p>
+        <p className="m-0 font-semibold text-ink">{address.label}</p>
         {address.isDefault && (
-          <Badge variant="success" icon={<CheckCircle2 size={12} aria-hidden="true" />}>
+          <span className="inline-flex items-center gap-1 rounded-pill bg-leaf-soft px-2.5 py-0.5 text-[13px] font-semibold text-leaf-ink">
+            <Check size={12} aria-hidden="true" />
             Default
-          </Badge>
+          </span>
         )}
       </div>
-      <p className="text-sm text-ink-muted">
+      <p className="m-0 text-ink-muted [overflow-wrap:anywhere]">
         {address.line1}
         {address.line2 ? `, ${address.line2}` : ''}, {address.city}, {address.district}
         {address.postalCode ? ` ${address.postalCode}` : ''}
       </p>
       {address.deliveryInstructions && (
-        <p className="text-sm text-ink-muted">{address.deliveryInstructions}</p>
+        <p className="m-0 text-sm text-ink-muted [overflow-wrap:anywhere]">
+          {address.deliveryInstructions}
+        </p>
       )}
       {removeError && (
-        <p role="alert" className="text-xs font-semibold text-danger-ink">
+        <p role="alert" className="m-0 text-xs font-semibold text-danger-ink">
           {removeError}
         </p>
       )}
-      <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" size="sm" onClick={onEdit}>
+      <div className="mt-1.5 flex flex-wrap gap-2">
+        <Button variant="pillSecondary" size="pillMd" onClick={onEdit}>
           Edit
         </Button>
         {!address.isDefault && (
           <Button
-            variant="secondary"
-            size="sm"
+            variant="pillSecondary"
+            size="pillMd"
             onClick={() => onSetDefault(address.id)}
             disabled={isSettingDefault}
           >
-            Set as default
+            Make default
           </Button>
         )}
-        <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)}>
+        <Button
+          variant="ghost"
+          size="pillMd"
+          className="text-danger-ink"
+          onClick={() => setConfirmOpen(true)}
+        >
           Remove
         </Button>
       </div>

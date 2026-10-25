@@ -76,10 +76,12 @@ describe('account sidebar', () => {
     expect(activeAccountHref('/portal/orders/abc')).toBe('/portal/orders');
     expect(activeAccountHref('/portal/reviews/1/edit')).toBe('/portal/reviews');
     expect(activeAccountHref('/portal/account/password')).toBe('/portal/account/profile');
+    expect(activeAccountHref('/portal/account/addresses')).toBe('/portal/account/profile');
     expect(activeAccountHref('/portal/unknown/1')).toBeNull();
   });
 
-  it('shows the customer with "Member since 2026", the groups in order, and Sign out in Account', async () => {
+  // HO-P3 S4 (D-6): the design's flat menu, with the working features it does not show kept.
+  it('shows the customer with "Member since 2026", one flat menu in order, and Sign out last', async () => {
     renderWithClient(<AccountSidebar />);
     expect(screen.getByText('Ayesha Rahman')).toBeInTheDocument();
     expect(await screen.findByText('Member since 2026')).toBeInTheDocument();
@@ -89,23 +91,35 @@ describe('account sidebar', () => {
         .getAllByRole('link')
         .map((l) => l.textContent?.replace(/\(.*\)$/, '').replace(/\d+$/, '')),
     ).toEqual(ACCOUNT_GROUPS.flatMap((g) => g.links.map((l) => l.label)));
+    expect(
+      ACCOUNT_GROUPS.flatMap((g) => g.links.map((l) => l.label)),
+    ).toEqual([
+      'Overview',
+      'My orders',
+      'Wishlist',
+      'My reviews',
+      'Billing',
+      'Profile & addresses',
+    ]);
     for (const heading of ['Shopping', 'Account'])
-      expect(within(nav).getByText(heading)).toBeInTheDocument();
+      expect(within(nav).queryByText(heading)).not.toBeInTheDocument();
+    expect(within(nav).queryByRole('link', { name: /subscriptions/i })).not.toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 
-  it('Orders is current and shows how many orders are still on their way', async () => {
+  it('My orders is current and shows how many orders are still on their way', async () => {
     renderWithClient(<AccountSidebar />);
-    const orders = screen.getByRole('link', { name: /^Orders/ });
+    const orders = screen.getByRole('link', { name: /^My orders/ });
     expect(orders).toHaveAttribute('aria-current', 'page');
     await waitFor(() => expect(orders).toHaveTextContent('(2 on the way)'), { timeout: 4000 });
   });
 
-  it('on a phone the same pages are a row of pills, starting with Orders', () => {
+  it('on a phone the same pages are a row of pills, starting with My orders', () => {
     renderWithClient(<AccountPills />);
     const links = within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link');
     expect(links).toHaveLength(ACCOUNT_GROUPS.flatMap((g) => g.links).length);
-    expect(links[0]).toHaveTextContent('Orders');
+    expect(links[0]).toHaveTextContent('My orders');
+    expect(screen.getByRole('link', { name: 'My orders' })).toHaveClass('bg-leaf');
   });
 
   it('frames /portal pages only, and only when signed in', () => {

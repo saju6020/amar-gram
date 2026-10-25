@@ -10,7 +10,7 @@ import { HearthEmpty } from '@/components/hearth/HearthEmpty';
 import { pillSelectClass } from '@/components/hearth/fields';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ORDER_STATUSES } from '@/lib/api/my-orders';
-import { fulfilmentLabel, orderStatusLabel } from '@/lib/format/orders';
+import { orderStatusLabel } from '@/lib/format/orders';
 import { useMyOrders } from '@/lib/hooks/useMyOrders';
 import { useUrlParams } from '@/lib/hooks/useUrlParams';
 import { cn } from '@/lib/utils';
@@ -112,20 +112,18 @@ export function MyOrdersList() {
                   aria-label={`View order ${order.orderNumber}`}
                   className={cn(
                     cardClass,
-                    'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 text-ink no-underline transition-colors hover:border-accent sm:px-[26px] sm:py-[22px]',
+                    'flex flex-col gap-1 rounded-[20px] px-4 py-4 text-ink no-underline transition-colors hover:border-leaf sm:px-5',
                   )}
                 >
-                  <strong className="text-[15.5px] tracking-[-0.01em] sm:text-[19px]">
-                    {order.orderNumber}
-                  </strong>
-                  <strong className="text-right text-base tabular-nums sm:text-[21px]">
-                    <Amount money={order.grandTotal} />
-                  </strong>
-                  <span className="text-[13.5px] text-ink-muted sm:text-base">
-                    {`${shortDate(order.placedOn, order.branchTimeZoneId)} · ${order.itemCount} ${order.itemCount === 1 ? 'item' : 'items'} · ${fulfilmentLabel(order.fulfilmentMethod)}`}
-                  </span>
-                  <span className="justify-self-end">
+                  <span className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                    <strong className="text-base [overflow-wrap:anywhere] sm:text-lg">
+                      {`Order ${order.orderNumber}`}
+                    </strong>
                     <OrderStatusBadge status={order.status} />
+                  </span>
+                  <span className="text-sm text-ink-muted">
+                    {`${shortDate(order.placedOn, order.branchTimeZoneId)} · ${order.itemCount} ${order.itemCount === 1 ? 'item' : 'items'} · `}
+                    <Amount money={order.grandTotal} />
                   </span>
                 </Link>
               </li>

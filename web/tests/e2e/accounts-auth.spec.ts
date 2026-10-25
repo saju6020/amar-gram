@@ -56,6 +56,30 @@ test.describe('Registration — US-ACC-01', () => {
 });
 
 test.describe('Sign-in — US-ACC-04', () => {
+  test('HO-P3 S4: the welcome panel, the way to the back office, and a Sign in | Create an account switch that keeps ?next=', async ({
+    page,
+  }) => {
+    await page.context().clearCookies();
+    await page.goto('/sign-in?next=/checkout');
+    await expect(page.getByRole('region', { name: 'Why sign in' })).toContainText('Welcome home.');
+    await expect(page.getByRole('link', { name: 'Sign in to the back office' })).toHaveAttribute(
+      'href',
+      '/staff/sign-in',
+    );
+    const switcher = page.getByRole('navigation', { name: 'Account' });
+    await expect(switcher.getByRole('link', { name: 'Sign in' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await switcher.getByRole('link', { name: 'Create an account' }).click();
+    await expect(page).toHaveURL(/\/register\?next=%2Fcheckout/);
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Account' })
+        .getByRole('link', { name: 'Create an account' }),
+    ).toHaveAttribute('aria-current', 'page');
+  });
+
   test('E-C1: an unknown identifier and a wrong password show the identical screen', async ({
     page,
   }) => {

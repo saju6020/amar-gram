@@ -6,8 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { RegistrationSuccess } from '@/components/auth/RegistrationSuccess';
-import { HearthAuthShell } from '@/components/hearth/HearthAuthShell';
-import { Check, House, Smartphone } from 'lucide-react';
+import { AuthModeSwitch, HearthAuthShell } from '@/components/hearth/HearthAuthShell';
 import { useCaptcha } from '@/lib/hooks/useCaptcha';
 import { useRegisterCustomer, useSignInCustomer } from '@/lib/hooks/useAuthMutations';
 import { ApiRateLimitedError } from '@/lib/api/client';
@@ -21,13 +20,9 @@ import { sanitizeNextPath } from '@/lib/validation/nextPath';
 
 // US-ACC-01. Customer-facing — warm layer.
 const REASONS = [
-  { text: 'One account for everything you buy', tone: 'warm' as const, Icon: House },
-  { text: 'Sign in with your mobile number or email', tone: 'teal' as const, Icon: Smartphone },
-  {
-    text: 'Keep your addresses, orders and subscriptions together',
-    tone: 'teal' as const,
-    Icon: Check,
-  },
+  'One account for everything you buy',
+  'Sign in with your mobile number or email',
+  'Keep your addresses and orders together',
 ];
 
 // ARCH gate HIGH 3 (first pass) — this page wires useCaptcha()/useRegisterCustomer(); RegisterForm
@@ -86,7 +81,6 @@ function RegisterPageContent() {
     return (
       <HearthAuthShell
         panelLabel="Welcome"
-        eyebrow="All set"
         headline="You’re"
         highlight="in"
         intro="Welcome to Amar Gram. Honest food and everyday goods, fresh from the village."
@@ -99,30 +93,36 @@ function RegisterPageContent() {
   return (
     <HearthAuthShell
       panelLabel="Why join"
-      eyebrow="New here"
-      headline="Join the"
-      highlight="family"
-      intro="It takes a minute. Then you can shop, save your addresses and set up repeat deliveries."
+      headline="Welcome"
+      highlight="home"
+      intro="It takes a minute. Then you can shop and save your addresses."
       reasons={REASONS}
     >
-      <AuthCard
-        bare
-        title="Create your account"
-        titleClassName="text-[30px] md:text-[40px]"
-        description="Give a mobile number, an email, or both — you’ll use one to sign in."
-        className="max-w-[460px] gap-5"
-      >
-        <RegisterForm
-          captcha={captcha}
-          onRegister={registerThenSignIn}
-          isPending={registerMutation.isPending || signInMutation.isPending}
-          rateLimitError={
-            registerMutation.error instanceof ApiRateLimitedError ? registerMutation.error : null
-          }
-          onSuccess={afterRegister}
+      <div className="flex w-full max-w-[440px] flex-col gap-[22px]">
+        <AuthModeSwitch
+          current="register"
           signInHref={signInHref}
+          registerHref={withCustomerNext('/register', next)}
         />
-      </AuthCard>
+        <AuthCard
+          bare
+          title="Create your account"
+          titleClassName="text-[34px]"
+          description="Give a mobile number, an email, or both — you’ll use one to sign in."
+          className="max-w-none gap-5"
+        >
+          <RegisterForm
+            captcha={captcha}
+            onRegister={registerThenSignIn}
+            isPending={registerMutation.isPending || signInMutation.isPending}
+            rateLimitError={
+              registerMutation.error instanceof ApiRateLimitedError ? registerMutation.error : null
+            }
+            onSuccess={afterRegister}
+            signInHref={signInHref}
+          />
+        </AuthCard>
+      </div>
     </HearthAuthShell>
   );
 }

@@ -20,11 +20,9 @@ export default function ForgotPasswordPage() {
     return (
       <HearthAuthShell
         panelLabel="What happens next"
-        eyebrow="On its way"
         headline="Almost"
         highlight="there"
         intro="Open the link on this device, then choose a new password."
-        art="envelope"
       >
         <div className="flex w-full max-w-[420px] flex-col gap-5">
           <span
@@ -73,7 +71,6 @@ export default function ForgotPasswordPage() {
   return (
     <HearthAuthShell
       panelLabel="How it works"
-      eyebrow="No worries"
       headline="It happens to"
       highlight="everyone"
       intro="We’ll send a link to the mobile number or email on your account, and you can choose a new password."
@@ -82,7 +79,6 @@ export default function ForgotPasswordPage() {
         'Open the link we send you',
         'Choose a new password',
       ]}
-      art="key"
     >
       <div className="flex w-full max-w-[420px] flex-col gap-5">
         <Link

@@ -2,6 +2,7 @@
 
 import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
 import { useFieldArray } from 'react-hook-form';
+import { pillInputClass } from '@/components/hearth/fields';
 import { Button } from '@/components/ui/button';
 import { MAX_ADDITIONAL_NUMBERS, type ProfileFormValues } from './ProfileForm.schema';
 
@@ -35,10 +36,15 @@ export function AdditionalPhoneNumbersField({
           <input
             id={`additional-${index}`}
             autoComplete="tel"
-            className="flex-1 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className={pillInputClass}
             {...register(`additionalPhoneNumbers.${index}.value` as const)}
           />
-          <Button type="button" variant="secondary" size="sm" onClick={() => remove(index)}>
+          <Button
+            type="button"
+            variant="pillSecondary"
+            size="pillMd"
+            onClick={() => remove(index)}
+          >
             Remove
           </Button>
         </div>
@@ -51,8 +57,8 @@ export function AdditionalPhoneNumbersField({
       {fields.length < MAX_ADDITIONAL_NUMBERS ? (
         <Button
           type="button"
-          variant="secondary"
-          size="sm"
+          variant="pillSecondary"
+          size="pillMd"
           className="w-fit"
           onClick={() => append({ value: '' })}
         >

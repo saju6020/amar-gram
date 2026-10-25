@@ -93,7 +93,7 @@ describe('AddressList/AddressCard — US-ACC-06', () => {
     renderWithClient(<AddressListWithHooks />);
     expect(await screen.findAllByText('Default')).toHaveLength(1);
 
-    await user.click(screen.getByRole('button', { name: /set as default/i }));
+    await user.click(screen.getByRole('button', { name: /make default/i }));
     await waitFor(() => expect(screen.getAllByText('Default')).toHaveLength(1));
   });
 

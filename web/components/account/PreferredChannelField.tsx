@@ -50,7 +50,7 @@ export function PreferredChannelField({
 
   return (
     <fieldset
-      className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-4"
+      className="m-0 flex flex-col gap-3 rounded-card bg-leaf-soft p-4"
       aria-describedby={error ? `${helpId} ${errorId}` : helpId}
     >
       <legend className="px-1 text-sm font-semibold text-ink">Send important messages by</legend>
@@ -60,10 +60,11 @@ export function PreferredChannelField({
           const inputId = `${baseId}-${option.id}`;
           return (
             <div key={option.id} className="flex flex-col gap-1">
-              <label htmlFor={inputId} className="flex items-center gap-2 text-sm text-ink">
+              <label htmlFor={inputId} className="flex min-h-11 items-center gap-2 text-sm text-ink">
                 <input
                   id={inputId}
                   type="radio"
+                  className="size-5 accent-leaf"
                   name={`${baseId}-preferred-channel`}
                   value={option.id}
                   checked={value === option.id}
