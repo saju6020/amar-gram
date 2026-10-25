@@ -19,7 +19,8 @@ public sealed record OrderTotalsViewModel(
 
 public sealed record OrderFulfilmentViewModel(
     string RecipientName, string? RecipientPhone, string? Line1, string? Line2, string? City, string? District, string? PostalCode, string? DeliveryInstructions,
-    string? ZoneName, string? ServiceLevel, string? SlotDate, string? SlotWindow, Guid? PickupBranchId, string? PickupBranchName, string? PickupBranchAddress);
+    string? ZoneName, string? ServiceLevel, string? SlotDate, string? SlotWindow, Guid? PickupBranchId, string? PickupBranchName, string? PickupBranchAddress,
+    string? RiderNote = null); // HO-P3 G4
 
 /// <summary>What a customer sees of the history: the status and when -- never who changed it.</summary>
 public sealed record CustomerStatusChangeViewModel(string To, DateTimeOffset ChangedOn);

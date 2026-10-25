@@ -84,7 +84,7 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
                 F = new
                 {
                     o.Fulfilment.RecipientName, o.Fulfilment.RecipientPhone, o.Fulfilment.Line1, o.Fulfilment.Line2, o.Fulfilment.City, o.Fulfilment.District, o.Fulfilment.PostalCode,
-                    o.Fulfilment.DeliveryInstructions, o.Fulfilment.ZoneName, o.Fulfilment.ServiceLevel, o.Fulfilment.SlotDate, o.Fulfilment.SlotWindowLabel, o.Fulfilment.PickupBranchId,
+                    o.Fulfilment.DeliveryInstructions, o.Fulfilment.ZoneName, o.Fulfilment.ServiceLevel, o.Fulfilment.SlotDate, o.Fulfilment.SlotWindowLabel, o.Fulfilment.PickupBranchId, o.Fulfilment.RiderNote,
                 },
                 Held = o.HeldPayment == null ? null : new { o.HeldPayment.Amount, o.HeldPayment.RecordedBy, o.HeldPayment.RecordedOn },
                 Cod = o.CodCollection == null ? null : new { o.CodCollection.Amount, o.CodCollection.CollectorKind, o.CodCollection.CollectorName, o.CodCollection.CollectedOn, o.CodCollection.RecordedBy },
@@ -141,7 +141,7 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
                 Money(head.Totals.Subtotal), Money(head.Totals.LineDiscountTotal), Money(head.Totals.OrderDiscount), Money(head.Totals.DeliveryCharge), Money(head.Totals.TaxTotal), Money(head.Totals.GrandTotal)),
             new OrderFulfilmentViewModel(
                 head.F.RecipientName, head.F.RecipientPhone, head.F.Line1, head.F.Line2, head.F.City, head.F.District, head.F.PostalCode, head.F.DeliveryInstructions, head.F.ZoneName,
-                head.F.ServiceLevel?.DisplayName, head.F.SlotDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), head.F.SlotWindowLabel, head.F.PickupBranchId, pickupName, pickupAddress),
+                head.F.ServiceLevel?.DisplayName, head.F.SlotDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), head.F.SlotWindowLabel, head.F.PickupBranchId, pickupName, pickupAddress, head.F.RiderNote),
             head.History.Select(h => new StaffStatusChangeViewModel(h.From?.DisplayName, h.To.DisplayName, h.ChangedOn, h.ChangedBy, staffNames.GetValueOrDefault(h.ChangedBy), h.Note)).ToList(),
             head.PaymentDueBy, head.CustomerTransferReference,
             head.Held is null ? null : new HeldPaymentViewModel(Money(head.Held.Amount), head.Held.RecordedBy, head.Held.RecordedOn),

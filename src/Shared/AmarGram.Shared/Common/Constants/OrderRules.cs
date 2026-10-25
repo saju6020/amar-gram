@@ -12,6 +12,8 @@ public static class OrderRules
     public const int MaxTransferReferenceLength = 100;
     public const int MaxTrackingNumberLength = 100;
     public const int MaxRecipientNameLength = 200;
+    /// <summary>HO-P3 G4: the optional per-order "note for the rider", plain text.</summary>
+    public const int MaxRiderNoteLength = 300;
     public const int MaxRecipientPhoneLength = 30;
     public const int MaxPaymentRefs = 10;
     public const int MaxAllocationsPerLine = 10;

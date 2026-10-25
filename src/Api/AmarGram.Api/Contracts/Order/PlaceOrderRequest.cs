@@ -14,5 +14,7 @@ public sealed class PlaceOrderRequest
     public string? DiscountCode { get; init; }
     public string? RecipientName { get; init; }
     public string? RecipientPhone { get; init; }
+    /// <summary>HO-P3 G4: optional note for the rider (max 300 characters, plain text).</summary>
+    public string? RiderNote { get; init; }
     public string QuoteFingerprint { get; init; } = default!;
 }

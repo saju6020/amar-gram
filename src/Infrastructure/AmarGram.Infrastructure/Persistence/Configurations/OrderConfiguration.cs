@@ -72,6 +72,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<OrderAggregate
             f.Property(p => p.District).HasColumnName("address_district").HasMaxLength(DeliveryAddressRules.DistrictMaxLength);
             f.Property(p => p.PostalCode).HasColumnName("address_postal_code").HasMaxLength(DeliveryAddressRules.PostalCodeMaxLength);
             f.Property(p => p.DeliveryInstructions).HasColumnName("delivery_instructions").HasMaxLength(DeliveryAddressRules.DeliveryInstructionsMaxLength);
+            f.Property(p => p.RiderNote).HasColumnName("rider_note").HasMaxLength(OrderRules.MaxRiderNoteLength);
             f.Property(p => p.DeliveryZoneId).HasColumnName("delivery_zone_id");
             f.Property(p => p.ZoneName).HasColumnName("zone_name").HasMaxLength(DeliveryZoneRules.MaxNameLength);
             f.Property(p => p.ServiceLevel).HasNullableEnumeration("service_level");

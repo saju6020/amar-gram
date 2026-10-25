@@ -102,6 +102,13 @@ public sealed class GetCatalogueQueryHandler(AmarGramDbContext db, IContentLocal
             source = source.Where(e => e.CountryOfOriginCode != null && origins.Contains(e.CountryOfOriginCode));
         }
 
+        // HO-P3 G1: a product matches when its district is ANY of the requested names (case-insensitive).
+        if (query.District.Count > 0)
+        {
+            var districtsLower = query.District.Select(d => d.Trim().ToLowerInvariant()).ToList();
+            source = source.Where(e => e.DistrictOfOrigin != null && districtsLower.Contains(e.DistrictOfOrigin.ToLower()));
+        }
+
         // HO-P2 §1.4: a product matches when it carries ANY of the requested certifications.
         if (query.Certification.Count > 0)
         {
@@ -226,6 +233,7 @@ public sealed class GetCatalogueQueryHandler(AmarGramDbContext db, IContentLocal
             ["subcategory"] = query.Subcategory,
             ["brand"] = query.Brand.Count > 0 ? string.Join(",", query.Brand) : null,
             ["origin"] = query.Origin.Count > 0 ? string.Join(",", query.Origin) : null,
+            ["district"] = query.District.Count > 0 ? string.Join(",", query.District) : null,
             ["certification"] = query.Certification.Count > 0 ? string.Join(",", query.Certification) : null,
             ["minPrice"] = query.MinPrice?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
             ["maxPrice"] = query.MaxPrice?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
@@ -255,6 +263,8 @@ public sealed class GetCatalogueQueryHandler(AmarGramDbContext db, IContentLocal
         return new CatalogueItem(
             e.ProductId, e.Slug, e.Name, e.Brand, category.DisplayName, subcategory, kind.DisplayName, country,
             fromPrice, priceVaries, inStock ? "InStock" : "OutOfStock",
-            new RatingSummary(e.RatingAverage, e.RatingCount), primaryImage);
+            new RatingSummary(e.RatingAverage, e.RatingCount), primaryImage,
+            DistrictOfOrigin: e.DistrictOfOrigin,
+            Certifications: e.Certifications.Select(c => Enumeration.FromValue<Certification>(c).DisplayName).ToList());
     }
 }

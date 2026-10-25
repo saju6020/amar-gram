@@ -92,7 +92,7 @@ public sealed class StaffProductsController(IInMemoryDispatcher dispatcher, IUse
         {
             ProductId = productId, ExpectedVersion = request.ExpectedVersion, Name = request.Name, Brand = request.Brand,
             Description = request.Description, Category = request.Category, Subcategory = request.Subcategory,
-            Tags = request.Tags, TaxClassId = request.TaxClassId, CountryOfOriginCode = request.CountryOfOriginCode,
+            Tags = request.Tags, TaxClassId = request.TaxClassId, CountryOfOriginCode = request.CountryOfOriginCode, DistrictOfOrigin = request.DistrictOfOrigin,
             ListedOnStorefront = request.ListedOnStorefront, IsExpiryTracked = request.IsExpiryTracked, Certifications = request.Certifications,
             UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true
         };

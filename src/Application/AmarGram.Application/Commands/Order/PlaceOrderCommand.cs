@@ -23,6 +23,8 @@ public sealed class PlaceOrderCommand : Command
     public string? DiscountCode { get; init; }
     public string? RecipientName { get; init; }
     public string? RecipientPhone { get; init; }
+    /// <summary>HO-P3 G4: optional plain-text note for the rider; delivery orders only (ignored for pickup).</summary>
+    public string? RiderNote { get; init; }
     public required string QuoteFingerprint { get; init; }
 }
 

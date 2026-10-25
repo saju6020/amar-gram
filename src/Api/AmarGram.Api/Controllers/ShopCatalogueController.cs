@@ -25,7 +25,7 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
     [HttpGet("products")]
     public async Task<IActionResult> GetProducts(
         [FromQuery] string? q, [FromQuery] string? category, [FromQuery] string? subcategory,
-        [FromQuery] string[]? brand, [FromQuery] string[]? origin, [FromQuery] string[]? certification,
+        [FromQuery] string[]? brand, [FromQuery] string[]? origin, [FromQuery] string[]? district, [FromQuery] string[]? certification,
         [FromQuery] string? minPrice, [FromQuery] string? maxPrice, [FromQuery] string? availability, [FromQuery] int? minRating,
         [FromQuery] string? sort, [FromQuery] int? pageNumber, [FromQuery] int? pageSize, [FromQuery] string? locale)
     {
@@ -33,6 +33,10 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
 
         var brands = brand ?? [];
         var origins = origin ?? [];
+        // HO-P3 G1: repeatable free-text district filter (case-insensitive match on the stored name).
+        var districts = (district ?? []).Where(d => !string.IsNullOrWhiteSpace(d)).Select(d => d.Trim()).ToArray();
+        if (districts.Length > ShopSearchRules.MaxFilterValues) return InvalidFilter("district", $"district cannot have more than {ShopSearchRules.MaxFilterValues} values.");
+        if (districts.Any(d => d.Length > ProductRules.DistrictMaxLength)) return InvalidFilter("district", $"district cannot exceed {ProductRules.DistrictMaxLength} characters.");
         var certifications = certification ?? [];
 
         if (brands.Length > ShopSearchRules.MaxFilterValues) return InvalidFilter("brand", $"brand cannot have more than {ShopSearchRules.MaxFilterValues} values.");
@@ -76,7 +80,7 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
 
         var query = new GetCatalogueQuery
         {
-            Q = q, Category = category, Subcategory = subcategory, Brand = brands, Origin = origins, Certification = certifications,
+            Q = q, Category = category, Subcategory = subcategory, Brand = brands, Origin = origins, District = districts, Certification = certifications,
             MinPrice = minPriceValue, MaxPrice = maxPriceValue, AvailabilityInStock = availability == "inStock" ? true : null, MinRating = minRating,
             Sort = sort, Locale = locale, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid(),
             PageSize = pageSize is > 0 ? Math.Min(pageSize.Value, ShopSearchRules.MaxPageSize) : ShopSearchRules.DefaultPageSize
@@ -103,6 +107,16 @@ public sealed class ShopCatalogueController(IInMemoryDispatcher dispatcher, IUse
     {
         Response.Headers.CacheControl = "public, max-age=60";
         var response = await dispatcher.GetResultAsync(new GetCategoriesQuery { UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
+        return Ok(response.Result);
+    }
+
+    /// <summary>HO-P3 G5 -- <c>{ currencyCode, freeOver, leadTimeDays, zoneName }</c>: the primary zone's Standard free-delivery threshold and lead time, for guests
+    /// (the signed-in checkout quote stays authoritative per address). All null when no zone is configured.</summary>
+    [HttpGet("delivery-promise")]
+    public async Task<IActionResult> GetDeliveryPromise()
+    {
+        Response.Headers.CacheControl = "public, max-age=60";
+        var response = await dispatcher.GetResultAsync(new AmarGram.Read.Queries.Order.GetDeliveryPromiseQuery { UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() });
         return Ok(response.Result);
     }
 

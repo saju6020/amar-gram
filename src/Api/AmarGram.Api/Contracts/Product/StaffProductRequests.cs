@@ -23,6 +23,8 @@ public sealed class UpdateProductDetailsRequest
     public IReadOnlyList<string> Tags { get; init; } = [];
     public required Guid TaxClassId { get; init; }
     public string? CountryOfOriginCode { get; init; }
+    /// <summary>HO-P3 G1: optional Bangladesh district of origin.</summary>
+    public string? DistrictOfOrigin { get; init; }
     public bool ListedOnStorefront { get; init; } = true;
     public bool IsExpiryTracked { get; init; }
     public IReadOnlyList<string> Certifications { get; init; } = [];

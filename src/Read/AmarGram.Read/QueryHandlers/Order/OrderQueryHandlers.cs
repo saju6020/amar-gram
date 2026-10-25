@@ -76,7 +76,7 @@ public sealed class GetCustomerOrderDetailQueryHandler(AmarGramDbContext db, IBu
                 F = new
                 {
                     o.Fulfilment.RecipientName, o.Fulfilment.RecipientPhone, o.Fulfilment.Line1, o.Fulfilment.Line2, o.Fulfilment.City, o.Fulfilment.District, o.Fulfilment.PostalCode,
-                    o.Fulfilment.DeliveryInstructions, o.Fulfilment.ZoneName, o.Fulfilment.ServiceLevel, o.Fulfilment.SlotDate, o.Fulfilment.SlotWindowLabel, o.Fulfilment.PickupBranchId,
+                    o.Fulfilment.DeliveryInstructions, o.Fulfilment.ZoneName, o.Fulfilment.ServiceLevel, o.Fulfilment.SlotDate, o.Fulfilment.SlotWindowLabel, o.Fulfilment.PickupBranchId, o.Fulfilment.RiderNote,
                 },
                 Ship = o.Shipment == null ? null : new { o.Shipment.CourierName, o.Shipment.TrackingNumber, o.Shipment.TrackingUrl, o.Shipment.LastTrackingStatus },
                 Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new
@@ -152,7 +152,7 @@ public sealed class GetCustomerOrderDetailQueryHandler(AmarGramDbContext db, IBu
                 Money(head.Totals.Subtotal), Money(head.Totals.LineDiscountTotal), Money(head.Totals.OrderDiscount), Money(head.Totals.DeliveryCharge), Money(head.Totals.TaxTotal), Money(head.Totals.GrandTotal)),
             new OrderFulfilmentViewModel(
                 head.F.RecipientName, head.F.RecipientPhone, head.F.Line1, head.F.Line2, head.F.City, head.F.District, head.F.PostalCode, head.F.DeliveryInstructions, head.F.ZoneName,
-                head.F.ServiceLevel?.DisplayName, head.F.SlotDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), head.F.SlotWindowLabel, head.F.PickupBranchId, pickupName, pickupAddress),
+                head.F.ServiceLevel?.DisplayName, head.F.SlotDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), head.F.SlotWindowLabel, head.F.PickupBranchId, pickupName, pickupAddress, head.F.RiderNote),
             head.History.Select(h => new CustomerStatusChangeViewModel(h.To.DisplayName, h.ChangedOn)).ToList(),
             head.Status == OrderStatus.PendingPayment ? head.PaymentDueBy : null, transfer, head.CustomerTransferReference,
             head.Ship is null ? null : new CustomerShipmentViewModel(head.Ship.CourierName, head.Ship.TrackingNumber, head.Ship.TrackingUrl, head.Ship.LastTrackingStatus),

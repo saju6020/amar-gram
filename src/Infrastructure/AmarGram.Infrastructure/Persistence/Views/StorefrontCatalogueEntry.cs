@@ -26,6 +26,8 @@ public sealed class StorefrontCatalogueEntry
     public int? Subcategory { get; init; }
     public int Kind { get; init; }
     public string? CountryOfOriginCode { get; init; }
+    /// <summary>HO-P3 G1.</summary>
+    public string? DistrictOfOrigin { get; init; }
     public int[] Certifications { get; init; } = [];
     public string SearchText { get; init; } = default!;
     public DateTimeOffset? FirstPublishedOn { get; init; }

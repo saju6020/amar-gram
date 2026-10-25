@@ -34,7 +34,7 @@ public sealed class GetProductDetailQueryHandler(
             .Where(p => p.Slug == query.Slug && p.Status == ProductStatus.Active && p.ListedOnStorefront)
             .Select(p => new
             {
-                p.Id, p.Slug, p.Name, p.Brand, p.Description, p.Category, p.Subcategory, p.Tags, p.Kind, p.CountryOfOriginCode,
+                p.Id, p.Slug, p.Name, p.Brand, p.Description, p.Category, p.Subcategory, p.Tags, p.Kind, p.CountryOfOriginCode, p.DistrictOfOrigin,
                 p.Certifications,
                 IngredientList = p.FoodDetails == null ? null : p.FoodDetails.IngredientList,
                 StorageInstructions = p.FoodDetails == null ? null : p.FoodDetails.StorageInstructions,
@@ -105,7 +105,8 @@ public sealed class GetProductDetailQueryHandler(
             product.Subcategory?.DisplayName, product.Tags, product.Certifications.Select(c => c.DisplayName).ToList(), product.Kind.DisplayName, country,
             food, productImages, skuViewModels, new RatingSummary(rating?.RatingAverage, rating?.RatingCount ?? 0),
             businessSettings.GetBool(AmarGram.Shared.Common.Constants.SettingKeys.CommercePricesIncludeTax), localised.Locale, localised.FieldLocales,
-            await BuildBundleAsync(product.Id, product.Kind));
+            await BuildBundleAsync(product.Id, product.Kind),
+            product.DistrictOfOrigin);
 
         return new QueryResponse<ProductDetailViewModel?> { Result = result };
     }

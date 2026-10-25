@@ -65,7 +65,7 @@ public sealed class CustomerOrdersController(IInMemoryDispatcher dispatcher, IUs
         {
             OrderId = Guid.NewGuid(), IdempotencyKey = key, FulfilmentMethod = method, DeliveryAddressId = request.DeliveryAddressId, ServiceLevel = level,
             SlotDate = slotDate, SlotWindowStart = slotStart, PickupBranchId = request.PickupBranchId, PaymentMethod = payment, DiscountCode = request.DiscountCode,
-            RecipientName = request.RecipientName, RecipientPhone = request.RecipientPhone, QuoteFingerprint = request.QuoteFingerprint ?? string.Empty,
+            RecipientName = request.RecipientName, RecipientPhone = request.RecipientPhone, RiderNote = request.RiderNote, QuoteFingerprint = request.QuoteFingerprint ?? string.Empty,
             UserContext = user, CorrelationId = Guid.NewGuid(), ValidateCommand = true
         });
 

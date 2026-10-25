@@ -38,6 +38,7 @@ public sealed record StaffProductDetailViewModel(
     DateTimeOffset? FirstPublishedOn,
     Guid TaxClassId,
     string? CountryOfOriginCode,
+    string? DistrictOfOrigin, // HO-P3 G1
     bool IsExpiryTracked,
     bool ListedOnStorefront,
     IReadOnlyList<StaffSkuViewModel> Skus,

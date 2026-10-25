@@ -227,6 +227,7 @@ public static class ShopModule
 
         services.AddScoped<IQueryHandlerAsync<GetCatalogueQuery, CatalogueResult>, GetCatalogueQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetCatalogueFiltersQuery, CatalogueFiltersViewModel>, GetCatalogueFiltersQueryHandler>();
+        services.AddScoped<IQueryHandlerAsync<AmarGram.Read.Queries.Order.GetDeliveryPromiseQuery, AmarGram.Read.Queries.Order.DeliveryPromiseViewModel>, AmarGram.Read.QueryHandlers.Order.GetDeliveryPromiseQueryHandler>(); // HO-P3 G5
         services.AddScoped<IQueryHandlerAsync<GetCategoriesQuery, IReadOnlyList<CategoryViewModel>>, GetCategoriesQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetOriginsQuery, IReadOnlyList<OriginViewModel>>, GetOriginsQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetOriginQuery, OriginViewModel?>, GetOriginQueryHandler>();

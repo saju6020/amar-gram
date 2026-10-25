@@ -96,7 +96,7 @@ public sealed class GetStaffProductDetailQueryHandler(
         var viewModel = new StaffProductDetailViewModel(
             product.Id, product.Version, product.Kind.DisplayName, product.Name, product.Brand, product.Description,
             product.Category.DisplayName, product.Subcategory?.DisplayName, product.Tags, product.Slug,
-            product.Status.DisplayName, product.FirstPublishedOn, product.TaxClassId, product.CountryOfOriginCode,
+            product.Status.DisplayName, product.FirstPublishedOn, product.TaxClassId, product.CountryOfOriginCode, product.DistrictOfOrigin,
             product.IsExpiryTracked, product.ListedOnStorefront, skuViewModels, checklist,
             product.BundleComponents.Select(c =>
             {

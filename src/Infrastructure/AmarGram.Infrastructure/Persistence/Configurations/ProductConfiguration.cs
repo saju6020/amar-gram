@@ -31,6 +31,7 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<AmarGram.Dom
         builder.Property(x => x.FirstPublishedOn).HasColumnName("first_published_on").HasColumnType("timestamptz");
         builder.Property(x => x.TaxClassId).HasColumnName("tax_class_id").IsRequired();
         builder.Property(x => x.CountryOfOriginCode).HasColumnName("country_of_origin_code").HasMaxLength(2).IsFixedLength();
+        builder.Property(x => x.DistrictOfOrigin).HasColumnName("district_of_origin").HasMaxLength(ProductRules.DistrictMaxLength);
         builder.Property(x => x.IsExpiryTracked).HasColumnName("is_expiry_tracked").IsRequired();
         builder.Property(x => x.ListedOnStorefront).HasColumnName("listed_on_storefront").IsRequired();
         builder.Property(x => x.SearchText).HasColumnName("search_text").HasColumnType("text").IsRequired();

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AmarGram.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AmarGramDbContext))]
-    [Migration("20261024151112_InitialAmarGramSql")]
-    partial class InitialAmarGramSql
+    [Migration("20261024180505_InitialAmarGram")]
+    partial class InitialAmarGram
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -6927,6 +6927,11 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(5000)")
                         .HasColumnName("description");
 
+                    b.Property<string>("DistrictOfOrigin")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("district_of_origin");
+
                     b.Property<DateTimeOffset?>("FirstPublishedOn")
                         .HasColumnType("timestamptz")
                         .HasColumnName("first_published_on");
@@ -9268,6 +9273,10 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                     b.Property<string>("CurrencyCode")
                         .HasColumnType("text")
                         .HasColumnName("currency_code");
+
+                    b.Property<string>("DistrictOfOrigin")
+                        .HasColumnType("text")
+                        .HasColumnName("district_of_origin");
 
                     b.Property<DateTimeOffset?>("FirstPublishedOn")
                         .HasColumnType("timestamp with time zone")
@@ -11788,6 +11797,11 @@ namespace AmarGram.Infrastructure.Persistence.Migrations
                                 .HasMaxLength(30)
                                 .HasColumnType("character varying(30)")
                                 .HasColumnName("recipient_phone");
+
+                            b1.Property<string>("RiderNote")
+                                .HasMaxLength(300)
+                                .HasColumnType("character varying(300)")
+                                .HasColumnName("rider_note");
 
                             b1.Property<int?>("ServiceLevel")
                                 .HasColumnType("integer")

@@ -21,6 +21,7 @@ public sealed class StorefrontCatalogueEntryConfiguration : IEntityTypeConfigura
         builder.Property(x => x.Subcategory).HasColumnName("subcategory");
         builder.Property(x => x.Kind).HasColumnName("kind");
         builder.Property(x => x.CountryOfOriginCode).HasColumnName("country_of_origin_code");
+        builder.Property(x => x.DistrictOfOrigin).HasColumnName("district_of_origin");
         builder.Property(x => x.Certifications).HasColumnName("certifications");
         builder.Property(x => x.SearchText).HasColumnName("search_text");
         builder.Property(x => x.FirstPublishedOn).HasColumnName("first_published_on");

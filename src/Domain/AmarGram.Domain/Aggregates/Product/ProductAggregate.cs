@@ -39,6 +39,8 @@ public sealed partial class ProductAggregate : AggregateRoot
     public DateTimeOffset? FirstPublishedOn { get; private set; }
     public Guid TaxClassId { get; private set; }
     public string? CountryOfOriginCode { get; private set; }
+    /// <summary>HO-P3 G1: optional district of origin (Bangladesh district name, free text), alongside the country.</summary>
+    public string? DistrictOfOrigin { get; private set; }
     public bool IsExpiryTracked { get; private set; }
     public bool ListedOnStorefront { get; private set; } = true;
     public string SearchText { get; private set; } = "";
@@ -109,6 +111,7 @@ public sealed partial class ProductAggregate : AggregateRoot
             throw new DomainRuleViolationException(BusinessViolationCodes.InvalidProductCategory, "The subcategory does not belong to this product's category.", nameof(dto.Subcategory));
 
         var normalisedCountry = NormaliseCountryCode(dto.CountryOfOriginCode);
+        var district = NormaliseDistrict(dto.DistrictOfOrigin);
 
         if (Status == ProductStatus.Active && IsFood && normalisedCountry is null)
             throw new DomainRuleViolationException(BusinessViolationCodes.CountryOfOriginRequired, "An active food product must keep a country of origin.", nameof(dto.CountryOfOriginCode));
@@ -131,6 +134,7 @@ public sealed partial class ProductAggregate : AggregateRoot
         Subcategory = dto.Subcategory;
         TaxClassId = dto.TaxClassId;
         CountryOfOriginCode = normalisedCountry;
+        DistrictOfOrigin = district;
         ListedOnStorefront = dto.ListedOnStorefront;
         IsExpiryTracked = IsFood || dto.IsExpiryTracked;
 
@@ -296,6 +300,16 @@ public sealed partial class ProductAggregate : AggregateRoot
     {
         if (string.IsNullOrWhiteSpace(slug) || slug.Length > ProductRules.SlugMaxLength || !SlugPattern().IsMatch(slug))
             throw new DomainRuleViolationException(BusinessViolationCodes.InvalidSlug, "Slug must be lower-case letters, digits and single hyphens, up to 120 characters.", nameof(slug));
+    }
+
+    /// <summary>HO-P3 G1: trimmed; blank clears it; longer than <see cref="ProductRules.DistrictMaxLength"/> or with control characters is refused.</summary>
+    private static string? NormaliseDistrict(string? district)
+    {
+        if (string.IsNullOrWhiteSpace(district)) return null;
+        var trimmed = district.Trim();
+        if (trimmed.Length > ProductRules.DistrictMaxLength || trimmed.Any(char.IsControl))
+            throw new DomainRuleViolationException(BusinessViolationCodes.InvalidDistrictOfOrigin, $"District of origin must be at most {ProductRules.DistrictMaxLength} characters of plain text.", nameof(DistrictOfOrigin));
+        return trimmed;
     }
 
     private static string? NormaliseCountryCode(string? code)

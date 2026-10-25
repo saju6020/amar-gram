@@ -21,6 +21,7 @@ public sealed class PlaceOrderCommandValidator : AbstractValidator<PlaceOrderCom
         RuleFor(x => x.DiscountCode).MaximumLength(40).NoControlCharacters();
         RuleFor(x => x.RecipientName).MaximumLength(OrderRules.MaxRecipientNameLength).NoControlCharacters();
         RuleFor(x => x.RecipientPhone).MaximumLength(OrderRules.MaxRecipientPhoneLength).NoControlCharacters();
+        RuleFor(x => x.RiderNote).MaximumLength(OrderRules.MaxRiderNoteLength).NoControlCharacters(); // HO-P3 G4
         RuleFor(x => x.QuoteFingerprint).Must(f => f is { Length: 64 } && f.All(c => c is >= '0' and <= '9' or >= 'a' and <= 'f')).WithMessage("is not a valid quote fingerprint.");
     }
 }

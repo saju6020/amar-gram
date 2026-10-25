@@ -93,7 +93,7 @@ public abstract class OrderingShopTestBase(OrderingApiFactory factory) : Orderin
     /// <summary>The body of a placement for the same choices the quote URL names, carrying the fingerprint of <paramref name="quote"/>.</summary>
     protected static object PlaceBody(
         Shop shop, JsonElement quote, string fulfilment = "Delivery", string payment = "CashOnDelivery", string? code = null, string? level = null, string? slotDate = null,
-        string? slotStart = null, Guid? pickupBranchId = null, string? recipientName = null, string? recipientPhone = null) => new
+        string? slotStart = null, Guid? pickupBranchId = null, string? recipientName = null, string? recipientPhone = null, string? riderNote = null) => new
         {
             fulfilment,
             deliveryAddressId = fulfilment == "Delivery" ? shop.AddressId : (Guid?)null,
@@ -105,6 +105,7 @@ public abstract class OrderingShopTestBase(OrderingApiFactory factory) : Orderin
             discountCode = code,
             recipientName,
             recipientPhone,
+            riderNote,
             quoteFingerprint = quote.GetProperty("fingerprint").GetString(),
         };
 

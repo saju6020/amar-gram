@@ -18,7 +18,7 @@ public static class ProductMapper
     public static ProductDetailsUpdateDto ToDomainDto(this UpdateProductDetailsCommand command, ProductCategory category, ProductSubcategory? subcategory, IReadOnlyList<Certification> certifications) =>
         new(command.Name, command.Brand, command.Description ?? "", category, subcategory, command.Tags,
             command.TaxClassId, command.CountryOfOriginCode, command.ListedOnStorefront, command.IsExpiryTracked,
-            certifications, command.UserContext, command.CorrelationId);
+            certifications, command.UserContext, command.CorrelationId, command.DistrictOfOrigin);
 
     public static SkuAddDto ToDomainDto(this AddSkuCommand command) =>
         new(command.SkuId, command.Code, command.Barcode, command.SizeOrWeight, command.Flavour, command.Colour, command.PackQuantity, command.ShippingWeightGrams);

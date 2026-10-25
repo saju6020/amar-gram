@@ -29,11 +29,13 @@ public sealed record FulfilmentDetails
     public TimeOnly? SlotWindowStart { get; init; }
     public TimeOnly? SlotWindowEnd { get; init; }
     public Guid? PickupBranchId { get; init; }
+    /// <summary>HO-P3 G4: the customer's optional note for the rider, given at checkout (plain text); separate from the address's standing <see cref="DeliveryInstructions"/>.</summary>
+    public string? RiderNote { get; init; }
 
     public FulfilmentDetails(
         string recipientName, string? recipientPhone, string? line1, string? line2, string? city, string? district, string? postalCode, string? deliveryInstructions,
         Guid? deliveryZoneId, string? zoneName, DeliveryServiceLevel? serviceLevel, DateOnly? slotDate, string? slotWindowLabel, TimeOnly? slotWindowStart,
-        TimeOnly? slotWindowEnd, Guid? pickupBranchId)
+        TimeOnly? slotWindowEnd, Guid? pickupBranchId, string? riderNote = null)
     {
         RecipientName = recipientName;
         RecipientPhone = recipientPhone;
@@ -51,6 +53,7 @@ public sealed record FulfilmentDetails
         SlotWindowStart = slotWindowStart;
         SlotWindowEnd = slotWindowEnd;
         PickupBranchId = pickupBranchId;
+        RiderNote = riderNote;
     }
 
     private FulfilmentDetails() => RecipientName = default!;
@@ -66,5 +69,6 @@ public sealed record FulfilmentDetails
         City = City is null ? null : RedactedText,
         PostalCode = PostalCode is null ? null : RedactedText,
         DeliveryInstructions = DeliveryInstructions is null ? null : RedactedText,
+        RiderNote = RiderNote is null ? null : RedactedText,
     };
 }

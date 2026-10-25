@@ -9,6 +9,9 @@ public static class ProductRules
     /// <summary>HO-P2 §1.3: every certification at most once (there are four).</summary>
     public const int MaxCertifications = 4;
 
+    /// <summary>HO-P3 G1: optional Bangladesh district of origin, free text (the longest district names are under 20 characters).</summary>
+    public const int DistrictMaxLength = 60;
+
     public const int NameMaxLength = 200;
     public const int BrandMaxLength = 100;
     public const int DescriptionMaxLength = 5000;

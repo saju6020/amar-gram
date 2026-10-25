@@ -134,3 +134,30 @@ public sealed class GetDiscountCodesQueryHandler(AmarGramDbContext db) : IQueryH
         return new QueryResponse<IReadOnlyList<DiscountCodeViewModel>> { Result = result };
     }
 }
+
+/// <summary>HO-P3 G5 -- see <see cref="GetDeliveryPromiseQuery"/>: the primary zone's Standard level, from the same zone data the checkout quote prices with.</summary>
+public sealed class GetDeliveryPromiseQueryHandler(AmarGramDbContext db, Microsoft.Extensions.Options.IOptions<AmarGram.Infrastructure.Configuration.ShopOptions> shopOptions)
+    : IQueryHandlerAsync<GetDeliveryPromiseQuery, DeliveryPromiseViewModel>
+{
+    public async Task<QueryResponse<DeliveryPromiseViewModel>> HandleAsync(GetDeliveryPromiseQuery query)
+    {
+        var branchId = shopOptions.Value.EffectiveStorefrontBranchId;
+        var standard = AmarGram.Shared.Common.Enums.DeliveryServiceLevel.Standard;
+
+        var row = await db.DeliveryZones.AsNoTracking()
+            .Where(z => z.BranchId == branchId && z.IsActive && z.Services.Any(s => s.IsActive && s.ServiceLevel == standard))
+            .OrderBy(z => z.Priority).ThenBy(z => z.Name)
+            .Select(z => new
+            {
+                z.Name, z.CurrencyCode,
+                Service = z.Services.Where(s => s.ServiceLevel == standard).Select(s => new { s.FreeOverOrderValue, s.LeadTimeDays }).First(),
+            })
+            .FirstOrDefaultAsync();
+
+        var result = row is null
+            ? new DeliveryPromiseViewModel(null, null, null, null)
+            : new DeliveryPromiseViewModel(row.CurrencyCode, OrderMoney.Of(row.Service.FreeOverOrderValue, row.CurrencyCode), row.Service.LeadTimeDays, row.Name);
+
+        return new QueryResponse<DeliveryPromiseViewModel> { Result = result };
+    }
+}

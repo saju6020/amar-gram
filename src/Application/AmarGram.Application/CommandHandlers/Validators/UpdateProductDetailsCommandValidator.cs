@@ -12,6 +12,7 @@ public sealed class UpdateProductDetailsCommandValidator : AbstractValidator<Upd
         RuleFor(x => x.ProductId).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().MaximumLength(ProductRules.NameMaxLength).NoControlCharacters();
         RuleFor(x => x.Brand).NotEmpty().MaximumLength(ProductRules.BrandMaxLength).NoControlCharacters();
+        RuleFor(x => x.DistrictOfOrigin).MaximumLength(ProductRules.DistrictMaxLength).NoControlCharacters(); // HO-P3 G1
         RuleFor(x => x.Description).MaximumLength(ProductRules.DescriptionMaxLength);
         RuleFor(x => x.Category).NotEmpty().MustBeValidEnumeration<UpdateProductDetailsCommand, ProductCategory>();
         RuleFor(x => x.Subcategory).MustBeValidEnumeration<UpdateProductDetailsCommand, ProductSubcategory>();

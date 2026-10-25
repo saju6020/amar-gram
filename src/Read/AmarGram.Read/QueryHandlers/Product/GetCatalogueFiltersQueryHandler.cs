@@ -46,10 +46,19 @@ public sealed class GetCatalogueFiltersQueryHandler(AmarGramDbContext db, IMemor
         var certifications = certificationGroups.OrderBy(c => c.Value)
             .Select(c => new NamedCount(Enumeration.FromValue<Certification>(c.Value).DisplayName, c.Count)).ToList();
 
+        // HO-P3 G1: distinct district names (case-insensitive), most products first then A-Z.
+        var districtGroups = await entries.Where(e => e.DistrictOfOrigin != null)
+            .GroupBy(e => e.DistrictOfOrigin!)
+            .Select(g => new { Value = g.Key, Count = g.Count() })
+            .ToListAsync();
+        var districts = districtGroups.GroupBy(d => d.Value, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new NamedCount(g.First().Value, g.Sum(x => x.Count)))
+            .OrderBy(d => d.Value, StringComparer.OrdinalIgnoreCase).ToList();
+
         var minPrice = await entries.Where(e => e.MinPrice != null).Select(e => (decimal?)e.MinPrice!.Value).MinAsync();
         var maxPrice = await entries.Where(e => e.MaxPrice != null).Select(e => (decimal?)e.MaxPrice!.Value).MaxAsync();
 
-        var result = new CatalogueFiltersViewModel(brands, origins, certifications, new PriceBounds(minPrice, maxPrice));
+        var result = new CatalogueFiltersViewModel(brands, origins, certifications, new PriceBounds(minPrice, maxPrice), districts);
         cache.Set(cacheKey, result, TimeSpan.FromSeconds(shopOptions.Value.Catalogue.FacetCacheSeconds));
 
         return new QueryResponse<CatalogueFiltersViewModel> { Result = result };

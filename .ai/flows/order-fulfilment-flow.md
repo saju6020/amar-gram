@@ -72,3 +72,11 @@ Pick list (by location + batch) ──► Pack ──► Dispatch (tracking) ─
 - Courier integration (blocked by SRS Q-4) with CSV manifest fallback
 - Returns quarantine and the restock/write-off decision
 - Blocked by SRS Q-3 (COD policy — now the primary payment route), Q-3b, Q-5 (tax)
+
+## HO-P3 backend gaps G1, G4, G5, G8 (2026-10-25) -- Status: Complete
+- G1: `ProductAggregate.DistrictOfOrigin` (`ProductRules.DistrictMaxLength` 60; `InvalidDistrictOfOrigin`), set via the product details update; `district` catalogue filter, `districts` facet, `districtOfOrigin` on list item/detail/staff detail. View `product.storefront_catalogue_entry` gained `district_of_origin`.
+- G4: `FulfilmentDetails.RiderNote` (`OrderRules.MaxRiderNoteLength` 300; redacted on anonymisation), `riderNote` on place-order request and on both order details (`fulfilment.riderNote`). Delivery orders only.
+- G5: `GET /api/shop/delivery-promise` (anonymous) = storefront branch's primary zone (active, lowest priority then name, with an active Standard level), Standard level's `freeOverOrderValue` and `leadTimeDays`.
+- G8: `CatalogueItem.Certifications` (names).
+- Baseline `InitialAmarGram` / `InitialAmarGramSql` regenerated (not stacked); recreate test DBs.
+- Key files: `ProductAggregate.cs`, `FulfilmentDetails.cs`, `GetCatalogueQueryHandler.cs`, `GetCatalogueFiltersQueryHandler.cs`, `OrderConfigurationQueryHandlers.cs` (`GetDeliveryPromiseQueryHandler`), `ShopCatalogueController.cs`, tests `StoreFrontGapsEndpointTests.cs`.

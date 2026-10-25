@@ -18,10 +18,10 @@ public static class OrderPlacement
 {
     /// <summary>The fulfilment snapshot of an online order: the recipient, the address as the customer had it, the zone / level / slot it was priced with,
     /// or the pickup branch (ADR-206).</summary>
-    public static FulfilmentDetails FulfilmentFor(CheckoutInputs inputs, CheckoutQuote quote, string recipientName, string? recipientPhone)
+    public static FulfilmentDetails FulfilmentFor(CheckoutInputs inputs, CheckoutQuote quote, string recipientName, string? recipientPhone, string? riderNote = null)
     {
         if (inputs.Choice.Method == FulfilmentMethod.Pickup)
-            return new FulfilmentDetails(recipientName, recipientPhone, null, null, null, null, null, null, null, null, null, null, null, null, null, inputs.Choice.PickupBranchId);
+            return new FulfilmentDetails(recipientName, recipientPhone, null, null, null, null, null, null, null, null, null, null, null, null, null, inputs.Choice.PickupBranchId, null);
 
         var address = inputs.Address!;
         DeliverySlot? slot = null;
@@ -30,7 +30,7 @@ public static class OrderPlacement
 
         return new FulfilmentDetails(
             recipientName, recipientPhone, address.Line1, address.Line2, address.City, address.District, address.PostalCode, address.DeliveryInstructions,
-            quote.Delivery.ZoneId, quote.Delivery.ZoneName, quote.SelectedServiceLevel, slot?.Date, slot?.Label, slot?.WindowStart, slot?.WindowEnd, null);
+            quote.Delivery.ZoneId, quote.Delivery.ZoneName, quote.SelectedServiceLevel, slot?.Date, slot?.Label, slot?.WindowStart, slot?.WindowEnd, null, riderNote);
     }
 
     /// <summary>The checkout refusal for the first blocking reason of a quote that cannot be placed (§8.7 rule 4).</summary>

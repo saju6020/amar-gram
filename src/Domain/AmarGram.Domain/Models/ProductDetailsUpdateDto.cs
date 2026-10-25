@@ -17,4 +17,5 @@ public sealed record ProductDetailsUpdateDto(
     bool IsExpiryTracked,
     IReadOnlyList<Certification> Certifications,
     UserContext UserContext,
-    Guid CorrelationId);
+    Guid CorrelationId,
+    string? DistrictOfOrigin = null);

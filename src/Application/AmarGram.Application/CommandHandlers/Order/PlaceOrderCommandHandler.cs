@@ -104,7 +104,7 @@ public sealed class PlaceOrderCommandHandler(
         var order = new OrderAggregate(command.OrderId);
         order.Place(new PlaceOrderDto(
             await numbers.NextAsync(now), OrderChannel.Online, customerId, quote.FulfilmentBranchId, command.FulfilmentMethod, command.PaymentMethod, quote.CurrencyCode,
-            OrderPlacement.FulfilmentFor(inputs, quote, recipientName, recipientPhone), quote.Lines.ToDomainDtos(), quote.Totals.ToOrderTotals(),
+            OrderPlacement.FulfilmentFor(inputs, quote, recipientName, recipientPhone, command.RiderNote), quote.Lines.ToDomainDtos(), quote.Totals.ToOrderTotals(),
             appliedDiscount?.DiscountCodeId, appliedDiscount?.Code, quote.Fingerprint, command.IdempotencyKey, now, command.UserContext!, command.CorrelationId,
             quote.DeliveryTaxOf()));
 

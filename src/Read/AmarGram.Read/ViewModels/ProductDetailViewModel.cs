@@ -15,4 +15,5 @@ public sealed record ProductDetailViewModel(
     IReadOnlyList<string> Tags, IReadOnlyList<string> Certifications, string Kind, CountryRef? CountryOfOrigin,
     FoodDetailViewModel? Food, IReadOnlyList<ProductImageRef> Images, IReadOnlyList<DetailSkuViewModel> Skus,
     RatingSummary Rating, bool PricesIncludeTax, string Locale, IReadOnlyDictionary<string, string> FieldLocales,
-    BundleDetailViewModel? Bundle = null);
+    BundleDetailViewModel? Bundle = null,
+    string? DistrictOfOrigin = null); // HO-P3 G1

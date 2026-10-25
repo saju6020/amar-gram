@@ -24,7 +24,10 @@ public sealed record CatalogueItem(
     // One card per size (owner, 2026-10-18), additive: the SKU this card is, and its size label
     // ("400 g"). Absent on rows that are not a single size (recommendations, suggestions).
     Guid? SkuId = null,
-    string? SizeLabel = null);
+    string? SizeLabel = null,
+    // HO-P3 G1: optional district of origin (free text). HO-P3 G8: certification names, as the product detail carries.
+    string? DistrictOfOrigin = null,
+    IReadOnlyList<string>? Certifications = null);
 
 public sealed record CatalogueResult(
     IReadOnlyList<CatalogueItem> Items,
