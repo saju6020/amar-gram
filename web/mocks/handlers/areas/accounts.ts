@@ -410,7 +410,10 @@ function seedStaffAccounts(): Map<string, StoredStaffAccount> {
     mobileNumber: null,
     emailAddress: accountsFixtureIds.stockIdentifier,
     password: hashPassword(accountsFixtureIds.stockPassword),
-    roleIds: ['Inventory'],
+    // Stock.View without receiving or procurement (tests/e2e/fixtures.ts `secondStaff`). HO-P1 swapped the retired
+    // Nurse role for Inventory, which can receive and view procurement; Reception keeps the documented contract
+    // (HO-P4 Amended, E-X3).
+    roleIds: ['Reception'],
   });
   staff.set(accountsFixtureIds.noPasswordStaffId, {
     id: accountsFixtureIds.noPasswordStaffId,

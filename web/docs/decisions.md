@@ -1971,7 +1971,7 @@ Appended; the entries above are left as written.
 
 **Why.** Deep links and the back button keep working; the split view does not fit a phone
 
-**Status.** Decided; built by HO-P4 S2 (`SplitView`).
+**Status.** Built (HO-P4 S2). The Orders workbench keeps `?order=` through `useUrlFilterState`, so a refetch, back/forward or reload keeps the selection and polling never clears it; from 1024 px the detail sits beside the list in `SplitView`, below it a row links to `/staff/orders/[id]`. `ResponsiveTable` has no select callback, so the selecting primary cell is an `aria-pressed` button.
 
 ### ADR-FE-184
 
@@ -1979,4 +1979,8 @@ Appended; the entries above are left as written.
 
 **Why.** The "nothing invented" rule (ADR-FE-105, ADR-FE-177)
 
-**Status.** Binding for every HO-P4 slice.
+**Status.** Binding for every HO-P4 slice. Each slice's left-out elements are listed against the BG rows in its report. Where a dashboard tile carries several server figures, S1 restyles `DashboardTile` rather than using the single-value `KpiTile`. `components/inventory/fields.tsx` `PageHeading`/`Panel` wrap the back-office `PageHeader`/`Panel`, so every inventory, procurement and recall page restyles with no per-page edit; the expandable stock list pages itself (`StockPager`) because `DataTable` has no detail rows (S4).
+
+### ADR-FE-035 -- correction (2026-10-26, HO-P4 S3)
+
+Appended; the entry above is left as written. **The "no upload" half is superseded.** Product photos are added through the shared `FileUploader` (purpose `ProductImage`, staff audience, virus-scanned by the server); the stored-file-id field stays for images attached before. The product editor's Status card (status text, publish checklist, Publish/Unpublish/Archive) is rendered once in the editor layout (`ProductEditorHeader`), so the transition commands are reachable from every section and are never a field saved with the Details form.
