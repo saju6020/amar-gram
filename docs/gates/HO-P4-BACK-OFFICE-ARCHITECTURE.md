@@ -44,3 +44,34 @@ SCOPE CHECK
 - 5d9ffbc: 0/4
 - files in allowed scope: 151/155
 - files outside allowed scope: web/mocks/handlers/areas/accounts.ts (5d9ffbc change), web/tests/e2e/fixtures.ts, web/tests/e2e/notifications-log.spec.ts, web/tests/e2e/notifications-templates.spec.ts
+
+---
+
+GATE: ARCHITECTURE
+HANDOVER: HO-P4-BACK-OFFICE
+COMMITS: as run 1, plus bd13079 (owner-ratified §1 Amended (v)-(vii) and the run-1 record)
+DATE: 2026-10-29
+STATUS: PASS
+
+Run 2. bd13079 touches only the handover's §1 Amended row (append-only, §14) and this file. `git diff 5d9ffbc bd13079` has no code change, so the run-1 code review stands. Each new row was checked against the code.
+
+RESOLVED SINCE RUN 1
+- Run-1 BLOCKERs, 5d9ffbc (web/mocks/handlers/areas/accounts.ts, web/tests/e2e/fixtures.ts, notifications-log.spec.ts, notifications-templates.spec.ts): covered by Amended (v), which matches the code.
+  - accounts.ts:61, :430-438 seeds `inventoryStaffId` (Rafiq Hossain, role `Inventory`) with three fixture keys.
+  - fixtures.ts:65-80 adds `inventoryStaff` and restates the `secondStaff` contract (Reception: Stock.View and the message log, no receiving or procurement).
+  - notifications-log.spec.ts:105-106 signs E-E2 in as `inventoryStaff`.
+  - notifications-templates.spec.ts:18-19 opens "More administration" first.
+  - The stated cause holds. src/Shared/AmarGram.Shared/Common/Constants/ActionRoles.Notifications.cs:14 grants NotificationLog.View to Reception and Administrator only, so an Inventory login is the right 403 case.
+- Run-1 MEDIUM, web/components/inventory/fields.tsx:210, :223: covered by Amended (vi), which names the file, the PageHeading/Panel wrap and the §4.2 exception. That matches ed3028a.
+- Run-1 LOW, S0 additive props: covered by Amended (vii) (KpiTile `headingLevel`; SearchField `inputRef`, `onKeyDown`). That matches KpiTile.tsx:26 and SearchField.tsx:32-33.
+
+FINDINGS
+- [LOW] web/docs/decisions.md:1974, :1982 (a8bf606). Carried from run 1: the ADR-FE-183/184 Status lines were rewritten in place, not appended. This follows the HO-P3 precedent (5bd5508). No action needed.
+
+The run-1 notes for TEST and CODE_REVIEW still apply.
+
+SCOPE CHECK
+- slice and integration commits as run 1; 5d9ffbc: 4/4 under Amended (v)
+- bd13079: 2/2 (handover §1 row, append-only; docs/gates record)
+- files in allowed scope: 157/157
+- files outside allowed scope: none
