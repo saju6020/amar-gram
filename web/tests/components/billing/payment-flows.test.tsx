@@ -143,9 +143,9 @@ describe('ApprovalsQueue — U-C9', () => {
   it('U35: swaps Approve and Reject for the words for a payment the user recorded; a forced request is mapped', async () => {
     renderWithClient(<ApprovalsQueue />);
     // HO-P4 §11.6.2 (rewritten): was "You recorded this payment" plus a disabled Approve button; the
-    // warning now replaces the Approve button on that card (Reject stays, see ApprovalsQueue), so the
-    // only Approve buttons left are the other cards' and none is disabled.
-    expect(await screen.findByText('You recorded this one. Another staff member must approve it.')).toBeInTheDocument();
+    // warning now replaces both buttons on that card (HO-P4 Amended (i): the server refuses either from
+    // the recorder), so the only Approve buttons left are the other cards' and none is disabled.
+    expect(await screen.findByText('You recorded this one. Another staff member must approve or reject it.')).toBeInTheDocument();
     const approves = screen.getAllByRole('button', { name: /^Approve/ });
     expect(approves.length).toBeGreaterThan(0);
     expect(approves.filter((b) => (b as HTMLButtonElement).disabled)).toHaveLength(0);
@@ -153,11 +153,16 @@ describe('ApprovalsQueue — U-C9', () => {
     const ownCards = cards.filter((li) => li.textContent?.includes('You recorded this one.'));
     expect(ownCards).toHaveLength(1);
     expect(within(ownCards[0]!).queryByRole('button', { name: /^Approve/ })).not.toBeInTheDocument();
-    expect(within(ownCards[0]!).getByRole('button', { name: /^Reject/ })).toBeInTheDocument();
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/staff/billing/payments/${ids.pendingOwnPaymentId}/approve`, { method: 'POST' });
-    expect(res.status).toBe(400);
-    const body = (await res.json()) as { errors: Array<{ errorCode: string }> };
-    expect(body.errors[0]?.errorCode).toBe('ApproverMustDiffer');
+    expect(within(ownCards[0]!).queryByRole('button', { name: /^Reject/ })).not.toBeInTheDocument();
+    for (const [action, init] of [
+      ['approve', { method: 'POST' }],
+      ['reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'Mine to withdraw' }) }],
+    ] as const) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/staff/billing/payments/${ids.pendingOwnPaymentId}/${action}`, init);
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as { errors: Array<{ errorCode: string }> };
+      expect(body.errors[0]?.errorCode).toBe('ApproverMustDiffer');
+    }
   });
 });
 

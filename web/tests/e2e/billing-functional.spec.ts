@@ -88,7 +88,7 @@ test.describe('staff — invoices and payments', () => {
 
   test('E-B2: a payment above the limit is pending; approval by another user works', async ({ page }) => {
     await page.goto('/staff/billing/approvals');
-    await expect(page.getByText('You recorded this one. Another staff member must approve it.')).toBeVisible();
+    await expect(page.getByText('You recorded this one. Another staff member must approve or reject it.')).toBeVisible();
     await page.locator('button:not([disabled])', { hasText: /^Approve/ }).first().click();
     await expect(page.getByText(/approved\./)).toBeVisible();
   });
@@ -148,9 +148,9 @@ test.describe('staff — close and reconcile', () => {
   });
 
   test('E-D1: a short count needs an explanation before the day closes', async ({ page }) => {
-    // decide the two pending payments first so only the variance blocks the close
+    // decide today's pending payment (another staff member's) first so only the variance blocks the close;
+    // the one this user recorded is yesterday's and only a colleague can decide it (HO-P4 Amended (i))
     await page.goto('/staff/billing/approvals');
-    await page.locator('button:not([disabled])', { hasText: /^Approve/ }).first().click();
     await page.getByRole('button', { name: /^Reject Sam Rahman/ }).first().click();
     await page.getByLabel('Reason').fill('Duplicate entry');
     await page.getByRole('button', { name: 'Reject payment' }).click();

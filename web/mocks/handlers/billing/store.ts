@@ -752,6 +752,8 @@ function seed(): Db {
       method: 'CashInStore',
       status: 'PendingApproval',
       amountCents: 5_500_000,
+      // Yesterday's: only another staff member can decide it (HO-P4 Amended (i)), so it must not block today's close.
+      receivedOn: addDaysIso(day, -1),
       requested: [],
       businessDate: null,
       acceptedOn: null,

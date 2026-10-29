@@ -876,6 +876,13 @@ export const staffBillingHandlers: HttpHandler[] = [
     const body = (await request.json()) as { reason?: string };
     const payment = findPayment(params.paymentId as string);
     if (!payment) return notFound();
+    if (payment.status !== 'PendingApproval') {
+      return violation('PaymentId', 'PaymentNotPending', 'This payment is no longer waiting for approval.');
+    }
+    // PaymentAggregate.Reject refuses the recorder exactly as Approve does.
+    if (payment.recordedBy === ids.meId) {
+      return violation('ApproverId', 'ApproverMustDiffer', 'A payment must be approved by a different staff member than the one who recorded it.');
+    }
     if (!body.reason?.trim()) return violation('Reason', 'ReasonRequired', 'Enter a reason.');
     payment.status = 'Rejected';
     payment.rejectedBy = ids.meId;

@@ -27,10 +27,11 @@ import { ReasonDialog } from './ReasonDialog';
 /**
  * `components/billing/ApprovalsQueue.tsx` — HO-BIL-002 §11.4 (US-BIL-11 AC2), ⭐; HO-P4 §11.6.2. Payments
  * waiting for a second person at the active branch, one card each: amount, customer, method, bank
- * reference, recorder, requested allocations. **Approve** is replaced by the words
- * *"You recorded this one. Another staff member must approve it."* when the server says the caller
- * cannot approve (`canApprove` false; **Reject** stays) or the payment's `recordedBy` is the signed-in account — presentation
- * only; the server still refuses a forced request with `ApproverMustDiffer`. **Reject** needs a reason.
+ * reference, recorder, requested allocations. **Approve** and **Reject** are replaced by the words
+ * *"You recorded this one. Another staff member must approve or reject it."* when the server says the
+ * caller cannot approve (`canApprove` false) or the payment's `recordedBy` is the signed-in account
+ * (HO-P4 Amended (i)) — presentation only; the server refuses either from the recorder with
+ * `ApproverMustDiffer`. **Reject** needs a reason.
  * What an approval did — applied, left unallocated — is shown after it, as the server reported it.
  */
 export function ApprovalsQueue() {
@@ -130,29 +131,29 @@ export function ApprovalsQueue() {
                 <div className="flex flex-wrap items-center gap-2">
                   {recordedByMe ? (
                     <p className="rounded-[var(--radius-sm)] bg-warning-bg px-3 py-1.5 text-sm text-warning-ink">
-                      You recorded this one. Another staff member must approve it.
+                      You recorded this one. Another staff member must approve or reject it.
                     </p>
                   ) : (
-                    <Button
-                      className="min-h-11 bg-leaf px-4 text-surface hover:bg-leaf-ink"
-                      disabled={busy !== null}
-                      aria-busy={busy === r.paymentId}
-                      onClick={() => void approveRow(r)}
-                    >
-                      {busy === r.paymentId ? 'Approving…' : 'Approve'}
-                      <span className="sr-only"> {r.customerName}</span>
-                    </Button>
+                    <>
+                      <Button
+                        className="min-h-11 bg-leaf px-4 text-surface hover:bg-leaf-ink"
+                        disabled={busy !== null}
+                        aria-busy={busy === r.paymentId}
+                        onClick={() => void approveRow(r)}
+                      >
+                        {busy === r.paymentId ? 'Approving…' : 'Approve'}
+                        <span className="sr-only"> {r.customerName}</span>
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="min-h-11 border-danger-ink bg-surface px-4 text-danger-ink hover:bg-danger-bg"
+                        disabled={busy !== null}
+                        onClick={() => setRejecting(r)}
+                      >
+                        Reject<span className="sr-only"> {r.customerName}</span>
+                      </Button>
+                    </>
                   )}
-                  {/* Reject stays on every card: this is the only screen where a recorder can void their own
-                      pending entry (the day cannot close while one is undecided), and the server decides. */}
-                  <Button
-                    variant="secondary"
-                    className="min-h-11 border-danger-ink bg-surface px-4 text-danger-ink hover:bg-danger-bg"
-                    disabled={busy !== null}
-                    onClick={() => setRejecting(r)}
-                  >
-                    Reject<span className="sr-only"> {r.customerName}</span>
-                  </Button>
                 </div>
                 {errors[r.paymentId] && (
                   <p role="alert" className="basis-full text-sm font-semibold text-danger-ink">
