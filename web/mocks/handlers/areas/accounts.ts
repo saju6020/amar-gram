@@ -52,11 +52,15 @@ export const accountsFixtureIds = {
   adminStaffId: 's0000000-0000-0000-0000-000000000001',
   adminIdentifier: 'admin@purrcare.test',
   adminPassword: 'AdminPass123!',
-  // A non-admin staff member with the Inventory role (key names kept for existing callers).
+  // A non-admin staff member with the Reception role (key names kept for existing callers).
   stockStaffId: 's0000000-0000-0000-0000-000000000002',
   stockIdentifier: 'stock@purrcare.test',
   stockPassword: 'StockPass123!',
   noPasswordStaffId: 's0000000-0000-0000-0000-000000000003',
+  // A non-admin staff member with the Inventory role: no NotificationLog.View (notifications E-E2).
+  inventoryStaffId: 's0000000-0000-0000-0000-000000000004',
+  inventoryIdentifier: 'inventory@purrcare.test',
+  inventoryPassword: 'InventoryPass123!',
 
   // Walk-in / duplicates.
   walkInDuplicateMobile: '01755555555', // an existing customer's PRIMARY — refuses (201 elsewhere)
@@ -422,6 +426,15 @@ function seedStaffAccounts(): Map<string, StoredStaffAccount> {
     emailAddress: null,
     password: null,
     roleIds: ['Reception'],
+  });
+  staff.set(accountsFixtureIds.inventoryStaffId, {
+    id: accountsFixtureIds.inventoryStaffId,
+    fullName: 'Rafiq Hossain',
+    mobileNumber: null,
+    emailAddress: accountsFixtureIds.inventoryIdentifier,
+    password: hashPassword(accountsFixtureIds.inventoryPassword),
+    // Reception can read the message log (ActionRoles.Notifications.cs), so the 403 case needs another role.
+    roleIds: ['Inventory'],
   });
   return staff;
 }

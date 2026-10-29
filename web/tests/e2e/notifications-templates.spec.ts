@@ -15,6 +15,8 @@ test.beforeEach(async ({ page }) => {
 
 test('the template list links to the editor from the admin navigation', async ({ page }) => {
   await page.goto('/staff/admin/branches');
+  // HO-P4 §11.6.6: entries beyond the four primary tabs sit in the collapsed "More administration" list.
+  await page.getByText('More administration').click();
   await page.getByRole('link', { name: 'Message templates' }).click();
   await expect(page).toHaveURL(/\/staff\/admin\/notification-templates$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Message templates' })).toBeVisible();

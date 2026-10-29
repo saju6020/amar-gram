@@ -1,4 +1,4 @@
-import { test, expect, signInAsStaff, secondStaff } from './fixtures';
+import { test, expect, signInAsStaff, inventoryStaff } from './fixtures';
 import { notificationFixtureIds as ids } from '../../mocks/handlers/notifications';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 
@@ -102,8 +102,8 @@ test('E-E2: a staff member without the notifications permission opening /staff/n
 }) => {
   await page.context().clearCookies();
   await page.goto('/staff/sign-in');
-  await page.getByLabel(/mobile number or email/i).fill(secondStaff.identifier);
-  await page.getByLabel(/^password/i).fill(secondStaff.password);
+  await page.getByLabel(/mobile number or email/i).fill(inventoryStaff.identifier);
+  await page.getByLabel(/^password/i).fill(inventoryStaff.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/staff\//);
 

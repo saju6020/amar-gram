@@ -62,14 +62,21 @@ async function signInViaPageFetch(
 }
 
 /**
- * The mock's second, non-administrator staff login. Its roles give it `Stock.View` but not
- * receiving, procurement, notifications or staff-account management, and the reports specs switch
- * its roles before use. The only place the e2e suite names the underlying mock fixture keys.
+ * The mock's second, non-administrator staff login (Reception). Its roles give it `Stock.View` and
+ * the message log but not receiving, procurement or staff-account management, and the reports specs
+ * switch its roles before use. The only place the e2e suite names the underlying mock fixture keys.
  */
 export const secondStaff = {
   staffId: accountsFixtureIds.stockStaffId,
   identifier: accountsFixtureIds.stockIdentifier,
   password: accountsFixtureIds.stockPassword,
+} as const;
+
+/** A non-administrator staff login with the Inventory role: no notifications permission at all. */
+export const inventoryStaff = {
+  staffId: accountsFixtureIds.inventoryStaffId,
+  identifier: accountsFixtureIds.inventoryIdentifier,
+  password: accountsFixtureIds.inventoryPassword,
 } as const;
 
 /** Signs in as the seeded staff administrator (`accountsFixtureIds.adminIdentifier`). Call once,
