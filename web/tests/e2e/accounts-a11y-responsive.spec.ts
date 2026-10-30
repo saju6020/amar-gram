@@ -126,6 +126,13 @@ test('E-X1 (idle lock open): axe on the staff idle-lock dialog, background inert
   await signInAsStaff(page);
   await page.goto('/staff/customers/new');
   await page.waitForLoadState('networkidle');
+  // `networkidle` is not "the staff session has loaded": the first `GET /api/staff/session` can lose
+  // the MSW start-up race and sit in its retry while `StaffSessionGuard` still shows "Loading…", so
+  // `IdleLock` (its child) is not mounted yet. Forcing the idle timeout in that window makes the
+  // guard's own first read the `session_idle_timeout` and a second read `session_invalid`, which
+  // redirects to sign-in instead of locking. Wait for the real page (as `staff-auth.spec.ts` does
+  // implicitly by filling a field first) so the lock is exercised the way it happens in use.
+  await page.getByLabel(/full name/i).waitFor();
 
   const cookies = await page.context().cookies();
   const staffSessionCookie = cookies.find((c) => c.name === 'pc_staff_session');
