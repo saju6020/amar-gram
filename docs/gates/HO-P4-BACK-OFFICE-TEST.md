@@ -39,3 +39,38 @@ PRODUCTION DEFECTS
 SCOPE CHECK
 - files in allowed scope: n/a for this gate (read-only; no product or test file left changed). The U24 mutation edited components/orders/StaffOrderDialogs.tsx and StaffOrderSidePanel.tsx temporarily and restored them with `git checkout`; `git status` showed only the two gate files and .claude/worktrees/.
 - files outside allowed scope: none. Written by this gate: docs/test-cases/TC-HO-P4-BACK-OFFICE.md, docs/gates/HO-P4-BACK-OFFICE-TEST.md.
+
+
+---
+
+# Run 2
+
+GATE: TEST (targeted rerun)
+HEAD: d8f07b6 (run 1 was 68297a7)
+DATE: 2026-10-31
+STATUS: PASS (for HO-P4-introduced defects; see the caveat on pre-existing failures)
+
+SHEET: docs/test-cases/TC-HO-P4-BACK-OFFICE.md, now 74 rows: 66 PASS, 6 FAIL, 2 BLOCKED, 0 NOT RUN. Only D1, D2 (FAIL to PASS) and the E14 note changed. Every other row stays as run 1.
+
+SCOPE CHECK
+- `git diff 68297a7..d8f07b6 --stat`: the spec (+7 lines), the handover (Amended row), and the run-1 gate docs. No product, mock or fixture file changed.
+- Spec change vs Amended (viii): one added `await page.getByLabel(/full name/i).waitFor();` plus a comment, placed before the idle hooks. Matches the wording exactly. `await page.getByRole('dialog').waitFor();` and `expectNoSeriousOrCriticalViolations(page)` are unchanged, and the test timeout (45 s) is unchanged. The assertions are not weakened; the wait only makes the page real before the lock is forced.
+
+RESULTS (fresh `next dev` on :3120, mocks on, --workers=1, --retries=0)
+- accounts-a11y-responsive "E-X1 (idle lock open)", chromium and mobile-360: 3 of 3 repetitions, 2/2 pass each (6/6).
+- staff-auth.spec.ts (idle-lock cases incl. ARCH HIGH 1/2, third-pass, offline, E6), both projects: 10/10 pass.
+- accounts-a11y-responsive.spec.ts whole file, both projects: 196/196 pass.
+- `npx tsc --noEmit`: exit 0. `npm run lint` (--max-warnings 0): exit 0.
+
+FINDINGS
+- D1 and D2 are closed. The run-1 HIGH finding is resolved.
+- The six remaining FAIL rows (E1, E10, E12, E13, E14, E16) are unchanged from run 1. Each is caused only by cases that also fail on baseline 46929be (staff-shell-toggle, staff-shell-manual-expand-overflow, procurement-flows E-A3, billing-a11y-responsive:86, billing-functional:18 and :216, and the others listed in run 1) or that are on the brief's baseline list. None was introduced by HO-P4, so they do not block this gate's verdict.
+- CAVEAT for ACCEPTANCE: the handover's A18/E-row text excepts only "known timing-flaky files recorded at baseline". Deterministic baseline failures such as staff-shell-toggle and procurement E-A3 are not written there as waived, so those rows stay literally FAIL on the sheet. Treating them as non-blocking is a reading of "no HO-P4 regression against baseline"; ACCEPTANCE or the owner should confirm it (or add them to the recorded baseline list).
+
+BLOCKED (unchanged)
+- Real-API specs (E11 and the others): need a running backend. R8: not independently re-audited beyond U35.
+
+WEAK TESTS: none found. No test was weakened or deleted.
+PRODUCTION DEFECTS: none found.
+
+SCOPE OF THIS RUN: written by this gate: docs/test-cases/TC-HO-P4-BACK-OFFICE.md, docs/gates/HO-P4-BACK-OFFICE-TEST.md. No product code, spec, mock or fixture edited; nothing committed.

@@ -14,12 +14,20 @@ Written: 2026-10-30  ·  Executed: 2026-10-30
 | | Count |
 |---|---|
 | Total | 74 |
-| PASS | 64 |
-| FAIL | 8 |
+| PASS | 66 |
+| FAIL | 6 |
 | BLOCKED | 2 |
 | NOT RUN | 0 |
 
-FAIL rows: E1, E10, E12, E13, E14, E16 (all because of pre-existing failures, listed below) and D1, D2 (the owner-assigned idle-lock fix is not delivered). No HO-P4-introduced regression was found.
+FAIL rows: E1, E10, E12, E13, E14, E16 (all because of pre-existing failures, listed below). D1 and D2 failed in run 1 and PASS in run 2 (see Run 2 below). No HO-P4-introduced regression was found.
+
+## Run 2 (2026-10-31, HEAD d8f07b6, targeted)
+
+- `git diff 68297a7..d8f07b6 --stat`: only `web/tests/e2e/accounts-a11y-responsive.spec.ts` (+7), the handover (Amended (viii)) and the run-1 gate docs. No product, mock or fixture file.
+- D1/D2: 3 reps x 2 projects, 6/6 pass. staff-auth.spec.ts, both projects: 10/10 pass. accounts-a11y-responsive.spec.ts whole file, both projects: 196/196 pass (8.8 min, 1 worker).
+- `npx tsc --noEmit` exit 0; `npm run lint` (--max-warnings 0) exit 0.
+- Rows changed: D1, D2 (FAIL to PASS), E14 evidence note, Summary counts (64/8 to 66/6). All other rows are as run 1.
+- Dev server on :3120 and chrome-headless-shell stopped afterwards.
 
 ## Environment
 
@@ -99,7 +107,7 @@ All executed in the one full vitest run (plus re-run of the 7 load-failed files)
 | E11 | inventory-real-api.spec.ts | Real-API only | BLOCKED | Needs a live API, none started. Unblock: `npm run test:e2e:real-api` against a running backend |
 | E12 | billing-functional, billing-a11y-responsive | Pass | FAIL | billing-a11y 62 and billing-functional 30 run on fresh server: failures only billing-a11y:86 (dialog contrast, both projects) and billing-functional:18 E-A1 (both) and :216 E-F1 (chromium). Baseline fails :86 and :18 on both projects (pre-existing). Mobile route cases :65 failed in a suspended run, ok in R1 re-run. E-B2 and E-D1 (Amended (i)) ok. billing-real-api not run |
 | E13 | admin-*, staff-admin | Pass | FAIL | admin-a11y-responsive 234/234 ok (R5, fresh server); admin-branch-calendar, admin-filters, staff-admin ok; admin-functional:56 E-B1 fails mobile-360 only (pre-existing: baseline mobile fails too, brief list). admin-functional:211 ok on fresh server |
-| E14 | Run-only specs | Pass unchanged | FAIL | accounts-a11y-responsive:122 fails (D1/D2). Pre-existing: notifications-inbox:16, :28 mobile; ordering-a11y-responsive:133 (baseline fails too); xct-operations:76 (both projects here; baseline mobile fails). reports-schedules, notifications-log/templates/unsubscribe, xct-offline, ordering-a11y rest: ok. A few load flakes passed on re-run (reports-schedules:21, notifications-log:66, account-area, accounts-auth) |
+| E14 | Run-only specs | Pass unchanged | FAIL | Run 2: accounts-a11y-responsive:122 now passes (D1/D2); the other failures below are unchanged from run 1. Pre-existing: notifications-inbox:16, :28 mobile; ordering-a11y-responsive:133 (baseline fails too); xct-operations:76 (both projects here; baseline mobile fails). reports-schedules, notifications-log/templates/unsubscribe, xct-offline, ordering-a11y rest: ok. A few load flakes passed on re-run (reports-schedules:21, notifications-log:66, account-area, accounts-auth) |
 | E15 | `npm run sweep:a11y`, staff routes, vs baseline | No new axe violations | PASS | SWEEP_AUDIENCE=staff, workers 1, same config. HEAD: 139 passed, 0 failed (serious/critical, wcag2a/aa/21a/21aa, alert text has no GUID or code). Baseline 46929be: 138 passed, 0 failed. One extra route at HEAD (/staff/customers), also clean. Note the sweep fails only on serious/critical |
 | E16 | Full `npm run test:e2e` (HO-P3 E16 waiver) | Whole suite run; failures named | FAIL | Run in 8 area chunks covering every non-real-API spec file, both projects, with fresh servers. Not green: the pre-existing set under E1, E10, E12, E13, E14 plus D1/D2. HO-P3 specs (portal-*, shop-* bar shop-staff): 194 tests, 189 pass, 4 skip, shop-portal E-D1 failed loaded and passed alone (R4). Not run: reports-real-api, inventory-real-api, billing-real-api, portal-real-api, xct-real-api, real-api-verification, journey-real-api (BLOCKED, need a backend) |
 
@@ -107,8 +115,8 @@ All executed in the one full vitest run (plus re-run of the 7 load-failed files)
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
-| D1 | accounts-a11y-responsive "E-X1 (idle lock open)" chromium | Pass (HO-P4 must fix) | FAIL | Failed in every run, fresh server included (R1, R2, R3). `page.getByRole('dialog').waitFor()` at spec line 150 times out at 45 s. The failure snapshot shows the staff sign-in form, not a dialog. Baseline fails identically, so HO-P4 did not fix it. Sibling staff-auth E-G2 tests use the same `__forceStaffIdleExpired` and `__invalidateQueries` hooks and pass (they fill a field first; this spec does not). Cause not isolated |
-| D2 | same, mobile-360 | Pass | FAIL | Same, every run |
+| D1 | accounts-a11y-responsive "E-X1 (idle lock open)" chromium | Pass (HO-P4 must fix) | PASS | Run 2 (HEAD d8f07b6, 2026-10-31): passed 3 of 3 reps (--workers=1, --retries=0, fresh server :3120), and again in the whole-file run (196/196). Run 1: FAIL in every run. Spec change is Amended (viii): one added `getByLabel(/full name/i).waitFor()`; dialog wait and axe assertion unchanged |
+| D2 | same, mobile-360 | Pass | PASS | Run 2: 3 of 3 reps pass, and in the whole-file run (196/196) |
 | D3 | shop-staff E-C1 chromium | Pass | PASS | R3 ok. Baseline fails it, so HO-P4 fixed it |
 | D4 | shop-staff E-C1 mobile-360 | Pass | PASS | R3 ok. Baseline fails it |
 
