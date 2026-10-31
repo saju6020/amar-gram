@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import { SelectField, TextField } from '@/components/billing/Fields';
 import { ApiNotFoundError } from '@/lib/api/client';
 import { hasOrderingCode, submitOrderingForm } from '@/lib/api/errors';
-import { RIDER_MANAGE_ROLES } from '@/lib/api/staff-orders';
-import { useStaffSession } from '@/lib/hooks/useSession';
-import { useDispatchCouriers, useDispatchOrder, useRecordTracking, useRiders } from '@/lib/hooks/useStaffOrders';
+import { useDispatchCouriers, useDispatchOrder, useCanManageRiders, useRecordTracking, useRiders } from '@/lib/hooks/useStaffOrders';
 import { cn } from '@/lib/utils';
 import { OrderDialog } from './OrderDialog';
 
@@ -45,8 +43,8 @@ export function DispatchDialog({
 }) {
   const couriers = useDispatchCouriers(open);
   const riders = useRiders(true, open);
-  const session = useStaffSession();
   const dispatch = useDispatchOrder(orderId);
+  const canManageRiders = useCanManageRiders();
   const [stockRefusal, setStockRefusal] = useState(false);
   const [sendWith, setSendWith] = useState<SendWith>('courier');
   const {
@@ -69,7 +67,6 @@ export function DispatchDialog({
   const activeRiders = riders.data ?? [];
   const noRiders = riders.isSuccess && activeRiders.length === 0;
   const riderUnavailable = noRiders || riders.isError;
-  const canManageRiders = (session.data?.roleIds ?? []).some((role) => RIDER_MANAGE_ROLES.includes(role));
 
   const submit = handleSubmit(async (values) => {
     const byRider = sendWith === 'rider';
@@ -88,10 +85,18 @@ export function DispatchDialog({
           );
         } catch (error) {
           if (error instanceof ApiNotFoundError) {
-            // `404 RiderNotFound` / `CourierNotFound`: the one chosen is inactive, gone, or not this branch's.
-            setError(byRider ? 'riderId' : 'courierId', {
-              message: byRider ? 'That rider is not available. Choose another.' : 'That courier is not available. Choose another.',
-            });
+            // A 404 carries no body here, and the server uses it for an unknown order as well as for `RiderNotFound` /
+            // `CourierNotFound` (OrderingResults.cs:15-21). Read the list again: if the one chosen is no longer on it, the
+            // person is told that; if it still is, the order is what went missing.
+            const chosen = byRider ? values.riderId : values.courierId;
+            const fresh = byRider ? (await riders.refetch()).data : (await couriers.refetch()).data;
+            if (fresh?.some((entry) => entry.id === chosen)) {
+              setError('root', { message: 'This order could not be found. It may have moved to another branch.' });
+            } else {
+              setError(byRider ? 'riderId' : 'courierId', {
+                message: byRider ? 'That rider is not available. Choose another.' : 'That courier is not available. Choose another.',
+              });
+            }
             return false as const;
           }
           if (STOCK_CODES.some((code) => hasOrderingCode(error, code))) setStockRefusal(true);

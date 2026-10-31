@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import { PageHeader } from '@/components/back-office/PageHeader';
@@ -34,7 +34,7 @@ import { basketLineFromSku, type BasketLine, type PosCustomer, type PosTender } 
  * payment and opens a review whose **Complete sale** is focused. One idempotency key per attempt, kept
  * while the payload is unchanged, so a double Enter or a retry after a lost response records one sale.
  *
- * A walk-in sale needs no customer (HO-P5 BG-8): the ticket's chip reads "Walk-in (no customer)" and opens the
+ * A walk-in sale needs no customer (HO-P5 BG-8): the ticket's chip reads "Walk-in (no customer) · Add customer" (§11.3.13) and opens the
  * customer fields; name and mobile go together or not at all, and a sale with neither sends neither. The
  * cash typed is put to the quote for the server's change due (BG-7). Nothing here adds up money.
  */
@@ -68,12 +68,20 @@ export function PosScreen() {
   const key = useIdempotencyKey();
   const complete = useCompleteCounterSale();
 
+  const router = useRouter();
   const preset = useStaffCustomer(presetCustomerId);
+  // The profile's "New order" link presets the buyer ONCE per customer id. Without the ref the effect refilled the
+  // buyer whenever the fields were empty, so clearing them (or New sale) sent the next walk-in on that customer's account.
+  const appliedPreset = useRef('');
   useEffect(() => {
-    if (preset.data && !customer.customerId && customer.name === '' && customer.mobile === '') {
-      setCustomer({ name: preset.data.fullName, mobile: preset.data.mobileNumber ?? '', customerId: preset.data.id });
-    }
-  }, [preset.data, customer]);
+    if (!preset.data || appliedPreset.current === presetCustomerId) return;
+    appliedPreset.current = presetCustomerId;
+    setCustomer((current) =>
+      !current.customerId && current.name === '' && current.mobile === ''
+        ? { name: preset.data.fullName, mobile: preset.data.mobileNumber ?? '', customerId: preset.data.id }
+        : current,
+    );
+  }, [preset.data, presetCustomerId]);
 
   const quoteLines = lines.map((l) => ({ skuId: l.skuId, quantity: l.quantity }));
   const quote = useCounterQuote({
@@ -88,7 +96,8 @@ export function PosScreen() {
   // not the previous basket's quote kept as placeholder data).
   const settled = !quote.isSettling && !quote.isFetching && !quote.isPlaceholderData;
   // The change preview is the quote's answer for the cash typed: shown only while the quote on screen is for it.
-  const previewSettled = !quote.isSettling && !quote.isPlaceholderData && cashTyped !== undefined;
+  // (Amended (ab)) Once a payment has been added the quote's one-tender answer would mislead on a split payment, so it is hidden.
+  const previewSettled = !quote.isSettling && !quote.isPlaceholderData && cashTyped !== undefined && tenders.length === 0;
   const preview =
     previewSettled && quote.data?.changeDue
       ? ({ kind: 'change', money: quote.data.changeDue } as const)
@@ -167,12 +176,16 @@ export function PosScreen() {
     setSale(null);
     setRootError(null);
     setFieldErrors({});
+    setCashTyped(undefined);
     key.renew();
+    // New sale starts a walk-in: drop the preset from the address, so a reload does not bring the buyer back either.
+    if (presetCustomerId) router.replace('/staff/pos');
     setTimeout(() => scanRef.current?.focus(), 0);
   }
 
+  const buyerText = customerGiven ? `Buyer: ${customer.name.trim()} (${customer.mobile.trim()}).` : 'No customer (walk-in sale).';
   const reviewText = quote.data
-    ? `Total ${formatMoney(quote.data.totals.grandTotal)}. Payments: ${tenders.map((t) => `${tenderMethodLabel(t.method)} ${formatMoney({ amount: t.amount, currencyCode: currency })}`).join(', ')}.`
+    ? `${buyerText} Total ${formatMoney(quote.data.totals.grandTotal)}. Payments: ${tenders.map((t) => `${tenderMethodLabel(t.method)} ${formatMoney({ amount: t.amount, currencyCode: currency })}`).join(', ')}.`
     : '';
 
   if (sale) {
@@ -187,7 +200,7 @@ export function PosScreen() {
   const customerLabel =
     customer.name.trim() !== '' || customer.mobile.trim() !== ''
       ? [customer.name.trim(), customer.mobile.trim()].filter(Boolean).join(' · ')
-      : 'Walk-in (no customer)';
+      : 'Walk-in (no customer) · Add customer';
 
   return (
     <div

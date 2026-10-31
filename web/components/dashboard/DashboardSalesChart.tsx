@@ -32,14 +32,17 @@ function readoutOf(day: SalesSeriesDay): string {
 
 /** Each day's bar length as a percentage of the tallest day (geometry only; ADR-FE-188). */
 function barShares(days: SalesSeriesDay[]): number[] {
-  const values = days.map((day) => toChartNumber(day.net) ?? 0);
+  const values = days.map((day) => Math.max(0, toChartNumber(day.net) ?? 0));
   const peak = Math.max(0, ...values);
   return values.map((value) => (peak > 0 ? Math.round((value / peak) * 100) : 0));
 }
 
 export function SalesChartPanel({ series }: { series: SalesSeries }) {
   const [asTable, setAsTable] = useState(false);
-  const [active, setActive] = useState<number | null>(null);
+  // Focus wins over the pointer: moving the mouse off the bars must not blank the readout of the bar a keyboard user is on.
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [focused, setFocused] = useState<number | null>(null);
+  const active = focused ?? hovered;
   const contentId = useId();
   const shares = barShares(series.days);
   const heading = `Sales, last ${series.days.length} days`;
@@ -86,16 +89,16 @@ export function SalesChartPanel({ series }: { series: SalesSeries }) {
             <ul
               aria-label={`${heading}, net sales for each day`}
               className="m-0 flex h-44 list-none items-stretch gap-1 p-0 sm:gap-1.5"
-              onMouseLeave={() => setActive(null)}
+              onMouseLeave={() => setHovered(null)}
             >
               {series.days.map((day, index) => (
                 <li key={day.date} className="flex min-w-0 flex-1 flex-col items-stretch">
                   <button
                     type="button"
                     aria-label={readoutOf(day)}
-                    onFocus={() => setActive(index)}
-                    onMouseEnter={() => setActive(index)}
-                    onBlur={() => setActive(null)}
+                    onFocus={() => setFocused(index)}
+                    onMouseEnter={() => setHovered(index)}
+                    onBlur={() => setFocused(null)}
                     className="group flex min-h-0 flex-1 flex-col justify-end rounded-sm border-0 bg-transparent p-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                   >
                     <span

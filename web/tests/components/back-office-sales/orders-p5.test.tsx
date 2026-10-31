@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { http } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import type { ReactElement } from 'react';
 import { server } from '../../../mocks/server';
 import { orderingIds as ids, violation } from '../../../mocks/handlers/ordering/fixtures';
@@ -26,6 +26,7 @@ function renderWithClient(ui: ReactElement) {
 beforeEach(() => {
   resetOrderingMockData();
   setUrl('/staff/orders');
+  server.events.removeAllListeners();
   window.sessionStorage.clear();
   window.localStorage.clear();
 });
@@ -47,7 +48,6 @@ describe('Pick-list tick - U20', () => {
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toEqual({ url: `/api/staff/orders/${order.id}/lines/${order.lines[0]!.lineId}/picked`, body: { picked: true } });
     await waitFor(() => expect(order.lines[0]!.picked).toBe(true));
-    server.events.removeAllListeners();
   });
 
   it('a 400 InvalidOrderTransition puts the tick back and says the order has left the shelf', async () => {
@@ -70,6 +70,104 @@ describe('Pick-list tick - U20', () => {
     const boxes = within(await screen.findByRole('list', { name: 'Pick list' })).getAllByRole('checkbox');
     expect(boxes).toHaveLength(2);
     for (const box of boxes) expect(box).toBeChecked();
+  });
+
+  /** A PUT …/picked that answers after `ms`, applying the tick to the mock store as the real mock does. */
+  function slowPick(ms: number, sent: string[] = []) {
+    server.use(
+      http.put('*/api/staff/orders/:orderId/lines/:lineId/picked', async ({ request, params }) => {
+        const body = (await request.json()) as { picked: boolean };
+        sent.push(`${String(params.lineId)}:${body.picked}`);
+        await delay(ms);
+        const line = findOrder(String(params.orderId))!.lines.find((l) => l.lineId === params.lineId)!;
+        line.picked = body.picked;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    return sent;
+  }
+  const firstBox = async () => within(await screen.findByRole('list', { name: 'Pick list' })).getAllByRole('checkbox')[0]!;
+
+  it('a failure that is not a refusal puts the tick back and shows the generic message', async () => {
+    const user = userEvent.setup();
+    server.use(http.put('*/api/staff/orders/:orderId/lines/:lineId/picked', () => new HttpResponse(null, { status: 500 })));
+    renderWithClient(<StaffOrderSidePanel orderId={ids.orders.confirmedCod} />);
+    const box = await firstBox();
+    await user.click(box);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Please try again.');
+    await waitFor(() => expect(box).not.toBeChecked());
+    expect(findOrder(ids.orders.confirmedCod)!.lines[0]!.picked).toBeFalsy();
+  });
+
+  it('a 404 (the line is gone) puts the tick back and says something went wrong, not that the order left the shelf', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.put('*/api/staff/orders/:orderId/lines/:lineId/picked', () => violation('lineId', 'OrderLineNotFound', 'That order line was not found.', 404)),
+    );
+    renderWithClient(<StaffOrderSidePanel orderId={ids.orders.confirmedCod} />);
+    const box = await firstBox();
+    await user.click(box);
+    const alert = await screen.findByRole('alert');
+    expect(alert).not.toHaveTextContent('left the shelf');
+    await waitFor(() => expect(box).not.toBeChecked());
+  });
+
+  it('while a line’s write is in flight its box ignores clicks, so tick then untick cannot end opposite to the last click', async () => {
+    const user = userEvent.setup();
+    const sent = slowPick(500);
+    const order = findOrder(ids.orders.confirmedCod)!;
+    renderWithClient(<StaffOrderSidePanel orderId={order.id} />);
+    const box = await firstBox();
+    await user.click(box);
+    expect(box).toBeChecked();
+    expect(box).toHaveAttribute('aria-disabled', 'true');
+    await user.click(box); // ignored: the first write has not settled
+    expect(box).toBeChecked();
+    expect(sent).toHaveLength(1);
+    await waitFor(() => expect(box).not.toHaveAttribute('aria-disabled'));
+    expect(box).toBeChecked();
+    await user.click(box);
+    await waitFor(() => expect(sent).toHaveLength(2));
+    await waitFor(() => expect(box).not.toHaveAttribute('aria-disabled'));
+    expect(box).not.toBeChecked();
+    expect(sent.map((s) => s.split(':')[1])).toEqual(['true', 'false']);
+    expect(order.lines[0]!.picked).toBe(false);
+  });
+
+  it('a refetch in the middle of a write does not flip the tick back', async () => {
+    const user = userEvent.setup();
+    slowPick(600);
+    const order = findOrder(ids.orders.confirmedCod)!;
+    const { client } = renderWithClient(<StaffOrderSidePanel orderId={order.id} />);
+    const box = await firstBox();
+    await user.click(box);
+    await client.invalidateQueries({ queryKey: ['staff', 'order'] });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(box).toBeChecked();
+    await waitFor(() => expect(order.lines[0]!.picked).toBe(true), { timeout: 3000 });
+    await waitFor(() => expect(box).not.toHaveAttribute('aria-disabled'));
+    expect(box).toBeChecked();
+  });
+
+  it('switching to another order mid-write shows that order’s own ticks, with no leftover error', async () => {
+    const user = userEvent.setup();
+    server.use(http.put('*/api/staff/orders/:orderId/lines/:lineId/picked', async () => {
+      await delay(400);
+      return new HttpResponse(null, { status: 500 });
+    }));
+    const { rerender } = renderWithClient(<StaffOrderSidePanel orderId={ids.orders.confirmedCod} />);
+    await user.click(await firstBox());
+    rerender(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <StaffOrderSidePanel orderId={p5OrderIds.packedWaiting} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByRole('heading', { name: `Order ${findOrder(p5OrderIds.packedWaiting)!.orderNumber}` })).toBeInTheDocument();
+    for (const box of within(screen.getByRole('list', { name: 'Pick list' })).getAllByRole('checkbox')) expect(box).toBeChecked();
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    // The first order's failed write must not paint its error or its un-tick onto the order now shown.
+    for (const box of within(screen.getByRole('list', { name: 'Pick list' })).getAllByRole('checkbox')) expect(box).toBeChecked();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 

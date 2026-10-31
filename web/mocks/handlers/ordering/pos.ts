@@ -20,6 +20,7 @@ import {
 } from './store';
 import { computeQuote, type QuoteLineInput } from './quote';
 import { orderLineView, totalsView } from './customer';
+import { normaliseMobile } from './staff';
 
 /**
  * `mocks/handlers/ordering/pos.ts` — HO-ORD-002 §12.1. The point of sale as `StaffPosController`
@@ -80,7 +81,8 @@ const POS_CATEGORIES = [
 const BOTH_OR_NEITHER = 'must be given with the %s (or leave both empty for a sale without customer details).';
 /** Shared/Common/Constants/AnonymousCounterCustomer.cs:19-22 and OrderMessages.cs:20. */
 const ANONYMOUS_RECIPIENT = 'Walk-in customer';
-const ANONYMOUS_RESERVED_MOBILE = '01000000000';
+/** AnonymousCounterCustomer.NormalisedMobile (AnonymousCounterCustomer.cs:17): every typed form (01…, +8801…, 8801…) normalises to this. */
+const ANONYMOUS_RESERVED_NORMALISED = '+8801000000000';
 
 export const posOrderingHandlers: HttpHandler[] = [
   http.get(`${API}/sku`, ({ request }) => {
@@ -185,10 +187,10 @@ export const posOrderingHandlers: HttpHandler[] = [
       const handed = Math.round(tendered * 100);
       const grand = result.totals.grand;
       return HttpResponse.json(
-        handed >= grand ? { ...result.wire, changeDue: money(handed - grand) } : { ...result.wire, cashShort: money(grand - handed) },
+        handed >= grand ? { ...result.wire, changeDue: money(handed - grand), cashShort: null } : { ...result.wire, changeDue: null, cashShort: money(grand - handed) },
       );
     }
-    return HttpResponse.json(result.wire);
+    return HttpResponse.json({ ...result.wire, changeDue: null, cashShort: null });
   }),
 
   http.post(`${API}/sales`, async ({ request }) => {
@@ -224,7 +226,7 @@ export const posOrderingHandlers: HttpHandler[] = [
       );
     }
     // The reserved walk-in number cannot be typed as a real customer (CompleteCounterSaleCommandHandler.cs:65-66).
-    if (!anonymous && mobile.replace(/[\s-]/g, '') === ANONYMOUS_RESERVED_MOBILE) {
+    if (!anonymous && normaliseMobile(mobile) === ANONYMOUS_RESERVED_NORMALISED) {
       return violation('CustomerMobile', 'InvalidMobileNumber', 'This does not look like a valid mobile number.');
     }
     if (mobile === '01700000000') {

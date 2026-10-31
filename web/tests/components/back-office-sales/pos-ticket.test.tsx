@@ -3,7 +3,10 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
-import { resetOrderingMockData } from '../../../mocks/handlers/ordering/store';
+import { delay, http, HttpResponse } from 'msw';
+import { server } from '../../../mocks/server';
+import { money, resetOrderingMockData, skuInfo, uuid } from '../../../mocks/handlers/ordering/store';
+import { computeQuote } from '../../../mocks/handlers/ordering/quote';
 import { PosScreen } from '@/components/pos/PosScreen';
 import { setUrl } from '../common/nav-mock';
 
@@ -67,7 +70,7 @@ describe('Tiles and ticket - U22', () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
     expect(screen.queryByLabelText(/Customer name/)).not.toBeInTheDocument();
-    const chip = screen.getByRole('button', { name: 'Walk-in (no customer)' });
+    const chip = screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' });
     expect(chip).toHaveAttribute('aria-expanded', 'false');
     await user.click(chip);
     expect(chip).toHaveAttribute('aria-expanded', 'true');
@@ -134,7 +137,7 @@ describe('Money rules at the counter - U23', () => {
     await user.click(field);
     await user.type(field, `${JASMINE_RICE}{Enter}`);
     await screen.findByRole('list', { name: 'Basket' });
-    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
+    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' }));
     await user.type(screen.getByLabelText(/Customer name/), 'Walk-in Buyer');
     await user.type(screen.getByLabelText(/Mobile number/), '01711112222');
     await user.click(screen.getByRole('button', { name: /1,?000\.00/ }));
@@ -148,5 +151,97 @@ describe('Money rules at the counter - U23', () => {
     expect(screen.getByText(/Change due:/)).toHaveTextContent(/220\.00/);
     expect(screen.getByRole('link', { name: 'Print receipt' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New sale' })).toBeInTheDocument();
+  });
+});
+
+/**
+ * HO-P5 Amended (ab) and the stale-quote cases: the change preview is the quote's answer for the cash typed, so it is only
+ * shown while the quote on screen is for exactly this basket and this cash, and not at all once a payment has been added.
+ */
+describe('Change preview staleness - U25 (Amended (ab))', () => {
+  const OATS_400 = '8900000000101';
+  const seen: Array<{ lines: number; cash: number | null }> = [];
+
+  /** A quote handler with a response delay chosen per request, so the order in which answers arrive can be controlled. */
+  function slowQuote(delayFor: (body: { lines: unknown[]; tenderedCash?: number | null }) => number) {
+    server.use(
+      http.post('*/api/staff/pos/quote', async ({ request }) => {
+        const body = (await request.json()) as { lines: Array<{ skuId: string; quantity: number }>; tenderedCash?: number | null };
+        seen.push({ lines: body.lines.length, cash: body.tenderedCash ?? null });
+        await delay(delayFor(body));
+        const lines = body.lines.map((l) => ({ lineId: uuid(), skuId: l.skuId, quantity: l.quantity, priceWhenAddedCents: skuInfo(l.skuId)?.priceCents ?? 0 }));
+        const result = computeQuote(lines, { fulfilment: 'Counter', customerHasOrders: false });
+        const grand = result.totals.grand;
+        const handed = body.tenderedCash == null ? null : Math.round(body.tenderedCash * 100);
+        return HttpResponse.json({
+          ...result.wire,
+          changeDue: handed !== null && handed >= grand ? money(handed - grand) : null,
+          cashShort: handed !== null && handed < grand ? money(grand - handed) : null,
+        });
+      }),
+    );
+  }
+
+  async function scan(user: ReturnType<typeof userEvent.setup>, code: string) {
+    const field = screen.getByLabelText('Scan a barcode');
+    await user.click(field);
+    await user.type(field, `${code}{Enter}`);
+  }
+  const text = () => document.body.textContent ?? '';
+
+  beforeEach(() => {
+    seen.length = 0;
+  });
+
+  it('is hidden once a payment has been added, and stays hidden while more cash is typed', async () => {
+    const user = userEvent.setup();
+    renderWithClient(<PosScreen />);
+    await scan(user, JASMINE_RICE);
+    await screen.findByRole('list', { name: 'Basket' });
+    await user.type(screen.getByLabelText(/handed over/), '1000');
+    await waitFor(() => expect(text()).toMatch(/Change due\s*৳?220\.00/));
+    await user.click(screen.getByRole('button', { name: 'Add payment' }));
+    expect(screen.getByRole('list', { name: 'Payments taken' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/handed over/), '500');
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    expect(text()).not.toMatch(/Change due|Still to pay/);
+    // Removing the payment brings the one-tender answer back.
+    await user.click(within(screen.getByRole('list', { name: 'Payments taken' })).getByRole('button'));
+    await waitFor(() => expect(text()).toMatch(/Still to pay\s*৳?280\.00/));
+  });
+
+  it('a basket change after cash was typed never shows the old basket’s change', async () => {
+    const user = userEvent.setup();
+    slowQuote((body) => (body.lines.length > 1 ? 1200 : 0));
+    renderWithClient(<PosScreen />);
+    await scan(user, JASMINE_RICE);
+    await screen.findByRole('list', { name: 'Basket' });
+    await user.type(screen.getByLabelText(/handed over/), '1000');
+    await waitFor(() => expect(text()).toMatch(/Change due\s*৳?220\.00/));
+    await scan(user, OATS_400);
+    await waitFor(() => expect(within(screen.getByRole('list', { name: 'Basket' })).getAllByRole('listitem')).toHaveLength(2));
+    // The new quote is in flight (1.2 s): the old 220.00 must not stay on screen as if it were for this basket.
+    await waitFor(() => expect(seen.some((s) => s.lines === 2)).toBe(true));
+    expect(text()).not.toMatch(/Change due\s*৳?220\.00/);
+    await waitFor(() => expect(text()).toMatch(/Change due|Still to pay/), { timeout: 3000 });
+    expect(text()).not.toMatch(/Change due\s*৳?220\.00/);
+  });
+
+  it('an answer that arrives late for cash that is no longer typed is never shown', async () => {
+    const user = userEvent.setup();
+    slowQuote((body) => (body.tenderedCash === 500 ? 1500 : 0));
+    renderWithClient(<PosScreen />);
+    await scan(user, JASMINE_RICE);
+    await screen.findByRole('list', { name: 'Basket' });
+    const cash = screen.getByLabelText(/handed over/);
+    await user.type(cash, '500');
+    await waitFor(() => expect(seen.some((s) => s.cash === 500)).toBe(true));
+    await user.clear(cash);
+    await user.type(cash, '1000');
+    await waitFor(() => expect(text()).toMatch(/Change due\s*৳?220\.00/));
+    // The slow answer for 500 lands after this: it must not replace the one for 1000.
+    await new Promise((resolve) => setTimeout(resolve, 1800));
+    expect(text()).toMatch(/Change due\s*৳?220\.00/);
+    expect(text()).not.toMatch(/Still to pay/);
   });
 });

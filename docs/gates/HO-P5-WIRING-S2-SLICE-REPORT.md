@@ -7,7 +7,7 @@ Written by the S2 implementer. Everything below that says "passed" was seen to p
 | Field | Value |
 |---|---|
 | Branch | `feat/p5-s2-sales`, created from `b4f7783` (the worktree's branch `worktree-agent-a974eb1973a852f4a` sat at `b4f7783`, so `git checkout -b feat/p5-s2-sales b4f7783`) |
-| Code HEAD when the verification below was run | `971c8bd`, plus one commit that only corrects server file:line comments in two mocks and adds this report (Vitest, typecheck and lint were rerun after it: 18 files, 220 tests passed) |
+| HEAD | the last commit of the branch; see "Gate fix round" at the end |
 | Worktree | `D:\my-repo\amar-gram\.claude\worktrees\agent-a974eb1973a852f4a` |
 | Pushed | No |
 
@@ -115,3 +115,33 @@ Not run: the full Vitest suite; E17 specs other than `ordering-a11y-responsive`;
 2. §20.2: the code-versus-document differences are recorded by Amended (x) and (y); nothing further to route.
 
 Nothing else blocked the slice.
+
+## Gate fix round (S2 gates, merged with Amended (aa)-(ab))
+
+Commits since the first report: `625a0da`, `adec50e`, `9eec889`, `d26e5d7`, `230ea43`, `971c8bd`, `f8ffb4d`, `db084bb` (Amended (z): tab count label, `<bdi>` rider note, with `tab-count-label.test.tsx`), then this round's commit(s); the exact list and HEAD are `git log b4f7783..HEAD --oneline`.
+
+**SECURITY MEDIUM.** `PosScreen` applies the `?customerId=` preset once per id (a ref), New sale calls `router.replace('/staff/pos')` and clears the typed cash, and the review summary names the buyer ("Buyer: name (mobile)." or "No customer (walk-in sale)."). Tests: preset then clear both fields, and preset then complete then New sale, each ending with a sale that carries neither name nor mobile (the second sale scans oats, because the seed has one jasmine rice).
+
+**ARCHITECTURE.** The chip reads "Walk-in (no customer) · Add customer" (§11.3.13); Vitest and e2e assertions updated. `ordering-staff.spec.ts` runs axe on `/staff/fulfilment/riders` (list and open dialog). Amended (ab): the change preview is hidden once a payment has been added; stale-quote tests cover a basket change after cash was typed, adding the payment, and out-of-order answers.
+
+**CODE_REVIEW.** `pos-p5.test.tsx` paging (an override of 25 items, two requests), empty category (override, exact text) and category membership (every tile is a catalogue product of that category, counts match) can now fail. A line's pick checkbox is `aria-disabled` while its write is in flight (kept focusable rather than `disabled`, so a keyboard user does not lose focus; clicks are ignored); tests cover a generic failure, a 404, tick then untick, a concurrent refetch and switching orders mid-write.
+
+**LOWs.**
+- `!= null` for the rider shipment.
+- One `useCanManageRiders()` (unknown roles are NOT allowed) for the riders page, the dispatch dialog and the pick list.
+- The dispatch dialog's 404 re-reads the rider or courier list and blames the order if the one chosen is still on it. The client's `ApiNotFoundError` carries no body, so it cannot map by code.
+- Tests for a failed riders read and for tracking-then-switch.
+- The chart clamps a negative net to a zero bar, and a keyboard-focused bar keeps its readout when the pointer leaves. UI-6 needs no arrow-key model; the 14 bars stay 14 tab stops.
+- Mock rider writes check shape, 404, duplicate name, then mobile; a whitespace-only name is `NotEmptyValidator`.
+- An empty-Guid courier beside a real rider is refused by the handler.
+- The quote always sends `changeDue` and `cashShort` (null when absent; the view model has no ignore-null setting).
+- `lacksRole` on start-packing, tracking and cancel.
+- The reserved walk-in number is refused in every typed form.
+- E9 reads the POST body to tell an anonymous sale from a named one.
+- A test renders the Subscription label.
+- `removeAllListeners` moved to `beforeEach`.
+- `tenderedCash` cites `PosRequests.cs:24`.
+
+Verification: typecheck and lint clean; Vitest 56 files / 512 tests (slice folders, back-office, guards and tab consumers) at --maxWorkers=1; e2e ordering-staff + ordering-pos (axe on the riders page included), both projects, --workers=1, fresh next dev on 3122: 52 passed.
+
+Left undone: nothing from the list. The mock receipt still hides the name of a named buyer who is not the seeded customer (`known` in `pos.ts`, pre-existing); E9 no longer depends on it.

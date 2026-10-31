@@ -35,7 +35,7 @@ async function scan(user: ReturnType<typeof userEvent.setup>, code: string) {
 
 async function fillCustomer(user: ReturnType<typeof userEvent.setup>) {
   // HO-P4 S2: the buyer's fields sit behind the ticket's customer chip; HO-P5 BG-8 renamed it "Walk-in (no customer)" (a sale may now have neither).
-  await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
+  await user.click(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' }));
   await user.type(screen.getByLabelText(/Customer name/), 'Walk-in Buyer');
   await user.type(screen.getByLabelText(/Mobile number/), '01711112222');
 }
@@ -249,7 +249,7 @@ describe('Review gating and keyboard path - gate fix', () => {
     renderWithClient(<PosScreen />);
     await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
-    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
+    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' }));
     await user.type(screen.getByLabelText(/Customer name/), 'Walk-in Buyer');
     await user.keyboard('{F2}');
     expect(screen.getByLabelText(/handed over/)).toHaveFocus();

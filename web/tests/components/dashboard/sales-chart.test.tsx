@@ -84,6 +84,33 @@ describe('SalesChartPanel - U16', () => {
   });
 });
 
+describe('SalesChartPanel - edge cases', () => {
+  it('a day with negative net sales (credit notes) gets a zero-length bar, not a negative height', () => {
+    const series = { ...SERIES, days: SERIES.days.map((d, i) => (i === 5 ? { ...d, net: money('-250.00') } : d)) };
+    renderWithClient(<SalesChartPanel series={series} />);
+    const bars = within(screen.getByRole('list', { name: /net sales for each day/ })).getAllByRole('button');
+    expect((bars[5]!.querySelector('span') as HTMLElement).style.height).toBe('0%');
+    expect(bars[5]).toHaveAccessibleName('6 Oct 2026: -৳250.00, 6 orders');
+  });
+
+  it('moving the pointer off the bars does not blank the readout of the bar that has keyboard focus', async () => {
+    const user = userEvent.setup();
+    renderWithClient(<SalesChartPanel series={SERIES} />);
+    const list = screen.getByRole('list', { name: /net sales for each day/ });
+    const bars = within(list).getAllByRole('button');
+    const readout = screen.getAllByRole('status').find((node) => node.getAttribute('aria-live') === 'polite')!;
+    bars[2]!.focus();
+    await waitFor(() => expect(readout).toHaveTextContent('3 Oct 2026'));
+    await user.hover(bars[8]!);
+    await waitFor(() => expect(readout).toHaveTextContent('3 Oct 2026'));
+    await user.unhover(bars[8]!);
+    await user.unhover(list);
+    expect(readout).toHaveTextContent('3 Oct 2026');
+    bars[2]!.blur();
+    await waitFor(() => expect(readout).toHaveTextContent(''));
+  });
+});
+
 describe('DashboardSalesChart - U16', () => {
   it('shows the panel once the series has loaded', async () => {
     renderWithClient(<DashboardSalesChart />);

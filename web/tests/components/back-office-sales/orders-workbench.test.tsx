@@ -3,6 +3,8 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
+import { http, HttpResponse } from 'msw';
+import { server } from '../../../mocks/server';
 import { orderingIds as ids } from '../../../mocks/handlers/ordering/fixtures';
 import { db, findOrder, p5OrderIds, resetOrderingMockData } from '../../../mocks/handlers/ordering/store';
 import { StaffOrderQueue } from '@/components/orders/StaffOrderQueue';
@@ -69,6 +71,24 @@ describe('Status pills - U18', () => {
     await waitFor(() => expect(within(tabs).getByRole('tab', { name: /^All/ })).toHaveTextContent(`All${cod.length}`));
     // The selected Confirmed pill still shows how many Confirmed orders there are, not the list's length.
     expect(within(tabs).getByRole('tab', { name: /^Confirmed/ })).toHaveTextContent(`Confirmed${cod.filter((o) => o.status === 'Confirmed').length}`);
+  });
+
+  it('a subscription-channel row carries the "Subscription" label (display only, OQ-11) and no other row does', async () => {
+    const row = (n: number, channel: string) => ({
+      id: `s${n}`, orderNumber: `ORD-SUB-00000${n}`, placedOn: '2026-10-14T03:00:00+00:00', customerName: `Sub ${n}`, status: 'Confirmed',
+      fulfilmentMethod: 'Delivery', paymentMethod: 'CashOnDelivery', channel, grandTotal: { amount: '100.00', currencyCode: 'BDT' },
+      ageMinutes: 5, flags: [], branchTimeZoneId: 'Asia/Dhaka', deliveryZone: null, deliveryDistrict: null, slotDate: null, slotWindowLabel: null,
+    });
+    server.use(
+      http.get('*/api/staff/orders', () =>
+        HttpResponse.json({ items: [row(1, 'Subscription'), row(2, 'Online')], pageNumber: 1, pageSize: 25, totalCount: 2 }),
+      ),
+    );
+    renderWithClient(<StaffOrderQueue />);
+    const subscription = (await screen.findByRole('button', { name: 'ORD-SUB-000001' })).closest('tr') as HTMLElement;
+    expect(subscription).toHaveTextContent('Subscription');
+    const online = screen.getByRole('button', { name: 'ORD-SUB-000002' }).closest('tr') as HTMLElement;
+    expect(online).not.toHaveTextContent('Subscription');
   });
 
   it('a delivery row shows its area and slot; pickup and counter rows show neither (U19, BG-3)', async () => {

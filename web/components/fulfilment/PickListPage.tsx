@@ -10,11 +10,10 @@ import { PrintSheet } from '@/components/print/PrintSheet';
 import { Button } from '@/components/ui/button';
 import { ApiForbiddenError } from '@/lib/api/client';
 import { describeOrderingError } from '@/lib/api/errors';
-import { RIDER_MANAGE_ROLES, type PickList } from '@/lib/api/staff-orders';
+import type { PickList } from '@/lib/api/staff-orders';
 import { formatDateOnly, formatInZone } from '@/lib/format/time';
 import { useBranchTimeZone } from '@/lib/hooks/useBranchTimeZone';
-import { useStaffSession } from '@/lib/hooks/useSession';
-import { usePickList, useStaffOrderQueue, useStartPacking } from '@/lib/hooks/useStaffOrders';
+import { useCanManageRiders, usePickList, useStaffOrderQueue, useStartPacking } from '@/lib/hooks/useStaffOrders';
 
 /**
  * `components/fulfilment/PickListPage.tsx` — ⭐ HO-ORD-002 §11.10, US-ORD-10 AC1, ADR-FE-094. The stock to
@@ -75,9 +74,7 @@ export function PickListPage() {
   const list = usePickList(chosen.length > 0 ? chosen : undefined);
   const confirmed = useStaffOrderQueue({ status: 'Confirmed', pageNumber: 1, pageSize: 100 });
   const startPacking = useStartPacking();
-  const session = useStaffSession();
-  // Presentation only (Riders.Manage): the server decides who may open the registry's write actions.
-  const canManageRiders = (session.data?.roleIds ?? []).some((role) => RIDER_MANAGE_ROLES.includes(role));
+  const canManageRiders = useCanManageRiders();
   const [selection, setSelection] = useState<string[]>(chosen);
   const [progress, setProgress] = useState<{ done: number; total: number; failures: Array<{ number: string; message: string }> } | null>(null);
   const [running, setRunning] = useState(false);

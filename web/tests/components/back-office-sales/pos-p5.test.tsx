@@ -4,10 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { server } from '../../../mocks/server';
+import { http, HttpResponse } from 'msw';
 import { db, resetOrderingMockData } from '../../../mocks/handlers/ordering/store';
+import { db as shopDb } from '../../../mocks/handlers/shop/store';
 import { CATEGORY_LABELS } from '@/lib/shop/labels';
 import { PosScreen } from '@/components/pos/PosScreen';
-import { setUrl } from '../common/nav-mock';
+import { currentUrl, setUrl } from '../common/nav-mock';
+import { orderingIds as ids } from '../../../mocks/handlers/ordering/fixtures';
 
 vi.mock('next/navigation', () => import('../common/nav-mock'));
 
@@ -60,7 +63,17 @@ describe('Browse by category - U24', () => {
     await user.click(screen.getByRole('tab', { name: 'Rice & grains' }));
     const rice = await screen.findByRole('list', { name: 'Rice & grains to sell' });
     expect(urls.some((url) => url.includes('category=RiceAndGrains'))).toBe(true);
-    expect(within(rice).getAllByRole('listitem').length).toBeLessThanOrEqual(allCount);
+    // Every tile is a product of that category in the shop catalogue, and every such sellable product is there.
+    const riceNames = shopDb.products
+      .filter((p) => p.category === 'RiceAndGrains' && p.status === 'Active' && p.listed)
+      .flatMap((p) => p.skus.filter((k) => k.status === 'Active' && k.price !== null).map(() => p.name));
+    expect(riceNames.length).toBeGreaterThan(0);
+    expect(riceNames.length).toBeLessThan(allCount);
+    const tiles = within(rice).getAllByRole('button');
+    expect(tiles).toHaveLength(riceNames.length);
+    for (const tile of tiles) {
+      expect(riceNames.some((name) => (tile.getAttribute('aria-label') ?? '').startsWith(`Add ${name}`))).toBe(true);
+    }
     expect(screen.getByRole('tab', { name: 'Rice & grains' })).toHaveAttribute('aria-selected', 'true');
   });
 
@@ -77,18 +90,38 @@ describe('Browse by category - U24', () => {
     expect(document.getElementById('pos-scan-live')).toHaveTextContent(`Added ${label}, quantity 2`);
   });
 
-  it('"Show more" asks for the next page and appends its tiles', async () => {
+  it('"Show more" asks the server for the next page, appends its tiles and goes away on the last page', async () => {
     const user = userEvent.setup();
+    const asked: string[] = [];
+    const sku = (n: number) => ({
+      skuId: `90000000-0000-0000-0000-${String(n).padStart(12, '0')}`,
+      productId: `p${n}`,
+      productName: `Item ${String(n).padStart(2, '0')}`,
+      variantLabel: '1 kg',
+      barcode: null,
+      unitPrice: { amount: '10.00', currencyCode: 'BDT' },
+      sellable: 5,
+      isBundle: false,
+      fefoBatches: [],
+    });
+    server.use(
+      http.get('*/api/staff/pos/browse', ({ request }) => {
+        const url = new URL(request.url);
+        const page = Number(url.searchParams.get('pageNumber'));
+        asked.push(url.search);
+        const all = Array.from({ length: 25 }, (_, i) => sku(i + 1));
+        return HttpResponse.json({ items: all.slice((page - 1) * 20, page * 20), pageNumber: page, pageSize: 20, totalCount: 25 });
+      }),
+    );
     renderWithClient(<PosScreen />);
     const grid = await screen.findByRole('list', { name: 'All items to sell' });
-    const first = within(grid).getAllByRole('listitem').length;
-    // Twenty to a page: the mock catalogue has fewer, so the button only appears when there is another page.
-    if (first >= 20) {
-      await user.click(screen.getByRole('button', { name: 'Show more' }));
-      await waitFor(() => expect(within(screen.getByRole('list', { name: 'All items to sell' })).getAllByRole('listitem').length).toBeGreaterThan(first));
-    } else {
-      expect(screen.queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
-    }
+    expect(within(grid).getAllByRole('listitem')).toHaveLength(20);
+    await user.click(screen.getByRole('button', { name: 'Show more' }));
+    await waitFor(() => expect(within(screen.getByRole('list', { name: 'All items to sell' })).getAllByRole('listitem')).toHaveLength(25));
+    expect(asked).toHaveLength(2);
+    expect(asked[1]).toContain('pageNumber=2');
+    expect(screen.getByRole('button', { name: /^Add Item 25/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
   });
 
   it('a typed name search replaces the grid with its results', async () => {
@@ -105,17 +138,23 @@ describe('Browse by category - U24', () => {
     expect(screen.queryByRole('tablist', { name: 'Item categories' })).not.toBeInTheDocument();
   });
 
-  it('says so when a category has nothing to sell', async () => {
+  it('says so when a category has nothing to sell, and shows no grid for it', async () => {
     const user = userEvent.setup();
+    server.use(
+      http.get('*/api/staff/pos/browse', ({ request }) => {
+        const empty = new URL(request.url).searchParams.get('category') === 'HouseholdAndCare';
+        const one = {
+          skuId: '90000000-0000-0000-0000-000000000001', productId: 'p1', productName: 'Rice', variantLabel: '1 kg', barcode: null,
+          unitPrice: { amount: '10.00', currencyCode: 'BDT' }, sellable: 5, isBundle: false, fefoBatches: [],
+        };
+        return HttpResponse.json({ items: empty ? [] : [one], pageNumber: 1, pageSize: 20, totalCount: empty ? 0 : 1 });
+      }),
+    );
     renderWithClient(<PosScreen />);
     await screen.findByRole('list', { name: 'All items to sell' });
     await user.click(screen.getByRole('tab', { name: 'Household & natural care' }));
-    await waitFor(() => expect(screen.queryByRole('list', { name: 'All items to sell' })).not.toBeInTheDocument());
-    await waitFor(() => {
-      const empty = screen.queryByText(/Nothing to sell in household/i);
-      const grid = screen.queryByRole('list', { name: 'Household & natural care to sell' });
-      expect(empty ?? grid).not.toBeNull();
-    });
+    expect(await screen.findByText('Nothing to sell in household & natural care right now.')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: /to sell$/ })).not.toBeInTheDocument();
   });
 });
 
@@ -131,7 +170,7 @@ describe('Walk-in sale - U26', () => {
     const user = userEvent.setup();
     const sales = recordSales();
     renderWithClient(<PosScreen />);
-    expect(screen.getByRole('button', { name: 'Walk-in (no customer)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
     await basketWithRice(user);
     await user.type(screen.getByLabelText(/handed over/), '1000.00');
     await user.click(screen.getByRole('button', { name: 'Add payment' }));
@@ -155,7 +194,7 @@ describe('Walk-in sale - U26', () => {
     await basketWithRice(user);
     await user.type(screen.getByLabelText(/handed over/), '1000.00');
     await user.click(screen.getByRole('button', { name: 'Add payment' }));
-    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
+    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' }));
     await user.type(screen.getByLabelText(/Mobile number/), '01711112222');
     const complete = screen.getByRole('button', { name: 'Complete sale' });
     await waitFor(() => expect(screen.getByText(/Enter both the name and the mobile number, or neither\./)).toBeInTheDocument());
@@ -174,7 +213,7 @@ describe('Walk-in sale - U26', () => {
     const sales = recordSales();
     renderWithClient(<PosScreen />);
     await basketWithRice(user);
-    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
+    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' }));
     await user.type(screen.getByLabelText(/Customer name/), 'Rana');
     await user.type(screen.getByLabelText(/Mobile number/), '01711112222');
     expect(screen.getByRole('button', { name: /Rana · 01711112222/ })).toBeInTheDocument();
@@ -186,5 +225,85 @@ describe('Walk-in sale - U26', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Complete sale' }));
     await screen.findByRole('heading', { name: /Sale complete/ });
     expect(sales[0]).toMatchObject({ customerName: 'Rana', customerMobile: '01711112222' });
+  });
+});
+
+// SECURITY (S2 gate): "New order" from a customer's profile presets the buyer once. Clearing it or pressing New sale
+// must never put the next walk-in on that customer's account.
+describe('Preset buyer from /staff/pos?customerId= - SECURITY', () => {
+  const PRESET = `/staff/pos?customerId=${ids.customerId}`;
+  beforeEach(() => {
+    // The accounts mock answers a customer lookup only for a signed-in staff session; stand one in.
+    server.use(
+      http.get('*/api/staff/customers/:customerId', () =>
+        HttpResponse.json({ id: ids.customerId, fullName: ids.customerName, mobileNumber: '01711000999', emailAddress: null, recordStatus: 'Complete', registrationChannel: 'Web', status: 'Active', mergedIntoCustomerId: null }),
+      ),
+    );
+  });
+
+  // Jasmine rice has a single unit in the seed, so a second sale scans oats instead.
+  async function addRice(user: ReturnType<typeof userEvent.setup>, code = JASMINE_RICE) {
+    const field = screen.getByLabelText('Scan a barcode');
+    await user.click(field);
+    await user.type(field, `${code}{Enter}`);
+    await screen.findByRole('list', { name: 'Basket' });
+  }
+  async function pay(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(screen.getByLabelText(/handed over/), '1000.00');
+    await user.click(screen.getByRole('button', { name: 'Add payment' }));
+    const complete = screen.getByRole('button', { name: 'Complete sale' });
+    await waitFor(() => expect(complete).toBeEnabled());
+    await user.click(complete);
+    return within(await screen.findByRole('dialog'));
+  }
+
+  it('fills the buyer from the URL, names them in the review, and clearing both fields keeps it a walk-in', async () => {
+    const user = userEvent.setup();
+    const sales = recordSales();
+    setUrl(PRESET);
+    renderWithClient(<PosScreen />);
+    const chip = await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) });
+    await user.click(chip);
+    await user.clear(screen.getByLabelText(/Customer name/));
+    await user.clear(screen.getByLabelText(/Mobile number/));
+    // The preset does not come back when the fields are empty.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument());
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(screen.getByLabelText(/Customer name/)).toHaveValue('');
+    await addRice(user);
+    const review = await pay(user);
+    expect(review.getByText(/No customer \(walk-in sale\)/)).toBeInTheDocument();
+    await user.click(review.getByRole('button', { name: 'Complete sale' }));
+    await screen.findByRole('heading', { name: /Sale complete/ });
+    expect(Object.keys(sales[0]!)).not.toContain('customerName');
+    expect(Object.keys(sales[0]!)).not.toContain('customerMobile');
+  });
+
+  it('the review names the preset buyer; after New sale the chip is a walk-in, the address loses the preset and the next sale carries neither', async () => {
+    const user = userEvent.setup();
+    const sales = recordSales();
+    setUrl(PRESET);
+    renderWithClient(<PosScreen />);
+    await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) });
+    await addRice(user);
+    const review = await pay(user);
+    expect(review.getByText(new RegExp(`Buyer: ${ids.customerName}`))).toBeInTheDocument();
+    await user.click(review.getByRole('button', { name: 'Complete sale' }));
+    await screen.findByRole('heading', { name: /Sale complete/ });
+    expect(sales[0]).toMatchObject({ customerName: ids.customerName });
+
+    await user.click(screen.getByRole('button', { name: 'New sale' }));
+    expect(await screen.findByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+    expect(currentUrl()).toBe('/staff/pos');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+
+    await addRice(user, '8900000000101');
+    const second = await pay(user);
+    await user.click(second.getByRole('button', { name: 'Complete sale' }));
+    await screen.findByRole('heading', { name: /Sale complete/ });
+    expect(sales).toHaveLength(2);
+    expect(Object.keys(sales[1]!)).not.toContain('customerName');
+    expect(Object.keys(sales[1]!)).not.toContain('customerMobile');
   });
 });

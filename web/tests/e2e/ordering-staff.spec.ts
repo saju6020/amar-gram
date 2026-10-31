@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect as baseExpect, signInAsStaff } from './fixtures';
 import { control } from './ordering-helpers';
+import { expectAxeClean } from './reports-helpers';
 import { orderingIds as ids } from '../../mocks/handlers/ordering/fixtures';
 
 const expect = baseExpect.configure({ timeout: 20_000 });
@@ -106,8 +107,11 @@ test.describe('fulfilment (US-ORD-09 to US-ORD-11, US-ORD-20)', () => {
     // A table from 768 px, stacked cards below it: read the page's main region either way.
     const main = page.locator('#main-content');
     await expect(main).toContainText('Jahid Alam');
+    // UI-6: the registry is axe-clean, with the list and then with the dialog open.
+    await expectAxeClean(page);
     await page.getByRole('button', { name: 'Add rider' }).click();
     const dialog = page.getByRole('dialog', { name: 'Add a rider' });
+    await expectAxeClean(page);
     await dialog.getByLabel('Name').fill('Nur Alam');
     await dialog.getByRole('button', { name: 'Add rider' }).click();
     await expect(main).toContainText('Nur Alam');

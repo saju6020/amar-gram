@@ -23,7 +23,7 @@ async function start(page: import('@playwright/test').Page) {
 
 /** HO-P4 S2: the buyer's name and mobile sit behind the ticket's customer chip. */
 async function fillCustomer(page: import('@playwright/test').Page, mobile: string) {
-  await page.getByRole('button', { name: 'Walk-in (no customer)' }).click();
+  await page.getByRole('button', { name: 'Walk-in (no customer) · Add customer' }).click();
   await page.getByLabel(/Customer name/).fill('Walk-in Buyer');
   await page.getByLabel(/Mobile number/).fill(mobile);
 }
@@ -70,6 +70,11 @@ test.describe('point of sale (US-ORD-16)', () => {
 
   test('E9: browse a category, add a tile, see the change before completing, and complete a walk-in sale with no customer', async ({ page }) => {
     await start(page);
+    // What the sale actually sends is the proof it is anonymous: the receipt cannot tell (it shows a name only for a known customer).
+    const saleBodies: string[] = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/api/staff/pos/sales')) saleBodies.push(request.postData() ?? '');
+    });
     const tabs = page.getByRole('tablist', { name: 'Item categories' });
     await expect(tabs.getByRole('tab').first()).toHaveText('All');
     await tabs.getByRole('tab', { name: 'Rice & grains' }).click();
@@ -86,7 +91,7 @@ test.describe('point of sale (US-ORD-16)', () => {
     await expect(page.getByRole('status').filter({ hasText: /Still to pay/ })).toContainText('280.00');
 
     // No customer: the chip says walk-in and the sale completes without a name or mobile.
-    await expect(page.getByRole('button', { name: 'Walk-in (no customer)' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeVisible();
     await page.getByLabel(/handed over/).fill('1000');
     await page.getByRole('button', { name: 'Add payment' }).click();
     const complete = page.getByRole('button', { name: 'Complete sale' });
@@ -98,13 +103,16 @@ test.describe('point of sale (US-ORD-16)', () => {
     await page.getByRole('link', { name: 'Print receipt' }).click();
     const sheet = page.getByRole('article', { name: 'Receipt' });
     await expect(sheet).toContainText('Change');
-    await expect(sheet).not.toContainText('Walk-in customer');
+    expect(saleBodies).toHaveLength(1);
+    const sent = JSON.parse(saleBodies[0]!) as Record<string, unknown>;
+    expect(Object.keys(sent)).not.toContain('customerName');
+    expect(Object.keys(sent)).not.toContain('customerMobile');
   });
 
   test('only a name or only a mobile blocks the sale with the both-or-neither message', async ({ page }) => {
     await start(page);
     await scan(page, JASMINE_RICE);
-    await page.getByRole('button', { name: 'Walk-in (no customer)' }).click();
+    await page.getByRole('button', { name: 'Walk-in (no customer) · Add customer' }).click();
     await page.getByLabel(/Customer name/).fill('Rana');
     await page.locator('#pos-tender-amount').fill('1000');
     await page.keyboard.press('Enter');

@@ -337,7 +337,58 @@ describe('Walk-in sale - PosRequests.cs:31-33, ReturnAndRefundCommandValidators.
   });
 });
 
-describe('Sales series - StaffDashboardController.cs:38-61, SalesSeriesQueries.cs:13-14', () => {
+describe('Gate follow-ups - mock truthfulness', () => {
+  const EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
+  const sale = (customerMobile: string) =>
+    completeCounterSale(
+      { customerName: 'Rana', customerMobile, lines: [{ skuId: ids.skuJasmineRice, quantity: 1 }], tenders: [{ method: 'Cash', amount: '1000.00' }] },
+      crypto.randomUUID(),
+    );
+
+  it('the reserved walk-in number is refused in every form it can be typed (CompleteCounterSaleCommandHandler.cs:57,65)', async () => {
+    for (const typed of ['01000000000', '+8801000000000', '8801000000000', '+880 1000-000000', '008801000000000']) {
+      expect(await violationOf(() => sale(typed))).toMatchObject({ errorCode: 'InvalidMobileNumber', propertyName: 'CustomerMobile' });
+    }
+  });
+
+  it('the quote always sends changeDue and cashShort, null when absent (the view model has no ignore-null setting)', async () => {
+    const lines = [{ skuId: ids.skuJasmineRice, quantity: 1 }];
+    const raw = await apiFetch<Record<string, unknown>>('/api/staff/pos/quote', { method: 'POST', body: { lines } });
+    expect(raw).toHaveProperty('changeDue', null);
+    expect(raw).toHaveProperty('cashShort', null);
+    const over = await apiFetch<Record<string, unknown>>('/api/staff/pos/quote', { method: 'POST', body: { lines, tenderedCash: 1000 } });
+    expect(over).toHaveProperty('cashShort', null);
+    expect(over.changeDue).toEqual({ amount: '220.00', currencyCode: 'BDT' });
+  });
+
+  it('rider writes check in the server’s order: shape, then 404, then duplicate name, then the mobile number', async () => {
+    // A whitespace-only name is NotEmpty, not a domain refusal.
+    expect(await violationOf(() => createRider({ name: '   ', isActive: true }))).toMatchObject({ errorCode: 'NotEmptyValidator', propertyName: 'Name' });
+    // A bad mobile on a duplicate name reports the duplicate first.
+    expect((await violationOf(() => createRider({ name: 'Rafiq Hasan', mobileNumber: '12345', isActive: true }))).errorCode).toBe('RiderNameAlreadyExists');
+    expect((await violationOf(() => updateRider(riderIds.jahid, { name: 'Rafiq Hasan', mobileNumber: '12345', isActive: true }))).errorCode).toBe('RiderNameAlreadyExists');
+    // A bad mobile for a rider that does not exist reports the missing rider (404), not the mobile.
+    expect(await failureOf(() => updateRider('a2000000-0000-0000-0000-0000000000ff', { name: 'Nobody', mobileNumber: '12345', isActive: true }))).toBeInstanceOf(ApiNotFoundError);
+    expect((await violationOf(() => updateRider(riderIds.jahid, { name: 'Jahid Alam', mobileNumber: '12345', isActive: true }))).errorCode).toBe('InvalidMobileNumber');
+  });
+
+  it('an empty-Guid courier beside a real rider passes the validator and is refused by the handler (OrderFulfilmentCommandHandlers.cs:108)', async () => {
+    const refusal = await violationOf(() => postRaw(p5OrderIds.packedWaiting, 'dispatch', { courierId: EMPTY_GUID, riderId: riderIds.rafiq }));
+    expect(refusal.errorCode).toBe('DispatchTargetInvalid');
+    expect(findOrder(p5OrderIds.packedWaiting)!.status).toBe('Packed');
+  });
+
+  it('start-packing, tracking and cancel are role-gated like the other writes (Orders.Fulfil, Orders.Cancel)', async () => {
+    asRoles(['Accountant']);
+    expect(await failureOf(() => postRaw(ids.orders.confirmedCod, 'packing', {}))).toBeInstanceOf(ApiForbiddenError);
+    expect(await failureOf(() => recordTracking(ids.orders.dispatchedCod, 'PC-1'))).toBeInstanceOf(ApiForbiddenError);
+    expect(await failureOf(() => cancelStaffOrder(ids.orders.confirmedCod, 'no'))).toBeInstanceOf(ApiForbiddenError);
+    asRoles(['Reception']);
+    await expect(cancelStaffOrder(ids.orders.confirmedCod, 'Customer rang')).resolves.toBeUndefined();
+  });
+});
+
+describe('Sales series -StaffDashboardController.cs:38-61, SalesSeriesQueries.cs:13-14', () => {
   it('returns 14 days by default, oldest first, every day present, with the server’s total', async () => {
     const series = await getSalesSeries();
     expect(series.days).toHaveLength(14);

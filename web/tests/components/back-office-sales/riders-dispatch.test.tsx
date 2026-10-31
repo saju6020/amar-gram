@@ -104,6 +104,50 @@ describe('DispatchDialog - U22', () => {
     expect(bodies[0]).toEqual({ courierId: ids.courierPathaoId, trackingNumber: 'PC-77' });
   });
 
+  it('when the riders cannot be read the Rider option is disabled and says so, and a courier dispatch still works', async () => {
+    server.use(http.get('*/api/staff/riders', () => new HttpResponse(null, { status: 500 })));
+    const user = userEvent.setup();
+    const bodies = recordBodies('POST', /\/dispatch$/);
+    open();
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText('Riders couldn’t be loaded.', undefined, { timeout: 4000 })).toBeInTheDocument();
+    expect(within(dialog).getByRole('radio', { name: 'Rider' })).toBeDisabled();
+    await waitFor(() => expect(within(dialog).getByRole('option', { name: 'Pathao Courier' })).toBeInTheDocument());
+    await user.selectOptions(within(dialog).getByLabelText(/Which courier/), 'Pathao Courier');
+    await user.click(within(dialog).getByRole('button', { name: 'Dispatch' }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]).toEqual({ courierId: ids.courierPathaoId });
+  });
+
+  it('a tracking number typed for a courier is not sent when the person switches to a rider', async () => {
+    const user = userEvent.setup();
+    const bodies = recordBodies('POST', /\/dispatch$/);
+    open();
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(within(dialog).getByRole('option', { name: 'Pathao Courier' })).toBeInTheDocument());
+    await user.selectOptions(within(dialog).getByLabelText(/Which courier/), 'Pathao Courier');
+    await user.type(within(dialog).getByLabelText(/Tracking number/), 'PC-1');
+    await waitFor(() => expect(within(dialog).getByRole('radio', { name: 'Rider' })).toBeEnabled());
+    await user.click(within(dialog).getByRole('radio', { name: 'Rider' }));
+    await user.selectOptions(within(dialog).getByLabelText(/Which rider/), 'Jahid Alam');
+    await user.click(within(dialog).getByRole('button', { name: 'Dispatch' }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]).toEqual({ riderId: riderIds.jahid });
+  });
+
+  it('a 404 for an order that is gone blames the order, not the rider or the courier', async () => {
+    const user = userEvent.setup();
+    server.use(http.post('*/api/staff/orders/:orderId/dispatch', () => new HttpResponse(null, { status: 404 })));
+    open();
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(within(dialog).getByRole('radio', { name: 'Rider' })).toBeEnabled());
+    await user.click(within(dialog).getByRole('radio', { name: 'Rider' }));
+    await user.selectOptions(within(dialog).getByLabelText(/Which rider/), 'Rafiq Hasan');
+    await user.click(within(dialog).getByRole('button', { name: 'Dispatch' }));
+    expect(await within(dialog).findByText('This order could not be found. It may have moved to another branch.')).toBeInTheDocument();
+    expect(within(dialog).queryByText(/not available/)).not.toBeInTheDocument();
+  });
+
   it('asks for a rider before sending anything', async () => {
     const user = userEvent.setup();
     const bodies = recordBodies('POST', /\/dispatch$/);
@@ -151,6 +195,9 @@ describe('DispatchDialog - U22', () => {
 });
 
 describe('RidersPage - U23', () => {
+  // One rule everywhere (useCanManageRiders): only a role that holds Riders.Manage is offered the buttons; unknown roles are not.
+  beforeEach(() => asRoles(['ShopManager']));
+
   it('lists every rider with name, mobile and status, in a captioned table', async () => {
     renderWithClient(<RidersPage />);
     const table = await screen.findByRole('table', { name: 'Riders' });
@@ -247,6 +294,15 @@ describe('RidersPage - U23', () => {
     renderWithClient(<RidersPage />);
     expect(await screen.findByText('You don’t have permission to do this.')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('a session whose roles are not known gets the list but no Add or Edit', async () => {
+    server.use(http.get('*/api/staff/session', () => new HttpResponse(null, { status: 401 })));
+    renderWithClient(<RidersPage />);
+    await screen.findByRole('table', { name: 'Riders' });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(screen.queryByRole('button', { name: 'Add rider' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
   });
 
   it('a role without Riders.Manage reads the list but gets no Add or Edit', async () => {

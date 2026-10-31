@@ -37,6 +37,7 @@ import {
   updateRider,
   type ConfirmTransferInput,
   type DeliveryFailureReason,
+  RIDER_MANAGE_ROLES,
   type DispatchTarget,
   type RecordDeliveryInput,
   type RiderInput,
@@ -45,6 +46,7 @@ import {
   type StaffOrderFilters,
 } from '@/lib/api/staff-orders';
 import { useBranchScope } from './useBranchScope';
+import { useStaffSession } from './useSession';
 
 /**
  * `lib/hooks/useStaffOrders.ts` — HO-ORD-002 §8.3, UI-5. The staff order screens' reads and writes.
@@ -87,6 +89,16 @@ export function useStaffOrderStatusCounts(filters: StaffOrderCountFilters) {
     retry: noRetryOnRefusal,
     ...POLL,
   });
+}
+
+/**
+ * Presentation only: does the signed-in role hold `Riders.Manage`? One rule for every screen that offers rider management
+ * (registry buttons, the dispatch dialog's link, the pick list's link). Unknown roles (session not loaded) are NOT allowed;
+ * the server's 403 still has the last word.
+ */
+export function useCanManageRiders(): boolean {
+  const session = useStaffSession();
+  return (session.data?.roleIds ?? []).some((role) => RIDER_MANAGE_ROLES.includes(role));
 }
 
 /** HO-P5 BG-5: the branch's riders. `activeOnly` is what a dispatch chooses from; the registry page lists all. */

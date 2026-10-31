@@ -370,6 +370,8 @@ function filteredOrders(url: URL, withStatus: boolean): DbOrder[] {
 /** Orders.Fulfil: Shared/Common/Constants/ActionRoles.Orders.cs:14. Riders.Manage: :26. */
 const FULFIL_ROLES = ['Reception', 'ShopManager', 'Administrator'];
 const RIDER_MANAGE_ROLES = ['ShopManager', 'Administrator'];
+/** Orders.Cancel: ActionRoles.Orders.cs:20. */
+const CANCEL_ROLES = ['Reception', 'ShopManager', 'Administrator'];
 
 /**
  * True when the request carries a staff session whose roles hold none of `allowed` -- the server's `403` from
@@ -396,7 +398,7 @@ const DISALLOWED_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
  * `MobileNumber.Create` (Domain/ValueObjects/MobileNumber.cs:21-48): strips spaces, `-` and parentheses, accepts
  * `01XXXXXXXXX`, `+8801XXXXXXXXX` or `8801XXXXXXXXX` (optionally after `00`), and stores `+8801XXXXXXXXX`.
  */
-function normaliseMobile(raw: string): string | null {
+export function normaliseMobile(raw: string): string | null {
   const cleaned = raw.replace(/[\s\-()]/g, '');
   if (cleaned === '') return null;
   const hasPlus = cleaned.startsWith('+');
@@ -429,13 +431,19 @@ interface RiderBody {
  */
 function refuseRiderBody(body: RiderBody): Response | null {
   const name = body.name ?? '';
-  if (name === '') return violation('Name', 'NotEmptyValidator', "Enter the rider's name.");
+  // FluentValidation's NotEmpty also rejects a whitespace-only name.
+  if (name.trim() === '') return violation('Name', 'NotEmptyValidator', "Enter the rider's name.");
   if (name.length > RIDER_NAME_MAX) return violation('Name', 'MaximumLengthValidator', `Use up to ${RIDER_NAME_MAX} characters for the name.`);
   if (DISALLOWED_CONTROL.test(name)) return violation('Name', 'PredicateValidator', 'must not contain control characters.');
   const mobile = body.mobileNumber ?? '';
   if (mobile.length > RIDER_MOBILE_VALIDATOR_MAX) return violation('MobileNumber', 'MaximumLengthValidator', 'Use up to 30 characters for the mobile number.');
   if (DISALLOWED_CONTROL.test(mobile)) return violation('MobileNumber', 'PredicateValidator', 'must not contain control characters.');
-  if (name.trim() === '') return violation('Name', 'InvalidRider', `A rider name is required (up to ${RIDER_NAME_MAX} characters).`);
+  return null;
+}
+
+/** The aggregate's `MobileNumber.Create` (RiderAggregate.cs:53): runs AFTER the 404 and the duplicate-name check. */
+function refuseRiderMobile(body: RiderBody): Response | null {
+  const mobile = body.mobileNumber ?? '';
   if (mobile.trim() !== '' && normaliseMobile(mobile) === null) {
     return violation('MobileNumber', 'InvalidMobileNumber', 'This does not look like a valid mobile number.');
   }
@@ -704,6 +712,7 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   http.post(`${API}/orders/:orderId/cancel`, async ({ request, params }) => {
+    if (lacksRole(request, CANCEL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
     const { note } = (await request.json()) as { note?: string };
@@ -723,7 +732,8 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   // ---- fulfilment -------------------------------------------------------------------------------------
-  http.post(`${API}/orders/:orderId/packing`, ({ params }) => {
+  http.post(`${API}/orders/:orderId/packing`, ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
     if (order.status !== 'Confirmed') {
@@ -799,6 +809,10 @@ export const staffOrderingHandlers: HttpHandler[] = [
     }
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
+    // The handler tests `is null` (OrderFulfilmentCommandHandlers.cs:108-109), so an empty-Guid courier beside a real rider passes the validator and is refused here.
+    if (body.courierId != null && body.riderId != null) {
+      return violation('CourierId', 'DispatchTargetInvalid', 'Choose either a courier or a rider to dispatch with, not both and not neither.');
+    }
     const courier = hasCourier ? db.couriers.find((c) => c.id === body.courierId && c.isActive) : undefined;
     const rider = hasRider ? db.riders.find((r) => r.id === body.riderId) : undefined;
     if (hasCourier && !courier) return violation('CourierId', 'CourierNotFound', 'That courier is not available.', 404);
@@ -874,6 +888,7 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   http.put(`${API}/orders/:orderId/tracking`, async ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
     const { trackingNumber } = (await request.json()) as { trackingNumber?: string };
@@ -1086,6 +1101,8 @@ export const staffOrderingHandlers: HttpHandler[] = [
     if (db.riders.some((r) => r.branchId === ids.mainBranchId && r.name === name)) {
       return violation('Name', 'RiderNameAlreadyExists', RIDER_NAME_TAKEN);
     }
+    const badMobile = refuseRiderMobile(body);
+    if (badMobile) return badMobile;
     const rider: DbRider = {
       id: uuid(),
       branchId: ids.mainBranchId,
@@ -1110,6 +1127,8 @@ export const staffOrderingHandlers: HttpHandler[] = [
     if (db.riders.some((r) => r.branchId === ids.mainBranchId && r.name === name && r.id !== rider.id)) {
       return violation('Name', 'RiderNameAlreadyExists', RIDER_NAME_TAKEN);
     }
+    const badMobile = refuseRiderMobile(body);
+    if (badMobile) return badMobile;
     rider.name = name;
     rider.mobileNumber = body.mobileNumber?.trim() ? normaliseMobile(body.mobileNumber) : null;
     rider.isActive = body.isActive ?? true;

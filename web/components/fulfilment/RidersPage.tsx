@@ -9,9 +9,8 @@ import { type Column, ResponsiveTable } from '@/components/billing/ResponsiveTab
 import { StaffOrdersTabs } from '@/components/orders/StaffOrdersTabs';
 import { Button } from '@/components/ui/button';
 import { ApiForbiddenError } from '@/lib/api/client';
-import { RIDER_MANAGE_ROLES, type Rider } from '@/lib/api/staff-orders';
-import { useStaffSession } from '@/lib/hooks/useSession';
-import { useRiders } from '@/lib/hooks/useStaffOrders';
+import type { Rider } from '@/lib/api/staff-orders';
+import { useCanManageRiders, useRiders } from '@/lib/hooks/useStaffOrders';
 import { RiderDialog } from './RiderDialog';
 
 /**
@@ -19,16 +18,14 @@ import { RiderDialog } from './RiderDialog';
  * name, mobile number and whether each is active, with "Add rider" and "Edit". The registry is deliberately
  * small and has no nav item; it is linked from the dispatch dialog and the pick list. Reading is
  * `Orders.Fulfil` and writing is `Riders.Manage`: the buttons follow the signed-in roles as a hint only (a
- * session whose roles are unknown still shows them), and the server's `403` has the last word — a refused
+ * session whose roles are not known yet shows none), and the server's `403` has the last word — a refused
  * list is the permission-denied state, a refused save is the permission message in the dialog.
  */
 export function RidersPage() {
   const riders = useRiders(false);
-  const session = useStaffSession();
+  const canManage = useCanManageRiders();
   const [editing, setEditing] = useState<Rider | 'new' | null>(null);
 
-  const roles = session.data?.roleIds ?? [];
-  const canManage = roles.length === 0 || roles.some((role) => RIDER_MANAGE_ROLES.includes(role));
 
   if (riders.error instanceof ApiForbiddenError) return <AccessRefusedState error={riders.error} />;
 

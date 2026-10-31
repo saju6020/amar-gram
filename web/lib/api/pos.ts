@@ -98,7 +98,7 @@ export interface CounterQuoteInput {
   lines: PosLineInput[];
   discountCode?: string;
   /** A typed amount (`"1000"` or `"1000.00"`), sent as a JSON number through `wireMoney`. Above zero, at most two decimals. */
-  tenderedCash?: string;
+  tenderedCash?: string; // Api/Contracts/Order/PosRequests.cs:24
 }
 
 export function getCounterQuote(input: CounterQuoteInput): Promise<CounterQuote> {

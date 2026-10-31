@@ -57,11 +57,14 @@ function Allocations({ order, lineId }: { order: StaffOrderDetail; lineId: strin
 function PickList({
   order,
   isPicked,
+  isWriting,
   onToggle,
   tickable,
 }: {
   order: StaffOrderDetail;
   isPicked: (line: StaffOrderLine) => boolean;
+  /** True while this line's write is in flight: the box ignores clicks (kept focusable) so two writes never race. */
+  isWriting: (line: StaffOrderLine) => boolean;
   onToggle: (lineId: string, picked: boolean) => void;
   tickable: boolean;
 }) {
@@ -88,7 +91,8 @@ function PickList({
                     type="checkbox"
                     className="h-5 w-5 flex-none accent-leaf"
                     checked={isPicked(line)}
-                    onChange={() => onToggle(line.lineId, !isPicked(line))}
+                    aria-disabled={isWriting(line) || undefined}
+                    onChange={() => !isWriting(line) && onToggle(line.lineId, !isPicked(line))}
                   />
                   <span className="min-w-0 flex-1 leading-snug [overflow-wrap:anywhere]">{text}</span>
                 </label>
@@ -184,7 +188,7 @@ function SidePanelBody({ order }: { order: StaffOrderDetail }) {
         {order.packedOn && <span>Packed {formatOrderWhen(order.packedOn, order.branchTimeZoneId)}</span>}
       </div>
 
-      <PickList order={order} tickable={tickable} isPicked={isPicked} onToggle={(lineId, picked) => void togglePicked(lineId, picked)} />
+      <PickList order={order} tickable={tickable} isPicked={isPicked} isWriting={(line) => line.lineId in justTicked} onToggle={(lineId, picked) => void togglePicked(lineId, picked)} />
 
       <div className="flex items-baseline justify-between gap-3 border-t border-surface-sunken pt-3">
         <span className="text-ink">Total</span>

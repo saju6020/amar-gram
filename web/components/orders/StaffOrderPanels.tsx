@@ -149,7 +149,7 @@ export function ShipmentPanel({ order, onEditTracking }: { order: StaffOrderDeta
   const s = order.shipment;
   if (!s) return null;
   // HO-P5 BG-5: an order that left with an in-house rider has a rider and no tracking number (the server refuses one).
-  const byRider = s.riderId !== null || s.riderName !== null;
+  const byRider = s.riderId != null || s.riderName != null;
   return (
     <Panel
       title="Shipment"
