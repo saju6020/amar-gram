@@ -34,8 +34,9 @@ import { basketLineFromSku, type BasketLine, type PosCustomer, type PosTender } 
  * payment and opens a review whose **Complete sale** is focused. One idempotency key per attempt, kept
  * while the payload is unchanged, so a double Enter or a retry after a lost response records one sale.
  *
- * The buyer's name and mobile are still required (the API has no anonymous sale, BG-8), so the ticket's
- * "Walk-in · add customer" chip opens the existing customer fields. Nothing here adds up money.
+ * A walk-in sale needs no customer (HO-P5 BG-8): the ticket's chip reads "Walk-in (no customer)" and opens the
+ * customer fields; name and mobile go together or not at all, and a sale with neither sends neither. The
+ * cash typed is put to the quote for the server's change due (BG-7). Nothing here adds up money.
  */
 const EMPTY_CUSTOMER: PosCustomer = { name: '', mobile: '', customerId: null };
 
@@ -55,6 +56,8 @@ export function PosScreen() {
   const [customerOpen, setCustomerOpen] = useState(false);
   const [tenders, setTenders] = useState<PosTender[]>([]);
   const [discountCode, setDiscountCode] = useState('');
+  // The cash typed in the tender panel, put to the quote for the server's change due (HO-P5 BG-7, ADR-FE-191).
+  const [cashTyped, setCashTyped] = useState<string | undefined>();
   const [sale, setSale] = useState<CounterSale | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
@@ -73,14 +76,29 @@ export function PosScreen() {
   }, [preset.data, customer]);
 
   const quoteLines = lines.map((l) => ({ skuId: l.skuId, quantity: l.quantity }));
-  const quote = useCounterQuote({ customerId: customer.customerId ?? undefined, lines: quoteLines, discountCode: discountCode.trim() || undefined });
+  const quote = useCounterQuote({
+    customerId: customer.customerId ?? undefined,
+    lines: quoteLines,
+    discountCode: discountCode.trim() || undefined,
+    tenderedCash: cashTyped,
+  });
   const currency = quote.data?.currencyCode ?? 'BDT';
 
   // Settled = the quote on screen is for the basket on screen (not the debounce window, not a refetch in flight,
   // not the previous basket's quote kept as placeholder data).
   const settled = !quote.isSettling && !quote.isFetching && !quote.isPlaceholderData;
-  const customerMissing = customer.name.trim() === '' || customer.mobile.trim() === '';
-  const ready = lines.length > 0 && tenders.length > 0 && !!quote.data?.canSell && settled && !customerMissing;
+  // The change preview is the quote's answer for the cash typed: shown only while the quote on screen is for it.
+  const previewSettled = !quote.isSettling && !quote.isPlaceholderData && cashTyped !== undefined;
+  const preview =
+    previewSettled && quote.data?.changeDue
+      ? ({ kind: 'change', money: quote.data.changeDue } as const)
+      : previewSettled && quote.data?.cashShort
+        ? ({ kind: 'short', money: quote.data.cashShort } as const)
+        : null;
+  // HO-P5 BG-8: the buyer's name and mobile are given together or not at all; neither is an anonymous walk-in sale.
+  const customerPartial = (customer.name.trim() === '') !== (customer.mobile.trim() === '');
+  const customerGiven = customer.name.trim() !== '' && customer.mobile.trim() !== '';
+  const ready = lines.length > 0 && tenders.length > 0 && !!quote.data?.canSell && settled && !customerPartial;
   // Enter in the amount field adds the payment and asks for the review. The payment lands in state a render
   // later, so the request waits here until the quote has settled, then opens the review only if the sale is ready.
   const [reviewRequested, setReviewRequested] = useState(false);
@@ -88,9 +106,9 @@ export function PosScreen() {
     if (!reviewRequested || !settled) return;
     setReviewRequested(false);
     if (ready) setReviewOpen(true);
-    // The review needs the buyer's name and mobile: show the fields so the missing part is in front of the cashier.
-    else if (customerMissing) setCustomerOpen(true);
-  }, [reviewRequested, settled, ready, customerMissing]);
+    // Only one of the buyer's name and mobile is filled in: show the fields so the missing part is in front of the cashier.
+    else if (customerPartial) setCustomerOpen(true);
+  }, [reviewRequested, settled, ready, customerPartial]);
 
   function addSku(sku: PosSku): string {
     const existing = linesRef.current.find((l) => l.skuId === sku.skuId);
@@ -103,8 +121,9 @@ export function PosScreen() {
 
   function payload() {
     return {
-      customerName: customer.name.trim(),
-      customerMobile: customer.mobile.trim(),
+      // Neither name nor mobile for a walk-in sale: the request then carries neither (BG-8).
+      customerName: customerGiven ? customer.name.trim() : undefined,
+      customerMobile: customerGiven ? customer.mobile.trim() : undefined,
       lines: quoteLines,
       discountCode: discountCode.trim() || undefined,
       tenders: tenders.map((t) => ({ method: t.method, amount: t.amount, reference: t.reference || undefined })),
@@ -168,7 +187,7 @@ export function PosScreen() {
   const customerLabel =
     customer.name.trim() !== '' || customer.mobile.trim() !== ''
       ? [customer.name.trim(), customer.mobile.trim()].filter(Boolean).join(' · ')
-      : 'Walk-in · add customer';
+      : 'Walk-in (no customer)';
 
   return (
     <div
@@ -258,6 +277,8 @@ export function PosScreen() {
               onAdd={(t) => setTenders((cur) => [...cur, { ...t, id: crypto.randomUUID() }])}
               onRemove={(id) => setTenders((cur) => cur.filter((t) => t.id !== id))}
               onReview={() => setReviewRequested(true)}
+              onCashAmountChange={setCashTyped}
+              preview={preview}
             />
             {rootError && <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink">{rootError}</p>}
             <Button className="h-14 w-full rounded-xl text-[17px]" disabled={!ready || complete.isPending} onClick={() => setReviewOpen(true)}>
@@ -265,7 +286,7 @@ export function PosScreen() {
             </Button>
             {!ready && lines.length > 0 && (
               <p className="text-sm text-ink-muted">
-                {customerMissing ? 'Enter the customer’s name and mobile. ' : ''}
+                {customerPartial ? 'Enter both the name and the mobile number, or neither. ' : ''}
                 {tenders.length === 0 ? 'Add a payment.' : ''}
               </p>
             )}

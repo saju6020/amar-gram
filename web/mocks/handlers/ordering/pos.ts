@@ -24,7 +24,7 @@ import { orderLineView, totalsView } from './customer';
 /**
  * `mocks/handlers/ordering/pos.ts` — HO-ORD-002 §12.1. The point of sale as `StaffPosController`
  * really answers it: the flat `PosSku` (with `sellable` and `fefoBatches`), a quote WITHOUT any tender
- * evaluation, a sale that needs `customerName` + `customerMobile` (ADR-216; a refused sale still stores
+ * evaluation (HO-P5: now a change preview when `tenderedCash` is sent), a sale whose `customerName` + `customerMobile` come together (ADR-216; both left out is an anonymous sale; a refused sale still stores
  * the walk-in), `TendersDoNotCoverTotal` / `TerminalReferenceRequired` from the tender rules, and the
  * `changeDue` only in the sale response.
  */

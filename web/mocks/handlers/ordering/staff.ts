@@ -383,7 +383,6 @@ function lacksRole(request: Request, allowed: readonly string[]): boolean {
 /** Shared/Common/Constants/OrderRules.cs:38 (`MaxNameLength`), `MobileNumber.MaxLength`/`Create` and `NoControlCharacters`. */
 const RIDER_NAME_MAX = 100;
 const RIDER_MOBILE_VALIDATOR_MAX = 30;
-// eslint-disable-next-line no-control-regex
 const DISALLOWED_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
 
 /**
