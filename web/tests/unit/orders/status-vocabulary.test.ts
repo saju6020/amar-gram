@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { orderStatusLabel as portalOrderStatusLabel } from '@/components/portal/dashboard/labels';
 import { orderActionLabel, orderChannelLabel, orderStatusLabel } from '@/lib/format/orders';
 import { db, resetOrderingMockData } from '@/mocks/handlers/ordering/store';
 import { orderingIds } from '@/mocks/handlers/ordering/fixtures';
@@ -9,6 +10,10 @@ describe('HO-P5 U2 - labels', () => {
     expect(orderStatusLabel('Packed')).toBe('Packed');
     expect(orderActionLabel('MarkPacked')).toBe('Mark packed');
     expect(orderChannelLabel('Subscription')).toBe('Subscription');
+  });
+
+  it('the portal order tile labels Packed instead of "Status unavailable"', () => {
+    expect(portalOrderStatusLabel('Packed')).toEqual({ label: 'Packed', tone: 'success' });
   });
 
   it('every pre-existing label is unchanged', () => {
@@ -84,6 +89,8 @@ describe('HO-P5 U4 - the shared mock seeds', () => {
     for (const p of products) if (p.district) byDistrict.set(p.district, (byDistrict.get(p.district) ?? 0) + 1);
     expect([...byDistrict.values()].some((n) => n >= 2)).toBe(true);
     expect(products.some((p) => !p.district)).toBe(true);
+    const foods = products.filter((p) => p.isExpiryTracked);
+    expect(foods.filter((p) => p.district).length).toBeGreaterThan(foods.length / 2);
     const skus = products.flatMap((p) => p.skus);
     expect(skus.filter((s) => s.compareAtCents)).toHaveLength(2);
     const dated = products.filter((p) => p.organicCertificateExpiresOn);

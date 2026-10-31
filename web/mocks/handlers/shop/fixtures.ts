@@ -261,20 +261,34 @@ const PRODUCERS: Array<{ brand: string; country: string }> = [
   { brand: 'Golden Harvest', country: 'IN' },
   { brand: 'Black Forest Mill', country: 'DE' },
 ];
-const GENERATED_LINES: Array<{ category: string; subcategory: string; name: string; tag: string }> =
-  [
-    { category: 'RiceAndGrains', subcategory: 'AromaticRice', name: 'Kalijira Rice', tag: 'rice' },
-    { category: 'RiceAndGrains', subcategory: 'EverydayRice', name: 'Miniket Rice', tag: 'rice' },
-    { category: 'HoneyAndGur', subcategory: 'SugarcaneGur', name: 'Sugarcane Gur', tag: 'gur' },
-    { category: 'OilsAndGhee', subcategory: 'Ghee', name: 'Desi Ghee', tag: 'ghee' },
-    { category: 'Spices', subcategory: 'GroundSpices', name: 'Turmeric Powder', tag: 'spice' },
-    { category: 'Pulses', subcategory: 'Lentils', name: 'Moong Dal', tag: 'dal' },
-    { category: 'TeaAndDrinks', subcategory: 'Tea', name: 'Sylhet Green Tea', tag: 'tea' },
-    { category: 'FreshProduce', subcategory: 'Fruit', name: 'Himsagar Mango', tag: 'fruit' },
-    { category: 'DatesAndDryFruit', subcategory: 'Dates', name: 'Khejur Dates', tag: 'dates' },
-    { category: 'DairyAndEggs', subcategory: 'Eggs', name: 'Free-range Eggs', tag: 'eggs' },
-    { category: 'SnacksAndSweets', subcategory: 'Pickles', name: 'Olive Pickle', tag: 'pickle' },
-  ];
+const GENERATED_LINES: Array<{
+  category: string;
+  subcategory: string;
+  name: string;
+  tag: string;
+  district: string;
+}> = [
+  { category: 'RiceAndGrains', subcategory: 'AromaticRice', name: 'Kalijira Rice', tag: 'rice', district: 'Netrokona' },
+  { category: 'RiceAndGrains', subcategory: 'EverydayRice', name: 'Miniket Rice', tag: 'rice', district: 'Naogaon' },
+  { category: 'HoneyAndGur', subcategory: 'SugarcaneGur', name: 'Sugarcane Gur', tag: 'gur', district: 'Natore' },
+  { category: 'OilsAndGhee', subcategory: 'Ghee', name: 'Desi Ghee', tag: 'ghee', district: 'Pabna' },
+  { category: 'Spices', subcategory: 'GroundSpices', name: 'Turmeric Powder', tag: 'spice', district: 'Bandarban' },
+  { category: 'Pulses', subcategory: 'Lentils', name: 'Moong Dal', tag: 'dal', district: 'Patuakhali' },
+  { category: 'TeaAndDrinks', subcategory: 'Tea', name: 'Sylhet Green Tea', tag: 'tea', district: 'Sylhet' },
+  { category: 'FreshProduce', subcategory: 'Fruit', name: 'Himsagar Mango', tag: 'fruit', district: 'Chapainawabganj' },
+  { category: 'DatesAndDryFruit', subcategory: 'Dates', name: 'Khejur Dates', tag: 'dates', district: 'Jashore' },
+  { category: 'DairyAndEggs', subcategory: 'Eggs', name: 'Free-range Eggs', tag: 'eggs', district: 'Gazipur' },
+  { category: 'SnacksAndSweets', subcategory: 'Pickles', name: 'Olive Pickle', tag: 'pickle', district: 'Bogura' },
+];
+/** HO-P5 Amended (g): districts for the Bangladeshi food in `seedGenerated`'s `others` list. */
+const OTHER_FOOD_DISTRICTS: Record<string, string> = {
+  'Tulsi Herbal Tea': 'Panchagarh',
+  'Bel Sharbat Syrup': 'Chapainawabganj',
+  'Nolen Gur Sandesh': 'Jashore',
+  'Puffed Rice Muri': 'Jhalokathi',
+  'Seasonal Vegetable Box': 'Jashore',
+  'Mishti Doi': 'Bogura',
+};
 const GRADES = ['Classic', 'Premium', 'Family'];
 const CERTIFICATION_CYCLE: string[][] = [
   ['CertifiedOrganic'],
@@ -303,6 +317,7 @@ function seedGenerated(): MockProduct[] {
           category: line.category,
           subcategory: line.subcategory,
           country: b.country,
+          district: b.country === 'BD' ? line.district : null,
           tags: [line.tag, si === 0 ? 'organic' : 'everyday'],
           ingredientList: `${line.name} (100%)`,
           ratingAverage: 3 + ((bi + si) % 3) * 0.7,
@@ -367,6 +382,7 @@ function seedGenerated(): MockProduct[] {
         category,
         subcategory,
         country,
+        district: OTHER_FOOD_DISTRICTS[name] ?? null,
         tags: [category.toLowerCase()],
         ratingAverage: 4.2,
         ratingCount: 9,
