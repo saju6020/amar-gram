@@ -8,6 +8,7 @@ import { server } from '@/mocks/server';
 import { resetOrderingMockData } from '@/mocks/handlers/ordering';
 import { ShopTopStrip } from '@/components/shop/ShopTopStrip';
 import ShopLayout from '@/app/(shop)/layout';
+import ProductPage from '@/app/(shop)/shop/products/[slug]/page';
 import { ApiError } from '@/lib/api/client';
 import { getDeliveryPromiseServer, type StorefrontBanner } from '@/lib/api/shop-catalogue';
 
@@ -147,6 +148,32 @@ describe('U10/U11: the shop layout', () => {
     const top = html.match(/data-testid="shop-top-strip"[\s\S]*?<\/div>/)?.[0] ?? '';
     expect(top).toContain('Mango season');
     expect(announcements(html)).toContain('Eid opening hours');
+  });
+});
+
+describe('U12: the product page passes the lead time to the delivery card', () => {
+  const renderPage = async () =>
+    renderToStaticMarkup(
+      createElement(
+        QueryClientProvider,
+        { client: new QueryClient() },
+        await ProductPage({
+          params: Promise.resolve({ slug: 'organic-rolled-oats' }),
+          searchParams: Promise.resolve({}),
+        }),
+      ),
+    );
+
+  it('states the server lead time', async () => {
+    expect(await renderPage()).toContain('Standard delivery usually takes 1 day.');
+  });
+
+  it('a failed promise read shows no lead time and no error', async () => {
+    servePromise(null, 500);
+    const html = await renderPage();
+    expect(html).toContain('Pick a delivery slot at checkout. The fee is shown before you place the order.');
+    expect(html).not.toContain('usually takes');
+    expect(html).not.toMatch(/role="alert"/);
   });
 });
 

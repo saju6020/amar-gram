@@ -14,13 +14,8 @@ Nothing outside the block was edited. No `src/`, config, dependency or subscript
 
 ## 2. §20 requests (what S1 could not do, with the exact change)
 
-**20.1-A. The product page lead time (11.2.6, U12 wiring, E3's "delivery card states the lead time") is not wired end to end.** `DeliveryPromiseCard` is rendered by `components/product/BuyBox.tsx:75` (`<DeliveryPromiseCard />`), which `app/(shop)/_components/ProductPurchase.tsx` renders. Neither file is in any §13 block, so S1 cannot pass `leadTimeDays` down. Built: `DeliveryPromiseCard({ className, leadTimeDays? })` and its text (U12 passes). Not built: the page does not read the promise, because there is nowhere to pass it. Needed, for whichever owner the integrator picks:
-1. `ProductPurchase.tsx`: add prop `leadTimeDays?: number | null` and pass it to `<BuyBox leadTimeDays={leadTimeDays} … />`.
-2. `BuyBox.tsx`: add prop `leadTimeDays?: number | null`; change line 75 to `<DeliveryPromiseCard leadTimeDays={leadTimeDays} />`.
-3. `app/(shop)/shop/products/[slug]/page.tsx` (S1): `settle(getDeliveryPromiseServer())` in the existing `Promise.all`, and `leadTimeDays={promise.ok ? promise.value.leadTimeDays : null}` on `<ProductPurchase>`. `getDeliveryPromiseServer` already exists. A failed read must render no lead time and no error.
-S1 did not use a React context or any other route round the missing props.
-
-**20.1-B. `tests/components/checkout/checkout.test.tsx:562` now fails (run-only file, not in S1's block).** It asserts `expect(screen.queryByText(/note for the rider/i)).not.toBeInTheDocument();` for the default Delivery checkout (test "U25: three numbered regions…"). That is the HO-P3 G4 absence this pass supersedes (§15 header). Needed change: replace that line with `expect(screen.getByLabelText('Note for the rider (optional)')).toBeInTheDocument();` and the comment "No stepper, no Continue buttons." Everything else in the file passes. S1 did not edit the file. Until it is routed, this one test is red, and the TEST gate's full Vitest run will show it.
+**20.1-A. Done after approval (Amended (o)).** `ProductPurchase.tsx` and `BuyBox.tsx` now pass an optional `leadTimeDays` to `DeliveryPromiseCard`; `[slug]/page.tsx` reads `getDeliveryPromiseServer()` in its `Promise.all` and passes `promise.ok ? promise.value.leadTimeDays : null`. A failed read shows today's text and no error (`shell-p5.test.tsx` U12, both cases; E3 asserts "Standard delivery usually takes 1 day.").
+**20.1-B. Done after approval (Amended (o)).** `checkout.test.tsx` U25 now asserts `getByLabelText('Note for the rider (optional)')` and its comment reads "No stepper, no Continue buttons."
 
 ## 3. Superseded assertions (old to new)
 
@@ -30,13 +25,13 @@ S1 did not use a React context or any other route round the missing props.
 | HO-P3 e2e `shop-catalogue.spec.ts` "S2: the heading band carries the h1 and the count; there is no District filter" (`getByText('District')` count 0) | Same test, renamed "…; the District filter is offered": same band and count assertions, and the District group toggle is visible (phone sheet and desktop). Plus two new district tests. |
 | HO-P3 U13's "no free-delivery amount" (strip only) | `shell-p5.test.tsx` U10 asserts the strip text. The HO-P3 U1 cases (banner as plain text, link, nothing without a banner, unsafe link) are unchanged and still pass. |
 | HO-P3 `catalogue-p3.test.tsx` "has no District filter (G1)" | Not edited (file not in S1's block). It still passes because its fixture has no `districts`, which is the "no group when empty" case. The positive case is in `catalogue-p5.test.tsx`. |
-| `checkout.test.tsx:562` "no rider note" | Needs the change in 20.1-B. |
+| `checkout.test.tsx:562` "no rider note" | `getByLabelText('Note for the rider (optional)')` is present for Delivery. |
 
 ## 4. OQ defaults built to
 
 - OQ-1 / ADR-FE-187: the promise takes the strip when `freeOver` is non-null; then every `Shop` banner goes to `BannerStrip`. Otherwise the HO-P3 behaviour. A failed promise read counts as "no promise" (U11).
 - OQ-2: no place name in the strip. Text is exactly "Free delivery over ৳5,000.00 · Cash on delivery across Bangladesh", the amount through `formatMoney`.
-- OQ-3: lead time worded "Standard delivery usually takes {n} day(s)…" in `DeliveryPromiseCard`. See the judgement call in 6.1 and the missing wiring in 20.1-A. The file's header comment records the owner rule it now overrides for these two figures.
+- OQ-3: lead time worded "Standard delivery usually takes {n} day(s)…" in `DeliveryPromiseCard`, wired from the page. The file's header comment records the owner rule it overrides for these two figures.
 - OQ-4 (G5b): no basket "Add ৳X more" hint.
 - OQ-5: card eyebrow is the district when present, else producer and country. Product page: "Grown in {district}" above the existing producer · country line.
 - OQ-6: "Village on every pack" not built; `PromiseStrip` unchanged.
@@ -97,7 +92,7 @@ Machine note: `Get-CimInstance Win32_OperatingSystem` is refused by this sandbox
 | `tests/components/shop/shell-p5.test.tsx` (new, node environment) | 10 passed |
 | `tests/components/checkout/rider-note.test.tsx` (new) | 12 passed |
 | `tests/components/catalogue/catalogue-params.test.ts`, `product-card.test.tsx` (appended) | passed |
-| Run together with all of `tests/components/shop`, `tests/components/orders`, `tests/components/product/product-p3.test.tsx`, `tests/components/checkout/checkout.test.tsx` | 25 files passed, 1 failed: `checkout.test.tsx` "U25" at line 562, the 20.1-B assertion. 461 of 462 tests passed. |
+| Run together with all of `tests/components/shop`, `tests/components/orders`, `product-p3.test.tsx`, `checkout.test.tsx` | passed (after the 20.1-B change). After the merge of Amended (o)-(q): `shell-p5`, all of `tests/components/checkout` and `tests/components/product`: 10 files, 109 tests passed. |
 | `tests/components/shop/no-hex-literals.test.ts` (U46) and `tests/guards` | 3 files, 218 tests passed |
 
 Earlier, before the `ProductDetailsTabs` fix in 6.1(6), `product-p3.test.tsx` "a tab with no API data is not rendered" failed; it passes now with an unchanged assertion.
@@ -107,16 +102,15 @@ Earlier, before the `ProductDetailsTabs` fix in 6.1(6), `product-p3.test.tsx` "a
 | Spec (§16) | Result |
 |---|---|
 | E2 `shop-catalogue.spec.ts` | 26 passed (13 per project), includes the 3 new district / Organic tests per project |
-| E3 `shop-product.spec.ts` | 18 passed, includes 2 new per project. The lead-time assertion is **not** present (20.1-A) |
+| E3 `shop-product.spec.ts` | 20 passed (10 per project), includes the new lead-time assertion and the 2 district tests per project |
 | E4 `shop-shell.spec.ts`, `shop-home.spec.ts` | with E3 in one run: 36 passed, 4 skipped (the specs' own phone-only or desktop-only skips). New: strip text on `/shop` and `/shop/products`, axe clean (serious / critical) on `/shop/products`; strip above the header on the home page. "Banners still render below" is covered by `shell-p5.test.tsx` only: no `Shop` banner is seeded, and a banner created in the browser is not visible to the server-rendered layout. |
 | E5 `ordering-customer.spec.ts` | 16 passed (8 per project), includes the new rider-note test: note typed, field hidden on Pickup and back, delivery COD placed, note shown on the order as text, URL clean |
 
 No known baseline failure appeared in these five specs. No load timeout or crash occurred, so none was rerun.
 
-## 8. Left undone
+## 8. Not in this slice
 
-- The product page lead time wiring (20.1-A).
-- `checkout.test.tsx:562` (20.1-B).
+- Both §20 requests are closed.
 - The basket "Add ৳X more" hint (G5b), the packing-slip note (G4b), the place name in the strip (G5c) and the village (G1 residual): residual gaps by design.
 - Screenshots at 360 and 1280 for ACCEPTANCE: this agent cannot see the rendered result. Please check by eye: the leaf strip text wrapping at 360 px; the "Organic" pill beside "In basket" (same colours, both `bg-leaf`); the District group closed by default in the filter card; the rider note field spacing under the payment options.
 - E6 and E17 are not run here (E17 per Amended (l)); the TEST gate and integration run them.

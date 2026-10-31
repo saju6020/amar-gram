@@ -88,6 +88,13 @@ test.describe('District of origin (HO-P5 S1, E3)', () => {
     );
   });
 
+  test('the delivery card states the server lead time', async ({ page }) => {
+    await page.goto(`/shop/products/${shopFixtureIds.multiVariantSlug}`);
+    await expect(
+      page.getByRole('region', { name: 'Delivery and payment' }),
+    ).toContainText('Standard delivery usually takes 1 day.');
+  });
+
   test('a product from a producer abroad has no "Grown in" line', async ({ page }) => {
     await page.goto(`/shop/products/${shopFixtureIds.thaiRiceSlug}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
