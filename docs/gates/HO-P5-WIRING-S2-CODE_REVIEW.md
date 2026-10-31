@@ -1,60 +1,51 @@
 GATE: CODE_REVIEW
 HANDOVER: HO-P5-WIRING (slice S2, sales)
-COMMITS: run 2 reviewed `git diff db084bb HEAD` (HEAD 3ba6ec8, branch feat/p5-s2-sales). Run 1 was at db084bb.
-DATE: 2026-10-31
+COMMITS: run 3 reviewed `git diff 72004e3 HEAD` (HEAD fa70fcc, branch feat/p5-s2-sales). Run 1 at db084bb, run 2 at 3ba6ec8.
+DATE: 2026-11-01
 STATUS: PASS
 
-RUN 1 (db084bb): PASS with 4 MEDIUM (weak pos-p5 tests, untested stale-quote race, tick race on the same line, thin tick tests) and a list of LOW.
-RUN 2: all four MEDIUM are closed; most LOW are closed; no BLOCKER, HIGH or MEDIUM remains. New items are LOW only. The still-open LOW from run 1 are kept below.
+HISTORY
+- Run 1 (db084bb): PASS with 4 MEDIUM (weak pos-p5 tests, untested stale-quote race, tick race on one line, thin tick tests) and a list of LOW.
+- Run 2 (3ba6ec8): PASS. All four MEDIUM closed; most LOW closed. New LOW only: (1) DispatchDialog trusted the stale list when the re-read failed; (2) the preset ref was never reset; (3) the order-switch test passed by construction; (4) no visual cue for `aria-disabled`; (5) a describe title typo. Kept LOW: mock named-customer `customerId: null`, fixed-sleep negative assertions, Confirmed+Counter `allowedActionsOf`, counts/list on separate timers.
+- Run 3 (fa70fcc): no BLOCKER, HIGH or MEDIUM. Run 2 LOW 1 to 5 are closed. Only LOW below.
 
-RUN 1 ITEMS - STATE
+RUN 2 ITEMS - STATE
+- [CLOSED] DispatchDialog.tsx:92-94: the result of `refetch()` is checked with `!reread.isError`; a failed re-read keeps the rider/courier message. The new test (first read ok, later reads 500, 404 on dispatch) fails on the old code (stale list still holds Rafiq, so it would say "could not be found"). Courier path is the same line but untested (LOW 1).
+- [CLOSED] preset reset: replaced by the per-link counter (below).
+- [CLOSED] order-switch test: now one shared QueryClient; asserts the first order's cache entry is back to unpicked and the shown order kept its ticks. By reading, it fails without the `onError` rollback: the first order has no observer after the switch, so the `onSettled` invalidation does not refetch it and the optimistic `true` would stay. The entry is found by `queryKey[3]`, which matches `['staff','order',branchId,orderId]`. Not run with the rollback removed (read-only).
+- [CLOSED] visual cue: label dims, `cursor-progress`, "Saving..." text while the line's write is in flight (StaffOrderSidePanel.tsx:90,99); the test asserts the text appears and goes.
+- [CLOSED] describe title typo.
 
-- [CLOSED] M1 pos-p5 weak tests. "Show more" now serves 25 items over two pages and asserts 20 tiles, the click, `pageNumber=2`, 25 tiles, and the button gone. The empty-category test overrides browse and asserts the exact "Nothing to sell in household & natural care right now." text and no `... to sell` list. The category test compares each tile's aria-label with the shop catalogue's names for that category, with `0 < n < allCount`. All can fail.
-- [CLOSED] M2 stale quote. PosScreen.tsx:98-99 hides the preview while settling, on placeholder data, before cash, and (ab) once a payment exists. pos-ticket.test.tsx adds three cases: hidden after a payment (incl. more cash typed, a 900 ms wait past the 400 ms debounce, then removing the payment brings "Still to pay" back), a basket change with a 1.2 s quote (old 220.00 must be gone while the new request is in flight and after), and a slow answer for 500 landing after 1000. Cases 1 and 2 fail if the `tenders.length === 0` or `isPlaceholderData` term is dropped. Case 3 holds by the tender being in the query key; it would fail only if that were removed. Acceptable.
-- [CLOSED, one residue kept as LOW] M3 tick race. StaffOrderSidePanel.tsx:94-95,191: a box whose line is in `justTicked` is `aria-disabled` and its `onChange` does nothing. Tick then untick can no longer overlap on one line. The test asserts one PUT, the box still checked, `aria-disabled` set then removed, then a second click sends `false`; it fails if the guard is removed (sent would be 2). The onError-snapshot case across two different lines remains (LOW below).
-- [CLOSED] M4 tick tests. Added: 500 (generic message, box reverts, store unchanged), 404 OrderLineNotFound (not "left the shelf"), refetch mid-write, order switch mid-write. The order-switch test is weak (LOW below).
-- [CLOSED] byRider uses `!= null` (StaffOrderPanels.tsx:152).
-- [CLOSED] one `useCanManageRiders()` (useStaffOrders.ts:99-102), used by RidersPage, DispatchDialog, PickListPage; unknown roles get nothing. Verified by reading all three call sites; no leftover copy.
-- [CLOSED] chart: `Math.max(0, ...)` on bar values; hover and focus kept in separate state, `active = focused ?? hovered`; both have tests that fail on the old code (negative net gives `0%` and the accessible name still shows the figure; pointer leaving keeps the focused bar's readout until blur).
-- [CLOSED] mock order of rider checks: shape (whitespace-only name is NotEmptyValidator), then 404, then duplicate, then mobile; matches `RiderCommandHandlers.cs:15-19,45-55`, `RiderAggregate.cs:48` and the validators (`NotEmpty()`, `MaximumLength(30)`). Test pins each step.
-- [CLOSED] mock: empty-Guid courier beside a real rider refused as DispatchTargetInvalid after the order 404 (handler `is null`); test added.
-- [CLOSED] mock: `lacksRole` on tracking (Fulfil), start-packing (Fulfil) and cancel (Orders.Cancel = Reception, ShopManager, Administrator, `ActionRoles.Orders.cs:20`); test added.
-- [CLOSED] `removeAllListeners` moved to `beforeEach` in orders-p5. [CLOSED] E9 no longer relies on the receipt text; it asserts the sale body has no customerName/customerMobile.
-- [CLOSED, partly] Dispatch 404 blamed the rider for a missing order: now decided by a list re-read (see LOW 1 for the hole).
-- [CLOSED] reserved walk-in mobile: the mock now normalises with `normaliseMobile`, so `+8801000000000`, `8801...`, `008801...` are refused like `01000000000`. (Not in run 1; extra.)
-- Quote nulls: the mock sends `changeDue: null, cashShort: null` when absent and exactly one set with a tender. `PosViewModels.cs:12-13` says the same (both null without a tender, exactly one otherwise, zero change is `changeDue` "0.00"), and no ignore-null option exists in `src/`. Client `quote.data?.changeDue` truthiness is safe because a Money object is always truthy.
+PosScreen REWRITE - JUDGEMENT (PosScreen.tsx:71-94)
+- Flow: the id in the address is copied into `presetId`, `presetLink` is bumped, and `router.replace('/staff/pos')` runs, all in one effect on the address. A second effect applies the customer when `preset.data` exists and `appliedLink !== presetLink`, through a functional `setCustomer` that only fills an empty ticket.
+- Loop: none. The first effect returns when the address id is empty and its deps are `[presetCustomerId, router]`; it does not write what it reads. If `replace` failed to clear the address the effect does not re-run (deps unchanged). The second effect writes `appliedLink` first, so it applies once per link. StrictMode's double run bumps the counter twice and replaces twice; the apply is still once (one `presetLink` value is current when the data is there), and the empty-ticket guard covers the rest.
+- Missed preset: not found. Same customer again: `presetId` unchanged but `presetLink` changes, and the cached `preset.data` is already there, so the second effect re-runs and applies. A different customer B: `useStaffCustomer` has no `keepPreviousData` (useStaffCustomers.ts:18-25), so `preset.data` is undefined for B's key until it loads; A's data cannot be applied for B's link. A customer typed before the lookup returns is not overwritten (by design). A failed lookup (403/404) leaves a silent walk-in, as before.
+- Address: the replace happens at once, before any basket exists, so Back from the receipt, a reload, or the unsaved-changes guard cannot put the id back. A link followed inside a mounted screen that already holds a basket could meet the guard; no such link exists (the profile page is a different route, so PosScreen remounts).
+- Tests that would pass without the code: checked each. "takes the preset out of the address ... a remount is a walk-in" fails on run 2's code (address kept until New sale, so the remount presets). "a new link presets again" fails on a bare `appliedPreset === id` ref. The bdi test fails without `<bdi>` (`tagName` is checked). "fills the buyer ... clearing both fields" and "after New sale ... walk-in" fail on the original refill effect. The Vitest router mock re-renders on `replace`, so URL changes are really observed. The three e2e cases (Print receipt then Back, reload, Void basket) were read only; they are the only proof against the real Next router and history.
+- `summary` as `ReactNode`: only consumer is `DialogDescription` (PosReviewDialog.tsx:48), which renders children; no string operation on it. `reviewText` is `''` when no quote, a fragment otherwise; `bdi` inside the description paragraph is valid. tsc is clean and pos.test / pos-ticket / pos-p5 pass. No other caller of the dialog.
+- Dispatch re-read: see above. Saving state: see above.
 
-NEW CHOICES - JUDGEMENT
+FINDINGS (all LOW)
+- [LOW] web/tests/components/back-office-sales/riders-dispatch.test.tsx:151-174 - the failed re-read is tested for riders only; the courier branch (`couriers.refetch()`, DispatchDialog.tsx:92) has no case. Add a courier variant.
+- [LOW] web/components/orders/StaffOrderSidePanel.tsx:90,99 - `opacity-60` on the whole row lowers the contrast of the line text and of "Saving..." (text-ink-muted) for the write's duration; axe could flag it if it samples at that moment. "Saving..." is inside the label, so the checkbox's accessible name changes while focused and is not in a live region; whether it is announced depends on the reader. Dim only the checkbox, or put the text in a polite live region.
+- [LOW] web/tests/components/back-office-sales/pos-p5.test.tsx (second new test) - calls `userEvent.setup()` three times inline; works, but one `const user` is the pattern in the rest of the file.
+- [LOW, kept] web/mocks/handlers/ordering/pos.ts:296,418 - a named customer who is not the seeded one gets `customerId: null`, so the mock receipt hides the name; E9 checks the sale body instead, which is the right test.
+- [LOW, kept] fixed `setTimeout` waits for negative assertions (riders-dispatch, sales-chart, orders-p5, pos-p5 at 100-150 ms) can pass before the render they guard; each is backed by a positive assertion.
+- [LOW, kept] web/mocks/handlers/ordering/staff.ts `allowedActionsOf`: Confirmed + Counter returns [] where the server table gives StartPacking, Cancel, CollectAtCounter; no role narrowing of the list. Unreachable in the mock.
+- [LOW, kept] StaffOrderQueue: counts and list poll on separate 30 s timers; no test that `search` reaches the counts request.
+- [LOW, kept] useStaffOrders.ts:291-293: `onError` restores the snapshot taken at that mutation's start, so with two different lines in flight a later failure can restore a snapshot with the other line's tick; the `onSettled` refetch corrects it.
 
-- Pick checkbox `aria-disabled`: sound. The box stays focusable (a native `disabled` would drop focus mid-write), Space and click are ignored, and a controlled checkbox snaps back to `checked`. Screen readers announce "dimmed/unavailable"; the write is short and a failure raises the existing `role=alert`. Residue: no visual cue (LOW 4). The tests reach the state through a delayed handler; they can fail.
-- Dispatch 404 re-read: no race that matters (the list is read after the 404; a concurrent deactivation can only tilt towards "rider not available", which is also true). One real hole: LOW 1. The extra read is one GET, only on a 404. The root error renders (`rootError={errors.root?.message}`).
-- `useCanManageRiders`: both states are reached. Allowed: ShopManager/Administrator in the dispatch, pick-list and riders tests (`asRoles`). Not allowed: Reception, and a session answering 401 (roles unknown). The unknown-roles test fails under the old permissive rule (buttons would be there with the table).
-- Preset buyer and `router.replace`: the walk-in flow works. The ref is set once the lookup returns; the functional `setCustomer` only fills if the fields are still empty, so a buyer typed first is never overwritten; clearing the fields no longer refills; StrictMode double-run is safe (second run returns early, the state update already queued). No loop: deps are `[preset.data, presetCustomerId]`, neither changes from the effect. `New sale` clears customer, cash and the address. Reopening the same customer from the profile remounts PosScreen, so it presets again; the ref never gets in the way. Only reopening within a still-mounted screen is blocked (LOW 2). Both tests ran and pass; the first fails on the old effect (refill after clear), the second fails if `router.replace` or the buyer text is dropped.
-- pos-p5 strengthened tests: they can fail (see M1).
-- Mock vs `src/`: rider write order, quote nulls, reserved mobile and role sets match as above.
-
-FINDINGS (LOW, all new unless marked kept)
-- [LOW] web/components/orders/DispatchDialog.tsx:93-94 - `refetch()` does not throw; if the re-read fails (network, 5xx), `.data` is the previous list, which still contains the chosen id, so the person is told "This order could not be found" when the rider was in fact removed. Use the result's `isError`/`status`: on failure fall back to the old rider/courier message (or a neutral "could not be checked, try again"). Also untested: only the order-gone and rider-gone paths exist.
-- [LOW] web/components/pos/PosScreen.tsx:76-77 - `appliedPreset` is never reset when `presetCustomerId` goes back to `''`, so the same `?customerId=` reached again without leaving the screen would not preset. Not reachable from the profile link (remounts). Reset it in the effect when the id is empty, and add a reopen case to the test.
-- [LOW] web/tests/components/back-office-sales/orders-p5.test.tsx (order-switch test) - passes by construction: the old body unmounts and the rerender uses a new QueryClient, so no state or cache from the first order can reach the second. It proves nothing about the hook. Keep it on one client, or assert the cache key. Kept from run 1, the onError snapshot restore across two different lines (useStaffOrders.ts:291-293) is still open; the `onSettled` refetch corrects it.
-- [LOW] web/components/orders/StaffOrderSidePanel.tsx:94 - `aria-disabled` has no visual style, so a sighted user sees an ignored click with no cue for the short write. Add an opacity/cursor class on `aria-disabled`.
-- [LOW] web/tests/components/back-office-sales/mock-refusals.test.ts (Sales series describe) - the title lost a space ("Sales series -StaffDashboard..."). Cosmetic.
-- [LOW, kept] web/mocks/handlers/ordering/pos.ts:296,418 - a named customer who is not the seeded one gets `customerId: null`, so the mock receipt hides the name; the E9 receipt text check was dropped for a body check, which is the right fix for the test, but the mock still differs from the server (which registers the buyer).
-- [LOW, kept] riders-dispatch.test.tsx and sales-chart.test.tsx - fixed `setTimeout` waits for negative assertions (now also in orders-p5 and pos-p5 at 100 ms, pos-ticket at 900/1800 ms) can pass before the render they guard. The pos-ticket ones are long enough; the 100 ms ones are not proof but are backed by positive assertions.
-- [LOW, kept] staff.ts `allowedActionsOf` for Confirmed + Counter returns [] where the server table gives StartPacking, Cancel, CollectAtCounter, and no role narrowing of the list; unreachable in the mock.
-- [LOW, kept] StaffOrderQueue counts and list poll on separate timers and can differ for a moment; no test that `search` reaches the counts request.
-
-VERIFIED
+VERIFIED (run by me, `--maxWorkers=1`)
 - `tsc --noEmit` in web/: exit 0, no output.
-- vitest at `--maxWorkers=1`: pos-p5, pos-ticket, orders-p5, riders-dispatch, mock-refusals = 5 files, 94 tests passed; orders-workbench, pos.test, sales-chart = 3 files, 39 tests passed.
-- Conventions: no colour literals or money arithmetic added; comments cite server file:line; no `src/`, `.ai/` or handover files touched.
+- vitest: orders-p5, pos-ticket, tests/components/pos/pos.test, pos-p5, riders-dispatch = 5 files, 79 tests passed.
+- Conventions: no `src/`, `.ai/` or handover files touched in the diff; no colour literals or money arithmetic added; comments cite server file:line where they describe server behaviour.
 
 NOT CHECKED
-- e2e specs (ordering-pos E9, ordering-staff riders axe), dev server, the rest of the Vitest suite, lint and build. The slice report's counts were not reproduced beyond the 8 files above.
-- Whether the mock's new `CANCEL_ROLES` refusal breaks a spec outside those 8 files (specs that cancel as a non-Cancel role). A request with no staff session still passes, so only an explicit role override could.
-- Visual result of `aria-disabled` and of the chart; the Next router's real `replace` timing (the test uses a mock).
-- Server behaviour was read from source, not run.
+- The e2e specs (the three new real-router preset cases, ordering-pos, ordering-staff), a dev server, the rest of the Vitest suite, lint, build. The slice report's "249 tests / 18 e2e passed" is its own claim.
+- I did not remove the `onError` rollback to watch the order-switch test fail; the claim rests on reading the cache behaviour and on the slice report.
+- Real Next router behaviour (replace timing, history entries, Suspense around `useSearchParams`) and the visual result of the Saving state.
+- Server behaviour (read from source earlier, not run).
 
 SCOPE CHECK
-- files in allowed scope: 26/26 changed files (the diffstat: web components, hooks, lib/api/pos.ts, mocks, tests, e2e, and gate/slice-report docs under Amended (r), (aa), (ab))
+- files in allowed scope: 10/10 changed files (DispatchDialog, StaffOrderSidePanel, PosReviewDialog, PosScreen, five test files, the slice report)
 - files outside allowed scope: none
