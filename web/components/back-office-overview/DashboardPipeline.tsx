@@ -58,7 +58,7 @@ export function DashboardPipeline() {
           <PipelineBars counts={counts.data} />
           <p className="m-0 border-t border-surface-sunken pt-3 text-sm text-ink-muted">
             <Link href="/staff/orders" className="font-semibold text-accent-ink underline">
-              All orders
+              Every order
             </Link>
             : {counts.data.total}
           </p>

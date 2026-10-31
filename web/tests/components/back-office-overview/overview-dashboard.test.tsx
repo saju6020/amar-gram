@@ -6,6 +6,7 @@ import { resetReportsMockData } from '@/mocks/handlers/reports';
 import StaffHomePage from '@/app/(staff)/staff/page';
 import { DashboardAttention } from '@/components/back-office-overview/DashboardAttention';
 import { DashboardLatestOrders } from '@/components/back-office-overview/DashboardLatestOrders';
+import { DashboardPipeline } from '@/components/back-office-overview/DashboardPipeline';
 import { renderWithClient } from '../reports/helpers';
 
 const nav = vi.hoisted(() => ({
@@ -181,5 +182,85 @@ describe('DashboardLatestOrders — U14', () => {
     await waitFor(() =>
       expect(screen.queryByRole('heading', { name: 'Latest orders' })).not.toBeInTheDocument(),
     );
+  });
+});
+
+describe('DashboardPipeline - U17 (HO-P5)', () => {
+  const counts = (over: Record<string, number> = {}) => {
+    const all: Record<string, number> = {
+      PendingPayment: 2,
+      Confirmed: 7,
+      Packing: 3,
+      Packed: 1,
+      Dispatched: 0,
+      Delivered: 20,
+      Cancelled: 1,
+      Returned: 0,
+      Refunded: 0,
+      ...over,
+    };
+    return {
+      // The server's own total, deliberately not the sum of the counts: whatever it sends is what is shown.
+      total: 99,
+      counts: Object.entries(all).map(([status, count]) => ({ status, count })),
+    };
+  };
+
+  it('draws Confirmed, Packing, Packed and Dispatched with the server counts as text, each linking to the orders in that status', async () => {
+    server.use(http.get('*/api/staff/orders/status-counts', () => HttpResponse.json(counts())));
+    renderWithClient(<DashboardPipeline />);
+    const list = await screen.findByRole('list', { name: 'Orders in progress by status' });
+    const rows = within(list).getAllByRole('link');
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'Confirmed7 orders',
+      'Being packed3 orders',
+      'Packed1 order',
+      'Dispatched0 orders',
+    ]);
+    expect(rows.map((row) => row.getAttribute('href'))).toEqual([
+      '/staff/orders?status=Confirmed',
+      '/staff/orders?status=Packing',
+      '/staff/orders?status=Packed',
+      '/staff/orders?status=Dispatched',
+    ]);
+    // No client-side sum: the line under the bars is the server's `total`.
+    expect(screen.getByRole('link', { name: 'Every order' })).toHaveAttribute('href', '/staff/orders');
+    expect(screen.getByText(/: 99$/)).toBeInTheDocument();
+  });
+
+  it('scales the longest bar to full width and an empty status to none', async () => {
+    server.use(http.get('*/api/staff/orders/status-counts', () => HttpResponse.json(counts())));
+    renderWithClient(<DashboardPipeline />);
+    const list = await screen.findByRole('list', { name: 'Orders in progress by status' });
+    const widthOf = (name: RegExp) =>
+      (within(list).getByRole('link', { name }).querySelector('span[style]') as HTMLElement).style.width;
+    expect(widthOf(/^Confirmed/)).toBe('100%');
+    expect(widthOf(/^Dispatched/)).toBe('0%');
+  });
+
+  it('is dropped on a 403 and after a failed read, with no banner', async () => {
+    server.use(http.get('*/api/staff/orders/status-counts', forbidden));
+    const { unmount } = renderWithClient(<DashboardPipeline />);
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: 'Orders in progress' })).not.toBeInTheDocument(),
+    );
+    unmount();
+    server.use(http.get('*/api/staff/orders/status-counts', () => new HttpResponse(null, { status: 500 })));
+    renderWithClient(<DashboardPipeline />);
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument(), { timeout: 4000 });
+    expect(screen.queryByRole('heading', { name: 'Orders in progress' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});
+
+describe('Dashboard page - HO-P5 panels', () => {
+  it('shows the sales chart, the pipeline and the rider-cash tile the server sends, for an administrator', async () => {
+    server.use(http.get('*/api/staff/session', () => HttpResponse.json(ADMIN_SESSION)));
+    renderWithClient(<StaffHomePage />);
+    expect(await screen.findByRole('heading', { level: 2, name: 'Sales, last 14 days' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'Orders in progress' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Cash on delivery out with riders' }),
+    ).toBeInTheDocument();
   });
 });

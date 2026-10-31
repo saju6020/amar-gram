@@ -376,8 +376,15 @@ const RIDER_MANAGE_ROLES = ['ShopManager', 'Administrator'];
  * `[RequireAction]`. A request with no staff session is "not modelled" and passes, like the other mocks.
  */
 function lacksRole(request: Request, allowed: readonly string[]): boolean {
-  const roles = getStaffRoleIdsForRequest(request);
+  const roles = roleOverride ?? getStaffRoleIdsForRequest(request);
   return roles !== null && !roles.some((role) => allowed.includes(role));
+}
+
+let roleOverride: string[] | null = null;
+
+/** Test seam, like `setMockReportRoles`: answer as these roles regardless of the session cookie. `null` clears it. */
+export function setMockOrderingRoles(roles: string[] | null): void {
+  roleOverride = roles;
 }
 
 /** Shared/Common/Constants/OrderRules.cs:38 (`MaxNameLength`), `MobileNumber.MaxLength`/`Create` and `NoControlCharacters`. */

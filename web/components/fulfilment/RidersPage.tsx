@@ -49,7 +49,7 @@ export function RidersPage() {
             nowrap: true,
             cell: (r: Rider) => (
               <Button variant="secondary" size="sm" onClick={() => setEditing(r)}>
-                Edit<span className="sr-only"> {r.name}</span>
+                Edit{' '}<span className="sr-only">{r.name}</span>
               </Button>
             ),
           },
