@@ -1,4 +1,5 @@
 import { apiFetch } from './client';
+import type { Money } from '../format/money';
 import type { ReportMoneyCell } from './reports';
 
 /**
@@ -47,4 +48,40 @@ export interface Dashboard {
 
 export function getDashboard(): Promise<Dashboard> {
   return apiFetch<Dashboard>('/api/staff/dashboard');
+}
+
+/**
+ * HO-P5 BG-1 (11.3.1): one branch-local day of the sales series. `net` is the day's net revenue (zero
+ * when nothing was invoiced) and `orders` the orders placed that day.
+ * // Read/ViewModels/SalesSeriesViewModels.cs:4
+ */
+export interface SalesSeriesDay {
+  /** `yyyy-MM-dd`, the branch's own day. */
+  date: string;
+  net: Money;
+  orders: number;
+}
+
+/**
+ * HO-P5 BG-1: `GET /api/staff/dashboard/sales-series?days=` (1 to 31, default 14), oldest day first, every
+ * day present. `total` is the SERVER's sum of the days' net revenue: the page shows it and never adds the
+ * days up (ADR-317).
+ * // Read/ViewModels/SalesSeriesViewModels.cs:7-9; Api/Controllers/StaffDashboardController.cs:38-61
+ */
+export interface SalesSeries {
+  branchId: string;
+  branchName: string;
+  from: string;
+  to: string;
+  timeZoneId: string;
+  currencyCode: string;
+  total: Money;
+  generatedOn: string;
+  days: SalesSeriesDay[];
+}
+
+export const SALES_SERIES_DEFAULT_DAYS = 14;
+
+export function getSalesSeries(days: number = SALES_SERIES_DEFAULT_DAYS): Promise<SalesSeries> {
+  return apiFetch<SalesSeries>(`/api/staff/dashboard/sales-series?days=${days}`);
 }

@@ -12,26 +12,36 @@ import {
   approveHeldPayment,
   cancelStaffOrder,
   confirmBankTransfer,
+  createRider,
   dispatchOrder,
   getPackingSlip,
   getPickList,
   getStaffOrder,
+  getStaffOrderStatusCounts,
   listAwaitingPayment,
   listDispatchCouriers,
   listReconciliationIssues,
+  listRiders,
   listStaffCustomerOrders,
   listStaffOrders,
+  markPacked,
   markReadyForCollection,
   reallocateLine,
   recordDelivery,
   recordDeliveryFailure,
   recordTracking,
   rejectHeldPayment,
+  setLinePicked,
   resolveReconciliationIssue,
   startPacking,
+  updateRider,
   type ConfirmTransferInput,
   type DeliveryFailureReason,
+  type DispatchTarget,
   type RecordDeliveryInput,
+  type RiderInput,
+  type StaffOrderCountFilters,
+  type StaffOrderDetail,
   type StaffOrderFilters,
 } from '@/lib/api/staff-orders';
 import { useBranchScope } from './useBranchScope';
@@ -60,6 +70,33 @@ export function useStaffOrderQueue(filters: StaffOrderFilters) {
     placeholderData: keepPreviousData,
     retry: noRetryOnRefusal,
     ...POLL,
+  });
+}
+
+/**
+ * HO-P5 BG-2: the count in every status under the queue's filters bar `status`. It shares the queue's 30 s
+ * refetch (UI-5) and its key prefix, so every order write refreshes it with the list.
+ */
+export function useStaffOrderStatusCounts(filters: StaffOrderCountFilters) {
+  const { branchId, ready } = useBranchScope();
+  return useQuery({
+    queryKey: ['staff', 'orders', 'status-counts', branchId, filters],
+    queryFn: () => getStaffOrderStatusCounts(filters),
+    enabled: ready,
+    placeholderData: keepPreviousData,
+    retry: noRetryOnRefusal,
+    ...POLL,
+  });
+}
+
+/** HO-P5 BG-5: the branch's riders. `activeOnly` is what a dispatch chooses from; the registry page lists all. */
+export function useRiders(activeOnly: boolean, enabled = true) {
+  const { branchId, ready } = useBranchScope();
+  return useQuery({
+    queryKey: ['staff', 'riders', branchId, activeOnly],
+    queryFn: () => listRiders(activeOnly),
+    enabled: ready && enabled,
+    retry: noRetryOnRefusal,
   });
 }
 
@@ -208,12 +245,67 @@ export function useMarkReadyForCollection(orderId: string) {
   });
 }
 
+/** HO-P5 BG-4: `Packing -> Packed`, optional. */
+export function useMarkPacked(orderId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => markPacked(orderId),
+    onSuccess: () => refreshOrders(queryClient, orderId),
+  });
+}
+
+/**
+ * HO-P5 BG-4 (8.4): the pick-list tick is server state. The tick shows at once (the cached order is updated),
+ * a refusal puts it back (`InvalidOrderTransition` once the order has left the shelf), and the order refetches
+ * when the request settles, so the tick survives a reload and another device sees it.
+ */
+export function useSetLinePicked(orderId: string) {
+  const queryClient = useQueryClient();
+  const { branchId } = useBranchScope();
+  const key = ['staff', 'order', branchId, orderId] as const;
+  return useMutation({
+    mutationFn: (input: { lineId: string; picked: boolean }) => setLinePicked(orderId, input.lineId, input.picked),
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<StaffOrderDetail>(key);
+      if (previous) {
+        queryClient.setQueryData<StaffOrderDetail>(key, {
+          ...previous,
+          lines: previous.lines.map((line) => (line.lineId === input.lineId ? { ...line, picked: input.picked } : line)),
+        });
+      }
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: key }),
+  });
+}
+
+/** Exactly one target: a courier (tracking optional) or an in-house rider (no tracking). */
 export function useDispatchOrder(orderId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { courierId: string; trackingNumber?: string }) =>
-      dispatchOrder(orderId, input),
+    mutationFn: (input: { target: DispatchTarget; trackingNumber?: string }) =>
+      dispatchOrder(orderId, input.target, input.trackingNumber),
     onSuccess: () => refreshOrders(queryClient, orderId),
+  });
+}
+
+export function useCreateRider() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: RiderInput) => createRider(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['staff', 'riders'] }),
+  });
+}
+
+export function useUpdateRider() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { riderId: string; rider: RiderInput }) => updateRider(input.riderId, input.rider),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['staff', 'riders'] }),
   });
 }
 
