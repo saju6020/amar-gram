@@ -3,15 +3,17 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
+import { ActionLink } from '@/components/back-office/ActionLink';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { StaffOrdersTabs } from '@/components/orders/StaffOrdersTabs';
 import { PrintSheet } from '@/components/print/PrintSheet';
 import { Button } from '@/components/ui/button';
 import { ApiForbiddenError } from '@/lib/api/client';
 import { describeOrderingError } from '@/lib/api/errors';
-import type { PickList } from '@/lib/api/staff-orders';
+import { RIDER_MANAGE_ROLES, type PickList } from '@/lib/api/staff-orders';
 import { formatDateOnly, formatInZone } from '@/lib/format/time';
 import { useBranchTimeZone } from '@/lib/hooks/useBranchTimeZone';
+import { useStaffSession } from '@/lib/hooks/useSession';
 import { usePickList, useStaffOrderQueue, useStartPacking } from '@/lib/hooks/useStaffOrders';
 
 /**
@@ -73,6 +75,9 @@ export function PickListPage() {
   const list = usePickList(chosen.length > 0 ? chosen : undefined);
   const confirmed = useStaffOrderQueue({ status: 'Confirmed', pageNumber: 1, pageSize: 100 });
   const startPacking = useStartPacking();
+  const session = useStaffSession();
+  // Presentation only (Riders.Manage): the server decides who may open the registry's write actions.
+  const canManageRiders = (session.data?.roleIds ?? []).some((role) => RIDER_MANAGE_ROLES.includes(role));
   const [selection, setSelection] = useState<string[]>(chosen);
   const [progress, setProgress] = useState<{ done: number; total: number; failures: Array<{ number: string; message: string }> } | null>(null);
   const [running, setRunning] = useState(false);
@@ -140,6 +145,11 @@ export function PickListPage() {
             <Button onClick={() => void packAll()} disabled={running || toPack.length === 0} aria-busy={running}>
               {running ? 'Starting…' : `Start packing ${toPack.length} order${toPack.length === 1 ? '' : 's'}`}
             </Button>
+            {canManageRiders && (
+              <ActionLink href="/staff/fulfilment/riders" variant="outline">
+                Manage riders
+              </ActionLink>
+            )}
             {progress && (
               <p role="status" className="text-sm font-semibold text-ink">
                 {progress.done} of {progress.total} started{progress.failures.length > 0 ? `, ${progress.failures.length} could not be started` : ''}.

@@ -10,8 +10,8 @@ import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { Button } from '@/components/ui/button';
 import { describeOrderingError } from '@/lib/api/errors';
 import type { StaffOrderAction, StaffOrderDetail as OrderDetail, StaffOrderLine } from '@/lib/api/staff-orders';
-import { formatOrderWhen, orderActionLabel } from '@/lib/format/orders';
-import { useMarkReadyForCollection, useStaffOrder, useStartPacking } from '@/lib/hooks/useStaffOrders';
+import { formatOrderWhen, orderActionLabel, orderChannelLabel } from '@/lib/format/orders';
+import { useMarkPacked, useMarkReadyForCollection, useStaffOrder, useStartPacking } from '@/lib/hooks/useStaffOrders';
 import { ApprovePaymentPanel } from './ApprovePaymentPanel';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { OrderSummary } from './OrderSummary';
@@ -31,7 +31,7 @@ import {
  * dialogs live here, not under the buttons, so a refetch that removes an action never closes a dialog
  * someone is typing in. A `403` shows the permission-denied state.
  */
-const PRIMARY: StaffOrderAction[] = ['ConfirmPayment', 'StartPacking', 'Dispatch', 'MarkReadyForCollection', 'RecordDelivery', 'RecordDeliveryFailure', 'Refund'];
+const PRIMARY: StaffOrderAction[] = ['ConfirmPayment', 'StartPacking', 'Dispatch', 'MarkPacked', 'MarkReadyForCollection', 'RecordDelivery', 'RecordDeliveryFailure', 'Refund'];
 
 function Detail({ order }: { order: OrderDetail }) {
   const [dialog, setDialog] = useState<StaffOrderDialogKind | null>(null);
@@ -40,9 +40,10 @@ function Detail({ order }: { order: OrderDetail }) {
   const [error, setError] = useState<string | null>(null);
   const startPacking = useStartPacking();
   const ready = useMarkReadyForCollection(order.id);
+  const packed = useMarkPacked(order.id);
   const open = (next: StaffOrderDialogKind | null) => setDialog(next);
   const allowed = new Set<string>(order.allowedActions);
-  const fulfilmentWork = allowed.has('StartPacking') || allowed.has('Dispatch') || allowed.has('MarkReadyForCollection');
+  const fulfilmentWork = allowed.has('StartPacking') || allowed.has('MarkPacked') || allowed.has('Dispatch') || allowed.has('MarkReadyForCollection');
 
   async function direct(run: () => Promise<unknown>) {
     setError(null);
@@ -60,6 +61,7 @@ function Detail({ order }: { order: OrderDetail }) {
       case 'StartPacking': return void direct(() => startPacking.mutateAsync(order.id));
       case 'Dispatch': return open('dispatch');
       case 'MarkReadyForCollection': return void direct(() => ready.mutateAsync());
+      case 'MarkPacked': return void direct(() => packed.mutateAsync());
       case 'RecordDelivery': return open('delivery');
       case 'RecordDeliveryFailure': return open('failure');
       case 'Refund': return open('refund');
@@ -68,7 +70,7 @@ function Detail({ order }: { order: OrderDetail }) {
   }
 
   const bar = PRIMARY.filter((a) => allowed.has(a) && !(a === 'ConfirmPayment' && order.heldPayment));
-  const busy = startPacking.isPending || ready.isPending;
+  const busy = startPacking.isPending || ready.isPending || packed.isPending;
 
   return (
     <div className="flex flex-col gap-5">
@@ -78,7 +80,7 @@ function Detail({ order }: { order: OrderDetail }) {
       </Link>
       <PageHeader
         title={`Order ${order.orderNumber}`}
-        description={`Placed ${formatOrderWhen(order.placedOn, order.branchTimeZoneId, true)} · ${order.channel === 'Counter' ? 'Counter sale' : 'Online'}`}
+        description={`Placed ${formatOrderWhen(order.placedOn, order.branchTimeZoneId, true)} · ${order.channel === 'Counter' ? 'Counter sale' : orderChannelLabel(order.channel)}`}
         actions={
           <>
             <OrderStatusBadge status={order.status} />
@@ -93,7 +95,7 @@ function Detail({ order }: { order: OrderDetail }) {
       {(bar.length > 0 || allowed.has('Cancel')) && (
         <div role="group" aria-label="Order actions" className="flex flex-wrap gap-2">
           {bar.map((action) => (
-            <Button key={action} onClick={() => perform(action)} disabled={busy} variant={action === 'Refund' ? 'secondary' : 'primary'}>
+            <Button key={action} onClick={() => perform(action)} disabled={busy} variant={action === 'Refund' || action === 'MarkPacked' ? 'secondary' : 'primary'}>
               {orderActionLabel(action, order.fulfilmentMethod)}
             </Button>
           ))}

@@ -7,11 +7,11 @@ import { Panel } from '@/components/back-office/Panel';
 import { Amount } from '@/components/billing/Amount';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { Button } from '@/components/ui/button';
-import { describeOrderingError } from '@/lib/api/errors';
+import { describeOrderingError, hasOrderingCode } from '@/lib/api/errors';
 import type { StaffOrderAction, StaffOrderDetail } from '@/lib/api/staff-orders';
 import { fulfilmentLabel, formatOrderWhen, orderActionLabel, orderStatusLabel, paymentMethodLabel } from '@/lib/format/orders';
 import { formatDateOnly } from '@/lib/format/time';
-import { useMarkReadyForCollection, useStaffOrder, useStartPacking } from '@/lib/hooks/useStaffOrders';
+import { useMarkPacked, useMarkReadyForCollection, useSetLinePicked, useStaffOrder, useStartPacking } from '@/lib/hooks/useStaffOrders';
 import { ApprovePaymentPanel } from './ApprovePaymentPanel';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { StaffOrderDialogs, type StaffOrderDialogKind } from './StaffOrderDialogs';
@@ -22,14 +22,20 @@ import { StaffOrderDialogs, type StaffOrderDialogKind } from './StaffOrderDialog
  * never clears it, and it refetches on its own every 30 s like the detail page.
  *
  * - The **pick list** is each line's server allocations (batch, expiry, location) in the order the
- *   server sent them. The ticks are local state keyed by order id and only gate the local *Start packing*
- *   button; they are not persisted (BG-4) and survive a refetch because this component stays mounted.
+ *   server sent them. The ticks are the server's `picked` (HO-P5 BG-4): a click writes one idempotent
+ *   `PUT …/picked`, shows at once and is put back with a message if the server refuses, so ticks survive a
+ *   refetch, a reload and another device. They still gate the *Start packing* button here (HO-P4 U21).
  * - The **next action** is the first of the order's `allowedActions` that this panel offers (ADR-FE-093);
- *   nothing is derived from the status. Everything else (shipment, reallocation, refund, delivery
+ *   nothing is derived from the status. *Mark packed* (the optional "packed, waiting for the rider" step)
+ *   is offered beside it when allowed. Everything else (shipment, reallocation, refund, delivery
  *   failure) stays on the full order page, one link away.
  * - "Cancel order" appears only when the server allows `Cancel`. All dialogs are the existing ones.
+ * - The rider note a customer left is shown as plain text (G4, OQ-7); it is never put in a link or in storage.
  */
 const NEXT_ACTIONS: StaffOrderAction[] = ['ConfirmPayment', 'StartPacking', 'Dispatch', 'MarkReadyForCollection', 'RecordDelivery'];
+/** The actions that mean the order is on the shelf side of fulfilment: the pick list is ticked while any is allowed. */
+const SHELF_ACTIONS: StaffOrderAction[] = ['StartPacking', 'MarkPacked', 'Dispatch', 'MarkReadyForCollection'];
+const LEFT_THE_SHELF = 'This order has already left the shelf.';
 
 function Allocations({ order, lineId }: { order: StaffOrderDetail; lineId: string }) {
   const line = order.lines.find((l) => l.lineId === lineId);
@@ -50,13 +56,11 @@ function Allocations({ order, lineId }: { order: StaffOrderDetail; lineId: strin
 
 function PickList({
   order,
-  ticks,
   onToggle,
   tickable,
 }: {
   order: StaffOrderDetail;
-  ticks: Record<string, boolean>;
-  onToggle: (lineId: string) => void;
+  onToggle: (lineId: string, picked: boolean) => void;
   tickable: boolean;
 }) {
   if (order.lines.length === 0) return null;
@@ -81,8 +85,8 @@ function PickList({
                   <input
                     type="checkbox"
                     className="h-5 w-5 flex-none accent-leaf"
-                    checked={ticks[line.lineId] === true}
-                    onChange={() => onToggle(line.lineId)}
+                    checked={line.picked}
+                    onChange={() => onToggle(line.lineId, !line.picked)}
                   />
                   <span className="min-w-0 flex-1 leading-snug [overflow-wrap:anywhere]">{text}</span>
                 </label>
@@ -97,31 +101,30 @@ function PickList({
   );
 }
 
-type Ticks = Record<string, Record<string, boolean>>;
-
-function SidePanelBody({
-  order,
-  ticksByOrder,
-  onTicksChange,
-}: {
-  order: StaffOrderDetail;
-  ticksByOrder: Ticks;
-  onTicksChange: (update: (current: Ticks) => Ticks) => void;
-}) {
+function SidePanelBody({ order }: { order: StaffOrderDetail }) {
   const [dialog, setDialog] = useState<StaffOrderDialogKind | null>(null);
   const [reallocLine, setReallocLine] = useState<string | undefined>();
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const startPacking = useStartPacking();
   const ready = useMarkReadyForCollection(order.id);
+  const packed = useMarkPacked(order.id);
+  const pick = useSetLinePicked(order.id);
 
   const allowed = new Set<string>(order.allowedActions);
   const next = NEXT_ACTIONS.find((a) => allowed.has(a) && !(a === 'ConfirmPayment' && order.heldPayment));
-  const ticks = ticksByOrder[order.id] ?? {};
-  const allTicked = order.lines.every((l) => ticks[l.lineId] === true);
-  const tickable = allowed.has('StartPacking');
-  const busy = startPacking.isPending || ready.isPending;
+  const allTicked = order.lines.every((l) => l.picked);
+  const tickable = SHELF_ACTIONS.some((a) => allowed.has(a));
+  const busy = startPacking.isPending || ready.isPending || packed.isPending;
   const gated = next === 'StartPacking' && !allTicked;
+
+  function togglePicked(lineId: string, picked: boolean) {
+    setError(null);
+    pick.mutate(
+      { lineId, picked },
+      { onError: (failure) => setError(hasOrderingCode(failure, 'InvalidOrderTransition') ? LEFT_THE_SHELF : describeOrderingError(failure)) },
+    );
+  }
 
   async function direct(run: () => Promise<unknown>) {
     setError(null);
@@ -139,6 +142,7 @@ function SidePanelBody({
       case 'StartPacking': return void direct(() => startPacking.mutateAsync(order.id));
       case 'Dispatch': return setDialog('dispatch');
       case 'MarkReadyForCollection': return void direct(() => ready.mutateAsync());
+      case 'MarkPacked': return void direct(() => packed.mutateAsync());
       case 'RecordDelivery': return setDialog('delivery');
       default: return undefined;
     }
@@ -166,19 +170,11 @@ function SidePanelBody({
           {f.slotDate && f.slotWindow ? ` · ${formatDateOnly(f.slotDate)}, ${f.slotWindow}` : ''} · {paymentMethodLabel(order.paymentMethod)}
         </span>
         {f.deliveryInstructions && <span className="[overflow-wrap:anywhere]">Note: {f.deliveryInstructions}</span>}
+        {f.riderNote && <span className="[overflow-wrap:anywhere]">Note for the rider: {f.riderNote}</span>}
+        {order.packedOn && <span>Packed {formatOrderWhen(order.packedOn, order.branchTimeZoneId)}</span>}
       </div>
 
-      <PickList
-        order={order}
-        ticks={ticks}
-        tickable={tickable}
-        onToggle={(lineId) =>
-          onTicksChange((current) => ({
-            ...current,
-            [order.id]: { ...(current[order.id] ?? {}), [lineId]: !(current[order.id]?.[lineId] ?? false) },
-          }))
-        }
-      />
+      <PickList order={order} tickable={tickable} onToggle={togglePicked} />
 
       <div className="flex items-baseline justify-between gap-3 border-t border-surface-sunken pt-3">
         <span className="text-ink">Total</span>
@@ -203,6 +199,11 @@ function SidePanelBody({
             </p>
           )}
         </div>
+      )}
+      {allowed.has('MarkPacked') && (
+        <Button variant="secondary" className="h-11 w-full" onClick={() => perform('MarkPacked')} disabled={busy}>
+          {orderActionLabel('MarkPacked', order.fulfilmentMethod)}
+        </Button>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -242,14 +243,13 @@ function SidePanelBody({
 }
 
 export function StaffOrderSidePanel({ orderId }: { orderId: string }) {
+  // The pick-list ticks are the order's own `picked` flags, so they need no state here.
   const query = useStaffOrder(orderId);
-  // Ticks, keyed by order id and then line id, live here so switching to another order and back keeps them.
-  const [ticksByOrder, setTicksByOrder] = useState<Ticks>({});
   return (
     <QueryBoundary query={query} notFoundTitle="Order not found" notFoundDescription="This order may belong to another branch." loadingLabel="Loading the order…">
       {(order) => (
         <Panel title={`Order ${order.orderNumber}`} actions={<OrderStatusBadge status={order.status} />}>
-          <SidePanelBody key={order.id} order={order} ticksByOrder={ticksByOrder} onTicksChange={setTicksByOrder} />
+          <SidePanelBody key={order.id} order={order} />
         </Panel>
       )}
     </QueryBoundary>
