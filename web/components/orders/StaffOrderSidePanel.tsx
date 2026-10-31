@@ -8,7 +8,7 @@ import { Amount } from '@/components/billing/Amount';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { Button } from '@/components/ui/button';
 import { describeOrderingError, hasOrderingCode } from '@/lib/api/errors';
-import type { StaffOrderAction, StaffOrderDetail } from '@/lib/api/staff-orders';
+import type { StaffOrderAction, StaffOrderDetail, StaffOrderLine } from '@/lib/api/staff-orders';
 import { fulfilmentLabel, formatOrderWhen, orderActionLabel, orderStatusLabel, paymentMethodLabel } from '@/lib/format/orders';
 import { formatDateOnly } from '@/lib/format/time';
 import { useMarkPacked, useMarkReadyForCollection, useSetLinePicked, useStaffOrder, useStartPacking } from '@/lib/hooks/useStaffOrders';
@@ -56,10 +56,12 @@ function Allocations({ order, lineId }: { order: StaffOrderDetail; lineId: strin
 
 function PickList({
   order,
+  isPicked,
   onToggle,
   tickable,
 }: {
   order: StaffOrderDetail;
+  isPicked: (line: StaffOrderLine) => boolean;
   onToggle: (lineId: string, picked: boolean) => void;
   tickable: boolean;
 }) {
@@ -85,8 +87,8 @@ function PickList({
                   <input
                     type="checkbox"
                     className="h-5 w-5 flex-none accent-leaf"
-                    checked={line.picked}
-                    onChange={() => onToggle(line.lineId, !line.picked)}
+                    checked={isPicked(line)}
+                    onChange={() => onToggle(line.lineId, !isPicked(line))}
                   />
                   <span className="min-w-0 flex-1 leading-snug [overflow-wrap:anywhere]">{text}</span>
                 </label>
@@ -113,17 +115,25 @@ function SidePanelBody({ order }: { order: StaffOrderDetail }) {
 
   const allowed = new Set<string>(order.allowedActions);
   const next = NEXT_ACTIONS.find((a) => allowed.has(a) && !(a === 'ConfirmPayment' && order.heldPayment));
-  const allTicked = order.lines.every((l) => l.picked);
+  // A tick the person just made shows in the same event (the checkbox is controlled, so it cannot wait for the cache to
+  // notify); the server's `picked` takes over as soon as the write has settled, or the tick goes back if it was refused.
+  const [justTicked, setJustTicked] = useState<Record<string, boolean>>({});
+  const isPicked = (line: StaffOrderLine) => justTicked[line.lineId] ?? line.picked;
+  const allTicked = order.lines.every(isPicked);
   const tickable = SHELF_ACTIONS.some((a) => allowed.has(a));
   const busy = startPacking.isPending || ready.isPending || packed.isPending;
   const gated = next === 'StartPacking' && !allTicked;
 
-  function togglePicked(lineId: string, picked: boolean) {
+  async function togglePicked(lineId: string, picked: boolean) {
     setError(null);
-    pick.mutate(
-      { lineId, picked },
-      { onError: (failure) => setError(hasOrderingCode(failure, 'InvalidOrderTransition') ? LEFT_THE_SHELF : describeOrderingError(failure)) },
-    );
+    setJustTicked((current) => ({ ...current, [lineId]: picked }));
+    try {
+      await pick.mutateAsync({ lineId, picked });
+    } catch (failure) {
+      setError(hasOrderingCode(failure, 'InvalidOrderTransition') ? LEFT_THE_SHELF : describeOrderingError(failure));
+    } finally {
+      setJustTicked((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== lineId)));
+    }
   }
 
   async function direct(run: () => Promise<unknown>) {
@@ -174,7 +184,7 @@ function SidePanelBody({ order }: { order: StaffOrderDetail }) {
         {order.packedOn && <span>Packed {formatOrderWhen(order.packedOn, order.branchTimeZoneId)}</span>}
       </div>
 
-      <PickList order={order} tickable={tickable} onToggle={togglePicked} />
+      <PickList order={order} tickable={tickable} isPicked={isPicked} onToggle={(lineId, picked) => void togglePicked(lineId, picked)} />
 
       <div className="flex items-baseline justify-between gap-3 border-t border-surface-sunken pt-3">
         <span className="text-ink">Total</span>

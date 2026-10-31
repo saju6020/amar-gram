@@ -40,6 +40,29 @@ test('E-A2: an accountant sees money tiles; an inventory clerk sees stock but no
   await expect(page.getByRole('link', { name: /waiting for approval/i })).toHaveCount(0);
 });
 
+test('E7: the sales chart has a table alternative and the pipeline links to the orders in a status', async ({ page }) => {
+  await openReportsAs(page, 'Administrator', '/staff');
+  const chart = page.getByRole('region', { name: 'Sales, last 14 days' });
+  await expect(chart).toBeVisible();
+  await expect(chart.getByRole('button', { name: /Oct 2026: .*orders?$/ })).toHaveCount(14);
+  // The bars' readout is polite and says the day, the server's amount and the order count.
+  await chart.getByRole('button', { name: /Oct 2026: / }).first().focus();
+  await expect(chart.locator('[aria-live="polite"]')).toContainText(/Oct 2026: .*orders?/);
+
+  await chart.getByRole('button', { name: 'Show as table' }).click();
+  const table = chart.getByRole('table');
+  await expect(table.getByRole('row')).toHaveCount(15);
+  await expect(table.getByRole('columnheader')).toHaveText(['Date', 'Net sales', 'Orders']);
+
+  // A role with the Sales view also sees cash on delivery out with riders, as the server's tile.
+  await expect(page.getByRole('heading', { level: 2, name: 'Cash on delivery out with riders' })).toBeVisible();
+
+  const pipeline = page.getByRole('region', { name: 'Orders in progress' });
+  await pipeline.getByRole('link', { name: /^Being packed/ }).click();
+  await expect(page).toHaveURL(/\/staff\/orders\?status=Packing/);
+  await expect(page.getByRole('tab', { name: /^Being packed/ })).toHaveAttribute('aria-selected', 'true');
+});
+
 test('E-X1/E-X2: the dashboard is axe-clean and never scrolls sideways', async ({ page }) => {
   await openReportsAs(page, 'Administrator', '/staff');
   await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible();
