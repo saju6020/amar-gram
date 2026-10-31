@@ -148,6 +148,31 @@ describe('DispatchDialog - U22', () => {
     expect(within(dialog).queryByText(/not available/)).not.toBeInTheDocument();
   });
 
+  it('a 404 whose re-read of the riders also fails keeps the rider message (a failed re-read says nothing about the order)', async () => {
+    const user = userEvent.setup();
+    let reads = 0;
+    server.use(
+      http.get('*/api/staff/riders', ({ request }) => {
+        reads += 1;
+        if (reads === 1) {
+          return HttpResponse.json(
+            db.riders.filter((r) => r.isActive && new URL(request.url).searchParams.get('activeOnly') === 'true').map((r) => ({ id: r.id, name: r.name, mobileNumber: r.mobileNumber, isActive: r.isActive })),
+          );
+        }
+        return new HttpResponse(null, { status: 500 });
+      }),
+      http.post('*/api/staff/orders/:orderId/dispatch', () => new HttpResponse(null, { status: 404 })),
+    );
+    open();
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(within(dialog).getByRole('radio', { name: 'Rider' })).toBeEnabled());
+    await user.click(within(dialog).getByRole('radio', { name: 'Rider' }));
+    await user.selectOptions(within(dialog).getByLabelText(/Which rider/), 'Rafiq Hasan');
+    await user.click(within(dialog).getByRole('button', { name: 'Dispatch' }));
+    expect(await within(dialog).findByText('That rider is not available. Choose another.', undefined, { timeout: 4000 })).toBeInTheDocument();
+    expect(within(dialog).queryByText(/could not be found/)).not.toBeInTheDocument();
+  });
+
   it('asks for a rider before sending anything', async () => {
     const user = userEvent.setup();
     const bodies = recordBodies('POST', /\/dispatch$/);

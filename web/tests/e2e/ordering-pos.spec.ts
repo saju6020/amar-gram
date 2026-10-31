@@ -1,5 +1,6 @@
 import { test, expect as baseExpect, signInAsStaff } from './fixtures';
 import { control } from './ordering-helpers';
+import { orderingIds } from '../../mocks/handlers/ordering/fixtures';
 
 const expect = baseExpect.configure({ timeout: 20_000 });
 test.describe.configure({ timeout: 120_000, retries: 1 });
@@ -107,6 +108,78 @@ test.describe('point of sale (US-ORD-16)', () => {
     const sent = JSON.parse(saleBodies[0]!) as Record<string, unknown>;
     expect(Object.keys(sent)).not.toContain('customerName');
     expect(Object.keys(sent)).not.toContain('customerMobile');
+  });
+
+  // SECURITY (S2 gate): a sale started from a customer's profile ("New order") presets the buyer once. The real router
+  // is the only place Back, a reload and a history entry can be tested.
+  test.describe('preset buyer from /staff/pos?customerId= (real router)', () => {
+    const PRESET = `/staff/pos?customerId=${orderingIds.customerId}`;
+    const chip = (page: import('@playwright/test').Page) => page.getByRole('button', { name: new RegExp(`^${orderingIds.customerName}`) });
+    const walkIn = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Walk-in (no customer) · Add customer' });
+
+    function watchSales(page: import('@playwright/test').Page): Array<Record<string, unknown>> {
+      const bodies: Array<Record<string, unknown>> = [];
+      page.on('request', (request) => {
+        if (request.method() === 'POST' && request.url().endsWith('/api/staff/pos/sales')) bodies.push(JSON.parse(request.postData() ?? '{}') as Record<string, unknown>);
+      });
+      return bodies;
+    }
+    async function payAndComplete(page: import('@playwright/test').Page) {
+      await page.locator('#pos-tender-amount').fill('2000');
+      await page.keyboard.press('Enter');
+      await page.getByRole('dialog').getByRole('button', { name: 'Complete sale' }).click();
+      await expect(page.getByRole('heading', { name: /Sale complete/ })).toBeVisible();
+    }
+
+    test('the address loses the customer once the chip shows them; after a sale, Print receipt then Back is a walk-in', async ({ page }) => {
+      await start(page);
+      const sales = watchSales(page);
+      await page.goto(PRESET);
+      await expect(chip(page)).toBeVisible();
+      await expect(page).toHaveURL(/\/staff\/pos$/); // client state survived the replace: the chip is still there
+      await expect(chip(page)).toBeVisible();
+      await scan(page, JASMINE_RICE);
+      await payAndComplete(page);
+      expect(sales[0]).toMatchObject({ customerName: orderingIds.customerName });
+
+      await page.getByRole('link', { name: 'Print receipt' }).click();
+      await expect(page.getByRole('article', { name: 'Receipt' })).toBeVisible();
+      await page.goBack();
+      await expect(page).toHaveURL(/\/staff\/pos$/);
+      await expect(walkIn(page)).toBeVisible();
+      await scan(page, OATS_400);
+      await payAndComplete(page);
+      expect(sales).toHaveLength(2);
+      expect(Object.keys(sales[1]!)).not.toContain('customerName');
+      expect(Object.keys(sales[1]!)).not.toContain('customerMobile');
+    });
+
+    test('a reload after the preset is a walk-in', async ({ page }) => {
+      await start(page);
+      await page.goto(PRESET);
+      await expect(chip(page)).toBeVisible();
+      await expect(page).toHaveURL(/\/staff\/pos$/);
+      await page.reload();
+      await expect(page.getByRole('heading', { level: 1, name: 'Counter sale' })).toBeVisible();
+      await expect(walkIn(page)).toBeVisible();
+    });
+
+    test('Void basket then the next sale is a walk-in', async ({ page }) => {
+      await start(page);
+      const sales = watchSales(page);
+      await page.goto(PRESET);
+      await expect(chip(page)).toBeVisible();
+      await scan(page, JASMINE_RICE);
+      await expect(page.getByRole('list', { name: 'Basket' }).getByRole('listitem')).toHaveCount(1);
+      await page.getByRole('button', { name: 'Void basket' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Void basket' }).click();
+      await expect(walkIn(page)).toBeVisible();
+      await expect(page).toHaveURL(/\/staff\/pos$/);
+      await scan(page, OATS_400);
+      await payAndComplete(page);
+      expect(Object.keys(sales[0]!)).not.toContain('customerName');
+      expect(Object.keys(sales[0]!)).not.toContain('customerMobile');
+    });
   });
 
   test('only a name or only a mobile blocks the sale with the both-or-neither message', async ({ page }) => {

@@ -69,19 +69,29 @@ export function PosScreen() {
   const complete = useCompleteCounterSale();
 
   const router = useRouter();
-  const preset = useStaffCustomer(presetCustomerId);
-  // The profile's "New order" link presets the buyer ONCE per customer id. Without the ref the effect refilled the
-  // buyer whenever the fields were empty, so clearing them (or New sale) sent the next walk-in on that customer's account.
-  const appliedPreset = useRef('');
+  // The profile's "New order" link presets the buyer ONCE per link. The id is taken into state and out of the address
+  // at once (replace, so no history entry keeps it, and before any basket exists for the unsaved-changes guard to
+  // trap the old address): neither Back from the receipt nor a reload can refill an empty ticket with that customer.
+  // Client state survives a replace to the same route. A later link (the same customer included) presets again.
+  const [presetId, setPresetId] = useState(presetCustomerId);
+  const [presetLink, setPresetLink] = useState(0);
+  const appliedLink = useRef(0);
   useEffect(() => {
-    if (!preset.data || appliedPreset.current === presetCustomerId) return;
-    appliedPreset.current = presetCustomerId;
+    if (presetCustomerId === '') return;
+    setPresetId(presetCustomerId);
+    setPresetLink((n) => n + 1);
+    router.replace('/staff/pos');
+  }, [presetCustomerId, router]);
+  const preset = useStaffCustomer(presetId);
+  useEffect(() => {
+    if (!preset.data || presetLink === 0 || appliedLink.current === presetLink) return;
+    appliedLink.current = presetLink;
     setCustomer((current) =>
       !current.customerId && current.name === '' && current.mobile === ''
         ? { name: preset.data.fullName, mobile: preset.data.mobileNumber ?? '', customerId: preset.data.id }
         : current,
     );
-  }, [preset.data, presetCustomerId]);
+  }, [preset.data, presetLink]);
 
   const quoteLines = lines.map((l) => ({ skuId: l.skuId, quantity: l.quantity }));
   const quote = useCounterQuote({
@@ -178,15 +188,25 @@ export function PosScreen() {
     setFieldErrors({});
     setCashTyped(undefined);
     key.renew();
-    // New sale starts a walk-in: drop the preset from the address, so a reload does not bring the buyer back either.
-    if (presetCustomerId) router.replace('/staff/pos');
     setTimeout(() => scanRef.current?.focus(), 0);
   }
 
-  const buyerText = customerGiven ? `Buyer: ${customer.name.trim()} (${customer.mobile.trim()}).` : 'No customer (walk-in sale).';
-  const reviewText = quote.data
-    ? `${buyerText} Total ${formatMoney(quote.data.totals.grandTotal)}. Payments: ${tenders.map((t) => `${tenderMethodLabel(t.method)} ${formatMoney({ amount: t.amount, currencyCode: currency })}`).join(', ')}.`
-    : '';
+  // The name is customer free text: isolate it (<bdi>) so a bidi/format character in it cannot reorder the amounts around it.
+  const buyerText = customerGiven ? (
+    <>
+      Buyer: <bdi>{customer.name.trim()}</bdi> (<bdi>{customer.mobile.trim()}</bdi>).
+    </>
+  ) : (
+    'No customer (walk-in sale).'
+  );
+  const reviewText = quote.data ? (
+    <>
+      {buyerText} Total {formatMoney(quote.data.totals.grandTotal)}. Payments:{' '}
+      {tenders.map((t) => `${tenderMethodLabel(t.method)} ${formatMoney({ amount: t.amount, currencyCode: currency })}`).join(', ')}.
+    </>
+  ) : (
+    ''
+  );
 
   if (sale) {
     return (

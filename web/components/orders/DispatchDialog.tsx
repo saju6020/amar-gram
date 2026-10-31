@@ -89,8 +89,9 @@ export function DispatchDialog({
             // `CourierNotFound` (OrderingResults.cs:15-21). Read the list again: if the one chosen is no longer on it, the
             // person is told that; if it still is, the order is what went missing.
             const chosen = byRider ? values.riderId : values.courierId;
-            const fresh = byRider ? (await riders.refetch()).data : (await couriers.refetch()).data;
-            if (fresh?.some((entry) => entry.id === chosen)) {
+            // `refetch()` does not throw: a failed re-read says nothing about the order, so it keeps the rider/courier message.
+            const reread = byRider ? await riders.refetch() : await couriers.refetch();
+            if (!reread.isError && reread.data?.some((entry) => entry.id === chosen)) {
               setError('root', { message: 'This order could not be found. It may have moved to another branch.' });
             } else {
               setError(byRider ? 'riderId' : 'courierId', {

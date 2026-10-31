@@ -27,7 +27,7 @@ export function PosReviewDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  summary: string;
+  summary: React.ReactNode;
   pending: boolean;
   onConfirm: () => void;
 }) {

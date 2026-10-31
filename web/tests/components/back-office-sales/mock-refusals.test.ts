@@ -388,7 +388,7 @@ describe('Gate follow-ups - mock truthfulness', () => {
   });
 });
 
-describe('Sales series -StaffDashboardController.cs:38-61, SalesSeriesQueries.cs:13-14', () => {
+describe('Sales series - StaffDashboardController.cs:38-61, SalesSeriesQueries.cs:13-14', () => {
   it('returns 14 days by default, oldest first, every day present, with the server’s total', async () => {
     const series = await getSalesSeries();
     expect(series.days).toHaveLength(14);

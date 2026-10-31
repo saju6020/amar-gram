@@ -8,6 +8,7 @@ import { Amount } from '@/components/billing/Amount';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { Button } from '@/components/ui/button';
 import { describeOrderingError, hasOrderingCode } from '@/lib/api/errors';
+import { cn } from '@/lib/utils';
 import type { StaffOrderAction, StaffOrderDetail, StaffOrderLine } from '@/lib/api/staff-orders';
 import { fulfilmentLabel, formatOrderWhen, orderActionLabel, orderStatusLabel, paymentMethodLabel } from '@/lib/format/orders';
 import { formatDateOnly } from '@/lib/format/time';
@@ -86,7 +87,7 @@ function PickList({
           return (
             <li key={line.lineId}>
               {tickable ? (
-                <label className="flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] bg-surface-page px-3 py-2">
+                <label className={cn('flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] bg-surface-page px-3 py-2', isWriting(line) && 'cursor-progress opacity-60')}>
                   <input
                     type="checkbox"
                     className="h-5 w-5 flex-none accent-leaf"
@@ -95,6 +96,7 @@ function PickList({
                     onChange={() => !isWriting(line) && onToggle(line.lineId, !isPicked(line))}
                   />
                   <span className="min-w-0 flex-1 leading-snug [overflow-wrap:anywhere]">{text}</span>
+                  {isWriting(line) && <span className="flex-none text-xs font-semibold text-ink-muted">Saving…</span>}
                 </label>
               ) : (
                 <div className="rounded-[var(--radius-md)] bg-surface-page px-3 py-2 leading-snug [overflow-wrap:anywhere]">{text}</div>

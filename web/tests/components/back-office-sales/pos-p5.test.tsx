@@ -257,6 +257,32 @@ describe('Preset buyer from /staff/pos?customerId= - SECURITY', () => {
     return within(await screen.findByRole('dialog'));
   }
 
+  it('takes the preset out of the address as soon as the chip shows the customer, and a remount is a walk-in', async () => {
+    setUrl(PRESET);
+    const first = renderWithClient(<PosScreen />);
+    await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) });
+    await waitFor(() => expect(currentUrl()).toBe('/staff/pos'));
+    // Back from the receipt, a reload or any remount reads the clean address: nobody is preset.
+    first.unmount();
+    renderWithClient(<PosScreen />);
+    expect(await screen.findByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+  });
+
+  it('a new link for a customer presets again once the address has been cleaned', async () => {
+    setUrl(PRESET);
+    renderWithClient(<PosScreen />);
+    await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) });
+    await waitFor(() => expect(currentUrl()).toBe('/staff/pos'));
+    await userEvent.setup().click(screen.getByRole('button', { name: new RegExp(`^${ids.customerName}`) }));
+    await userEvent.setup().clear(screen.getByLabelText(/Customer name/));
+    await userEvent.setup().clear(screen.getByLabelText(/Mobile number/));
+    await screen.findByRole('button', { name: 'Walk-in (no customer) · Add customer' });
+    setUrl(PRESET);
+    expect(await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) })).toBeInTheDocument();
+  });
+
   it('fills the buyer from the URL, names them in the review, and clearing both fields keeps it a walk-in', async () => {
     const user = userEvent.setup();
     const sales = recordSales();
@@ -287,7 +313,9 @@ describe('Preset buyer from /staff/pos?customerId= - SECURITY', () => {
     await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) });
     await addRice(user);
     const review = await pay(user);
-    expect(review.getByText(new RegExp(`Buyer: ${ids.customerName}`))).toBeInTheDocument();
+    // The name is isolated from the amounts around it.
+    expect(review.getByText(ids.customerName).tagName).toBe('BDI');
+    expect(review.getByText(/Buyer:/)).toBeInTheDocument();
     await user.click(review.getByRole('button', { name: 'Complete sale' }));
     await screen.findByRole('heading', { name: /Sale complete/ });
     expect(sales[0]).toMatchObject({ customerName: ids.customerName });

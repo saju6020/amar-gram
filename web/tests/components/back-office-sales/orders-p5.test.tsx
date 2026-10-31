@@ -121,10 +121,13 @@ describe('Pick-list tick - U20', () => {
     await user.click(box);
     expect(box).toBeChecked();
     expect(box).toHaveAttribute('aria-disabled', 'true');
+    // The waiting state is visible as text, not only as a dimmed row.
+    expect(screen.getByText('Saving…')).toBeInTheDocument();
     await user.click(box); // ignored: the first write has not settled
     expect(box).toBeChecked();
     expect(sent).toHaveLength(1);
     await waitFor(() => expect(box).not.toHaveAttribute('aria-disabled'));
+    expect(screen.queryByText('Saving…')).not.toBeInTheDocument();
     expect(box).toBeChecked();
     await user.click(box);
     await waitFor(() => expect(sent).toHaveLength(2));
@@ -149,16 +152,16 @@ describe('Pick-list tick - U20', () => {
     expect(box).toBeChecked();
   });
 
-  it('switching to another order mid-write shows that order’s own ticks, with no leftover error', async () => {
+  it('switching to another order mid-write shows that order’s own ticks, with no leftover error, and rolls the first one back in its own cache entry', async () => {
     const user = userEvent.setup();
     server.use(http.put('*/api/staff/orders/:orderId/lines/:lineId/picked', async () => {
       await delay(400);
       return new HttpResponse(null, { status: 500 });
     }));
-    const { rerender } = renderWithClient(<StaffOrderSidePanel orderId={ids.orders.confirmedCod} />);
+    const { rerender, client } = renderWithClient(<StaffOrderSidePanel orderId={ids.orders.confirmedCod} />);
     await user.click(await firstBox());
     rerender(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <QueryClientProvider client={client}>
         <StaffOrderSidePanel orderId={p5OrderIds.packedWaiting} />
       </QueryClientProvider>,
     );
@@ -168,6 +171,14 @@ describe('Pick-list tick - U20', () => {
     // The first order's failed write must not paint its error or its un-tick onto the order now shown.
     for (const box of within(screen.getByRole('list', { name: 'Pick list' })).getAllByRole('checkbox')) expect(box).toBeChecked();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // The hook's rollback ran against the first order's own cache entry (no observer is left on it, so nothing else could
+    // have corrected it): its tick is back, and the order on screen kept its own.
+    const cached = (orderId: string) =>
+      client.getQueryCache().findAll({ queryKey: ['staff', 'order'] }).filter((q) => q.queryKey[3] === orderId && q.state.data !== undefined).at(-1)?.state.data as
+        | { lines: Array<{ picked: boolean }> }
+        | undefined;
+    expect(cached(ids.orders.confirmedCod)!.lines[0]!.picked).toBe(false);
+    expect(cached(p5OrderIds.packedWaiting)!.lines.every((l) => l.picked)).toBe(true);
   });
 });
 

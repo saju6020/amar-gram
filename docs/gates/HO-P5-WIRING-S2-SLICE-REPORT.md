@@ -145,3 +145,14 @@ Commits since the first report: `625a0da`, `adec50e`, `9eec889`, `d26e5d7`, `230
 Verification: typecheck and lint clean; Vitest 56 files / 512 tests (slice folders, back-office, guards and tab consumers) at --maxWorkers=1; e2e ordering-staff + ordering-pos (axe on the riders page included), both projects, --workers=1, fresh next dev on 3122: 52 passed.
 
 Left undone: nothing from the list. The mock receipt still hides the name of a named buyer who is not the seeded customer (`known` in `pos.ts`, pre-existing); E9 no longer depends on it.
+
+## Second gate fix round (SECURITY run 2)
+
+- **Preset (MEDIUM).** The first fix applied the preset once per mount, so Back from the receipt or a reload remounted with `?customerId=X`. Now `PosScreen` takes the id into state and calls `router.replace('/staff/pos')` as soon as the id appears (before any basket exists), so no history entry keeps it; a per-link counter lets a later link (the same customer included) preset again, which also covers resetting the guard. Doing the replace only after the customer arrived was tried first: with a quick scan the unsaved-changes guard put the old address back and the preset returned after Void (found by the e2e). Client state survives the replace (the chip stays).
+- Tests: Vitest (URL clean once the chip shows the customer; a remount is a walk-in; a new link presets again) and e2e through the real router in `ordering-pos.spec.ts` (Print receipt then Back; reload; Void basket), each ending in a sale whose POST body has neither name nor mobile.
+- Review summary: buyer name and mobile in `<bdi>`.
+- Dispatch dialog: `refetch()` result checked for `isError`; a failed re-read keeps the rider/courier message (test added).
+- Order-switch tick test: now shares the query client and asserts the first order's cache entry was rolled back and the order on screen kept its ticks; verified to fail with the `onError` rollback removed.
+- Saving state: the row dims, shows `cursor-progress` and the text "Saving…" while a line's write is in flight.
+- `Sales series` describe title fixed.
+- Verification: typecheck and lint clean; Vitest (slice folders, 19 files, 249 tests) at `--maxWorkers=1`; e2e `ordering-pos.spec.ts` both projects `--workers=1`, fresh `next dev` on 3122: 18 passed.
