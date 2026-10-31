@@ -18,6 +18,7 @@ export type OrderStatus =
   | 'PendingPayment'
   | 'Confirmed'
   | 'Packing'
+  | 'Packed' // HO-P5 BG-4: Domain/DomainServices/OrderTransitionRules.cs:21-22, 56 (optional, Packing -> Packed)
   | 'Dispatched'
   | 'Delivered'
   | 'Cancelled'
@@ -30,6 +31,7 @@ export const ORDER_STATUSES: OrderStatus[] = [
   'PendingPayment',
   'Confirmed',
   'Packing',
+  'Packed',
   'Dispatched',
   'Delivered',
   'Cancelled',
@@ -83,6 +85,8 @@ export interface OrderFulfilmentView {
   pickupBranchId: string | null;
   pickupBranchName: string | null;
   pickupBranchAddress: string | null;
+  /** The customer's note for the rider (Delivery only; the server drops it for Pickup). Read/ViewModels/OrderViewModels.cs:23 */
+  riderNote?: string | null;
 }
 
 export interface CustomerStatusChange {

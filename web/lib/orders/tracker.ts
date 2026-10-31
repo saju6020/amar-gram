@@ -19,6 +19,8 @@ const STAGE_OF_STATUS: Partial<Record<OrderStatus, Stage>> = {
   PendingPayment: 'Placed',
   Confirmed: 'Confirmed',
   Packing: 'Packing',
+  // HO-P5 ADR-FE-189: packed and waiting for the rider is still the Packing node (the customer cannot act on it).
+  Packed: 'Packing',
   Dispatched: 'Dispatched',
   Delivered: 'Delivered',
   Returned: 'Delivered',

@@ -9,6 +9,7 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
   PendingPayment: 'Waiting for payment',
   Confirmed: 'Confirmed',
   Packing: 'Being packed',
+  Packed: 'Packed', // HO-P5 OQ-10
   Dispatched: 'Dispatched',
   Delivered: 'Delivered',
   Cancelled: 'Cancelled',
@@ -28,6 +29,17 @@ const FULFILMENT_LABELS: Record<string, string> = {
 
 export function fulfilmentLabel(method: string): string {
   return FULFILMENT_LABELS[method] ?? method;
+}
+
+const ORDER_CHANNEL_LABELS: Record<string, string> = {
+  Online: 'Online',
+  Counter: 'Counter',
+  // HO-P5 OQ-11: display only. No filter, tab or subscription call until the subscriptions handover.
+  Subscription: 'Subscription',
+};
+
+export function orderChannelLabel(channel: string): string {
+  return ORDER_CHANNEL_LABELS[channel] ?? channel;
 }
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
@@ -177,6 +189,7 @@ const ACTION_LABELS: Record<string, string> = {
   ConfirmPayment: 'Confirm transfer',
   Cancel: 'Cancel order',
   StartPacking: 'Start packing',
+  MarkPacked: 'Mark packed', // HO-P5 BG-4
   Dispatch: 'Dispatch',
   MarkReadyForCollection: 'Ready for collection',
   RecordDelivery: 'Record delivery',
