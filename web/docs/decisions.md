@@ -1984,3 +1984,69 @@ Appended; the entries above are left as written.
 ### ADR-FE-035 -- correction (2026-10-26, HO-P4 S3)
 
 Appended; the entry above is left as written. **The "no upload" half is superseded.** Product photos are added through the shared `FileUploader` (purpose `ProductImage`, staff audience, virus-scanned by the server); the stored-file-id field stays for images attached before. The product editor's Status card (status text, publish checklist, Publish/Unpublish/Archive) is rendered once in the editor layout (`ProductEditorHeader`), so the transition commands are reachable from every section and are never a field saved with the Details form.
+
+## ADR-FE-185 … ADR-FE-192 — Wiring pass: surface the new backend data (HO-P5)
+
+### ADR-FE-185
+
+**Decision.** **Wiring rule.** A `lib/api` type gains a field only as a server view model or request contract has it, cited by file:line in a comment. The matching MSW mock adds the same field **and** the server's validation for any new input (length, count, enumeration, ownership, state); its error body uses the same code and property name
+
+**Why.** A mock that accepts what the server refuses hides a real defect (HO-P4 Amended (i))
+
+**Status.** Binding for every HO-P5 slice. Amends ADR-FE-184: the gaps it listed are now closed this way.
+
+### ADR-FE-186
+
+**Decision.** **The checkout rider note is component state only**: not in the URL (free text a customer may fill with personal details), not in storage. It is sent only for Delivery, trimmed, at most 300 characters with a visible counter, and kept across a retry
+
+**Why.** The URL holds the checkout *choices* (ADR-FE-090); the note is not a choice
+
+**Status.** Binding for HO-P5 S1.
+
+### ADR-FE-187
+
+**Decision.** **The store top strip shows the public delivery promise when `freeOver` is set**; all `Shop` banners then show in `BannerStrip`. A failed or empty promise read falls back to the HO-P3 banner behaviour
+
+**Why.** OQ-1 and OQ-2 of HO-P5 (owner-ratified defaults); no place name because the promise carries no zone name
+
+**Status.** Binding for HO-P5 S1. Amends ADR-FE-176.
+
+### ADR-FE-188
+
+**Decision.** **Chart geometry may convert a server amount string to a number for bar length only**, through the reports chart's existing conversion. Every figure shown (labels, readout, table, total) is the server string; no total or average is computed
+
+**Why.** Bar length is not a money figure; ADR-317 and ADR-FE-092 stay binding for everything displayed
+
+**Status.** Binding for HO-P5 S2. Clarifies, does not relax, ADR-FE-092 and ADR-317.
+
+### ADR-FE-189
+
+**Decision.** **`Packed` is shown to customers as the Packing tracker node** (label "Packed" in lists and badges) and to staff as its own status pill and pipeline bar
+
+**Why.** The customer tracker has no node for a step the customer cannot act on; staff need the waiting-for-rider state visible
+
+**Status.** Built (HO-P5 S0: status, labels, tracker mapping). Amends the HO-P3 tracker and HO-P4 §11.3.1.
+
+### ADR-FE-190
+
+**Decision.** **Receipt drafts autosave**: whole-form `PUT` 1.5 s after the last change and on field blur, never more than one request in flight (a newer change waits and supersedes), status "Draft saved at hh:mm" in a polite live region; posting sends `draftId`; "Discard draft" confirms and deletes. A 404 on save means the draft was closed elsewhere: stop autosaving and say so
+
+**Why.** BG-18; the server keeps one draft per client-minted id and owner
+
+**Status.** Binding for HO-P5 S3. Supersedes HO-P4 §11.5.6 "no autosave".
+
+### ADR-FE-191
+
+**Decision.** **The POS change preview is the quote's `changeDue` / `cashShort`** for the typed tender, debounced; the completed sale's `changeDue` stays authoritative on the receipt
+
+**Why.** BG-7; the browser may not subtract (ADR-317)
+
+**Status.** Binding for HO-P5 S2. Supersedes HO-P4 §11.3.6 / U23 "no change shown before completion".
+
+### ADR-FE-192
+
+**Decision.** **Roster cells cycle Morning, Evening, Off, Morning** with one `PUT` per click; a `Custom` cell asks before replacing its hours; past dates and non-rosterable staff are read-only; the cell text is the server's shift and slot times
+
+**Why.** BG-23; the server owns the presets and the Reception-only rule
+
+**Status.** Binding for HO-P5 S4. Amends HO-P4 §11.6.9.
