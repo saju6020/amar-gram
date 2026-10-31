@@ -163,6 +163,40 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
   });
 
+  // HO-P5 S1 (E5): the optional note for the rider.
+  test('G4: a delivery COD order with a rider note shows it on the order; Pickup hides the field and keeps the note out of the URL', async ({
+    page,
+  }) => {
+    await resetMock(page);
+    await signInAsCustomer(page);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
+    await startCheckoutDelivery(page);
+
+    const note = page.getByLabel('Note for the rider (optional)');
+    await expect(note).toHaveAttribute('maxlength', '300');
+    await note.fill('Please call before you come up <b>twice</b>');
+    await expect(page.getByText('43 of 300')).toBeVisible();
+    // Free text a customer may fill with personal details: never in the address bar.
+    expect(page.url()).not.toContain('call');
+
+    // Collecting instead: the field goes away.
+    await page.getByRole('radio', { name: /Collect from a branch/ }).click();
+    await expect(note).toHaveCount(0);
+    await page.getByRole('radio', { name: /Delivery/ }).first().click();
+    await expect(note).toBeVisible();
+
+    await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
+    await page.getByRole('radio', { name: /Cash on delivery/ }).click();
+    await page.getByRole('button', { name: 'Place order' }).click();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
+
+    const delivering = page.getByRole('region', { name: 'Delivering to' });
+    await expect(delivering.getByText('Note for the rider')).toBeVisible();
+    // Plain text: the markup is shown, not applied.
+    await expect(delivering).toContainText('Please call before you come up <b>twice</b>');
+    expect(page.url()).not.toContain('call');
+  });
+
   test('E-B4/E-C1: COD is disabled above the ceiling with its reason; bank transfer shows instructions', async ({
     page,
   }) => {

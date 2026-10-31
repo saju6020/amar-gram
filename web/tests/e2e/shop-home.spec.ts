@@ -98,6 +98,19 @@ test.describe('shop home (HO-P3 E3)', () => {
     await expect(page.getByRole('button', { name: /^One more / }).first()).toBeVisible();
   });
 
+  test('the top strip states the free-delivery threshold above the header', async ({ page }) => {
+    await page.goto('/shop');
+    const strip = page.getByTestId('shop-top-strip');
+    await expect(strip).toHaveText(
+      'Free delivery over ৳5,000.00 · Cash on delivery across Bangladesh',
+    );
+    await expect(page.getByRole('article').first()).toBeVisible();
+    // The strip comes before the header in the page.
+    const stripBox = await strip.boundingBox();
+    const headerBox = await page.getByRole('banner').boundingBox();
+    expect(stripBox!.y).toBeLessThan(headerBox!.y);
+  });
+
   test('"See all products" opens the catalogue', async ({ page }) => {
     await page.goto('/shop');
     await page.getByRole('link', { name: 'See all products' }).click();
