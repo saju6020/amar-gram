@@ -178,7 +178,7 @@ export const posOrderingHandlers: HttpHandler[] = [
     });
     // HO-P5 BG-7: with a tendered amount and a sale that can be made (and no quantity cut down), exactly one of
     // `changeDue` (the cash covers the total; zero when exact) and `cashShort` -- both absent otherwise.
-    // Read/QueryHandlers/Order/PosQueryHandlers.cs:111-122, by the rule of Domain/DomainServices/TenderCalculator.cs:49-52.
+    // Read/QueryHandlers/Order/PosQueryHandlers.cs:113-123, by the rule of Domain/DomainServices/TenderCalculator.cs:49-52.
     // The arithmetic is the server's, done here because this handler IS the server.
     const changes = (result.wire.changes as Array<{ kind: string }> | undefined) ?? [];
     if (tendered !== undefined && tendered !== null && result.wire.canSell === true && changes.every((c) => c.kind !== 'QuantityReduced')) {

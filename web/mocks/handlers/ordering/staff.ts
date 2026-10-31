@@ -878,7 +878,7 @@ export const staffOrderingHandlers: HttpHandler[] = [
     if (!order) return notFound();
     const { trackingNumber } = (await request.json()) as { trackingNumber?: string };
     if (!order.shipment) return violation('OrderId', 'InvalidOrderTransition', 'This order has not been dispatched.');
-    // OrderAggregate.RecordTracking (Domain/Aggregates/Order/OrderAggregate.cs:468-471): a rider delivery has no tracking number.
+    // OrderAggregate.RecordTracking (Domain/Aggregates/Order/OrderAggregate.cs:465-471): a rider delivery has no tracking number.
     if (order.shipment.riderId) {
       return violation('Shipment', 'InvalidOrderTransition', 'An order delivered by an in-house rider has no tracking number.');
     }
@@ -1075,7 +1075,7 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   // Riders.Manage (:34-48). A name already taken at the branch is 400 RiderNameAlreadyExists on `Name`
-  // (Application/CommandHandlers/Order/RiderCommandHandlers.cs:15-36): the handler compares the trimmed name exactly
+  // (Application/CommandHandlers/Order/RiderCommandHandlers.cs:13-34): the handler compares the trimmed name exactly
   // (Postgres equality and the unique index `ix_rider_branch_name` are case-sensitive), so "rafiq hasan" is a different rider.
   http.post(`${API}/riders`, async ({ request }) => {
     if (lacksRole(request, RIDER_MANAGE_ROLES)) return forbidden();
