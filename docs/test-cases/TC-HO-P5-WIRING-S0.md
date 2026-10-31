@@ -14,8 +14,8 @@ Written: 2026-10-31 (before any command ran)  ·  Executed: 2026-10-31
 | | Count |
 |---|---|
 | Total | 44 |
-| PASS | 39 |
-| FAIL | 1 (T3, environmental, see evidence) |
+| PASS | 40 |
+| FAIL | 0 (T3 failed at the default worker count, passed at `--maxWorkers=2`; see its evidence) |
 | BLOCKED | 4 |
 | NOT RUN | 0 |
 
@@ -33,7 +33,7 @@ Written: 2026-10-31 (before any command ran)  ·  Executed: 2026-10-31
 |---|---|---|---|---|
 | T1 | `tsc --noEmit` over web/ | exit 0 | PASS | exit 0, also with `--incremental false -p .` |
 | T2 | `eslint . --max-warnings 0` | exit 0 | PASS | exit 0, no output |
-| T3 | Full Vitest suite | no failure | FAIL | Run 1: 3 failed / 1878 passed / 45 skipped (213 files; idle-lock, inventory/shared-pieces, back-office-stock/receiving-layout). Run 2: 5 failed / 1876 passed / 45 skipped (goods-receipt-form x4, shared-pieces x1). Different tests each time; every failing file passes alone (33/33 and 24/24). No failing file is touched by the S0 diff (`git diff cda20c4 HEAD` on those folders is empty). Timeouts and a `pointer-events: none` race under load: environmental, same pattern HO-P4 recorded. The suite was never green in one pass here. |
+| T3 | Full Vitest suite | no failure | PASS | At `--maxWorkers=2` on 8eda79a (docs only since 0ae5cc9): exit 0, 212 files passed, 1 skipped, 1881 tests passed, 45 skipped, 0 failed. Earlier at the default worker count, not green: Run 1: 3 failed / 1878 passed / 45 skipped (213 files; idle-lock, inventory/shared-pieces, back-office-stock/receiving-layout). Run 2: 5 failed / 1876 passed / 45 skipped (goods-receipt-form x4, shared-pieces x1). Different tests each time; every failing file passes alone (33/33 and 24/24). No failing file is touched by the S0 diff (`git diff cda20c4 HEAD` on those folders is empty). Timeouts and a `pointer-events: none` race under load: environmental, same pattern HO-P4 recorded. |
 | U1a | Tracker for Packed, Delivery | 5 nodes, done,done,current,future,future; not null | PASS | `tracker-packed.test.ts` passed in the selected run |
 | U1b | Tracker for Packed, Pickup | same | PASS | same file, passed |
 | U1c | `ORDER_STATUSES` has Packed between Packing and Dispatched | adjacent | PASS | passed |
@@ -95,7 +95,7 @@ Written: 2026-10-31 (before any command ran)  ·  Executed: 2026-10-31
 | A1: mock seeds it | U4a-f, X2 | PASS |
 | A1: ADRs 185-192 recorded | X4 | PASS |
 | A1: test split with unchanged count | U3 | PASS |
-| A21 (S0 part): typecheck, lint, Vitest, build pass | T1, T2, B1 pass; T3 fails on load | PARTIAL (T3) |
+| A21 (S0 part): typecheck, lint, Vitest, build pass | T1, T2, T3 (`--maxWorkers=2`), B1 | PASS |
 | §16 E1: three run-only specs pass | E1a-c | PASS |
 | Amended (h) Packed headline | G4, G5 | PASS (unit only, X3 BLOCKED) |
 

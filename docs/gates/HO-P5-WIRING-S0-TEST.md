@@ -1,14 +1,15 @@
 GATE: TEST
 HANDOVER: HO-P5-WIRING (slice S0)
-COMMITS: base cda20c4, HEAD 0ae5cc9 (branch feat/p5-s0-contract)
+COMMITS: base cda20c4, HEAD 0ae5cc9 (branch feat/p5-s0-contract); Vitest rerun at 8eda79a (docs only since 0ae5cc9)
 DATE: 2026-10-31
-STATUS: PASS for S0-introduced defects, with one caveat (Vitest never green in a single full pass here; load timeouts only, see below)
+STATUS: PASS
 
-SHEET: docs/test-cases/TC-HO-P5-WIRING-S0.md (44 rows: 39 PASS, 1 FAIL, 4 BLOCKED, 0 NOT RUN). Written before any command ran.
+SHEET: docs/test-cases/TC-HO-P5-WIRING-S0.md (44 rows: 40 PASS, 0 FAIL, 4 BLOCKED, 0 NOT RUN). Written before any command ran. Updated after ACCEPTANCE run 1 for T3 and A21 only.
 
 RESULTS
 - `tsc --noEmit`: exit 0 (also `--incremental false -p .`). ESLint `--max-warnings 0`: exit 0.
-- Vitest, full suite, two runs: run 1: 3 failed, 1878 passed, 45 skipped (213 files, 1926 tests); run 2: 5 failed, 1876 passed, 45 skipped. The failures differ between runs (idle-lock, inventory/shared-pieces, back-office-stock/receiving-layout, then inventory/goods-receipt-form x4 and shared-pieces). Every failing file passes alone (33/33, 24/24). None is touched by the S0 diff. Classified environmental (load timeouts, a pointer-events race); same pattern HO-P4 recorded. Never green in one pass, so T3 is a FAIL on the sheet.
+- Vitest, full suite at `--maxWorkers=2` (rerun at 8eda79a after ACCEPTANCE run 1): exit 0, 212 files passed, 1 skipped; 1881 tests passed, 45 skipped, 0 failed (1926 tests, 334 s). This is the A21 evidence.
+- Vitest, full suite at the default worker count, two earlier runs, neither green: run 1: 3 failed, 1878 passed, 45 skipped (213 files, 1926 tests); run 2: 5 failed, 1876 passed, 45 skipped. The failures differ between runs (idle-lock, inventory/shared-pieces, back-office-stock/receiving-layout, then inventory/goods-receipt-form x4 and shared-pieces). Every failing file passes alone (33/33, 24/24). None is touched by the S0 diff. Classified environmental (load timeouts, a pointer-events race); same pattern HO-P4 recorded. No comparison run at base exists. Later slices should expect the same at the default worker count.
 - S0's own tests: tracker-packed 4, status-vocabulary 8, order-status-badge-packed 3, account-sidebar 6, overview-dashboard/customers/signin 6+5+5, no-colour-literals and no-hex-literals: all pass. Old `overview.test.tsx` had 16 `it`; the three new files hold 16 (U3).
 - `next build`: exit 0 (1m15s).
 - Production bundle inspection (`.next`, all js/json/html/rsc/map): zero hits for `__purrcare_ordering_mock_db__`, the rider names (Rafiq Hasan, Jahid Alam, Kamal Mia), Mizanur Rahman, Shirin Akter, order id `...112`, the rider-note text, BOC-2026-0142, Bangladesh Organic Council, Sam Rahman, setupWorker, createWorker, the rider mobile. "Kalijira Rice" and "msw/browser" appear only in `.next/cache/webpack/*-production/0.pack` (build cache, not served). The two layout chunks that mention `NEXT_PUBLIC_USE_MOCKS` contain the guard call with `nodeEnv:"production"` inlined, not handlers. `public/mockServiceWorker.js` is tracked, present, holds no seeds: the known LOW stands.
@@ -24,7 +25,8 @@ FAILURES AND CLASSIFICATION
 - ordering-customer.spec.ts:146 E-B3 (mobile-360): flaky (passed on the spec's own in-file retry). Passes alone. Environmental.
 - shop-staff.spec.ts:137 E-C3 (mobile-360): element not found at 29.7 s under load. Reran alone on both projects: 2/2 pass. Environmental.
 - No failure from the 12-item baseline list appeared (none of those specs were in scope). No unexplained failure, no real S0 defect.
-- Vitest failures: see RESULTS; environmental.
+- The four results above are in specs outside S0's §16 rows (`ordering-customer` is S1's E5, `shop-staff` is S3's E10) and each passes alone, so under §1 Amended (i) they are recorded here, do not block S0, and are rechecked at E18. Chunks 2 and 3 are not clean evidence for those specs: chunk 2 reused chunk 1's dev server, against §16's "fresh `next dev` per chunk".
+- Vitest failures at the default worker count: see RESULTS; environmental. None at `--maxWorkers=2`.
 
 SPECIFIC CHECKS
 - U4 amounts: the existing test in `web/tests/unit/orders/status-vocabulary.test.ts` asserts no amounts (status of 6 of 11 old orders plus `toHaveLength(13)`), as CODE_REVIEW said. I compared the real seeds against cda20c4 at runtime with a temporary test (deleted, tree clean): all 11 pre-existing orders are equal as full objects (timestamps normalised, new rider fields dropped); status, subtotal, grand total, amount paid and each line's quantity, unit price and line total identical; order count 11 to 13. The 51 pre-existing products equal after dropping the five new fields. So the seeds did keep amounts; the test just does not prove it. I did not edit the test (not assigned to this gate).
