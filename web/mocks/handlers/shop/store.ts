@@ -21,7 +21,8 @@ import {
  * state, always seeded fresh.
  */
 
-const PERSIST_KEY = '__purrcare_shop_mock_db__';
+// HO-P5 Amended (b): bumped so a browser's stale copy does not hide the new district, certificate and "Was" price seeds.
+const PERSIST_KEY = '__purrcare_shop_mock_db__v2';
 
 export interface MockAlert {
   stockAlertId: string;
@@ -100,6 +101,18 @@ export function resetShopMockData(): void {
 
 export const money = (amount: string) => ({ amount, currencyCode: 'BDT' });
 
+/**
+ * Minor units (`280000`) to the wire amount (`"2800.00"`) by string handling only: no division, no float
+ * (HO-P5 CODE_REVIEW: the "Was" price is formatted, never computed).
+ */
+function centsText(cents: number): string {
+  const digits = String(Math.trunc(cents)).padStart(3, '0');
+  return `${digits.slice(0, -2)}.${digits.slice(-2)}`;
+}
+
+const compareAtOf = (sku: MockSku) =>
+  sku.compareAtCents == null ? null : money(centsText(sku.compareAtCents));
+
 export const isOnStorefront = (p: MockProduct) => p.status === 'Active' && p.listed;
 
 export function findBySlug(slug: string): MockProduct | undefined {
@@ -167,6 +180,12 @@ export function catalogueItem(p: MockProduct) {
     availability: productAvailability(p),
     rating: { average: p.ratingAverage, count: p.ratingCount },
     primaryImage: imageFor(p, true),
+    // HO-P5 G1/G8/BG-13: Read/ViewModels/CatalogueItem.cs:28-32. The public builder never sends the staff-only
+    // certificate expiry and file, or the scheduled "Was" price. The mock's cards are per product, so the
+    // "Was" price (a single-size card's field on the server) is sent only when the product has one active size.
+    districtOfOrigin: p.district ?? null,
+    certifications: p.certifications,
+    compareAtPrice: activeSkus(p).length === 1 ? compareAtOf(activeSkus(p)[0]!) : null,
   };
 }
 
@@ -184,6 +203,8 @@ export function detailView(p: MockProduct, locale: string | undefined) {
     productId: p.productId,
     slug: p.slug,
     name: name.value!,
+    // HO-P5 G1: Read/ViewModels/ProductDetailViewModel.cs:21 (no village).
+    districtOfOrigin: p.district ?? null,
     brand: p.brand,
     description: description.value ?? '',
     category: p.category,
@@ -216,6 +237,8 @@ export function detailView(p: MockProduct, locale: string | undefined) {
       colour: s.colour,
       packQuantity: s.packQuantity,
       price: s.price ? money(s.price) : null,
+      // HO-P5 BG-13: Read/ViewModels/ProductDetailViewModel.cs:12-13.
+      compareAtPrice: compareAtOf(s),
       availability: skuAvailability(p, s),
       expiryNotice: s.expiresOn && s.inStock ? { expiresOn: s.expiresOn } : null,
       images:

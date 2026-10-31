@@ -92,6 +92,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
             brand={product.brand}
             rating={product.rating}
             country={product.countryOfOrigin}
+            district={product.districtOfOrigin}
             lang={lang || undefined}
             description={product.description}
             descriptionLang={product.fieldLocales.description ?? product.locale}

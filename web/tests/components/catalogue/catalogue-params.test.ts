@@ -73,4 +73,24 @@ describe('catalogueParams — HO-SHP-002 §8.4, ADR-FE-031', () => {
     const cleared = clearFilters(parsed);
     expect(toSearchParams(cleared).toString()).toBe('q=oats&sort=rating&lang=bn');
   });
+
+  // HO-P5 S1 U8: `district` is a repeatable list, handled exactly as `origin` is.
+  it('U8: district is parsed as a list, sent to the API, counted, and cleared like origin', () => {
+    const parsed = parseCatalogueParams(
+      new URLSearchParams('district=Dinajpur&district=Sylhet&district=Dinajpur&origin=BD&q=oats'),
+    );
+    expect(parsed.district).toEqual(['Dinajpur', 'Sylhet']);
+    expect(toApiSearchParams(parsed).getAll('district')).toEqual(['Dinajpur', 'Sylhet']);
+    expect(toSearchParams(parsed).toString()).toBe(
+      'q=oats&origin=BD&district=Dinajpur&district=Sylhet',
+    );
+    expect(activeFilterCount(parsed)).toBe(3);
+    expect(parseCatalogueParams({ district: ['A', 'B'] }).district).toEqual(['A', 'B']);
+    expect(parseCatalogueParams({ district: ' ' }).district).toEqual([]);
+    const toggled = withFilterChange(parsed, { district: toggleValue(parsed.district, 'Sylhet') });
+    expect(toggled.district).toEqual(['Dinajpur']);
+    expect(toggled.pageNumber).toBe(1);
+    // Clear filters drops the district and keeps the search, as it does for origin.
+    expect(toSearchParams(clearFilters(parsed)).toString()).toBe('q=oats');
+  });
 });

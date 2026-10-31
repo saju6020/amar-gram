@@ -307,8 +307,19 @@ function CardAction({
   );
 }
 
-/** Producer and country (G1: there is no district yet), in the leaf eyebrow. */
+/**
+ * The leaf eyebrow: the district of origin when the item has one (HO-P5 G1, OQ-5; uppercased by CSS, the
+ * text is as sent), otherwise the producer and country.
+ */
 function Eyebrow({ item }: { item: CatalogueItem }) {
+  const district = item.districtOfOrigin?.trim();
+  if (district) {
+    return (
+      <p className="m-0 flex items-center gap-1.5 text-xs font-semibold uppercase leading-tight tracking-[0.06em] text-leaf">
+        <span>{district}</span>
+      </p>
+    );
+  }
   const country = item.countryOfOrigin;
   const flag = country ? countryFlag(country.code) : null;
   return (
@@ -330,8 +341,9 @@ function Eyebrow({ item }: { item: CatalogueItem }) {
  * area, a white badge, the 44px wishlist heart, the producer and country eyebrow, the name (the heading
  * link) with its size, rating, a Fraunces price (`fromPrice`, as sent) and a mango *Add* pill. Once this
  * size is in the basket a leaf quantity stepper takes the Add button's place (D-7). Everything the
- * shopper needs is text; names and brands are PLAIN TEXT. No "Organic" badge: the catalogue items do
- * not carry certifications yet (G8).
+ * shopper needs is text; names and brands are PLAIN TEXT. An "Organic" pill shows over the image corner
+ * only when the item's `certifications` include `CertifiedOrganic` (HO-P5 G8); it is text, and the
+ * card also carries "Certified organic" as visually hidden text after the name.
  */
 export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProps) {
   const Heading = headingLevel;
@@ -348,6 +360,7 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
   const resolvedUrl = resolveFileUrl(item.primaryImage?.url);
   const imageUrl = resolvedUrl === failedSrc ? null : resolvedUrl;
   const imageAlt = item.primaryImage?.altText || `${item.name} — photo coming soon`;
+  const organic = item.certifications?.includes('CertifiedOrganic') ?? false;
   const badges = [
     item.kind === 'Bundle' && (
       <span key="kit" className="inline-flex items-center gap-1.5 text-leaf-ink">
@@ -384,8 +397,17 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
             <ProductPackArt tone={tone} className="size-3/5 rounded-none bg-transparent" />
           </span>
         )}
-        {(badges.length > 0 || inBasket > 0) && (
+        {(organic || badges.length > 0 || inBasket > 0) && (
           <div className="absolute left-3 top-3 flex max-w-[calc(100%-72px)] flex-col items-start gap-1.5">
+            {organic && (
+              // The visible word is "Organic"; the hidden "Certified organic" after the name says it in full.
+              <span
+                aria-hidden="true"
+                className="rounded-pill bg-leaf px-2.5 py-1 text-xs font-bold leading-tight text-leaf-soft"
+              >
+                Organic
+              </span>
+            )}
             {badges.map((badge, i) => (
               <span
                 key={i}
@@ -423,6 +445,7 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
             )}
           </Link>
         </Heading>
+        {organic && <span className="sr-only">Certified organic</span>}
         <RatingText rating={item.rating} />
         {item.availability !== 'InStock' && <AvailabilityText availability={item.availability} />}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2.5 gap-y-2 pt-1.5">

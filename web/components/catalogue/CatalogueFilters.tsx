@@ -57,6 +57,7 @@ export function CatalogueFilters({
   const brands = collapsible
     ? matchingBrands.filter((b, i) => i < BRANDS_COLLAPSED || value.brand.includes(b.name))
     : matchingBrands;
+  const districts = facets.districts ?? [];
   const selectedCategory = categories.find((c) => c.value === value.category);
   const organicOffered =
     facets.certifications.some((c) => c.value === ORGANIC) || value.certification.includes(ORGANIC);
@@ -124,6 +125,22 @@ export function CatalogueFilters({
               />
             );
           })}
+        </FilterGroup>
+      )}
+
+      {/* HO-P5 G1: districts of origin, in the order and with the counts the API sends. */}
+      {districts.length > 0 && (
+        <FilterGroup legend="District" defaultOpen={false} active={value.district.length > 0}>
+          {districts.map((district) => (
+            <CheckOption
+              key={district.value}
+              id={`${uid}-district-${district.value}`}
+              label={district.value}
+              count={district.count}
+              checked={value.district.includes(district.value)}
+              onChange={() => onChange({ district: toggleValue(value.district, district.value) })}
+            />
+          ))}
         </FilterGroup>
       )}
 

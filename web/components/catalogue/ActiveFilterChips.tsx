@@ -52,6 +52,13 @@ function chipsFor(
       });
     }
   }
+  for (const district of value.district) {
+    chips.push({
+      key: `district-${district}`,
+      label: district,
+      patch: { district: toggleValue(value.district, district) },
+    });
+  }
   for (const brand of value.brand) {
     chips.push({
       key: `brand-${brand}`,
