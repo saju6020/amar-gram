@@ -23,6 +23,7 @@ const ORDER: Readonly<Record<string, StatusLabel>> = {
   PendingPayment: { label: 'Awaiting payment', tone: 'warning' },
   Confirmed: { label: 'Confirmed', tone: 'success' },
   Packing: { label: 'Being packed', tone: 'success' },
+  Packed: { label: 'Packed', tone: 'success' },
   Dispatched: { label: 'On its way', tone: 'success' },
   Delivered: { label: 'Delivered', tone: 'success' },
   Cancelled: { label: 'Cancelled', tone: 'neutral' },

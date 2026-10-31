@@ -114,6 +114,22 @@ describe('account sidebar', () => {
     await waitFor(() => expect(orders).toHaveTextContent('(2 on the way)'), { timeout: 4000 });
   });
 
+  it('a Packed order counts as on the way (HO-P5 BG-4)', async () => {
+    server.use(
+      http.get('*/api/customers/me/orders', () =>
+        HttpResponse.json({
+          items: [order('1', 'Packed'), order('2', 'Delivered')],
+          pageNumber: 1,
+          pageSize: 50,
+          totalCount: 2,
+        }),
+      ),
+    );
+    renderWithClient(<AccountSidebar />);
+    const orders = screen.getByRole('link', { name: /^My orders/ });
+    await waitFor(() => expect(orders).toHaveTextContent('(1 on the way)'), { timeout: 4000 });
+  });
+
   it('on a phone the same pages are a row of pills, starting with My orders', () => {
     renderWithClient(<AccountPills />);
     const links = within(screen.getByRole('navigation', { name: 'Main' })).getAllByRole('link');

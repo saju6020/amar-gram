@@ -10,12 +10,13 @@ import { orderTrackerSteps } from '@/lib/orders/tracker';
 import { portalOrderHref } from '@/lib/routing/portal-links';
 
 /** Orders that are still on their way (the overview's live order card shows the newest of these). */
-const OPEN_STATUSES = ['PendingPayment', 'Confirmed', 'Packing', 'Dispatched'];
+const OPEN_STATUSES = ['PendingPayment', 'Confirmed', 'Packing', 'Packed', 'Dispatched'];
 
 const HEADLINES: Record<string, string> = {
   PendingPayment: 'is waiting for your transfer',
   Confirmed: 'is confirmed',
   Packing: 'is being packed',
+  Packed: 'is packed',
   Dispatched: 'is on its way',
 };
 

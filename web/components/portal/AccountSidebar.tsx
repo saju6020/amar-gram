@@ -27,7 +27,7 @@ const ICONS: Record<AccountIcon, LucideIcon> = {
 };
 
 /** Orders that are still on their way (the count beside Orders). */
-const OPEN_ORDER_STATUSES = new Set(['PendingPayment', 'Confirmed', 'Packing', 'Dispatched']);
+const OPEN_ORDER_STATUSES = new Set(['PendingPayment', 'Confirmed', 'Packing', 'Packed', 'Dispatched']);
 
 export function initialsOf(fullName: string): string {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
