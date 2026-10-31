@@ -16,6 +16,7 @@ const HEADLINES: Record<string, string> = {
   PendingPayment: 'is waiting for your transfer',
   Confirmed: 'is confirmed',
   Packing: 'is being packed',
+  Packed: 'is packed',
   Dispatched: 'is on its way',
 };
 
