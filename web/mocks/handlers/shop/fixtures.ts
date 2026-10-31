@@ -53,6 +53,11 @@ export const shopFixtureIds = {
   hiddenReviewId: uuid('d', 4),
   moderationPendingReviewId: uuid('d', 11),
   priceSkuId: uuid('b', 101),
+  /** HO-P5 S0 (BG-14): the uploaded organic certificate on the oats product (the mustard-oil certificate has expired and has no file). */
+  organicCertificateFileId: uuid('e', 1),
+  /** HO-P5 S0: the two seeded certified-organic products, valid and expired. */
+  certificateValidSlug: 'organic-rolled-oats',
+  certificateExpiredSlug: 'pure-mustard-oil',
 } as const;
 
 export type Availability = 'InStock' | 'OutOfStock';
@@ -70,6 +75,9 @@ export interface MockSku {
   /** Current price amount, or null when never priced. */
   price: string | null;
   scheduledPrice: { amount: string; effectiveFrom: string } | null;
+  /** HO-P5 BG-13 "Was" price in minor units: Read/ViewModels/CatalogueItem.cs:31-32, StaffProductDetailViewModel.cs:23-25. */
+  compareAtCents?: number | null;
+  scheduledCompareAtCents?: number | null;
   inStock: boolean;
   expiresOn: string | null;
 }
@@ -102,6 +110,11 @@ export interface MockProduct {
   allergens: string | null;
   organicCertifier: string | null;
   organicCertificateNumber: string | null;
+  /** HO-P5 BG-14 (StaffProductDetailViewModel.cs:27-33): `yyyy-MM-dd` expiry and the uploaded file id. */
+  organicCertificateExpiresOn?: string | null;
+  organicCertificateFileId?: string | null;
+  /** HO-P5 G1 / BG-12: Read/ViewModels/CatalogueItem.cs:28-29, ProductDetailViewModel.cs:21. A district name, no village. */
+  district?: string | null;
   /** HO-P2 §1.3 certification names (`CertifiedOrganic`, `PesticideFree`, `Traditional`, `Halal`). */
   certifications: string[];
   images: Array<{
@@ -376,6 +389,9 @@ export function seedProducts(): MockProduct[] {
       subcategory: 'FlattenedAndPuffedRice',
       country: 'BD',
       tags: ['oats', 'breakfast', 'organic'],
+      district: 'Dinajpur',
+      organicCertificateExpiresOn: '2030-12-31',
+      organicCertificateFileId: shopFixtureIds.organicCertificateFileId,
       certifications: ['CertifiedOrganic', 'PesticideFree'],
       organicCertifier: 'Bangladesh Organic Council',
       organicCertificateNumber: 'BOC-2026-0142',
@@ -392,6 +408,8 @@ export function seedProducts(): MockProduct[] {
       skus: [
         sku(101, 'OAT-400G', '400 g', '650.00', true),
         sku(102, 'OAT-2KG', '2 kg', '2450.00', true, {
+          compareAtCents: 280_000,
+          scheduledCompareAtCents: 300_000,
           shippingWeightGrams: 2100,
           expiresOn: '2026-11-12',
           scheduledPrice: { amount: '2600.00', effectiveFrom: '2026-12-01T00:00:00Z' },
@@ -433,6 +451,7 @@ export function seedProducts(): MockProduct[] {
       subcategory: 'DateMolasses',
       country: 'BD',
       tags: ['gur', 'jessore', 'winter'],
+      district: 'Satkhira',
       certifications: ['Traditional'],
       ingredientList: 'Date palm sap (100%)',
       ratingAverage: 3.8,
@@ -440,7 +459,7 @@ export function seedProducts(): MockProduct[] {
       sold: 150,
       createdAt: '2026-07-10T00:00:00Z',
       ...food({ category: 'HoneyAndGur' }),
-      skus: [sku(301, 'GUR-1KG', '1 kg', '690.00', true)],
+      skus: [sku(301, 'GUR-1KG', '1 kg', '690.00', true, { compareAtCents: 79_000 })],
     }),
     product({
       productId: uuid('a', 4),
@@ -451,6 +470,7 @@ export function seedProducts(): MockProduct[] {
       subcategory: 'SpiceBlends',
       country: 'BD',
       tags: ['spice', 'masala'],
+      district: 'Sylhet',
       certifications: ['Halal'],
       ingredientList: 'Coriander, cumin, cardamom, cinnamon, clove, black pepper',
       ratingAverage: 4.7,
@@ -471,6 +491,8 @@ export function seedProducts(): MockProduct[] {
       subcategory: 'MustardOil',
       country: 'BD',
       tags: ['oil', 'mustard', 'cold-pressed'],
+      district: 'Sirajganj',
+      organicCertificateExpiresOn: '2025-12-31',
       certifications: ['CertifiedOrganic'],
       organicCertifier: 'Bangladesh Organic Council',
       organicCertificateNumber: 'BOC-2026-0187',
@@ -490,6 +512,7 @@ export function seedProducts(): MockProduct[] {
       subcategory: 'Honey',
       country: 'BD',
       tags: ['honey', 'raw'],
+      district: 'Satkhira',
       certifications: ['Traditional'],
       ingredientList: 'Raw honey (100%)',
       ratingAverage: 4.1,
@@ -545,6 +568,7 @@ export function seedProducts(): MockProduct[] {
       subcategory: 'Pickles',
       country: 'BD',
       tags: ['pickle', 'mango', 'achar'],
+      district: 'Bogura',
       certifications: ['Traditional'],
       ingredientList: 'Green mango, mustard oil, salt, spices',
       ratingAverage: 4.6,

@@ -12,7 +12,21 @@ import { orderingIds as ids } from './fixtures';
  * mock's, so Add to cart on a real product page reaches a real cart line.
  */
 
-const PERSIST_KEY = '__purrcare_ordering_mock_db__';
+// HO-P5 S0: bumped (v2) so a stale sessionStorage copy without riders, picked ticks or the new seeds is not loaded.
+const PERSIST_KEY = '__purrcare_ordering_mock_db__v2';
+
+/** Seed ids HO-P5 adds (kept here: `ordering/fixtures.ts` is not S0's file). */
+export const riderIds = {
+  rafiq: 'a2000000-0000-0000-0000-000000000001',
+  jahid: 'a2000000-0000-0000-0000-000000000002',
+  kamalInactive: 'a2000000-0000-0000-0000-000000000003',
+} as const;
+export const p5OrderIds = {
+  packedWaiting: 'f0000000-0000-0000-0000-000000000112',
+  dispatchedWithRider: 'f0000000-0000-0000-0000-000000000113',
+} as const;
+/** Customer-facing carrier name of an in-house dispatch: Shared/Common/Constants/OrderRules.cs:25 */
+export const RIDER_CARRIER_NAME = 'Our delivery rider';
 export const CURRENCY = 'BDT';
 export const ZONE = ids.timeZoneId;
 export const DEFAULT_STOCK = 25;
@@ -84,12 +98,17 @@ export interface DbOrderLine {
   quantityReturned: number;
   returnClass: 'Food' | 'Household' | 'Other';
   allocations: DbAllocation[];
+  /** HO-P5 BG-4 pick-list tick: Read/ViewModels/StaffOrderViewModels.cs:19. Absent = not picked (optional so unrelated builders compile). */
+  picked?: boolean;
+  pickedOn?: string | null;
+  pickedBy?: string | null;
 }
 
 export type OrderStatusName =
   | 'PendingPayment'
   | 'Confirmed'
   | 'Packing'
+  | 'Packed'
   | 'Dispatched'
   | 'Delivered'
   | 'Cancelled'
@@ -121,6 +140,8 @@ export interface DbFulfilment {
   pickupBranchId: string | null;
   pickupBranchName: string | null;
   pickupBranchAddress: string | null;
+  /** HO-P5 G4: Read/ViewModels/OrderViewModels.cs:23. Absent = none (optional so unrelated builders compile). */
+  riderNote?: string | null;
 }
 
 export interface DbOrder {
@@ -156,14 +177,19 @@ export interface DbOrder {
     collectedOn: string;
     recordedBy: string;
   } | null;
+  /** HO-P5 BG-5: Read/ViewModels/StaffOrderViewModels.cs:27-30 -- `courierId` is null when the order left with an in-house rider. */
   shipment: {
-    courierId: string;
+    courierId: string | null;
     courierName: string;
     trackingNumber: string | null;
     trackingUrl: string | null;
     dispatchedOn: string;
     lastTrackingStatus: string | null;
+    riderId?: string | null;
+    riderName?: string | null;
   } | null;
+  /** HO-P5 BG-4: when the order was marked packed (StaffOrderViewModels.cs:38 `PackedOn`). */
+  packedOn?: string | null;
   collectBy: string | null;
   invoiceNumber: string | null;
   amountPaidCents: Cents;
@@ -286,6 +312,15 @@ export interface DbCode {
   version: number;
 }
 
+/** HO-P5 BG-5: Read/ViewModels/RiderViewModels.cs:3-4 plus the owning branch. */
+export interface DbRider {
+  id: string;
+  branchId: string;
+  name: string;
+  mobileNumber: string | null;
+  isActive: boolean;
+}
+
 export interface DbBank {
   configured: boolean;
   accountName: string | null;
@@ -305,6 +340,7 @@ export interface Db {
   issues: DbIssue[];
   zones: DbZone[];
   couriers: DbCourier[];
+  riders: DbRider[];
   codes: DbCode[];
   bank: DbBank;
   stock: Record<string, number>;
@@ -657,6 +693,8 @@ function seedOrders(): DbOrder[] {
     trackingUrl: 'https://track.example/pathao/PC-88213004',
     dispatchedOn: minutesAgo(1300),
     lastTrackingStatus: 'Out for delivery',
+    riderId: null,
+    riderName: null,
   };
 
   const delivered = orderFrom({
@@ -677,6 +715,8 @@ function seedOrders(): DbOrder[] {
     trackingUrl: null,
     dispatchedOn: minutesAgo(3800),
     lastTrackingStatus: null,
+    riderId: null,
+    riderName: null,
   };
   delivered.cod = {
     amountCents: delivered.grandTotalCents,
@@ -685,6 +725,7 @@ function seedOrders(): DbOrder[] {
     collectedOn: minutesAgo(3000),
     recordedBy: ids.adminStaffId,
   };
+  delivered.fulfilment.riderNote = 'Please ring the bell twice; the gate is stiff.';
   delivered.amountPaidCents = delivered.grandTotalCents;
   delivered.invoiceNumber = 'INV-MAIN-2627-000398';
   delivered.returnWindowEndsOn = addDays(todayLocal(), 5);
@@ -752,6 +793,53 @@ function seedOrders(): DbOrder[] {
   cancelledPaid.refundDueCents = cancelledPaid.grandTotalCents;
   cancelledPaid.invoiceNumber = 'INV-MAIN-2627-000397';
 
+  // HO-P5 S0 (BG-4): packed, every line picked, waiting for a rider. Another customer, so Sam's list is unchanged.
+  const packedAt = minutesAgo(55);
+  const packedWaiting = orderFrom({
+    id: p5OrderIds.packedWaiting,
+    seq: 112,
+    status: 'Confirmed',
+    placedMinutesAgo: 400,
+    paymentMethod: 'CashOnDelivery',
+    lines: [
+      allocated(line(1, oats2, 1, { picked: true, pickedOn: minutesAgo(70), pickedBy: ids.adminStaffId })),
+      allocated(line(2, rice, 1, { picked: true, pickedOn: minutesAgo(65), pickedBy: ids.adminStaffId })),
+    ],
+    customerName: 'Mizanur Rahman',
+    customerId: 'c0000000-0000-0000-0000-0000000000a5',
+  });
+  step(packedWaiting, 'Packing', 90);
+  step(packedWaiting, 'Packed', 55);
+  packedWaiting.packedOn = packedAt;
+  packedWaiting.fulfilment.slotDate = addDays(todayLocal(), 1);
+  packedWaiting.fulfilment.slotWindow = '10:00-13:00';
+
+  // HO-P5 S0 (BG-5): cash on delivery on the road with an in-house rider (feeds the orders.cod-with-riders tile).
+  const withRider = orderFrom({
+    id: p5OrderIds.dispatchedWithRider,
+    seq: 113,
+    status: 'Confirmed',
+    placedMinutesAgo: 500,
+    paymentMethod: 'CashOnDelivery',
+    lines: [allocated(line(1, oats400, 2, { picked: true, pickedOn: minutesAgo(200), pickedBy: ids.adminStaffId }))],
+    customerName: 'Shirin Akter',
+    customerId: 'c0000000-0000-0000-0000-0000000000a6',
+  });
+  step(withRider, 'Packing', 220);
+  step(withRider, 'Dispatched', 120);
+  withRider.shipment = {
+    courierId: null,
+    courierName: RIDER_CARRIER_NAME,
+    trackingNumber: null,
+    trackingUrl: null,
+    dispatchedOn: minutesAgo(120),
+    lastTrackingStatus: null,
+    riderId: riderIds.rafiq,
+    riderName: 'Rafiq Hasan',
+  };
+  withRider.fulfilment.slotDate = todayLocal();
+  withRider.fulfilment.slotWindow = '14:00-17:00';
+
   return [
     awaiting,
     reported,
@@ -764,6 +852,16 @@ function seedOrders(): DbOrder[] {
     counter,
     openedFood,
     cancelledPaid,
+    packedWaiting,
+    withRider,
+  ];
+}
+
+function seedRiders(): DbRider[] {
+  return [
+    { id: riderIds.rafiq, branchId: ids.mainBranchId, name: 'Rafiq Hasan', mobileNumber: '01711000101', isActive: true },
+    { id: riderIds.jahid, branchId: ids.mainBranchId, name: 'Jahid Alam', mobileNumber: '01711000102', isActive: true },
+    { id: riderIds.kamalInactive, branchId: ids.mainBranchId, name: 'Kamal Mia', mobileNumber: null, isActive: false },
   ];
 }
 
@@ -968,6 +1066,7 @@ function seed(): Db {
     refunds: [],
     issues: seedIssues(),
     zones: seedZones(),
+    riders: seedRiders(),
     couriers: [
       { id: ids.courierPathaoId, name: 'Pathao Courier', trackingUrlTemplate: 'https://track.example/pathao/{tracking}', supportsCod: true, isActive: true },
       { id: ids.courierInHouseId, name: 'In-house rider', trackingUrlTemplate: null, supportsCod: true, isActive: true },
