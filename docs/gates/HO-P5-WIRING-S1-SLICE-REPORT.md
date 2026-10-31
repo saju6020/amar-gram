@@ -2,7 +2,7 @@
 
 Branch `feat/p5-s1-store-front` from `b4f7783`. Worktree `D:\my-repo\amar-gram\.claude\worktrees\agent-ae90eaf84a4b7e537`. Not pushed. The build is in `44a53c7`, `2074711`, `b3ab577` and the Amended (o) commit `1916533`, then the gate-fix commit (final HEAD: see `git log`).
 
-## 1. Files touched (all inside S1's §13 block; paths under `web/`)
+## 1. Files touched (S1's §13 block plus five files added by Amended (o) and (s); paths under `web/`)
 
 Source: `lib/api/shop-catalogue.ts`, `lib/api/checkout.ts`, `lib/shop/catalogueParams.ts`, `app/(shop)/layout.tsx`, `app/(shop)/shop/products/[slug]/page.tsx`, `components/shop/ShopTopStrip.tsx`, `components/catalogue/{ProductCard,CatalogueFilters,ActiveFilterChips}.tsx`, `components/product/{ProductHeading,ProductDetailsTabs}.tsx`, `components/hearth/DeliveryPromise.tsx`, `components/checkout/{CheckoutScreen,PaymentSection}.tsx`, `components/orders/MyOrderDetail.tsx`, `mocks/handlers/shop/{store,catalogue}.ts`, `mocks/handlers/ordering/customer.ts`.
 
@@ -10,9 +10,9 @@ Tests: new `tests/components/catalogue/catalogue-p5.test.tsx`, `tests/components
 
 Amended (o) also had S1 edit `app/(shop)/_components/ProductPurchase.tsx` and `components/product/BuyBox.tsx` (pass `leadTimeDays`) and `tests/components/checkout/checkout.test.tsx` (the U25 assertion). The gate fixes touched `app/(shop)/_components/CatalogueView.tsx` (plain text for `InvalidCatalogueFilter`), `components/shop/ShopTopStrip.tsx` (zero threshold), `tests/components/catalogue/catalogue-fixtures.ts` and `catalogue-p3.test.tsx` (Amended (s)).
 
-Block files read and left unchanged (not needed): `lib/hooks/useCheckout.ts`, `FilterGroup.tsx`, `FiltersSheet.tsx` (it renders `CatalogueFilters`, so the District group and its count come with it), `BannerStrip.tsx`, `CatalogueControls.tsx`, `CatalogueView.tsx`, `ProductDetailsRow.tsx`, `app/(shop)/shop/products/page.tsx`, `OrderPanels.tsx`, `app/(portal)/portal/orders/[orderId]/page.tsx`.
+Block files read and left unchanged (not needed): `lib/hooks/useCheckout.ts`, `FilterGroup.tsx`, `FiltersSheet.tsx` (it renders `CatalogueFilters`, so the District group and its count come with it), `BannerStrip.tsx`, `CatalogueControls.tsx`, `ProductDetailsRow.tsx`, `app/(shop)/shop/products/page.tsx`, `OrderPanels.tsx`, `app/(portal)/portal/orders/[orderId]/page.tsx`.
 
-Nothing outside the block was edited. No `src/`, config, dependency or subscription change.
+Nothing outside the block as amended by (o) and (s) was edited. No `src/`, config, dependency or subscription change.
 
 ## 2. §20 requests (what S1 could not do, with the exact change)
 
@@ -26,12 +26,12 @@ Nothing outside the block was edited. No `src/`, config, dependency or subscript
 | HO-P3 U6, `product-card.test.tsx` "U6: no Organic badge on a card (catalogue items carry no certifications yet)" | "U6: the Organic pill shows only when the item is CertifiedOrganic, with the text Certified organic". Keeps the old "no pill and no hidden text" check for an item with no certifications, and adds the same for an item with other certifications only. Adds the positive: pill `bg-leaf text-leaf-soft`, hidden "Certified organic" `sr-only`, card link name unchanged. |
 | HO-P3 e2e `shop-catalogue.spec.ts` "S2: the heading band carries the h1 and the count; there is no District filter" (`getByText('District')` count 0) | Same test, renamed "…; the District filter is offered": same band and count assertions, and the District group toggle is visible (phone sheet and desktop). Plus two new district tests. |
 | HO-P3 U13's "no free-delivery amount" (strip only) | `shell-p5.test.tsx` U10 asserts the strip text. The HO-P3 U1 cases (banner as plain text, link, nothing without a banner, unsafe link) are unchanged and still pass. |
-| HO-P3 `catalogue-p3.test.tsx` "has no District filter (G1)" | Not edited (file not in S1's block). It still passes because its fixture has no `districts`, which is the "no group when empty" case. The positive case is in `catalogue-p5.test.tsx`. |
+| HO-P3 `catalogue-p3.test.tsx` "has no District filter (G1)" | Retitled "shows no District group when the API sends no districts" (Amended (s)); same assertion, and the fixture now has `districts: []`. The positive cases are in `catalogue-p5.test.tsx`. |
 | `checkout.test.tsx:562` "no rider note" | `getByLabelText('Note for the rider (optional)')` is present for Delivery. |
 
 ## 4. OQ defaults built to
 
-- OQ-1 / ADR-FE-187: the promise takes the strip when `freeOver` is non-null; then every `Shop` banner goes to `BannerStrip`. Otherwise the HO-P3 behaviour. A failed promise read counts as "no promise" (U11).
+- OQ-1 / ADR-FE-187: the promise takes the strip when `freeOver` is non-null and not zero (Amended (w): a zero threshold counts as no promise); then every `Shop` banner goes to `BannerStrip`. Otherwise the HO-P3 behaviour. A failed promise read counts as "no promise" (U11).
 - OQ-2: no place name in the strip. Text is exactly "Free delivery over ৳5,000.00 · Cash on delivery across Bangladesh", the amount through `formatMoney`.
 - OQ-3: lead time worded "Standard delivery usually takes {n} day(s)…" in `DeliveryPromiseCard`, wired from the page. The file's header comment records the owner rule it overrides for these two figures.
 - OQ-4 (G5b): no basket "Add ৳X more" hint.
@@ -69,9 +69,9 @@ Nothing outside the block was edited. No `src/`, config, dependency or subscript
 
 ### 6.1 Where the code differs from the document, or a default looked wrong (§20.2 / §20.6)
 
-1. **District facet order.** The inventory and the handler comment say "most products first, then A-Z". The code (`GetCatalogueFiltersQueryHandler.cs:55-56`) orders by name only, case-insensitively. The mock and the UI follow the code (UI shows the order sent). The integrator may want a §1 Amended row.
+1. **District facet order.** The inventory and the handler comment say "most products first, then A-Z". The code (`GetCatalogueFiltersQueryHandler.cs:55-56`) orders by name only, case-insensitively. The mock and the UI follow the code (UI shows the order sent). Recorded as Amended (p).
 2. **`DeliveryPromiseViewModel.CurrencyCode` is nullable** (`string?`, `GetDeliveryPromiseQuery.cs:14`); the document types it as a string. The type is `string | null`.
-3. **`CatalogueFilters.districts` is optional in the type.** The server always sends it, but `tests/components/catalogue/catalogue-fixtures.ts` (not in S1's block) builds a `CatalogueFilters` without it and would not type-check otherwise. The component treats a missing field as empty.
+3. **`CatalogueFilters.districts` is required** (Amended (s)); `catalogue-fixtures.ts` has `districts: []`.
 4. **A lead time of 0 days** keeps today's text instead of "usually takes 0 days". Not in the document; the owner may want a different sentence for same-day delivery (OQ-3 follow-up).
 5. **`MyOrderDetail` Packed wording is S1's own** ("Your order is packed"; "It's packed and we'll tell you when it's on its way / ready to collect"). The handover gives no wording. Please check.
 6. **The District tab in "Origin & producer"** lists District only when the tab already exists (country, producer or notes). A district alone does not create the tab; `product-p3.test.tsx` "a tab with no API data is not rendered" requires that, and a product always has a producer.

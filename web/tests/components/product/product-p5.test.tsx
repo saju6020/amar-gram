@@ -79,6 +79,12 @@ describe('U12: DeliveryPromiseCard', () => {
     expect(screen.queryByText(TODAY)).not.toBeInTheDocument();
   });
 
+  it('U12c: a lead time of 0 keeps today’s text (Amended (q)), never "usually takes 0 days"', () => {
+    render(<DeliveryPromiseCard leadTimeDays={0} />);
+    expect(screen.getByText(TODAY)).toBeInTheDocument();
+    expect(screen.queryByText(/usually takes/)).not.toBeInTheDocument();
+  });
+
   it('keeps today’s text without a lead time, and keeps its other facts and export', () => {
     const { rerender } = render(<DeliveryPromiseCard />);
     expect(screen.getByText(TODAY)).toBeInTheDocument();

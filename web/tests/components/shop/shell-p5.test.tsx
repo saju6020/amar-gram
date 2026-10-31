@@ -197,16 +197,46 @@ describe('the catalogue shows plain text for InvalidCatalogueFilter, not the ser
   });
 });
 
-describe('a zero threshold', () => {
-  it('does not take the strip: "Free delivery over ৳0.00" would be a misleading claim', () => {
-    const html = renderToStaticMarkup(
+describe('a zero threshold (Amended (w))', () => {
+  const strip = (amount: string) =>
+    renderToStaticMarkup(
       createElement(ShopTopStrip, {
-        promise: { currencyCode: 'BDT', freeOver: { amount: '0.00', currencyCode: 'BDT' }, leadTimeDays: 1 },
+        promise: { currencyCode: 'BDT', freeOver: { amount, currencyCode: 'BDT' }, leadTimeDays: 1 },
         banner: banner('b1', 'Mango season'),
       }),
     );
+
+  it.each(['0', '0.0', '0.00'])('%s does not take the strip: it falls back to the banner', (amount) => {
+    const html = strip(amount);
     expect(html).not.toContain('Free delivery');
     expect(html).toContain('Mango season');
+  });
+
+  it.each([
+    ['0.01', '৳0.01'],
+    ['0.50', '৳0.50'],
+  ])('%s is a real threshold and takes the strip', (amount, shown) => {
+    const html = strip(amount);
+    expect(html).toContain(`Free delivery over ${shown} · Cash on delivery across Bangladesh`);
+    expect(html).not.toContain('Mango season');
+  });
+
+  it('in the layout, the first banner goes to the strip and the rest below, none lost or doubled', async () => {
+    serveBanners([...banners, banner('b3', 'Closed on Friday')]);
+    servePromise({ currencyCode: 'BDT', freeOver: { amount: '0.00', currencyCode: 'BDT' }, leadTimeDays: 1 });
+    const html = await renderLayout();
+    // A banner's body repeats its title ("<title> body"), so count the title alone.
+    const count = (text: string) => (html.match(new RegExp(`${text}(?! body)`, 'g')) ?? []).length;
+    const top = html.match(/data-testid="shop-top-strip"[\s\S]*?<\/div>/)?.[0] ?? '';
+    expect(top).toContain('Mango season');
+    const below = announcements(html);
+    expect(below).toContain('Eid opening hours');
+    expect(below).toContain('Closed on Friday');
+    expect(below).not.toContain('Mango season');
+    expect(count('Mango season')).toBe(1);
+    expect(count('Eid opening hours')).toBe(1);
+    expect(count('Closed on Friday')).toBe(1);
+    expect(html).not.toContain('Free delivery');
   });
 });
 

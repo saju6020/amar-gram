@@ -12,7 +12,7 @@ import { resetShopMockData, shopFixtureIds } from '@/mocks/handlers/shop';
 import { CheckoutScreen } from '@/components/checkout/CheckoutScreen';
 import { MyOrderDetail } from '@/components/orders/MyOrderDetail';
 import { apiFetch, ApiConflictError, ApiValidationError } from '@/lib/api/client';
-import { getCheckoutQuote } from '@/lib/api/checkout';
+import { getCheckoutQuote, placeOrder } from '@/lib/api/checkout';
 import type { CheckoutQuote } from '@/lib/api/checkout';
 import type { Cart } from '@/lib/api/cart';
 import type { CustomerOrderDetail } from '@/lib/api/my-orders';
@@ -26,6 +26,11 @@ import { currentCheckoutUrl, pushed, setCheckoutUrl } from './nav';
  */
 
 vi.mock('next/navigation', () => import('./nav'));
+// Passes through to the real `placeOrder`; only records what the screen hands it.
+vi.mock('@/lib/api/checkout', async (original) => {
+  const actual = await original<typeof import('@/lib/api/checkout')>();
+  return { ...actual, placeOrder: vi.fn(actual.placeOrder) };
+});
 
 const money = (amount: string) => ({ amount, currencyCode: 'BDT' });
 
@@ -201,6 +206,54 @@ describe('U13: the checkout rider note', () => {
     expect(bodies[0]!.fulfilment).toBe('Delivery');
     expect(currentCheckoutUrl()).not.toContain('gate');
     expect(JSON.stringify({ ...window.sessionStorage })).not.toContain('gate is stiff');
+  });
+
+  // The two Delivery-only guards each hold on their own: the screen never hands a note to `placeOrder`
+  // for Pickup, and `placeOrder` never puts one on the wire for Pickup even if it is given one.
+  it('screen guard: the request the screen builds for Pickup carries no riderNote', async () => {
+    vi.mocked(placeOrder).mockClear();
+    serveCheckout();
+    server.use(
+      http.post('*/api/customers/me/orders', () => HttpResponse.json(PLACED, { status: 201 })),
+    );
+    setCheckoutUrl(DELIVERY_URL);
+    const user = userEvent.setup();
+    renderWithClient(<CheckoutScreen />);
+    await placeButton();
+    await user.type(noteField()!, 'Ring twice');
+    setCheckoutUrl(PICKUP_URL);
+    await waitFor(() => expect(noteField()).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Place order/ })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole('button', { name: /^Place order/ }));
+    await waitFor(() => expect(placeOrder).toHaveBeenCalledTimes(1));
+    const request = vi.mocked(placeOrder).mock.calls[0]![0];
+    expect(request.fulfilment).toBe('Pickup');
+    expect(request.riderNote).toBeUndefined();
+  });
+
+  it('client guard: placeOrder drops a note given with Pickup, and trims one given with Delivery', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    server.use(
+      http.post('*/api/customers/me/orders', async ({ request }) => {
+        bodies.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json(PLACED, { status: 201 });
+      }),
+    );
+    const { placeOrder: realPlaceOrder } = await vi.importActual<typeof import('@/lib/api/checkout')>(
+      '@/lib/api/checkout',
+    );
+    await realPlaceOrder(
+      { fulfilment: 'Pickup', pickupBranchId: 'br1', paymentMethod: 'PayOnCollection', riderNote: 'Ring twice', quoteFingerprint: 'F1' },
+      'k-a',
+    );
+    await realPlaceOrder(
+      { fulfilment: 'Delivery', addressId: 'a1', paymentMethod: 'CashOnDelivery', riderNote: '  Ring twice  ', quoteFingerprint: 'F1' },
+      'k-b',
+    );
+    expect('riderNote' in bodies[0]!).toBe(false);
+    expect(bodies[1]!.riderNote).toBe('Ring twice');
   });
 
   it('a whitespace-only note sends nothing', async () => {

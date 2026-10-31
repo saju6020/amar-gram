@@ -179,3 +179,46 @@ describe('U47: the mock refuses what the server refuses', () => {
     expect(sku?.compareAtPrice).toEqual({ amount: '2800.00', currencyCode: 'BDT' });
   });
 });
+
+describe('the "Was" price is formatted from minor units by string handling (centsText)', () => {
+  it.each([
+    [5, '0.05'],
+    [99, '0.99'],
+    [100, '1.00'],
+    [101, '1.01'],
+    [280_000, '2800.00'],
+  ])('%i minor units is %s on the public detail and card', async (cents, amount) => {
+    const { db, findBySlug, detailView, catalogueItem } = await import('@/mocks/handlers/shop/store');
+    const product = findBySlug('organic-rolled-oats')!;
+    product.skus[0]!.compareAtCents = cents;
+    const sku = detailView(product, undefined).skus.find((s) => s.skuId === product.skus[0]!.skuId)!;
+    expect(sku.compareAtPrice).toEqual({ amount, currencyCode: 'BDT' });
+    // A card carries it only for a product with exactly one active size.
+    const single = db.products.find((p) => p.skus.length === 1 && p.skus[0]!.status === 'Active')!;
+    single.skus[0]!.compareAtCents = cents;
+    expect(catalogueItem(single).compareAtPrice).toEqual({ amount, currencyCode: 'BDT' });
+  });
+});
+
+describe('the shop mock store key is pinned at v2 (Amended (b))', () => {
+  it('ignores a stale v1 copy in sessionStorage and persists under the v2 key', async () => {
+    Object.defineProperty(navigator, 'serviceWorker', { value: {}, configurable: true });
+    try {
+      window.sessionStorage.clear();
+      window.sessionStorage.setItem(
+        '__purrcare_shop_mock_db__',
+        JSON.stringify({ products: [], origins: [], reviews: [], wishlist: [], alerts: [] }),
+      );
+      vi.resetModules();
+      const store = await import('@/mocks/handlers/shop/store');
+      // The stale copy would have left no products and hidden the HO-P5 districts.
+      expect(store.db.products.length).toBeGreaterThan(0);
+      expect(store.db.products.some((p) => p.district)).toBe(true);
+      store.persist();
+      expect(window.sessionStorage.getItem('__purrcare_shop_mock_db__v2')).not.toBeNull();
+    } finally {
+      Reflect.deleteProperty(navigator, 'serviceWorker');
+      window.sessionStorage.clear();
+    }
+  });
+});
