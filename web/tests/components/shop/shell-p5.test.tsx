@@ -37,7 +37,7 @@ const banners = [banner('b1', 'Mango season'), banner('b2', 'Eid opening hours')
 function serveBanners(list: StorefrontBanner[]) {
   server.use(http.get('*/api/content/banners', () => HttpResponse.json(list)));
 }
-function servePromise(body: unknown, status = 200) {
+function servePromise(body: Record<string, unknown> | null, status = 200) {
   server.use(
     http.get('*/api/shop/delivery-promise', () =>
       status === 200 ? HttpResponse.json(body) : new HttpResponse(null, { status }),

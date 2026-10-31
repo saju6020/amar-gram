@@ -167,6 +167,13 @@ export function getCheckoutQuote(choices: CheckoutChoices): Promise<CheckoutQuot
 export interface PlaceOrderRequest extends CheckoutChoices {
   recipientName?: string;
   recipientPhone?: string;
+  /**
+   * HO-P5 G4: the customer's note for the rider, at most 300 characters, no control characters
+   * (`Api/Contracts/Order/PlaceOrderRequest.cs:17-18`; `Shared/Constants/OrderRules.cs:16`). The server keeps it for
+   * Delivery and drops it for Pickup (`App/CommandHandlers/Order/OrderPlacement.cs:21-33`), so it is only sent for
+   * Delivery. Component state only (ADR-FE-186): never in the URL or in storage.
+   */
+  riderNote?: string;
   quoteFingerprint: string;
 }
 
@@ -205,6 +212,7 @@ export function placeOrder(
     discountCode: request.discountCode || undefined,
     recipientName: request.recipientName || undefined,
     recipientPhone: request.recipientPhone || undefined,
+    riderNote: request.fulfilment === 'Delivery' ? request.riderNote?.trim() || undefined : undefined,
     quoteFingerprint: request.quoteFingerprint,
   };
   return apiFetch<PlacedOrder>('/api/customers/me/orders', {

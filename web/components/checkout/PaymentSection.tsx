@@ -1,9 +1,11 @@
 'use client';
 
+import { useId } from 'react';
 import { Banknote, Landmark, Store, TriangleAlert } from 'lucide-react';
 import { bannerWarnClass } from '@/components/hearth/card';
+import { pillInputClass } from '@/components/hearth/fields';
 import { OptionCard } from '@/components/hearth/OptionCard';
-import type { PaymentMethodChoice, PaymentOption } from '@/lib/api/checkout';
+import type { FulfilmentChoice, PaymentMethodChoice, PaymentOption } from '@/lib/api/checkout';
 import { paymentMethodExplanation, paymentMethodLabel } from '@/lib/format/orders';
 import { cn } from '@/lib/utils';
 import { CheckoutSection } from './CheckoutSection';
@@ -14,13 +16,17 @@ function MethodIcon({ method }: { method: PaymentMethodChoice }) {
   return <Banknote size={20} aria-hidden="true" />;
 }
 
+/** The longest note the server accepts (`Shared/Constants/OrderRules.cs:16`). */
+export const RIDER_NOTE_MAX_LENGTH = 300;
+
 /**
  * `components/checkout/PaymentSection.tsx` — section 3 of the single-page checkout (HO-P3 S3, ADR-FE-175;
  * HO-ORD-002 US-ORD-07). **There is no payment step in the card sense** (ADR-FE-092): this is a choice of
  * *how you will pay a person later* — *Cash on delivery*, *Bank transfer*, *Pay when you collect*. Options
  * come from the quote; an unavailable one is shown **disabled with the server's reason**. When bank
  * transfer is chosen, the option's own server `message` is shown as a notice. No card option, no online
- * payment control exists anywhere. (No rider note: G4.)
+ * payment control exists anywhere. For a Delivery order the section ends with the optional "Note for the
+ * rider" (HO-P5 G4, ADR-FE-186): a labelled text input with a live count, held in the screen's state only.
  */
 export function PaymentSection({
   options,
@@ -28,13 +34,27 @@ export function PaymentSection({
   onSelect,
   loading,
   error,
+  fulfilment,
+  riderNote,
+  onRiderNote,
+  riderNoteError,
 }: {
   options: PaymentOption[];
   selected: PaymentMethodChoice | undefined;
   onSelect: (method: PaymentMethodChoice) => void;
   loading: boolean;
   error?: string | null;
+  /** The note field is for Delivery only; the server drops a note on a Pickup order. */
+  fulfilment?: FulfilmentChoice;
+  riderNote?: string;
+  onRiderNote?: (value: string) => void;
+  /** The server's refusal of the note, shown under the field. */
+  riderNoteError?: string | null;
 }) {
+  const noteId = useId();
+  const noteHintId = `${noteId}-hint`;
+  const noteErrorId = `${noteId}-error`;
+  const showNote = fulfilment === 'Delivery' && !!onRiderNote;
   const transferNotice = options.find(
     (option) => option.method === 'BankTransfer' && option.available && selected === 'BankTransfer',
   )?.message;
@@ -80,6 +100,34 @@ export function PaymentSection({
         <p role="status" className={cn(bannerWarnClass, 'm-0')}>
           {transferNotice}
         </p>
+      )}
+      {showNote && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={noteId} className="text-sm font-semibold text-ink">
+            Note for the rider (optional)
+          </label>
+          <input
+            id={noteId}
+            type="text"
+            name="rider-note"
+            autoComplete="off"
+            maxLength={RIDER_NOTE_MAX_LENGTH}
+            value={riderNote ?? ''}
+            placeholder="e.g. call before you come up"
+            aria-invalid={riderNoteError ? true : undefined}
+            aria-describedby={riderNoteError ? `${noteHintId} ${noteErrorId}` : noteHintId}
+            onChange={(event) => onRiderNote(event.target.value)}
+            className={pillInputClass}
+          />
+          <p id={noteHintId} className="m-0 text-xs text-ink-muted">
+            {(riderNote ?? '').length} of {RIDER_NOTE_MAX_LENGTH}
+          </p>
+          {riderNoteError && (
+            <p id={noteErrorId} role="alert" className="m-0 text-sm font-semibold text-danger-ink">
+              {riderNoteError}
+            </p>
+          )}
+        </div>
       )}
       {error && (
         <p role="alert" className="m-0 text-sm font-semibold text-danger-ink">
