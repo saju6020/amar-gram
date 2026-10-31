@@ -4,7 +4,7 @@ COMMITS: base cda20c4, HEAD 0ae5cc9 (branch feat/p5-s0-contract); Vitest rerun a
 DATE: 2026-10-31
 STATUS: PASS
 
-SHEET: docs/test-cases/TC-HO-P5-WIRING-S0.md (44 rows: 40 PASS, 0 FAIL, 4 BLOCKED, 0 NOT RUN). Written before any command ran. Updated after ACCEPTANCE run 1 for T3 and A21 only.
+SHEET: docs/test-cases/TC-HO-P5-WIRING-S0.md (44 rows: 40 PASS, 0 FAIL, 4 BLOCKED, 0 NOT RUN). Written before any command ran by the test-engineer. Edited after that by the integrator, not the test-engineer: after ACCEPTANCE run 1, the status, the 2-worker Vitest result, T3, A21 and the Amended (i) note under FAILURES AND CLASSIFICATION; after ACCEPTANCE run 2, the X3 and E17 entries.
 
 RESULTS
 - `tsc --noEmit`: exit 0 (also `--incremental false -p .`). ESLint `--max-warnings 0`: exit 0.
@@ -35,7 +35,8 @@ SPECIFIC CHECKS
 - Do the added seeds move any existing spec: no. Every spec run (E1 plus 10 more files) passes or passed on isolated rerun.
 
 BLOCKED
-- X3 (customer-side Packed headline on a screen): needs a Packed order for Sam in the portal and ordering fixtures (S1's seeds).
+- X3 (customer-side Packed headline on a screen): not reachable under mocks, and under §1 Amended (k) no slice owes it. It stays proven by the component test only.
+- E17 ("every other spec"): not run on S0. Under §1 Amended (l) it is checked at E18 and does not block S0's gates.
 - E18 full e2e and E19 `sweep:a11y`: the handover assigns both to the integration step (§16, §17.2), not S0; S0's per-slice e2e is E1. I did not start the full run (over 3 hours). **A full e2e is not required for S0.**
 - Real-API specs (`*-real-api`, `journey-real-api`, `real-api-verification`): no backend.
 

@@ -1,104 +1,120 @@
 GATE: ACCEPTANCE
 HANDOVER: HO-P5-WIRING (slice S0)
-COMMITS: b32012f 54950d6 99f5c30 a3416f9 238b1f7 00ea533 707433a bb647e4 fabce37 41d5e08 c422d2a 0ae5cc9 818982f (base cda20c4, HEAD 818982f, branch feat/p5-s0-contract)
+RUN: 2 (run 1, FAIL, is in git history at 8eda79a)
+COMMITS: b32012f 54950d6 99f5c30 a3416f9 238b1f7 00ea533 707433a bb647e4 fabce37 41d5e08 c422d2a 0ae5cc9 818982f 8eda79a 7e863a5 (base cda20c4, HEAD 7e863a5, branch feat/p5-s0-contract)
 DATE: 2026-10-31
-STATUS: FAIL
+STATUS: BLOCKED
 
-Run 1. One criterion is not met: A21, the Vitest part. No defect in S0's code was found. The fix is a green run or an owner amendment, not a code change (see OWNER DECISIONS).
+Everything run 1 failed on now holds. One new question stops the PASS: §16 row E17 is assigned to slice "all", no S0 gate ran it, and the sheet has no row for it. The handover does not say whether "all" binds a slice's own gates, and Amended (i) now turns on exactly that word. This is a document defect and needs an owner decision (D4). No defect in S0's code was found.
+
+WHAT RUN 1 FOUND AND WHAT CHANGED
+- D1 (A21 Vitest): closed by a full green run, route (i) of run 1's D1. See Question 1.
+- TEST not a plain PASS: the record now reads PASS. See Question 2.
+- D2 (four e2e results outside the baseline): closed by Amended (i). See Question 3.
+- D3 (§19 screenshots): closed by Amended (j). S1-S4 still owe them.
+- Customer-side Packed headline with no owner: closed by Amended (k). No slice owes it on a real screen.
+- Correction to run 1: its line "S0's e2e is E1 only" was wrong to state as fact, because it passed over E17. That is how this question reached run 2.
+
+The handover diff since 0ae5cc9 is one line (line 76), and only appends (i)-(k); the earlier text is unchanged. `git diff 0ae5cc9 HEAD --stat -- web` is empty, and `git diff 0ae5cc9 8eda79a --name-only` lists docs files only. So the code under review is the code at 0ae5cc9.
 
 PRIOR GATES (from docs/gates/ and docs/test-cases/, not from commit messages)
-- ARCHITECTURE: run 1 FAIL (in git at 707433a), run 2 PASS. The record says HEAD bb647e4; fabce37 only commits the record (`git diff bb647e4 fabce37` is that one file).
-- SECURITY: PASS, at fabce37.
-- CODE_REVIEW: PASS, at 41d5e08.
-- TEST: NOT a recorded PASS. The status reads "PASS for S0-introduced defects, with one caveat", and row T3 is FAIL. The record's qualifier is its own opinion and has no support in the handover. This alone forbids an ACCEPTANCE PASS.
-- Sheet TC-HO-P5-WIRING-S0.md: recounted, 44 rows: 39 PASS, 1 FAIL, 4 BLOCKED, 0 NOT RUN. It matches its summary.
+- ARCHITECTURE: run 1 FAIL (git, 707433a), run 2 PASS.
+- SECURITY: PASS.
+- CODE_REVIEW: PASS.
+- TEST: the record reads PASS at 7e863a5. It covers everything it ran, but it is silent on E17 (D4), and the status was changed by the integrator, not the test-engineer (Question 2).
+- 0ae5cc9 came after ARCHITECTURE, SECURITY and CODE_REVIEW. Run 1's Question 1 found no rerun needed: one static string and one test case. `git diff --stat 41d5e08 0ae5cc9 -- web` still shows only LiveOrderCard.tsx (+1) and order-status-badge-packed.test.tsx. I stand by that finding.
 
-CRITERIA (S0 is the slice for A1; A18-A21 apply to "all"; A2-A17 are S1-S4; A22 is a recorded non-goal)
+QUESTION 1: Does the Vitest log satisfy A21? Yes.
+Checked against the log itself (vitest-s0-w2.txt in the session scratchpad; it is outside the repo and will not outlive the session):
+- Summary lines: "Test Files 212 passed | 1 skipped (213)", "Tests 1881 passed | 45 skipped (1926)", duration 334.23 s. These match the claim.
+- Progress line 125 of the log, counted by character: 1881 pass marks, 45 skip marks, no failure mark. It agrees with the summary independently.
+- No failure, "Unhandled" or error-summary block. The only "failed" text is expected stderr from the load-error tests ("Storefront read failed", which those tests provoke on purpose).
+- 213 files equals 213 tracked `*.test.ts(x)` files. 1926 tests equals run 1's total, so nothing dropped out.
+- Run started 13:13:54, 7 s after 8eda79a (13:13:47). It wrote the log at 13:19:28, which fits the 334 s duration. Paths are the main checkout, not a worktree.
+Why the lower worker count is acceptable:
+- A21 says "Vitest ... pass". §17.2 says `npm test`, which is `vitest run`. Neither fixes concurrency, and `npm test -- --maxWorkers=2` is that command with a flag.
+- `web/vitest.config.mts` sets no `retry`, so the green is first-attempt. The config and package.json are not in the S0 diff. No assertion was weakened and no `.skip` or `.only` was added.
+- The worker flag takes away contention, not checks. The earlier failures were timeouts under load, in files S0 does not touch (`git diff cda20c4 HEAD` on those folders is empty).
+Limits, stated plainly:
+- The log shows neither the exit code nor the flag. "exit 0" and `--maxWorkers=2` are the integrator's statements. The first is supported by zero failures and no error block; the second does not change the result.
+- One green run in three. Default-worker flakiness is real and not explained by a base comparison. It is not S0's defect, but it will recur at S1-S4 and integration (see carry-forwards).
+
+QUESTION 2: Is TEST a genuine plain PASS, and does the sheet add up?
+- Count: recounted by parsing the three case tables. 44 rows: 40 PASS, 0 FAIL, 4 BLOCKED, 0 NOT RUN. It adds up and matches the summary and the record.
+- Edits: `git diff 8eda79a 7e863a5` touches the T3 row, the summary, the A21 coverage row and the record. T3's new evidence matches the log. U4f, X1, X2 and X3 rows are as the test-engineer wrote them.
+- The four BLOCKED rows stay acceptable, and none is counted as a pass:
+  - X3: Amended (k) says no slice owes it.
+  - E18, E19: §16 assigns them to "integration".
+  - E-real: §17.2 says to record "not run" without an environment.
+- The status is plain, and the evidence behind T3 is real. Four things stop me calling the record clean:
+  - E17 has no row, not even BLOCKED (D4). §19 asks TEST for "§15/§16 cases exist and pass".
+  - The record does not say the integrator changed it, and neither does the 7e863a5 commit body. §19 names `test-engineer` for this gate. I accept the change because I checked the log myself, but the record should say who changed it.
+  - TEST record line 7 says it was updated "for T3 and A21 only", but line 28 (the Amended (i) reasoning) was also added.
+  - X1's expected result is "pass or baseline", yet its evidence shows four non-baseline results that passed only on rerun. Its PASS means "does not block under (i)", not "these specs passed". R6 leans on it the same way. Neither row feeds a §18 criterion for S0.
+
+QUESTION 3: Do the four e2e results stop blocking under Amended (i)? Yes. E1 is clean. E17 is the open point.
+- The four: ordering-customer :166, :66, :146 (flaky) and shop-staff :137.
+- Not in S0's rows: ordering-customer.spec.ts is S1's E5 and shop-staff.spec.ts is S3's E10 (§16). They are not ordering-customer-orders.spec.ts, which is a separate file in E1.
+- Each condition in (i) is met on the record: all four are named in the TEST record, and each passed when rerun alone (X1: 1 worker, no retries, 6/6 and 2/2). The rerun text predates the integrator's edit and is the test-engineer's. I did not rerun them (no browser, as instructed).
+- Still owed: the recheck at E18, where "any other failure blocks" applies in full. (i) requires a rerun alone, not run 1's suggested chunk rerun on a fresh server, so the §16 "fresh `next dev`" breach on chunk 2 no longer affects S0.
+- E1: 60 passed, 0 failed, both projects, 2 workers, no retries mentioned. 60 matches 30 `test(` calls (2 + 12 + 16, recounted) on two projects. Chunk 1 ran first, on the first server, so the breach does not reach it. The spec files are not in the S0 diff. No raw log survives for this; the evidence is TEST's record.
+- E17, not settled by (i). See D4.
+
+QUESTION 4: Criteria that apply to S0
 - A1 MET.
-  - Tracker: web/lib/orders/tracker.ts:23 `Packed: 'Packing'`. tests/unit/orders/tracker-packed.test.ts asserts five nodes, done/done/current/future/future, on delivery and pickup. I read it and ran it alone: 4/4.
-  - `ORDER_STATUSES`: web/lib/api/my-orders.ts:34, adjacency asserted in the same file.
-  - Labels: web/lib/format/orders.ts (`Packed`, `MarkPacked`, `Subscription`), web/components/portal/dashboard/labels.ts:26, web/components/orders/OrderStatusBadge.tsx:29. status-vocabulary.test.ts ran alone 8/8; order-status-badge-packed.test.tsx ran alone 3/3.
-  - Seeds: `seedOrders` and `seedRiders` in web/mocks/handlers/ordering/store.ts (`...112` Packed with all lines picked, `...113` Dispatched COD with rider and null courier, rider note on the delivered order, 2 active + 1 inactive riders); web/mocks/handlers/shop/fixtures.ts (districts, two Was prices, one expired and one valid certificate).
-  - U4's "ids and amounts unchanged": the test does NOT assert amounts (status of 6 old orders plus a count). The evidence is the seed comparisons recorded by ARCHITECTURE and by TEST U4f, and my own reading of the diff. In store.ts the only removed lines are `PERSIST_KEY` and the `courierId` type. In fixtures.ts they are the `GENERATED_LINES` reformat, with names and tags unchanged, and the GUR-1KG sku line, with its price unchanged.
-  - ADRs: web/docs/decisions.md:1990-2046, eight headings, confirmed by grep.
-  - Split: 16 `it` in the old file at cda20c4; 6 + 5 + 5 in the new files, recounted. Suite totals agree: HO-P4 had 208 files and 1910 tests (1852 + 13 + 45). S0 run 1 has 213 files and 1926 tests, which is +16 from S0's own new cases (4 + 8 + 3 + 1).
-  - E1: TEST chunk 1, 60 passed and 0 failed. That matches 30 `test(` calls (2 + 12 + 16) on two projects. Not rerun by me.
-  - "Everywhere" is read with Amended (b). A grep of `'Packing'` across app, components, lib and mocks leaves only MyOrderDetail.tsx (S1), StaffOrderQueue.tsx (S2) and ordering/staff.ts (S2 §11.3.14). No site is unowned.
-- A18 MET for S0's part. The back-up `rg` over components and app returned 0 hits (run by me). no-colour-literals and no-hex-literals passed (TEST U46). The a11y rows it names (E6, E12, E16, E19) belong to other slices and to integration.
-- A19 NOT APPLICABLE to S0, and vacuously held. S0 changes no handler file and adds no mocked input. A grep shows no handler, lib or component reads the new seed fields, apart from the type-only `riderNote?` at my-orders.ts:89.
-- A20 MET. See SCOPE. Nothing subscription-shaped (the one `Subscriptions` hit in added lines is a moved absence assertion); no src, config, package or lock file in the diff.
-- A21 NOT MET (S0 part).
-  - typecheck T1, lint T2 and build B1: met, as recorded by TEST at 0ae5cc9.
-  - Vitest: not met. No full run passed: run 1 had 3 failed, run 2 had 5 failed (T3). See Question 2.
-  - The "full e2e" half is integration (evidence column names E18; §17.1 step 5), so it is not evaluated here.
-- A22: the recorded non-goal holds. No subscription work.
+  - Tracker: tracker.ts:23. ORDER_STATUSES: my-orders.ts:34. Labels: format/orders.ts:12, :38, :192; labels.ts:26; OrderStatusBadge.tsx:29. All re-read.
+  - U1, U2, U4 and the Packed cases: I ran tracker-packed, status-vocabulary, order-status-badge-packed and account-sidebar alone at HEAD: 4 files, 21 tests passed.
+  - ADRs: decisions.md:1990-2046, eight headings, regrepped.
+  - Split: 16 `it` at cda20c4, 6 + 5 + 5 now, recounted.
+  - Seeds and "amounts unchanged": TEST U4f and run 1's diff reading. store.ts diff regrepped; PERSIST_KEY is now `...v2`.
+  - E1: as Question 3.
+- A18 MET for S0's part. The `rg` back-up returned 0 hits, rerun now. The guards passed within the green run. The a11y rows it names belong to other slices and integration.
+- A19 NOT APPLICABLE to S0. S0 changes only two seed files under mocks/ and adds no refusal, so U47 has nothing to cover.
+- A20 MET. See SCOPE.
+- A21 for S0's part: typecheck, lint and build MET (T1, T2, B1 at 0ae5cc9; web/ identical at HEAD; not rerun). Vitest MET (Question 1). The full-e2e half is integration by its evidence column (E18).
+  - OPEN: A21's evidence also cites §17.2, whose per-slice list includes "the slice's run-only specs from §16". Whether that includes E17 is D4.
+- A22: the recorded non-goal holds.
 
-AMENDED (a)-(h), checked against the diff
-- (a) MET: only `Packed` added in OrderStatusBadge.tsx:29 (plus the `Box` import), AccountSidebar.tsx:30 and LiveOrderCard.tsx:13.
-- (b) MET: MyOrderDetail.tsx, StaffOrderQueue.tsx and shop/store.ts are untouched, as S1 and S2 own them.
-- (c) MET: the new fields are optional in store.ts. `packedOn` is also optional, which (c) does not name (ARCHITECTURE LOW; no conflict).
-- (d) Not independently opened. I relied on the 54950d6 commit body and ARCHITECTURE's line-by-line check.
-- (e) MET: both test files are in the diff and cover only `Packed`.
-- (f) MET: labels.ts:26 is one line.
-- (g) MET: the status-vocabulary case asserts more than half of food products have a district; ARCHITECTURE counted 30 of 45.
-- (h) MET: LiveOrderCard.tsx:19, and the one case in order-status-badge-packed.test.tsx:34-37.
-
-QUESTION 1: 0ae5cc9 (Packed headline). In scope. No earlier gate needs rerunning.
-- Amended (h) landed at c422d2a, before the code at 0ae5cc9. It names this exact line, this wording and this test file. I can confirm it is recorded as owner-ratified; I cannot verify the ratification beyond that record.
-- The diff (`git diff c422d2a..0ae5cc9`) is one static string, one test case, a `vi.mock` of `useMyOrder` and two import changes the case needs. No other test in that file renders the mocked hook.
-- ARCHITECTURE: both files were already in scope; nothing structural changed. Its LOW on this line is now resolved.
-- SECURITY: a literal constant rendered as React text at LiveOrderCard.tsx:52. No data, storage or authorisation surface.
-- CODE_REVIEW: this gate specified the fix and the wording, as its own MEDIUM.
-- TEST ran at 0ae5cc9 (G4), with a mutation check (G5). 818982f adds only the TEST record and the sheet (`git diff --name-only 0ae5cc9 HEAD`).
-- No handover text requires a rerun for a change this small; this is my judgement against each gate's §19 focus, stated so it can be challenged.
-
-QUESTION 2: Vitest. The handover's wording requires it to pass. It does not accept this result.
-- A21: "typecheck, lint, Vitest and build pass; full e2e shows only the 12 baseline failures". Its slice is "all". Its evidence names §17.2, and §17.2 "Per slice" lists `npm test`; §17.1 step 4 has each slice run that list before its gates.
-- §15: "Existing tests stay green without weakening an assertion". §5: "The `web/` baseline green apart from the 12 known e2e failures (§1)".
-- HO-P5 contains no Vitest exception. A grep for "flaky", "load timeout" and "pass alone" finds none. HO-P4's A18 read "pass, apart from the known timing-flaky files recorded at baseline", and HO-P2 had the same carve-out. HO-P5's A21 dropped those words. The HO-P3 and HO-P4 acceptances are therefore no precedent for this wording.
-- The earlier record is not complete cover either:
-  - goods-receipt-form, shared-pieces: recorded as load timeouts in HO-P3 and HO-P4.
-  - receiving-layout: recorded in HO-P4, where ACCEPTANCE noted it could not be on a baseline list.
-  - tests/components/staff/idle-lock.test.tsx: no record as a Vitest load timeout in HO-P3 or HO-P4.
-  - The "pointer-events race" TEST describes is not a timeout, and TEST did not say which test showed it.
-  - HO-XCT-002-TEST.md records goods-receipt-form U-C6 failing once when run alone. "Passes alone" is therefore not always true of that file.
-- In S0's favour, as facts rather than as a waiver:
-  - I ran each file alone at HEAD: idle-lock 13/13, shared-pieces 17/17, receiving-layout 3/3, goods-receipt-form 7/7. That reproduces TEST's 33/33 and 24/24.
-  - `git diff cda20c4 HEAD` touches no inventory or back-office-stock path.
-  - I found no route from S0's change to these failures, but no comparison run at base exists.
-
-QUESTION 3: The four e2e results. The wording does not allow them, and it does not settle whether they count against S0. Owner decision.
-- §1: "Any other failure, or any of these failing in a new way, blocks". There is no qualifier for load, rerun or slice.
-- §20.8 does not help. It covers crashes ("worker exit 0xC0000142, `next dev` heap errors at low memory, a stuck port") and asks to "rerun the chunk at `--workers=1`". These were test failures, not crashes, and TEST reran the tests rather than the chunks.
-- These four are not in any S0 row. S0's e2e is E1 only (§16, 60 passed, 0 failed). ordering-customer.spec.ts is S1's E5 and shop-staff.spec.ts is S3's E10, both "may change". The run was the TEST gate's added row X1, and A21's full e2e is integration. So no S0 §18 criterion is unmet by them.
-- Evidence they are unrelated to S0, which is a reason and not a waiver: :66/:146/:166 are basket and checkout flows; shop-staff :137 is review moderation; no handler reads a new seed field; they passed alone (recorded by TEST, not rerun by me). HO-P4 TEST lists shop-staff E-C1 and ordering-customer E-B1/E-B5 as similar load failures, though not these exact cases.
-- Deviation in the run: §16 requires "a fresh `next dev` per chunk". The sheet says the server restarted once, between chunks 2 and 3, so chunk 2 (three of the four results) ran on chunk 1's server. Chunk 3 was on a fresh server and shop-staff :137 still failed.
-
-QUESTION 4: No S0 criterion requires the customer-side Packed headline on a real screen.
-- A1's evidence column is "U1-U4, E1". E1's expected result is "Pass (the tracker and status vocabulary change breaks nothing)", which does not involve a Packed order. Amended (h) asks for "one case" in a component test. G4 asserts the heading and G5 shows it fails when the entry is removed.
-- X3 stays BLOCKED and is not counted as a pass. It does not affect the verdict.
-- Correction to the sheet: X3 and the TEST record give "S1's seeds" as the unblock. §13 does not support that. ordering/store.ts is S0's ("A slice that needs another seed field raises §20.1; it does not edit the store"), and mocks/handlers/portal/** is in no §13 block, so §14 forbids it. No §16 row asks for this either. So nobody will prove it on a screen unless the owner assigns it. See CARRY-FORWARDS.
+AMENDED (a)-(k)
+- (a)-(h): checked in run 1; code unchanged. Lines re-read for (a), (f) and (h). (d) still rests on the 54950d6 commit body and ARCHITECTURE; I did not open it.
+- (i), (j), (k): applied above. Each is recorded as owner-ratified. I cannot verify ratification beyond the text in §1 and in commit 8eda79a.
 
 OWNER DECISIONS
-- D1 (Vitest; closes A21 for S0). Either route clears it:
-  - (i) A full `npm test` at S0 HEAD with zero failures, recorded by TEST with any flags used. A21 does not fix concurrency, so in my reading a lower worker count (for example `npm test -- --maxWorkers=2`) still counts. No config change is allowed (§12).
-  - (ii) A §1 Amended row. Suggested wording, for the owner to accept or change: "A21's Vitest requirement and §17.2's `npm test` accept, for S0, a full run whose only failures are in `tests/components/staff/idle-lock.test.tsx`, `tests/components/inventory/shared-pieces.test.tsx`, `tests/components/inventory/goods-receipt-form.test.tsx` and `tests/components/back-office-stock/receiving-layout.test.tsx`, each passing when rerun alone and each reported by name." The owner should also say whether this carries to S1-S4 and integration; otherwise the same question returns at every slice.
-- D2 (e2e; §1 "Any other failure ... blocks"). Does this reach a failure in a spec outside the slice's §16 rows that passes when rerun alone? Suggested wording if the answer is no: "A failure under load in a spec outside a slice's §16 rows does not block that slice if it passes when its chunk is rerun on a fresh `next dev` at `--workers=1`. E18 at integration stays exact." If the answer is yes, chunks 2 and 3 must be rerun under §16 and come back clean.
-- D3 (§19 screenshots). §19 asks ACCEPTANCE for "screenshots at 360 and 1280 against the matching `.dc.html`". This run was told not to start a browser, so none were taken, and TEST took none either. S0 changes no layout, and the only Packed surface reachable under mocks is the staff order list and panel (X2, observed as text). The owner should say whether S0 is exempt; otherwise this gate must take them on its rerun.
-
-After D1 and D2, TEST must update its record to a plain PASS and ACCEPTANCE must run again. No code change or other gate rerun is needed for this.
+D1, D2 and D3 from run 1 are closed. One is new.
+- D4: does §16 E17 ("all", run-only, must pass) bind S0 at its gates, or only the integration run?
+  - Why it binds, on the text:
+    - (i) says "only the e2e rows §16 assigns to that slice block", and E17's Slice column reads "all".
+    - §16 uses "integration" as a separate value for E18 and E19, so "all" does not obviously mean integration.
+    - In §15, the "all" rows U46 and U47 are per slice, and TEST ran U46 at S0.
+    - §17.1 step 4 and §17.2 have each slice run "the slice's run-only specs from §16" before its gates.
+  - Why it might not:
+    - §17.2 says "the slice's" specs, and E17 belongs to no one slice.
+    - E18 contains every E17 spec.
+    - HO-P3's "all" E16 was explicitly the integration branch.
+    - HO-P4's gates ran once for the whole handover, so it is no precedent.
+    - (i) was ratified after run 1 wrote "S0's e2e is E1 only". That hints at the intent but does not state it.
+  - Is it empty for S0? No. E17 includes staff-shell-*, xct-offline and xct-offline-a11y, which open /staff/orders, the screen where S0's new seed orders now appear. I have no evidence that S0 breaks them, and none that it does not. None of the E17 specs was run.
+  - Route A: a §1 Amended row, suggested wording for the owner to accept or change: "E17's 'all' is checked at E18; it does not block a slice's own gates." This also settles it for S1-S4.
+  - Route B: run the E17 specs under §16 (chromium + mobile-360, 2 workers, fresh `next dev`, 12 baseline failures excepted, real-API specs recorded as not run), and have TEST add the row. Any other failure would block S0.
+  - My recommendation is A, because E18 already covers these specs before anything ships. The cost of A is that a seed-driven break in these specs is found later, at integration, not now. The choice is the owner's.
+Either way, ACCEPTANCE then runs again. Under A it should need only this one check. No code change or other gate rerun follows from D4 under A; under B, TEST updates its record.
 
 SCOPE
-- out-of-scope work found: none. `orderChannelLabel` is display only (OQ-11). Nothing from §4.1 is implemented. No §20 condition was worked around in the code.
+- out-of-scope work found: none. `orderChannelLabel` is display only (OQ-11). Added lines mentioning subscriptions are that label, its test, a comment and a moved absence assertion. No §20 condition was worked around in the code.
 - files outside allowed scope: none. See SCOPE CHECK.
 
 UNDECLARED DEVIATIONS
-- Implementation: none found. Commit messages declare the split and the key bump; every waiver is an Amended row. I was given no §17.3 slice report, so I could not compare against one.
-- TEST gate run: the §16 "fresh `next dev` per chunk" breach (Question 3). The sheet states the restart but does not flag it as a deviation.
+- Implementation: none found. I was given no §17.3 slice report, so I could not compare against one.
+- TEST gate:
+  - E17 omitted without being recorded (D4).
+  - Integrator authorship of the TEST update is not in the record or commit body (declared to this gate in its brief only).
+  - "T3 and A21 only" understates the edit (Question 2).
+  - The §16 fresh-server breach on chunk 2 is now disclosed in the record (line 28).
 
-CARRY-FORWARDS
+CARRY-FORWARDS (run 1's list, updated)
 S0, before it can pass:
-- D1, D2, D3 above. S1-S4 cannot branch until S0 merges (§5, §17.1).
+- D4 above. S1-S4 cannot branch until S0 merges (§5, §17.1).
+- Run 1's D1, D2, D3: closed.
 S1:
 - MyOrderDetail.tsx: `Packed` at :68, :105, :112, :161, :194 (Amended (b)). Until then a Packed order gets no hero there (:104).
 - Bump `PERSIST_KEY` in mocks/handlers/shop/store.ts (Amended (b), §11.1.2).
@@ -117,9 +133,12 @@ S3:
 S1 and S2 together:
 - A further seed goes through §20.1, not a direct edit. status-vocabulary.test.ts has `toHaveLength(13)`, `toHaveLength(1)` for Packed and riderNote, and `toHaveLength(2)` for compareAt, so added seeds will break it. That file is in S0's block; the integrator must route the change.
 - Strengthen U4's "amounts kept" case (TEST and CODE_REVIEW suggestion), because its title claims more than it asserts.
-- Customer-side Packed on a real screen has no owner (Question 4). If wanted, it needs an Amended row naming the portal fixtures and an ordering-store seed.
+- Customer-side Packed on a real screen: settled by Amended (k), no slice owes it.
+All later slices (new):
+- Full Vitest at the default worker count was red on 2 of 2 runs here, and green at `--maxWorkers=2` on 1 of 1. Each slice should run `npm test -- --maxWorkers=2` and record the flag; run 1's and this run's reading is that it satisfies A21.
 Integration:
 - E18 full e2e, exactly the 12 baseline failures; E19 `sweep:a11y`; the A21 full set.
+- Recheck by name, per Amended (i): ordering-customer :166, :66, :146; shop-staff :137.
 - Add the new GETs to tests/contract/mock-vs-real.contract.test.ts and run `test:contract` if a scratch API exists (§12, §17.1).
 - Add the ADR row to docs/handover/README.md (§9).
 - Real-API specs, not run by anyone so far.
@@ -131,20 +150,23 @@ Small items left open by earlier gates, no owner assigned:
 - Handover wording: §5 still lists OQ answers as open; §14 has no carve-out for docs/gates and docs/test-cases; Amended (d)'s "U15" label (ARCHITECTURE LOW).
 
 NOT CHECKED
-- Full Vitest, tsc, lint, build, Playwright: not rerun (instructed). Those results are TEST's record. I reran 3 S0 test files and the 5 named flaky files, each alone.
-- account-sidebar.test.tsx and overview-*.test.tsx: read or counted, not rerun.
-- The TEST seed comparison and the X2 and X3 probes used temporary files that were deleted, so they cannot be re-executed from the repo. I checked the diff instead.
-- Screenshots (D3). The owner ratification of each Amended row beyond its text in §1 and in commit messages. Any §17.3 slice report.
+- Full Vitest, tsc, lint, build, Playwright: not rerun (instructed). I ran 4 S0 test files alone and the `rg` back-up.
+- The log's exit code and worker flag (not in the log). Whether the tree had uncommitted edits during that run (clean now).
+- E1 and the rerun results have no surviving raw log; the evidence is the TEST record.
+- The TEST seed comparison and the X2 and X3 probes used deleted temporary files.
+- Owner ratification beyond its text. Any §17.3 slice report. Screenshots: not taken, exempt under (j).
+- The E17 specs: never run on S0 by anyone.
 
 FINDINGS
-- [HIGH] docs/handover/HO-P5-WIRING.md:677 — A21 requires Vitest to pass, with no exception; T3 shows no green run in two attempts. Not an S0 code defect on the evidence available. See D1.
-- [HIGH] docs/gates/HO-P5-WIRING-S0-TEST.md:5 — the status is not a plain PASS, which §19 and this gate's rules require. See D1, D2.
-- [MEDIUM] docs/handover/HO-P5-WIRING.md:75 — "Any other failure ... blocks" has four results outside the baseline and no rule for reruns or for specs outside the slice. See D2.
-- [MEDIUM] docs/test-cases/TC-HO-P5-WIRING-S0.md:26 — chunks 1 and 2 shared a dev server against §16's "fresh `next dev` per chunk".
-- [LOW] docs/test-cases/TC-HO-P5-WIRING-S0.md:70 and :106 — X3's unblock names "S1's seeds", which §13 and §14 do not allow.
+- [HIGH] docs/handover/HO-P5-WIRING.md:608 — E17 is assigned to "all", and Amended (i) makes "rows §16 assigns to that slice" the test for what blocks. No S0 gate ran it, and the handover does not say whether it binds. See D4.
+- [MEDIUM] docs/test-cases/TC-HO-P5-WIRING-S0.md:72 — "S0's per-slice list is E1" is stated with no row or note for E17.
+- [MEDIUM] docs/gates/HO-P5-WIRING-S0-TEST.md:7 — the update does not say the integrator made it, and "T3 and A21 only" omits line 28.
+- [LOW] docs/test-cases/TC-HO-P5-WIRING-S0.md:68 — X1 is PASS though its expected "pass or baseline" was met only after reruns. Read it as "non-blocking under (i)".
+- [LOW] docs/test-cases/TC-HO-P5-WIRING-S0.md:70, :106 and docs/gates/HO-P5-WIRING-S0-TEST.md:38 — X3's unblock still says "S1's seeds". Amended (k) replaced that; §13 and §14 never allowed it.
 - [LOW] web/tests/unit/orders/status-vocabulary.test.ts:67 — case title claims "amounts kept" with no amount asserted. Carried from earlier gates.
 
 SCOPE CHECK
-- files in allowed scope: 19/19 implementation files in `git diff --name-only cda20c4 HEAD` (§13 S0 block 10, split-created 2 at handover lines 417 and 492, Amended (a) (e) (f) (h) 6, handover 1: only line 76 differs from base). Plus 5 gate and sheet artifacts, which §14's `docs/**` row does not carve out but the gate definitions require (same reading as ARCHITECTURE).
+- files in allowed scope: 19/19 implementation files in `git diff --name-only cda20c4 HEAD`: §13 S0 block 10 (including the deleted overview.test.tsx and overview-signin), split-created 2 (handover lines 417 and 492), Amended (a) (e) (f) (h) 6, handover 1 (only line 76 differs from base). Plus 6 gate and sheet artifacts, which §14's `docs/**` row does not carve out but the gate definitions require. 25 paths in all. No e2e spec, guard, config, package or lock file in the diff.
 - files outside allowed scope: none
+- merge target: feat/phase2-catalogue-theme is at cda20c4, the merge base, with 0 commits ahead of it, so S0 would merge without conflict.
 - written by this gate: docs/gates/HO-P5-WIRING-S0-ACCEPTANCE.md only. Nothing committed; no dev server or browser started.
