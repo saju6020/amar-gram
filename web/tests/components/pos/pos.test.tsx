@@ -34,8 +34,8 @@ async function scan(user: ReturnType<typeof userEvent.setup>, code: string) {
 }
 
 async function fillCustomer(user: ReturnType<typeof userEvent.setup>) {
-  // HO-P4 S2: the buyer's fields sit behind the ticket's customer chip (the API still needs name and mobile, BG-8).
-  await user.click(screen.getByRole('button', { name: 'Walk-in · add customer' }));
+  // HO-P4 S2: the buyer's fields sit behind the ticket's customer chip; HO-P5 BG-8 renamed it "Walk-in (no customer)" (a sale may now have neither).
+  await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
   await user.type(screen.getByLabelText(/Customer name/), 'Walk-in Buyer');
   await user.type(screen.getByLabelText(/Mobile number/), '01711112222');
 }
@@ -242,18 +242,22 @@ describe('The quantity box - gate fix', () => {
 });
 
 describe('Review gating and keyboard path - gate fix', () => {
-  it('Enter in the amount field does NOT open the review without a customer, and says what is missing', async () => {
+  // HO-P5 U26 supersedes "does NOT open the review without a customer": a walk-in sale needs none (BG-8), but name and
+  // mobile are both or neither, so a name without a mobile is what is still refused.
+  it('Enter in the amount field does NOT open the review with only half the customer, and says what is missing', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
     await scan(user, JASMINE_RICE);
     await screen.findByRole('list', { name: 'Basket' });
+    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
+    await user.type(screen.getByLabelText(/Customer name/), 'Walk-in Buyer');
     await user.keyboard('{F2}');
     expect(screen.getByLabelText(/handed over/)).toHaveFocus();
     await user.keyboard('1000{Enter}');
-    expect(await screen.findByText(/Enter the customer.s name and mobile/)).toBeInTheDocument();
+    expect(await screen.findByText(/Enter both the name and the mobile number, or neither/)).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    // The missing fields are put in front of the cashier.
-    expect(await screen.findByLabelText(/Customer name/)).toBeInTheDocument();
+    // The fields stay in front of the cashier.
+    expect(await screen.findByLabelText(/Mobile number/)).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Payments taken' })).toBeInTheDocument();
   });
 

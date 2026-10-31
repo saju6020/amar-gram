@@ -39,7 +39,10 @@ describe('Tiles and ticket - U22', () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
     expect(screen.getByRole('heading', { level: 1, name: 'Counter sale' })).toBeInTheDocument();
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument(); // no category tabs (BG-6)
+    // HO-P5 U24 supersedes "no category tabs (BG-6)": the category tablist and its tap grid now exist.
+    const categories = screen.getByRole('tablist', { name: 'Item categories' });
+    expect(within(categories).getAllByRole('tab').map((t) => t.textContent)[0]).toBe('All');
+    expect(within(categories).getAllByRole('tab')).toHaveLength(12);
     const results = await addByName(user, 'Jasmine');
     await user.click(within(results).getAllByRole('button')[0]!);
     const basket = await screen.findByRole('list', { name: 'Basket' });
@@ -60,11 +63,11 @@ describe('Tiles and ticket - U22', () => {
     expect(document.body.innerHTML).not.toMatch(/card number(?!\.)|expiry|cvv/i);
   });
 
-  it('"Walk-in · add customer" opens the existing name and mobile fields', async () => {
+  it('"Walk-in (no customer)" opens the existing name and mobile fields', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
     expect(screen.queryByLabelText(/Customer name/)).not.toBeInTheDocument();
-    const chip = screen.getByRole('button', { name: 'Walk-in · add customer' });
+    const chip = screen.getByRole('button', { name: 'Walk-in (no customer)' });
     expect(chip).toHaveAttribute('aria-expanded', 'false');
     await user.click(chip);
     expect(chip).toHaveAttribute('aria-expanded', 'true');
@@ -75,7 +78,9 @@ describe('Tiles and ticket - U22', () => {
 });
 
 describe('Money rules at the counter - U23', () => {
-  it('"Exact" fills the amount with the quote’s total string unchanged and no change is shown before completion', async () => {
+  // HO-P5 U25 supersedes this case's "no change is shown before completion": the quote's changeDue / cashShort for the
+  // typed cash is shown (BG-7), and the fixed amounts still fill the field as typed.
+  it('"Exact" fills the amount with the quote’s total string unchanged and the quote answers the change for the typed cash', async () => {
     const user = userEvent.setup();
     renderWithClient(<PosScreen />);
     const field = screen.getByLabelText('Scan a barcode');
@@ -92,7 +97,34 @@ describe('Money rules at the counter - U23', () => {
     // Fixed quick amounts fill the field as typed, too.
     await user.click(screen.getByRole('button', { name: /1,?000\.00/ }));
     expect(screen.getByLabelText(/handed over/)).toHaveValue('1000.00');
-    expect(document.body.textContent).not.toMatch(/change (due|to give)/i);
+    // The change is the quote's answer for 1000.00 against 780.00, not a sum made here.
+    await waitFor(() => expect(document.body.textContent).toMatch(/Change due\s*৳?220\.00/));
+  });
+
+  it('typing less than the total shows what is still to pay, from the quote', async () => {
+    const user = userEvent.setup();
+    renderWithClient(<PosScreen />);
+    const field = screen.getByLabelText('Scan a barcode');
+    await user.click(field);
+    await user.type(field, `${JASMINE_RICE}{Enter}`);
+    await screen.findByRole('list', { name: 'Basket' });
+    const total = await screen.findByRole('region', { name: 'Sale total' });
+    await waitFor(() => expect(within(total).getByRole('definition')).toHaveTextContent(/780\.00/));
+    await user.type(screen.getByLabelText(/handed over/), '500');
+    await waitFor(() => expect(document.body.textContent).toMatch(/Still to pay\s*৳?280\.00/));
+    expect(document.body.textContent).not.toMatch(/Change due/);
+  });
+
+  it('shows nothing about change until some cash is typed', async () => {
+    const user = userEvent.setup();
+    renderWithClient(<PosScreen />);
+    const field = screen.getByLabelText('Scan a barcode');
+    await user.click(field);
+    await user.type(field, `${JASMINE_RICE}{Enter}`);
+    await screen.findByRole('list', { name: 'Basket' });
+    const total = await screen.findByRole('region', { name: 'Sale total' });
+    await waitFor(() => expect(within(total).getByRole('definition')).toHaveTextContent(/780\.00/));
+    expect(document.body.textContent).not.toMatch(/Change due|Still to pay/);
   });
 
   it('after completion the screen shows the server’s change due', async () => {
@@ -102,7 +134,7 @@ describe('Money rules at the counter - U23', () => {
     await user.click(field);
     await user.type(field, `${JASMINE_RICE}{Enter}`);
     await screen.findByRole('list', { name: 'Basket' });
-    await user.click(screen.getByRole('button', { name: 'Walk-in · add customer' }));
+    await user.click(screen.getByRole('button', { name: 'Walk-in (no customer)' }));
     await user.type(screen.getByLabelText(/Customer name/), 'Walk-in Buyer');
     await user.type(screen.getByLabelText(/Mobile number/), '01711112222');
     await user.click(screen.getByRole('button', { name: /1,?000\.00/ }));

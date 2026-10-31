@@ -22,10 +22,6 @@ import { cn } from '@/lib/utils';
  * only while the series query succeeded: a `403` (a role without `Reports.SalesView`, or no branch) or a
  * failed read leaves it out, with no error banner, because the rest of the dashboard stands without it.
  */
-function dayOfMonth(date: string): string {
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`));
-}
-
 function ordersText(count: number): string {
   return `${count} order${count === 1 ? '' : 's'}`;
 }
@@ -93,7 +89,7 @@ export function SalesChartPanel({ series }: { series: SalesSeries }) {
               onMouseLeave={() => setActive(null)}
             >
               {series.days.map((day, index) => (
-                <li key={day.date} className="flex min-w-0 flex-1 flex-col items-stretch gap-1">
+                <li key={day.date} className="flex min-w-0 flex-1 flex-col items-stretch">
                   <button
                     type="button"
                     aria-label={readoutOf(day)}
@@ -111,12 +107,14 @@ export function SalesChartPanel({ series }: { series: SalesSeries }) {
                       )}
                     />
                   </button>
-                  <span aria-hidden="true" className="text-center text-[11px] leading-none text-ink-muted">
-                    {dayOfMonth(day.date)}
-                  </span>
                 </li>
               ))}
             </ul>
+            {/* The first and last day only: fourteen day numbers would not fit a phone; each bar names its own date. */}
+            <div aria-hidden="true" className="-mt-2 flex justify-between text-[11px] leading-none text-ink-muted">
+              <span>{formatDateOnly(series.days[0]?.date ?? series.from)}</span>
+              <span>{formatDateOnly(series.days[series.days.length - 1]?.date ?? series.to)}</span>
+            </div>
             <p role="status" aria-live="polite" className="m-0 min-h-5 text-sm font-semibold text-ink">
               {activeDay ? readoutOf(activeDay) : ''}
             </p>
