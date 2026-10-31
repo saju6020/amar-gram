@@ -45,8 +45,8 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
         {f.recipientPhone && <Row label="Phone">{f.recipientPhone}</Row>}
         {address && <Row label="Address">{address}</Row>}
         {f.deliveryInstructions && <Row label="Instructions">{f.deliveryInstructions}</Row>}
-        {/* HO-P5 G4 / OQ-7: the customer's note for the rider, as plain text only (React escapes it; never a link, never stored). */}
-        {f.riderNote && <Row label="Note for the rider">{f.riderNote}</Row>}
+        {/* HO-P5 G4 / OQ-7: the customer's note for the rider, as plain text only (React escapes it; never a link, never stored; <bdi> isolates bidi/format characters such as U+202E the server lets through). */}
+        {f.riderNote && <Row label="Note for the rider"><bdi>{f.riderNote}</bdi></Row>}
         {f.zoneName && <Row label="Delivery zone">{f.zoneName}</Row>}
         {f.slotDate && f.slotWindow && <Row label="Slot">{`${formatDateOnly(f.slotDate)}, ${f.slotWindow} (${order.branchTimeZoneId})`}</Row>}
         {f.pickupBranchName && <Row label="Collect at">{f.pickupBranchName}</Row>}

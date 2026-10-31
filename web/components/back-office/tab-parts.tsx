@@ -5,6 +5,24 @@ import { cn } from '@/lib/utils';
 import { handleTablistKeyDown, type TabsProps } from './tabs-shared';
 
 /**
+ * HO-P5 (z): a tab may carry `countLabel`, the noun its count counts ("order"). The visible count is unchanged, and the
+ * accessible name gains ", 1 order" / ", 3 orders" so it reads "Packed, 1 order". Without `countLabel` the output is exactly as before.
+ */
+export type CountedTabItem = TabsProps['items'][number] & { countLabel?: string };
+
+function renderCount(item: CountedTabItem, className: string) {
+  if (item.count === undefined) return null;
+  const { count, countLabel } = item;
+  if (!countLabel) return <span className={className}>{count}</span>;
+  return (
+    <>
+      <span className={className} aria-hidden="true">{count}</span>
+      <span className="sr-only">{`, ${count} ${countLabel}${count === 1 ? '' : 's'}`}</span>
+    </>
+  );
+}
+
+/**
  * The one behaviour both tab styles share (HO-P4 §11.1, UI-6): `state` is an ARIA tablist with a
  * roving tabindex and arrow-key movement; `link` is a `<nav aria-label>` of links with
  * `aria-current="page"` and never `role="tab"`. Each style supplies only its classes.
@@ -39,9 +57,7 @@ export function TabsBase({
               className={cn(itemClass(selected), 'no-underline')}
             >
               {item.label}
-              {item.count !== undefined && (
-                <span className={countClass(selected)}>{item.count}</span>
-              )}
+              {renderCount(item, countClass(selected))}
             </Link>
           );
         })}
@@ -65,7 +81,7 @@ export function TabsBase({
             className={itemClass(selected)}
           >
             {item.label}
-            {item.count !== undefined && <span className={countClass(selected)}>{item.count}</span>}
+            {renderCount(item, countClass(selected))}
           </button>
         );
       })}

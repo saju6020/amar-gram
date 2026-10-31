@@ -50,10 +50,10 @@ test.describe('fulfilment (US-ORD-09 to US-ORD-11, US-ORD-20)', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/staff/orders');
     const pills = page.getByRole('tablist', { name: 'Order status' });
-    // The pill's name is its label and the server's count ("Packed 1").
-    await expect(pills.getByRole('tab', { name: /^All\s*\d+$/ })).toBeVisible();
-    await expect(pills.getByRole('tab', { name: /^Packed\s*\d+$/ })).toBeVisible();
-    await pills.getByRole('tab', { name: /^Packed\s*\d+$/ }).click();
+    // The pill's name is its label, then the server's count and noun ("Packed, 1 order").
+    await expect(pills.getByRole('tab', { name: /^All\s*,\s*\d+ orders?$/ })).toBeVisible();
+    await expect(pills.getByRole('tab', { name: /^Packed\s*,\s*1 order$/ })).toBeVisible();
+    await pills.getByRole('tab', { name: /^Packed\s*,\s*1 order$/ }).click();
     await expect(page).toHaveURL(/[?&]status=Packed/);
     const table = page.getByRole('table', { name: 'Orders' });
     await expect(table.getByRole('row')).toHaveCount(2); // the header and the one seeded Packed order

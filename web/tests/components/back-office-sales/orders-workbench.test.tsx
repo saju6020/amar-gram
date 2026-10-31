@@ -33,16 +33,18 @@ describe('Status pills - U18', () => {
     const user = userEvent.setup();
     renderWithClient(<StaffOrderQueue />);
     const tabs = await screen.findByRole('tablist', { name: 'Order status' });
+    // Visible count, then the screen-reader text "{n} order(s)" (HO-P5 Amended (z)).
+    const pill = (label: string, n: number) => `${label}${n}, ${n} order${n === 1 ? '' : 's'}`;
     const countOf = (status: string) => db.orders.filter((o) => o.status === status).length;
     // The counts arrive from their own request; the pill text is "{label}{count}" once they have.
     await waitFor(() =>
       expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual([
-        `Waiting for payment${countOf('PendingPayment')}`,
-        `Confirmed${countOf('Confirmed')}`,
-        `Being packed${countOf('Packing')}`,
-        `Packed${countOf('Packed')}`,
-        `Dispatched${countOf('Dispatched')}`,
-        `All${db.orders.length}`,
+        pill('Waiting for payment', countOf('PendingPayment')),
+        pill('Confirmed', countOf('Confirmed')),
+        pill('Being packed', countOf('Packing')),
+        pill('Packed', countOf('Packed')),
+        pill('Dispatched', countOf('Dispatched')),
+        pill('All', db.orders.length),
       ]),
     );
     expect(countOf('Packed')).toBeGreaterThan(0);

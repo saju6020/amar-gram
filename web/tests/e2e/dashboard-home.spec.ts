@@ -60,7 +60,7 @@ test('E7: the sales chart has a table alternative and the pipeline links to the 
   const pipeline = page.getByRole('region', { name: 'Orders in progress' });
   await pipeline.getByRole('link', { name: /^Being packed/ }).click();
   await expect(page).toHaveURL(/\/staff\/orders\?status=Packing/);
-  await expect(page.getByRole('tab', { name: /^Being packed/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tab', { name: /^Being packed\s*,\s*\d+ orders?$/ })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('E-X1/E-X2: the dashboard is axe-clean and never scrolls sideways', async ({ page }) => {

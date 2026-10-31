@@ -13,7 +13,7 @@ Written by the S2 implementer. Everything below that says "passed" was seen to p
 
 Commits (oldest first): `625a0da` clients, hooks, mocks, dispatch dialog; `adec50e` workbench, riders page; `9eec889` dashboard panels, POS; `d26e5d7` superseded assertions; `230ea43` new tests; `971c8bd` tick fix and e2e. Run `git log b4f7783..HEAD --oneline` for the exact list.
 
-## Files touched (all inside S2's §13 block)
+## Files touched (inside S2's §13 block; `components/back-office/tab-parts.tsx` is in scope by §1 Amended (z))
 
 New: `app/(staff)/staff/fulfilment/riders/page.tsx`, `components/back-office-overview/DashboardPipeline.tsx`, `components/dashboard/DashboardSalesChart.tsx`, `components/fulfilment/RiderDialog.tsx`, `components/fulfilment/RidersPage.tsx`, `components/pos/PosBrowseGrid.tsx`, `components/pos/PosSkuTile.tsx`, `lib/hooks/useSalesSeries.ts`; tests `tests/components/back-office-sales/{mock-refusals.test.ts,orders-p5.test.tsx,pos-p5.test.tsx,riders-dispatch.test.tsx}`, `tests/components/dashboard/sales-chart.test.tsx`.
 
@@ -70,7 +70,7 @@ Test seam added: `setMockOrderingRoles` in `mocks/handlers/ordering/staff.ts`, t
 
 ## Decisions to double-check (visual or UX; nothing here could be seen rendered)
 
-* **Pill count accessible name.** `PillTabs` renders the count as a trailing span, so a pill reads "Packed 1" to a screen reader, not "Packed, 1 order" (§7 UI-6). Making it read that way needs `components/back-office/tab-parts.tsx` (a shared primitive, not S2's): **§20.1 request** — in `TabsBase`, render `{item.count}` followed by `<span className="sr-only"> orders</span>` (or let `TabItem` carry a `countLabel`). Not done; the number is text and visible.
+* Pill count accessible name: done under Amended (z) (see Follow-ups); a pill now reads "Packed, 1 order".
 * The Subscription channel appears only as a second line in the Fulfilment cell ("Subscription") for such a row; there is no seed order with that channel (`DbOrder.channel` in S0's store is `'Online' | 'Counter'`), so it is unit-tested through the type only.
 * Dashboard layout: the sales chart (2/3) and "Orders in progress" (1/3) sit above "Needs attention / Latest orders" from 1280 px, stacked below. At 360 px the 14 bars are about 18 px wide each with a first and last date under them (not 14 day numbers); each bar is a button with a 44 px tall column but is narrower than 44 px, a deliberate trade-off for a chart of 14 days (the same days are in the table alternative). Please look at it.
 * Riders page uses `ResponsiveTable` (table from 768 px, cards below), not `DataTable`, because the latter is URL-driven (search/sort/pager) and the registry is a short list. The Orders tabs show above it for orientation.
@@ -100,14 +100,18 @@ Not run: the full Vitest suite; E17 specs other than `ordering-a11y-responsive`;
 
 ## Anything left undone
 
-* The pill-count accessible name (above).
-* The handover's `DataTable` for the riders page (above).
+* Nothing outstanding in the slice. The riders page uses `ResponsiveTable` rather than `DataTable`; Amended (y) records that.
 * No e2e case for the Subscription channel label (no seed; see above).
 * `tests/contract/mock-vs-real.contract.test.ts` is the integration step's.
 
+## Follow-ups after the report (Amended (z) and S1 SECURITY)
+
+* `tab-parts.tsx`: optional `countLabel` (type `CountedTabItem`), visible count unchanged, sr-only ", 1 order"; no other tab changes. Test: `tab-count-label.test.tsx`. Verified: typecheck and lint clean; Vitest 91 files / 740 tests passed at `--maxWorkers=1` (slice folders, `back-office` incl. `primitives`, and every folder importing the tabs); e2e `ordering-staff` + `dashboard-home` on a fresh `next dev` (3122), both projects, `--workers=1`: 48 passed (a first run had my E8 pills assertion fail on the name format; fixed to `/^Packeds*,s*1 order$/`).
+* Staff read-back of the rider note is wrapped in `<bdi>` on the side panel and the order page (U+202E and other format characters pass the server's C0-only rule); test in `orders-p5.test.tsx`.
+
 ## §20 requests
 
-1. **§20.1 (LOW):** `components/back-office/tab-parts.tsx` — count text for screen readers ("Packed, 1 order"). Exact change in "Decisions to double-check".
-2. **§20.2 (record):** the three differences between the handover and the code listed above (pick list excludes Packed; rider name uniqueness is case-sensitive; `CourierNotFound` is 404) for the integrator's §1 Amended row.
+1. ~~§20.1 pill count name~~ closed by Amended (z): `tab-parts.tsx` now takes an optional `countLabel`; the queue pills read "Packed, 1 order".
+2. §20.2: the code-versus-document differences are recorded by Amended (x) and (y); nothing further to route.
 
 Nothing else blocked the slice.

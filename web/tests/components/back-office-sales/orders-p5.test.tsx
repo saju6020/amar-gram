@@ -110,16 +110,20 @@ describe('Mark packed - U21', () => {
 
 describe('Rider note and rider shipment - G4 staff read-back, BG-5', () => {
   it('shows the note a customer left as plain text on the side panel and the order page, never as markup or a link', async () => {
-    const hostile = '<b>ring</b> <a href="javascript:alert(1)">here</a> & call';
+    const hostile = '<b>ring</b> <a href="javascript:alert(1)">here</a> & call ‮evil';
     findOrder(ids.orders.confirmedCod)!.fulfilment.riderNote = hostile;
     const { container, unmount } = renderWithClient(<StaffOrderSidePanel orderId={ids.orders.confirmedCod} />);
-    expect(await screen.findByText(`Note for the rider: ${hostile}`)).toBeInTheDocument();
+    const note = (await screen.findByText(hostile)) as HTMLElement;
+    // The note sits in its own isolate, so a U+202E in it cannot reorder the text around it.
+    expect(note.tagName).toBe('BDI');
+    expect(note.parentElement).toHaveTextContent(`Note for the rider: ${hostile}`);
     expect(container.querySelector('b, a[href^="javascript"]')).toBeNull();
     unmount();
 
     const page = renderWithClient(<StaffOrderDetail orderId={ids.orders.confirmedCod} />);
     const term = await screen.findByText('Note for the rider');
     expect(term.nextElementSibling).toHaveTextContent(hostile);
+    expect(term.nextElementSibling!.querySelector('bdi')).not.toBeNull();
     expect(page.container.querySelector('b, a[href^="javascript"]')).toBeNull();
     // Not in the address bar and not in browser storage.
     expect(window.location.href).not.toContain('ring');

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/back-office/PageHeader';
 import { Panel } from '@/components/back-office/Panel';
 import { PillTabs } from '@/components/back-office/PillTabs';
+import type { CountedTabItem } from '@/components/back-office/tab-parts';
 import { SearchField } from '@/components/back-office/SearchField';
 import { SplitView } from '@/components/back-office/SplitView';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
@@ -198,6 +199,11 @@ export function StaffOrderQueue() {
   if (query.error instanceof ApiForbiddenError) return <AccessRefusedState error={query.error} />;
   const filtered = FIELDS.some((name) => name !== 'page' && name !== 'order' && values[name]);
   const moreActive = MORE_FIELDS.some((name) => name !== 'status' && values[name]) || (!!values.status && !PILL_STATUSES.includes(values.status));
+  // `countLabel` is the optional tab-parts extension (HO-P5 Amended (z)): the name reads "Packed, 1 order".
+  const pillItems: CountedTabItem[] = [
+    ...PILL_STATUSES.map((status) => ({ key: status, label: orderStatusLabel(status), count: countOf(status), countLabel: 'order' })),
+    { key: ALL_PILL, label: 'All', count: counts.data?.total, countLabel: 'order' },
+  ];
   const pillValue = values.status === '' ? ALL_PILL : values.status;
 
   const list = (
@@ -251,10 +257,7 @@ export function StaffOrderQueue() {
         label="Order status"
         value={pillValue}
         onChange={(key) => set('status', key === ALL_PILL ? '' : key)}
-        items={[
-          ...PILL_STATUSES.map((status) => ({ key: status, label: orderStatusLabel(status), count: countOf(status) })),
-          { key: ALL_PILL, label: 'All', count: counts.data?.total },
-        ]}
+        items={pillItems}
       />
       <div className="grid items-start gap-3 md:grid-cols-2">
         <details open={moreActive} className="rounded-2xl border border-border bg-surface p-3">

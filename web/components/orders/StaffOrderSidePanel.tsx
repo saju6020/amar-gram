@@ -180,7 +180,7 @@ function SidePanelBody({ order }: { order: StaffOrderDetail }) {
           {f.slotDate && f.slotWindow ? ` · ${formatDateOnly(f.slotDate)}, ${f.slotWindow}` : ''} · {paymentMethodLabel(order.paymentMethod)}
         </span>
         {f.deliveryInstructions && <span className="[overflow-wrap:anywhere]">Note: {f.deliveryInstructions}</span>}
-        {f.riderNote && <span className="[overflow-wrap:anywhere]">Note for the rider: {f.riderNote}</span>}
+        {f.riderNote && <span className="[overflow-wrap:anywhere]">Note for the rider: <bdi>{f.riderNote}</bdi></span>}
         {order.packedOn && <span>Packed {formatOrderWhen(order.packedOn, order.branchTimeZoneId)}</span>}
       </div>
 
