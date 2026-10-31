@@ -9,7 +9,7 @@ import { CATEGORIES, FACETS } from './catalogue-fixtures';
 
 /**
  * HO-P5 S1 §15 U7 (the District filter, its chip and Clear filters) and the U47 mock refusals for
- * `GET /api/shop/products?district=` (Api/Controllers/ShopCatalogueController.cs:36-39).
+ * `GET /api/shop/products?district=` (Api/Controllers/ShopCatalogueController.cs:37-39).
  */
 
 const replace = vi.fn();
@@ -89,11 +89,8 @@ describe('U7: the District filter', () => {
     expect(screen.getByRole('button', { name: 'Filters (2)' })).toBeInTheDocument();
   });
 
-  it('has no District group when the API sends no districts, or an older response lacks the field', () => {
-    const { unmount } = setup('', { ...FACETS, districts: [] });
-    expect(screen.queryByText('District')).not.toBeInTheDocument();
-    unmount();
-    setup('', FACETS);
+  it('has no District group when the API sends no districts', () => {
+    setup('', { ...FACETS, districts: [] });
     expect(screen.queryByText('District')).not.toBeInTheDocument();
   });
 });
@@ -117,6 +114,20 @@ describe('U47: the mock refuses what the server refuses', () => {
     const first = await refusal(apiFetch(`/api/shop/products?${query.toString()}`));
     expect(first.propertyName).toBe('district');
     expect(first.errorCode).toBe('InvalidCatalogueFilter');
+  });
+
+  it('blanks are dropped and values trimmed before they are counted: 20 real values plus blanks is accepted', async () => {
+    const query = new URLSearchParams();
+    for (const d of tooMany.slice(0, 20)) query.append('district', ` ${d} `);
+    query.append('district', '');
+    query.append('district', '   ');
+    await expect(apiFetch(`/api/shop/products?${query.toString()}`)).resolves.toMatchObject({
+      items: [],
+    });
+    // A 60-character value with padding is within the limit once trimmed.
+    await expect(
+      apiFetch(`/api/shop/products?district=${encodeURIComponent(` ${'x'.repeat(60)} `)}`),
+    ).resolves.toBeDefined();
   });
 
   it('exactly 20 values is accepted', async () => {

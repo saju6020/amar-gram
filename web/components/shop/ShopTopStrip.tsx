@@ -10,7 +10,11 @@ import type { DeliveryPromise, StorefrontBanner } from '@/lib/api/shop-catalogue
 export function promiseTakesStrip(
   promise: DeliveryPromise | null | undefined,
 ): promise is DeliveryPromise & { freeOver: NonNullable<DeliveryPromise['freeOver']> } {
-  return !!promise?.freeOver;
+  // The server accepts a threshold of zero (OrderConfigurationCommandValidators.cs:16-17), under which every
+  // order ships free; "Free delivery over ৳0.00" would read oddly, so a zero threshold leaves the strip to the
+  // banner. Checked on the server's string (all digits zero), not by arithmetic.
+  const amount = promise?.freeOver?.amount;
+  return !!amount && !/^0*\.?0*$/.test(amount);
 }
 
 /**

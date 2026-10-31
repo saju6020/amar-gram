@@ -85,9 +85,9 @@ export interface CatalogueFilters {
   price: { min: number | null; max: number | null };
   /**
    * HO-P5 G1: the districts of origin present, by name (`Read/Queries/Product/GetCatalogueFiltersQuery.cs:17-18`).
-   * The server always sends it; optional here only so older fixtures and responses still type-check.
+   * Always sent by the server.
    */
-  districts?: Array<{ value: string; count: number }>;
+  districts: Array<{ value: string; count: number }>;
 }
 
 export interface CategoryNode {
@@ -330,7 +330,7 @@ export function getBannersServer(placement: 'Shop' | 'Home'): Promise<Storefront
  * HO-P5 G5: `GET /api/shop/delivery-promise` (public; `Cache-Control: public, max-age=60`). The primary
  * zone's Standard free-delivery threshold and lead time; every field is null when no zone offers a
  * Standard service (`Read/Queries/Order/GetDeliveryPromiseQuery.cs:6-14`, handler
- * `Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:138-162`). There is no zone name (OQ-2).
+ * `Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:139-162`). There is no zone name (OQ-2).
  */
 export interface DeliveryPromise {
   currencyCode: string | null;

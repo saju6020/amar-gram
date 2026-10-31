@@ -8,6 +8,8 @@ import { server } from '@/mocks/server';
 import { resetOrderingMockData } from '@/mocks/handlers/ordering';
 import { ShopTopStrip } from '@/components/shop/ShopTopStrip';
 import ShopLayout from '@/app/(shop)/layout';
+import { CatalogueView } from '@/app/(shop)/_components/CatalogueView';
+import { parseCatalogueParams } from '@/lib/shop/catalogueParams';
 import ProductPage from '@/app/(shop)/shop/products/[slug]/page';
 import { ApiError } from '@/lib/api/client';
 import { getDeliveryPromiseServer, type StorefrontBanner } from '@/lib/api/shop-catalogue';
@@ -174,6 +176,37 @@ describe('U12: the product page passes the lead time to the delivery card', () =
     expect(html).toContain('Pick a delivery slot at checkout. The fee is shown before you place the order.');
     expect(html).not.toContain('usually takes');
     expect(html).not.toMatch(/role="alert"/);
+  });
+});
+
+describe('the catalogue shows plain text for InvalidCatalogueFilter, not the server message', () => {
+  it('an over-limit district list reads the existing plain sentence', async () => {
+    const query = Array.from({ length: 21 }, (_, i) => `district=D${i}`).join('&');
+    const html = renderToStaticMarkup(
+      createElement(
+        QueryClientProvider,
+        { client: new QueryClient() },
+        await CatalogueView({
+          params: parseCatalogueParams(new URLSearchParams(query)),
+          basePath: '/shop/products',
+        }),
+      ),
+    );
+    expect(html).toContain('One of the filters is not valid. Clear the filters and try again.');
+    expect(html).not.toContain('district cannot have more than');
+  });
+});
+
+describe('a zero threshold', () => {
+  it('does not take the strip: "Free delivery over ৳0.00" would be a misleading claim', () => {
+    const html = renderToStaticMarkup(
+      createElement(ShopTopStrip, {
+        promise: { currencyCode: 'BDT', freeOver: { amount: '0.00', currencyCode: 'BDT' }, leadTimeDays: 1 },
+        banner: banner('b1', 'Mango season'),
+      }),
+    );
+    expect(html).not.toContain('Free delivery');
+    expect(html).toContain('Mango season');
   });
 });
 

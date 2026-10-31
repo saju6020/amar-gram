@@ -57,7 +57,7 @@ export function CatalogueFilters({
   const brands = collapsible
     ? matchingBrands.filter((b, i) => i < BRANDS_COLLAPSED || value.brand.includes(b.name))
     : matchingBrands;
-  const districts = facets.districts ?? [];
+  const districts = facets.districts;
   const selectedCategory = categories.find((c) => c.value === value.category);
   const organicOffered =
     facets.certifications.some((c) => c.value === ORGANIC) || value.certification.includes(ORGANIC);

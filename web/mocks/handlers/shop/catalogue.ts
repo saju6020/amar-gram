@@ -179,7 +179,7 @@ function getList(url: URL) {
 const MAX_FILTER_VALUES = 20;
 const DISTRICT_MAX_LENGTH = 60;
 
-/** The repeatable `district` values, blanks dropped and trimmed (Api/Controllers/ShopCatalogueController.cs:36). */
+/** The repeatable `district` values, blanks dropped and trimmed (Api/Controllers/ShopCatalogueController.cs:37). */
 function districtValues(sp: URLSearchParams): string[] {
   return sp
     .getAll('district')
@@ -270,7 +270,7 @@ export const catalogueHandlers: HttpHandler[] = [
   }),
 
   // HO-P5 G5: the primary zone's Standard free-delivery threshold and lead time, readable by guests
-  // (Api/Controllers/ShopCatalogueController.cs:113-121; Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:138-162).
+  // (Api/Controllers/ShopCatalogueController.cs:113-121; Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:139-162).
   http.get('*/api/shop/delivery-promise', () =>
     HttpResponse.json(deliveryPromise(), { headers: { 'Cache-Control': 'public, max-age=60' } }),
   ),

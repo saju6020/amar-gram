@@ -103,7 +103,7 @@ export const money = (amount: string) => ({ amount, currencyCode: 'BDT' });
 
 /**
  * Minor units (`280000`) to the wire amount (`"2800.00"`) by string handling only: no division, no float
- * (HO-P5 CODE_REVIEW: the "Was" price is formatted, never computed).
+ * (HO-P5 S0 carry-forward: the "Was" price is formatted, never computed).
  */
 function centsText(cents: number): string {
   const digits = String(Math.trunc(cents)).padStart(3, '0');

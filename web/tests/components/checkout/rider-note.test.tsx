@@ -203,6 +203,26 @@ describe('U13: the checkout rider note', () => {
     expect(JSON.stringify({ ...window.sessionStorage })).not.toContain('gate is stiff');
   });
 
+  it('a whitespace-only note sends nothing', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    serveCheckout();
+    server.use(
+      http.post('*/api/customers/me/orders', async ({ request }) => {
+        bodies.push((await request.json()) as Record<string, unknown>);
+        return HttpResponse.json(PLACED, { status: 201 });
+      }),
+    );
+    setCheckoutUrl(DELIVERY_URL);
+    const user = userEvent.setup();
+    renderWithClient(<CheckoutScreen />);
+    await placeButton();
+    await user.type(noteField()!, '    ');
+    expect(screen.getByText('4 of 300')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^Place order/ }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect('riderNote' in bodies[0]!).toBe(false);
+  });
+
   it('sends no note at all for Pickup, even after one was typed for Delivery', async () => {
     const bodies: Array<Record<string, unknown>> = [];
     serveCheckout();
@@ -250,12 +270,13 @@ describe('U13: the checkout rider note', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /^Place order/ })).toBeEnabled(),
     );
+    // The field kept what was typed through the failure.
+    expect(noteField()).toHaveValue('Call before you come up');
     await user.click(screen.getByRole('button', { name: /^Place order/ }));
     await waitFor(() => expect(seen).toHaveLength(2));
     expect(seen[0]!.key).toBeTruthy();
     expect(seen[1]!.key).toBe(seen[0]!.key);
     expect(seen[1]!.note).toBe('Call before you come up');
-    // The note field kept what was typed through the failure.
     await waitFor(() => expect(pushed).toEqual(['/portal/orders/o2?placed=1']));
   });
 });
@@ -334,6 +355,28 @@ describe('U15: the note on the customer’s order, and the Packed hero', () => {
     // A customer cannot cancel from Packed: the button is disabled and says why (the Packed cancel hint).
     expect(screen.getByRole('button', { name: 'Cancel order' })).toBeDisabled();
     expect(screen.getByText(/It’s already packed, so it can’t be cancelled here./)).toBeInTheDocument();
+    // The tracker keeps the Packing node as the current step; Placed and Confirmed are done.
+    const current = document.querySelectorAll('li[aria-current="step"]');
+    expect(current).toHaveLength(1);
+    expect(current[0]).toHaveTextContent(/Packing/);
+    expect(document.querySelectorAll('li[data-status="done"]').length).toBeGreaterThanOrEqual(2);
+    // The Packed return hint: a disabled Return button that says when it opens.
+    expect(screen.getByRole('button', { name: 'Return an item' })).toBeDisabled();
+    expect(
+      screen.getByText('You can request a return once the order has been delivered.'),
+    ).toBeInTheDocument();
+  });
+
+  it('a Packed pickup order gets the pickup hero sentence', async () => {
+    const packed = orderingDb.orders.find((o) => o.id === p5OrderIds.packedWaiting)!;
+    packed.customerId = orderingIds.customerId;
+    packed.fulfilmentMethod = 'Pickup';
+    renderWithClient(<MyOrderDetail orderId={p5OrderIds.packedWaiting} />);
+    expect(await screen.findByRole('heading', { name: 'Your order is packed' })).toBeInTheDocument();
+    expect(
+      screen.getByText('It’s packed and we’ll tell you when it’s ready to collect.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/on its way/)).not.toBeInTheDocument();
   });
 });
 

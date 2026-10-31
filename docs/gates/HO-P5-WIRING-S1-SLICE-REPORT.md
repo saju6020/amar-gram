@@ -1,12 +1,14 @@
 # HO-P5 S1 (store front) - slice report (§17.3)
 
-Branch `feat/p5-s1-store-front` from `b4f7783`. Worktree `D:\my-repo\amar-gram\.claude\worktrees\agent-ae90eaf84a4b7e537`. Not pushed. HEAD is the commit that adds this file (see `git log`); the build is in `44a53c7`, `2074711` and `b3ab577`.
+Branch `feat/p5-s1-store-front` from `b4f7783`. Worktree `D:\my-repo\amar-gram\.claude\worktrees\agent-ae90eaf84a4b7e537`. Not pushed. The build is in `44a53c7`, `2074711`, `b3ab577` and the Amended (o) commit `1916533`, then the gate-fix commit (final HEAD: see `git log`).
 
 ## 1. Files touched (all inside S1's §13 block; paths under `web/`)
 
 Source: `lib/api/shop-catalogue.ts`, `lib/api/checkout.ts`, `lib/shop/catalogueParams.ts`, `app/(shop)/layout.tsx`, `app/(shop)/shop/products/[slug]/page.tsx`, `components/shop/ShopTopStrip.tsx`, `components/catalogue/{ProductCard,CatalogueFilters,ActiveFilterChips}.tsx`, `components/product/{ProductHeading,ProductDetailsTabs}.tsx`, `components/hearth/DeliveryPromise.tsx`, `components/checkout/{CheckoutScreen,PaymentSection}.tsx`, `components/orders/MyOrderDetail.tsx`, `mocks/handlers/shop/{store,catalogue}.ts`, `mocks/handlers/ordering/customer.ts`.
 
 Tests: new `tests/components/catalogue/catalogue-p5.test.tsx`, `tests/components/product/product-p5.test.tsx`, `tests/components/shop/shell-p5.test.tsx`, `tests/components/checkout/rider-note.test.tsx`; appended `tests/components/catalogue/catalogue-params.test.ts`, `tests/components/catalogue/product-card.test.tsx`; e2e `tests/e2e/{shop-catalogue,shop-product,shop-shell,shop-home,ordering-customer}.spec.ts`.
+
+Amended (o) also had S1 edit `app/(shop)/_components/ProductPurchase.tsx` and `components/product/BuyBox.tsx` (pass `leadTimeDays`) and `tests/components/checkout/checkout.test.tsx` (the U25 assertion). The gate fixes touched `app/(shop)/_components/CatalogueView.tsx` (plain text for `InvalidCatalogueFilter`), `components/shop/ShopTopStrip.tsx` (zero threshold), `tests/components/catalogue/catalogue-fixtures.ts` and `catalogue-p3.test.tsx` (Amended (s)).
 
 Block files read and left unchanged (not needed): `lib/hooks/useCheckout.ts`, `FilterGroup.tsx`, `FiltersSheet.tsx` (it renders `CatalogueFilters`, so the District group and its count come with it), `BannerStrip.tsx`, `CatalogueControls.tsx`, `CatalogueView.tsx`, `ProductDetailsRow.tsx`, `app/(shop)/shop/products/page.tsx`, `OrderPanels.tsx`, `app/(portal)/portal/orders/[orderId]/page.tsx`.
 
@@ -38,7 +40,7 @@ Nothing outside the block was edited. No `src/`, config, dependency or subscript
 - OQ-7: the rider note shown to the customer as plain text, "Note for the rider" (label) and the note (value). The delivery panel is in `MyOrderDetail.tsx` (the "Delivering to" card), not in `OrderPanels.tsx` as 11.2.9 says; the element is where the panel actually is.
 - OQ-8: `compareAtPrice` is not added to the `lib/api` types or shown. The mock sends it (the server does), but nothing reads it.
 - OQ-10: customer `Packed` hero, headline "Your order is packed", tracker stays on the Packing node (S0).
-- ADR-FE-186: the rider note is `CheckoutScreen` state only. Not in the URL and not in storage (`rider-note.test.tsx` and E5 assert both). Sent only for Delivery, trimmed, `maxLength` 300, live count "{n} of 300", kept across a retry with the same `Idempotency-Key` (the key is derived from the request signature, which includes the note).
+- ADR-FE-186: the rider note is `CheckoutScreen` state only. Not in the URL and not in storage (`rider-note.test.tsx` asserts both URL and storage; E5 asserts the URL only). Sent only for Delivery, trimmed, `maxLength` 300, live count "{n} of 300", kept across a retry with the same `Idempotency-Key` (the key is derived from the request signature, which includes the note).
 
 ## 5. Carry-forwards from the S0 ACCEPTANCE sheet
 
@@ -54,11 +56,11 @@ Nothing outside the block was edited. No `src/`, config, dependency or subscript
 
 | Mock | Refusal / behaviour | Server |
 |---|---|---|
-| `GET /api/shop/products` (`mocks/handlers/shop/catalogue.ts`) | more than 20 `district` values: 400 `InvalidCatalogueFilter`, `propertyName: "district"`, "district cannot have more than 20 values." | `src/Api/AmarGram.Api/Controllers/ShopCatalogueController.cs:37-38`; limit `src/Shared/AmarGram.Shared/Common/Constants/ShopSearchRules.cs:9` |
-| same | a value over 60 characters: 400 `InvalidCatalogueFilter` on `district`, "district cannot exceed 60 characters." Blank values are dropped and values trimmed first. | `ShopCatalogueController.cs:36,39`; `ProductRules.cs:13` |
+| `GET /api/shop/products` (`mocks/handlers/shop/catalogue.ts`) | more than 20 `district` values: 400 `InvalidCatalogueFilter`, `propertyName: "district"`, "district cannot have more than 20 values." | `src/Api/AmarGram.Api/Controllers/ShopCatalogueController.cs:38`; limit `src/Shared/AmarGram.Shared/Common/Constants/ShopSearchRules.cs:9` |
+| same | a value over 60 characters: 400 `InvalidCatalogueFilter` on `district`, "district cannot exceed 60 characters." Blank values are dropped and values trimmed first. | `ShopCatalogueController.cs:37,39`; `ProductRules.cs:13` |
 | same | `district` filter is case-insensitive on the stored name; `appliedFilters.district` echoes the values | `src/Read/AmarGram.Read/QueryHandlers/Product/GetCatalogueQueryHandler.cs:106-109, 236` |
 | `GET /api/shop/filters` | `districts[{ value, count }]`, merged case-insensitively | `GetCatalogueFiltersQueryHandler.cs:50-56` (see 6.1 on the order) |
-| `GET /api/shop/delivery-promise` | primary zone = storefront branch's active zone, lowest priority then name, with an active Standard service; `{ currencyCode, freeOver, leadTimeDays }`, all null without one; `freeOver` null when the Standard level has no threshold | `ShopCatalogueController.cs:113-121`; `Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:138-162` |
+| `GET /api/shop/delivery-promise` | primary zone = storefront branch's active zone, lowest priority then name, with an active Standard service; `{ currencyCode, freeOver, leadTimeDays }`, all null without one; `freeOver` null when the Standard level has no threshold | `ShopCatalogueController.cs:113-121`; `Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:139-162` |
 | `POST /api/customers/me/orders` (`mocks/handlers/ordering/customer.ts`) | `riderNote` over 300 characters: 400 `RiderNote` / `MaximumLengthValidator` | `src/Application/AmarGram.Application/CommandHandlers/Validators/PlaceOrderCommandValidator.cs:24`; `OrderRules.cs:16` |
 | same | a C0 control character other than tab, LF, CR: 400 `RiderNote` / `PredicateValidator`; both rules failing give two violations; the check runs before the quote and idempotency-conflict checks, as the validator does | `PlaceOrderCommandValidator.cs:24`; `src/Shared/AmarGram.Shared/Common/Helpers/ControlCharacters.cs:17-27` |
 | same | note kept for Delivery, silently dropped (null) for Pickup, read back as `fulfilment.riderNote` | `src/Application/AmarGram.Application/CommandHandlers/Order/OrderPlacement.cs:21-33`; `CustomerOrdersController.cs:68` |
@@ -114,3 +116,11 @@ No known baseline failure appeared in these five specs. No load timeout or crash
 - The basket "Add ৳X more" hint (G5b), the packing-slip note (G4b), the place name in the strip (G5c) and the village (G1 residual): residual gaps by design.
 - Screenshots at 360 and 1280 for ACCEPTANCE: this agent cannot see the rendered result. Please check by eye: the leaf strip text wrapping at 360 px; the "Organic" pill beside "In basket" (same colours, both `bg-leaf`); the District group closed by default in the filter card; the rider note field spacing under the payment options.
 - E6 and E17 are not run here (E17 per Amended (l)); the TEST gate and integration run them.
+
+## 9. Gate fixes
+
+- `CatalogueFilters.districts` is required (Amended (s)); fixtures and the p3 case updated.
+- An `InvalidCatalogueFilter` response shows the `SHOP_CODE_MESSAGES` plain text, not the server message (`shell-p5.test.tsx`).
+- Added: Packed tracker state, Packed return hint and Packed pickup hero; field keeps its text after a failed place; whitespace-only note sends nothing; 20 real districts plus blanks accepted.
+- Zero threshold: the server allows a free-delivery threshold of 0 (`OrderConfigurationCommandValidators.cs:16-17` allows >= 0; `DeliveryChargeCalculator.cs:17` makes every order free). `promiseTakesStrip` now returns false for an all-zero amount string (no arithmetic), so the strip falls back to the banner instead of "Free delivery over 0.00". Nothing under `src/` changed.
+- Citations corrected (district trim `ShopCatalogueController.cs:37`; promise handler `:139-162`); the `centsText` comment no longer names a gate.
