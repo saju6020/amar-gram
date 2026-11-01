@@ -1,62 +1,54 @@
 GATE: TEST
 HANDOVER: HO-P5-WIRING (slice S1, store front)
-RUN: 3
-COMMITS: base da87b60; run 1 at b058708; run 2 at e6956c0; run 3 at 9169e55 (branch feat/p5-s1-store-front; product code unchanged since e6956c0)
+RUN: 4
+COMMITS: base da87b60; run 1 b058708; run 2 e6956c0; run 3 9169e55; run 4 1cac603 (branch feat/p5-s1-store-front)
 DATE: 2026-10-31 to 2026-11-01
 STATUS: FAIL
 
-One S1 row still fails: E6g (accounts-a11y-responsive:161, mobile-360), the first result on a fresh server for that file. The other seven E6 files passed first time. I found no defect in S1's code, but the one failure means the "degradation over a long chunk" explanation is not confirmed, and I cannot say it is wrong either.
+Three S1 rows fail first time in run 4: E6c and E6e (cold-compile timeouts in the single-server chunk) and E6d (ordering-a11y-responsive: four tests fail on a horizontal overflow, a new and deterministic failure). None of the three is the sign-in bounce the race fix addresses. The bounce did not appear in run 4. I found no defect in S1's code; the E6d failure is not explained.
 
 HISTORY
-- Run 1 (b058708, 2 workers): 89 PASS, 5 FAIL (E2a, E6a, E6b, E6c, E6i), 5 BLOCKED. All five passed alone. The Delivery-only guards were each unproven alone.
-- Run 2 (e6956c0, 1 worker, tests-only change): 92 PASS, 4 FAIL, 3 BLOCKED. Vitest 216 files / 1941 passed; typecheck and lint exit 0; E2-E5 80 passed, 0 failed, 0 flaky; each Delivery guard now fails a test on its own. In the single-server E6 chunk 2a, four tests failed: home.spec:33 (both projects), portal-dashboard:66 (both), account-area:51 (mobile-360), accounts-auth:102 (mobile-360). Each passed 8/8 alone. Control: the same eight specs at 1 worker on da87b60 (no S1 code) gave 363 passed and 11 failed, including portal-dashboard:66 on both projects, account-area:51, accounts-auth:102/:18/:34, home:41. ordering-a11y-responsive: 67 passed, 1 failed (:133 mobile-360, the baseline exception). Those run 2 results stand; run 3 does not repeat Vitest, E2-E5, the mutations or ordering-a11y-responsive.
+- Run 1 (b058708, 2 workers): 89 PASS, 5 FAIL, 5 BLOCKED. Five failures, all passing alone.
+- Run 2 (e6956c0, 1 worker): 92 PASS, 4 FAIL, 3 BLOCKED. Vitest 216 files / 1941 passed, typecheck and lint exit 0, E2-E5 80 passed with no flake, each Delivery guard now fails a test alone. In the single-server E6 chunk, four tests failed: home:33 (both projects), portal-dashboard:66 (both), account-area:51 (mobile-360), accounts-auth:102 (mobile-360); each passed 8/8 alone; the same chunk on da87b60 gave 363 passed, 11 failed. ordering-a11y-responsive: 67 passed, 1 failed (:133 on mobile-360, baseline).
+- Run 3 (9169e55, fresh server per file): 95 PASS, 1 FAIL, 3 BLOCKED. Seven of eight E6 files passed; accounts-a11y-responsive:161 (mobile-360) failed with a 30 s timeout on "Account menu for ..." after the page bounced to sign-in. Server memory grew 2.0-2.5 GB to 3.7-4.1 GB over the two ~11-minute files and stayed near 2 GB for short ones.
+- Integration (697a636, merged as 1cac603, Amended (ac)): cause of the bounce reproduced by the integrator by delaying MSW registration (>= 1500 ms bounces every time, <= 300 ms never, because the session hook's two 300 ms retries end first). Fix: the shared `page` fixture holds every `/api/` fetch until `__mswReady`; new `msw-start-race.spec.ts`. No app code changed.
 
-RUN 3 METHOD (fixed before running)
-Every E6 spec file except ordering-a11y-responsive and the real-API specs: shop-a11y-responsive, shop-portal, home, portal-a11y-responsive, portal-dashboard, account-area, accounts-a11y-responsive, accounts-auth. For each file, a script checked :3121 was free, started a fresh `next dev` (PORT=3121, NEXT_PUBLIC_USE_MOCKS=true, NEXT_PUBLIC_API_BASE_URL=http://localhost:5005), warmed 15 routes, ran `--project=chromium --project=mobile-360 --workers=1 --retries=0`, then stopped only that server. First result counts; nothing was rerun. A keep-awake process (PID 39340) ran throughout and was stopped. Server memory is the working set of the process listening on :3121, at the start (after warming) and the end of each file.
+RUN 4 CHANGE CHECK: `git diff e6956c0 HEAD --stat` shows web/tests/e2e/fixtures.ts, portal-helpers.ts and msw-start-race.spec.ts plus docs only. No product file. `npm run typecheck`: exit 0. Vitest, E2-E5, mutations and `next build` were not repeated, as instructed.
 
-RUN 3 RESULTS (first result per file)
-| File | Result | Server memory start to end |
-|---|---|---|
-| shop-a11y-responsive | 76 passed | 2,487 to 4,107 MB (11.7 min) |
-| shop-portal | 6 passed | 2,144 to 2,405 MB (47 s) |
-| home | 8 passed | 2,283 to 2,179 MB (27 s) |
-| portal-a11y-responsive | 34 passed | 2,217 to 1,935 MB (1.2 min) |
-| portal-dashboard | 24 passed | 2,244 to 2,213 MB (52 s) |
-| account-area | 12 passed | 2,142 to 2,257 MB (52 s) |
-| accounts-a11y-responsive | 195 passed, 1 FAILED | 1,976 to 3,703 MB (11.1 min) |
-| accounts-auth | 18 passed | 2,010 to 2,252 MB (1.0 min) |
+RUN 4 METHOD (fixed in advance)
+`--project=chromium --project=mobile-360 --workers=1 --retries=0`, mocks, :3121, routes warmed, a fresh `next dev` per chunk, a keep-awake process (PID 13732, stopped), first result counts, no reruns for the sheet. Note: `--retries=0` does not override a spec's own in-file `retries` (ordering-a11y-responsive and ordering-customer-orders retry once); for those the first attempt is what I counted.
+- Chunk 2a (run 2's list on one server: shop-a11y-responsive, shop-portal, home, portal-a11y-responsive, portal-dashboard, account-area, accounts-a11y-responsive, accounts-auth): 371 passed, 3 failed (31.6 min).
+- Chunk 2b (ordering-a11y-responsive, fresh server): 64 passed, 4 failed (20.9 min).
+- Chunk 3 (ordering-customer-orders, shop-staff, msw-start-race, fresh server): 17 passed, 1 flaky.
 
-FAILURE
-- E6g: accounts-a11y-responsive.spec.ts:161 "E-X3: after signing out, no pc_session cookie is readable and web storage is empty", mobile-360, test number 196 of 196, near the end of the 11-minute file. A 30 s test timeout on `getByRole('button', { name: /^Account menu for / }).click()` after `signInAsCustomer` and `goto('/portal/account/profile')`. The dev log shows `/portal/account/profile` answered 200 and then `/sign-in?next=%2Fportal%2Faccount%2Fprofile`: the page did not see the signed-in session and went to sign-in.
-- Same symptom as the earlier four? Yes in kind: a customer or staff session not recognised right after sign-in, on a freshly loaded page. Different in form: a 30 s test timeout instead of a 5 s expect. Not a new class of failure.
-- Not rerun, as instructed. In run 2 this test passed in the single-server chunk, so it fails in some runs and not others.
+RUN 4 FAILURES
+1. portal-dashboard.spec.ts:66 "E-A4: tile links reach the owning areas", chromium and mobile-360. Clicking "All invoices" left the page on /portal; `toHaveURL(/portal/billing)` failed after 5 s. Dev log: `/portal/billing` was compiled on demand at that moment: 5.1 s (2,843 modules) for chromium, 8.4 s (1,587 modules) for mobile-360. On run 3's fresh per-file server the same route compiled in 2.4 s. Different cause from the bounce: a cold on-demand compile slower than the test's 5 s expect.
+2. home.spec.ts:33 "signed in as staff lands on /staff", mobile-360 only (chromium passed). Stayed on "/" for 5 s. Dev log: `/staff` compiled in 7.7 s (1,818 modules) in this server; the chromium run of the same test saw 3.3 s (passed); run 3's fresh server 1.6 s. Same family as 1: cold-compile timeout, not the bounce (the page never went to /sign-in).
+   Failures 1 and 2 are the same two tests that failed in run 2's single-server chunk. In run 2 I called them session failures; the run 4 dev log shows they are compile-time failures, so that earlier label was probably wrong for these two. account-area:51 and accounts-auth:102 (run 2) and accounts-a11y:161 (run 3) did not fail in run 4.
+3. ordering-a11y-responsive.spec.ts:100, "/staff/orders" and "/staff/returns", on chromium and mobile-360 (4 tests; each failed its first attempt and the in-file retry): `/staff/orders @360 overflows horizontally`, expected <= 0, received 38 (likewise /staff/returns). Not the baseline :133 (it passed). New in run 4: these four passed in run 2 chunk 2b and run 1. Deterministic: the four tests alone on another fresh server at HEAD failed again; the same four tests alone on a fresh server with the e6956c0 versions of fixtures.ts and portal-helpers.ts swapped in (temporarily; restored with git checkout; tree clean) passed 4/4. So the new `/api` hold in `page` changes what these pages show when the 600 ms overflow check runs.
+   Not established: whether this exposes a real 38 px overflow on staff orders and returns at 360 that the old race hid (for example pages sitting in an error or empty state before the fix), or a timing effect of the hold itself. I did not inspect the rendered page. Suspected only: the former. It is not caused by S1: S1 changes nothing in staff orders or returns, and the product code is identical to run 2's.
+4. X1 ordering-customer-orders.spec.ts:35 E-C2 (chromium) failed its first attempt and passed on the in-file retry. Same test, same cause as before (it sets a 3 s transfer window and expects the "Pay by bank transfer" heading within 5 s). Reported separately; not the bounce.
 
-WHAT THIS DOES AND DOES NOT SHOW ABOUT THE CAUSE
-- The four run-2 failures (home:33, portal-dashboard:66, account-area:51, accounts-auth:102) all passed first time on a fresh server per file. That fits server age or chunk length being a factor. It is only support: the one failure that remains is in the fresh-server method, and it sits at the end of the longest files.
-- Memory: the two longest files (shop-a11y-responsive and accounts-a11y-responsive, about 11 minutes each) grew the dev server from about 2.0-2.5 GB to 3.7-4.1 GB. The short files stayed near 2.0-2.4 GB or fell. shop-a11y-responsive grew most and passed; accounts-a11y-responsive grew less and had the failure. So growth alone does not predict the failure. I did not measure the same figures through the single-server run 2 chunk, so I have nothing to compare the 3.7-4.1 GB against.
-- Control: da87b60 fails the same specs in a single-server chunk. That shows the instability is not caused by S1. It does not show what the cause is.
+WHAT PASSED
+- accounts-a11y-responsive (including :161), accounts-auth (including :102), account-area (including :51), shop-a11y-responsive, shop-portal, portal-a11y-responsive: all passed first time in the single-server chunk where, in runs 2 and 3, some of them had failed. This is consistent with the race fix but does not prove it (those failures are intermittent), and msw-start-race.spec.ts passed on both projects.
+- shop-staff passed. ordering-a11y-responsive :133 on mobile-360 passed this time.
 
-WHAT I READ IN THE MOCK AND SESSION CODE
-Verified by reading (tests/e2e/fixtures.ts, portal-helpers.ts, mocks/handlers/areas/accounts.ts, instrumentation.ts, app/providers.tsx, lib/hooks/useSession.ts):
-- `signInAsCustomer` and `signInAsStaff` do a page-level `fetch` to the sign-in endpoint. The handler runs in the browser (MSW service worker, state in the page), keeps its session Maps in the page and mirrors them to that tab's `sessionStorage`, and sets the cookie with `document.cookie`. Playwright gives each test a fresh browser context, so session state does not carry from one test to the next. Customer sessions last 168 hours, staff sessions use a 30-minute idle window plus an absolute expiry, both measured on the wall clock, not on server age.
-- The dev server also runs a separate `msw/node` instance (instrumentation.ts) for server components. That instance has its own module-level copy of the mock stores (shop, ordering, accounts) which lives as long as the server and is shared by every test and both projects. The in-page store and the server store are different copies. State that accumulates over the server's life therefore exists (orders placed, reviews, a maintenance flag). I did not find any place where a sign-in test depends on that server-side copy.
-- The fixtures file and `app/providers.tsx` both document a race: `worker.start()` is asynchronous, so a request in the same tick as hydration can reach the real network (nothing listens on :5005) before MSW is ready. `goto` is wrapped to wait for the service-worker controller (15 s) and `__mswReady` (10 s), both best-effort with errors swallowed. The session query retries only on a network error (`useSession.ts`: `retryOnlyNetworkError`, 300 ms delay, count not checked). A first session read that lost this race would fail, and the guard fails closed and redirects to sign-in, which is exactly what the run 3 log shows for E6g.
-Only suspected, not verified: that the loss of that race is more likely when the dev server is slow or large, and that this is why failures appear in long runs. I did not instrument the race, did not read the guard's retry count against the failure, and have no direct measurement tying any failure to server memory or age. The "degradation" explanation is supported by 4 of 5 earlier failures disappearing on fresh servers, and weakened by the E6g failure and by da87b60's failures being the same kind of thing; it is not proven.
-
-STATE OF THE ROWS (sheet: docs/test-cases/TC-HO-P5-WIRING-S1.md, 99 rows)
-- 95 PASS, 1 FAIL (E6g), 3 BLOCKED (E4c, E6h, R11), 0 NOT RUN. E17 is not a slice row and is outside the counts.
-- E6a, E6b, E6c, E6e, E6f, E6i changed from FAIL or from run 2 evidence to PASS on the run 3 first results; E6d stays PASS with the :133 baseline exception from run 2. E6g is FAIL. Run 2 evidence is kept in each cell.
-- E2-E5, Vitest, the mutation checks and X1/X2 are as in run 2.
-
-BLOCKED (unchanged)
-- E4c (unit-only under Amended (t)), E6h and all real-API specs (no backend), R11 (backend SECURITY items).
+ROWS (sheet: docs/test-cases/TC-HO-P5-WIRING-S1.md, 100 rows: 94 PASS, 3 FAIL, 3 BLOCKED, 0 NOT RUN)
+- FAIL: E6c (home:33), E6e (portal-dashboard:66), E6d (ordering-a11y-responsive overflow).
+- PASS now: E6g, E6i; E6a, E6b, E6f unchanged; new row X3 (msw-start-race) PASS.
+- BLOCKED: E4c, E6h, R11 (as recorded). E17 outside the counts.
+- Each changed row carries its earlier evidence after "PRIOR:".
 
 NOT RUN
-- E17, E18, E19 `sweep:a11y`, ACCEPTANCE screenshots; Vitest, E2-E5, mutations and ordering-a11y-responsive in run 3 (not asked).
+- Vitest, E2-E5, mutations, `next build` (not requested), E17, E18, E19 `sweep:a11y`, ACCEPTANCE screenshots, real-API specs.
+
+WHAT WOULD CLEAR THE THREE FAILS
+- E6c, E6e: either warm `/staff` and `/portal/billing` (and similar first-visit routes) before the chunk, or raise the 5 s expect timeout on those navigations; both are harness choices, not S1 changes.
+- E6d: someone must look at /staff/orders and /staff/returns at 360 with data loaded. If the 38 px overflow is real it is a staff-side layout fault (S2's area), not S1's.
 
 PRODUCTION DEFECTS
-- None found in S1. Carried, not S1: `public/mockServiceWorker.js` is served (LOW); the SECURITY MEDIUMs are backend.
+- None found in S1. Possible, unverified, outside S1: the /staff/orders and /staff/returns 360 px overflow above.
 
 SCOPE AND CLEANUP
-- Written by this gate: this record and the sheet (overwritten/updated). No product or existing spec file changed; nothing committed. `git status` shows only these two docs.
-- Servers I started were all stopped by the script; nothing listens on :3121; keep-awake PID 39340 stopped; port 3122 untouched. web/node_modules has 412 entries (restored earlier from the main checkout; no junction remains). No temporary worktree exists.
+- Written by this gate: this record and the sheet. fixtures.ts and portal-helpers.ts were swapped and restored for one diagnostic; `git status` shows only these two docs. Nothing committed.
+- Servers I started are stopped; nothing listens on :3121; keep-awake PID 13732 stopped; port 3122 untouched.
