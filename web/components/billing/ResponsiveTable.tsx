@@ -217,13 +217,14 @@ export function ResponsiveTable<TRow>({
                     primary.cell(row)
                   )}
                 </div>
-                <dl className="mt-2 grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
+                <dl className="mt-2 grid grid-cols-[fit-content(8rem)_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
                   {columns
                     .filter((column) => column.id !== primary.id)
                     .map((column) => (
                       <React.Fragment key={column.id}>
                         <dt className="text-ink-muted">{column.header}</dt>
-                        <dd className="min-w-0 text-ink [overflow-wrap:anywhere]">
+                        {/* A long status pill wraps here: at 360 px beside the staff rail this column is about 130 px wide. */}
+                        <dd className="min-w-0 text-ink [overflow-wrap:anywhere] [&_span]:whitespace-normal">
                           {column.cell(row)}
                         </dd>
                       </React.Fragment>

@@ -19,7 +19,7 @@ export function TableFrame({
       role="region"
       aria-label={label}
       tabIndex={0}
-      className="w-full overflow-x-auto rounded-2xl border border-border bg-surface"
+      className="relative w-full overflow-x-auto rounded-2xl border border-border bg-surface"
     >
       <div style={minWidth ? { minWidth } : undefined}>{children}</div>
     </div>
