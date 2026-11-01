@@ -8,6 +8,7 @@ import { HearthBand } from '@/components/hearth/HearthBand';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
 import { ShopLoadError } from '@/components/shop/ShopLoadError';
 import { ApiValidationError } from '@/lib/api/client';
+import { SHOP_CODE_MESSAGES } from '@/lib/api/errors';
 import {
   getCatalogueFiltersServer,
   getCatalogueServer,
@@ -93,7 +94,8 @@ export async function CatalogueView({
         <ErrorState
           title="That search or filter isn’t valid."
           description={
-            result.error.response.errors[0]?.errorMessage ?? 'Clear the filters and try again.'
+            SHOP_CODE_MESSAGES[result.error.response.errors[0]?.errorCode ?? ''] ??
+            'Clear the filters and try again.'
           }
         />,
       );

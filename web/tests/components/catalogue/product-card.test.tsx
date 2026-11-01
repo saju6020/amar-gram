@@ -229,9 +229,43 @@ describe('ProductCard — one card per size', () => {
     expect(screen.queryByTestId('stepper-value')).not.toBeInTheDocument();
   });
 
-  it('U6: no "Organic" badge on a card (catalogue items carry no certifications yet)', () => {
+  // HO-P5 S1 U6 supersedes HO-P3 U6 ("no Organic badge: catalogue items carry no certifications yet").
+  it('U6: the "Organic" pill shows only when the item is CertifiedOrganic, with the text "Certified organic"', () => {
     serveCart([]);
-    renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
+    const { unmount } = renderWithClient(
+      <ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />,
+    );
+    // Without certifications, and with others but not organic: no pill and no hidden text.
     expect(screen.queryByText(/organic$/i, { selector: 'span' })).not.toBeInTheDocument();
+    unmount();
+    const other = renderWithClient(
+      <ProductCard item={makeItem({ certifications: ['PesticideFree', 'Halal'] })} />,
+    );
+    expect(screen.queryByText('Organic')).not.toBeInTheDocument();
+    expect(screen.queryByText('Certified organic')).not.toBeInTheDocument();
+    other.unmount();
+
+    renderWithClient(
+      <ProductCard item={makeItem({ certifications: ['CertifiedOrganic', 'Halal'] })} />,
+    );
+    const card = within(screen.getByRole('article'));
+    expect(card.getByText('Organic')).toHaveClass('bg-leaf', 'text-leaf-soft');
+    // The card's accessible content says it in full, after the name; the link name is unchanged.
+    expect(card.getByText('Certified organic')).toHaveClass('sr-only');
+    expect(card.getByRole('link', { name: 'Organic Rolled Oats' })).toBeInTheDocument();
+  });
+
+  it('U5: the eyebrow is the district when present, otherwise the producer and country', () => {
+    serveCart([]);
+    const { unmount } = renderWithClient(
+      <ProductCard item={makeItem({ districtOfOrigin: 'Dinajpur' })} />,
+    );
+    const eyebrow = screen.getByText('Dinajpur');
+    expect(eyebrow.closest('p')).toHaveClass('uppercase');
+    // The district replaces the producer line (OQ-5); the text itself is as sent.
+    expect(screen.queryByText('Amar Gram Farms · Bangladesh')).not.toBeInTheDocument();
+    unmount();
+    renderWithClient(<ProductCard item={makeItem({ districtOfOrigin: null })} />);
+    expect(screen.getByText('Amar Gram Farms · Bangladesh')).toBeInTheDocument();
   });
 });

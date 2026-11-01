@@ -4,7 +4,9 @@ import { cn } from '@/lib/utils';
 /**
  * The delivery-and-payment facts the shop may state (docs/design/shop/README.md, owner decision
  * 2026-10-16). Only true rules: the delivery slot and fee are chosen and shown at checkout, pickup
- * is at a branch, and payment is cash on delivery or bank transfer. No dates, fees or speed claims.
+ * is at a branch, and payment is cash on delivery or bank transfer. No dates, fees or speed claims,
+ * except (HO-P5 OQ-3, owner-ratified 2026-10-31) the one server figure the public delivery promise
+ * sends: "usually takes N day(s)" from `leadTimeDays`, as sent.
  */
 const FACTS = [
   {
@@ -35,8 +37,26 @@ const TILE_TONE = {
   teal: 'bg-accent-tint text-accent',
 } as const;
 
-/** The card under the product page's buy row. */
-export function DeliveryPromiseCard({ className }: { className?: string }) {
+/** The delivery fact's text: the server's lead time when it sends a positive one (OQ-3), else today's text. */
+function deliveryText(leadTimeDays: number | null | undefined): string {
+  if (typeof leadTimeDays === 'number' && leadTimeDays > 0) {
+    const days = leadTimeDays === 1 ? '1 day' : `${leadTimeDays} days`;
+    return `Standard delivery usually takes ${days}. Pick a slot at checkout; the fee is shown before you order.`;
+  }
+  return FACTS[0].text;
+}
+
+/**
+ * The card under the product page's buy row. `leadTimeDays` is the public delivery promise's figure
+ * (`GET /api/shop/delivery-promise`); without it the card keeps its plain text.
+ */
+export function DeliveryPromiseCard({
+  className,
+  leadTimeDays,
+}: {
+  className?: string;
+  leadTimeDays?: number | null;
+}) {
   return (
     <section
       aria-label="Delivery and payment"
@@ -62,7 +82,9 @@ export function DeliveryPromiseCard({ className }: { className?: string }) {
             </span>
             <span className="flex flex-col">
               <strong className="text-sm text-ink">{title}</strong>
-              <span className="text-[13px] text-ink-muted">{text}</span>
+              <span className="text-[13px] text-ink-muted">
+                {key === 'delivery' ? deliveryText(leadTimeDays) : text}
+              </span>
             </span>
           </li>
         ))}

@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from './fixtures';
 
 /**
@@ -47,6 +48,28 @@ test.describe('store-front shell (HO-P3 E1)', () => {
     await page.goto('/cart');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(tabBar).toHaveCount(0);
+  });
+
+  // HO-P5 S1 (E4): the strip states the server's free-delivery threshold (no place name, no arithmetic).
+  test('the top strip shows the delivery promise on the home page and the catalogue, axe clean', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    const promise = 'Free delivery over ৳5,000.00 · Cash on delivery across Bangladesh';
+    for (const path of ['/shop', '/shop/products']) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.getByTestId('shop-top-strip')).toHaveText(promise);
+      await expect(page.getByTestId('shop-top-strip').getByRole('link')).toHaveCount(0);
+    }
+    await page.waitForLoadState('networkidle');
+    const results = await new AxeBuilder({ page }).analyze();
+    const serious = results.violations.filter(
+      (v) => v.impact === 'serious' || v.impact === 'critical',
+    );
+    expect(
+      serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`),
+    ).toEqual([]);
   });
 
   test('desktop: there is no tab bar', async ({ page }) => {

@@ -18,6 +18,8 @@ export interface BuyBoxProps {
   actions?: React.ReactNode;
   /** The quantity chosen in the buy row. It only changes the note beside the price, never the price. */
   quantity?: number;
+  /** HO-P5 G5: the public delivery promise's lead time for the delivery card. */
+  leadTimeDays?: number | null;
 }
 
 /**
@@ -36,6 +38,7 @@ export function BuyBox({
   stockAlert,
   actions,
   quantity = 1,
+  leadTimeDays,
 }: BuyBoxProps) {
   const packNote = quantity > 1 ? `${quantity} × ${sku.label}` : `${sku.label} pack`;
   return (
@@ -72,7 +75,7 @@ export function BuyBox({
           {stockAlert}
         </div>
       )}
-      <DeliveryPromiseCard />
+      <DeliveryPromiseCard leadTimeDays={leadTimeDays} />
     </>
   );
 }

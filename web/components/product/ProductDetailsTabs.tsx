@@ -46,6 +46,7 @@ function buildTabs(
 
   // Origin & producer (G9: no harvest month or packing date yet, so only what the API sends).
   const country = detail.countryOfOrigin;
+  const district = detail.districtOfOrigin?.trim();
   if (country || originNotes || detail.brand) {
     tabs.push({
       id: 'origin',
@@ -55,6 +56,11 @@ function buildTabs(
           {country && (
             <p>
               <span className="font-semibold">Country of origin:</span> {country.name}
+            </p>
+          )}
+          {district && (
+            <p>
+              <span className="font-semibold">District:</span> {district}
             </p>
           )}
           {detail.brand && (

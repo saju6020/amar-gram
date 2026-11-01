@@ -556,10 +556,10 @@ describe('Single-page checkout - U25, U26, U31', () => {
     expect(screen.getByRole('radio', { name: /Collect from a branch/ })).not.toBeChecked();
     const group = screen.getByRole('radiogroup', { name: 'Delivery address' });
     expect(await within(group).findByRole('radio', { name: /Home/ })).toBeChecked();
-    // No stepper, no Continue buttons, no rider note.
+    // No stepper, no Continue buttons.
     expect(screen.queryByRole('list', { name: 'Checkout steps' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Continue/ })).not.toBeInTheDocument();
-    expect(screen.queryByText(/note for the rider/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Note for the rider (optional)')).toBeInTheDocument();
   });
 
   it('U26: an address outside every zone preselects collection and says why', async () => {

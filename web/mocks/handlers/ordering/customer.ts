@@ -48,6 +48,34 @@ import { testControl } from './control';
 
 const API = '*/api';
 
+/** `OrderRules.MaxRiderNoteLength` (src/Shared/AmarGram.Shared/Common/Constants/OrderRules.cs:16). */
+const MAX_RIDER_NOTE_LENGTH = 300;
+
+/**
+ * `PlaceOrderCommandValidator` on `RiderNote`: at most 300 characters and no control characters (tab, LF and CR
+ * are allowed) - App/CommandHandlers/Validators/PlaceOrderCommandValidator.cs:24, with `ControlCharacters.ContainsDisallowed`
+ * (Shared/Common/Helpers/ControlCharacters.cs:17-27). FluentValidation's default codes name the rule that failed.
+ */
+function riderNoteProblems(note: unknown) {
+  if (typeof note !== 'string') return [];
+  const problems: Array<{ propertyName: string; errorCode: string; errorMessage: string }> = [];
+  if (note.length > MAX_RIDER_NOTE_LENGTH) {
+    problems.push({
+      propertyName: 'RiderNote',
+      errorCode: 'MaximumLengthValidator',
+      errorMessage: `The length of 'Rider Note' must be ${MAX_RIDER_NOTE_LENGTH} characters or fewer. You entered ${note.length} characters.`,
+    });
+  }
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(note)) {
+    problems.push({
+      propertyName: 'RiderNote',
+      errorCode: 'PredicateValidator',
+      errorMessage: "'Rider Note' must not contain control characters.",
+    });
+  }
+  return problems;
+}
+
 interface AddressRecord {
   id: string;
   label: string;
@@ -400,6 +428,9 @@ export const customerOrderingHandlers: HttpHandler[] = [
       return violation('Idempotency-Key', 'RequestInProgress', 'This order is already being placed.', 409);
     }
     const body = (await request.json()) as Record<string, string | undefined>;
+    // The validator runs before the handler, so a refused note is a 400 whatever the quote says.
+    const noteProblems = riderNoteProblems(body.riderNote);
+    if (noteProblems.length > 0) return violations(noteProblems);
     if (testControl.failNextPlacement === 'StockNoLongerAvailable') {
       testControl.failNextPlacement = null;
       return violation(
@@ -490,6 +521,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
         pickupBranchId: method === 'Pickup' ? (branch?.id ?? null) : null,
         pickupBranchName: method === 'Pickup' ? (branch?.name ?? null) : null,
         pickupBranchAddress: method === 'Pickup' ? (branch?.address ?? null) : null,
+        // G4: kept for Delivery, silently dropped for Pickup (App/CommandHandlers/Order/OrderPlacement.cs:21-33).
+        riderNote: method === 'Delivery' ? body.riderNote || null : null,
       },
       history: [{ from: null, to: transfer ? 'PendingPayment' : 'Confirmed', changedOn: placedOn, changedBy: ids.customerId, changedByName: null, note: null }],
       paymentDueBy: transfer ? new Date(Date.now() + db.transferWindowSeconds * 1000).toISOString() : null,

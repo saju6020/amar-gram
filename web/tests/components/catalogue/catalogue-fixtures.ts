@@ -30,6 +30,7 @@ export const FACETS: CatalogueFilters = {
   ],
   certifications: [{ value: 'CertifiedOrganic', count: 3 }],
   price: { min: 250, max: 5200 },
+  districts: [],
 };
 
 export const CATEGORIES: CategoryNode[] = [

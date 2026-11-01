@@ -64,6 +64,10 @@ export interface CatalogueItem {
   /** One card per size (owner, 2026-10-18): the size this card is, and its label ("400 g"). */
   skuId?: string | null;
   sizeLabel?: string | null;
+  /** HO-P5 G1: a free-text district name, no village (`Read/ViewModels/CatalogueItem.cs:28-29`). */
+  districtOfOrigin?: string | null;
+  /** HO-P5 G8: certification names as the product detail carries them (`Read/ViewModels/CatalogueItem.cs:28-30`). */
+  certifications?: string[] | null;
 }
 
 export interface CatalogueResult extends PagedResult<CatalogueItem> {
@@ -79,6 +83,11 @@ export interface CatalogueFilters {
   origins: Array<{ code: string; name: string; count: number }>;
   certifications: Array<{ value: string; count: number }>;
   price: { min: number | null; max: number | null };
+  /**
+   * HO-P5 G1: the districts of origin present, by name (`Read/Queries/Product/GetCatalogueFiltersQuery.cs:17-18`).
+   * Always sent by the server.
+   */
+  districts: Array<{ value: string; count: number }>;
 }
 
 export interface CategoryNode {
@@ -139,6 +148,8 @@ export interface ProductDetail {
   certifications?: string[];
   kind: ProductKind;
   countryOfOrigin: CountryRef | null;
+  /** HO-P5 G1: a free-text district name (`Read/ViewModels/ProductDetailViewModel.cs:21`). */
+  districtOfOrigin?: string | null;
   food: FoodDetail | null;
   images: ProductImageRef[];
   skus: DetailSku[];
@@ -313,6 +324,23 @@ export function getBannersServer(placement: 'Shop' | 'Home'): Promise<Storefront
   return getPublic<StorefrontBanner[]>(
     `/api/content/banners?placement=${encodeURIComponent(placement)}`,
   );
+}
+
+/**
+ * HO-P5 G5: `GET /api/shop/delivery-promise` (public; `Cache-Control: public, max-age=60`). The primary
+ * zone's Standard free-delivery threshold and lead time; every field is null when no zone offers a
+ * Standard service (`Read/Queries/Order/GetDeliveryPromiseQuery.cs:6-14`, handler
+ * `Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:139-162`). There is no zone name (OQ-2).
+ */
+export interface DeliveryPromise {
+  currencyCode: string | null;
+  freeOver: Money | null;
+  leadTimeDays: number | null;
+}
+
+/** Read server-side for the shop shell and the product page; a failed read means "no promise" (ADR-FE-187). */
+export function getDeliveryPromiseServer(): Promise<DeliveryPromise> {
+  return getPublic<DeliveryPromise>('/api/shop/delivery-promise', { revalidate: 60 });
 }
 
 /** The same status read from the browser, for the client-side maintenance watch. */

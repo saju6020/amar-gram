@@ -30,6 +30,8 @@ export interface ProductPurchaseProps {
   heading: React.ReactNode;
   /** An override for the buy box action slot; by default the quantity / *Add to basket* / wishlist row (§3.3). */
   actions?: React.ReactNode;
+  /** HO-P5 G5: the public delivery promise's lead time, passed to the delivery card; absent when unknown. */
+  leadTimeDays?: number | null;
 }
 
 function messageFor(error: unknown): string {
@@ -50,6 +52,7 @@ export function ProductPurchase({
   lang,
   heading,
   actions,
+  leadTimeDays,
 }: ProductPurchaseProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -132,6 +135,7 @@ export function ProductPurchase({
           sku={sku}
           pricesIncludeTax={detail.pricesIncludeTax}
           quantity={quantity}
+          leadTimeDays={leadTimeDays}
           variants={
             <VariantSelector skus={detail.skus} selectedSkuId={sku.skuId} onSelect={select} />
           }

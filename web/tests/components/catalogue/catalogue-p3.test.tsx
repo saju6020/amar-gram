@@ -65,7 +65,7 @@ describe('U15: the heading band', () => {
     expect(screen.getByRole('status')).toHaveTextContent('7 products');
   });
 
-  it('has no District filter (G1)', () => {
+  it('shows no District group when the API sends no districts', () => {
     setup();
     expect(screen.queryByText(/district/i)).not.toBeInTheDocument();
   });

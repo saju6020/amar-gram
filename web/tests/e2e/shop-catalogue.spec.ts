@@ -117,7 +117,8 @@ test.describe('the design controls (HO-P3 S2)', () => {
     await expect(page).not.toHaveURL(/certification=/);
   });
 
-  test('S2: the heading band carries the h1 and the count; there is no District filter', async ({
+  // HO-P5 S1 (E2) supersedes "there is no District filter (G1)": the group exists, with server counts.
+  test('S2: the heading band carries the h1 and the count; the District filter is offered', async ({
     page,
   }) => {
     await page.goto('/shop/products');
@@ -125,7 +126,46 @@ test.describe('the design controls (HO-P3 S2)', () => {
       .locator('main header')
       .filter({ has: page.getByRole('heading', { level: 1 }) });
     await expect(band.getByRole('status')).toHaveText(/\d+ products?/);
-    await expect(page.getByText('District')).toHaveCount(0);
+    await withFilters(page, async (scope) => {
+      await expect(scope.getByRole('button', { name: 'District', exact: true })).toBeVisible();
+    });
+  });
+});
+
+test.describe('district of origin and the Organic badge (HO-P5 S1, E2)', () => {
+  test('filtering by a district shows only cards with that district as their eyebrow', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products');
+    await withFilters(page, async (scope) => {
+      await tickFilter(scope, 'District', /Satkhira/);
+    });
+    await expect(page).toHaveURL(/district=Satkhira/);
+    await expect(page.getByRole('button', { name: 'Remove filter Satkhira' })).toBeVisible();
+    const cards = page.getByRole('article');
+    await expect(cards.first()).toBeVisible();
+    const count = await cards.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+    for (let i = 0; i < count; i += 1) {
+      await expect(cards.nth(i).getByText('Satkhira', { exact: true })).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Remove filter Satkhira' }).click();
+    await expect(page).not.toHaveURL(/district=/);
+  });
+
+  test('a certified-organic card shows the Organic pill; one that is not certified does not', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products?district=Sirajganj');
+    const oil = page.getByRole('article').filter({ hasText: 'Pure Mustard Oil' });
+    await expect(oil.getByText('Sirajganj', { exact: true })).toBeVisible();
+    await expect(oil.getByText('Organic', { exact: true })).toBeVisible();
+    await expect(oil.getByText('Certified organic')).toBeAttached();
+
+    await page.goto('/shop/products?district=Satkhira');
+    const gur = page.getByRole('article').filter({ hasText: 'Date Palm Gur' });
+    await expect(gur).toBeVisible();
+    await expect(gur.getByText('Organic', { exact: true })).toHaveCount(0);
   });
 });
 

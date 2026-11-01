@@ -7,6 +7,7 @@ import { ProductHeading } from '@/components/product/ProductHeading';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
 import { ApiNotFoundError } from '@/lib/api/client';
 import {
+  getDeliveryPromiseServer,
   getOriginServer,
   getProductDetailServer,
   getProductReviewsServer,
@@ -57,9 +58,10 @@ export default async function ProductPage({ params, searchParams }: Props) {
     throw detail.error;
   }
   const product = detail.value;
-  const [origin, reviews] = await Promise.all([
+  const [origin, reviews, promise] = await Promise.all([
     product.countryOfOrigin ? settle(getOriginServer(product.countryOfOrigin.code)) : null,
     settle(getProductReviewsServer(slug)),
+    settle(getDeliveryPromiseServer()),
   ]);
   const initialSku = defaultSku(product.skus, one(query.sku));
   const nameLang = product.fieldLocales.name ?? product.locale;
@@ -85,6 +87,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
         detail={product}
         initialSkuId={initialSku?.skuId ?? ''}
         lang={lang}
+        leadTimeDays={promise.ok ? promise.value.leadTimeDays : null}
         heading={
           <ProductHeading
             name={product.name}
@@ -92,6 +95,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
             brand={product.brand}
             rating={product.rating}
             country={product.countryOfOrigin}
+            district={product.districtOfOrigin}
             lang={lang || undefined}
             description={product.description}
             descriptionLang={product.fieldLocales.description ?? product.locale}
