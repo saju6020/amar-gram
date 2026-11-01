@@ -1,8 +1,8 @@
 # TC-HO-P5-WIRING-S1 — Store front (district, Organic, delivery promise, rider note)
 
 Handover: docs/handover/HO-P5-WIRING.md (S1: §1 Amended (a)-(w), §8.3, §11.2, §15 U5-U15, U46, U47, §16 E2-E6, §17.2, §18 A2-A5 and A18-A20, §19, §20.8)
-Commit(s) under test: feat/p5-s1-store-front, HEAD b058708, diff base da87b60
-Written: 2026-10-31 (before any command ran)  ·  Executed: 2026-10-31
+Commit(s) under test: feat/p5-s1-store-front, run 1 at HEAD b058708, run 2 at HEAD e6956c0 (only tests, the slice report and docs changed in between; `git diff b058708 HEAD --stat` shows no product file), diff base da87b60
+Written: 2026-10-31 (before any command ran)  ·  Executed: run 1 2026-10-31, run 2 2026-10-31 to 2026-11-01. Evidence cells say "RUN 1" and "RUN 2" where both exist; a bare cell is run 1 and was not rerun.
 
 > Statuses record what was **observed**, not inferred. The Evidence column names what was actually
 > seen. `BLOCKED` marks a case that could not be executed or whose result was reasoned about rather
@@ -28,12 +28,12 @@ Written: 2026-10-31 (before any command ran)  ·  Executed: 2026-10-31
 | | Count |
 |---|---|
 | Total | 99 (E17 is not a slice row and is outside the counts) |
-| PASS | 89 |
-| FAIL | 5 (E2a, E6a, E6b, E6c, E6i: each failed once in a 2-worker chunk and passed alone; none is a reproduced defect) |
-| BLOCKED | 5 (U12c, E4c, E6h, R9, R11) |
+| PASS | 92 |
+| FAIL | 4 (E6c, E6e, E6f, E6i: each fails in the long 2a chunk at 1 worker, passes alone 8/8, and the same chunk at da87b60 fails too) |
+| BLOCKED | 3 (E4c, E6h, R11) |
 | NOT RUN | 0 |
 
-Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green, so the condition never arose.
+Counts are run 2 (run 1 was 89 PASS, 5 FAIL, 5 BLOCKED). Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green, so the condition never arose.
 
 ## Environment
 
@@ -43,15 +43,18 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 - Chunks: 1 = E2-E5 (5 specs); 2a = E6 minus ordering-a11y-responsive; 2b = ordering-a11y-responsive; 3 = X1 and X2. All `--project=chromium --project=mobile-360 --workers=2 --max-failures=20 --reporter=list`; reruns `--workers=1 --retries=0`.
 - E6's first attempt (all nine specs in one run) stopped after 141 passes with exit 1, no failure and no summary line. I treated it as a crashed run per 20.8 (not a result) and redid E6 in 2a and 2b. Cause not established (possibly my own background-command timeout; not proven).
 - No backend on :5005, so real-API specs are BLOCKED.
+- RUN 2 (HEAD e6956c0), `--workers=1` for every chunk, fresh `next dev` on :3121 each, routes warmed. The machine suspended during the first attempt at chunks 2a/2b (Playwright reported a 10.4 h duration and `net::ERR_NETWORK_IO_SUSPENDED`; 2b had 2 failures, 2a had 7), so I discarded that attempt and reran 2a and 2b with a temporary keep-awake process (`SetThreadExecutionState`, no setting changed; PID 20700, killed afterwards). The results above are from the clean reruns.
+- RUN 2 control: the same eight E6 specs (2a list) at 1 worker on `da87b60` (S1's diff base, in a temporary worktree sharing node_modules by a junction): 363 passed, 11 failed, including portal-dashboard:66 on both projects, account-area:51 on mobile-360, accounts-auth:102/:18/:34 on chromium, home:41 on mobile-360. The temporary worktree is removed. During cleanup an earlier `git worktree remove --force` on a first, C:-drive copy followed the junction and emptied this worktree's `web/node_modules`; I restored it with robocopy from `D:\my-repomar-gram\web
+ode_modules` (same package-lock hash, 412 entries, typecheck and the mutation runs passed afterwards). node_modules is untracked, so `git status` is unaffected.
 - Working tree during the run: `docs/gates/HO-P5-WIRING-S1-ARCHITECTURE.md` showed as modified by a process other than this gate. I did not touch it.
 
 ## Command rows
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
-| T1 | `npm run typecheck` | exit 0 | PASS | `npm run typecheck` exit 0; also `npx tsc --noEmit --incremental false -p .` exit 0 |
-| T2 | `npm run lint` (`--max-warnings 0`) | exit 0 | PASS | `npm run lint` exit 0, no output |
-| T3 | `npm test -- --maxWorkers=2` (full Vitest) | exit 0; 0 failed | PASS | `npm test -- --maxWorkers=2` exit 0: 216 files passed, 1 skipped; 1927 tests passed, 45 skipped, 0 failed (333.76 s). S0 was 212 files / 1881 passed; difference is S1's new files and cases. No rerun at 1 worker was needed, so no flake comparison arose. |
+| T1 | `npm run typecheck` | exit 0 | PASS | RUN 1: `npm run typecheck` exit 0; also `npx tsc --noEmit --incremental false -p .` exit 0 RUN 2: exit 0 at e6956c0. |
+| T2 | `npm run lint` (`--max-warnings 0`) | exit 0 | PASS | RUN 1: `npm run lint` exit 0, no output RUN 2: exit 0 at e6956c0. |
+| T3 | `npm test -- --maxWorkers=2` (full Vitest) | exit 0; 0 failed | PASS | RUN 1: `npm test -- --maxWorkers=2` exit 0: 216 files passed, 1 skipped; 1927 tests passed, 45 skipped, 0 failed (333.76 s). S0 was 212 files / 1881 passed; difference is S1's new files and cases. No rerun at 1 worker was needed, so no flake comparison arose. RUN 2: `npm test -- --maxWorkers=2` exit 0: 216 files passed, 1 skipped; 1941 tests passed, 45 skipped, 0 failed (14 more than run 1, the new cases). |
 | T4 | `next build` after e2e, `next dev` stopped | exit 0 | PASS | `next build` after e2e with the dev server stopped and `.next` deleted: exit 0, 58 s |
 | T5 | Served-output inspection of `.next` for mock data (mock db key, rider names, seed text, `setupWorker`) as S0's record did | zero hits outside build cache | PASS | grep of `.next` (excluding `cache`): 0 files for `__purrcare_ordering_mock_db__`, `__purrcare_shop_mock_db__`, rider names, Mizanur Rahman, Shirin Akter, BOC-2026-0142, Bangladesh Organic Council, Sam Rahman, setupWorker, createWorker, "Kalijira Rice", "Organic Rolled Oats", Dinajpur, Rajshahi, "Stock take until", "Call before you come", msw/browser. `InvalidCatalogueFilter` (3 files), `districtOfOrigin` (4) and `delivery-promise` (1) appear as production code (message map, types, client path), not handlers. |
 | T6 | U46 back-up: `rg` colour literals over `components app` (§17.2) restricted to S1-touched files | no match | PASS | pattern `#hex|rgba?(|hsla?(|-[#` searched (Grep tool; `rg` is not on the Git Bash PATH) over every S1-touched file in components/ and over app/(shop): no match. Vitest guards in U46 also pass. |
@@ -83,7 +86,7 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 | U11 | Layout promise read 500 | page renders; strip falls back to banner; no error banner | PASS | shell-p5 "U11: a failed promise read (500) renders the page and falls back to the banner, with no error banner" passed |
 | U12a | `DeliveryPromiseCard` `leadTimeDays: 1` | "usually takes 1 day" text | PASS | product-p5 "states the server lead time when it sends one" passed |
 | U12b | `null` / absent | today's text; export and other facts unchanged | PASS | product-p5 "keeps today’s text without a lead time, and keeps its other facts and export" passed |
-| U12c | `leadTimeDays: 0` | today's text (Amended (q)) | BLOCKED | component code (`leadTimeDays > 0`) was read, but no test passes 0 (none found in product-p5 or shell-p5); not watched. Gap: Amended (q) call is unpinned |
+| U12c | `leadTimeDays: 0` | today's text (Amended (q)) | PASS | RUN 1 was BLOCKED (no test). RUN 2: product-p5 "U12c: a lead time of 0 keeps today’s text (Amended (q)), never usually takes 0 days" exists and the full suite (exit 0) passed it |
 | U12d | Product page: promise ok → lead time; promise 500 → no lead time, no error | as stated | PASS | shell-p5 "states the server lead time" and "a failed promise read shows no lead time and no error" passed |
 | U13a | Rider note field for Delivery | labelled "Note for the rider (optional)", section 3, `maxLength` 300, live count "{n} of 300" | PASS | rider-note "is a labelled field in section 3 for Delivery, with maxLength 300 and a live count" passed |
 | U13b | Pickup | field absent | PASS | rider-note "is absent for Pickup" passed |
@@ -96,7 +99,7 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 | U15b | Seeded note shown; none → nothing | as stated | PASS | rider-note "shows the seeded note on a delivery order and nothing when there is none" passed |
 | P1 | `MyOrderDetail` Packed Delivery: hero "Your order is packed", cancel hint, return hint, Packing node `current` | as stated, Amended (b), (q) | PASS | rider-note "a Packed order gets its hero and a cancel hint, and the Packing node stays current" passed (asserts hero, cancel hint, one aria-current Packing node, at least 2 done, disabled Return with its hint) |
 | P2 | `MyOrderDetail` Packed Pickup: pickup hero sentence | as stated | PASS | rider-note "a Packed pickup order gets the pickup hero sentence" passed |
-| P3 | `PERSIST_KEY` is `__purrcare_shop_mock_db__v2` | bumped, Amended (b) | PASS | read mocks/handlers/shop/store.ts:25: PERSIST_KEY = __purrcare_shop_mock_db__v2. By inspection only: no test pins the key (gap) |
+| P3 | `PERSIST_KEY` is `__purrcare_shop_mock_db__v2` | bumped, Amended (b) | PASS | RUN 1: read store.ts:25, no test. RUN 2: catalogue-p5 "the shop mock store key is pinned at v2" (a stale v1 copy in sessionStorage is ignored; persist writes the v2 key) passed in the full suite |
 | P4 | `checkout.test.tsx` U25 asserts the field present (Amended (o)) | `getByLabelText('Note for the rider (optional)')` | PASS | checkout.test.tsx:562 getByLabelText for the rider note; the file passed in the full suite and in the 47-test mutation runs when unmutated |
 | B1 | Behaviour: `district` filter case-insensitive; facets merged case-insensitively, A-Z | as stated | PASS | catalogue-p5 "filters case-insensitively, and the facets list the districts A-Z with counts" passed |
 | B2 | Behaviour: delivery-promise mock shape (primary zone Standard), all-null without zone, no `freeOver` without threshold | as stated | PASS | shell-p5 three delivery-promise mock cases (primary zone, all null, no freeOver) passed |
@@ -119,33 +122,33 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
-| E2a | `shop-catalogue.spec.ts` existing tests (both projects) | pass | FAIL | Chunk 1 (fresh dev server, 2 workers, both projects, 5 specs): 78 passed, 4 skipped, 1 failed, 1 flaky. shop-catalogue.spec.ts:217 "E-E1: maintenance replaces the storefront" FAILED on mobile-360: `getByText("Stock take until 6pm.")` not found in 20 s. Rerun alone, 1 worker, warm: chromium and mobile-360 both pass. Rerun at 2 workers, --retries=0, --repeat-each=3: 6/6 pass. Not reproduced; cause unexplained (candidate: the test flips a server-global maintenance flag and the other project's copy of the same test ran at the same time; not proven). All other shop-catalogue tests in the chunk passed. |
-| E2b | new: filter by district → every card's eyebrow is that district | pass | PASS | shop-catalogue.spec.ts "filtering by a district shows only cards with that district as their eyebrow" passed on chromium and mobile-360 in chunk 1 |
-| E2c | new: certified card shows "Organic", uncertified does not | pass | PASS | shop-catalogue.spec.ts "a certified-organic card shows the Organic pill; one that is not certified does not" passed on both projects in chunk 1 |
-| E2d | retitled S2 test: "the District filter is offered" | pass | PASS | shop-catalogue.spec.ts "S2: the heading band ... the District filter is offered" passed on both projects in chunk 1 |
-| E3a | `shop-product.spec.ts` existing tests | pass | PASS | shop-product.spec.ts existing tests: 20 passed in chunk 1 across both projects with the new ones (10 per project) |
-| E3b | new: "Grown in …" above producer line and under Origin | pass | PASS | shop-product.spec.ts "a product with a district says Grown in ... above its producer line, and lists it under Origin" passed on both projects |
-| E3c | new: delivery card states lead time | pass | PASS | shop-product.spec.ts "the delivery card states the server lead time" passed on both projects |
-| E3d | new: producer abroad has no "Grown in" | pass | PASS | shop-product.spec.ts "a product from a producer abroad has no Grown in line" passed on both projects |
-| E4a | `shop-shell.spec.ts`: strip states threshold on `/shop`, `/shop/products`, axe clean | pass | PASS | shop-shell.spec.ts "the top strip shows the delivery promise on the home page and the catalogue, axe clean" passed on both projects (4 skipped across shop-shell/shop-home are the specs' own phone-only/desktop-only skips) |
-| E4b | `shop-home.spec.ts`: strip above header on home, axe clean | pass | PASS | shop-home.spec.ts strip test passed on both projects in chunk 1 |
+| E2a | `shop-catalogue.spec.ts` existing tests (both projects) | pass | PASS | RUN 2 chunk 1 (fresh dev server :3121, --workers=1, both projects, config retries): 80 passed, 4 skipped, 0 failed, 0 flaky. shop-catalogue.spec.ts all passed, including :217 maintenance on both projects. RUN 1 had failed :217 on mobile-360 at 2 workers (passed alone). Cause was the 2-worker run; not reproduced at 1 worker. |
+| E2b | new: filter by district → every card's eyebrow is that district | pass | PASS | RUN 1: shop-catalogue.spec.ts "filtering by a district shows only cards with that district as their eyebrow" passed on chromium and mobile-360 in chunk 1 RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E2c | new: certified card shows "Organic", uncertified does not | pass | PASS | RUN 1: shop-catalogue.spec.ts "a certified-organic card shows the Organic pill; one that is not certified does not" passed on both projects in chunk 1 RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E2d | retitled S2 test: "the District filter is offered" | pass | PASS | RUN 1: shop-catalogue.spec.ts "S2: the heading band ... the District filter is offered" passed on both projects in chunk 1 RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E3a | `shop-product.spec.ts` existing tests | pass | PASS | RUN 1: shop-product.spec.ts existing tests: 20 passed in chunk 1 across both projects with the new ones (10 per project) RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E3b | new: "Grown in …" above producer line and under Origin | pass | PASS | RUN 1: shop-product.spec.ts "a product with a district says Grown in ... above its producer line, and lists it under Origin" passed on both projects RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E3c | new: delivery card states lead time | pass | PASS | RUN 1: shop-product.spec.ts "the delivery card states the server lead time" passed on both projects RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E3d | new: producer abroad has no "Grown in" | pass | PASS | RUN 1: shop-product.spec.ts "a product from a producer abroad has no Grown in line" passed on both projects RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E4a | `shop-shell.spec.ts`: strip states threshold on `/shop`, `/shop/products`, axe clean | pass | PASS | RUN 1: shop-shell.spec.ts "the top strip shows the delivery promise on the home page and the catalogue, axe clean" passed on both projects (4 skipped across shop-shell/shop-home are the specs' own phone-only/desktop-only skips) RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E4b | `shop-home.spec.ts`: strip above header on home, axe clean | pass | PASS | RUN 1: shop-home.spec.ts strip test passed on both projects in chunk 1 RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
 | E4c | "banners still render below" in a browser | unit-only per Amended (t); not an e2e row | BLOCKED | Amended (t): no `Shop` banner seeded; proven by U10d |
-| E5a | `ordering-customer.spec.ts` new rider-note test: note typed, hidden on Pickup and back, COD placed, shown on order as text, URL clean | pass | PASS | ordering-customer.spec.ts:167 "G4: a delivery COD order with a rider note shows it on the order; Pickup hides the field and keeps the note out of the URL" passed on both projects in chunk 1 |
-| E5b | `ordering-customer.spec.ts:166` COD disabled above the ceiling (S0 flaked under load) | pass, or passes alone | PASS | The COD-ceiling test is now at :200 (S1 added a test at :167, so the S0 line :166 moved). "E-B4/E-C1: COD is disabled above the ceiling" passed on chromium and mobile-360 in chunk 1 |
-| E5c | `ordering-customer.spec.ts:66` basket Undo (mobile-360; S0 flaked) | pass, or passes alone | PASS | ordering-customer.spec.ts:66 passed on both projects in chunk 1 and again alone (4/4 in the reruns) |
-| E5d | `ordering-customer.spec.ts:146` E-B3 (mobile-360; S0 flaked) | pass, or passes alone | PASS | ordering-customer.spec.ts:146 E-B3: chromium FAILED its first attempt in chunk 1 (24.8 s; `Collect from a branch` radio not found at line 156), passed on the spec's own configured retry (`retries: 1` at line 5), reported flaky. mobile-360 passed first time. Alone, 1 worker, --retries=0, --repeat-each=4: 8/8 pass (both projects). Same test flaked under load in S0. PASS with the flake noted; on a strict reading a first-attempt failure on an S1 row is a caveat |
-| E5e | rest of `ordering-customer.spec.ts` | pass | PASS | the other ordering-customer tests passed on both projects in chunk 1 |
-| E6a | `shop-a11y-responsive.spec.ts` | pass | FAIL | Chunk 2a (fresh server, 2 workers; shop-a11y-responsive, shop-portal, home, portal-a11y-responsive, portal-dashboard, account-area, accounts-a11y-responsive, accounts-auth): 370 passed, 4 failed. shop-a11y-responsive.spec.ts:118 "review form with validation errors" FAILED on mobile-360 (90 s timeout clicking `Send review`). Alone, 1 worker, --retries=0: passes on chromium and mobile-360. Everything else in the spec passed. Unexplained under load. E6 first attempt (2 workers, all E6 specs in one run) stopped after 141 passes with exit 1, no failure listing and no summary line; per 20.8 it is not recorded as a result and the chunk was redone in two parts on fresh servers.  |
-| E6b | `shop-portal.spec.ts` | pass | FAIL | Chunk 2a: shop-portal.spec.ts:11 "E-D1: save to the wishlist; request alerts" FAILED on chromium (90 s timeout waiting for `Tell me when it's back`). Alone, 1 worker, --retries=0: passes on both projects. Unexplained under load; the product page is an S1 file, but the same page passes alone and elsewhere in the chunk |
-| E6c | `home.spec.ts` | pass | FAIL | Chunk 2a: home.spec.ts:41 "signed in as a customer lands on My orders" FAILED on mobile-360 (expected /portal/orders, received /shop). Alone: passes on both projects. Unexplained under load (sign-in session state) |
-| E6d | `ordering-a11y-responsive.spec.ts` except baseline :133 | pass; :133 fails as recorded or passes | PASS | Chunk 2b (fresh server, 2 workers): ordering-a11y-responsive.spec.ts 68 passed, exit 0. The baseline :133 test passed on both projects here |
-| E6e | `portal-a11y-responsive.spec.ts`, `portal-dashboard.spec.ts` | pass | PASS | Chunk 2a: portal-a11y-responsive.spec.ts and portal-dashboard.spec.ts all passed |
-| E6f | `account-area.spec.ts` | pass | PASS | Chunk 2a: account-area.spec.ts all passed |
-| E6g | `accounts-a11y-responsive.spec.ts` | pass | PASS | Chunk 2a: accounts-a11y-responsive.spec.ts all passed |
-| E6i | `accounts-auth.spec.ts` | pass | FAIL | Chunk 2a: accounts-auth.spec.ts:102 "E-C2: reload the portal after sign-in" FAILED on mobile-360 (`getByLabel("Full name")` not found in 5 s). Alone: passes on both projects. Unexplained under load |
+| E5a | `ordering-customer.spec.ts` new rider-note test: note typed, hidden on Pickup and back, COD placed, shown on order as text, URL clean | pass | PASS | RUN 1: ordering-customer.spec.ts:167 "G4: a delivery COD order with a rider note shows it on the order; Pickup hides the field and keeps the note out of the URL" passed on both projects in chunk 1 RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E5b | `ordering-customer.spec.ts:166` COD disabled above the ceiling (S0 flaked under load) | pass, or passes alone | PASS | RUN 1: The COD-ceiling test is now at :200 (S1 added a test at :167, so the S0 line :166 moved). "E-B4/E-C1: COD is disabled above the ceiling" passed on chromium and mobile-360 in chunk 1 RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E5c | `ordering-customer.spec.ts:66` basket Undo (mobile-360; S0 flaked) | pass, or passes alone | PASS | RUN 1: ordering-customer.spec.ts:66 passed on both projects in chunk 1 and again alone (4/4 in the reruns) RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E5d | `ordering-customer.spec.ts:146` E-B3 (mobile-360; S0 flaked) | pass, or passes alone | PASS | RUN 1: flaky on chromium at 2 workers (passed on retry), 8/8 alone. RUN 2: passed first time on both projects at 1 worker, no flaky line in the chunk. Clean. |
+| E5e | rest of `ordering-customer.spec.ts` | pass | PASS | RUN 1: the other ordering-customer tests passed on both projects in chunk 1 RUN 2: passed again in chunk 1 at 1 worker on both projects, no flake. |
+| E6a | `shop-a11y-responsive.spec.ts` | pass | PASS | RUN 2 chunk 2a (second attempt, see Environment): shop-a11y-responsive.spec.ts all passed on both projects at 1 worker. RUN 1 had failed :118 on mobile-360 at 2 workers. |
+| E6b | `shop-portal.spec.ts` | pass | PASS | RUN 2 chunk 2a: shop-portal.spec.ts all passed on both projects at 1 worker. RUN 1 had failed :11 on chromium at 2 workers. |
+| E6c | `home.spec.ts` | pass | FAIL | RUN 2 chunk 2a: home.spec.ts:33 "signed in as staff lands on /staff" FAILED on chromium and mobile-360 (stayed on "/", expected /staff, 5 s). Alone, fresh server, --retries=0 --repeat-each=4: 8/8 pass. Baseline control (see Run 2 control): the same 8-spec chunk at da87b60, 1 worker, also failed (home.spec :41 on mobile-360 plus 10 others). Not caused by S1; not reproduced alone |
+| E6d | `ordering-a11y-responsive.spec.ts` except baseline :133 | pass; :133 fails as recorded or passes | PASS | RUN 2 chunk 2b (fresh server, 1 worker): 67 passed, 1 failed: ordering-a11y-responsive.spec.ts:133 on mobile-360, the baseline exception named in the handover. (It passed on both projects in run 1 at 2 workers.) No other failure |
+| E6e | `portal-a11y-responsive.spec.ts`, `portal-dashboard.spec.ts` | pass | FAIL | RUN 2 chunk 2a: portal-a11y-responsive.spec.ts passed; portal-dashboard.spec.ts:66 "E-A4: tile links reach the owning areas" FAILED on chromium and mobile-360 (stayed on /portal, expected /portal/billing). Alone, --retries=0 --repeat-each=4: 8/8 pass. The baseline chunk at da87b60 also failed :66 on both projects. Not caused by S1 |
+| E6f | `account-area.spec.ts` | pass | FAIL | RUN 2 chunk 2a: account-area.spec.ts:51 "E-E2: opt into SMS marketing" FAILED on mobile-360 (`getByRole("table")` not found in 5 s). Alone, --retries=0 --repeat-each=4: 8/8 pass. The baseline chunk at da87b60 also failed :51 on mobile-360 (and three other account-area tests). Not caused by S1 |
+| E6g | `accounts-a11y-responsive.spec.ts` | pass | PASS | RUN 2 chunk 2a: accounts-a11y-responsive.spec.ts all passed on both projects |
+| E6i | `accounts-auth.spec.ts` | pass | FAIL | RUN 2 chunk 2a: accounts-auth.spec.ts:102 "E-C2: reload the portal after sign-in" FAILED on mobile-360 (`getByLabel("Full name")` not found, 5 s). Alone, --retries=0 --repeat-each=4: 8/8 pass; :137 also 8/8. The baseline chunk at da87b60 also failed :102 (chromium) and :18, :34. Not caused by S1 |
 | E6h | `portal-real-api.spec.ts` | real-API | BLOCKED | no backend on :5005 |
-| X1 | `ordering-customer-orders.spec.ts` (S0 E1; `MyOrderDetail` changed). Not E2-E6 | pass, baseline, or passes alone under (i) | PASS | Chunk 3 (fresh server, 2 workers; with shop-staff): 15 passed, 1 flaky, exit 0. ordering-customer-orders.spec.ts:69 "E-D1: cancel before packing..." chromium first attempt timed out finding the ORD-2026-000104 link, passed on retry; alone, --retries=0, --repeat-each=3: 6/6 pass on both projects. Passes alone, so within "pass, baseline, or passes alone under (i)" |
-| X2 | `shop-staff.spec.ts` (S3's E10; shop mock store changed and `PERSIST_KEY` bumped). Not E2-E6 | pass, baseline, or passes alone under (i) | PASS | Chunk 3: shop-staff.spec.ts all passed on both projects (no failure, no flake) |
+| X1 | `ordering-customer-orders.spec.ts` (S0 E1; `MyOrderDetail` changed). Not E2-E6 | pass, baseline, or passes alone under (i) | PASS | RUN 1: 1 flaky at 2 workers. RUN 2 chunk 3 (1 worker): ordering-customer-orders.spec.ts:35 "E-C2: an unconfirmed transfer expires" flaked on both projects (passed on retry); shop-staff all passed. 14 passed, 2 flaky. Alone, --retries=0 --repeat-each=4: 7 of 8 pass; the one failure was the first (cold) chromium run: the test sets a 3 s transfer window and then expects the "Pay by bank transfer" heading, so a slow first render loses the race by design. Within (i): passes alone, test-timing, not S1 |
+| X2 | `shop-staff.spec.ts` (S3's E10; shop mock store changed and `PERSIST_KEY` bumped). Not E2-E6 | pass, baseline, or passes alone under (i) | PASS | RUN 2 chunk 3 (1 worker): shop-staff.spec.ts all passed on both projects, no flake |
 | E17 | Not a slice row (Amended (l)); checked at E18; outside the counts | — | BLOCKED | not counted |
 
 ## Regression cases from earlier gates
@@ -157,10 +160,10 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 | R3 | ARCHITECTURE | `InvalidCatalogueFilter` shows raw server message | catalogue renders `SHOP_CODE_MESSAGES` plain text (shell-p5) | PASS | shell-p5 plain-text case passed; mutation M1 makes it fail |
 | R4 | ARCHITECTURE | NUL difference | U47-6 | PASS | U47-6 passed (NUL answered as Amended (v) states) |
 | R5 | CODE_REVIEW | Packed paths unasserted | P1, P2 | PASS | P1 and P2 passed; the case now asserts the Packing node, done nodes, disabled Return and its hint |
-| R6 | CODE_REVIEW | retry test did not assert field | U13f | PASS | rider-note retry case now asserts `noteField()).toHaveValue("Call before you come up")` between attempts and the same key and note; passed |
+| R6 | CODE_REVIEW | retry test did not assert field | U13f | PASS | rider-note retry case asserts the field value between attempts; passed in full suite, run 1 and run 2 |
 | R7 | CODE_REVIEW | blanks/trim not tested | U47-1b | PASS | U47-1b passed |
-| R8 | CODE_REVIEW | zero threshold (fix) | strip falls back for `0.00`, `0`, `0.0`; shows for `0.50`, `5000.00` (shell-p5) | PASS | shell-p5 zero-threshold case passed; M3 makes it fail; probe shows 0, 0.0, 0.00 fall back and 0.50, 0.01 show the strip. The shipped test covers only 0.00 |
-| R9 | CODE_REVIEW | `centsText` edges untested | gap: see Gaps | BLOCKED | `centsText` not exported; no fixture with edge value; adding either is outside this gate |
+| R8 | CODE_REVIEW | zero threshold (fix) | strip falls back for `0.00`, `0`, `0.0`; shows for `0.50`, `5000.00` (shell-p5) | PASS | RUN 2: zero-threshold cases now cover 0, 0.0, 0.00 (fall back) and 0.01, 0.50 (strip), plus the layout case; all passed. M3 (run 1) fails the 0.00 case |
+| R9 | CODE_REVIEW | `centsText` edges untested | gap: see Gaps | PASS | RUN 1 was BLOCKED. RUN 2: catalogue-p5 "the Was price is formatted from minor units by string handling (centsText)" table (5, 99, 100, 101, 280000 minor units, on both the detail and the single-size card) exists and the full suite passed it |
 | R10 | SECURITY | note rendered as text, not URL/storage | U13c, U15a, E5a | PASS | U13c (URL and storage empty), U15a (markup literal) and E5a (URL clean, note shown as text) passed |
 | R11 | SECURITY | rider note in audit table; catalogue rate limit shared bucket | backend, pre-existing | BLOCKED | no backend change in S1; owner is backend |
 | R12 | SECURITY | public builders must not carry staff-only certificate/scheduled fields | list and detail JSON contain none | PASS | catalogue-p5 staff-only fields case passed; M4 makes it fail for both the card and the detail builder |
@@ -170,9 +173,9 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 | ID | Mutation | Expected | Status | Evidence |
 |---|---|---|---|---|
 | M1 | `CatalogueView.tsx`: revert plain-text mapping to raw `errorMessage` | a test fails | PASS | CatalogueView plain-text mapping replaced by raw errorMessage: shell-p5 "an over-limit district list reads the existing plain sentence" FAILED (expected the plain sentence). Restored with git checkout; tree clean |
-| M2 | Delivery-only note: send note regardless of fulfilment (CheckoutScreen:341 and checkout.ts:215 both; then each alone to see if the double guard hides it) | a test fails (both); report each alone | PASS | removing both Delivery guards (CheckoutScreen:341 and checkout.ts:215): rider-note "sends no note at all for Pickup, even after one was typed for Delivery" FAILED (1 failed, 46 passed). Removing CheckoutScreen:341 alone: 47/47 passed. Removing checkout.ts:215 alone: 47/47 passed. The guards are redundant and each is individually unproven; only the pair is. Restored; clean |
+| M2 | Delivery-only note: send note regardless of fulfilment (CheckoutScreen:341 and checkout.ts:215 both; then each alone to see if the double guard hides it) | a test fails (both); report each alone | PASS | RUN 1: removing both guards was caught; removing either one alone was NOT caught (47/47). RUN 2, after the new tests: removing CheckoutScreen.tsx:341 alone fails "screen guard: the request the screen builds for Pickup carries no riderNote" (1 failed, 48 passed); removing lib/api/checkout.ts:215 alone fails "client guard: placeOrder drops a note given with Pickup, and trims one given with Delivery" (1 failed, 48 passed); removing both fails those two plus "sends no note at all for Pickup..." (3 failed). Each restored with git checkout; tree clean |
 | M2b | `PaymentSection`: show note field for Pickup too | a test fails | PASS | PaymentSection showNote without the Delivery check: "is absent for Pickup" and "sends no note at all for Pickup..." FAILED (2 failed). Restored; clean |
-| M3 | `promiseTakesStrip`: remove the zero-amount check | a test fails | PASS | promiseTakesStrip zero-amount test removed (return !!amount): shell-p5 "does not take the strip: Free delivery over 0.00 would be a misleading claim" FAILED. Restored; clean. Probe (temporary test, deleted): 0, 0.00, 0.0 give false; 0.50, 0.01, 10.00, 5000.00, 100 give true; null freeOver and null promise give false (9/9 passed). The shipped test only uses 0.00 |
+| M3 | `promiseTakesStrip`: remove the zero-amount check | a test fails | PASS | RUN 1: promiseTakesStrip zero-amount test removed (return !!amount): shell-p5 "does not take the strip: Free delivery over 0.00 would be a misleading claim" FAILED. Restored; clean. Probe (temporary test, deleted): 0, 0.00, 0.0 give false; 0.50, 0.01, 10.00, 5000.00, 100 give true; null freeOver and null promise give false (9/9 passed). The shipped test only uses 0.00 RUN 2: new tests: 0, 0.0, 0.00 fall back; 0.01 and 0.50 take the strip; a layout case shows the first banner is the strip and the rest below, none lost or doubled. All passed in the full suite (mutation not repeated; no product code changed). |
 | M4 | `catalogueItem`: add `organicCertificateExpiresOn` to the public card; and `detailView` likewise | a test fails | PASS | added organicCertificateExpiresOn to the public catalogueItem: catalogue-p5 "the public card and detail never carry the staff-only certificate or scheduled Was fields" FAILED. Added organicCertificateFileId to detailView: same test FAILED. Restored both; clean |
 
 ## Acceptance-criteria coverage
@@ -181,9 +184,9 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 |---|---|---|
 | A2 district on cards, product page, filter with server counts and URL state | U5, U7, U8, U9, E2b, E3b | PASS (U5, U7-U9, E2b, E3b all passed) |
 | A3 truthful Organic badge | U6, E2c | PASS (U6, E2c passed) |
-| A4 strip threshold, lead time, no arithmetic, safe fallback | U10-U12, R8, E3c, E4a, E4b | PASS (U10-U12 passed except U12c, which has no test; E3c, E4a, E4b passed) |
-| A5 rider note placed once, validated as server, shown back | U13-U15, U47-3..6, E5a | PASS (U13-U15, U47-3..6, E5a passed; a rider-note mutation of only one of two guards goes undetected, see M2) |
-| A18 (S1 share) no colour literals; a11y specs pass | U46, T6, E4, E6 | FAIL (U46, T6 pass; E4 passes; E6 had 4 specs fail under 2-worker load, all pass alone) |
+| A4 strip threshold, lead time, no arithmetic, safe fallback | U10-U12, R8, E3c, E4a, E4b | PASS (U10-U12 incl. U12c, E3c, E4a, E4b passed) |
+| A5 rider note placed once, validated as server, shown back | U13-U15, U47-3..6, E5a | PASS (U13-U15, U47-3..6, E5a passed, and each Delivery guard is now caught alone, see M2) |
+| A18 (S1 share) no colour literals; a11y specs pass | U46, T6, E4, E6 | FAIL (U46, T6, E4 pass; four E6 specs fail in the long 2a chunk at 1 worker, each passes alone 8/8, and the baseline chunk fails the same way) |
 | A19 every new mocked input refused as the server does | U47-1..6 | PASS (U47-1..6 passed) |
 | A20 scope | T7 | PASS (T7) |
 | A21 typecheck, lint, Vitest, build | T1-T4 | PASS (T1-T4 green; the S1 slice does not own the full e2e, E18) |
@@ -192,10 +195,8 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 
 | ID | Why | What would unblock it |
 |---|---|---|
-| U12c (lead time 0 keeps today's text) | no test passes 0; only the code was read | a one-line case in product-p5 |
 | E6h and any `*-real-api` spec | no backend | a scratch API on :5005 |
 | E4c | unit-only per Amended (t) | a seeded `Shop` banner (outside S1's block, §20.1) |
-| R9 | `centsText` private | export plus table test, or a fixture with an edge price |
 | R11 | backend | backend owner |
 
 ## Gaps left deliberately
@@ -203,8 +204,5 @@ Row T3b (rerun at `--maxWorkers=1` if T3 is not green) was removed: T3 was green
 | Gap | Why not covered | Suggested owner |
 |---|---|---|
 | ACCEPTANCE screenshots at 360 / 1280 | not a TEST gate item (§19) | acceptance-reviewer |
-| No test pins `PERSIST_KEY` v2 (P3 is by reading) | would need a test file beyond the S1 list | integrator |
-| Zero-threshold test covers only `0.00` (probe confirms `0`, `0.0`) | not changed: existing specs are not edited by this gate | slice owner |
-| Delivery-only rider note: each of the two guards alone is unproven (M2) | defence in depth; removing both is caught | slice owner, optional |
-| Cause of the five 2-worker failures unexplained | none reproduced alone | integrator at E18 |
+| E6 specs home.spec:33, portal-dashboard:66, account-area:51, accounts-auth:102 fail in a long single-server chunk even at 1 worker, and also on da87b60 | pre-existing instability of the e2e chunk, not S1; each passes alone | integrator at E18 (chunk size or order) |
 | E17 | Amended (l) | integration E18 |
