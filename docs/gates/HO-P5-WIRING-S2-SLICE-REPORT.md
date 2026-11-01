@@ -156,3 +156,12 @@ Left undone: nothing from the list. The mock receipt still hides the name of a n
 - Saving state: the row dims, shows `cursor-progress` and the text "Saving…" while a line's write is in flight.
 - `Sales series` describe title fixed.
 - Verification: typecheck and lint clean; Vitest (slice folders, 19 files, 249 tests) at `--maxWorkers=1`; e2e `ordering-pos.spec.ts` both projects `--workers=1`, fresh `next dev` on 3122: 18 passed.
+
+## Third gate fix round (SECURITY run 3 races)
+
+- `reset()` sets `appliedLink.current = presetLink`, so a customer lookup still in flight cannot attach its customer to the sale that starts after a Void or New sale. Tests hold the lookup open across a Void, and across a walk-in sale then New sale; both fail with that line removed.
+- The preset is taken once per mount (`presetTaken` ref). A later `?customerId=` on the same mount (the unsaved-changes guard's sentinel, say) only gets its address cleaned. The two real links are on other pages, so a later link remounts. The "new link" test now remounts, and a new case returns to the parameter URL on the same mount and stays walk-in.
+- A failed lookup (403, 404, 500) shows an alert: "We couldn’t attach that customer to this sale. It is a walk-in sale; enter the customer here if you need them." Hidden once the sale is reset or a customer is entered. Tested for all three statuses.
+- e2e reload case now also asserts the POST body carries neither name nor mobile.
+- Dispatch dialog: courier case for a failed re-read added. Pick list: only the checkbox is dimmed; "Saving…" moved to a polite live region above the list, so no checkbox's accessible name changes. `pos-p5` no longer calls `userEvent.setup()` three times in one test.
+- Verification: typecheck and lint clean; Vitest `back-office-sales`, `pos`, `orders`, `fulfilment`, `dashboard`, `back-office-overview` at `--maxWorkers=1`; e2e `ordering-pos.spec.ts` both projects `--workers=1` on a fresh `next dev` (3122): 18 passed; Vitest 19 files / 255 tests.

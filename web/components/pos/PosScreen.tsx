@@ -69,20 +69,26 @@ export function PosScreen() {
   const complete = useCompleteCounterSale();
 
   const router = useRouter();
-  // The profile's "New order" link presets the buyer ONCE per link. The id is taken into state and out of the address
-  // at once (replace, so no history entry keeps it, and before any basket exists for the unsaved-changes guard to
-  // trap the old address): neither Back from the receipt nor a reload can refill an empty ticket with that customer.
-  // Client state survives a replace to the same route. A later link (the same customer included) presets again.
-  const [presetId, setPresetId] = useState(presetCustomerId);
+  // The profile's "New order" link presets the buyer once PER MOUNT (the two real links are on other pages, so a later
+  // link always mounts this screen afresh). The id is taken into state and out of the address at once (replace, so no
+  // history entry keeps it, and before any basket exists for the unsaved-changes guard to trap the old address). Any
+  // later customerId parameter on the same mount (Back through the guard's sentinel, say) only has its address cleaned: it
+  // never presets again. Client state survives a replace to the same route.
+  const [presetId, setPresetId] = useState('');
   const [presetLink, setPresetLink] = useState(0);
   const appliedLink = useRef(0);
+  const presetTaken = useRef(false);
   useEffect(() => {
     if (presetCustomerId === '') return;
-    setPresetId(presetCustomerId);
-    setPresetLink((n) => n + 1);
+    if (!presetTaken.current) {
+      presetTaken.current = true;
+      setPresetId(presetCustomerId);
+      setPresetLink(1);
+    }
     router.replace('/staff/pos');
   }, [presetCustomerId, router]);
   const preset = useStaffCustomer(presetId);
+  const [presetNoticeHidden, setPresetNoticeHidden] = useState(false);
   useEffect(() => {
     if (!preset.data || presetLink === 0 || appliedLink.current === presetLink) return;
     appliedLink.current = presetLink;
@@ -178,6 +184,9 @@ export function PosScreen() {
   }
 
   function reset() {
+    // A lookup still in flight must not attach its customer to the sale that starts now.
+    appliedLink.current = presetLink;
+    setPresetNoticeHidden(true);
     setLines([]);
     setCustomer(EMPTY_CUSTOMER);
     setCustomerOpen(false);
@@ -233,6 +242,11 @@ export function PosScreen() {
       }}
     >
       <UnsavedChangesGuard when={lines.length > 0} />
+      {preset.isError && !presetNoticeHidden && !customerGiven && (
+        <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink">
+          We couldn’t attach that customer to this sale. It is a walk-in sale; enter the customer here if you need them.
+        </p>
+      )}
       <PageHeader
         title="Counter sale"
         description="Scan items, take payment, print the receipt."

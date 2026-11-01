@@ -270,18 +270,94 @@ describe('Preset buyer from /staff/pos?customerId= - SECURITY', () => {
     expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
   });
 
-  it('a new link for a customer presets again once the address has been cleaned', async () => {
+  it('a new link (a fresh mount) presets again; the same mount returning to the parameter URL stays a walk-in', async () => {
+    const user = userEvent.setup();
     setUrl(PRESET);
-    renderWithClient(<PosScreen />);
+    const first = renderWithClient(<PosScreen />);
+    const named = () => screen.getByRole('button', { name: new RegExp(`^${ids.customerName}`) });
     await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) });
     await waitFor(() => expect(currentUrl()).toBe('/staff/pos'));
-    await userEvent.setup().click(screen.getByRole('button', { name: new RegExp(`^${ids.customerName}`) }));
-    await userEvent.setup().clear(screen.getByLabelText(/Customer name/));
-    await userEvent.setup().clear(screen.getByLabelText(/Mobile number/));
+    await user.click(named());
+    await user.clear(screen.getByLabelText(/Customer name/));
+    await user.clear(screen.getByLabelText(/Mobile number/));
     await screen.findByRole('button', { name: 'Walk-in (no customer) · Add customer' });
+    // Back through the unsaved-changes guard's sentinel puts the parameter in the address again on the SAME mount: only the
+    // address is cleaned; nobody is attached.
     setUrl(PRESET);
+    await waitFor(() => expect(currentUrl()).toBe('/staff/pos'));
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+    // A link from another page mounts the screen afresh, and that presets.
+    first.unmount();
+    setUrl(PRESET);
+    renderWithClient(<PosScreen />);
     expect(await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) })).toBeInTheDocument();
   });
+
+  /** A customer lookup that answers only when released, so the sale can move on while it is still in flight. */
+  function heldLookup() {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.get('*/api/staff/customers/:customerId', async () => {
+        await gate;
+        return HttpResponse.json({ id: ids.customerId, fullName: ids.customerName, mobileNumber: '01711000999', emailAddress: null, recordStatus: 'Complete', registrationChannel: 'Web', status: 'Active', mergedIntoCustomerId: null });
+      }),
+    );
+    return release;
+  }
+
+  it('a lookup still in flight when the basket is voided does not attach the customer afterwards', async () => {
+    const user = userEvent.setup();
+    const sales = recordSales();
+    const release = heldLookup();
+    setUrl(PRESET);
+    renderWithClient(<PosScreen />);
+    await addRice(user);
+    await user.click(screen.getByRole('button', { name: 'Void basket' }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Void basket' }));
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+    await addRice(user, '8900000000101');
+    const review = await pay(user);
+    await user.click(review.getByRole('button', { name: 'Complete sale' }));
+    await screen.findByRole('heading', { name: /Sale complete/ });
+    expect(Object.keys(sales[0]!)).not.toContain('customerName');
+    expect(Object.keys(sales[0]!)).not.toContain('customerMobile');
+  });
+
+  it('a lookup still in flight across a walk-in sale and New sale does not attach the customer to the next sale', async () => {
+    const user = userEvent.setup();
+    const sales = recordSales();
+    const release = heldLookup();
+    setUrl(PRESET);
+    renderWithClient(<PosScreen />);
+    await addRice(user);
+    const first = await pay(user);
+    await user.click(first.getByRole('button', { name: 'Complete sale' }));
+    await screen.findByRole('heading', { name: /Sale complete/ });
+    expect(Object.keys(sales[0]!)).not.toContain('customerName');
+    await user.click(screen.getByRole('button', { name: 'New sale' }));
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+    await addRice(user, '8900000000101');
+    const second = await pay(user);
+    await user.click(second.getByRole('button', { name: 'Complete sale' }));
+    await screen.findByRole('heading', { name: /Sale complete/ });
+    expect(Object.keys(sales[1]!)).not.toContain('customerName');
+    expect(Object.keys(sales[1]!)).not.toContain('customerMobile');
+  });
+
+  it.each([[403], [404], [500]])('a failed lookup (%i) says the customer was not attached, and the sale is a walk-in', async (status) => {
+    server.use(http.get('*/api/staff/customers/:customerId', () => new HttpResponse(null, { status })));
+    setUrl(PRESET);
+    renderWithClient(<PosScreen />);
+    const alert = await screen.findByRole('alert', undefined, { timeout: 15000 });
+    expect(alert).toHaveTextContent('We couldn’t attach that customer to this sale');
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+  }, 25000);
 
   it('fills the buyer from the URL, names them in the review, and clearing both fields keeps it a walk-in', async () => {
     const user = userEvent.setup();

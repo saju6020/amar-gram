@@ -156,12 +156,17 @@ test.describe('point of sale (US-ORD-16)', () => {
 
     test('a reload after the preset is a walk-in', async ({ page }) => {
       await start(page);
+      const sales = watchSales(page);
       await page.goto(PRESET);
       await expect(chip(page)).toBeVisible();
       await expect(page).toHaveURL(/\/staff\/pos$/);
       await page.reload();
       await expect(page.getByRole('heading', { level: 1, name: 'Counter sale' })).toBeVisible();
       await expect(walkIn(page)).toBeVisible();
+      await scan(page, OATS_400);
+      await payAndComplete(page);
+      expect(Object.keys(sales[0]!)).not.toContain('customerName');
+      expect(Object.keys(sales[0]!)).not.toContain('customerMobile');
     });
 
     test('Void basket then the next sale is a walk-in', async ({ page }) => {

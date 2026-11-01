@@ -173,6 +173,27 @@ describe('DispatchDialog - U22', () => {
     expect(within(dialog).queryByText(/could not be found/)).not.toBeInTheDocument();
   });
 
+  it('the same holds for a courier: a 404 whose re-read of the couriers fails keeps the courier message', async () => {
+    const user = userEvent.setup();
+    let reads = 0;
+    server.use(
+      http.get('*/api/staff/fulfilment/couriers', () => {
+        reads += 1;
+        return reads === 1
+          ? HttpResponse.json([{ id: ids.courierPathaoId, name: 'Pathao Courier', trackingUrlTemplate: null, supportsCod: true, isActive: true }])
+          : new HttpResponse(null, { status: 500 });
+      }),
+      http.post('*/api/staff/orders/:orderId/dispatch', () => new HttpResponse(null, { status: 404 })),
+    );
+    open();
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(within(dialog).getByRole('option', { name: 'Pathao Courier' })).toBeInTheDocument());
+    await user.selectOptions(within(dialog).getByLabelText(/Which courier/), 'Pathao Courier');
+    await user.click(within(dialog).getByRole('button', { name: 'Dispatch' }));
+    expect(await within(dialog).findByText('That courier is not available. Choose another.', undefined, { timeout: 4000 })).toBeInTheDocument();
+    expect(within(dialog).queryByText(/could not be found/)).not.toBeInTheDocument();
+  });
+
   it('asks for a rider before sending anything', async () => {
     const user = userEvent.setup();
     const bodies = recordBodies('POST', /\/dispatch$/);

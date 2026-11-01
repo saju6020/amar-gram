@@ -75,6 +75,10 @@ function PickList({
       <h3 className="text-[13px] font-semibold text-ink-muted">
         {tickable ? 'Pick list (first-expiry batch suggested)' : 'Items'}
       </h3>
+      {/* The waiting state is announced politely from here, so it does not become part of any checkbox's name. */}
+      <p role="status" aria-live="polite" className="m-0 min-h-4 text-xs font-semibold text-ink-muted">
+        {order.lines.some(isWriting) ? 'Saving…' : ''}
+      </p>
       <ul aria-label={tickable ? 'Pick list' : 'Items on this order'} className="m-0 flex list-none flex-col gap-2 p-0">
         {order.lines.map((line) => {
           const name = `${line.productName} ${line.variantLabel}`.trim();
@@ -87,16 +91,15 @@ function PickList({
           return (
             <li key={line.lineId}>
               {tickable ? (
-                <label className={cn('flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] bg-surface-page px-3 py-2', isWriting(line) && 'cursor-progress opacity-60')}>
+                <label className="flex min-h-11 items-center gap-3 rounded-[var(--radius-md)] bg-surface-page px-3 py-2">
                   <input
                     type="checkbox"
-                    className="h-5 w-5 flex-none accent-leaf"
+                    className={cn('h-5 w-5 flex-none accent-leaf', isWriting(line) && 'cursor-progress opacity-60')}
                     checked={isPicked(line)}
                     aria-disabled={isWriting(line) || undefined}
                     onChange={() => !isWriting(line) && onToggle(line.lineId, !isPicked(line))}
                   />
                   <span className="min-w-0 flex-1 leading-snug [overflow-wrap:anywhere]">{text}</span>
-                  {isWriting(line) && <span className="flex-none text-xs font-semibold text-ink-muted">Saving…</span>}
                 </label>
               ) : (
                 <div className="rounded-[var(--radius-md)] bg-surface-page px-3 py-2 leading-snug [overflow-wrap:anywhere]">{text}</div>
