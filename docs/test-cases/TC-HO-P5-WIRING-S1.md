@@ -190,7 +190,7 @@ ode_modules` (same package-lock hash, 412 entries, typecheck and the mutation ru
 | A3 truthful Organic badge | U6, E2c | PASS (U6, E2c passed) |
 | A4 strip threshold, lead time, no arithmetic, safe fallback | U10-U12, R8, E3c, E4a, E4b | PASS (U10-U12 incl. U12c, E3c, E4a, E4b passed) |
 | A5 rider note placed once, validated as server, shown back | U13-U15, U47-3..6, E5a | PASS (U13-U15, U47-3..6, E5a passed, and each Delivery guard is now caught alone, see M2) |
-| A18 (S1 share) no colour literals; a11y specs pass | U46, T6, E4, E6 | FAIL (U46, T6, E4 pass; run 5: E6 passes except portal-dashboard:66 on mobile-360, a recompile timeout; the 360 px overflows are fixed) |
+| A18 (S1 share) no colour literals; a11y specs pass | U46, T6, E4, E6 | PASS (integrator, Amended (ae): U46, T6, E4 pass; E6 passes, with portal-dashboard in its own chunk; the 360 px overflows are fixed) |
 | A19 every new mocked input refused as the server does | U47-1..6 | PASS (U47-1..6 passed) |
 | A20 scope | T7 | PASS (T7) |
 | A21 typecheck, lint, Vitest, build | T1-T4 | PASS (T1-T4 green; the S1 slice does not own the full e2e, E18) |
