@@ -90,6 +90,8 @@ export function PosScreen() {
   const preset = useStaffCustomer(presetId);
   const [presetNoticeHidden, setPresetNoticeHidden] = useState(false);
   useEffect(() => {
+    // A lookup that failed on first load is final for this link: a later successful refetch must not attach the customer.
+    if (preset.isLoadingError && presetLink !== 0) appliedLink.current = presetLink;
     if (!preset.data || presetLink === 0 || appliedLink.current === presetLink) return;
     appliedLink.current = presetLink;
     setCustomer((current) =>
@@ -97,7 +99,7 @@ export function PosScreen() {
         ? { name: preset.data.fullName, mobile: preset.data.mobileNumber ?? '', customerId: preset.data.id }
         : current,
     );
-  }, [preset.data, presetLink]);
+  }, [preset.data, preset.isLoadingError, presetLink]);
 
   const quoteLines = lines.map((l) => ({ skuId: l.skuId, quantity: l.quantity }));
   const quote = useCounterQuote({
@@ -242,7 +244,7 @@ export function PosScreen() {
       }}
     >
       <UnsavedChangesGuard when={lines.length > 0} />
-      {preset.isError && !presetNoticeHidden && !customerGiven && (
+      {preset.isLoadingError && !presetNoticeHidden && !customerGiven && (
         <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink">
           We couldn’t attach that customer to this sale. It is a walk-in sale; enter the customer here if you need them.
         </p>

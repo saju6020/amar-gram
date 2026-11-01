@@ -20,7 +20,7 @@ vi.mock('next/navigation', () => import('../common/nav-mock'));
  */
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return { client, ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>) };
 }
 
 const JASMINE_RICE = '8900000000201';
@@ -348,6 +348,43 @@ describe('Preset buyer from /staff/pos?customerId= - SECURITY', () => {
     await screen.findByRole('heading', { name: /Sale complete/ });
     expect(Object.keys(sales[1]!)).not.toContain('customerName');
     expect(Object.keys(sales[1]!)).not.toContain('customerMobile');
+  });
+
+  const lookupBody = { id: ids.customerId, fullName: ids.customerName, mobileNumber: '01711000999', emailAddress: null, recordStatus: 'Complete', registrationChannel: 'Web', status: 'Active', mergedIntoCustomerId: null };
+  const LOOKUP_KEY = ['staff-customers', 'customer', ids.customerId];
+
+  it('a lookup that failed on first load stays failed: a later successful refetch does not attach the customer', async () => {
+    const user = userEvent.setup();
+    const sales = recordSales();
+    server.use(http.get('*/api/staff/customers/:customerId', () => new HttpResponse(null, { status: 500 })));
+    setUrl(PRESET);
+    const { client } = renderWithClient(<PosScreen />);
+    await screen.findByRole('alert', undefined, { timeout: 15000 });
+    server.use(http.get('*/api/staff/customers/:customerId', () => HttpResponse.json(lookupBody)));
+    await client.refetchQueries({ queryKey: LOOKUP_KEY });
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
+    await addRice(user);
+    const review = await pay(user);
+    await user.click(review.getByRole('button', { name: 'Complete sale' }));
+    await screen.findByRole('heading', { name: /Sale complete/ });
+    expect(Object.keys(sales[0]!)).not.toContain('customerName');
+    expect(Object.keys(sales[0]!)).not.toContain('customerMobile');
+  }, 25000);
+
+  it('a background refetch that fails after a good lookup shows no alert', async () => {
+    const user = userEvent.setup();
+    setUrl(PRESET);
+    const { client } = renderWithClient(<PosScreen />);
+    await user.click(await screen.findByRole('button', { name: new RegExp(`^${ids.customerName}`) }));
+    await user.clear(screen.getByLabelText(/Customer name/));
+    await user.clear(screen.getByLabelText(/Mobile number/));
+    await screen.findByRole('button', { name: 'Walk-in (no customer) · Add customer' });
+    server.use(http.get('*/api/staff/customers/:customerId', () => new HttpResponse(null, { status: 500 })));
+    await client.refetchQueries({ queryKey: LOOKUP_KEY }).catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Walk-in (no customer) · Add customer' })).toBeInTheDocument();
   });
 
   it.each([[403], [404], [500]])('a failed lookup (%i) says the customer was not attached, and the sale is a walk-in', async (status) => {
