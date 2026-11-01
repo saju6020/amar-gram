@@ -141,7 +141,9 @@ export async function holdApiUntilMswReady(page: Page): Promise<void> {
 export const test = base.extend({
   page: async ({ page }, runTest) => {
     // A real-API run has no worker, so the flag would never be set.
-    if (process.env.NEXT_PUBLIC_USE_MOCKS !== 'false') await holdApiUntilMswReady(page);
+    if (process.env.NEXT_PUBLIC_USE_MOCKS !== 'false' && process.env.E2E_REAL_API !== '1') {
+      await holdApiUntilMswReady(page);
+    }
 
     const originalGoto = page.goto.bind(page);
     page.goto = (async (url: Parameters<Page['goto']>[0], options: Parameters<Page['goto']>[1]) => {

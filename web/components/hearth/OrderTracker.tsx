@@ -45,7 +45,7 @@ export function OrderTracker({
           aria-current={step.status === 'current' ? 'step' : undefined}
           data-status={step.status}
           className={cn(
-            'relative flex flex-col items-center gap-2.5 text-center',
+            'relative flex min-w-0 flex-col items-center gap-2.5 text-center',
             index > 0 &&
               'before:absolute before:-left-1/2 before:top-[21px] before:h-1 before:w-full sm:before:top-[25px]',
             index > 0 && (step.status === 'future' ? 'before:bg-border' : 'before:bg-accent'),
@@ -67,7 +67,8 @@ export function OrderTracker({
               (step.icon ?? index + 1)
             )}
           </span>
-          <strong className="text-sm">
+          {/* At 360 px each of the five columns is about 60 px wide, so "Dispatched" needs the smaller size. */}
+          <strong className="max-w-full text-[11px] leading-tight sm:text-sm">
             {step.label}
             <span className="sr-only"> ({SR_STATUS[step.status]})</span>
           </strong>
