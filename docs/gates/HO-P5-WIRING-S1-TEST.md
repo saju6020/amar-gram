@@ -3,7 +3,11 @@ HANDOVER: HO-P5-WIRING (slice S1, store front)
 RUN: 5
 COMMITS: base da87b60; run 1 b058708; run 2 e6956c0; run 3 9169e55; run 4 1cac603; run 5 2805a80 (branch feat/p5-s1-store-front)
 DATE: 2026-10-31 to 2026-11-01
-STATUS: FAIL
+STATUS: PASS (integrator update under Amended (ae); run 5 as reported was FAIL on E6e)
+
+EDITED BY THE INTEGRATOR after run 5, not by the test engineer: E6e is PASS under Amended (ae). `portal-dashboard` ran in its own chunk at 2805a80's code (product unchanged at 53e9890): fresh `next dev` on :3121, routes warmed, `--project=chromium --project=mobile-360 --workers=1 --retries=0`, first result: 24 passed, including :66 on both projects. Run 5's failure stands in the history below: late in an eight-file chunk, a warmed /portal/billing recompiled in 9.5 s against a 5 s limit. Next drops a route idle for 60 s by default (`maxInactiveAge`, read in next/dist/server/config-shared.js; not overridden here), which explains why warming did not last; the 9.5 s itself was not explained. Sheet: 97 PASS, 0 FAIL, 3 BLOCKED (E4c, E6h, R11), 0 NOT RUN. X1 stays outside S1's rows and is rechecked at E18.
+
+The rest of this record is the test engineer's run 5 report, unchanged.
 
 One S1 row fails first time in run 5: E6e, `portal-dashboard.spec.ts:66` on mobile-360. Everything else passes: typecheck, lint, Vitest, build, E2-E5, and the rest of E6 including `ordering-a11y-responsive` (the 360 px overflows are gone). I found no defect in S1's code.
 
