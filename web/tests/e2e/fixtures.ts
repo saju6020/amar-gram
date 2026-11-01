@@ -106,8 +106,43 @@ export async function signInAsCustomer(page: Page): Promise<void> {
   );
 }
 
+/**
+ * Holds every page `fetch` to `/api/` until MSW's worker reports ready, on every page of this
+ * browser context. `app/providers.tsx` starts the worker in an effect AFTER first paint, while
+ * children (the session guards, the first queries) fire their first request in their own effects,
+ * which run first. The session hook's two 300 ms retries cover that gap only when the worker starts
+ * quickly; on a busy machine or a long-running dev server it loses, the session read fails as a
+ * network error, and the guard fails closed to sign-in. Reproduced by delaying the worker's
+ * registration: 1500 ms bounces every time, 300 ms never does (HO-P5 Amended (ac),
+ * `msw-start-race.spec.ts`). The timer is captured here, before any spec's `page.clock` can pause it.
+ */
+export async function holdApiUntilMswReady(page: Page): Promise<void> {
+  await page.context().addInitScript(() => {
+    const original = window.fetch.bind(window);
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    window.fetch = async (...args: Parameters<typeof fetch>) => {
+      const input = args[0];
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (/\/api\//.test(url)) {
+        // 20 ms x 1500 = 30 s, counted rather than read from a clock a spec may have paused.
+        for (
+          let waits = 0;
+          (window as unknown as { __mswReady?: boolean }).__mswReady !== true && waits < 1500;
+          waits += 1
+        ) {
+          await new Promise((resolve) => nativeSetTimeout(resolve, 20));
+        }
+      }
+      return original(...args);
+    };
+  });
+}
+
 export const test = base.extend({
   page: async ({ page }, runTest) => {
+    // A real-API run has no worker, so the flag would never be set.
+    if (process.env.NEXT_PUBLIC_USE_MOCKS !== 'false') await holdApiUntilMswReady(page);
+
     const originalGoto = page.goto.bind(page);
     page.goto = (async (url: Parameters<Page['goto']>[0], options: Parameters<Page['goto']>[1]) => {
       const response = await originalGoto(url, options);
