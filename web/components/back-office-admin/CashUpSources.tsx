@@ -157,7 +157,8 @@ export function CashUpSourceCountForm({
       for (const violation of failure.response.errors) {
         const row = /^Counts\[(\d+)\]\.(SourceKey|CountedCash)$/.exec(violation.propertyName);
         if (row) {
-          setError(`counts.${Number(row[1])}` as const, { type: 'server', message: violation.errorMessage });
+          // The row index stays the digits the server sent; no number conversion in a Billing file (ADR-FE-080).
+          setError(`counts.${row[1]}` as `counts.${number}`, { type: 'server', message: violation.errorMessage });
         } else {
           allRows = false;
         }
