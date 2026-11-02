@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState';
+import { CashUpSourceCountForm, CashUpSourcesReadout } from '@/components/back-office-admin/CashUpSources';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Panel } from '@/components/back-office/Panel';
@@ -40,6 +41,10 @@ import { guardedText } from './schemas';
  * *Over …* / *Balanced*. A non-zero variance makes the **explanation** required (the server refuses
  * a close without it). Pending approvals show a banner. **Close day** is a UI-3 confirm and cannot
  * be undone; a closed day is read-only with who and when.
+ *
+ * HO-P5 §11.5.5 (BG-20): when the server lists `sources` (the till, and each staff member who collected cash on
+ * delivery) the count is one input per source and the over or short is the server's, per source and in total
+ * (`CashUpSources.tsx`). With none, the single total input of HO-P4 stays.
  */
 const schema = z.object({
   countedCash: z.string().trim().min(1, 'Enter the cash you counted.').regex(MONEY_PATTERN, MONEY_FORMAT_MESSAGE),
@@ -107,6 +112,8 @@ function CashUpBody({ view, date, zone, branchName }: { view: CashUp; date: stri
   }
 
   const lines = view.lines;
+  const sources = view.sources ?? [];
+  const perSource = sources.length > 0;
   return (
     <div className="flex flex-col gap-5">
       <UnsavedChangesGuard when={isDirty && !closed} />
@@ -183,11 +190,23 @@ function CashUpBody({ view, date, zone, branchName }: { view: CashUp; date: stri
        <section aria-labelledby="cashup-count" className="flex flex-col gap-3">
         <h3 id="cashup-count" className="text-base font-semibold text-ink">Count</h3>
         {closed ? (
-          <dl className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Counted cash">{view.counted ? <Amount money={view.counted} /> : '—'}</Stat>
-            <Stat label="Variance"><VarianceText view={view} /></Stat>
-            <Stat label="Explanation">{view.explanation ?? '—'}</Stat>
-          </dl>
+          <>
+            {perSource && <CashUpSourcesReadout sources={sources} />}
+            <dl className="grid gap-3 sm:grid-cols-3">
+              <Stat label="Counted cash">{view.counted ? <Amount money={view.counted} /> : '—'}</Stat>
+              <Stat label="Variance"><VarianceText view={view} /></Stat>
+              <Stat label="Explanation">{view.explanation ?? '—'}</Stat>
+            </dl>
+          </>
+        ) : perSource ? (
+          <CashUpSourceCountForm
+            view={view}
+            date={date}
+            sources={sources}
+            nonZero={nonZero}
+            onClose={() => setCloseOpen(true)}
+            toastSaved={() => toast({ title: 'Count saved' })}
+          />
         ) : (
           <form onSubmit={save} noValidate className="flex max-w-xl flex-col gap-4">
             <FormRootError message={errors.root?.message} />

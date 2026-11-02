@@ -1,27 +1,29 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { ActionLink } from '@/components/back-office/ActionLink';
 import { PageHeader } from '@/components/back-office/PageHeader';
 import { SplitView } from '@/components/back-office/SplitView';
 import { CustomerProfileView } from '@/components/back-office-overview/CustomerProfileView';
 import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState';
-import { CustomerSearchPanel } from '@/components/customer/CustomerSearchPanel';
+import { CustomerBrowsePanel } from '@/components/customer/CustomerBrowsePanel';
 import { ApiForbiddenError } from '@/lib/api/client';
-import { useFindCustomers } from '@/lib/hooks/useStaffCustomers';
+import type { CustomerListSort } from '@/lib/api/staff-customers';
+import { useBrowseCustomers } from '@/lib/hooks/useStaffCustomers';
 import { useUrlParams } from '@/lib/hooks/useUrlParams';
 
-// US-ACC-10, HO-P4 §11.2.8. Customers: search (left) and the selected profile (right). The search
-// term (`?q=`) and the selection (`?customer=`) live in the URL, so a reload or back/forward keeps
-// them (ADR-FE-183). The lookup is by mobile number or email only: a value containing `@` is sent as
-// `email`, anything else as `mobile`. There is no name search or browsable list (BG-19).
+// US-ACC-10, HO-P5 §11.5.3 (BG-19, OQ-14). Customers: the browsable list (left) and the selected profile (right). The
+// search term (`?search=`), tag, sort, page and the selection (`?customer=`) live in the URL, so a reload or back/forward
+// keeps them (ADR-FE-183). The POS customer panel keeps its exact mobile/email lookup; this screen browses.
+const PAGE_SIZE = 20;
+
 export default function StaffCustomersPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Customers"
-        description="Find a customer by mobile number or email."
+        description="Find a customer by name, mobile number or email."
         actions={
           <ActionLink href="/staff/customers/new" variant="primary">
             <UserPlus size={16} aria-hidden="true" />
@@ -38,28 +40,58 @@ export default function StaffCustomersPage() {
 
 function CustomersSplit() {
   const url = useUrlParams();
-  const term = url.get('q').trim();
+  const search = url.get('search').trim();
+  const tag = url.get('tag').trim();
+  const sort: CustomerListSort = url.get('sort') === 'name' ? 'name' : 'recent';
+  const page = Math.max(1, Math.trunc(Number(url.get('page'))) || 1);
   const selectedId = url.get('customer');
 
-  const lookup = useFindCustomers(term.includes('@') ? { email: term } : { mobile: term }, !!term);
+  const browse = useBrowseCustomers({
+    search: search || undefined,
+    tag: tag || undefined,
+    sort,
+    pageNumber: page,
+    pageSize: PAGE_SIZE,
+  });
 
-  if (lookup.error instanceof ApiForbiddenError) return <PermissionDeniedState />;
+  // The tag filter offers the tags seen so far (the pages the person has looked at) and the one in the URL.
+  const [seenTags, setSeenTags] = useState<string[]>([]);
+  useEffect(() => {
+    const onPage = browse.data?.items.flatMap((item) => item.tags) ?? [];
+    if (onPage.length === 0) return;
+    setSeenTags((current) => {
+      const next = [...new Set([...current, ...onPage])];
+      return next.length === current.length ? current : next;
+    });
+  }, [browse.data]);
+  const tagOptions = [...new Set([...seenTags, ...(tag ? [tag] : [])])].sort((a, b) => a.localeCompare(b));
+
+  if (browse.error instanceof ApiForbiddenError) return <PermissionDeniedState />;
 
   return (
     <SplitView
-      listLabel="Customer search"
+      listLabel="Customer list"
       detailLabel="Customer profile"
       ratio="2:3"
       list={
-        <CustomerSearchPanel
-          term={term}
-          onSearch={(next) => url.set({ q: next, customer: undefined })}
-          results={lookup.data}
-          isLoading={!!term && lookup.isLoading}
-          isError={lookup.isError}
-          onRetry={() => void lookup.refetch()}
+        <CustomerBrowsePanel
+          search={search}
+          onSearch={(next) => url.set({ search: next, customer: undefined })}
+          tag={tag}
+          tagOptions={tagOptions}
+          onTag={(next) => url.set({ tag: next, customer: undefined })}
+          sort={sort}
+          onSort={(next) => url.set({ sort: next === 'recent' ? undefined : next })}
+          page={page}
+          onPage={(next) => url.set({ page: next === 1 ? undefined : String(next) })}
+          items={browse.data?.items}
+          totalCount={browse.data?.totalCount}
+          pageSize={PAGE_SIZE}
+          isLoading={browse.isLoading}
+          isError={browse.isError}
+          onRetry={() => void browse.refetch()}
           selectedId={selectedId}
-          onSelect={(customerId) => url.set({ customer: customerId })}
+          onSelect={(customerId) => url.set({ customer: customerId, page: page === 1 ? undefined : String(page) })}
         />
       }
       detail={selectedId ? <CustomerProfileView customerId={selectedId} headingLevel={2} /> : null}

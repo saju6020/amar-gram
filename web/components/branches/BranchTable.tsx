@@ -8,16 +8,16 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { buttonVariants } from '@/components/ui/button';
-import type { BranchSummary } from '@/lib/api/admin-branches';
+import type { AdminBranch } from '@/lib/api/admin-branches';
 import { cn } from '@/lib/utils';
 
-/** `components/branches/BranchTable.tsx` — HO-ADM-002 §11.2, US-ADM-01; HO-P4 §11.6.7. One outlet
- *  card per branch: name, code, active status and time zone, with links to edit, hours, holidays &
- *  closures, calendar and roster. The "+ Add outlet" action is shown only to a caller who can manage
- *  branches (presentation only). Address, type, hours summary, delivery areas and staff count are
- *  not on the branch list (BG-21), so they are not shown. */
+/** `components/branches/BranchTable.tsx` — HO-ADM-002 §11.2, US-ADM-01; HO-P4 §11.6.7; HO-P5 §11.5.6 (BG-21). One outlet
+ *  card per branch: name, type (Outlet or Warehouse) and active status, the address, code, time zone, "Today: {hours}"
+ *  (the server's own text, "Closed" included), "Delivers to {areas}" when it has any, and the staff count, with links to
+ *  edit, hours, holidays & closures, calendar and roster. The "+ Add outlet" action is shown only to a caller who can
+ *  manage branches (presentation only). */
 export interface BranchTableProps {
-  branches: BranchSummary[] | undefined;
+  branches: AdminBranch[] | undefined;
   isLoading: boolean;
   isError: boolean;
   onRetry: () => void;
@@ -80,15 +80,31 @@ export function BranchTable({
                   <h2 className="font-display text-lg font-semibold text-ink [overflow-wrap:anywhere]">
                     {branch.name}
                   </h2>
-                  <StatusPill tone={branch.isActive ? 'success' : 'neutral'}>
-                    {branch.isActive ? 'Active' : 'Inactive'}
-                  </StatusPill>
+                  <div className="flex flex-none flex-wrap justify-end gap-1">
+                    <StatusPill tone="neutral">{branch.type}</StatusPill>
+                    <StatusPill tone={branch.isActive ? 'success' : 'neutral'}>
+                      {branch.isActive ? 'Active' : 'Inactive'}
+                    </StatusPill>
+                  </div>
                 </div>
+                {branch.addressLine && (
+                  <p className="m-0 text-sm text-ink-muted [overflow-wrap:anywhere]">{branch.addressLine}</p>
+                )}
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
                   <dt className="text-ink-muted">Code</dt>
                   <dd className="text-ink [overflow-wrap:anywhere]">{branch.code}</dd>
                   <dt className="text-ink-muted">Time zone</dt>
                   <dd className="text-ink [overflow-wrap:anywhere]">{branch.timeZoneId}</dd>
+                  <dt className="text-ink-muted">Today</dt>
+                  <dd className="text-ink [overflow-wrap:anywhere]">{branch.todayHours.summary}</dd>
+                  {branch.deliveryAreas.length > 0 && (
+                    <>
+                      <dt className="text-ink-muted">Delivers to</dt>
+                      <dd className="text-ink [overflow-wrap:anywhere]">{branch.deliveryAreas.join(', ')}</dd>
+                    </>
+                  )}
+                  <dt className="text-ink-muted">Staff</dt>
+                  <dd className="text-ink">{branch.activeStaffCount} staff</dd>
                 </dl>
                 <div className="mt-auto flex flex-wrap gap-x-4 pt-2 text-sm">
                   <CardLink href={`/staff/admin/branches/${branch.id}`} name={branch.name}>

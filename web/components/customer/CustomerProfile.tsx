@@ -7,29 +7,29 @@ import { UnderlineTabs } from '@/components/back-office/UnderlineTabs';
 import type { StaffCustomer } from '@/lib/api/staff-customers';
 import { CustomerDetail } from './CustomerDetail';
 
-type ProfileTab = 'orders' | 'billing';
+type ProfileTab = 'orders' | 'billing' | 'notes';
 
-const TABS = [
-  { key: 'orders', label: 'Orders' },
-  { key: 'billing', label: 'Billing' },
-];
+const TAB_LABEL: Record<ProfileTab, string> = { orders: 'Orders', billing: 'Billing', notes: 'Notes' };
 
 /**
  * `components/customer/CustomerProfile.tsx` — HO-P4 §11.2.9, US-ACC-10/11, US-BIL-03. The one
  * customer profile layout, shared by `/staff/customers?customer=…` and `/staff/customers/[id]`:
- * identity, the "New order" action, an optional row of key figures, the Orders / Billing tabs, the
- * erase panel (Administrators) and the duplicates link. Like every `components/customer` file it
- * imports no hooks: the page loads the data and the panels and passes them in. Not built, because
- * the API has no data for them (BG-15, BG-19): Subscriptions and Notes tabs, "Send password reset",
- * lifetime spend, order count and "Customer since".
+ * identity, the "New order" action, the staff tags, an optional row of key figures, the Orders / Billing /
+ * Notes tabs, the erase panel (Administrators) and the duplicates link. Like every `components/customer`
+ * file it imports no hooks: the page loads the data and the panels and passes them in. HO-P5 BG-19 adds
+ * the figures (customer since, orders, lifetime spend), the area, the tags, the Notes tab and the staff-started
+ * password reset. Not built: the Subscriptions tab (BG-15, deferred).
  */
 export function CustomerProfile({
   customer,
   headingLevel = 1,
   messagesLink,
   figures,
+  tagsControl,
+  actions,
   ordersPanel,
   billingPanel,
+  notesPanel,
   erasePanel,
 }: {
   customer: StaffCustomer;
@@ -37,11 +37,22 @@ export function CustomerProfile({
   messagesLink?: ReactNode;
   /** A row of `KpiTile`s built from server figures; omitted when there are none. */
   figures?: ReactNode;
+  /** The tag chips and their "Edit tags" control (BG-19); the page builds them because editing needs hooks. */
+  tagsControl?: ReactNode;
+  /** Extra header actions, e.g. "Send password reset" (BG-19). */
+  actions?: ReactNode;
   ordersPanel: ReactNode;
   billingPanel: ReactNode;
+  /** The Notes tab's content; with none, the tab is not offered. */
+  notesPanel?: ReactNode;
   erasePanel?: ReactNode;
 }) {
   const [tab, setTab] = useState<ProfileTab>('orders');
+  const tabs = [
+    { key: 'orders', label: TAB_LABEL.orders },
+    { key: 'billing', label: TAB_LABEL.billing },
+    ...(notesPanel ? [{ key: 'notes', label: `${TAB_LABEL.notes} (${customer.noteCount})` }] : []),
+  ];
 
   return (
     <div className="flex flex-col gap-5">
@@ -58,7 +69,10 @@ export function CustomerProfile({
             New order
           </ActionLink>
           {messagesLink}
+          {actions}
         </div>
+
+        {tagsControl}
 
         {figures}
       </div>
@@ -67,7 +81,7 @@ export function CustomerProfile({
         <UnderlineTabs
           mode="state"
           label="Customer details"
-          items={TABS}
+          items={tabs}
           value={tab}
           onChange={(key) => setTab(key as ProfileTab)}
         />
@@ -76,11 +90,11 @@ export function CustomerProfile({
             widening the page (UI-1). */}
         <div
           role="tabpanel"
-          aria-label={tab === 'orders' ? 'Orders' : 'Billing'}
+          aria-label={TAB_LABEL[tab]}
           tabIndex={0}
           className="min-w-0 overflow-x-auto"
         >
-          {tab === 'orders' ? ordersPanel : billingPanel}
+          {tab === 'orders' ? ordersPanel : tab === 'billing' ? billingPanel : notesPanel}
         </div>
       </div>
 

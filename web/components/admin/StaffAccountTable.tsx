@@ -1,13 +1,37 @@
 import Link from 'next/link';
-import { CheckCircle2, CircleDashed } from 'lucide-react';
+import { CheckCircle2, CircleDashed, Lock } from 'lucide-react';
 import { StatusPill } from '@/components/back-office/StatusPill';
 import { DataTable, type DataTableColumn } from '@/components/common/DataTable';
-import type { StaffAccountSummary } from '@/lib/api/staff-admin';
+import type { StaffAccountStatus, StaffAccountSummary } from '@/lib/api/staff-admin';
 
-/** `components/admin/StaffAccountTable.tsx` — US-ACC-07, UI-4 (paginated, filterable); HO-P4 §11.6.8.
- *  Name, sign-in IDs (mobile and email), roles, status ("Active" once a password is set, otherwise
- *  "Not set up") and an Edit link. The branch assignment is not on the list (BG-22). The footer names
- *  the real role ids the role catalogue returns. */
+/** `components/admin/StaffAccountTable.tsx` — US-ACC-07, UI-4 (paginated, filterable); HO-P4 §11.6.8; HO-P5 §11.5.7
+ *  (BG-22). Name, sign-in IDs (mobile and email), roles, the outlets the person is assigned to (the primary first, marked
+ *  "(primary)"), the status the **server** derives (Active, Not set up or Locked — never worked out here from
+ *  `hasPassword`) and an Edit link. The footer names the real role ids the role catalogue returns; the design's
+ *  Manager / Cashier / Packer set does not exist in the backend (BG-22 residual). */
+
+function StatusCell({ status }: { status: StaffAccountStatus }) {
+  if (status === 'Active') {
+    return (
+      <StatusPill tone="success" icon={<CheckCircle2 size={12} />}>
+        Active
+      </StatusPill>
+    );
+  }
+  if (status === 'Locked') {
+    return (
+      <StatusPill tone="danger" icon={<Lock size={12} />}>
+        Locked
+      </StatusPill>
+    );
+  }
+  return (
+    <StatusPill tone="warning" icon={<CircleDashed size={12} />}>
+      Not set up
+    </StatusPill>
+  );
+}
+
 export interface StaffAccountTableProps {
   rows: StaffAccountSummary[] | undefined;
   totalCount: number | undefined;
@@ -53,18 +77,26 @@ export function StaffAccountTable({
     },
     { id: 'roles', header: 'Roles', cell: (row) => row.roleIds.join(', ') },
     {
-      id: 'hasPassword',
-      header: 'Status',
+      id: 'outlet',
+      header: 'Outlet',
       cell: (row) =>
-        row.hasPassword ? (
-          <StatusPill tone="success" icon={<CheckCircle2 size={12} />}>
-            Active
-          </StatusPill>
+        row.branches.length > 0 ? (
+          <span className="flex flex-col text-sm">
+            {row.branches.map((branch) => (
+              <span key={branch.id} className="[overflow-wrap:anywhere]">
+                {branch.name}
+                {branch.isPrimary ? ' (primary)' : ''}
+              </span>
+            ))}
+          </span>
         ) : (
-          <StatusPill tone="warning" icon={<CircleDashed size={12} />}>
-            Not set up
-          </StatusPill>
+          '—'
         ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: (row) => <StatusCell status={row.status} />,
     },
     {
       id: 'edit',

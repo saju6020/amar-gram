@@ -4,9 +4,10 @@ import { use, useMemo, useState } from 'react';
 import { useAdminBranch } from '@/lib/hooks/useAdminBranches';
 import {
   useBranchRosters,
-  useAvailability,
+  useRosterCells,
   useRosterExceptions,
   useSetRosterPattern,
+  useSetRosterShift,
   useCancelScheduledRosterPattern,
   useCreateRosterException,
   useCancelRosterException,
@@ -14,19 +15,23 @@ import {
 import { useAdminLeaveRequests } from '@/lib/hooks/useLeave';
 import { useStaffAccounts } from '@/lib/hooks/useStaffAdmin';
 import { Panel } from '@/components/back-office/Panel';
-import { RosterWeekView, type RosterDayCell } from '@/components/roster/RosterWeekView';
+import { RosterWeekView, weekdayLabel, type RosterDayCell } from '@/components/roster/RosterWeekView';
+import { describeShiftError, nextRosterShift } from '@/components/roster/shiftCycle';
 import { RosterPatternEditor } from '@/components/roster/RosterPatternEditor';
 import { RosterExceptionForm } from '@/components/roster/RosterExceptionForm';
 import { LoadingState } from '@/components/common/LoadingState';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { ApiForbiddenError } from '@/lib/api/client';
+import { ROSTERABLE_ROLE_IDS, type RosterShiftName } from '@/lib/api/admin-rosters';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { getWeekDates, shiftWeek, todayIso } from '@/lib/format/week';
-import { timeOnlyInZone, localDateOf } from '@/lib/format/time';
+import { todayInZone } from '@/lib/format/time';
 
 /** `/staff/admin/branches/[branchId]/roster` — US-ADM-03. Week view (OQ-1: defaults to this
- *  week), pattern editor per staff member, and roster exceptions. Data from `.../availability`
- *  (unrestricted — shows shifts outside opening hours too, §8.5 rule 6) and `.../rosters`. */
+ *  week), pattern editor per staff member, and roster exceptions. HO-P5 §11.5.8 (BG-23, ADR-FE-192): the grid reads
+ *  `.../roster-cells` for the shown week and each cell is a button — one `PUT` per click cycles Morning → Evening → Off →
+ *  Morning, a `Custom` day is confirmed first, and the cell is replaced by the server's answer. Past days and people whose
+ *  role cannot be rostered are not buttons. */
 export default function BranchRosterPage({ params }: { params: Promise<{ branchId: string }> }) {
   const { branchId } = use(params);
   const { data: branch } = useAdminBranch(branchId);
@@ -38,12 +43,16 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
   const from = weekDates[0] ?? anchor;
   const to = weekDates[6] ?? anchor;
 
-  const availability = useAvailability(branchId, { from, to, restrictToOpeningHours: false });
+  const cells = useRosterCells(branchId, { from, to });
+  const setShift = useSetRosterShift(branchId);
   const exceptions = useRosterExceptions(branchId, { from, to });
   const leave = useAdminLeaveRequests({ status: 'Approved', from, to, pageSize: 100 });
 
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [pendingCancelException, setPendingCancelException] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const [shiftError, setShiftError] = useState<string | null>(null);
+  const [confirmCustom, setConfirmCustom] = useState<{ staffAccountId: string; date: string } | null>(null);
 
   const setPatternMutation = useSetRosterPattern(branchId, selectedStaffId ?? '');
   const cancelPatternMutation = useCancelScheduledRosterPattern(branchId, selectedStaffId ?? '');
@@ -51,6 +60,12 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
   const cancelExceptionMutation = useCancelRosterException(branchId);
 
   const nameById = new Map((staffAccounts.data?.items ?? []).map((s) => [s.id, s.fullName]));
+  // Presentation only: the roles that can hold a roster (`StaffRosterRules`); the server still refuses with `StaffNotRosterable`.
+  const rosterableIds = new Set(
+    (staffAccounts.data?.items ?? [])
+      .filter((s) => s.roleIds.some((role) => ROSTERABLE_ROLE_IDS.includes(role)))
+      .map((s) => s.id),
+  );
   const rows = (rosters.data ?? []).map((r) => ({
     staffAccountId: r.staffAccountId,
     staffFullName: nameById.get(r.staffAccountId) ?? r.staffAccountId,
@@ -72,28 +87,48 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
     const onLeave = (leave.data?.items ?? []).some(
       (l) => l.staffAccountId === staffAccountId && date >= l.startsOn && date <= l.endsOn,
     );
-    const dayExceptions = (exceptions.data ?? []).filter(
-      (e) => e.staffAccountId === staffAccountId && e.date === date,
-    );
-    const intervals = (availability.data ?? [])
-      .filter((a) => a.staffAccountId === staffAccountId && localDateOf(a.start, zone) === date)
-      .map((a) => ({
-        label: `${timeOnlyInZone(a.start, zone)}–${timeOnlyInZone(a.end, zone)}`,
-        outsideOpeningHours: a.outsideOpeningHours,
-      }));
+    const cell = (cells.data ?? []).find((c) => c.staffAccountId === staffAccountId && c.date === date);
+    const pending =
+      setShift.isPending &&
+      setShift.variables?.staffAccountId === staffAccountId &&
+      setShift.variables.date === date;
     return {
-      intervals,
+      intervals: [],
       isOnLeave: onLeave,
-      exceptionLabels: dayExceptions.map((e) =>
-        e.kind === 'ExtraShift' ? 'Extra shift' : 'Shift cancelled',
-      ),
+      exceptionLabels: [],
+      shift: cell && {
+        shift: cell.shift,
+        times: cell.slots.map((slot) => `${slot.starts}–${slot.ends}`).join(', '),
+        // Today or later in the branch's own day, and a person who can be rostered.
+        editable: rosterableIds.has(staffAccountId) && date >= todayInZone(zone),
+        pending,
+      },
     };
+  }
+
+  async function changeShift(staffAccountId: string, date: string, current: RosterShiftName) {
+    // A Custom day carries hours of its own (the weekly pattern, or an exception): ask before replacing them.
+    if (current === 'Custom') {
+      setConfirmCustom({ staffAccountId, date });
+      return;
+    }
+    await applyShift(staffAccountId, date, nextRosterShift(current));
+  }
+
+  async function applyShift(staffAccountId: string, date: string, shift: ReturnType<typeof nextRosterShift>) {
+    setShiftError(null);
+    try {
+      const cell = await setShift.mutateAsync({ staffAccountId, date, shift });
+      setAnnouncement(`${nameById.get(staffAccountId) ?? 'Staff member'}, ${weekdayLabel(date)}: ${cell.shift}`);
+    } catch (error) {
+      setShiftError(describeShiftError(error));
+    }
   }
 
   // §18 A3: Rosters.View excludes Accountant and ShopManager, who can still reach the branch
   // pages (Branches.View covers all staff) — a rosters/availability/exceptions 403 is a
   // permission refusal, not a generic load failure.
-  const refusal = [rosters, availability, exceptions]
+  const refusal = [rosters, cells, exceptions]
     .map((query) => query.error)
     .find((error) => error instanceof ApiForbiddenError);
   if (refusal) return <AccessRefusedState error={refusal} />;
@@ -116,12 +151,15 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
         onPrevWeek={() => setAnchor((a) => shiftWeek(a, -1))}
         onNextWeek={() => setAnchor((a) => shiftWeek(a, 1))}
         onThisWeek={() => setAnchor(todayIso())}
-        isLoading={rosters.isLoading || availability.isLoading}
-        isError={rosters.isError || availability.isError}
+        isLoading={rosters.isLoading || cells.isLoading}
+        isError={rosters.isError || cells.isError}
         onRetry={() => {
           void rosters.refetch();
-          void availability.refetch();
+          void cells.refetch();
         }}
+        onCycle={changeShift}
+        announcement={announcement}
+        shiftError={shiftError}
       />
 
       <Panel title="Shift patterns">
@@ -195,6 +233,23 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
         </ul>
        </div>
       </Panel>
+
+      <ConfirmDialog
+        open={!!confirmCustom}
+        onOpenChange={(open) => !open && setConfirmCustom(null)}
+        title="Replace this day's hours?"
+        consequence={
+          confirmCustom
+            ? `${nameById.get(confirmCustom.staffAccountId) ?? 'This person'} has their own hours on ${weekdayLabel(confirmCustom.date)}. Setting a shift replaces them with the Morning shift for that day.`
+            : ''
+        }
+        confirmLabel="Replace hours"
+        variant="destructive"
+        onConfirm={async () => {
+          if (confirmCustom) await applyShift(confirmCustom.staffAccountId, confirmCustom.date, 'Morning');
+          setConfirmCustom(null);
+        }}
+      />
 
       <ConfirmDialog
         open={!!pendingCancelException}
