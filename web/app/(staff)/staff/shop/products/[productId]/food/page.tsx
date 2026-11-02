@@ -51,6 +51,8 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
               allergens: v.allergens || null,
               organicCertifier: v.organicCertifier || null,
               organicCertificateNumber: v.organicCertificateNumber || null,
+              organicCertificateExpiresOn: v.organicCertificateExpiresOn || null,
+              organicCertificateFileId: v.organicCertificateFileId || null,
             }),
           null,
           'Labelling saved',

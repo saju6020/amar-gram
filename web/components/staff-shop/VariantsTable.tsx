@@ -7,7 +7,6 @@ import { TableFrame } from '@/components/back-office/TableFrame';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { LoadingState } from '@/components/common/LoadingState';
-import { ScheduleChangeDialog } from '@/components/admin/ScheduleChangeDialog';
 import { formatMoney } from '@/lib/format/money';
 import { priceCurrencyCode } from '@/lib/shop/currency';
 import { formatBestBefore } from '@/lib/format/shop';
@@ -20,6 +19,7 @@ import type {
   StaffSku,
 } from '@/lib/api/staff-shop';
 import { AddSkuDialog, type AddSkuValues } from './AddSkuDialog';
+import { SchedulePriceDialog } from './SchedulePriceDialog';
 import { EditSkuDialog, type EditSkuValues } from './EditSkuDialog';
 
 export function skuLabel(sku: StaffSku): string {
@@ -81,6 +81,8 @@ export interface VariantsTableProps {
     amount: string,
     effectiveFromIso: string,
     currencyCode: string,
+    /** The optional "Was" amount as typed (HO-P5 BG-13); sent through `wireMoney`, compared by the server. */
+    compareAt?: string,
   ) => Promise<unknown>;
 }
 
@@ -88,7 +90,9 @@ export interface VariantsTableProps {
  * HO-SHP-002 §11.6 `VariantsTable` — US-SHP-02. SKUs with their code, barcode, status, CURRENT price,
  * SCHEDULED price and the stock copy (read-only, from the API). **Add SKU**, **Discontinue /
  * Reactivate** (confirmed) and **Prices**: Current / Scheduled / Past (HO-ADM-002's effective-dated
- * pattern) with **Schedule a new price**.
+ * pattern) with **Schedule a new price**. HO-P5 BG-13 adds the **Was** column (the compare-at price of the current
+ * price, and "then {…}" beside a scheduled one) and the optional "Was price" in the schedule dialog. No reorder
+ * column (HO-P4 note stands).
  */
 export function VariantsTable(props: VariantsTableProps) {
   const { product, priceSkuId } = props;
@@ -111,7 +115,7 @@ export function VariantsTable(props: VariantsTableProps) {
           {statusError}
         </p>
       )}
-      <TableFrame label="Pack sizes (scrolls horizontally)" minWidth={900}>
+      <TableFrame label="Pack sizes (scrolls horizontally)" minWidth={980}>
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Pack sizes</caption>
           <thead>
@@ -120,6 +124,7 @@ export function VariantsTable(props: VariantsTableProps) {
                 'Pack',
                 'SKU code',
                 'Price',
+                'Was',
                 'Barcode',
                 'Shipping weight',
                 'Status',
@@ -148,6 +153,14 @@ export function VariantsTable(props: VariantsTableProps) {
                   {sku.scheduledPrice && (
                     <span className="block text-xs text-ink-muted">
                       Scheduled {formatMoney(sku.scheduledPrice)}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {sku.compareAtPrice ? formatMoney(sku.compareAtPrice) : '—'}
+                  {sku.scheduledCompareAtPrice && (
+                    <span className="block text-xs text-ink-muted">
+                      then {formatMoney(sku.scheduledCompareAtPrice)}
                     </span>
                   )}
                 </td>
@@ -229,17 +242,12 @@ export function VariantsTable(props: VariantsTableProps) {
               <PriceRows title="Past" entries={props.priceHistory.past} />
             </>
           )}
-          <ScheduleChangeDialog
+          <SchedulePriceDialog
             open={scheduling}
             onOpenChange={setScheduling}
-            title="Schedule a new price"
-            valueLabel={`Amount (${currencyCode})`}
-            consequence={(date) =>
-              `The new price shows on the storefront from ${date}. Orders placed before then keep their price.`
-            }
-            codeMessages={SHOP_CODE_MESSAGES}
-            onSchedule={async (value, iso) => {
-              await props.onSchedulePrice(priceSku, value, iso, currencyCode);
+            currencyCode={currencyCode}
+            onSchedule={async (value, iso, compareAt) => {
+              await props.onSchedulePrice(priceSku, value, iso, currencyCode, compareAt);
               setScheduling(false);
             }}
           />

@@ -14,11 +14,15 @@ import {
   ApiNotFoundError,
   ApiValidationError,
 } from '@/lib/api/client';
-import { describeApiError, SHOP_CODE_MESSAGES } from '@/lib/api/errors';
+import { describeApiError } from '@/lib/api/errors';
 import type { ProductTransition } from '@/lib/api/staff-shop';
 import { useProductTransition, useShopLocales, useStaffProduct } from '@/lib/hooks/useStaffShop';
 import { isFoodCategory } from '@/lib/shop/labels';
 import { CONFLICT_MESSAGE } from '@/lib/shop/submitSection';
+import {
+  CATALOGUE_CODE_MESSAGES,
+  ORGANIC_CERTIFICATE_EXPIRED_MESSAGE,
+} from '@/components/staff-shop/submitProductSection';
 
 /**
  * `/staff/shop/products/[productId]/**` — HO-SHP-002 §8.1, ADR-FE-034: route-based sections under one
@@ -83,9 +87,13 @@ function ProductEditorShell({
       await transition.mutateAsync({ transition: next, expectedVersion: p.version });
     } catch (e) {
       if (e instanceof ApiConflictError) setError({ message: CONFLICT_MESSAGE, conflict: true });
-      else if (e instanceof ApiValidationError)
-        setError({ message: describeApiError(e, SHOP_CODE_MESSAGES), conflict: false });
-      else setError({ message: describeApiError(e, SHOP_CODE_MESSAGES), conflict: false });
+      else if (
+        e instanceof ApiValidationError &&
+        e.response.errors.some((x) => x.errorCode === 'OrganicCertificateExpired')
+      )
+        // BG-14: a publish refused for an expired certificate points at where to renew it.
+        setError({ message: ORGANIC_CERTIFICATE_EXPIRED_MESSAGE, conflict: false });
+      else setError({ message: describeApiError(e, CATALOGUE_CODE_MESSAGES), conflict: false });
     }
   }
 

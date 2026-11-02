@@ -22,14 +22,25 @@ function PriceScheduler({
   productId: string;
   skuId: string;
   children: (
-    schedule: (amount: string, iso: string, currencyCode: string) => Promise<unknown>,
+    schedule: (
+      amount: string,
+      iso: string,
+      currencyCode: string,
+      compareAt?: string,
+    ) => Promise<unknown>,
   ) => React.ReactNode;
 }) {
   const schedule = useScheduleSkuPrice(productId, skuId);
   return (
     <>
-      {children((amount, iso, currencyCode) =>
-        schedule.mutateAsync({ amount: Number(amount), currencyCode, effectiveFrom: iso }),
+      {children((amount, iso, currencyCode, compareAt) =>
+        // Amounts stay strings and are sent through `wireMoney` (ADR-317); the server checks the Was price.
+        schedule.mutateAsync({
+          amount,
+          currencyCode,
+          effectiveFrom: iso,
+          ...(compareAt ? { compareAtAmount: compareAt } : {}),
+        }),
       )}
     </>
   );
@@ -52,7 +63,12 @@ export default function ProductVariantsPage({
   if (!p) return <LoadingState rows={6} />;
 
   const table = (
-    schedule: (amount: string, iso: string, currencyCode: string) => Promise<unknown>,
+    schedule: (
+      amount: string,
+      iso: string,
+      currencyCode: string,
+      compareAt?: string,
+    ) => Promise<unknown>,
   ) => (
     <VariantsTable
       product={p}
@@ -60,7 +76,9 @@ export default function ProductVariantsPage({
       onSelectPrices={setPriceSkuId}
       priceHistory={prices.data}
       priceLoading={prices.isPending && !!priceSkuId}
-      onSchedulePrice={(_sku, amount, iso, currency) => schedule(amount, iso, currency)}
+      onSchedulePrice={(_sku, amount, iso, currency, compareAt) =>
+        schedule(amount, iso, currency, compareAt)
+      }
       onAddSku={(values) => addSku.mutateAsync({ expectedVersion: p.version, ...values })}
       onUpdateSku={(sku, values) =>
         updateSku.mutateAsync({ skuId: sku.skuId, expectedVersion: p.version, ...values })

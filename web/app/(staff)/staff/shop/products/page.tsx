@@ -10,7 +10,7 @@ import {
 } from '@/components/staff-shop/StaffProductTable';
 import { ApiForbiddenError } from '@/lib/api/client';
 import { staffProductsExportUrl, type StaffProductListParams } from '@/lib/api/staff-shop';
-import { useStaffProducts } from '@/lib/hooks/useStaffShop';
+import { useBulkProductStatus, useStaffProducts } from '@/lib/hooks/useStaffShop';
 import { useUrlFilterState } from '@/lib/hooks/useUrlFilterState';
 
 const FIELDS = ['q', 'status', 'category', 'brand', 'kind', 'listed', 'barcode', 'sort'] as const;
@@ -33,6 +33,7 @@ function ProductListContent() {
     pageSize: PAGE_SIZE,
   };
   const products = useStaffProducts(params);
+  const bulk = useBulkProductStatus();
   if (products.error instanceof ApiForbiddenError) return <PermissionDeniedState />;
 
   return (
@@ -47,6 +48,7 @@ function ProductListContent() {
       onFilter={(name: StaffProductFilterName, value) => setValue(name, value)}
       onFlush={(name) => flush(name)}
       exportHref={staffProductsExportUrl(params)}
+      onBulkStatus={(action, productIds) => bulk.mutateAsync({ action, productIds })}
     />
   );
 }

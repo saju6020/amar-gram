@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Panel } from '@/components/back-office/Panel';
 import { LimitedMarkup } from '@/components/content/LimitedMarkup';
-import { submitSection } from '@/lib/shop/submitSection';
+import { submitProductSection } from './submitProductSection';
 import {
   CERTIFICATIONS,
   categoryLabel,
@@ -25,6 +25,7 @@ const schema = z.object({
   subcategory: z.string(),
   tags: z.string(),
   countryOfOriginCode: z.string(),
+  districtOfOrigin: z.string().max(60, 'Keep the district to 60 characters or fewer.'),
   taxClassId: z.string().min(1, 'Choose a tax class.'),
   listedOnStorefront: z.boolean(),
   isExpiryTracked: z.boolean(),
@@ -39,6 +40,7 @@ const KNOWN = [
   'subcategory',
   'tags',
   'countryOfOriginCode',
+  'districtOfOrigin',
   'taxClassId',
   'listedOnStorefront',
   'isExpiryTracked',
@@ -107,6 +109,7 @@ export function ProductDetailsForm({
       subcategory: product.subcategory ?? '',
       tags: product.tags.join(', '),
       countryOfOriginCode: product.countryOfOriginCode ?? '',
+      districtOfOrigin: product.districtOfOrigin ?? '',
       taxClassId: product.taxClassId,
       listedOnStorefront: product.listedOnStorefront,
       isExpiryTracked: isFood ? true : product.isExpiryTracked,
@@ -176,6 +179,20 @@ export function ProductDetailsForm({
             ))}
           </select>
         </Field>
+        <Field
+          id="pd-district"
+          label="District of origin"
+          error={errors.districtOfOrigin?.message}
+          hint="Optional. For a product grown in Bangladesh, shown in the shop, for example Dinajpur."
+        >
+          <input
+            id="pd-district"
+            className={inputClass}
+            maxLength={60}
+            aria-invalid={!!errors.districtOfOrigin}
+            {...register('districtOfOrigin')}
+          />
+        </Field>
         {isFood && (
           <fieldset className="m-0 border-0 p-0">
             <legend className="mb-1 p-0 text-sm font-semibold text-ink">Certifications</legend>
@@ -229,7 +246,7 @@ export function ProductDetailsForm({
       onReload={onReload}
       aside={organise}
       onSubmit={handleSubmit(async (values) => {
-        const ok = await submitSection(
+        const ok = await submitProductSection(
           () => onSave({ ...values, tagList: normaliseTags(values.tags) }),
           setError,
           KNOWN,
