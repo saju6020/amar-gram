@@ -35,6 +35,8 @@ export interface RosterShiftInfo {
   editable: boolean;
   /** A change to this cell is in flight. */
   pending?: boolean;
+  /** The availability read says this shift falls outside the branch's opening hours (HO-ADM-002 §11.4): shown as words. */
+  outsideOpeningHours?: boolean;
 }
 
 export interface RosterDayCell {
@@ -139,6 +141,9 @@ function CellContents({
     return (
       <div className="flex flex-col items-start gap-1">
         <ShiftCell info={cell.shift} staffName={staffName} date={date} onCycle={onCycle} />
+        {cell.shift.outsideOpeningHours && (
+          <span className="block text-xs font-semibold text-warning-ink">Outside opening hours</span>
+        )}
         {cell.isOnLeave && <StatusPill tone="neutral">On leave</StatusPill>}
       </div>
     );

@@ -1,6 +1,7 @@
 import { test, expect, signInAsCustomer, signInAsStaff } from './fixtures';
 import { billingIds as ids } from '../../mocks/handlers/billing';
 import { addDaysIso, todayInZone } from '../../lib/format/time';
+import { expectAxeClean, expectNoHorizontalScroll } from './reports-helpers';
 
 /**
  * HO-BIL-002 §16 E-series against MSW (the real-API re-run is `billing-real-api.spec.ts`). One
@@ -156,7 +157,8 @@ test.describe('staff — close and reconcile', () => {
     await page.getByRole('button', { name: 'Reject payment' }).click();
     await page.goto(`/staff/billing/cash-up?date=${todayInZone('Asia/Dhaka')}`);
     await expect(page.getByText(/Expected cash in the till/)).toBeVisible();
-    await page.getByLabel(/Counted cash/).fill('1');
+    // HO-P5 BG-20: the count is one input per source; today has the till alone.
+    await page.getByLabel('Counted for Till').fill('1');
     await page.getByRole('button', { name: 'Save count' }).click();
     await expect(page.getByText(/Short BDT/).first()).toBeVisible();
     await expect(page.getByLabel(/^Explanation/)).toHaveAttribute('required', '');
@@ -169,6 +171,27 @@ test.describe('staff — close and reconcile', () => {
     await page.getByRole('button', { name: 'Close day' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Close day' }).click();
     await expect(page.getByText(/closed and read-only/)).toBeVisible();
+  });
+
+  // HO-P5 §16 E14 (BG-20, US-BIL-12): the day two days ago has a staff collector beside the till.
+  test('E14: count two sources → each source shows the server\'s over or short, and the total is the server\'s sum', async ({ page }) => {
+    await page.goto(`/staff/billing/cash-up?date=${addDaysIso(todayInZone('Asia/Dhaka'), -2)}`);
+    const region = page.getByRole('region', { name: 'Count cash by source' });
+    await expect(region.getByRole('rowheader', { name: 'Till' })).toBeVisible();
+    await expect(region.getByRole('rowheader', { name: 'Rezwan Ahmed' })).toBeVisible();
+    await expect(region.getByText('Not counted yet')).toHaveCount(2);
+
+    await page.getByLabel('Counted for Till').fill('100');
+    await page.getByLabel('Counted for Rezwan Ahmed').fill('1100');
+    await page.getByRole('button', { name: 'Save count' }).click();
+
+    // Rezwan collected 1,200.00 and counted 1,100.00: short by 100. The till expected nothing that day: 100 over.
+    await expect(region.getByText('Short BDT 100.00')).toBeVisible();
+    await expect(region.getByText('Over BDT 100.00')).toBeVisible();
+    await expect(page.getByText(/Counted in total:/)).toContainText('৳1,200.00');
+
+    await expectAxeClean(page);
+    await expectNoHorizontalScroll(page);
   });
 
   test('E-D2: a COD remittance with a shortfall is listed', async ({ page }) => {

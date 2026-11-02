@@ -899,9 +899,10 @@ function seed(): Db {
     carriedIn: [
       { date: day, id: 'ca110000-0000-0000-0000-000000000001', kind: 'CodRemittance', label: 'COD remittance — Pathao Courier', cents: 50_000 },
     ],
-    // One staff collector today, so the cash-up has a second source beside the till (HO-P5 BG-20).
+    // One staff collector two days ago, so that day's cash-up has a second source beside the till (HO-P5 BG-20). Not today: the
+    // seeded figures of today's cash-up (expected cash 2,950.00) are a contract other specs count against (HO-BIL-002 U-D1).
     staffCash: [
-      { id: 'ca220000-0000-0000-0000-000000000001', date: day, staffAccountId: ids.otherStaffId, staffName: ids.otherStaffName, cents: 120_000 },
+      { id: 'ca220000-0000-0000-0000-000000000001', date: addDaysIso(day, -2), staffAccountId: ids.otherStaffId, staffName: ids.otherStaffName, cents: 120_000 },
     ],
     statements: [statement],
     matches,

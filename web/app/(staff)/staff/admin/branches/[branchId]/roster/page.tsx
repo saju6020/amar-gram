@@ -4,6 +4,7 @@ import { use, useMemo, useState } from 'react';
 import { useAdminBranch } from '@/lib/hooks/useAdminBranches';
 import {
   useBranchRosters,
+  useAvailability,
   useRosterCells,
   useRosterExceptions,
   useSetRosterPattern,
@@ -25,7 +26,7 @@ import { ApiForbiddenError } from '@/lib/api/client';
 import { ROSTERABLE_ROLE_IDS, type RosterShiftName } from '@/lib/api/admin-rosters';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { getWeekDates, shiftWeek, todayIso } from '@/lib/format/week';
-import { todayInZone } from '@/lib/format/time';
+import { localDateOf, todayInZone } from '@/lib/format/time';
 
 /** `/staff/admin/branches/[branchId]/roster` — US-ADM-03. Week view (OQ-1: defaults to this
  *  week), pattern editor per staff member, and roster exceptions. HO-P5 §11.5.8 (BG-23, ADR-FE-192): the grid reads
@@ -44,6 +45,9 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
   const to = weekDates[6] ?? anchor;
 
   const cells = useRosterCells(branchId, { from, to });
+  // Not the grid's own data (the cells are what was rostered), but the one thing it cannot say: that a rostered shift falls
+  // outside the opening hours (unrestricted, so those shifts show too — HO-ADM-001 §8.5 rule 6).
+  const availability = useAvailability(branchId, { from, to, restrictToOpeningHours: false });
   const setShift = useSetRosterShift(branchId);
   const exceptions = useRosterExceptions(branchId, { from, to });
   const leave = useAdminLeaveRequests({ status: 'Approved', from, to, pageSize: 100 });
@@ -88,6 +92,9 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
       (l) => l.staffAccountId === staffAccountId && date >= l.startsOn && date <= l.endsOn,
     );
     const cell = (cells.data ?? []).find((c) => c.staffAccountId === staffAccountId && c.date === date);
+    const outsideOpeningHours = (availability.data ?? []).some(
+      (a) => a.staffAccountId === staffAccountId && a.outsideOpeningHours && localDateOf(a.start, zone) === date,
+    );
     const pending =
       setShift.isPending &&
       setShift.variables?.staffAccountId === staffAccountId &&
@@ -102,6 +109,7 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
         // Today or later in the branch's own day, and a person who can be rostered.
         editable: rosterableIds.has(staffAccountId) && date >= todayInZone(zone),
         pending,
+        outsideOpeningHours,
       },
     };
   }
@@ -128,7 +136,7 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
   // §18 A3: Rosters.View excludes Accountant and ShopManager, who can still reach the branch
   // pages (Branches.View covers all staff) — a rosters/availability/exceptions 403 is a
   // permission refusal, not a generic load failure.
-  const refusal = [rosters, cells, exceptions]
+  const refusal = [rosters, cells, availability, exceptions]
     .map((query) => query.error)
     .find((error) => error instanceof ApiForbiddenError);
   if (refusal) return <AccessRefusedState error={refusal} />;
