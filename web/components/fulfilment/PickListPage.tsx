@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
+import { ActionLink } from '@/components/back-office/ActionLink';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { StaffOrdersTabs } from '@/components/orders/StaffOrdersTabs';
 import { PrintSheet } from '@/components/print/PrintSheet';
@@ -12,7 +13,7 @@ import { describeOrderingError } from '@/lib/api/errors';
 import type { PickList } from '@/lib/api/staff-orders';
 import { formatDateOnly, formatInZone } from '@/lib/format/time';
 import { useBranchTimeZone } from '@/lib/hooks/useBranchTimeZone';
-import { usePickList, useStaffOrderQueue, useStartPacking } from '@/lib/hooks/useStaffOrders';
+import { useCanManageRiders, usePickList, useStaffOrderQueue, useStartPacking } from '@/lib/hooks/useStaffOrders';
 
 /**
  * `components/fulfilment/PickListPage.tsx` — ⭐ HO-ORD-002 §11.10, US-ORD-10 AC1, ADR-FE-094. The stock to
@@ -73,6 +74,7 @@ export function PickListPage() {
   const list = usePickList(chosen.length > 0 ? chosen : undefined);
   const confirmed = useStaffOrderQueue({ status: 'Confirmed', pageNumber: 1, pageSize: 100 });
   const startPacking = useStartPacking();
+  const canManageRiders = useCanManageRiders();
   const [selection, setSelection] = useState<string[]>(chosen);
   const [progress, setProgress] = useState<{ done: number; total: number; failures: Array<{ number: string; message: string }> } | null>(null);
   const [running, setRunning] = useState(false);
@@ -140,6 +142,11 @@ export function PickListPage() {
             <Button onClick={() => void packAll()} disabled={running || toPack.length === 0} aria-busy={running}>
               {running ? 'Starting…' : `Start packing ${toPack.length} order${toPack.length === 1 ? '' : 's'}`}
             </Button>
+            {canManageRiders && (
+              <ActionLink href="/staff/fulfilment/riders" variant="outline">
+                Manage riders
+              </ActionLink>
+            )}
             {progress && (
               <p role="status" className="text-sm font-semibold text-ink">
                 {progress.done} of {progress.total} started{progress.failures.length > 0 ? `, ${progress.failures.length} could not be started` : ''}.

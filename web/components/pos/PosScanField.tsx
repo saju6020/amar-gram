@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import type { PosSku } from '@/lib/api/pos';
 import { useScanner } from '@/lib/hooks/useScanner';
 import { usePosBarcodeLookup, usePosSkuSearch } from '@/lib/hooks/usePos';
-import { formatMoney } from '@/lib/format/money';
+import { PosBrowseGrid } from './PosBrowseGrid';
+import { POS_TILE_GRID, PosSkuTile } from './PosSkuTile';
 
 /**
  * `components/pos/PosScanField.tsx` — ⭐ HO-ORD-002 §11.11, ADR-FE-095, HW-2; HO-P4 S2 (§11.3.6). The
@@ -16,7 +17,8 @@ import { formatMoney } from '@/lib/format/money';
  * the server and adds the row. Typing slowly never looks anything up until Enter. An unknown barcode is
  * announced in a polite live region, the text stays in the field, and the name search opens with it so
  * the cashier can tap the right product. The results of that search are **tap tiles** (name, variant,
- * price): there is no category browsing and no browse-all grid, because the API has neither (BG-6).
+ * price). Below, the category tabs and tap grid (HO-P5 BG-6, `PosBrowseGrid`) browse the sellable items;
+ * once a name is typed into the search its results replace the grid, so the scan and search keep priority.
  * Focus returns to the scan field after every add (the parent focuses `inputRef`).
  */
 export function PosScanField({ inputRef, onAdd }: { inputRef: RefObject<HTMLInputElement | null>; onAdd: (sku: PosSku) => string }) {
@@ -58,6 +60,8 @@ export function PosScanField({ inputRef, onAdd }: { inputRef: RefObject<HTMLInpu
   }
 
   const results = search.data ?? [];
+  // A name typed into the search replaces the browse grid with its results (HO-P5 §11.3.11).
+  const searching = searchOpen && searchText.trim() !== '';
   return (
     <div className="flex flex-col gap-3">
       <SearchField
@@ -82,32 +86,22 @@ export function PosScanField({ inputRef, onAdd }: { inputRef: RefObject<HTMLInpu
       {searchOpen && (
         <div className="flex flex-col gap-3">
           <SearchField id="pos-search" label="Product name or code" placeholder="Product name or code" value={searchText} onChange={setSearchText} />
-          <ul aria-label="Search results" className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5 p-0">
-            {results.map((sku) => {
-              const name = `${sku.productName} ${sku.variantLabel}`.trim();
-              return (
+          {searching && (
+            <ul aria-label="Search results" className={POS_TILE_GRID}>
+              {results.map((sku) => (
                 <li key={sku.skuId} className="min-w-0">
-                  <button
-                    type="button"
-                    aria-label={`Add ${name}${sku.unitPrice ? `, ${formatMoney(sku.unitPrice)}` : ''}`}
-                    onClick={() => setAnnouncement(onAdd(sku))}
-                    className="flex min-h-28 w-full flex-col justify-between gap-2 rounded-[14px] border border-border bg-surface p-3 text-left text-ink transition-colors hover:bg-surface-sunken"
-                  >
-                    <strong aria-hidden="true" className="text-sm leading-tight [overflow-wrap:anywhere]">{sku.productName}</strong>
-                    <span aria-hidden="true" className="flex items-baseline justify-between gap-2 text-[13px] text-ink-muted">
-                      <span className="min-w-0 [overflow-wrap:anywhere]">{sku.variantLabel}</span>
-                      {sku.unitPrice && <strong className="whitespace-nowrap text-ink">{formatMoney(sku.unitPrice)}</strong>}
-                    </span>
-                  </button>
+                  <PosSkuTile sku={sku} onAdd={(picked) => setAnnouncement(onAdd(picked))} />
                 </li>
-              );
-            })}
-          </ul>
-          {searchText.trim() !== '' && !search.isFetching && results.length === 0 && (
+              ))}
+            </ul>
+          )}
+          {searching && !search.isFetching && results.length === 0 && (
             <p className="text-sm text-ink-muted">No product matches “{searchText.trim()}”.</p>
           )}
         </div>
       )}
+      {/* The scan field and the name search keep priority: a typed query shows its results instead of the grid. */}
+      {!searching && <PosBrowseGrid onAdd={(picked) => setAnnouncement(onAdd(picked))} />}
     </div>
   );
 }

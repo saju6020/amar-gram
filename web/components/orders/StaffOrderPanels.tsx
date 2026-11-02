@@ -45,6 +45,8 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
         {f.recipientPhone && <Row label="Phone">{f.recipientPhone}</Row>}
         {address && <Row label="Address">{address}</Row>}
         {f.deliveryInstructions && <Row label="Instructions">{f.deliveryInstructions}</Row>}
+        {/* HO-P5 G4 / OQ-7: the customer's note for the rider, as plain text only (React escapes it; never a link, never stored; <bdi> isolates bidi/format characters such as U+202E the server lets through). */}
+        {f.riderNote && <Row label="Note for the rider"><bdi>{f.riderNote}</bdi></Row>}
         {f.zoneName && <Row label="Delivery zone">{f.zoneName}</Row>}
         {f.slotDate && f.slotWindow && <Row label="Slot">{`${formatDateOnly(f.slotDate)}, ${f.slotWindow} (${order.branchTimeZoneId})`}</Row>}
         {f.pickupBranchName && <Row label="Collect at">{f.pickupBranchName}</Row>}
@@ -94,6 +96,7 @@ export function StaffLinesPanel({
                   ))}
                 </ul>
               )}
+              {source.picked && <p>Picked.</p>}
               {source.quantityReturned > 0 && <p>{source.quantityReturned} returned.</p>}
               {onReallocate && (
                 <Button variant="ghost" size="sm" onClick={() => onReallocate(source)}>
@@ -145,30 +148,36 @@ export function PaymentsPanel({ order }: { order: StaffOrderDetail }) {
 export function ShipmentPanel({ order, onEditTracking }: { order: StaffOrderDetail; onEditTracking: () => void }) {
   const s = order.shipment;
   if (!s) return null;
+  // HO-P5 BG-5: an order that left with an in-house rider has a rider and no tracking number (the server refuses one).
+  const byRider = s.riderId != null || s.riderName != null;
   return (
     <Panel
       title="Shipment"
       actions={
-        <Button variant="secondary" size="sm" onClick={onEditTracking}>
-          {s.trackingNumber ? 'Change tracking number' : 'Enter tracking number'}
-        </Button>
+        byRider ? undefined : (
+          <Button variant="secondary" size="sm" onClick={onEditTracking}>
+            {s.trackingNumber ? 'Change tracking number' : 'Enter tracking number'}
+          </Button>
+        )
       }
     >
       <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
-        <Row label="Courier">{s.courierName}</Row>
-        <Row label="Tracking number">
-          {s.trackingNumber ? (
-            safeHttpUrl(s.trackingUrl) ? (
-              <a href={safeHttpUrl(s.trackingUrl) ?? undefined} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-ink hover:underline">
-                {s.trackingNumber}
-              </a>
+        {byRider ? <Row label="Rider">{s.riderName ?? 'Our delivery rider'}</Row> : <Row label="Courier">{s.courierName}</Row>}
+        {!byRider && (
+          <Row label="Tracking number">
+            {s.trackingNumber ? (
+              safeHttpUrl(s.trackingUrl) ? (
+                <a href={safeHttpUrl(s.trackingUrl) ?? undefined} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-ink hover:underline">
+                  {s.trackingNumber}
+                </a>
+              ) : (
+                s.trackingNumber
+              )
             ) : (
-              s.trackingNumber
-            )
-          ) : (
-            'Not entered yet'
-          )}
-        </Row>
+              'Not entered yet'
+            )}
+          </Row>
+        )}
         <Row label="Dispatched">{formatOrderWhen(s.dispatchedOn, order.branchTimeZoneId)}</Row>
         {s.lastTrackingStatus && <Row label="Courier status">{s.lastTrackingStatus}</Row>}
       </dl>

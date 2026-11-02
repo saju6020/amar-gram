@@ -2,6 +2,7 @@ import { apiFetch, ApiNotFoundError } from './client';
 import type { Money } from '../format/money';
 import { wireMoney } from '../money';
 import type { CheckoutChange, ExcludedLine, OrderTotals, QuoteDiscount, QuoteLine } from './checkout';
+import type { PagedResult } from './types';
 
 /**
  * `lib/api/pos.ts` — HO-ORD-002 §8.2. The point of sale, as `StaffPosController` / `PosViewModels.cs`
@@ -48,6 +49,26 @@ export function searchPosSkus(text: string): Promise<PosSku[]> {
   return apiFetch(`/api/staff/pos/skus?q=${encodeURIComponent(text)}`);
 }
 
+/** The counter grid is paged 20 by default, 100 at most. Read/QueryHandlers/Order/OrderQueryHandlers.cs:20 */
+export const POS_BROWSE_PAGE_SIZE = 20;
+
+/**
+ * HO-P5 BG-6: `GET /api/staff/pos/browse?category=&pageNumber=&pageSize=` -- sellable SKUs by name, optionally
+ * within one `ProductCategory` name. Same row shape as the search; `fefoBatches` is empty here.
+ * // Api/Controllers/StaffPosController.cs:50-52; Read/Queries/Order/PosQueries.cs:22-24
+ */
+export function browsePosSkus(params: {
+  category?: string;
+  pageNumber: number;
+  pageSize: number;
+}): Promise<PagedResult<PosSku>> {
+  const search = new URLSearchParams();
+  if (params.category) search.set('category', params.category);
+  search.set('pageNumber', String(params.pageNumber));
+  search.set('pageSize', String(params.pageSize));
+  return apiFetch(`/api/staff/pos/browse?${search.toString()}`);
+}
+
 export interface PosLineInput {
   skuId: string;
   quantity: number;
@@ -62,16 +83,32 @@ export interface CounterQuote {
   canSell: boolean;
   blockingReasons: string[];
   currencyCode: string;
+  /**
+   * HO-P5 BG-7: with a `tenderedCash` and a sale that can be made, exactly one of these is set (`changeDue`
+   * when the cash covers the total, zero when exact; `cashShort` when it does not). Both are absent without
+   * a tender. The server's answer, never worked out here.
+   * // Read/ViewModels/PosViewModels.cs:12-17
+   */
+  changeDue?: Money | null;
+  cashShort?: Money | null;
 }
 
-export function getCounterQuote(input: {
+export interface CounterQuoteInput {
   customerId?: string;
   lines: PosLineInput[];
   discountCode?: string;
-}): Promise<CounterQuote> {
+  /** A typed amount (`"1000"` or `"1000.00"`), sent as a JSON number through `wireMoney`. Above zero, at most two decimals. */
+  tenderedCash?: string; // Api/Contracts/Order/PosRequests.cs:24
+}
+
+export function getCounterQuote(input: CounterQuoteInput): Promise<CounterQuote> {
   return apiFetch('/api/staff/pos/quote', {
     method: 'POST',
-    body: { ...input, discountCode: input.discountCode || undefined },
+    body: {
+      ...input,
+      discountCode: input.discountCode || undefined,
+      tenderedCash: input.tenderedCash ? wireMoney(input.tenderedCash) : undefined,
+    },
   });
 }
 
@@ -86,8 +123,9 @@ export interface TenderInput {
 }
 
 export interface CounterSaleInput {
-  customerName: string;
-  customerMobile: string;
+  /** Both or neither; neither is an anonymous walk-in sale (HO-P5 BG-8). Api/Contracts/Order/PosRequests.cs:31-33 */
+  customerName?: string;
+  customerMobile?: string;
   lines: PosLineInput[];
   discountCode?: string;
   tenders: TenderInput[];
@@ -108,8 +146,8 @@ export function completeCounterSale(
   return apiFetch('/api/staff/pos/sales', {
     method: 'POST',
     body: {
-      customerName: input.customerName,
-      customerMobile: input.customerMobile,
+      customerName: input.customerName || undefined,
+      customerMobile: input.customerMobile || undefined,
       lines: input.lines,
       discountCode: input.discountCode || undefined,
       tenders: input.tenders.map((tender) => ({ ...tender, amount: wireMoney(tender.amount) })),

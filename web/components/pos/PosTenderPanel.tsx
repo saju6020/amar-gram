@@ -1,9 +1,10 @@
 'use client';
 
-import { forwardRef, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { TenderMethod } from '@/lib/api/pos';
-import { formatMoney } from '@/lib/format/money';
+import { formatMoney, type Money } from '@/lib/format/money';
+import { MONEY_PATTERN } from '@/lib/money';
 import { tenderMethodLabel } from '@/lib/format/orders';
 import { cn } from '@/lib/utils';
 import type { PosTender } from './types';
@@ -14,9 +15,10 @@ import type { PosTender } from './types';
  * (terminal)** (the amount charged on the terminal and the **terminal slip number**, never a card number).
  * The tender is a radiogroup; the cash quick buttons only **fill the amount field**: "Exact" with the
  * server quote's total string, the others with fixed whole amounts. Amounts are kept as typed and nothing
- * is added up here, so whether they cover the total, and the change due, are the server's answer when the
- * sale is completed (no change is shown before that, BG-7). Keyboard path: `F2` focuses the amount;
- * **Enter** adds the payment and opens the review.
+ * is added up here. The change for the cash typed is the SERVER's: the screen puts the typed cash to the
+ * counter quote (debounced) and this panel shows "Change due ৳X" or "Still to pay ৳Y" from the answer in a
+ * polite live region (HO-P5 BG-7, ADR-FE-191); the completed sale's own `changeDue` stays the one on the
+ * receipt. Keyboard path: `F2` focuses the amount; **Enter** adds the payment and opens the review.
  */
 const QUICK_AMOUNTS = ['1000.00', '1500.00', '2000.00'];
 
@@ -36,12 +38,22 @@ export const PosTenderPanel = forwardRef<
     onRemove: (id: string) => void;
     onReview: () => void;
     disabled: boolean;
+    /** Tells the screen which cash amount is typed (or none), to put to the counter quote (ADR-FE-191). */
+    onCashAmountChange?: (amount: string | undefined) => void;
+    /** The quote's answer for that cash amount, as the server's strings; `null` when there is none to show. */
+    preview?: { kind: 'change' | 'short'; money: Money } | null;
   }
->(function PosTenderPanel({ tenders, currencyCode, exactAmount, onAdd, onRemove, onReview, disabled }, ref) {
+>(function PosTenderPanel({ tenders, currencyCode, exactAmount, onAdd, onRemove, onReview, disabled, onCashAmountChange, preview = null }, ref) {
   const [method, setMethod] = useState<TenderMethod>('Cash');
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Only a cash amount the server could accept goes into the quote: above zero, at most two decimals.
+  const cashForQuote = method === 'Cash' && MONEY_PATTERN.test(amount.trim()) && /[1-9]/.test(amount) ? amount.trim() : undefined;
+  useEffect(() => {
+    onCashAmountChange?.(cashForQuote);
+  }, [cashForQuote, onCashAmountChange]);
 
   function add(): boolean {
     if (!/^\d+(\.\d{1,2})?$/.test(amount.trim())) {
@@ -128,6 +140,10 @@ export const PosTenderPanel = forwardRef<
           }}
         />
         <p className="text-xs text-ink-muted">Press F2 to jump here. Enter adds the payment and opens the review.</p>
+        {/* HO-P5 BG-7: the quote's answer for the cash typed above; the completed sale's own change due stays the one on the receipt. */}
+        <p role="status" aria-live="polite" className="min-h-6 text-base font-bold text-ink">
+          {preview ? `${preview.kind === 'change' ? 'Change due' : 'Still to pay'} ${formatMoney(preview.money)}` : ''}
+        </p>
       </div>
       {method === 'InStoreCard' && (
         <div className="flex flex-col gap-1">

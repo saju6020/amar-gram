@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect as baseExpect, signInAsStaff } from './fixtures';
 import { control } from './ordering-helpers';
+import { expectAxeClean } from './reports-helpers';
 import { orderingIds as ids } from '../../mocks/handlers/ordering/fixtures';
 
 const expect = baseExpect.configure({ timeout: 20_000 });
@@ -45,6 +46,81 @@ test.describe('fulfilment (US-ORD-09 to US-ORD-11, US-ORD-20)', () => {
     await expect(page).toHaveURL(/\/staff\/orders\/f0000000-0000-0000-0000-000000000104$/);
   });
 
+  test('E8: the status pills carry the server counts, a Packed pill filters, and a row shows its area and slot', async ({ page }) => {
+    await start(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/staff/orders');
+    const pills = page.getByRole('tablist', { name: 'Order status' });
+    // The pill's name is its label, then the server's count and noun ("Packed, 1 order").
+    await expect(pills.getByRole('tab', { name: /^All\s*,\s*\d+ orders?$/ })).toBeVisible();
+    await expect(pills.getByRole('tab', { name: /^Packed\s*,\s*1 order$/ })).toBeVisible();
+    await pills.getByRole('tab', { name: /^Packed\s*,\s*1 order$/ }).click();
+    await expect(page).toHaveURL(/[?&]status=Packed/);
+    const table = page.getByRole('table', { name: 'Orders' });
+    await expect(table.getByRole('row')).toHaveCount(2); // the header and the one seeded Packed order
+    // A delivery row names its area and its slot (BG-3).
+    await expect(table.getByRole('row').nth(1)).toContainText('Dhaka');
+    await expect(table.getByRole('row').nth(1)).toContainText(/· 10:00-13:00/);
+  });
+
+  test('E8: a pick-list tick is the server’s - it survives a reload', async ({ page }) => {
+    await start(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/staff/orders?order=${O.confirmedCod}`);
+    const panel = page.getByRole('region', { name: 'Selected order' });
+    const boxes = panel.getByRole('list', { name: 'Pick list' }).getByRole('checkbox');
+    await expect(boxes.first()).not.toBeChecked();
+    await boxes.first().check();
+    await expect(boxes.first()).toBeChecked();
+    // Give the write time to land, then read the order afresh.
+    await expect.poll(async () => page.evaluate(async (id) => (await (await fetch(`/api/staff/orders/${id}`)).json()).lines[0].picked, O.confirmedCod)).toBe(true);
+    await page.reload();
+    await expect(panel.getByRole('list', { name: 'Pick list' }).getByRole('checkbox').first()).toBeChecked();
+  });
+
+  test('E8: Mark packed, then dispatch to a rider - the shipment shows the rider and the order page has no tracking action', async ({ page }) => {
+    await start(page);
+    await page.goto(`/staff/orders/${O.confirmedCod}`);
+    await page.getByRole('button', { name: 'Start packing' }).click();
+    const actions = page.getByRole('group', { name: 'Order actions' });
+    await actions.getByRole('button', { name: 'Mark packed' }).click();
+    await expect(actions.getByRole('button', { name: 'Mark packed' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1, name: 'Order ORD-2026-000104' })).toBeVisible();
+    await expect(page.getByText('Packed').first()).toBeVisible();
+
+    await actions.getByRole('button', { name: 'Dispatch' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('radio', { name: 'Rider' }).check({ force: true });
+    await dialog.getByLabel('Which rider').selectOption({ label: 'Rafiq Hasan' });
+    await expect(dialog.getByLabel('Tracking number')).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Dispatch' }).click();
+    const shipment = page.getByRole('region', { name: 'Shipment' });
+    await expect(shipment).toContainText('Rider');
+    await expect(shipment).toContainText('Rafiq Hasan');
+    await expect(shipment.getByRole('button')).toHaveCount(0);
+  });
+
+  test('the riders page adds a rider and refuses a name already used', async ({ page }) => {
+    await start(page);
+    await page.goto('/staff/fulfilment/riders');
+    await expect(page.getByRole('heading', { level: 1, name: 'Riders' })).toBeVisible();
+    // A table from 768 px, stacked cards below it: read the page's main region either way.
+    const main = page.locator('#main-content');
+    await expect(main).toContainText('Jahid Alam');
+    // UI-6: the registry is axe-clean, with the list and then with the dialog open.
+    await expectAxeClean(page);
+    await page.getByRole('button', { name: 'Add rider' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a rider' });
+    await expectAxeClean(page);
+    await dialog.getByLabel('Name').fill('Nur Alam');
+    await dialog.getByRole('button', { name: 'Add rider' }).click();
+    await expect(main).toContainText('Nur Alam');
+    await page.getByRole('button', { name: 'Add rider' }).click();
+    await page.getByRole('dialog').getByLabel('Name').fill('Rafiq Hasan');
+    await page.getByRole('dialog').getByRole('button', { name: 'Add rider' }).click();
+    await expect(page.getByRole('dialog').getByText('A rider with this name already exists at this branch.')).toBeVisible();
+  });
+
   test('E-B1: pack, dispatch with tracking, record the COD cash with its collector', async ({ page }) => {
     await start(page);
     await page.goto(`/staff/orders/${O.confirmedCod}`);
@@ -56,7 +132,7 @@ test.describe('fulfilment (US-ORD-09 to US-ORD-11, US-ORD-20)', () => {
 
     await page.getByRole('group', { name: 'Order actions' }).getByRole('button', { name: 'Dispatch' }).click();
     const dispatch = page.getByRole('dialog');
-    await dispatch.getByLabel('Courier').selectOption({ label: 'Pathao Courier' });
+    await dispatch.getByLabel('Which courier').selectOption({ label: 'Pathao Courier' });
     await dispatch.getByLabel('Tracking number').fill('PC-5550001');
     await dispatch.getByRole('button', { name: 'Dispatch' }).click();
     await expect(page.getByRole('region', { name: 'Shipment' })).toContainText('PC-5550001');

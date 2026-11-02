@@ -5,8 +5,9 @@ import { usePosCustomerLookup } from '@/lib/hooks/usePos';
 import type { PosCustomer } from './types';
 
 /**
- * `components/pos/PosCustomerPanel.tsx` — HO-ORD-002 §11.11, OQ-5, Amended (2) / ADR-216; HO-P4 S2: opened from the ticket's customer chip (the API has no anonymous sale, BG-8). A counter sale
- * needs the buyer's **name and mobile number** (the person is found by mobile or created). **Find an
+ * `components/pos/PosCustomerPanel.tsx` — HO-ORD-002 §11.11, OQ-5, Amended (2) / ADR-216; HO-P4 S2: opened from the ticket's customer chip.
+ * HO-P5 BG-8: the buyer is optional — the **name and mobile number** are given together (the person is found by mobile or
+ * created) or both left empty for an anonymous walk-in sale; the screen blocks one without the other. **Find an
  * existing customer** looks the mobile up and attaches the match. Errors from the server for either field arrive on the screen's message.
  */
 export function PosCustomerPanel({
@@ -22,15 +23,15 @@ export function PosCustomerPanel({
   const field = 'w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
   return (
     <div role="group" aria-label="Customer" className="flex flex-col gap-3 rounded-[var(--radius-md)] bg-surface-page p-3">
-      <p className="text-sm text-ink-muted">A name and mobile number are needed for every sale.</p>
+      <p className="text-sm text-ink-muted">Optional. Give the name and the mobile number together, or leave both empty for a walk-in sale.</p>
       <div className="grid gap-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="pos-cust-name" className="text-sm font-semibold">Customer name <span aria-hidden="true">*</span></label>
+          <label htmlFor="pos-cust-name" className="text-sm font-semibold">Customer name</label>
           <input id="pos-cust-name" className={field} value={customer.name} maxLength={200} aria-invalid={!!errors.name} onChange={(e) => onChange({ ...customer, name: e.target.value, customerId: null })} />
           {errors.name && <p role="alert" className="text-xs font-semibold text-danger-ink">{errors.name}</p>}
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="pos-cust-mobile" className="text-sm font-semibold">Mobile number <span aria-hidden="true">*</span></label>
+          <label htmlFor="pos-cust-mobile" className="text-sm font-semibold">Mobile number</label>
           <input id="pos-cust-mobile" className={field} value={customer.mobile} inputMode="tel" maxLength={20} aria-invalid={!!errors.mobile} onChange={(e) => onChange({ ...customer, mobile: e.target.value, customerId: null })} />
           {errors.mobile && <p role="alert" className="text-xs font-semibold text-danger-ink">{errors.mobile}</p>}
         </div>
