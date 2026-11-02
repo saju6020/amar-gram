@@ -10,6 +10,7 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { HearthEmpty } from '@/components/hearth/HearthEmpty';
 import { buttonVariants } from '@/components/ui/button';
 import type { CheckoutChoices, PlaceOrderRequest } from '@/lib/api/checkout';
+import { ApiValidationError } from '@/lib/api/client';
 import { describeOrderingError, orderingViolationCodes } from '@/lib/api/errors';
 import { useDeliveryAddresses, useCustomerProfile } from '@/lib/hooks/useAccount';
 import { useAddDeliveryAddress } from '@/lib/hooks/useAccountMutations';
@@ -23,13 +24,16 @@ import { DeliverToSection } from './DeliverToSection';
 import { DeliveryTimeSection } from './DeliveryTimeSection';
 import { DiscountCodeField } from './DiscountCodeField';
 import { OrderAside, OrderAsideFallback } from './OrderAside';
-import { PaymentSection } from './PaymentSection';
+import { PaymentSection, RIDER_NOTE_MAX_LENGTH } from './PaymentSection';
 import { PendingPoliciesPanel } from './PendingPoliciesPanel';
 
 /** Until the branches load (or if they cannot): the shop's own zone. */
 const FALLBACK_ZONE = 'Asia/Dhaka';
 /** How long Place order stays disabled after `409 RequestInProgress` before the customer may press it again. */
 const IN_PROGRESS_RECHECK_MS = 4000;
+
+/** The 400 for `RiderNote` (`App/CommandHandlers/Validators/PlaceOrderCommandValidator.cs:24`), in plain words. */
+const RIDER_NOTE_REFUSED = `Your note for the rider could not be accepted. Keep it to ${RIDER_NOTE_MAX_LENGTH} characters, without special control characters.`;
 
 type SectionKey = 'fulfilment' | 'slot' | 'payment';
 type UrlPatch = Parameters<ReturnType<typeof useCheckoutUrlState>['update']>[0];
@@ -143,6 +147,10 @@ export function CheckoutScreen() {
   const idempotency = useIdempotencyKey();
 
   const [recipient, setRecipient] = useState<{ name: string; phone: string } | null>(null);
+  // ADR-FE-186: the rider note is free text a customer may fill with personal details, so it lives in this
+  // component's state only: not in the URL, not in storage. It is sent for Delivery only.
+  const [riderNote, setRiderNote] = useState('');
+  const [riderNoteError, setRiderNoteError] = useState<string | null>(null);
   const [acknowledged, setAcknowledged] = useState<string | null>(null);
   const [placeError, setPlaceError] = useState<string | null>(null);
   const [sectionErrors, setSectionErrors] = useState<Partial<Record<SectionKey, string>>>({});
@@ -268,6 +276,14 @@ export function CheckoutScreen() {
     const message = describeOrderingError(error);
     // Any definitive refusal ends this key (the API replays it for an unchanged body); RequestInProgress keeps it.
     idempotency.settleFailure(error);
+    if (
+      error instanceof ApiValidationError &&
+      error.response.errors.some((violation) => violation.propertyName === 'RiderNote')
+    ) {
+      setRiderNoteError(RIDER_NOTE_REFUSED);
+      reveal('co-pay');
+      return;
+    }
     if (codes.includes('CheckoutQuoteChanged') || codes.includes('StockNoLongerAvailable')) {
       setAcknowledged(null);
       void queryClient.invalidateQueries({ queryKey: ['checkout', 'quote'] });
@@ -312,6 +328,7 @@ export function CheckoutScreen() {
     if (!quote || submitting.current || settling) return;
     submitting.current = true;
     setPlaceError(null);
+    setRiderNoteError(null);
     const request: PlaceOrderRequest = {
       ...choices,
       serviceLevel:
@@ -321,6 +338,7 @@ export function CheckoutScreen() {
       discountCode: quote.discount?.applied ? quote.discount.code : undefined,
       recipientName: recipient?.name.trim() || undefined,
       recipientPhone: recipient?.phone.trim() || undefined,
+      riderNote: state.fulfilment === 'Delivery' ? riderNote.trim() || undefined : undefined,
       quoteFingerprint: quote.fingerprint,
     };
     try {
@@ -458,6 +476,13 @@ export function CheckoutScreen() {
               update({ paymentMethod: method });
             }}
             error={sectionErrors.payment ?? null}
+            fulfilment={state.fulfilment}
+            riderNote={riderNote}
+            onRiderNote={(value) => {
+              setRiderNote(value);
+              setRiderNoteError(null);
+            }}
+            riderNoteError={riderNoteError}
           />
         </div>
 

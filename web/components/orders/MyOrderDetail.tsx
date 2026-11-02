@@ -65,7 +65,15 @@ export function isExpiredTransfer(order: CustomerOrderDetail): boolean {
 }
 
 const KV_TERM = 'text-xs text-ink-muted';
-const HEARTH_STATUSES = ['PendingPayment', 'Confirmed', 'Packing', 'Dispatched', 'Delivered'];
+// HO-P5 Amended (b): `Packed` (BG-4) gets the hero too; the tracker keeps it on the Packing node (ADR-FE-189).
+const HEARTH_STATUSES = [
+  'PendingPayment',
+  'Confirmed',
+  'Packing',
+  'Packed',
+  'Dispatched',
+  'Delivered',
+];
 
 function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced: boolean }) {
   const zone = order.branchTimeZoneId;
@@ -102,14 +110,16 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
   const slotText = f.slotWindow ?? f.slotDate;
   const trackHref = safeHttpUrl(order.shipment?.trackingUrl);
   const showHero = HEARTH_STATUSES.includes(order.status);
-  const cancelBlocked = !order.canCancel && ['Packing', 'Dispatched'].includes(order.status);
+  const cancelBlocked = !order.canCancel && ['Packing', 'Packed', 'Dispatched'].includes(order.status);
   const cancelReason = contact
     ? 'This order can’t be cancelled online any more.'
     : order.status === 'Dispatched'
       ? 'It has already left the shop, so it can’t be cancelled here.'
-      : 'We’ve started packing it, so it can’t be cancelled here.';
+      : order.status === 'Packed'
+        ? 'It’s already packed, so it can’t be cancelled here.'
+        : 'We’ve started packing it, so it can’t be cancelled here.';
   const returnsNotYet =
-    !order.canRequestReturn && ['Confirmed', 'Packing', 'Dispatched'].includes(order.status);
+    !order.canRequestReturn && ['Confirmed', 'Packing', 'Packed', 'Dispatched'].includes(order.status);
   const steps = orderTrackerSteps(order, { waitingForTransfer: order.status === 'PendingPayment' });
   const codUnpaid = order.paymentMethod === 'CashOnDelivery' && !paid;
 
@@ -162,6 +172,10 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
         return pickup
           ? 'We’re packing it now and will tell you when it’s ready to collect.'
           : 'We’re packing it now and will tell you when it’s on its way.';
+      case 'Packed':
+        return pickup
+          ? 'It’s packed and we’ll tell you when it’s ready to collect.'
+          : 'It’s packed and we’ll tell you when it’s on its way.';
       case 'Dispatched':
         if (pickup) {
           return `Ready for collection at ${f.pickupBranchName ?? 'the branch'}${order.collectBy ? ` by ${formatDateOnly(order.collectBy)}` : ''}.`;
@@ -192,6 +206,7 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
     PendingPayment: 'Waiting for your transfer',
     Confirmed: 'Your order is confirmed',
     Packing: 'We’re packing your order',
+    Packed: 'Your order is packed',
     Dispatched: pickup ? 'Ready for collection' : 'On its way to you',
     Delivered: 'Delivered',
   };
@@ -381,6 +396,13 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
                     <div>
                       <dt className={KV_TERM}>Delivery time</dt>
                       <dd className="m-0">{`${f.slotWindow ?? f.slotDate} (${zone})`}</dd>
+                    </div>
+                  )}
+                  {f.riderNote && (
+                    // HO-P5 G4 (OQ-7): the customer's own words, shown as plain text (React escapes it).
+                    <div>
+                      <dt className={KV_TERM}>Note for the rider</dt>
+                      <dd className="m-0 [overflow-wrap:anywhere]">{f.riderNote}</dd>
                     </div>
                   )}
                 </>

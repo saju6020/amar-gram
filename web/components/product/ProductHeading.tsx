@@ -10,6 +10,8 @@ export interface ProductHeadingProps {
   brand: string;
   rating: RatingSummary;
   country: CountryRef | null;
+  /** HO-P5 G1: the district of origin, when the product has one. */
+  district?: string | null;
   lang?: string;
   /** The product's description (limited markup). Only a short plain excerpt of it is shown. */
   description?: string | null;
@@ -19,7 +21,7 @@ export interface ProductHeadingProps {
 
 /**
  * HO-SHP-002 §11.3 `ProductHeading` in the approved design (HO-P3 S2): the "{producer} · {country}"
- * eyebrow in leaf (G1: there is no district or village yet), the Fraunces name (`<h1>`), a short
+ * eyebrow in leaf (with "Grown in {district}" above it when the product has a district, HO-P5 G1, OQ-5), the Fraunces name (`<h1>`), a short
  * plain excerpt of the description, and the rating text. The country is the link to its origin page.
  */
 export function ProductHeading({
@@ -28,13 +30,20 @@ export function ProductHeading({
   brand,
   rating,
   country,
+  district,
   lang,
   description,
   descriptionLang,
 }: ProductHeadingProps) {
   const excerpt = plainExcerpt(description, 200);
+  const grownIn = district?.trim();
   return (
     <header className="flex flex-col gap-3">
+      {grownIn && (
+        <p className="m-0 text-[13px] font-semibold uppercase tracking-[0.12em] text-leaf">
+          Grown in {grownIn}
+        </p>
+      )}
       <p className="m-0 text-[13px] font-semibold uppercase tracking-[0.12em] text-leaf">
         {brand}
         {country && (

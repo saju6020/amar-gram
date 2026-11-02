@@ -10,6 +10,8 @@ import {
   priceRange,
   productAvailability,
 } from './store';
+import { orderingIds } from '../ordering/fixtures';
+import { CURRENCY, db as orderingDb, money as orderingMoney } from '../ordering/store';
 
 /**
  * `mocks/handlers/shop/catalogue.ts` — HO-SHP-002 §12. The PUBLIC catalogue endpoints of
@@ -96,6 +98,8 @@ function getList(url: URL) {
   const q = (sp.get('q') ?? '').trim();
   const brands = sp.getAll('brand').map((b) => b.toLowerCase());
   const origins = sp.getAll('origin').map((o) => o.toUpperCase());
+  const districtNames = districtValues(sp);
+  const districts = districtNames.map((d) => d.toLowerCase());
   const certifications = sp.getAll('certification');
   const minPrice = sp.get('minPrice');
   const maxPrice = sp.get('maxPrice');
@@ -107,6 +111,9 @@ function getList(url: URL) {
     if (sp.get('subcategory') && p.subcategory !== sp.get('subcategory')) return false;
     if (brands.length && !brands.includes(p.brand.toLowerCase())) return false;
     if (origins.length && !(p.country && origins.includes(p.country))) return false;
+    // HO-P5 G1: case-insensitive match on the stored name (Read/QueryHandlers/Product/GetCatalogueQueryHandler.cs:106-109).
+    if (districts.length && !(p.district && districts.includes(p.district.toLowerCase())))
+      return false;
     if (certifications.length && !certifications.some((c) => p.certifications.includes(c)))
       return false;
     if (minPrice || maxPrice) {
@@ -148,6 +155,7 @@ function getList(url: URL) {
       subcategory: sp.get('subcategory'),
       brand: brands.length ? sp.getAll('brand').join(',') : null,
       origin: origins.length ? origins.join(',') : null,
+      district: districtNames.length ? districtNames.join(',') : null,
       certification: certifications.length ? certifications.join(',') : null,
       minPrice: minPrice ? Number(minPrice).toFixed(2) : null,
       maxPrice: maxPrice ? Number(maxPrice).toFixed(2) : null,
@@ -165,6 +173,18 @@ function getList(url: URL) {
         ? { didYouMean: didYouMean(q), popular: popular.map(catalogueItem) }
         : null,
   };
+}
+
+/** `ShopSearchRules.MaxFilterValues` and `ProductRules.DistrictMaxLength` (src/Shared/AmarGram.Shared/Common/Constants). */
+const MAX_FILTER_VALUES = 20;
+const DISTRICT_MAX_LENGTH = 60;
+
+/** The repeatable `district` values, blanks dropped and trimmed (Api/Controllers/ShopCatalogueController.cs:37). */
+function districtValues(sp: URLSearchParams): string[] {
+  return sp
+    .getAll('district')
+    .map((d) => d.trim())
+    .filter(Boolean);
 }
 
 function countBy<T>(values: T[], key: (v: T) => string | null): Array<[string, number]> {
@@ -198,6 +218,25 @@ export const catalogueHandlers: HttpHandler[] = [
         'Catalogue',
       );
     }
+    // HO-P5 G1: more than 20 values, or a value over 60 characters, is InvalidCatalogueFilter on `district`
+    // (Api/Controllers/ShopCatalogueController.cs:37-39).
+    const districtList = districtValues(sp);
+    if (districtList.length > MAX_FILTER_VALUES) {
+      return badRequest(
+        'district',
+        'InvalidCatalogueFilter',
+        `district cannot have more than ${MAX_FILTER_VALUES} values.`,
+        'Catalogue',
+      );
+    }
+    if (districtList.some((d) => d.length > DISTRICT_MAX_LENGTH)) {
+      return badRequest(
+        'district',
+        'InvalidCatalogueFilter',
+        `district cannot exceed ${DISTRICT_MAX_LENGTH} characters.`,
+        'Catalogue',
+      );
+    }
     return HttpResponse.json(getList(url), { headers: { 'Cache-Control': 'public, max-age=60' } });
   }),
 
@@ -224,8 +263,17 @@ export const catalogueHandlers: HttpHandler[] = [
         min: prices.length ? Math.min(...prices) : null,
         max: prices.length ? Math.max(...prices) : null,
       },
+      // HO-P5 G1: distinct names (case-insensitive). The server's comment says "most products first", but its
+      // code orders by name, A-Z (Read/QueryHandlers/Product/GetCatalogueFiltersQueryHandler.cs:50-56): the code wins.
+      districts: districtFacets(scope),
     });
   }),
+
+  // HO-P5 G5: the primary zone's Standard free-delivery threshold and lead time, readable by guests
+  // (Api/Controllers/ShopCatalogueController.cs:113-121; Read/QueryHandlers/Order/OrderConfigurationQueryHandlers.cs:139-162).
+  http.get('*/api/shop/delivery-promise', () =>
+    HttpResponse.json(deliveryPromise(), { headers: { 'Cache-Control': 'public, max-age=60' } }),
+  ),
 
   http.get('*/api/shop/categories', () => {
     const scope = storefrontProducts();
@@ -331,4 +379,49 @@ function originViews() {
       void _sortOrder;
       return rest;
     });
+}
+
+/** The distinct districts of the products in `scope` with their counts, merged case-insensitively, A-Z. */
+function districtFacets(scope: MockProduct[]): Array<{ value: string; count: number }> {
+  const groups = new Map<string, { value: string; count: number }>();
+  for (const p of scope) {
+    if (!p.district) continue;
+    const key = p.district.toLowerCase();
+    const group = groups.get(key);
+    if (group) group.count += 1;
+    else groups.set(key, { value: p.district, count: 1 });
+  }
+  const byName = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+  return [...groups.entries()]
+    .sort(([a], [b]) => byName(a, b))
+    .map(([, group]) => group);
+}
+
+/**
+ * The storefront branch's active zone with the lowest priority (then name) that has an active Standard
+ * service, and that service's threshold and lead time; every field is null without one. The amount is
+ * the ordering mock's own formatting of the stored threshold: nothing is computed here.
+ */
+function deliveryPromise(): {
+  currencyCode: string | null;
+  freeOver: { amount: string; currencyCode: string } | null;
+  leadTimeDays: number | null;
+} {
+  const byName = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+  const zone = orderingDb.zones
+    .filter(
+      (z) =>
+        z.branchId === orderingIds.mainBranchId &&
+        z.isActive &&
+        z.services.some((s) => s.isActive && s.serviceLevel === 'Standard'),
+    )
+    .sort((a, b) => a.priority - b.priority || byName(a.name, b.name))[0];
+  const service = zone?.services.find((s) => s.isActive && s.serviceLevel === 'Standard');
+  if (!zone || !service) return { currencyCode: null, freeOver: null, leadTimeDays: null };
+  const freeOver = service.freeOverCents == null ? null : orderingMoney(service.freeOverCents);
+  return {
+    currencyCode: freeOver?.currencyCode ?? CURRENCY,
+    freeOver,
+    leadTimeDays: service.leadTimeDays,
+  };
 }
