@@ -81,7 +81,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 const INPUT =
-  'w-full min-w-[7rem] rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-right text-sm text-ink ' +
+  'min-h-11 w-full min-w-[7rem] rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-right text-sm text-ink ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-[invalid=true]:border-danger-ink';
 
 /** An open day: one input per source, the explanation, and Save count / Close day. */
@@ -234,10 +234,10 @@ export function CashUpSourceCountForm({
         {...register('explanation')}
       />
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" variant="secondary" disabled={isSubmitting} aria-busy={isSubmitting}>
+        <Button type="submit" variant="secondary" className="min-h-11" disabled={isSubmitting} aria-busy={isSubmitting}>
           {isSubmitting ? 'Saving…' : 'Save count'}
         </Button>
-        <Button type="button" disabled={!view.counted || isDirty || isSubmitting} onClick={onClose}>
+        <Button type="button" className="min-h-11" disabled={!view.counted || isDirty || isSubmitting} onClick={onClose}>
           Close day
         </Button>
       </div>

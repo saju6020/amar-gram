@@ -162,10 +162,10 @@ export function CustomerTagsDialog({
           )}
 
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={save.isPending}>
+            <Button type="button" variant="secondary" className="min-h-11" onClick={() => onOpenChange(false)} disabled={save.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={save.isPending} aria-busy={save.isPending}>
+            <Button type="submit" className="min-h-11" disabled={save.isPending} aria-busy={save.isPending}>
               {save.isPending ? 'Saving…' : 'Save tags'}
             </Button>
           </DialogFooter>
