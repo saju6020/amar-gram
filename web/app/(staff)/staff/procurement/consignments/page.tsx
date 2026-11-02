@@ -14,7 +14,8 @@ import { ApiForbiddenError } from '@/lib/api/client';
 import { useInventoryListState } from '@/lib/hooks/useInventoryListState';
 import { useConsignments } from '@/lib/hooks/useProcurement';
 
-const FIELDS = ['status', 'originCountryCode', 'from', 'to'] as const;
+// HO-P5 BG-17: `arrivingWithinDays` arrives from the inventory overview's "consignments arriving" row.
+const FIELDS = ['status', 'originCountryCode', 'from', 'to', 'arrivingWithinDays'] as const;
 
 /** `/staff/procurement/consignments` — US-IMP-03. */
 function ConsignmentsContent() {
@@ -56,6 +57,24 @@ function ConsignmentsContent() {
           { name: 'to', label: 'Arriving to', type: 'date' },
         ]}
       />
+      {list.values.arrivingWithinDays && (
+        <p className="m-0 flex flex-wrap items-center gap-3 text-sm text-ink">
+          <span>
+            Showing consignments arriving in the next {list.values.arrivingWithinDays}{' '}
+            {list.values.arrivingWithinDays === '1' ? 'day' : 'days'} that have not been received yet.
+          </span>
+          <button
+            type="button"
+            className="min-h-11 font-semibold text-accent underline"
+            onClick={() => {
+              list.setValue('arrivingWithinDays', '');
+              list.flush('arrivingWithinDays');
+            }}
+          >
+            Show all consignments
+          </button>
+        </p>
+      )}
       <ConsignmentTable
         rows={query.data?.items}
         totalCount={query.data?.totalCount ?? 0}
