@@ -81,9 +81,9 @@ export function StaffAccountTable({
       header: 'Outlet',
       cell: (row) =>
         row.branches.length > 0 ? (
-          <span className="flex flex-col text-sm">
+          <span className="flex min-w-40 flex-col text-sm">
             {row.branches.map((branch) => (
-              <span key={branch.id} className="[overflow-wrap:anywhere]">
+              <span key={branch.id} className="[overflow-wrap:break-word]">
                 {branch.name}
                 {branch.isPrimary ? ' (primary)' : ''}
               </span>

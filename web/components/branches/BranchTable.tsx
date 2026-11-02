@@ -76,11 +76,11 @@ export function BranchTable({
           {branches.map((branch) => (
             <li key={branch.id} className="min-w-0">
               <article className="flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-display text-lg font-semibold text-ink [overflow-wrap:anywhere]">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="min-w-0 font-display text-lg font-semibold text-ink [overflow-wrap:break-word]">
                     {branch.name}
                   </h2>
-                  <div className="flex flex-none flex-wrap justify-end gap-1">
+                  <div className="flex flex-wrap gap-1">
                     <StatusPill tone="neutral">{branch.type}</StatusPill>
                     <StatusPill tone={branch.isActive ? 'success' : 'neutral'}>
                       {branch.isActive ? 'Active' : 'Inactive'}

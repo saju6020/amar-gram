@@ -177,6 +177,12 @@ export function CustomerBrowsePanel({
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-sm font-bold [overflow-wrap:anywhere]">{customer.fullName}</span>
+                      {/* Under the name, not beside it: beside it the pill squeezed the text to a letter a line at 360 px (HO-P5 Amended (am)). */}
+                      {customer.recordStatus === 'Incomplete' && (
+                        <span className="flex">
+                          <CustomerStatusBadge recordStatus="Incomplete" />
+                        </span>
+                      )}
                       <span className="text-[13px] [overflow-wrap:anywhere]">
                         {customer.mobileNumber ?? customer.emailAddress ?? '—'}
                         {customer.area ? ` · ${customer.area}` : ''}
@@ -194,7 +200,6 @@ export function CustomerBrowsePanel({
                         </span>
                       )}
                     </span>
-                    {customer.recordStatus === 'Incomplete' && <CustomerStatusBadge recordStatus="Incomplete" />}
                   </button>
                 </li>
               );
