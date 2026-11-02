@@ -27,10 +27,15 @@ function PipelineBars({ counts }: { counts: StaffOrderStatusCounts }) {
         <li key={row.status}>
           <Link
             href={`/staff/orders?status=${encodeURIComponent(row.status)}`}
-            className="grid min-h-11 grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_auto] items-center gap-3 rounded-md px-1 text-sm text-ink no-underline hover:bg-surface-sunken"
+            className="grid min-h-11 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-md px-1 py-1 text-sm text-ink no-underline hover:bg-surface-sunken sm:grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_auto] sm:py-0"
           >
             <span className="font-semibold">{orderStatusLabel(row.status)}</span>
-            <span aria-hidden="true" className="block h-3 overflow-hidden rounded-full bg-surface-sunken">
+            {/* Below `sm` the bar takes its own full-width line under the label and count (HO-P5 Amended (ah)):
+                beside a 7.5rem label in a phone panel it was only a few pixels long. */}
+            <span
+              aria-hidden="true"
+              className="col-span-2 row-start-2 block h-3 overflow-hidden rounded-full bg-surface-sunken sm:col-span-1 sm:row-start-auto"
+            >
               <span
                 className="block h-full rounded-full bg-leaf"
                 style={{ width: `${peak > 0 ? Math.round((row.count / peak) * 100) : 0}%` }}
