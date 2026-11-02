@@ -68,6 +68,8 @@ test('E5: /staff/customers — search by mobile, select, see the profile, "New o
   await expect(page.getByRole('tab', { name: 'Billing' })).toBeVisible();
   await expect(page.getByRole('tab', { name: /^Notes/ })).toBeVisible();
 
+  // A client-side URL change swaps the page's head for a moment; axe's document-title rule must not catch it between.
+  await expect(page).toHaveTitle(/.+/);
   await expectAxeClean(page);
   await expectNoHorizontalScroll(page);
 
@@ -117,6 +119,7 @@ test('E13: search by name → lifetime spend; add a note; edit tags; send a pass
   await page.getByRole('dialog').getByRole('button', { name: 'Send reset link' }).click();
   await expect(profile.getByText(/Reset link sent by mobile to \*\*\*999\. It expires at/)).toBeVisible();
 
+  await expect(page).toHaveTitle(/.+/);
   await expectAxeClean(page);
   await expectNoHorizontalScroll(page);
 });

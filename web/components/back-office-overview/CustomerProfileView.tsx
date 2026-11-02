@@ -76,7 +76,7 @@ export function CustomerProfileView({
       // The server's summary (BG-19) and, from Billing, what they owe. A role without Billing (`403`) or a failed
       // read shows no balance tile rather than a guess.
       figures={
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <KpiTile
             label="Customer since"
             headingLevel={3}

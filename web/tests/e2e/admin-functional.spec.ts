@@ -1,7 +1,6 @@
 import { test, expect, signInAsStaff, signInAsCustomer } from './fixtures';
 import { administrationFixtureIds } from '../../mocks/handlers/admin';
 import type { Page } from '@playwright/test';
-import { expectAxeClean, expectNoHorizontalScroll } from './reports-helpers';
 
 /**
  * HO-ADM-002 §16 functional E-cases, run against MSW. File name sorts after
@@ -161,6 +160,8 @@ test('E15: outlet cards show the type, address, today\'s hours, delivery areas a
   page,
 }) => {
   test.setTimeout(60_000);
+  // Imported here, not at the top, so the line numbers the baseline list in HO-P5 §1 names (E-B1 at :56) do not move.
+  const { expectAxeClean, expectNoHorizontalScroll } = await import('./reports-helpers');
   await signInAsStaff(page);
   await page.goto('/staff/admin/branches');
   const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Dhanmondi outlet' }) });
@@ -194,6 +195,7 @@ test('E15: outlet cards show the type, address, today\'s hours, delivery areas a
 
 // HO-P5 §16 E15 (BG-23): a roster cell is a button that cycles Morning -> Evening -> Off -> Morning through the server.
 test('E15: a roster cell cycles to the next shift and the change is announced', async ({ page }) => {
+  const { expectAxeClean, expectNoHorizontalScroll } = await import('./reports-helpers');
   await signInAsStaff(page);
   await page.goto(`/staff/admin/branches/${administrationFixtureIds.mainBranchId}/roster`);
 
