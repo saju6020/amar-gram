@@ -81,9 +81,10 @@ describe('CashUpScreen — U-D', () => {
     setUrl(`/staff/billing/cash-up?date=${todayInZone('Asia/Dhaka')}`);
     renderWithClient(<CashUpScreen />);
     expect(await screen.findByText(/still waiting for approval/)).toBeInTheDocument();
-    await user.type(await screen.findByLabelText(/Counted cash/), '2940');
+    await user.type(await screen.findByLabelText(/Counted for Till/), '2940');
     await user.click(screen.getByRole('button', { name: 'Save count' }));
-    expect(await screen.findByText(/Short BDT 10\.00/)).toBeInTheDocument();
+    // The till's row and the day's variance line both say it (HO-P5 Amended (ai)).
+    expect((await screen.findAllByText(/Short BDT 10\.00/)).length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/^Explanation/)).toBeRequired();
     await user.click(screen.getByRole('button', { name: 'Close day' }));
     const dialog = await screen.findByRole('dialog');
