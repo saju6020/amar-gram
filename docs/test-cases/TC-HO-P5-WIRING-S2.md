@@ -1,6 +1,6 @@
 # TC-HO-P5-WIRING-S2 — Sales (dashboard, orders workbench, riders, counter sale)
 
-Handover: docs/handover/HO-P5-WIRING.md (S2: §1 Amended (a)-(ae), §8.4, §11.3, §13 S2 block, §15 U16-U27, U46, U47, §16 E7-E9, §17.2, §18 A6-A9 and A18-A21, §19)
+Handover: docs/handover/HO-P5-WIRING.md (S2: §1 Amended (a)-(ag), §8.4, §11.3, §13 S2 block, §15 U16-U27, U46, U47, §16 E7-E9, §17.2, §18 A6-A9 and A18-A21, §19)
 Commit(s) under test: feat/p5-s2-sales at HEAD afff3ca (S2 commits 625a0da ... 962eaa0, merged with integration 697a636 / 2a2963c / b05175d)
 Written: 2026-11-01 (before any command ran)  ·  Executed: see Evidence column (2026-11-01; X1 and R22 on 2026-11-02)
 
