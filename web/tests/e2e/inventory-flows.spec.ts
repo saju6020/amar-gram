@@ -1,6 +1,7 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect, signInAsStaff } from './fixtures';
 import { inventoryFixtureIds as ids } from '../../mocks/handlers/inventory';
-import { dialog, pickSku, signInAsStockViewer, warmRoutes } from './inventory-helpers';
+import { dateIn, dialog, pickSku, signInAsStockViewer, warmRoutes, wedgeScan } from './inventory-helpers';
 import { INVENTORY_ROUTES } from './inventory-routes';
 
 /**
@@ -305,4 +306,115 @@ test('E-X3: a stock-only staff member gets the server’s permission state on re
   // …but stock is theirs to read.
   await page.goto('/staff/inventory/stock');
   await expect(page.getByRole('heading', { name: /^stock$/i })).toBeVisible();
+});
+
+/**
+ * HO-P5 S3 (E11) -- reorder level and arrivals (BG-16, BG-17) and server-side receipt drafts with "Receive into" (BG-18),
+ * run against MSW. A draft lives on the (mock) server, so a reload resumes it from `?draft=`.
+ */
+test.describe('HO-P5 S3: stock and receiving wiring (E11)', () => {
+  test('Stock by item shows "Reorder at"; the overview counts consignments arriving and links to them', async ({
+    page,
+  }) => {
+    await page.goto('/staff/inventory');
+    await expect(page.getByRole('columnheader', { name: 'Reorder at' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /stock by item/i })).toContainText('(branch default)');
+
+    const arriving = page.getByRole('link', { name: /consignments? arriving in the next 7 days/ });
+    await expect(arriving).toBeVisible();
+    await arriving.click();
+    await expect(page).toHaveURL(/\/staff\/procurement\/consignments\?.*arrivingWithinDays=7/);
+    await expect(page.getByText(/Showing consignments arriving in the next 7 days/)).toBeVisible();
+    await page.getByRole('button', { name: 'Show all consignments' }).click();
+    await expect(page.getByText(/Showing consignments arriving in the next 7 days/)).toHaveCount(0);
+  });
+
+  test('type a new receipt, reload with ?draft=, the lines are back, post it; the posted draft is gone', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.foodBarcode);
+    await expect(page.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
+    await page.getByLabel(/^lot number/i).fill('L-E11-1');
+    await page.getByLabel(/^accepted/i).fill('3');
+    // The autosave says so in a polite status, and the address now names the draft.
+    await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
+    await expect(page).toHaveURL(/\/staff\/inventory\/receipts\/new\?.*draft=[0-9a-f-]{36}/);
+    const draftUrl = page.url();
+
+    await page.reload();
+    await expect(page.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
+    await expect(page.getByLabel(/^lot number/i)).toHaveValue('L-E11-1');
+    await expect(page.getByLabel(/^accepted/i)).toHaveValue('3');
+
+    await page.getByLabel(/^expiry date/i).fill(dateIn(150));
+    await page.getByLabel(/^unit cost/i).fill('450');
+    await page.getByRole('button', { name: /review and post/i }).click();
+    await (await dialog(page)).getByRole('button', { name: /post receipt/i }).click();
+    await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible();
+
+    // Posting closed the draft: its address now says it is gone.
+    await page.goto(draftUrl);
+    await expect(page.getByText('That draft is no longer here')).toBeVisible();
+  });
+
+  test('Your drafts lists a saved draft; Continue resumes it; Discard confirms and deletes it', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.chilledBarcode);
+    await expect(page.getByRole('listitem', { name: /^line 1:/i })).toBeVisible();
+    await page.getByLabel(/^lot number/i).fill('L-E11-2');
+    await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
+
+    // A new receipt in the same browser: the earlier one is listed, another member's never is.
+    await page.goto('/staff/inventory/receipts/new');
+    const list = page.getByRole('list', { name: 'Your drafts' });
+    await expect(list).toBeVisible();
+    await expect(list).not.toContainText('NADIA-DRAFT');
+    await list.getByRole('button', { name: /^Continue the draft/ }).first().click();
+    await expect(page.getByLabel(/^lot number/i)).toHaveValue('L-E11-2');
+
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByRole('button', { name: /^Discard the draft/ }).first().click();
+    await (await dialog(page)).getByRole('button', { name: 'Discard draft' }).click();
+    await expect(page.getByRole('list', { name: 'Your drafts' })).toHaveCount(0);
+  });
+
+  test('"Receive into" appears for a person in two branches; changing it asks first when lines exist', async ({
+    page,
+  }) => {
+    await page.goto('/staff/inventory/receipts/new');
+    const select = page.getByLabel('Receive into');
+    await expect(select).toBeVisible();
+    await expect(select.locator('option')).toHaveCount(2);
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.foodBarcode);
+    await expect(page.getByRole('listitem', { name: /^line 1:/i })).toBeVisible();
+    const other = await select.locator('option:not(:checked)').first().getAttribute('value');
+    await select.selectOption(other!);
+    const confirm = await dialog(page);
+    await expect(confirm).toContainText('location on every line is cleared');
+    await confirm.getByRole('button', { name: 'Change branch' }).click();
+    await expect(page.getByLabel(/^location/i)).toHaveValue('');
+  });
+
+  test('the receiving screen has no axe violation and does not scroll sideways (drafts list, status, Receive into)', async ({
+    page,
+  }) => {
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.foodBarcode);
+    await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
+    const axe = await new AxeBuilder({ page }).analyze();
+    expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
 });

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- the replies are parsed JSON of the mocked server; each assertion names the fields it reads */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { inventoryFixtureIds as ids, resetInventoryMockData } from '@/mocks/handlers/inventory';
 import { db } from '@/mocks/handlers/inventory/store';
