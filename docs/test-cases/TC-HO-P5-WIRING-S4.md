@@ -1,6 +1,6 @@
 # TC-HO-P5-WIRING-S4 — Customers, money and admin (BG-19 … BG-23)
 
-Handover: docs/handover/HO-P5-WIRING.md (S4: §1 Amended (a)-(aj), esp. (i), (l), (n), (ac), (ae), (ai), (aj); §11.5; §13 S4 block; §15 U37-U45, U46, U47; §16 E13-E16; §17; §18 A14-A17, A18-A21; §19)
+Handover: docs/handover/HO-P5-WIRING.md (S4: §1 Amended (a)-(al), esp. (i), (l), (n), (ac), (ae), (ai), (aj); §11.5; §13 S4 block; §15 U37-U45, U46, U47; §16 E13-E16; §17; §18 A14-A17, A18-A21; §19)
 Commit(s) under test: feat/p5-s4-customers-admin at HEAD 794188b (base 0a14dbc; S4 commits 3d6f14b … 794188b)
 Written: 2026-11-02 (before any command ran)  ·  Executed: 2026-11-02 to 2026-11-03 (see Evidence column)
 
