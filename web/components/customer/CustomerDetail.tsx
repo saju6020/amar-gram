@@ -55,6 +55,13 @@ export function CustomerDetail({
         <dd className="text-ink-muted [overflow-wrap:anywhere]">{customer.mobileNumber ?? '—'}</dd>
         <dt className="font-semibold text-ink">Email</dt>
         <dd className="text-ink-muted [overflow-wrap:anywhere]">{customer.emailAddress ?? '—'}</dd>
+        {/* HO-P5 BG-19: the district of the default delivery address; absent when they have none. */}
+        {customer.area && (
+          <>
+            <dt className="font-semibold text-ink">Area</dt>
+            <dd className="text-ink-muted [overflow-wrap:anywhere]">{customer.area}</dd>
+          </>
+        )}
         <dt className="font-semibold text-ink">Registration channel</dt>
         <dd className="text-ink-muted">
           {customer.registrationChannel === 'Reception' ? 'Walk-in' : 'Self-service'}

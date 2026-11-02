@@ -43,9 +43,24 @@ export interface StaffAccountSummary {
   emailAddress: string | null;
   roleIds: string[];
   hasPassword: boolean;
+  /** HO-P5 BG-22 -- derived on the server (Shared/Helpers/StaffAccountStatusRules.cs:5-16): no password is `NotSetUp`,
+   *  a running sign-in lockout is `Locked`, otherwise `Active` (Read/ViewModels/StaffAccountSummaryViewModel.cs:5-7). */
+  status: StaffAccountStatus;
+  /** The assigned branches, the primary first then by name; empty with no explicit assignment
+   *  (Read/ViewModels/StaffAccountSummaryViewModel.cs:9). */
+  branches: StaffAccountBranch[];
 }
 
-export type StaffAccount = StaffAccountSummary;
+export type StaffAccountStatus = 'Active' | 'NotSetUp' | 'Locked';
+
+export interface StaffAccountBranch {
+  id: string;
+  name: string;
+  isPrimary: boolean;
+}
+
+/** The single-account read (`StaffAccountViewModel`) carries neither the status nor the branches. */
+export type StaffAccount = Omit<StaffAccountSummary, 'status' | 'branches'>;
 
 export interface GetStaffAccountsParams {
   search?: string;

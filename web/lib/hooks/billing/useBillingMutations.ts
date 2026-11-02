@@ -27,6 +27,7 @@ import {
   type RecordPaymentRequest,
 } from '@/lib/api/billing-staff';
 import { closeCashUp, recordCashCount } from '@/lib/api/billing-cashup';
+import { useBranchScope } from '@/lib/hooks/useBranchScope';
 import {
   autoMatchStatement,
   importBankStatement,
@@ -252,12 +253,21 @@ export function useIssueRefund() {
   });
 }
 
+type RecordCashCountInput = Parameters<typeof recordCashCount>[1];
+
 export function useRecordCashCount(date: string) {
   const queryClient = useQueryClient();
+  const { branchId } = useBranchScope();
   return useMutation({
-    mutationFn: (input: { countedCash: string; explanation?: string }) =>
-      recordCashCount(date, input),
-    onSuccess: () => invalidateAfterPosting(queryClient),
+    // HO-P5 BG-20: either the total alone or `counts[]` per source; the response is the full read.
+    mutationFn: (input: RecordCashCountInput) => recordCashCount(date, input),
+    onSuccess: (view) => {
+      // The response is the full cash-up read (StaffCashUpController.cs:45-50) of the ACTIVE branch: it replaces that one
+      // cached entry, ['billing', 'cash-up', branchId, date] (useCashUp's key), never another branch's same day. The
+      // refetch that follows only confirms it.
+      queryClient.setQueryData(['billing', 'cash-up', branchId, date], view);
+      invalidateAfterPosting(queryClient);
+    },
   });
 }
 

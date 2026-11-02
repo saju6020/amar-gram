@@ -2,6 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   registerWalkInCustomer,
   mergeCustomer,
+  addCustomerNote,
+  setCustomerTags,
+  requestCustomerPasswordReset,
   type RegisterWalkInCustomerRequest,
   type MergeCustomerRequest,
 } from '@/lib/api/staff-customers';
@@ -51,4 +54,33 @@ export function useMergeCustomer() {
       });
     },
   });
+}
+
+/** HO-P5 BG-19. A note changes the list and the profile's `noteCount`, so both are refetched. */
+export function useAddCustomerNote(customerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => addCustomerNote(customerId, text),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'notes', customerId] });
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'customer', customerId] });
+    },
+  });
+}
+
+/** HO-P5 BG-19. The whole set is replaced; the response is the set as stored. The profile and the list rows show tags. */
+export function useSetCustomerTags(customerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (tags: string[]) => setCustomerTags(customerId, tags),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'customer', customerId] });
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'browse'] });
+    },
+  });
+}
+
+/** HO-P5 BG-19. Nothing is cached: the result holds only the masked destination and the expiry, never the token. */
+export function useRequestCustomerPasswordReset(customerId: string) {
+  return useMutation({ mutationFn: () => requestCustomerPasswordReset(customerId) });
 }

@@ -12,7 +12,8 @@ import { billingIds as ids } from './fixtures';
  * real UI never computes any of this (ADR-FE-080, HO-BIL-002 §20.2).
  */
 
-const PERSIST_KEY = '__purrcare_billing_mock_db__';
+// HO-P5: bumped when the cash-up gained per-source counts and a staff-collected cash source.
+const PERSIST_KEY = '__purrcare_billing_mock_db_p5__';
 export const ZONE = 'Asia/Dhaka';
 export const CURRENCY = 'BDT';
 export const APPROVAL_THRESHOLD_CENTS = 5_000_000; // BDT 50,000.00
@@ -233,6 +234,20 @@ export interface DbCashUp {
   countedOn: string | null;
   closedByName: string | null;
   closedOn: string | null;
+  /** HO-P5 BG-20 -- the per-source count (`CashUpAggregate.SourceCounts`); empty for a day counted by total only. */
+  sourceCounts?: Array<{ key: string; label: string; cents: Cents }>;
+  /** Frozen at close (`CashUpAggregate.ExpectedSources`). */
+  expectedSources?: Array<{ key: string; label: string; cents: Cents }>;
+}
+
+/** HO-P5 BG-20 -- cash a staff member collected on delivery that day. It is its own cash source (the collector holds it until it
+ *  is banked) and counts in the expected cash (CashUpCalculator.cs, CashUpRows.cs:48-51). */
+export interface DbStaffCash {
+  id: string;
+  date: string;
+  staffAccountId: string;
+  staffName: string;
+  cents: Cents;
 }
 
 export interface DbStatementLine {
@@ -319,6 +334,7 @@ export interface Db {
   refunds: DbRefund[];
   cashUps: DbCashUp[];
   carriedIn: Array<{ date: string; id: string; kind: string; label: string; cents: Cents }>;
+  staffCash: DbStaffCash[];
   statements: DbStatement[];
   matches: DbMatch[];
   profiles: DbProfile[];
@@ -882,6 +898,11 @@ function seed(): Db {
     ],
     carriedIn: [
       { date: day, id: 'ca110000-0000-0000-0000-000000000001', kind: 'CodRemittance', label: 'COD remittance — Pathao Courier', cents: 50_000 },
+    ],
+    // One staff collector two days ago, so that day's cash-up has a second source beside the till (HO-P5 BG-20). Not today: the
+    // seeded figures of today's cash-up (expected cash 2,950.00) are a contract other specs count against (HO-BIL-002 U-D1).
+    staffCash: [
+      { id: 'ca220000-0000-0000-0000-000000000001', date: addDaysIso(day, -2), staffAccountId: ids.otherStaffId, staffName: ids.otherStaffName, cents: 120_000 },
     ],
     statements: [statement],
     matches,
@@ -1534,6 +1555,24 @@ export function cashUpFor(date: string, branchId: string) {
       label: c.label,
     });
   }
+  // Staff-collected cash on delivery counts in the cash and is a source of its own (HO-P5 BG-20).
+  const staffCash = db.staffCash.filter((c) => c.date === date);
+  for (const c of staffCash) {
+    lines.push({
+      id: c.id,
+      kind: 'Payment',
+      method: 'CashOnDelivery',
+      collector: 'Staff',
+      refundMethod: null,
+      amount: money(c.cents),
+      countsInCash: true,
+      carriedIn: false,
+      label: `Cash on delivery · ${c.staffName}`,
+      sourceKey: staffSourceKey(c.staffAccountId),
+    });
+    cash += c.cents;
+    cashCount += 1;
+  }
   const expectedCash = cash - cashReversals - cashRefunds + carriedTotal;
   const record = db.cashUps.find((c) => c.date === date);
   const counted = record?.countedCents ?? null;
@@ -1567,7 +1606,62 @@ export function cashUpFor(date: string, branchId: string) {
     closedBy: record?.status === 'Closed' ? ids.otherStaffId : null,
     closedByName: record?.closedByName ?? null,
     closedOn: record?.closedOn ?? null,
+    sources: cashUpSources(date, expectedCash, record),
   };
+}
+
+export const TILL_KEY = 'till';
+
+export function staffSourceKey(staffAccountId: string): string {
+  return `staff:${staffAccountId}`;
+}
+
+/**
+ * The expected cash per source, in integer minor units: the staff collectors' cash, and the till as the rest, so the sources sum to
+ * the expected cash (`CashUpCalculator.CalculateSources`, CashUpCalculator.cs:83-112). The till is always listed, first.
+ */
+export function expectedSourcesOf(date: string, expectedCash: Cents): Array<{ key: string; label: string; cents: Cents }> {
+  const byStaff = new Map<string, { label: string; cents: Cents }>();
+  for (const c of db.staffCash.filter((x) => x.date === date)) {
+    const key = staffSourceKey(c.staffAccountId);
+    byStaff.set(key, { label: c.staffName, cents: (byStaff.get(key)?.cents ?? 0) + c.cents });
+  }
+  let staffTotal = 0;
+  for (const v of byStaff.values()) staffTotal += v.cents;
+  const staff = [...byStaff.entries()]
+    .map(([key, v]) => ({ key, label: v.label, cents: v.cents }))
+    .sort((x, y) => x.label.localeCompare(y.label));
+  return [{ key: TILL_KEY, label: 'Till', cents: expectedCash - staffTotal }, ...staff];
+}
+
+/** `CashUpSources.Reconcile` (CashUpSources.cs:21-40): the union of expected and counted keys, the till first. A source left out of
+ *  the count reads as counted nothing only once the day is closed and something was counted; while open it stays null. */
+function cashUpSources(date: string, expectedCash: Cents, record: DbCashUp | undefined) {
+  const closed = record?.status === 'Closed';
+  const expected = closed && record?.expectedSources && record.expectedSources.length > 0 ? record.expectedSources : expectedSourcesOf(date, expectedCash);
+  const counted = record?.sourceCounts ?? [];
+  const keys = [...new Set([...expected.map((e) => e.key), ...counted.map((c) => c.key)])];
+  return keys
+    .map((key) => {
+      const exp = expected.find((e) => e.key === key);
+      const cnt = counted.find((c) => c.key === key);
+      const expectedCents = exp?.cents ?? 0;
+      const countedCents = cnt ? cnt.cents : counted.length > 0 && closed ? 0 : null;
+      return {
+        key,
+        label: exp?.label ?? cnt?.label ?? key,
+        expectedCents,
+        countedCents,
+      };
+    })
+    .sort((x, y) => Number(y.key === TILL_KEY) - Number(x.key === TILL_KEY) || x.label.localeCompare(y.label))
+    .map((r) => ({
+      key: r.key,
+      label: r.label,
+      expected: money(r.expectedCents),
+      counted: r.countedCents === null ? null : money(r.countedCents),
+      variance: r.countedCents === null ? null : money(r.countedCents - r.expectedCents),
+    }));
 }
 
 /** The mock's expected cash, for its own variance checks (never sent to the client). */

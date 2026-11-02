@@ -257,7 +257,7 @@ test('E-D1: a short count needs an explanation before the day closes', async () 
   const cents = BigInt(figure.replace(/[^0-9]/g, '')); // test-side arithmetic only
   const counted = cents - 1000n;
   const asText = `${counted / 100n}.${String(counted % 100n).padStart(2, '0')}`;
-  await accountant.getByLabel(/Counted cash/).fill(asText);
+  await accountant.getByLabel(/Counted for Till/).fill(asText);
   await accountant.getByRole('button', { name: 'Save count' }).click();
   await expect(accountant.getByText(/Short BDT 10\.00/).first()).toBeVisible({ timeout: 20_000 });
   await expect(accountant.getByLabel(/^Explanation/)).toHaveAttribute('required', '');

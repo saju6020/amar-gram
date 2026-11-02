@@ -2,12 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
-import { resetBillingMockData } from '../../../mocks/handlers/billing';
+import { http, HttpResponse } from 'msw';
+import { server } from '../../../mocks/server';
+import { billingIds, resetBillingMockData } from '../../../mocks/handlers/billing';
+import { cashUpFor } from '../../../mocks/handlers/billing/store';
 import { BillingNav } from '@/components/billing/BillingNav';
 import { CashUpScreen } from '@/components/billing/CashUpScreen';
 import { BranchTable } from '@/components/branches/BranchTable';
 import { StaffAccountTable } from '@/components/admin/StaffAccountTable';
 import { SettingsHub } from '@/components/back-office-admin/SettingsHub';
+import type { AdminBranch } from '@/lib/api/admin-branches';
 import { setUrl } from '../common/nav-mock';
 import { todayInZone } from '@/lib/format/time';
 
@@ -53,7 +57,13 @@ describe('CashUpScreen — U36 (HO-P4 §11.6.3)', () => {
     resetBillingMockData();
   });
 
+  // HO-P5 §11.5.5: with an empty `sources` the HO-P4 single input remains, and this case (HO-P4 U36) still passes unchanged.
   it('lists the server lines by source in one panel, with the count form and the close action', async () => {
+    server.use(
+      http.get('*/api/staff/billing/cash-ups/:date', ({ params }) =>
+        HttpResponse.json({ ...cashUpFor(params.date as string, billingIds.mainBranchId), sources: [] }),
+      ),
+    );
     setUrl(`/staff/billing/cash-up?date=${todayInZone('Asia/Dhaka')}`);
     renderWithClient(<CashUpScreen />);
     const region = await screen.findByRole('region', { name: 'Cash-up lines by source' });
@@ -68,13 +78,41 @@ describe('CashUpScreen — U36 (HO-P4 §11.6.3)', () => {
   });
 });
 
-describe('BranchTable — U38 (HO-P4 §11.6.7)', () => {
-  const branches = [
-    { id: 'b1', code: 'MAIN', name: 'Dhanmondi outlet', timeZoneId: 'Asia/Dhaka', isActive: true },
-    { id: 'b2', code: 'CTG', name: 'Chattogram warehouse', timeZoneId: 'Asia/Dhaka', isActive: false },
+describe('BranchTable — U38 (HO-P4 §11.6.7), U43 (HO-P5 §11.5.6)', () => {
+  const branches: AdminBranch[] = [
+    {
+      id: 'b1',
+      code: 'MAIN',
+      name: 'Dhanmondi outlet',
+      timeZoneId: 'Asia/Dhaka',
+      isActive: true,
+      addressLine: '12 Gulshan Avenue, Dhaka',
+      phoneNumber: null,
+      email: null,
+      weeklyHours: [],
+      type: 'Outlet',
+      todayHours: { date: '2026-11-03', isOpenToday: true, summary: '09:00-13:00, 14:00-18:00', intervals: [] },
+      deliveryAreas: ['Dhaka City', 'Narayanganj'],
+      activeStaffCount: 9,
+    },
+    {
+      id: 'b2',
+      code: 'CTG',
+      name: 'Chattogram warehouse',
+      timeZoneId: 'Asia/Dhaka',
+      isActive: false,
+      addressLine: null,
+      phoneNumber: null,
+      email: null,
+      weeklyHours: [],
+      type: 'Warehouse',
+      todayHours: { date: '2026-11-03', isOpenToday: false, summary: 'Closed', intervals: [] },
+      deliveryAreas: [],
+      activeStaffCount: 1,
+    },
   ];
 
-  it('renders one card per branch with its five links and no address or staff count', () => {
+  it('renders one card per branch with its five links, and the type, address, today\'s hours, delivery areas and staff count the server sends', () => {
     render(
       <BranchTable branches={branches} isLoading={false} isError={false} onRetry={vi.fn()} canCreate />,
     );
@@ -94,8 +132,23 @@ describe('BranchTable — U38 (HO-P4 §11.6.7)', () => {
       ['Calendar Dhanmondi outlet', '/staff/admin/branches/b1/calendar'],
       ['Roster Dhanmondi outlet', '/staff/admin/branches/b1/roster'],
     ]);
-    expect(screen.queryByText(/address|staff count|\d+ people/i)).not.toBeInTheDocument();
+    // U43 (supersedes the HO-P4 "no address or staff count" assertion): each is there, as the server sent it.
+    expect(within(first).getByText('Outlet')).toBeInTheDocument();
+    expect(within(first).getByText('12 Gulshan Avenue, Dhaka')).toBeInTheDocument();
+    expect(within(first).getByText('Today')).toBeInTheDocument();
+    expect(within(first).getByText('09:00-13:00, 14:00-18:00')).toBeInTheDocument();
+    expect(within(first).getByText('Dhaka City, Narayanganj')).toBeInTheDocument();
+    expect(within(first).getByText('9 staff')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Add outlet/ })).toHaveAttribute('href', '/staff/admin/branches/new');
+  });
+
+  it('shows a Warehouse pill, the server\'s "Closed", and leaves out "Delivers to" and the address when there are none', () => {
+    render(<BranchTable branches={branches} isLoading={false} isError={false} onRetry={vi.fn()} canCreate />);
+    const second = screen.getAllByRole('article')[1]!;
+    expect(within(second).getByText('Warehouse')).toBeInTheDocument();
+    expect(within(second).getByText('Closed')).toBeInTheDocument();
+    expect(within(second).queryByText('Delivers to')).not.toBeInTheDocument();
+    expect(within(second).getByText('1 staff')).toBeInTheDocument();
   });
 
   it('hides "Add outlet" from a caller who cannot create branches and shows the empty state', () => {
@@ -105,16 +158,48 @@ describe('BranchTable — U38 (HO-P4 §11.6.7)', () => {
   });
 });
 
-describe('StaffAccountTable — U39 (HO-P4 §11.6.8)', () => {
-  it('lists the role ids the catalogue returned, not the design roles, and shows status text', () => {
+describe('StaffAccountTable — U39 (HO-P4 §11.6.8), U44 (HO-P5 §11.5.7)', () => {
+  it('lists the role ids the catalogue returned, not the design roles; the Outlet column puts the primary first; the status is the server\'s', () => {
     setUrl('/staff/admin/staff-accounts');
     render(
       <StaffAccountTable
         rows={[
-          { id: 's1', fullName: 'Rina Das', mobileNumber: '01711111111', emailAddress: 'rina@example.com', roleIds: ['Reception'], hasPassword: true },
-          { id: 's2', fullName: 'New Cashier', mobileNumber: null, emailAddress: null, roleIds: ['Inventory'], hasPassword: false },
+          {
+            id: 's1',
+            fullName: 'Rina Das',
+            mobileNumber: '01711111111',
+            emailAddress: 'rina@example.com',
+            roleIds: ['Reception'],
+            hasPassword: true,
+            status: 'Active',
+            branches: [
+              { id: 'b1', name: 'Dhanmondi outlet', isPrimary: true },
+              { id: 'b2', name: 'Chattogram warehouse', isPrimary: false },
+            ],
+          },
+          {
+            id: 's2',
+            fullName: 'New Cashier',
+            mobileNumber: null,
+            emailAddress: null,
+            roleIds: ['Inventory'],
+            hasPassword: false,
+            status: 'NotSetUp',
+            branches: [],
+          },
+          {
+            id: 's3',
+            fullName: 'Locked Out',
+            mobileNumber: null,
+            emailAddress: 'locked@example.com',
+            roleIds: ['Accountant'],
+            // A password is set, so the old hasPassword rule would have said Active: the server says Locked.
+            hasPassword: true,
+            status: 'Locked',
+            branches: [{ id: 'b1', name: 'Dhanmondi outlet', isPrimary: true }],
+          },
         ]}
-        totalCount={2}
+        totalCount={3}
         pageSize={20}
         isLoading={false}
         isError={false}
@@ -128,11 +213,16 @@ describe('StaffAccountTable — U39 (HO-P4 §11.6.8)', () => {
     expect(screen.queryByText(/Cashier \(|Packer|Stock keeper|Rider/)).not.toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
     expect(screen.getByText('Not set up')).toBeInTheDocument();
+    expect(screen.getByText('Locked')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Sign-in IDs' })).toBeInTheDocument();
-    expect(screen.queryByRole('columnheader', { name: /outlet/i })).not.toBeInTheDocument();
+    // U44 (supersedes "no Outlet column"): the primary outlet first, marked, then the others; none reads as a dash.
+    expect(screen.getByRole('columnheader', { name: 'Outlet' })).toBeInTheDocument();
+    const rina = screen.getByRole('row', { name: /Rina Das/ });
+    expect(rina).toHaveTextContent('Dhanmondi outlet (primary)Chattogram warehouse');
+    expect(within(screen.getByRole('row', { name: /New Cashier/ })).getAllByText('—').length).toBeGreaterThan(0);
     // The name link stays unique (specs find the row by it); the Edit link is described by the name.
     expect(screen.getAllByRole('link', { name: /Rina Das/ })).toHaveLength(1);
-    expect(screen.getAllByRole('link', { name: 'Edit' })).toHaveLength(2);
+    expect(screen.getAllByRole('link', { name: 'Edit' })).toHaveLength(3);
   });
 });
 
