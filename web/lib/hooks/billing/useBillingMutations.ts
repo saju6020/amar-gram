@@ -27,6 +27,8 @@ import {
   type RecordPaymentRequest,
 } from '@/lib/api/billing-staff';
 import { closeCashUp, recordCashCount } from '@/lib/api/billing-cashup';
+
+type RecordCashCountInput = Parameters<typeof recordCashCount>[1];
 import {
   autoMatchStatement,
   importBankStatement,
@@ -255,9 +257,14 @@ export function useIssueRefund() {
 export function useRecordCashCount(date: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { countedCash: string; explanation?: string }) =>
-      recordCashCount(date, input),
-    onSuccess: () => invalidateAfterPosting(queryClient),
+    // HO-P5 BG-20: either the total alone or `counts[]` per source; the response is the full read.
+    mutationFn: (input: RecordCashCountInput) => recordCashCount(date, input),
+    onSuccess: (view) => {
+      // The response is the full cash-up read (StaffCashUpController.cs:45-50): it replaces the day's cached read at once
+      // (the key is ['billing', 'cash-up', branchId, date]); the refetch that follows only confirms it.
+      queryClient.setQueriesData({ queryKey: ['billing', 'cash-up'], predicate: (query) => query.queryKey[3] === date }, view);
+      invalidateAfterPosting(queryClient);
+    },
   });
 }
 

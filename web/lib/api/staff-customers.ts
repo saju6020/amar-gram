@@ -1,4 +1,5 @@
 import { apiFetch } from './client';
+import type { Money } from '@/lib/format/money';
 import type { PagedResult } from './types';
 
 /**
@@ -8,6 +9,9 @@ import type { PagedResult } from './types';
  * DuplicateCustomerGroup}ViewModel.cs`. `mobileMatchedOn` is HO-ACC-001 §1 Amended (2026-09-25
  * SECURITY gate fix) — "Primary" / "Additional" / `null`, see each field's doc comment.
  */
+
+const MAX_PAGE_SIZE = 100;
+const MAX_PAGE_NUMBER = 1_000_000;
 
 // -------------------------------------------------------------------------------------------
 // Walk-in registration — C15, US-ACC-10
@@ -68,10 +72,132 @@ export interface StaffCustomer {
   registrationChannel: 'SelfService' | 'Reception';
   status: 'Active' | 'Merged' | 'Anonymised';
   mergedIntoCustomerId: string | null;
+  // HO-P5 BG-19 -- the profile summary (Read/ViewModels/StaffCustomerViewModel.cs:11-13).
+  /** When the record was created (ISO instant). */
+  customerSince: string;
+  /** District of the default delivery address; `null` when there is none. */
+  area: string | null;
+  /** Orders that are not cancelled (a server count). */
+  orderCount: number;
+  /** Paid minus refunded on those orders, a server figure shown as sent (never summed here). */
+  lifetimeSpend: Money;
+  tags: string[];
+  noteCount: number;
 }
 
 export async function getStaffCustomer(customerId: string): Promise<StaffCustomer> {
   return apiFetch<StaffCustomer>(`/api/staff/customers/${encodeURIComponent(customerId)}`);
+}
+
+// -------------------------------------------------------------------------------------------
+// Browse — HO-P5 BG-19, US-ACC-10
+// -------------------------------------------------------------------------------------------
+
+/** One row of the browsable list (Read/ViewModels/StaffCustomerViewModel.cs:21-23). */
+export interface StaffCustomerListItem {
+  id: string;
+  fullName: string;
+  mobileNumber: string | null;
+  emailAddress: string | null;
+  recordStatus: 'Complete' | 'Incomplete';
+  status: 'Active' | 'Merged' | 'Anonymised';
+  customerSince: string;
+  area: string | null;
+  tags: string[];
+}
+
+/** `recent` (default, newest first) or `name` -- StaffCustomersController.cs:61 (`CustomerListSorts`). */
+export type CustomerListSort = 'recent' | 'name';
+
+export interface BrowseCustomersParams {
+  /** Name, email (a term with `@`) or mobile (a phone-like term with 3+ digits); at most 100 characters. */
+  search?: string;
+  /** One tag; at most 100 characters. */
+  tag?: string;
+  sort?: CustomerListSort;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+/** The server's caps: `PagingRules.MaxPageSize` 100 and `MaxPageNumber` 1,000,000 -> 400 above
+ *  (StaffCustomersController.cs:58-59). Clamped here for the same reason as `getDuplicateCustomerGroups`. */
+export async function browseCustomers(
+  params: BrowseCustomersParams = {},
+): Promise<PagedResult<StaffCustomerListItem>> {
+  const query = new URLSearchParams();
+  if (params.search) query.set('search', params.search);
+  if (params.tag) query.set('tag', params.tag);
+  if (params.sort) query.set('sort', params.sort);
+  if (params.pageNumber) query.set('pageNumber', String(Math.min(params.pageNumber, MAX_PAGE_NUMBER)));
+  if (params.pageSize) query.set('pageSize', String(Math.min(params.pageSize, MAX_PAGE_SIZE)));
+  const text = query.toString();
+  return apiFetch<PagedResult<StaffCustomerListItem>>(
+    `/api/staff/customers/browse${text ? `?${text}` : ''}`,
+  );
+}
+
+// -------------------------------------------------------------------------------------------
+// Notes, tags and the staff-started password reset — HO-P5 BG-19, US-ACC-10/11
+// -------------------------------------------------------------------------------------------
+
+/** Limits of the staff-only record (Shared/Constants/CustomerStaffRecordRules.cs:6-9). */
+export const CUSTOMER_NOTE_MAX_LENGTH = 1000;
+export const CUSTOMER_MAX_NOTES = 200;
+export const CUSTOMER_MAX_TAGS = 10;
+export const CUSTOMER_TAG_MAX_LENGTH = 30;
+
+/** The roles that may add notes, set tags and start a password reset -- `Customers.AddNote`, `.SetTags` and
+ *  `.RequestPasswordReset` (Shared/Constants/ActionRoles.Accounts.cs:33-35). Presentation only: it hides a control from a
+ *  role that would be refused; the server still decides (403). */
+export const CUSTOMER_STAFF_RECORD_ROLES: readonly string[] = ['Reception', 'Administrator'];
+
+/** A staff note, newest first (Read/ViewModels/StaffCustomerViewModel.cs:36). */
+export interface CustomerNote {
+  id: string;
+  text: string;
+  authorStaffId: string;
+  /** The author's name as it is now; `null` when the account is gone. */
+  authorName: string | null;
+  createdOn: string;
+}
+
+export async function getCustomerNotes(customerId: string): Promise<CustomerNote[]> {
+  return apiFetch<CustomerNote[]>(`/api/staff/customers/${encodeURIComponent(customerId)}/notes`);
+}
+
+/** 201 `{ noteId }` (StaffCustomersController.cs:119-129). */
+export async function addCustomerNote(customerId: string, text: string): Promise<{ noteId: string }> {
+  return apiFetch<{ noteId: string }>(`/api/staff/customers/${encodeURIComponent(customerId)}/notes`, {
+    method: 'POST',
+    body: { text },
+  });
+}
+
+/** Replaces the whole set; the response is the set as stored -- trimmed, de-duplicated without regard
+ *  to case (StaffCustomersController.cs:135-146, CustomerStaffRecordAggregate.cs:58-77). */
+export async function setCustomerTags(customerId: string, tags: string[]): Promise<{ tags: string[] }> {
+  return apiFetch<{ tags: string[] }>(`/api/staff/customers/${encodeURIComponent(customerId)}/tags`, {
+    method: 'PUT',
+    body: { tags },
+  });
+}
+
+/** `{ channel, maskedDestination, expiresOn }` -- never the token (StaffCustomersController.cs:148-161,
+ *  RequestCustomerPasswordResetCommandHandler.cs:76-80). `channel` is the customer's own: `Mobile` when
+ *  they have one, otherwise `Email`. */
+export interface CustomerPasswordResetResult {
+  channel: 'Mobile' | 'Email';
+  maskedDestination: string;
+  expiresOn: string;
+}
+
+export async function requestCustomerPasswordReset(
+  customerId: string,
+): Promise<CustomerPasswordResetResult> {
+  return apiFetch<CustomerPasswordResetResult>(
+    `/api/staff/customers/${encodeURIComponent(customerId)}/password-reset`,
+    { method: 'POST' },
+  );
 }
 
 // -------------------------------------------------------------------------------------------
@@ -106,9 +232,6 @@ export interface GetDuplicateGroupsParams {
 // today (`DuplicateGroupList.tsx`'s own `DUPLICATE_GROUPS_PAGE_SIZE` is 20), but clamping
 // defensively at the one call site every request goes through means a future caller can never
 // accidentally send an oversized value.
-const MAX_PAGE_SIZE = 100;
-const MAX_PAGE_NUMBER = 1_000_000;
-
 export async function getDuplicateCustomerGroups(
   params: GetDuplicateGroupsParams = {},
 ): Promise<PagedResult<DuplicateCustomerGroup>> {

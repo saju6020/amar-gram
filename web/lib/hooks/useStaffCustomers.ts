@@ -2,7 +2,10 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   getStaffCustomer,
   findCustomers,
+  browseCustomers,
+  getCustomerNotes,
   getDuplicateCustomerGroups,
+  type BrowseCustomersParams,
   type FindCustomersParams,
   type GetDuplicateGroupsParams,
 } from '@/lib/api/staff-customers';
@@ -31,6 +34,26 @@ export function useFindCustomers(params: FindCustomersParams, enabled: boolean) 
     queryKey: ['staff-customers', 'find', params],
     queryFn: () => findCustomers(params),
     enabled,
+    retry: noRetryOn403,
+  });
+}
+
+/** HO-P5 BG-19 -- the browsable list. `placeholderData` keeps the previous page on screen while the next loads. */
+export function useBrowseCustomers(params: BrowseCustomersParams) {
+  return useQuery({
+    queryKey: ['staff-customers', 'browse', params],
+    queryFn: () => browseCustomers(params),
+    placeholderData: (previous) => previous,
+    retry: noRetryOn403,
+  });
+}
+
+/** HO-P5 BG-19 -- a customer's staff notes, newest first. Only fetched while the Notes tab is open. */
+export function useCustomerNotes(customerId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['staff-customers', 'notes', customerId],
+    queryFn: () => getCustomerNotes(customerId),
+    enabled: !!customerId && enabled,
     retry: noRetryOn403,
   });
 }
