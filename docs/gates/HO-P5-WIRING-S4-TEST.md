@@ -3,7 +3,11 @@ HANDOVER: HO-P5-WIRING (slice S4, customers, money and admin; BG-19..BG-23)
 RUN: 1
 COMMITS: feat/p5-s4-customers-admin at 794188b (base 0a14dbc; S4 commits 3d6f14b ... 794188b)
 DATE: 2026-11-02 to 2026-11-03
-STATUS: FAIL
+STATUS: PASS (integrator update, 2026-11-03, under Amended (al)). Run 1's verdict was FAIL; that record is commit 2976c4d.
+
+INTEGRATOR UPDATE (2026-11-03, under the owner's 2026-10-31 delegation; not the gate's own words)
+- Amended (al) adopts the gate's three files into S4 unchanged, so the slice's suite now holds G1, G2, G3, G8 and G9. M1b, M1c, M1d, M2b, M5b, M5c, M6b and R1, R2, R17 are covered, which by the gate's own reading makes the sheet 141 PASS, 0 FAIL, 1 BLOCKED (U47j, unreachable in the mock as seeded).
+- Rechecked at the same product commit (794188b): tsc exit 0; ESLint on the three files exit 0; `vitest run` of the two gate Vitest files: 10 passed. The gate e2e spec passed in the run-1 E13 chunk on this commit and was not rerun.
 
 The slice's code passes every row it owns:
 - typecheck, lint, the full Vitest suite, the build and the served-output check;

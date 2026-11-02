@@ -38,8 +38,8 @@ Written: 2026-11-02 (before any command ran)  ·  Executed: 2026-11-02 to 2026-1
 | | Count |
 |---|---|
 | Total | 142 (E17 and the acceptance table not counted) |
-| PASS | 131 |
-| FAIL | 10: 7 mutation rows (M1b, M1c, M1d, M2b, M5b, M5c, M6b) and the 3 regression rows that depend on them (R1, R2, R17). Each is a gap in the slice's own tests, not a product defect, and each is closed by a gate-added test (G1, G9, G2, G8, G3) that passes on clean code and fails under the mutation |
+| PASS | 131 (141 after Amended (al), integrator update 2026-11-03) |
+| FAIL | 10: 7 mutation rows (M1b, M1c, M1d, M2b, M5b, M5c, M6b) and the 3 regression rows that depend on them (R1, R2, R17). Each is a gap in the slice's own tests, not a product defect, and each is closed by a gate-added test (G1, G9, G2, G8, G3) that passes on clean code and fails under the mutation. 0 after Amended (al) adopted the gate files into S4 |
 | BLOCKED | 1 (U47j: `NoResetChannel` cannot be reached in the mock as seeded) |
 | NOT RUN | 0 |
 
