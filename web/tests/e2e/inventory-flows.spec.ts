@@ -369,7 +369,9 @@ test.describe('HO-P5 S3: stock and receiving wiring (E11)', () => {
     await wedgeScan(page, ids.chilledBarcode);
     await expect(page.getByRole('listitem', { name: /^line 1:/i })).toBeVisible();
     await page.getByLabel(/^lot number/i).fill('L-E11-2');
+    // The address names the draft only once the newest change has been saved.
     await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
+    await expect(page).toHaveURL(/draft=[0-9a-f-]{36}/);
 
     // A new receipt in the same browser: the earlier one is listed, another member's never is.
     await page.goto('/staff/inventory/receipts/new');

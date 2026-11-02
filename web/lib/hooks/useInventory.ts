@@ -436,7 +436,9 @@ export function useAlerts(params: {
 export const ALERT_BADGE_POLL_MS = 60_000;
 
 export function useAlertSummary(enabled = true) {
-  return useInventoryQuery('alerts', ['summary'], getAlertSummary, {
+  // An arrow, not the function itself: react-query hands its context object to a bare `queryFn`, which would become
+  // `getAlertSummary`'s `arrivalWindowDays` argument (the server answers that with a 400 `InvalidQuery`).
+  return useInventoryQuery('alerts', ['summary'], () => getAlertSummary(), {
     refetchInterval: ALERT_BADGE_POLL_MS,
     enabled,
   });

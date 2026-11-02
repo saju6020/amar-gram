@@ -32,6 +32,8 @@ import type { PostGoodsReceiptRequest } from '@/lib/api/inventory-receipts';
 import type { ConsignmentSummary } from '@/lib/api/procurement-consignments';
 import type { PurchaseOrderSummary } from '@/lib/api/procurement-orders';
 
+/** How long the form must stay saved before the draft id is written to the address (see the comment in the form). */
+const ADDRESS_AFTER_SETTLED_MS = 600;
 const TOP_FIELDS = ['purchaseOrderId', 'consignmentId', 'supplierId', 'deliveryReference'] as const;
 
 export interface PurchaseOrderLinesFor {
@@ -131,11 +133,24 @@ export function GoodsReceiptForm({
   });
 
   const draftSaved = autosave.state === 'saved' || autosave.state === 'idle' ? autosave.savedAt : null;
+  // The address gets `?draft=` once the draft exists AND nothing is waiting to be saved. While a change is pending the
+  // unsaved-changes guard keeps a sentinel history entry, and when the change is saved it steps back off that entry
+  // (`history.back()`, asynchronous): an address written in that same tick lands on the entry being left and is lost.
+  // So the address is written a moment after the form has settled, and only if it still has.
+  const onDraftSavedRef = React.useRef(onDraftSaved);
   React.useEffect(() => {
-    if (autosave.savedAt) onDraftSaved?.(draftId);
-    // The address is put right once, on the first success.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autosave.savedAt === null]);
+    onDraftSavedRef.current = onDraftSaved;
+  });
+  const reportedRef = React.useRef(false);
+  const draftSettled = !!autosave.savedAt && !autosave.hasUnsavedChanges;
+  React.useEffect(() => {
+    if (reportedRef.current || !draftSettled) return;
+    const timer = setTimeout(() => {
+      reportedRef.current = true;
+      onDraftSavedRef.current?.(draftId);
+    }, ADDRESS_AFTER_SETTLED_MS);
+    return () => clearTimeout(timer);
+  }, [draftSettled, draftId]);
 
   // A change the quiet-moment timer has not sent yet goes out when the page is hidden.
   const flushRef = React.useRef(autosave.flush);

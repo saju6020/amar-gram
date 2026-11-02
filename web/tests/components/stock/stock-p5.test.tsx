@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import * as React from 'react';
+import { render, renderHook, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { server } from '@/mocks/server';
+import { useAlertSummary } from '@/lib/hooks/useInventory';
 import { StockTable, reorderLevelText } from '@/components/stock/StockTable';
 import { SkuStockMatrix } from '@/components/stock/SkuStockMatrix';
 import { InventoryOverview } from '@/components/inventory/InventoryOverview';
@@ -149,5 +153,24 @@ describe('U34 — Inventory overview: consignments arriving (BG-17)', () => {
   it('leaves the row out when the server sent no consignmentsArriving', () => {
     render(<InventoryOverview alerts={alerts} nearExpiry={undefined} activeRecalls={undefined} />);
     expect(screen.queryByRole('link', { name: /arriving/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('U34 — the overview reads the summary with the default window', () => {
+  it('sends no arrivalWindowDays (the query context object must not become the parameter) and gets the 7-day arrivals', async () => {
+    const urls: string[] = [];
+    const listener = ({ request }: { request: Request }) => urls.push(request.url);
+    server.events.on('request:start', listener);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { result } = renderHook(() => useAlertSummary(), {
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    });
+    await waitFor(() => expect(result.current.data).toBeDefined(), { timeout: 5000 });
+    server.events.removeListener('request:start', listener);
+    const summaryUrl = urls.find((u) => u.includes('/alerts/summary'))!;
+    expect(summaryUrl).not.toContain('arrivalWindowDays');
+    expect(result.current.data?.consignmentsArriving).toMatchObject({ withinDays: 7 });
   });
 });

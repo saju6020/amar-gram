@@ -61,7 +61,7 @@ beforeEach(() => {
 });
 
 describe('U32 — goods receipt layout', () => {
-  it('has no "Receive into" select: the branch is the one in the sidebar', () => {
+  it('has no "Receive into" select for a person in one branch (HO-P5 OQ-13; two or more is in receipt-drafts.test.tsx)', () => {
     setup();
     expect(screen.queryByLabelText(/receive into/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/delivery reference/i)).toBeInTheDocument();

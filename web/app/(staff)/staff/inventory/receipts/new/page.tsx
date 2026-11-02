@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -58,6 +58,7 @@ function NewReceiptContent() {
     isGuid(draftParam) ? { id: draftParam, resume: true } : freshWorkspace(),
   );
   const [receiveInto, setReceiveInto] = useState<string | null>(null);
+  const [booted, setBooted] = useState(false);
 
   const draft = useReceiptDraft(workspace.resume ? workspace.id : null);
   const draftLineCodes = (draft.data?.lines ?? []).map((l) => l.skuCode ?? '').filter(Boolean);
@@ -86,6 +87,12 @@ function NewReceiptContent() {
   const discard = useDiscardReceiptDraft();
   const drafts = useReceiptDrafts();
   const zone = useBranchTimeZone();
+  // The orders and locations gate only the FIRST paint. Choosing another branch re-reads them, and the form (with the
+  // lines typed so far) must stay mounted while that happens; a draft being opened, though, always waits for itself.
+  const firstLoad = !orders.isLoading && !locations.isLoading;
+  useEffect(() => {
+    if (firstLoad) setBooted(true);
+  }, [firstLoad]);
 
   if (orders.error instanceof ApiForbiddenError) return <AccessRefusedState error={orders.error} />;
 
@@ -116,7 +123,7 @@ function NewReceiptContent() {
 
   const draftReady =
     !workspace.resume || (draft.isFetchedAfterMount && !!draft.data && draftSkus.every((q) => !q.isLoading));
-  if (orders.isLoading || locations.isLoading || !draftReady) return <LoadingState rows={5} />;
+  if ((!booted && !firstLoad) || !draftReady) return <LoadingState rows={5} />;
 
   const skusByCode: Record<string, SkuLookup | null | undefined> = {};
   po.data?.lines.forEach((l, i) => {
@@ -162,7 +169,7 @@ function NewReceiptContent() {
           setReceiveInto(id);
           setPoChoice('');
         }}
-        locations={locations.data}
+        locations={locations.isLoading ? undefined : locations.data}
         purchaseOrders={orders.data?.items ?? []}
         consignments={consignments.data?.items ?? []}
         purchaseOrderLines={ready ? { purchaseOrderId: po.data.id, lines: linesFromPurchaseOrder(po.data, skusByCode) } : null}

@@ -295,6 +295,23 @@ describe('U35/U36 — the page', () => {
     expect(db.receiptDrafts.some((d) => d.draftId === ids.otherStaffDraftId)).toBe(true);
   }, 20000);
 
+  it('changing the branch keeps the form mounted: the lines typed so far stay, with their locations cleared', async () => {
+    const user = userEvent.setup({ delay: 0 });
+    await renderPage();
+    await screen.findByLabelText('Receive into', {}, { timeout: 8000 });
+    await user.click(screen.getByLabelText(/^direct/i));
+    await user.type(screen.getByLabelText(/scan a barcode/i), `${ids.foodBarcode}{Enter}`);
+    await screen.findByRole('listitem', { name: /^line 1:/i }, { timeout: 8000 });
+    await user.type(screen.getByLabelText(/lot number/i), 'KEEP-ME');
+    await user.selectOptions(screen.getByLabelText('Receive into'), ids.londonBranchId);
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Change branch' }));
+    // The new branch's locations load in the background; the form is not replaced by a loading state.
+    await waitFor(() => expect(screen.getByLabelText(/^location/i)).toHaveValue(''), { timeout: 8000 });
+    expect(screen.getByLabelText(/lot number/i)).toHaveValue('KEEP-ME');
+    expect(screen.getByLabelText('Receive into')).toHaveValue(ids.londonBranchId);
+  }, 20000);
+
   it('choosing another branch reads the orders, consignments and locations for THAT branch', async () => {
     const urls: string[] = [];
     const listener = ({ request }: { request: Request }) => urls.push(request.url);
