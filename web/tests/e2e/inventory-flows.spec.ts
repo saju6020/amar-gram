@@ -341,7 +341,9 @@ test.describe('HO-P5 S3: stock and receiving wiring (E11)', () => {
     await page.getByLabel(/^accepted/i).fill('3');
     // The autosave says so in a polite status, and the address now names the draft.
     await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
-    await expect(page).toHaveURL(/\/staff\/inventory\/receipts\/new\?.*draft=[0-9a-f-]{36}/);
+    await expect(page).toHaveURL(/\/staff\/inventory\/receipts\/new\?.*draft=[0-9a-f-]{36}/, {
+      timeout: 15_000,
+    });
     const draftUrl = page.url();
 
     await page.reload();
@@ -371,7 +373,7 @@ test.describe('HO-P5 S3: stock and receiving wiring (E11)', () => {
     await page.getByLabel(/^lot number/i).fill('L-E11-2');
     // The address names the draft only once the newest change has been saved.
     await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
-    await expect(page).toHaveURL(/draft=[0-9a-f-]{36}/);
+    await expect(page).toHaveURL(/draft=[0-9a-f-]{36}/, { timeout: 15_000 });
 
     // A new receipt in the same browser: the earlier one is listed, another member's never is.
     await page.goto('/staff/inventory/receipts/new');

@@ -34,6 +34,8 @@ import type { PurchaseOrderSummary } from '@/lib/api/procurement-orders';
 
 /** How long the form must stay saved before the draft id is written to the address (see the comment in the form). */
 const ADDRESS_AFTER_SETTLED_MS = 600;
+/** How long the unsaved-changes guard stays on after the newest change has been saved. */
+const GUARD_RELEASE_MS = 1500;
 const TOP_FIELDS = ['purchaseOrderId', 'consignmentId', 'supplierId', 'deliveryReference'] as const;
 
 export interface PurchaseOrderLinesFor {
@@ -133,16 +135,30 @@ export function GoodsReceiptForm({
   });
 
   const draftSaved = autosave.state === 'saved' || autosave.state === 'idle' ? autosave.savedAt : null;
-  // The address gets `?draft=` once the draft exists AND nothing is waiting to be saved. While a change is pending the
-  // unsaved-changes guard keeps a sentinel history entry, and when the change is saved it steps back off that entry
-  // (`history.back()`, asynchronous): an address written in that same tick lands on the entry being left and is lost.
-  // So the address is written a moment after the form has settled, and only if it still has.
+  // The unsaved-changes guard (NFR-USA-5) holds while the newest change is unsaved and for a moment after it is saved.
+  // The guard keeps a sentinel history entry and steps back off it (`history.back()`, asynchronous) when it releases;
+  // releasing on every autosave while someone is still typing made those steps overlap and walk the page back. Held for
+  // GUARD_RELEASE_MS after the last save, it releases once the form has really settled.
+  const unsaved = autosave.hasUnsavedChanges && !submitting;
+  const [guardHeld, setGuardHeld] = React.useState(false);
+  React.useEffect(() => {
+    if (unsaved) {
+      setGuardHeld(true);
+      return;
+    }
+    const timer = setTimeout(() => setGuardHeld(false), GUARD_RELEASE_MS);
+    return () => clearTimeout(timer);
+  }, [unsaved]);
+
+  // The address gets `?draft=` once the draft exists and the guard has let go: an address written while its sentinel
+  // entry is still there lands on the entry being left and is lost. A moment later still, so the guard's own
+  // `history.back()` has finished.
   const onDraftSavedRef = React.useRef(onDraftSaved);
   React.useEffect(() => {
     onDraftSavedRef.current = onDraftSaved;
   });
   const reportedRef = React.useRef(false);
-  const draftSettled = !!autosave.savedAt && !autosave.hasUnsavedChanges;
+  const draftSettled = !!autosave.savedAt && !unsaved && !guardHeld;
   React.useEffect(() => {
     if (reportedRef.current || !draftSettled) return;
     const timer = setTimeout(() => {
@@ -297,7 +313,7 @@ export function GoodsReceiptForm({
 
   return (
     <form onSubmit={review} noValidate className="flex flex-col gap-4" onBlurCapture={() => autosave.flush()}>
-      <UnsavedChangesGuard when={autosave.hasUnsavedChanges && !submitting} />
+      <UnsavedChangesGuard when={(unsaved || guardHeld) && !submitting} />
       <p
         role="status"
         className={
