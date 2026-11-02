@@ -5,7 +5,6 @@ import { SearchField } from '@/components/back-office/SearchField';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
-import { SimplePager } from '@/components/notifications/SimplePager';
 import { Button } from '@/components/ui/button';
 import type { CustomerListSort, StaffCustomerListItem } from '@/lib/api/staff-customers';
 import { cn } from '@/lib/utils';
@@ -136,11 +135,13 @@ export function CustomerBrowsePanel({
         <ErrorState onRetry={onRetry} />
       ) : !items || items.length === 0 ? (
         <EmptyState
-          title={filtered ? 'No customer matches' : 'No customers yet'}
+          title={page > 1 ? 'Nothing on this page' : filtered ? 'No customer matches' : 'No customers yet'}
           description={
-            filtered
-              ? 'Check the spelling, clear the tag, or register them as a walk-in customer.'
-              : 'Register a walk-in customer to start the list.'
+            page > 1
+              ? 'The list is shorter than this page. Go back to the first page.'
+              : filtered
+                ? 'Check the spelling, clear the tag, or register them as a walk-in customer.'
+                : 'Register a walk-in customer to start the list.'
           }
           action={
             page > 1 ? (
@@ -203,9 +204,30 @@ export function CustomerBrowsePanel({
           <p role="status" className="m-0 text-xs text-ink-muted">
             {isRefreshing ? 'Updating the list…' : total <= pageSize ? (total === 1 ? '1 customer' : `${total} customers`) : ''}
           </p>
-          <SimplePager pageNumber={page} pageSize={pageSize} totalCount={total} onPageChange={onPage} />
+          <BrowsePager page={page} pageSize={pageSize} total={total} onPage={onPage} />
         </>
       )}
     </div>
+  );
+}
+
+/** Previous / Next for the customers list, at the 44 px target size (HO-P3 UI-6); `SimplePager`'s `sm` buttons are 32 px. */
+function BrowsePager({ page, pageSize, total, onPage }: { page: number; pageSize: number; total: number; onPage: (page: number) => void }) {
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  if (pageCount <= 1) return null;
+  return (
+    <nav aria-label="Pages" className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink-muted">
+      <span>
+        Page {page} of {pageCount} · {total} total
+      </span>
+      <div className="flex gap-2">
+        <Button variant="secondary" className="min-h-11" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+          Previous
+        </Button>
+        <Button variant="secondary" className="min-h-11" disabled={page >= pageCount} onClick={() => onPage(page + 1)}>
+          Next
+        </Button>
+      </div>
+    </nav>
   );
 }

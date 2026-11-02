@@ -235,7 +235,7 @@ export const opsBillingHandlers: HttpHandler[] = [
     const isSourceCount = !!counts && counts.length > 0;
 
     if (isSourceCount) {
-      // The aggregate's order: closed, then each source once, then each one the day has, then the date.
+      // The aggregate's order: closed, then each source once, then each one the day has, then the date, then the total's cap.
       if (existing?.status === 'Closed') {
         return violation('Status', 'CashUpClosed', 'This day is closed and can no longer be changed.');
       }
@@ -248,13 +248,13 @@ export const opsBillingHandlers: HttpHandler[] = [
       if (keys.some((key) => !known.some((k) => k.key === key))) {
         return violation('counts', 'UnknownCashUpSource', 'This day has no such source of cash.');
       }
-      // The total is the sum of the sources and is held to the same cap as one amount (CashUpAggregate.cs:101-102).
+      // Then `RecordCount(total)`: the date first, then the total held to the same cap as one amount (CashUpAggregate.cs:110-111 -> :58, :61).
+      if (date > today()) {
+        return violation('BusinessDate', 'CashUpDateInFuture', 'A till cannot be counted for a day that has not started.');
+      }
       const totalCents = counts.reduce((sum, c) => sum + toCents(c.countedCash), 0);
       if (totalCents > 999_999_999_999) {
         return violation('countedCash', 'InvalidAmount', 'The counted cash must be zero or more, with at most two decimals.');
-      }
-      if (date > today()) {
-        return violation('BusinessDate', 'CashUpDateInFuture', 'A till cannot be counted for a day that has not started.');
       }
       const refusedCard = cardNumber();
       if (refusedCard) return refusedCard;

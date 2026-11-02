@@ -132,6 +132,8 @@ describe('Customers screen — U37 browse, U38 profile summary', () => {
     renderWithClient(<StaffCustomersPage />);
     expect(await screen.findByText(/^Page 1 of 3/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    // 44 px targets (HO-P3 UI-6); jsdom has no layout, so the class is the check.
+    for (const name of ['Previous', 'Next']) expect(screen.getByRole('button', { name })).toHaveClass('min-h-11');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(nav.replace).toHaveBeenLastCalledWith(expect.stringContaining('page=2'), expect.anything());
   });
@@ -218,6 +220,8 @@ describe('Customers screen — U37 browse, U38 profile summary', () => {
     mockBrowse([], 45);
     nav.search = 'page=9';
     renderWithClient(<StaffCustomersPage />);
+    expect(await screen.findByText('Nothing on this page')).toBeInTheDocument();
+    expect(screen.queryByText('No customers yet')).not.toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Back to the first page' }));
     expect(nav.replace).toHaveBeenLastCalledWith(expect.not.stringContaining('page='), expect.anything());
   });
