@@ -72,12 +72,13 @@ describe('U30 — stock row expand', () => {
     server.events.removeListener('request:start', listener);
   });
 
-  it('shows each figure with its unit, Available as the server sellable, and no Reorder at column', () => {
+  it('shows each figure with its unit, Available as the server sellable, and the Reorder at column (HO-P5 BG-16)', () => {
     renderTable();
     const table = screen.getByRole('table', { name: /stock by item/i });
     const headers = within(table).getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(expect.arrayContaining(['Item', 'On hand', 'Reserved', 'Available', 'Next expiry']));
-    expect(headers.join(' ')).not.toMatch(/reorder at/i);
+    expect(headers).toEqual(
+      expect.arrayContaining(['Item', 'On hand', 'Reserved', 'Available', 'Next expiry', 'Reorder at']),
+    );
     expect(table).toHaveTextContent('37 bags');
     expect(table).toHaveTextContent('24 bags');
   });

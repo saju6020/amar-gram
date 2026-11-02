@@ -3,7 +3,10 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GoodsReceiptForm } from '@/components/inventory/GoodsReceiptForm';
 import { ApiValidationError } from '@/lib/api/client';
-import { receiptDraftKey } from '@/lib/drafts/receipt-draft';
+import { stateFromDraft } from '@/components/inventory/receiptModel';
+import { resetInventoryMockData } from '@/mocks/handlers/inventory';
+import { db } from '@/mocks/handlers/inventory/store';
+import type { GoodsReceiptDraft } from '@/lib/api/inventory-receipts';
 import type { SkuLookup, StockLocation } from '@/lib/api/inventory-lookup';
 import { renderWithClient } from './testUtils';
 
@@ -16,7 +19,7 @@ vi.mock('next/navigation', async () => {
   };
 });
 
-const STAFF = 'staff-1';
+const DRAFT_ID = '22222222-2222-4222-8222-222222222222';
 const locations: StockLocation[] = [
   {
     id: 'wh',
@@ -76,7 +79,8 @@ function setup(overrides: Partial<React.ComponentProps<typeof GoodsReceiptForm>>
   );
   const utils = renderWithClient(
     <GoodsReceiptForm
-      staffAccountId={STAFF}
+      draftId={DRAFT_ID}
+      onDiscardDraft={vi.fn().mockResolvedValue(undefined)}
       locations={locations}
       purchaseOrders={[]}
       consignments={[]}
@@ -103,6 +107,7 @@ async function addFoodLine(user: ReturnType<typeof userEvent.setup>) {
 
 beforeEach(() => {
   window.sessionStorage.clear();
+  resetInventoryMockData();
 });
 
 describe('U-C — goods receipt', () => {
@@ -164,43 +169,78 @@ describe('U-C — goods receipt', () => {
     });
   });
 
-  it('U-C4: the draft is autosaved, offered back after a reload, restored, and cleared by Discard', async () => {
-    const first = setup();
-    await addFoodLine(first.user);
-    await first.user.type(screen.getByLabelText(/lot number/i), 'L-DRAFT');
-    await waitFor(() =>
-      expect(window.sessionStorage.getItem(receiptDraftKey(STAFF))).toContain('L-DRAFT'),
+  it('U-C4: the draft is autosaved to the server (not the browser), then Discard confirms and hands over to the screen', async () => {
+    const onDiscardDraft = vi.fn().mockResolvedValue(undefined);
+    const { user } = setup({ onDiscardDraft });
+    await addFoodLine(user);
+    await user.type(screen.getByLabelText(/lot number/i), 'L-DRAFT');
+    // ADR-FE-190: a whole-form PUT after a quiet moment (or on blur) and "Draft saved at hh:mm" in the polite status.
+    await waitFor(
+      () =>
+        expect(db.receiptDrafts.find((d) => d.draftId === DRAFT_ID)?.lines[0]).toMatchObject({
+          skuId: 'k1',
+          lotNumber: 'L-DRAFT',
+        }),
+      { timeout: 5000 },
     );
-    // The draft holds ids, lots, dates, quantities and costs — never anything personal.
-    expect(window.sessionStorage.getItem(receiptDraftKey(STAFF))).not.toMatch(
-      /customer|email|mobile/i,
-    );
-    first.unmount();
+    expect(screen.getByText(/^Draft saved at \d\d:\d\d/)).toBeInTheDocument();
+    expect(screen.getByText(/^Draft saved at/).closest('[role="status"]')).not.toBeNull();
+    // Nothing is kept in browser storage any more (ADR-FE-190 supersedes the sessionStorage draft of ADR-FE-043).
+    expect(window.sessionStorage.length).toBe(0);
+    expect(screen.queryByText('Restore the receipt you were entering?')).not.toBeInTheDocument();
 
-    const second = setup();
-    expect(await screen.findByText('Restore the receipt you were entering?')).toBeInTheDocument();
-    await second.user.click(screen.getByRole('button', { name: /restore the draft/i }));
-    expect(await screen.findByLabelText(/lot number/i)).toHaveValue('L-DRAFT');
-
-    await second.user.click(screen.getByRole('button', { name: /discard draft/i }));
+    await user.click(screen.getByRole('button', { name: /discard draft/i }));
     const dialog = await screen.findByRole('dialog');
-    await second.user.click(within(dialog).getByRole('button', { name: /discard draft/i }));
-    await waitFor(() => expect(window.sessionStorage.getItem(receiptDraftKey(STAFF))).toBeNull());
-  });
+    expect(dialog).toHaveTextContent(/nothing has been posted/i);
+    await user.click(within(dialog).getByRole('button', { name: /discard draft/i }));
+    await waitFor(() => expect(onDiscardDraft).toHaveBeenCalledTimes(1));
+  }, 15000);
 
-  it('U-C4b: a line scanned while the restore prompt is open survives the restore', async () => {
-    const first = setup();
-    await addFoodLine(first.user);
-    await waitFor(() => expect(window.sessionStorage.getItem(receiptDraftKey(STAFF))).not.toBeNull());
-    first.unmount();
-
-    const second = setup();
-    await screen.findByText('Restore the receipt you were entering?');
-    await scan(second.user, milk.barcode!);
-    await screen.findByRole('listitem', { name: /line 1: fresh cow milk/i });
-    await second.user.click(screen.getByRole('button', { name: /restore the draft/i }));
-    expect(await screen.findByRole('listitem', { name: /line 1: organic rice/i })).toBeInTheDocument();
-    expect(screen.getByRole('listitem', { name: /line 2: fresh cow milk/i })).toBeInTheDocument();
+  it('U-C4b: a resumed draft keeps its lines and a line scanned afterwards is added after them', async () => {
+    const draft: GoodsReceiptDraft = {
+      draftId: DRAFT_ID,
+      branchId: 'b1',
+      branchName: 'Main',
+      supplierId: null,
+      purchaseOrderId: null,
+      consignmentId: null,
+      deliveryReference: 'DRV-7',
+      receivedOn: null,
+      note: null,
+      version: 2,
+      updatedOn: '2026-11-02T09:00:00Z',
+      lines: [
+        {
+          skuId: food.skuId,
+          skuCode: food.skuCode,
+          displayName: food.displayName,
+          purchaseOrderLineId: null,
+          lotNumber: 'L-RESUMED',
+          manufacturedOn: null,
+          expiresOn: '2027-01-30',
+          quantityAccepted: '20',
+          quantityRejected: '0',
+          rejectionReason: null,
+          rejectionNote: null,
+          locationId: 'wh',
+          holdForInspection: false,
+          unitCostAmount: '450',
+          unitCostCurrency: 'BDT',
+          exchangeRateToBase: null,
+        },
+      ],
+    };
+    const { user } = setup({
+      initial: stateFromDraft(draft, { [food.skuCode]: food }),
+      initialIsDraft: true,
+    });
+    const first = await screen.findByRole('listitem', { name: /line 1: organic rice/i });
+    expect(within(first).getByLabelText(/lot number/i)).toHaveValue('L-RESUMED');
+    expect(within(first).getByLabelText(/^accepted/i)).toHaveValue('20');
+    expect(screen.getByLabelText(/delivery reference/i)).toHaveValue('DRV-7');
+    await scan(user, milk.barcode!);
+    expect(await screen.findByRole('listitem', { name: /line 2: fresh cow milk/i })).toBeInTheDocument();
+    expect(screen.getByRole('listitem', { name: /line 1: organic rice/i })).toBeInTheDocument();
   });
 
   it('U-C6: a 400 with three line violations lands each on its own field, scrolls to the first, shows no error code', async () => {

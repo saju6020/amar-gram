@@ -39,7 +39,8 @@ function setup(overrides: Partial<React.ComponentProps<typeof GoodsReceiptForm>>
   const onScan = vi.fn(async (barcode: string) => [rice, lentils].find((s) => s.barcode === barcode) ?? null);
   const utils = renderWithClient(
     <GoodsReceiptForm
-      staffAccountId="staff-1"
+      draftId="11111111-1111-4111-8111-111111111111"
+      onDiscardDraft={vi.fn().mockResolvedValue(undefined)}
       locations={locations}
       purchaseOrders={[]}
       consignments={[{ id: 'cn-1', reference: 'CN-1', shipmentReference: 'SH-9' } as never]}

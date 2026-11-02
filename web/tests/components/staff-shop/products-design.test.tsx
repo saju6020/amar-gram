@@ -110,25 +110,30 @@ describe('Products list — HO-P4 §11.4.2/§11.4.3 (U25, U26)', () => {
     );
   });
 
-  it('shows the design columns and leaves out the bulk bar and the data the list lacks', () => {
+  it('shows the design columns (HO-P5 BG-9 adds Origin, Price and Stock); without the bulk handler there are no select boxes', () => {
     table();
     for (const header of [
       'Product',
       'Category',
       'Producer',
+      'Origin',
       'Pack sizes',
+      'Price',
+      'Stock',
       'Listed in shop',
       'Status',
       'Updated',
     ]) {
       expect(screen.getByRole('columnheader', { name: header })).toBeInTheDocument();
     }
+    // The row carries none of the BG-9 data: the old pack-size count stays, the rest says "—", nothing is invented.
     expect(screen.getByText('3 pack sizes')).toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(3);
+    expect(screen.queryByText(/available/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Organic')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    for (const absent of ['Origin', 'Price range', 'Stock', 'Organic']) {
-      expect(screen.queryByRole('columnheader', { name: absent })).not.toBeInTheDocument();
-    }
-    expect(screen.queryByText(/publish selected|hide selected/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Organic' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/publish selected|hide selected|hide from shop/i)).not.toBeInTheDocument();
   });
 
   it('the search box sends digits as barcode and text as q (confirmed with Enter)', async () => {
