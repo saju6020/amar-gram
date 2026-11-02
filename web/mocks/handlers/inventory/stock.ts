@@ -258,6 +258,68 @@ function stockSummaries(branchId: string, locationId: string | null): StockSumma
   return [...bySku.values()].map(({ _next, ...row }) => ({ ...row, nextExpiresOn: _next }));
 }
 
+/**
+ * HO-P5 BG-16 -- the "Reorder at" figures of one SKU at a branch, as `GetStockSummaryQueryHandler` works them out
+ * (StockQueryHandlers.cs:213-224) from the pairs of `ReorderReads.PairsAsync` (AlertsAndReportsQueryHandlers.cs:25-73):
+ * every (SKU, location) with stock at an active, non-quarantine location plus every pair with a policy; the point is the
+ * policy's, else the branch default; usable is the free stock of available, unexpired batches. The level is the sum of the
+ * EXPLICIT policies, else the default point once (`isDefault`); `below` is any pair with a point above 0 and less usable
+ * stock than it -- the `belowReorderPoint` filter's rule. The mock plays the server here, so it adds quantities.
+ */
+export function reorderFigures(
+  branchId: string,
+  skuId: string,
+  onlyLocationId?: string | null,
+): { level: string; isDefault: boolean; below: boolean } {
+  const pairs = new Map<string, { locationId: string; point: number; defaulted: boolean }>();
+  const countable = (locationId: string) => {
+    const location = locationOf(locationId);
+    return (
+      !!location &&
+      location.isActive &&
+      location.kind !== 'Quarantine' &&
+      (!onlyLocationId || locationId === onlyLocationId)
+    );
+  };
+  for (const policy of db.reorderPolicies) {
+    if (policy.branchId !== branchId || policy.skuId !== skuId || !countable(policy.locationId))
+      continue;
+    pairs.set(policy.locationId, {
+      locationId: policy.locationId,
+      point: policy.reorderPoint,
+      defaulted: policy.isDefaulted,
+    });
+  }
+  for (const batch of branchBatches(branchId).filter((b) => b.skuId === skuId)) {
+    for (const position of positionsOf(batch.id)) {
+      if (pairs.has(position.locationId) || !countable(position.locationId)) continue;
+      pairs.set(position.locationId, {
+        locationId: position.locationId,
+        point: effectiveReorderPoint(branchId, skuId, position.locationId),
+        defaulted: true,
+      });
+    }
+  }
+  const usableAt = (locationId: string) =>
+    branchBatches(branchId)
+      .filter((b) => b.skuId === skuId && b.status === 'Available' && !isExpired(b))
+      .reduce((sum, b) => {
+        const p = positionsOf(b.id).find((pos) => pos.locationId === locationId);
+        return sum + (p ? p.onHand - p.reserved : 0);
+      }, 0);
+  const all = [...pairs.values()];
+  const explicit = all.filter((p) => !p.defaulted);
+  const level =
+    explicit.length > 0
+      ? explicit.reduce((sum, p) => sum + p.point, 0)
+      : all.reduce((max, p) => Math.max(max, p.point), 0);
+  return {
+    level: q(level),
+    isDefault: explicit.length === 0,
+    below: all.some((p) => p.point > 0 && usableAt(p.locationId) < p.point),
+  };
+}
+
 export function effectiveReorderPoint(branchId: string, skuId: string, locationId: string): number {
   return (
     db.reorderPolicies.find(
@@ -287,17 +349,18 @@ export const stockHandlers: HttpHandler[] = [
           s.displayName.toLowerCase().includes(search) ||
           s.skuCode.toLowerCase().includes(search),
       )
-      .filter((s) => !cls || s.stockClass === cls);
+      .filter((s) => !cls || s.stockClass === cls)
+      .map((s) => {
+        const figures = reorderFigures(branchId, s.skuId, locationId);
+        return {
+          ...s,
+          reorderLevel: figures.level,
+          reorderLevelIsDefault: figures.isDefault,
+          belowReorderLevel: figures.below,
+        };
+      });
     if (below) {
-      rows = rows.filter((s) =>
-        db.reorderPolicies.some(
-          (p) =>
-            p.branchId === branchId &&
-            p.skuId === s.skuId &&
-            (!locationId || p.locationId === locationId) &&
-            parseFloat(s.usable) < p.reorderPoint,
-        ),
-      );
+      rows = rows.filter((s) => s.belowReorderLevel);
     }
     rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
     return HttpResponse.json(paged(rows, request));
@@ -392,6 +455,10 @@ export const stockHandlers: HttpHandler[] = [
           isExpired: isExpired(b),
           daysToExpiry: daysToExpiry(b),
           status: b.status,
+          // BG-16 -- InventoryStockViewModels.cs:49-52: when it was received and who supplied it (null without a supplier).
+          receivedOn: b.receivedOn,
+          supplierId: b.supplierId,
+          supplierName: db.suppliers.find((s) => s.id === b.supplierId)?.name ?? null,
           locations: positionsOf(b.id).map((p) => {
             const location = locationOf(p.locationId)!;
             return {

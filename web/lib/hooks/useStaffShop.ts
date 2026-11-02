@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addSku,
+  bulkProductStatus,
   changeProductSlug,
   createOrigin,
   createProduct,
@@ -27,10 +28,12 @@ import {
   updateProductDetails,
   updateSku,
   type AddSkuRequest,
+  type BulkProductAction,
   type CreateProductRequest,
   type OriginInput,
   type ProductImageInput,
   type ProductTransition,
+  type ScheduleSkuPriceRequest,
   type SetFoodDetailsRequest,
   type SkuAttributesInput,
   type StaffProductListParams,
@@ -239,6 +242,19 @@ export function useProductTransition(productId: string) {
   });
 }
 
+/** HO-P5 BG-10: publish or hide several products in one call. The list refetches whatever the mix of outcomes. */
+export function useBulkProductStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: { productIds: string[]; action: BulkProductAction }) =>
+      bulkProductStatus(request),
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ['staff', 'products'] });
+      void queryClient.invalidateQueries({ queryKey: ['staff', 'product'] });
+    },
+  });
+}
+
 export function useSkuPrices(skuId: string | null) {
   return useQuery({
     queryKey: ['staff', 'sku-prices', skuId],
@@ -252,8 +268,7 @@ export function useScheduleSkuPrice(productId: string, skuId: string) {
   const queryClient = useQueryClient();
   const invalidate = useInvalidateProduct(productId);
   return useMutation({
-    mutationFn: (request: { amount: number; currencyCode: string; effectiveFrom: string }) =>
-      scheduleSkuPrice(skuId, request),
+    mutationFn: (request: ScheduleSkuPriceRequest) => scheduleSkuPrice(skuId, request),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['staff', 'sku-prices', skuId] });
       invalidate();

@@ -32,6 +32,9 @@ export const inventoryFixtureIds = {
   supplier2Id: 'a1000000-0000-4000-8000-000000000002',
   inactiveSupplierId: 'a1000000-0000-4000-8000-000000000003',
 
+  /** HO-P5 BG-18: an open draft that belongs to ANOTHER staff member (Nadia); the signed-in caller gets a 404 for it. */
+  otherStaffDraftId: 'dd000000-0000-4000-8000-000000000001',
+
   poPartId: 'd1000000-0000-4000-8000-000000000001',
   poOpenId: 'd1000000-0000-4000-8000-000000000002',
   poDraftId: 'd1000000-0000-4000-8000-000000000003',
@@ -126,6 +129,34 @@ export function forbiddenResponse(): Response {
 
 export function branchOf(request: Request): string {
   return request.headers.get('x-branch-id') ?? inventoryFixtureIds.mainBranchId;
+}
+
+/**
+ * HO-P5 BG-18 -- the branches the signed-in staff member works in, as `GET /api/staff/branches/mine` answers for the
+ * administrator fixture (`admin/branches.ts`): the main outlet and London. There is no session resolution across mock
+ * areas, so a spec that needs another set overrides the endpoints with `server.use(...)`.
+ */
+export const ASSIGNED_BRANCH_IDS: readonly string[] = [
+  inventoryFixtureIds.mainBranchId,
+  inventoryFixtureIds.londonBranchId,
+];
+/** The names the admin branches mock gives those two branches (display only). */
+export const BRANCH_NAMES: Readonly<Record<string, string>> = {
+  [inventoryFixtureIds.mainBranchId]: 'Dhanmondi outlet',
+  [inventoryFixtureIds.londonBranchId]: 'London outlet',
+};
+
+/**
+ * `InventoryControllerSupport.TryResolveBranch(accessor, requestedBranchId, …)` (`InventoryControllerSupport.cs:35-56`):
+ * an explicit `branchId` the caller is not assigned to is `403 { error: "BranchNotAssigned" }`; none given, the active
+ * branch (`X-Branch-Id`). Returns the branch id, or the refusal to send.
+ */
+export function resolveBranch(request: Request, explicit?: string | null): string | Response {
+  if (!explicit) return branchOf(request);
+  if (!ASSIGNED_BRANCH_IDS.includes(explicit)) {
+    return HttpResponse.json({ error: 'BranchNotAssigned' }, { status: 403 });
+  }
+  return explicit;
 }
 
 export interface Violation {

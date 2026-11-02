@@ -1,6 +1,7 @@
 import { apiFetch, getApiUrl } from './client';
 import type { PagedResult } from './types';
 import type { Money } from '@/lib/format/money';
+import { wireMoney } from '@/lib/money/wire';
 import type { ProductCategory, ProductKind } from './shop-catalogue';
 
 /**
@@ -26,6 +27,25 @@ export interface StaffProductSummary {
   skuCount: number;
   listedOnStorefront: boolean;
   lastUpdatedOn: string;
+  // HO-P5 BG-9 -- Read/ViewModels/StaffProductSummaryViewModel.cs:25-30. All additive; the list sends them
+  // for the page, only the CSV export leaves them out. Optional here so a reader tolerates a missing one.
+  /** `CountryRef { code, name }` (`CatalogueItem.cs:3`); `null` when the product has none. */
+  countryOfOrigin?: { code: string; name: string } | null;
+  /** Size labels of the active SKUs that have one, cheapest first; empty for a single unlabelled SKU. */
+  packSizes?: string[] | null;
+  /** Cheapest and dearest CURRENT price of the active, priced SKUs (equal for one); `null` when none is priced now. */
+  priceRange?: { min: Money; max: Money } | null;
+  /** Sellable quantity at the caller's active branch; `null` when unknown or for a bundle. */
+  availableStock?: number | null;
+  /** The primary photo (else the first) with a signed 480 px `url`; `null` when the product has none. */
+  primaryImage?: {
+    url: string | null;
+    altText: string;
+    isPrimary: boolean;
+    skuId: string | null;
+  } | null;
+  /** Carries `CertifiedOrganic`. */
+  isOrganic?: boolean;
 }
 
 export interface StaffProductListParams {
@@ -66,6 +86,34 @@ export function staffProductsExportUrl(params: StaffProductListParams): string {
   return getApiUrl(`/api/staff/shop/products/export.csv${query ? `?${query}` : ''}`);
 }
 
+/**
+ * HO-P5 BG-10 -- `POST /api/staff/shop/products/bulk-status` (`StaffProductsController.cs:280-296`,
+ * `Api/Contracts/Product/StaffProductRequests.cs:94-99`). 200 whatever the mix of outcomes; 400 only for a
+ * malformed request. No versions travel: the server takes each product's current one.
+ */
+export type BulkProductAction = 'Publish' | 'Unpublish';
+export interface BulkProductStatusItem {
+  productId: string;
+  succeeded: boolean;
+  /** The product's status after the attempt; `null` on a failure. */
+  status: string | null;
+  errorCode: string | null;
+  propertyName: string | null;
+  message: string | null;
+}
+export interface BulkProductStatusResult {
+  action: BulkProductAction;
+  succeededCount: number;
+  failedCount: number;
+  items: BulkProductStatusItem[];
+}
+export function bulkProductStatus(request: {
+  productIds: string[];
+  action: BulkProductAction;
+}): Promise<BulkProductStatusResult> {
+  return apiFetch('/api/staff/shop/products/bulk-status', { method: 'POST', body: request });
+}
+
 export interface PublishChecklistItem {
   item: string;
   isBlocking: boolean;
@@ -87,6 +135,10 @@ export interface StaffSku {
   status: 'Active' | 'Discontinued';
   currentPrice: Money | null;
   scheduledPrice: Money | null;
+  /** HO-P5 BG-13 -- the "Was" price of the CURRENT price row and of the scheduled one; `null` when none
+   *  (`Read/ViewModels/StaffProductDetailViewModel.cs:23-25`). */
+  compareAtPrice?: Money | null;
+  scheduledCompareAtPrice?: Money | null;
   /** Deferred to the HO-IMP-001 follow-up (backlog SHP row 51). `null`/absent = never reported. */
   stock?: { sellableQuantity: number; nextAllocatableExpiryOn: string | null; asOf: string } | null;
 }
@@ -121,6 +173,14 @@ export interface StaffFoodDetail {
   /** Optional; publishing needs both only when `CertifiedOrganic` is set. */
   organicCertifier: string | null;
   organicCertificateNumber: string | null;
+  // HO-P5 BG-14 -- staff-only (`Read/ViewModels/StaffProductDetailViewModel.cs:27-33`); not on the public read.
+  /** Last valid day (`yyyy-MM-dd`); `null` when not recorded. */
+  organicCertificateExpiresOn?: string | null;
+  /** The SERVER's verdict (expiry before UTC today); never worked out here. */
+  organicCertificateExpired?: boolean;
+  organicCertificateFileId?: string | null;
+  /** Signed, time-limited link; `null` when no file or the file no longer exists. */
+  organicCertificateUrl?: string | null;
 }
 export interface StaffImage {
   fileId: string;
@@ -147,6 +207,8 @@ export interface StaffProductDetail {
   firstPublishedOn: string | null;
   taxClassId: string;
   countryOfOriginCode: string | null;
+  /** HO-P5 BG-12 -- `Read/ViewModels/StaffProductDetailViewModel.cs:52`; a district name, `null` when none. */
+  districtOfOrigin?: string | null;
   isExpiryTracked: boolean;
   listedOnStorefront: boolean;
   skus: StaffSku[];
@@ -193,6 +255,10 @@ export interface UpdateProductDetailsRequest {
   tags: string[];
   taxClassId: string;
   countryOfOriginCode?: string | null;
+  /** HO-P5 BG-12 -- `Api/Contracts/Product/StaffProductRequests.cs:26-27`; at most 60 characters, no control
+   *  characters. `null` or omitted clears it. `isSubscribable` is deliberately NOT here (§4.1): the server
+   *  leaves it unchanged when it is omitted (`StaffProductRequests.cs:32-33`). */
+  districtOfOrigin?: string | null;
   listedOnStorefront: boolean;
   isExpiryTracked: boolean;
   certifications: string[];
@@ -220,6 +286,10 @@ export interface SetFoodDetailsRequest {
   allergens?: string | null;
   organicCertifier?: string | null;
   organicCertificateNumber?: string | null;
+  /** HO-P5 BG-14 -- `Api/Contracts/Product/FoodAndOriginRequests.cs:14-18`. This is a whole-set `PUT`: an omitted
+   *  or `null` value CLEARS the stored one, so a save that does not touch them sends back what is stored. */
+  organicCertificateExpiresOn?: string | null;
+  organicCertificateFileId?: string | null;
 }
 export function setFoodDetails(productId: string, request: SetFoodDetailsRequest): Promise<void> {
   return apiFetch(`${productPath(productId)}/food`, { method: 'PUT', body: request });
@@ -359,13 +429,30 @@ export interface SkuPriceHistory {
 export function getSkuPrices(skuId: string): Promise<SkuPriceHistory> {
   return apiFetch(`/api/staff/shop/skus/${encodeURIComponent(skuId)}/prices`);
 }
+export interface ScheduleSkuPriceRequest {
+  /** An amount string such as `"2450.00"` (sent as a JSON number through `wireMoney`, never parsed here). */
+  amount: string | number;
+  currencyCode: string;
+  effectiveFrom: string;
+  /** HO-P5 BG-13 -- the optional "Was" amount, same shape; the server refuses one that does not exceed `amount`
+   *  (400 `CompareAtMustExceedPrice`, `StaffProductRequests.cs:90-91`, `SkuPriceAggregate.cs:46-47`). */
+  compareAtAmount?: string | number;
+}
 export function scheduleSkuPrice(
   skuId: string,
-  request: { amount: number; currencyCode: string; effectiveFrom: string },
+  request: ScheduleSkuPriceRequest,
 ): Promise<{ skuPriceId: string }> {
+  const wire = (value: string | number) => (typeof value === 'string' ? wireMoney(value) : value);
   return apiFetch(`/api/staff/shop/skus/${encodeURIComponent(skuId)}/prices`, {
     method: 'POST',
-    body: request,
+    body: {
+      amount: wire(request.amount),
+      currencyCode: request.currencyCode,
+      effectiveFrom: request.effectiveFrom,
+      ...(request.compareAtAmount === undefined || request.compareAtAmount === ''
+        ? {}
+        : { compareAtAmount: wire(request.compareAtAmount) }),
+    },
   });
 }
 

@@ -13,7 +13,7 @@ import { getActiveBranchId } from '../branch';
  * `FilePurpose` mirrors `FilePurpose.cs` (`src/Shared/.../Enums/FilePurpose.cs`) — every member on
  * the backend today.
  */
-export type FilePurpose = 'ProductImage' | 'ReportExport';
+export type FilePurpose = 'ProductImage' | 'ReportExport' | 'OrganicCertificate';
 
 /**
  * `resolveFileUrl` -- the ONE place a signed file URL from an API response becomes something the

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import {
   getBatch,
@@ -16,12 +16,19 @@ import {
   type StockListParams,
 } from '@/lib/api/inventory-stock';
 import {
+  discardReceiptDraft,
   getGoodsReceipt,
   getGoodsReceipts,
+  getReceiptDraft,
+  listReceiptDrafts,
   postGoodsReceipt,
+  saveReceiptDraft,
   type GoodsReceiptListParams,
   type PostGoodsReceiptRequest,
+  type SaveGoodsReceiptDraftRequest,
 } from '@/lib/api/inventory-receipts';
+import { ApiNotFoundError } from '@/lib/api/client';
+import { describeApiError } from '@/lib/api/errors';
 import {
   approveAdjustment,
   approveCount,
@@ -131,6 +138,169 @@ export function useGoodsReceipt(id: string) {
   });
 }
 
+// ---- receipt drafts (HO-P5 BG-18, ADR-FE-190) -------------------------------------------------
+
+/** The caller's own open drafts, newest first (`branchId` narrows to one). */
+export function useReceiptDrafts(branchId?: string, enabled = true) {
+  return useInventoryQuery(
+    'receipt-drafts',
+    ['list', branchId ?? null],
+    () => listReceiptDrafts(branchId),
+    { enabled },
+  );
+}
+
+/** One draft in full. The form takes its first values from it ONCE, so a screen should wait for
+ *  `isFetchedAfterMount` rather than build the form from a cached older copy. */
+export function useReceiptDraft(draftId: string | null) {
+  return useInventoryQuery(
+    'receipt-drafts',
+    ['detail', draftId],
+    () => getReceiptDraft(draftId as string),
+    { enabled: !!draftId },
+  );
+}
+
+export function useDiscardReceiptDraft() {
+  const invalidate = useInvalidateInventory();
+  return useMutation({
+    mutationFn: (draftId: string) => discardReceiptDraft(draftId),
+    onSuccess: () => invalidate('receipt-drafts'),
+  });
+}
+
+/** NFR-USA-4: the draft codes in plain language (the server's own message is preferred). */
+export const DRAFT_CODE_MESSAGES: Readonly<Record<string, string>> = {
+  GoodsReceiptDraftLimitReached: 'You already have 20 open drafts. Post or discard one of them first.',
+  InvalidGoodsReceiptDraft:
+    'Something in the form is too long or out of range, so it was not saved as a draft.',
+};
+
+/** ADR-FE-190: 1.5 s after the last change, and on blur. */
+export const RECEIPT_DRAFT_AUTOSAVE_MS = 1500;
+
+export type ReceiptDraftSaveState = 'idle' | 'saving' | 'saved' | 'error' | 'closed';
+
+/**
+ * `useReceiptDraftAutosave` -- ADR-FE-190. Whole-form `PUT` to the caller's server draft:
+ *  - `payload` is the form as a request, or `null` while there is nothing to save (a form nobody has
+ *    touched must not create a draft). A change schedules one save after `delayMs` of quiet; `flush()`
+ *    (a field blur) saves at once;
+ *  - never more than one request in flight: a change made meanwhile waits, and when the request settles
+ *    the NEWEST form is sent (it supersedes any older one, which is never sent);
+ *  - a 404 means the draft was closed elsewhere (posted or discarded): autosaving stops for good and
+ *    `state` is `'closed'`; any other failure sets `'error'` in plain language and the next change tries
+ *    again (`GoodsReceiptDraftLimitReached` is a 400 on the first save of a new draft);
+ *  - `hasUnsavedChanges` stays true until the newest form has been saved: that is what the
+ *    unsaved-changes guard waits for (NFR-USA-5).
+ * The saved time is the browser's clock when the server answered; the draft itself is the server's.
+ */
+export function useReceiptDraftAutosave(options: {
+  draftId: string;
+  payload: SaveGoodsReceiptDraftRequest | null;
+  enabled?: boolean;
+  delayMs?: number;
+}) {
+  const { draftId, payload, enabled = true, delayMs = RECEIPT_DRAFT_AUTOSAVE_MS } = options;
+  const key = payload ? JSON.stringify(payload) : null;
+  const [state, setState] = useState<ReceiptDraftSaveState>('idle');
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [closed, setClosed] = useState(false);
+
+  const latest = useRef<{ payload: SaveGoodsReceiptDraftRequest | null; key: string | null }>({
+    payload: null,
+    key: null,
+  });
+  const savedKeyRef = useRef<string | null>(null);
+  const inFlight = useRef(false);
+  const stopped = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftIdRef = useRef(draftId);
+  const enabledRef = useRef(enabled);
+  useEffect(() => {
+    latest.current = { payload, key };
+    draftIdRef.current = draftId;
+    enabledRef.current = enabled;
+  });
+
+  const clearTimer = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  }, []);
+
+  const run = useCallback(async () => {
+    clearTimer();
+    // One request at a time: the change waits, and `run` is called again when this one settles.
+    while (!inFlight.current && !stopped.current && enabledRef.current) {
+      const { payload: body, key: bodyKey } = latest.current;
+      if (!body || bodyKey === savedKeyRef.current) return;
+      inFlight.current = true;
+      setState('saving');
+      let retryNow = false;
+      try {
+        await saveReceiptDraft(draftIdRef.current, body);
+        savedKeyRef.current = bodyKey;
+        setSavedKey(bodyKey);
+        setSavedAt(new Date().toISOString());
+        setMessage(null);
+        setState('saved');
+        retryNow = latest.current.key !== bodyKey; // a newer form arrived meanwhile: send it now
+      } catch (error) {
+        if (error instanceof ApiNotFoundError) {
+          stopped.current = true;
+          setClosed(true);
+          setMessage(
+            'This draft was closed somewhere else, so it is no longer being saved. Nothing you typed here has been lost.',
+          );
+          setState('closed');
+        } else {
+          setMessage(describeApiError(error, DRAFT_CODE_MESSAGES));
+          setState('error');
+        }
+      } finally {
+        inFlight.current = false;
+      }
+      if (!retryNow) return;
+    }
+  }, [clearTimer]);
+
+  // A change: wait for a quiet moment, then save.
+  useEffect(() => {
+    if (!enabled || stopped.current || key === null || key === savedKeyRef.current) return;
+    clearTimer();
+    timer.current = setTimeout(() => void run(), delayMs);
+    return clearTimer;
+  }, [key, enabled, delayMs, run, clearTimer]);
+
+  // Leaving the screen with a change waiting for its quiet moment: send it (best effort).
+  useEffect(
+    () => () => {
+      if (timer.current) {
+        clearTimeout(timer.current);
+        timer.current = null;
+        void run();
+      }
+    },
+    [run],
+  );
+
+  const stop = useCallback(() => {
+    stopped.current = true;
+    clearTimer();
+  }, [clearTimer]);
+
+  return {
+    state,
+    savedAt,
+    message,
+    hasUnsavedChanges: enabled && !closed && key !== null && key !== savedKey,
+    flush: () => void run(),
+    stop,
+  };
+}
+
 export function usePostGoodsReceipt() {
   const invalidate = useInvalidateInventory();
   return useMutation({
@@ -138,6 +308,7 @@ export function usePostGoodsReceipt() {
     onSuccess: () =>
       invalidate(
         'receipts',
+        'receipt-drafts',
         'stock',
         'batches',
         'purchase-orders',

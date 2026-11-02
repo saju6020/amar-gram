@@ -17,6 +17,7 @@ import {
   violation,
 } from './fixtures';
 import { db, persist } from './store';
+import { isArrivingWithin } from './consignments';
 import {
   branchBatches,
   daysToExpiry,
@@ -77,10 +78,27 @@ export const alertHandlers: HttpHandler[] = [
   http.get('*/api/staff/inventory/alerts/summary', ({ request }) => {
     const denied = guard(request, ROLES.stockView);
     if (denied) return denied;
+    // BG-17: `arrivalWindowDays` is 1-90 (default 7), else 400 `InvalidQuery` (`StaffAlertsAndReorderController.cs:41-42`).
+    const windowParam = new URL(request.url).searchParams.get('arrivalWindowDays');
+    const windowDays = windowParam === null ? 7 : Number(windowParam);
+    if (!(Number.isInteger(windowDays) && windowDays >= 1 && windowDays <= 90))
+      return violation(
+        'arrivalWindowDays',
+        'InvalidQuery',
+        'arrivalWindowDays must be between 1 and 90.',
+      );
     const open = db.alerts.filter((a) => a.branchId === branchOf(request) && a.status === 'Open');
     const byKind: Partial<Record<AlertKind, number>> = {};
     for (const alert of open) byKind[alert.kind] = (byKind[alert.kind] ?? 0) + 1;
-    const body: AlertSummary = { open: { total: open.length, byKind } };
+    const body: AlertSummary = {
+      open: { total: open.length, byKind },
+      consignmentsArriving: {
+        withinDays: windowDays,
+        count: db.consignments.filter(
+          (c) => c.branchId === branchOf(request) && isArrivingWithin(c, windowDays),
+        ).length,
+      },
+    };
     return HttpResponse.json(body);
   }),
 
