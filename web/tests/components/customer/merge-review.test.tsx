@@ -196,6 +196,12 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
         registrationChannel: 'SelfService',
         status: 'Active',
         mergedIntoCustomerId: null,
+        customerSince: '2026-10-01T00:00:00Z',
+        area: null,
+        orderCount: 0,
+        lifetimeSpend: { amount: '0.00', currencyCode: 'BDT' },
+        tags: [],
+        noteCount: 0,
       },
       {
         id: 'b',
@@ -206,6 +212,12 @@ describe('MergeReview — US-ACC-11, ADR-FE-011', () => {
         registrationChannel: 'SelfService',
         status: 'Active',
         mergedIntoCustomerId: null,
+        customerSince: '2026-10-01T00:00:00Z',
+        area: null,
+        orderCount: 0,
+        lifetimeSpend: { amount: '0.00', currencyCode: 'BDT' },
+        tags: [],
+        noteCount: 0,
       },
     ];
 
