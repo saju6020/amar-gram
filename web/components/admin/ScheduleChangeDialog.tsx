@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   useDialogReturnFocus,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { ApiValidationError } from '@/lib/api/client';
 import { describeApiError } from '@/lib/api/errors';
 import { nowAsDateTimeLocal, formatDateOnly } from '@/lib/format/time';
 
@@ -25,7 +26,23 @@ export interface ScheduleChangeDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string; // "Schedule a new price" / "Schedule a new tax rate"
   valueLabel: string; // "Amount (BDT)" / "Rate (%)"
-  onSchedule: (value: string, effectiveFromIso: string) => Promise<unknown>;
+  onSchedule: (value: string, effectiveFromIso: string, extraValue?: string) => Promise<unknown>;
+  /**
+   * HO-P5 S3 (Amended (ak)): an OPTIONAL second field, drawn under the value (the shop's "Was price"). Without it the
+   * dialog is exactly as before and `onSchedule` is called with two arguments. With it, the typed text is the third.
+   */
+  extraField?: {
+    /** Draws the input; the dialog owns the text and the error. */
+    render: (state: {
+      value: string;
+      onChange: (next: string) => void;
+      error: string | null;
+    }) => ReactNode;
+    /** A client-side check of the typed text (only when it is not blank); return the message to refuse it. */
+    validate?: (value: string) => string | null;
+    /** A server validation error on this property is shown under the extra field instead of at the top. */
+    errorProperty?: string;
+  };
   /**
    * The sentence under the title saying what scheduling changes, given the effective date as text.
    * Defaults to the generic wording (orders and invoices); the shop passes its own (S16).
@@ -43,7 +60,10 @@ export function ScheduleChangeDialog({
   onSchedule,
   consequence = (date) => `Orders and invoices made before ${date} keep their price.`,
   codeMessages,
+  extraField,
 }: ScheduleChangeDialogProps) {
+  const [extraValue, setExtraValue] = useState('');
+  const [extraError, setExtraError] = useState<string | null>(null);
   const [value, setValue] = useState('');
   const [whenChoice, setWhenChoice] = useState<'now' | 'future'>('now');
   const [futureLocal, setFutureLocal] = useState('');
@@ -63,6 +83,7 @@ export function ScheduleChangeDialog({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setExtraError(null);
     if (!value.trim() || !effectiveFromIso) {
       setError('Enter a value and an effective date.');
       return;
@@ -72,15 +93,33 @@ export function ScheduleChangeDialog({
       setError('Choose an effective date and time that is not in the past.');
       return;
     }
+    if (extraField?.validate && extraValue.trim()) {
+      const refusal = extraField.validate(extraValue.trim());
+      if (refusal) {
+        setExtraError(refusal);
+        return;
+      }
+    }
     setIsPending(true);
     try {
-      await onSchedule(value.trim(), effectiveFromIso);
+      if (extraField) await onSchedule(value.trim(), effectiveFromIso, extraValue.trim() || undefined);
+      else await onSchedule(value.trim(), effectiveFromIso);
       setValue('');
+      setExtraValue('');
       setWhenChoice('now');
       setFutureLocal('');
       onOpenChange(false);
     } catch (err) {
-      setError(describeApiError(err, codeMessages));
+      const property = extraField?.errorProperty;
+      if (property && err instanceof ApiValidationError && err.response.errors.some((x) => x.propertyName === property)) {
+        const own = err.response.errors.filter((x) => x.propertyName === property);
+        const rest = err.response.errors.filter((x) => x.propertyName !== property);
+        setExtraError(describeApiError(new ApiValidationError({ ...err.response, errors: own }), codeMessages));
+        if (rest.length > 0)
+          setError(describeApiError(new ApiValidationError({ ...err.response, errors: rest }), codeMessages));
+      } else {
+        setError(describeApiError(err, codeMessages));
+      }
     } finally {
       setIsPending(false);
     }
@@ -112,6 +151,8 @@ export function ScheduleChangeDialog({
               className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink"
             />
           </div>
+
+          {extraField?.render({ value: extraValue, onChange: setExtraValue, error: extraError })}
 
           <fieldset className="flex flex-col gap-2">
             <legend className="text-sm font-semibold text-ink">Effective from</legend>

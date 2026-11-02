@@ -392,7 +392,7 @@ describe('U31 — "Was" price BG-13', () => {
     expect(onSchedulePrice).toHaveBeenLastCalledWith(s, '2600', expect.any(String), 'BDT', '3100');
   });
 
-  it('the schedule dialog without a Was price sends none; a malformed amount is refused before any request', async () => {
+  it('the schedule dialog without a Was price sends none; a malformed Was price is refused before any request', async () => {
     const user = userEvent.setup();
     const onSchedulePrice = vi.fn().mockResolvedValue(undefined);
     render(
@@ -409,12 +409,12 @@ describe('U31 — "Was" price BG-13', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Schedule a new price' }));
     const dialog = await screen.findByRole('dialog');
-    await user.type(within(dialog).getByLabelText('Amount (BDT)'), '12,5');
-    await user.click(within(dialog).getByRole('button', { name: 'Schedule' }));
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent(/Enter an amount such as/);
-    expect(onSchedulePrice).not.toHaveBeenCalled();
-    await user.clear(within(dialog).getByLabelText('Amount (BDT)'));
     await user.type(within(dialog).getByLabelText('Amount (BDT)'), '2600');
+    await user.type(within(dialog).getByLabelText('Was price (optional)'), '12,5');
+    await user.click(within(dialog).getByRole('button', { name: 'Schedule' }));
+    expect(await within(dialog).findByText(/Enter an amount such as/)).toBeInTheDocument();
+    expect(onSchedulePrice).not.toHaveBeenCalled();
+    await user.clear(within(dialog).getByLabelText('Was price (optional)'));
     await user.click(within(dialog).getByRole('button', { name: 'Schedule' }));
     await waitFor(() => expect(onSchedulePrice).toHaveBeenCalledTimes(1));
     expect(onSchedulePrice.mock.calls[0]![4]).toBeUndefined();
