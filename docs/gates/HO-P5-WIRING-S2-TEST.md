@@ -3,7 +3,11 @@ HANDOVER: HO-P5-WIRING (slice S2, sales: dashboard, orders workbench, riders, co
 RUN: 1 (finished on 2026-11-02 after an interrupted session; rows already observed were kept, not rerun)
 COMMITS: feat/p5-s2-sales at afff3ca (S2 commits 625a0da ... 962eaa0, merged with integration 697a636 / 2a2963c / b05175d)
 DATE: 2026-11-01 to 2026-11-02
-STATUS: FAIL
+STATUS: PASS (integrator update, 2026-11-02, under Amended (ag)). Run 1's verdict was FAIL; that record is commit d1d18f3.
+
+INTEGRATOR UPDATE (2026-11-02, under the owner's 2026-10-31 delegation; not the gate's own words)
+- Amended (ag) adopts `web/tests/components/back-office-sales/test-gate-s2.test.tsx` and `web/tests/e2e/sales-gate-s2.spec.ts` into S2 unchanged, so the slice's suite now holds G2 and R3. M1c and M8 are covered, and the gate's own reading above makes the sheet 136 PASS, 0 FAIL, 1 BLOCKED (R15, accepted edge).
+- Rechecked on feat/p5-s2-sales after merging integration b38ff88 (merge e638ccd, which brings in S1 and Amended (ad)-(af)): typecheck exit 0; ESLint on the two adopted files exit 0; Vitest `back-office-sales`, `staff-orders`, `fulfilment` at --maxWorkers=2: 9 files, 131 tests passed. Fresh `next dev` on :3122, routes warmed, `--workers=1 --retries=0`, both projects: `sales-gate-s2` 6 passed (1.0 min); `dashboard-home` (E7) 8 passed; `ordering-staff` (E8) 40 passed; `ordering-pos` (E9) 18 passed; no flaky or retried test. Full Vitest and X1 were not rerun after the merge; they ran on afff3ca.
 
 The slice's code passes every row it owns: typecheck, lint, Vitest, build, the served-output check, every U-row, E7, E8 and E9 on both projects first time, and X1 (`ordering-a11y-responsive`, 68 of 68 first time). The gate fails on two mutation rows, M1c and M8. Each one is a gap in the slice's own tests, not a product defect: a logic line can be removed and every one of the slice's tests still passes. The gate's own tests close both gaps (G2 and R3 in `web/tests/components/back-office-sales/test-gate-s2.test.tsx`). Each of those tests passes on clean code and fails when the line is removed. If the integrator adopts that file, and `web/tests/e2e/sales-gate-s2.spec.ts` with it, into the slice, M1c and M8 are covered and the sheet would read 136 PASS, 0 FAIL, 1 BLOCKED. That decision belongs to the integrator, not to this gate.
 
