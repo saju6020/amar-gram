@@ -147,8 +147,8 @@ describe('Customer tags — U40 (HO-P5 §11.5.4, BG-19)', () => {
     server.use(
       http.put('*/api/staff/customers/c1/tags', async ({ request }) => {
         sent = await request.json();
-        // The server trims and de-duplicates without regard to case, keeping the first spelling.
-        return HttpResponse.json({ tags: ['Regular', 'Wholesale'] });
+        // The stored set is the server's, and it can differ from what was sent (here a colleague added "VIP" meanwhile).
+        return HttpResponse.json({ tags: ['Regular', 'Wholesale', 'VIP'] });
       }),
     );
     renderWithClient(<CustomerProfileView customerId="c1" headingLevel={2} />);
@@ -172,6 +172,8 @@ describe('Customer tags — U40 (HO-P5 §11.5.4, BG-19)', () => {
     expect(within(dialog).getByRole('alert')).toHaveTextContent('A customer can have up to 10 tags.');
     expect(sent).toBeNull();
 
+    // The refused eleventh stays typed in the box, and would be saved with the set: clear it, then remove down and save.
+    await userEvent.clear(input);
     // Remove down to what the test wants stored, then save.
     for (let n = 1; n <= 8; n += 1) {
       await userEvent.click(within(dialog).getByRole('button', { name: `Remove tag Tag ${n}` }));
@@ -179,8 +181,31 @@ describe('Customer tags — U40 (HO-P5 §11.5.4, BG-19)', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save tags' }));
     await waitFor(() => expect(sent).toEqual({ tags: ['Regular', 'Wholesale'] }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    // The chips show the server's returned set.
-    expect(within(screen.getByRole('list', { name: 'Tags' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Regular', 'Wholesale']);
+    // The chips show the server's returned set, not the draft that was sent.
+    expect(within(screen.getByRole('list', { name: 'Tags' })).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Regular', 'Wholesale', 'VIP']);
+  });
+
+  it('a tag typed but not added is saved with the set, and a bad one blocks the save with a message', async () => {
+    let sent: unknown = null;
+    server.use(
+      http.put('*/api/staff/customers/c1/tags', async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json({ tags: (sent as { tags: string[] }).tags });
+      }),
+    );
+    renderWithClient(<CustomerProfileView customerId="c1" headingLevel={2} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit tags' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit tags' });
+    // A duplicate typed and left in the box blocks the save, with a reason.
+    await userEvent.type(within(dialog).getByLabelText('Add a tag'), 'regular');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save tags' }));
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('“regular” is already a tag.');
+    expect(sent).toBeNull();
+    // A new one typed and left in the box is part of the save.
+    await userEvent.clear(within(dialog).getByLabelText('Add a tag'));
+    await userEvent.type(within(dialog).getByLabelText('Add a tag'), 'Gift');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save tags' }));
+    await waitFor(() => expect(sent).toEqual({ tags: ['Regular', 'Gift'] }));
   });
 
   it('shows the server\'s message when it refuses the set, and the dialog stays open', async () => {

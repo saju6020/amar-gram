@@ -88,13 +88,14 @@ function CustomersSplit() {
           totalCount={browse.data?.totalCount}
           pageSize={PAGE_SIZE}
           isLoading={browse.isLoading}
+          isRefreshing={browse.isPlaceholderData}
           isError={browse.isError}
           onRetry={() => void browse.refetch()}
           selectedId={selectedId}
           onSelect={(customerId) => url.set({ customer: customerId, page: page === 1 ? undefined : String(page) })}
         />
       }
-      detail={selectedId ? <CustomerProfileView customerId={selectedId} headingLevel={2} /> : null}
+      detail={selectedId ? <CustomerProfileView key={selectedId} customerId={selectedId} headingLevel={2} /> : null}
     />
   );
 }

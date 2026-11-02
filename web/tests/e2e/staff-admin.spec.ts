@@ -56,9 +56,10 @@ test('E15: the staff list has an Outlet column and a server-derived Status', asy
   await expect(admin).toContainText('London outlet');
   await expect(admin).toContainText('Active');
 
-  // No password yet is "Not set up", and no outlet reads as a dash.
+  // No password yet is "Not set up", and a person with no outlet reads as a dash.
   const newHire = page.getByRole('row', { name: /New Hire, No Password Yet/ });
   await expect(newHire).toContainText('Not set up');
+  await expect(newHire.getByText('—').first()).toBeVisible();
 
   await expectAxeClean(page);
   await expectNoHorizontalScroll(page);

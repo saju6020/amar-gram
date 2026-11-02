@@ -52,22 +52,29 @@ export function CustomerTagsDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  function add() {
+  /** The set with the typed tag added, or `null` after saying why it cannot be (nothing typed returns the set as it is). */
+  function withTyped(): string[] | null {
     const tag = input.trim();
-    if (tag === '') return;
+    if (tag === '') return draft;
     if (tag.length > CUSTOMER_TAG_MAX_LENGTH || /[\u0000-\u001f\u007f-\u009f]/.test(tag)) {
       setProblem(`A tag can be up to ${CUSTOMER_TAG_MAX_LENGTH} characters.`);
-      return;
+      return null;
     }
     if (draft.some((existing) => existing.toLowerCase() === tag.toLowerCase())) {
       setProblem(`“${tag}” is already a tag.`);
-      return;
+      return null;
     }
     if (draft.length >= CUSTOMER_MAX_TAGS) {
       setProblem(`A customer can have up to ${CUSTOMER_MAX_TAGS} tags.`);
-      return;
+      return null;
     }
-    setDraft([...draft, tag]);
+    return [...draft, tag];
+  }
+
+  function add() {
+    const next = withTyped();
+    if (!next || input.trim() === '') return;
+    setDraft(next);
     setInput('');
     setProblem(null);
   }
@@ -82,8 +89,11 @@ export function CustomerTagsDialog({
   async function submit(event: FormEvent) {
     event.preventDefault();
     setProblem(null);
+    // A tag typed but not yet added is part of what the person means to save, not something to drop quietly.
+    const toSave = withTyped();
+    if (!toSave) return;
     try {
-      const result = await save.mutateAsync(draft);
+      const result = await save.mutateAsync(toSave);
       onSaved(result.tags);
       onOpenChange(false);
     } catch (failure) {

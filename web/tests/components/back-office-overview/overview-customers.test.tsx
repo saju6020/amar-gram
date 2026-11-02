@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
@@ -129,7 +130,7 @@ describe('Customers screen — U37 browse, U38 profile summary', () => {
   it('pages the list: Next writes page, and shows where you are', async () => {
     mockBrowse([item], 45);
     renderWithClient(<StaffCustomersPage />);
-    expect(await screen.findByText('Page 1 of 3')).toBeInTheDocument();
+    expect(await screen.findByText(/^Page 1 of 3/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(nav.replace).toHaveBeenLastCalledWith(expect.stringContaining('page=2'), expect.anything());
@@ -171,6 +172,54 @@ describe('Customers screen — U37 browse, U38 profile summary', () => {
       '/staff/customers/duplicates',
     );
     expect(await screen.findByText(/erase/i, { selector: 'h2, h3' })).toBeInTheDocument();
+  });
+
+  it('selecting another customer starts a fresh profile: no note draft, no reset result, back on the Orders tab', async () => {
+    mockBrowse();
+    server.use(
+      http.get('*/api/staff/customers/c2', () =>
+        HttpResponse.json({ ...detail, id: 'c2', fullName: 'Karim Uddin', mobileNumber: '01711000002', noteCount: 0 }),
+      ),
+      http.get('*/api/staff/customers/c2/notes', () => HttpResponse.json([])),
+      http.post('*/api/staff/customers/c1/password-reset', () =>
+        HttpResponse.json({ channel: 'Mobile', maskedDestination: '***001', expiresOn: '2026-10-22T08:15:00Z' }),
+      ),
+    );
+    nav.search = 'customer=c1';
+    const view = renderWithClient(<StaffCustomersPage />);
+    // The next customer is already cached, so no loading state would otherwise unmount the profile.
+    view.client.setQueryData(['staff-customers', 'customer', 'c2'], {
+      ...detail,
+      id: 'c2',
+      fullName: 'Karim Uddin',
+      mobileNumber: '01711000002',
+      noteCount: 0,
+    });
+    await userEvent.click(await screen.findByRole('tab', { name: 'Notes (2)' }));
+    await userEvent.type(await screen.findByLabelText('Add a note'), 'Only for Nusrat');
+    await userEvent.click(screen.getByRole('button', { name: 'Send password reset' }));
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Send reset link' }));
+    expect(await screen.findByText(/Reset link sent by mobile to \*\*\*001/)).toBeInTheDocument();
+
+    nav.search = 'customer=c2';
+    view.rerender(
+      <QueryClientProvider client={view.client}>
+        <StaffCustomersPage />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByRole('heading', { level: 2, name: 'Karim Uddin' })).toBeInTheDocument();
+    expect(screen.queryByText(/Reset link sent/)).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Orders', selected: true })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Notes (0)' }));
+    expect(await screen.findByLabelText('Add a note')).toHaveValue('');
+  });
+
+  it('a page past the end says so and offers the first page', async () => {
+    mockBrowse([], 45);
+    nav.search = 'page=9';
+    renderWithClient(<StaffCustomersPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Back to the first page' }));
+    expect(nav.replace).toHaveBeenLastCalledWith(expect.not.stringContaining('page='), expect.anything());
   });
 
   it('no erase panel for a role other than Administrator', async () => {

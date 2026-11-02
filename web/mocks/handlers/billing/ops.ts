@@ -226,9 +226,11 @@ export const opsBillingHandlers: HttpHandler[] = [
     if (problems.length > 0) return HttpResponse.json({ errors: problems, isValid: false }, { status: 400 });
 
     const explanation = body.explanation?.trim() || null;
-    if (explanation && looksLikeCardNumber(explanation)) {
-      return violation('Explanation', 'ReferenceLooksLikeCardNumber', 'This looks like a card number. Card numbers must never be recorded.');
-    }
+    // The aggregate refuses a card number inside RecordCount, after the open-day, source and date checks (CashUpAggregate.cs:56-73).
+    const cardNumber = () =>
+      explanation && looksLikeCardNumber(explanation)
+        ? violation('Explanation', 'ReferenceLooksLikeCardNumber', 'This looks like a card number. Card numbers must never be recorded.')
+        : null;
     const existing = db.cashUps.find((c) => c.date === date);
     const isSourceCount = !!counts && counts.length > 0;
 
@@ -246,9 +248,16 @@ export const opsBillingHandlers: HttpHandler[] = [
       if (keys.some((key) => !known.some((k) => k.key === key))) {
         return violation('counts', 'UnknownCashUpSource', 'This day has no such source of cash.');
       }
+      // The total is the sum of the sources and is held to the same cap as one amount (CashUpAggregate.cs:101-102).
+      const totalCents = counts.reduce((sum, c) => sum + toCents(c.countedCash), 0);
+      if (totalCents > 999_999_999_999) {
+        return violation('countedCash', 'InvalidAmount', 'The counted cash must be zero or more, with at most two decimals.');
+      }
       if (date > today()) {
         return violation('BusinessDate', 'CashUpDateInFuture', 'A till cannot be counted for a day that has not started.');
       }
+      const refusedCard = cardNumber();
+      if (refusedCard) return refusedCard;
       let record = existing;
       if (!record) {
         record = { date, status: 'Open', version: 0, countedCents: null, explanation: null, countedOn: null, closedByName: null, closedOn: null };
@@ -268,13 +277,16 @@ export const opsBillingHandlers: HttpHandler[] = [
       return HttpResponse.json(cashUpFor(date, ids.mainBranchId));
     }
 
+    // RecordCount: open first (CashUpClosed on Status), then the date, then the explanation (CashUpAggregate.cs:56-73,136-141).
+    if (existing?.status === 'Closed') {
+      return violation('Status', 'CashUpClosed', 'This day is closed and can no longer be changed.');
+    }
     if (date > today()) {
       return violation('BusinessDate', 'CashUpDateInFuture', 'You cannot count the till for a future day.');
     }
+    const refusedCard = cardNumber();
+    if (refusedCard) return refusedCard;
     let record = existing;
-    if (record?.status === 'Closed') {
-      return violation('BusinessDate', 'CashUpClosed', 'This day has been closed and can no longer be changed.');
-    }
     if (!record) {
       record = { date, status: 'Open', version: 0, countedCents: null, explanation: null, countedOn: null, closedByName: null, closedOn: null };
       db.cashUps.push(record);

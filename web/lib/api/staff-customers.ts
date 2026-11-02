@@ -93,7 +93,7 @@ export async function getStaffCustomer(customerId: string): Promise<StaffCustome
 // Browse — HO-P5 BG-19, US-ACC-10
 // -------------------------------------------------------------------------------------------
 
-/** One row of the browsable list (Read/ViewModels/StaffCustomerViewModel.cs:21-23). */
+/** One row of the browsable list (Read/ViewModels/StaffCustomerViewModel.cs:26-28). */
 export interface StaffCustomerListItem {
   id: string;
   fullName: string;
@@ -110,7 +110,8 @@ export interface StaffCustomerListItem {
 export type CustomerListSort = 'recent' | 'name';
 
 export interface BrowseCustomersParams {
-  /** Name, email (a term with `@`) or mobile (a phone-like term with 3+ digits); at most 100 characters. */
+  /** Matches a name or an email address (substring, any case) and, for a phone-like term of 3+ digits, a mobile
+   *  (BrowseCustomersQueryHandler.cs:24-35); at most 100 characters. */
   search?: string;
   /** One tag; at most 100 characters. */
   tag?: string;
@@ -151,7 +152,7 @@ export const CUSTOMER_TAG_MAX_LENGTH = 30;
  *  role that would be refused; the server still decides (403). */
 export const CUSTOMER_STAFF_RECORD_ROLES: readonly string[] = ['Reception', 'Administrator'];
 
-/** A staff note, newest first (Read/ViewModels/StaffCustomerViewModel.cs:36). */
+/** A staff note, newest first (Read/ViewModels/StaffCustomerViewModel.cs:31). */
 export interface CustomerNote {
   id: string;
   text: string;

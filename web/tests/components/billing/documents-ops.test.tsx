@@ -84,7 +84,7 @@ describe('CashUpScreen — U-D', () => {
     await user.type(await screen.findByLabelText(/Counted for Till/), '2940');
     await user.click(screen.getByRole('button', { name: 'Save count' }));
     // The till's row and the day's variance line both say it (HO-P5 Amended (ai)).
-    expect((await screen.findAllByText(/Short BDT 10\.00/)).length).toBeGreaterThan(0);
+    expect(await screen.findAllByText(/Short BDT 10\.00/)).toHaveLength(2);
     expect(screen.getByLabelText(/^Explanation/)).toBeRequired();
     await user.click(screen.getByRole('button', { name: 'Close day' }));
     const dialog = await screen.findByRole('dialog');

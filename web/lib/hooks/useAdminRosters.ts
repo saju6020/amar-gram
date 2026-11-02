@@ -17,6 +17,12 @@ import {
 } from '@/lib/api/admin-rosters';
 import { ApiForbiddenError } from '@/lib/api/client';
 
+/** The grid reads `roster-cells`, and each of these writes can change a cell (a pattern, a scheduled pattern, an
+ *  exception -- a cell click is stored as exceptions), so each refetches them (HO-P5 BG-23). */
+function invalidateCells(queryClient: ReturnType<typeof useQueryClient>, branchId: string) {
+  void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'roster-cells'] });
+}
+
 function noRetryOn403(failureCount: number, error: unknown) {
   return !(error instanceof ApiForbiddenError) && failureCount < 1;
 }
@@ -40,6 +46,7 @@ export function useSetRosterPattern(branchId: string, staffAccountId: string) {
       void queryClient.invalidateQueries({
         queryKey: ['admin', 'branches', branchId, 'availability'],
       });
+      invalidateCells(queryClient, branchId);
     },
   });
 }
@@ -50,6 +57,8 @@ export function useCancelScheduledRosterPattern(branchId: string, staffAccountId
     mutationFn: () => cancelScheduledRosterPattern(branchId, staffAccountId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'rosters'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'availability'] });
+      invalidateCells(queryClient, branchId);
     },
   });
 }
@@ -74,6 +83,7 @@ export function useCreateRosterException(branchId: string) {
       void queryClient.invalidateQueries({
         queryKey: ['admin', 'branches', branchId, 'availability'],
       });
+      invalidateCells(queryClient, branchId);
     },
   });
 }
@@ -86,6 +96,8 @@ export function useCancelRosterException(branchId: string) {
       void queryClient.invalidateQueries({
         queryKey: ['admin', 'branches', branchId, 'roster-exceptions'],
       });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'availability'] });
+      invalidateCells(queryClient, branchId);
     },
   });
 }
@@ -127,6 +139,7 @@ export function useSetRosterShift(branchId: string) {
             c.staffAccountId === cell.staffAccountId && c.date === cell.date ? cell : c,
           ),
       );
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'rosters'] });
       void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'roster-exceptions'] });
       void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'availability'] });
     },

@@ -12,6 +12,7 @@ import { FormRootError, TextAreaField } from '@/components/billing/Fields';
 import { guardedText } from '@/components/billing/schemas';
 import { Button } from '@/components/ui/button';
 import type { CashUp, CashUpSource } from '@/lib/api/billing-cashup';
+import { ApiValidationError } from '@/lib/api/client';
 import { billingViolationCodes, submitBillingForm } from '@/lib/api/errors';
 import type { Money } from '@/lib/format/money';
 import { useRecordCashCount } from '@/lib/hooks/billing/useBillingMutations';
@@ -109,6 +110,7 @@ export function CashUpSourceCountForm({
     register,
     handleSubmit,
     setError,
+    clearErrors,
     reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<Values>({ resolver: zodResolver(schema), mode: 'onChange', defaultValues: initial() });
@@ -141,9 +143,26 @@ export function CashUpSourceCountForm({
       setError,
       { knownFields: ['explanation'] },
     );
-    if (ok) toastSaved();
-    else if (billingViolationCodes(failure).some((code) => SOURCE_CODES.includes(code))) {
+    if (ok) {
+      toastSaved();
+      return;
+    }
+    if (billingViolationCodes(failure).some((code) => SOURCE_CODES.includes(code))) {
       setError('root', { type: 'server', message: SOURCES_CHANGED_MESSAGE });
+      return;
+    }
+    // A refusal of one row's key or amount (`Counts[2].CountedCash`) belongs under that row's input, not in the root message.
+    if (failure instanceof ApiValidationError) {
+      let allRows = failure.response.errors.length > 0;
+      for (const violation of failure.response.errors) {
+        const row = /^Counts\[(\d+)\]\.(SourceKey|CountedCash)$/.exec(violation.propertyName);
+        if (row) {
+          setError(`counts.${Number(row[1])}` as const, { type: 'server', message: violation.errorMessage });
+        } else {
+          allRows = false;
+        }
+      }
+      if (allRows) clearErrors('root');
     }
   });
 

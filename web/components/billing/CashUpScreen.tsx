@@ -7,11 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState';
-import { CashUpSourceCountForm, CashUpSourcesReadout } from '@/components/back-office-admin/CashUpSources';
+import { CashUpSourceCountForm, CashUpSourcesReadout, SourceVariancePill } from '@/components/back-office-admin/CashUpSources';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Panel } from '@/components/back-office/Panel';
-import { StatusPill } from '@/components/back-office/StatusPill';
 import { TableFrame } from '@/components/back-office/TableFrame';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -52,15 +51,9 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
+/** The day's variance as the server states it; the same pill each source row uses (`CashUpSources.tsx`). */
 function VarianceText({ view }: { view: CashUp }) {
-  if (!view.variance) return <StatusPill tone="neutral">Not counted yet</StatusPill>;
-  const sign = moneySign(view.variance.amount);
-  if (sign === 'zero') return <StatusPill tone="success">Balanced</StatusPill>;
-  return (
-    <StatusPill tone={sign === 'negative' ? 'danger' : 'warning'}>
-      {sign === 'negative' ? 'Short' : 'Over'} {a11yMoney(withoutSign(view.variance))}
-    </StatusPill>
-  );
+  return <SourceVariancePill variance={view.variance} />;
 }
 
 function CashUpBody({ view, date, zone, branchName }: { view: CashUp; date: string; zone: string; branchName: string | undefined }) {

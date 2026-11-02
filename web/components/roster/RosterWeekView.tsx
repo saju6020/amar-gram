@@ -225,7 +225,7 @@ export function RosterWeekView({
             <StatusPill tone="success">Morning</StatusPill>
             <StatusPill tone="warning">Evening</StatusPill>
             <StatusPill tone="neutral">Off</StatusPill>
-            <span>then back to Morning. “Custom” days are set by the weekly pattern.</span>
+            <span>then back to Morning. “Custom” days have hours of their own, from the weekly pattern or an exception.</span>
           </p>
           <p role="status" aria-live="polite" className="sr-only">
             {announcement}

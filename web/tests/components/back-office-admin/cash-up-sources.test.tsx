@@ -7,14 +7,13 @@ import type { ReactElement } from 'react';
 import { server } from '../../../mocks/server';
 import { resetBillingMockData } from '../../../mocks/handlers/billing';
 import { CashUpScreen } from '@/components/billing/CashUpScreen';
-import { getCashUp } from '@/lib/api/billing-cashup';
+import { closeCashUp, getCashUp, recordCashCount } from '@/lib/api/billing-cashup';
 import { addDaysIso, todayInZone } from '@/lib/format/time';
 import { setUrl } from '../common/nav-mock';
 
 vi.mock('next/navigation', () => import('../common/nav-mock'));
 
-function renderWithClient(ui: ReactElement) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
+function renderWithClient(ui: ReactElement, client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } })) {
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 }
 
@@ -68,8 +67,9 @@ describe('CashUpScreen per source — U42 (HO-P5 §11.5.5)', () => {
     const sent = JSON.parse(body) as { counts: Array<{ sourceKey: string; countedCash: number | string }>; countedCash?: unknown };
     expect(sent.countedCash).toBeUndefined();
     expect(sent.counts.map((c) => c.sourceKey)).toEqual(['till', expect.stringMatching(/^staff:/)]);
-    // The digits go out as typed: 1200 as a number, not a quoted string, where the runtime can write raw JSON.
-    if ('rawJSON' in JSON) expect(body).toMatch(/"countedCash":1200(\.00)?[,}]/);
+    // The digits go out as typed: 1200 as a number, not a quoted string (this needs `JSON.rawJSON`, which Node 24 has).
+    expect('rawJSON' in JSON).toBe(true);
+    expect(body).toMatch(/"countedCash":1200(\.00)?[,}]/);
 
     const table = within(screen.getByRole('region', { name: 'Count cash by source' })).getByRole('table');
     // The staff source balances exactly (1,200.00 expected and counted); the till expected nothing that day, so 1.00 is over.
@@ -80,11 +80,68 @@ describe('CashUpScreen per source — U42 (HO-P5 §11.5.5)', () => {
     // The total counted and the day's variance are the server's: 1 + 1200 = 1201.00.
     const status = screen.getByText(/Counted in total:/);
     expect(status).toHaveTextContent('৳1,201.00');
-    expect(status).toHaveTextContent('Variance:');
+    // The day's variance is the server's: 1,201.00 counted against 1,200.00 expected.
+    expect(status).toHaveTextContent('Variance: Over BDT 1.00');
     // The reply is the screen: a re-read agrees with it.
     const read = await getCashUp(TWO_SOURCES());
     expect(read.counted?.amount).toBe('1201.00');
     expect(read.sources?.find((s) => s.key === 'till')?.counted?.amount).toBe('1.00');
+  });
+
+  it('writes the reply to this branch\'s cached day only, never another branch\'s same day', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
+    const sentinel = { sentinel: 'another branch, the same day' };
+    const otherKey = ['billing', 'cash-up', 'another-branch', TWO_SOURCES()];
+    client.setQueryData(otherKey, sentinel);
+    const user = userEvent.setup();
+    renderWithClient(<CashUpScreen />, client);
+    await user.type(await screen.findByLabelText('Counted for Till'), '1');
+    await user.type(screen.getByLabelText('Counted for Rezwan Ahmed'), '1200');
+    await user.click(screen.getByRole('button', { name: 'Save count' }));
+    await waitFor(() => expect(screen.getByText(/Counted in total:/)).toHaveTextContent('৳1,201.00'));
+    // The other branch's entry still holds what it held (it may be marked stale, but it was not overwritten).
+    expect(client.getQueryData(otherKey)).toBe(sentinel);
+  });
+
+  it('a closed day reads as a table with no inputs: each source\'s expected, counted and the server\'s over or short', async () => {
+    await recordCashCount(TWO_SOURCES(), {
+      counts: [
+        { sourceKey: 'till', countedCash: '0' },
+        { sourceKey: (await getCashUp(TWO_SOURCES())).sources![1]!.key, countedCash: '1100' },
+      ],
+      explanation: 'The courier kept 100 for fuel.',
+    });
+    await closeCashUp(TWO_SOURCES(), (await getCashUp(TWO_SOURCES())).version);
+    renderWithClient(<CashUpScreen />);
+    const region = await screen.findByRole('region', { name: 'Counted cash by source' });
+    expect(screen.queryByLabelText(/^Counted for /)).not.toBeInTheDocument();
+    const staffRow = within(region).getByRole('rowheader', { name: 'Rezwan Ahmed' }).closest('tr')!;
+    expect(staffRow).toHaveTextContent('৳1,200.00');
+    expect(staffRow).toHaveTextContent('৳1,100.00');
+    expect(within(staffRow).getByText('Short BDT 100.00')).toBeInTheDocument();
+    const tillRow = within(region).getByRole('rowheader', { name: 'Till' }).closest('tr')!;
+    expect(within(tillRow).getByText('Balanced')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save count' })).not.toBeInTheDocument();
+  });
+
+  it('a refusal of one row\'s amount appears under that row\'s input, not as a general message', async () => {
+    server.use(
+      http.put('*/api/staff/billing/cash-ups/:date/count', () =>
+        HttpResponse.json(
+          { isValid: false, errors: [{ propertyName: 'Counts[1].CountedCash', errorCode: 'PredicateValidator', errorMessage: 'must not be negative and have at most two decimals.', resourceName: 'Billing' }] },
+          { status: 400 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithClient(<CashUpScreen />);
+    await user.type(await screen.findByLabelText('Counted for Till'), '1');
+    await user.type(screen.getByLabelText('Counted for Rezwan Ahmed'), '1');
+    await user.click(screen.getByRole('button', { name: 'Save count' }));
+    const input = screen.getByLabelText('Counted for Rezwan Ahmed');
+    await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'));
+    expect(screen.getByText('must not be negative and have at most two decimals.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Counted for Till')).not.toHaveAttribute('aria-invalid');
   });
 
   it('blocks a missing or malformed amount before any request, naming the source', async () => {

@@ -10,6 +10,7 @@ import { RosterWeekView, type RosterDayCell } from '@/components/roster/RosterWe
 import { describeShiftError, nextRosterShift } from '@/components/roster/shiftCycle';
 import { ApiValidationError } from '@/lib/api/client';
 import { addDaysIso, todayInZone } from '@/lib/format/time';
+import { getWeekDates, todayIso } from '@/lib/format/week';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
@@ -242,14 +243,54 @@ describe('Branch roster page — cells, one PUT per click (U45)', () => {
     expect(screen.getByText(/^Nadia Karim, .*: Evening$/, { selector: 'p[role="status"]' })).toBeInTheDocument();
   });
 
-  it('only days from today on, and only the person who can be rostered, are buttons (Ada is not)', async () => {
+  it('only the person who can be rostered has buttons (Ada has none), and only for days from today on', async () => {
     setup(() => 'Morning');
     await screen.findAllByRole('button', { name: /Change shift/ });
     expect(screen.queryAllByRole('button', { name: /^Ada Administrator/ })).toHaveLength(0);
-    for (const b of screen.getAllByRole('button', { name: /^Nadia Karim.*Change shift$/ })) {
-      // "Nadia Karim, Tuesday 5 Jan: …" — the day is in the name; every button's day is today or later.
-      expect(b.getAttribute('aria-label')).toMatch(/^Nadia Karim, \w+ \d+ \w+: /);
-    }
+    // Both the table and the day list are mounted, so each editable day has two buttons.
+    const upcoming = getWeekDates(todayIso()).filter((day) => day >= todayInZone('Asia/Dhaka')).length;
+    expect(screen.getAllByRole('button', { name: /^Nadia Karim.*Change shift$/ })).toHaveLength(upcoming * 2);
+  });
+
+  it('a week that is wholly past has no buttons at all, but still says each shift', async () => {
+    setup(() => 'Morning');
+    const user = userEvent.setup();
+    await screen.findAllByRole('button', { name: /Change shift/ });
+    await user.click(screen.getAllByRole('button', { name: 'Previous week' })[0]!);
+    await waitFor(() => expect(screen.queryAllByRole('button', { name: /Change shift/ })).toHaveLength(0));
+    expect((await screen.findAllByText('Morning')).length).toBeGreaterThan(0);
+  });
+
+  it('cancelling a roster exception (a "Roster cell" one included) refetches the cells, so the grid shows the new shift', async () => {
+    let current: 'Morning' | 'Off' = 'Morning';
+    server.use(
+      http.get('*/api/admin/branches/:branchId/roster-exceptions', () =>
+        HttpResponse.json([
+          {
+            id: 'ex-1',
+            staffAccountId: 'staff-n',
+            branchId: administrationFixtureIds.mainBranchId,
+            date: todayInZone('Asia/Dhaka'),
+            kind: 'ExtraShift',
+            starts: '08:00',
+            ends: '14:00',
+            reason: 'Roster cell: Morning',
+          },
+        ]),
+      ),
+      http.delete('*/api/admin/branches/:branchId/roster-exceptions/:id', () => {
+        current = 'Off';
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    // The page renders as soon as it is set up, so the exception list must already be answering.
+    setup(() => current);
+    const user = userEvent.setup();
+    await screen.findAllByRole('button', { name: /^Nadia Karim, .*: Morning, 08:00–14:00\. Change shift$/ });
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel exception' }));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /^Nadia Karim, .*: Off\. Change shift$/ }).length).toBeGreaterThan(0));
+    expect(screen.queryAllByRole('button', { name: /^Nadia Karim, .*: Morning/ })).toHaveLength(0);
   });
 
   it('a Custom day asks before replacing its hours; Cancel sends nothing and Replace sends Morning', async () => {
@@ -284,8 +325,11 @@ describe('Branch roster page — cells, one PUT per click (U45)', () => {
       ),
     );
     const user = userEvent.setup();
-    await user.click((await screen.findAllByRole('button', { name: /^Nadia Karim, .*: Morning, 08:00–14:00\. Change shift$/ }))[0]!);
+    const clicked = (await screen.findAllByRole('button', { name: /^Nadia Karim, .*: Morning, 08:00–14:00\. Change shift$/ }))[0]!;
+    const label = clicked.getAttribute('aria-label')!;
+    await user.click(clicked);
     expect(await screen.findByText(message)).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /^Nadia Karim, .*: Morning, 08:00–14:00\. Change shift$/ }).length).toBeGreaterThan(0);
+    // That very cell (the same person and day) still holds the shift it had.
+    expect(screen.getAllByRole('button', { name: label }).length).toBeGreaterThan(0);
   });
 });

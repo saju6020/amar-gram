@@ -154,6 +154,43 @@ describe('PUT …/cash-ups/{date}/count with counts[] — StaffCashUpController.
     ).toMatchObject({ errorCode: 'CashUpDateInFuture', propertyName: 'BusinessDate' });
   });
 
+  it('refuses a per-source total above the maximum amount (InvalidAmount on countedCash), though each amount alone is within it', async () => {
+    const [till, staff] = await sourceKeys();
+    expect(
+      await violationOf(() =>
+        recordCashCount(SRC_DAY, {
+          counts: [
+            { sourceKey: till!, countedCash: '9999999999.99' },
+            { sourceKey: staff!, countedCash: '9999999999.99' },
+          ],
+        }),
+      ),
+    ).toMatchObject({ errorCode: 'InvalidAmount', propertyName: 'countedCash' });
+    expect((await getCashUp(SRC_DAY)).counted).toBeNull();
+  });
+
+  it('refuses in the aggregate\'s order: a closed day is CashUpClosed on Status before the date or a card number in the explanation, on the total-only path too', async () => {
+    const [till] = await sourceKeys();
+    await recordCashCount(SRC_DAY, { counts: [{ sourceKey: till!, countedCash: '0' }], explanation: 'Courier cash banked early.' });
+    await closeCashUp(SRC_DAY, (await getCashUp(SRC_DAY)).version);
+    expect(await violationOf(() => recordCashCount(SRC_DAY, { countedCash: '5' }))).toMatchObject({
+      errorCode: 'CashUpClosed',
+      propertyName: 'Status',
+    });
+    expect(
+      await violationOf(() => recordCashCount(SRC_DAY, { countedCash: '5', explanation: '4111 1111 1111 1111' })),
+    ).toMatchObject({ errorCode: 'CashUpClosed', propertyName: 'Status' });
+    // On an open day the card number is refused (after the checks above it).
+    const open = addDaysIso(TODAY, -3);
+    expect(await violationOf(() => recordCashCount(open, { countedCash: '5', explanation: '4111 1111 1111 1111' }))).toMatchObject({
+      errorCode: 'ReferenceLooksLikeCardNumber',
+    });
+    // A future day is refused before a card number is looked at.
+    expect(
+      await violationOf(() => recordCashCount(addDaysIso(TODAY, 1), { countedCash: '5', explanation: '4111 1111 1111 1111' })),
+    ).toMatchObject({ errorCode: 'CashUpDateInFuture' });
+  });
+
   it('freezes the sources at close: a source left out reads as counted nothing (a variance), and a closed day refuses a recount (CashUpClosed on Status)', async () => {
     const [till, staff] = await sourceKeys();
     await recordCashCount(SRC_DAY, {

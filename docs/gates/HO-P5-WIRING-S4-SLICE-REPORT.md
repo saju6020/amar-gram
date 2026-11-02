@@ -118,3 +118,34 @@ Not run: the full Vitest suite; E17 specs; `sweep:a11y`; `npm run build`; the co
 * No e2e case for a Locked staff status (the mock has no lockout; `setMockStaffLockedUntil` is a component-test seam). The Locked pill is proved by `money-and-admin.test.tsx` U39/U44 and the mock rule by `mock-refusals.test.ts`.
 * `NoResetChannel` is mirrored in the mock but unreachable from the seeds (no active customer has neither a mobile nor an email); it has no test.
 * `tests/contract/mock-vs-real.contract.test.ts` is the integration step's.
+
+## Round 2 (CODE_REVIEW run 1 fixes; ARCHITECTURE and SECURITY passed)
+
+Commit: `fix(web): ... (HO-P5 S4 CODE_REVIEW run 1)`. Nothing under `docs/handover` or `eslint.config.mjs` was touched.
+
+**Must fix**
+1. HIGH, roster cells stale: `useSetRosterPattern`, `useCancelScheduledRosterPattern`, `useCreateRosterException` and `useCancelRosterException` now all invalidate `['admin','branches',branchId,'roster-cells']` (one `invalidateCells` helper; cancel-pattern and cancel-exception also refetch availability); `useSetRosterShift` also invalidates `rosters`. Page test in `roster-cells.test.tsx`: cancelling a "Roster cell" exception turns the grid from Morning to Off. Shown to fail with the invalidation removed.
+2. MEDIUM, cross-branch cache write: `useRecordCashCount` reads `useBranchScope()` itself and does `setQueryData(['billing','cash-up',branchId,date], view)`. Test in `cash-up-sources.test.tsx` seeds another branch's entry for the same day and asserts it is the same object after a save.
+3. MEDIUM, profile state carried over: `CustomerProfileView key={selectedId}`. Test (`overview-customers.test.tsx`): note draft, reset result and the Notes tab do not carry to a cached next customer. Shown to fail without the key.
+4. MEDIUM, U40: the mocked PUT now returns a set that differs from what was sent (a colleague's "VIP" added); the chips must show it.
+5. MEDIUM, past days: two tests. This week's Nadia buttons equal twice the days on or after today (table plus day list); after "Previous week" there are no buttons at all while the shifts still read as text.
+6. LOW, `documents-ops.test.tsx` now `toHaveLength(2)`.
+
+**Cheap LOWs**
+- `staff-customers.ts`: citations now `:26-28` (list item) and `:31` (note); the search comment no longer says "email only with @".
+- Roster legend: "Custom days have hours of their own, from the weekly pattern or an exception."
+- `useBillingMutations.ts`: the type alias moved below the imports.
+- "The cell keeps its shift" now checks the clicked cell's exact label.
+- `staff-admin.spec.ts` now asserts the dash for a person with no outlet.
+- `CashUpSources.tsx`: `Counts[i].SourceKey` / `.CountedCash` violations go under that row's input (root message cleared when every violation was a row one); `CashUpScreen`'s `VarianceText` delegates to `SourceVariancePill`, one component (both in the block). Test added.
+- `cash-up-sources.test.tsx`: asserts "Variance: Over BDT 1.00"; the `rawJSON` assertion is unconditional; closed per-source readout case added (no inputs, Short BDT 100.00 / Balanced).
+- `CustomerTagsDialog`: a tag typed but not added is added on Save (a bad one blocks the save with the same message as Add). Tests for both.
+- `CustomerBrowsePanel`: uses `SimplePager`; an empty page past the end offers "Back to the first page"; an "Updating the list..." status shows while the previous page is held (`isRefreshing` from `isPlaceholderData`). Pager text is now "Page 1 of 3 - 45 total"; test updated. Test for the way back.
+- `billing/ops.ts`: total-only and per-source counts check in the aggregate's order (open first, `CashUpClosed` on `Status`; then the date; the card-number guard last); a per-source sum above 9,999,999,999.99 is `InvalidAmount` on `countedCash`. Tests: both orders and the cap.
+
+**Record only**
+- `components/customer/CustomerSearchPanel.tsx` is dead (no importer; the POS has its own panel). Left in place as instructed; the integrator may delete it.
+- The `'UTC'` zone fallback and the 100-staff read cap on the roster page: left as they are.
+- Roster and branch mock 403s (SECURITY LOW 3, inherited): not added. The admin mocks model no staff session by design (`admin/fixtures.ts`), so a role check needs a new seam across `accounts.ts`; not cheap.
+
+**Verification:** typecheck and `eslint . --max-warnings 0` clean. Vitest, 54 files / 585 tests (guards, U46 and every folder S4 touches or that imports its mocks: admin, branches, customer, roster, back-office-admin, back-office-customers, back-office-overview, billing, staff) at `--maxWorkers=2`: all passed. e2e on a fresh `next dev` (3124), both projects, `--workers=1`: `staff-admin` + `staff-customers` 16 passed; `billing-functional -g "E14|E-D1"` 4 passed. Server killed (3124 free).

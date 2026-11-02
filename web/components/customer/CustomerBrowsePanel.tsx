@@ -5,6 +5,7 @@ import { SearchField } from '@/components/back-office/SearchField';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
+import { SimplePager } from '@/components/notifications/SimplePager';
 import { Button } from '@/components/ui/button';
 import type { CustomerListSort, StaffCustomerListItem } from '@/lib/api/staff-customers';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ export function CustomerBrowsePanel({
   totalCount,
   pageSize,
   isLoading,
+  isRefreshing = false,
   isError,
   onRetry,
   selectedId,
@@ -61,6 +63,8 @@ export function CustomerBrowsePanel({
   totalCount: number | undefined;
   pageSize: number;
   isLoading: boolean;
+  /** The previous page is still shown while the next one loads. */
+  isRefreshing?: boolean;
   isError: boolean;
   onRetry: () => void;
   selectedId: string;
@@ -76,7 +80,6 @@ export function CustomerBrowsePanel({
   }
 
   const total = totalCount ?? 0;
-  const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const filtered = !!search || !!tag;
 
   return (
@@ -139,6 +142,13 @@ export function CustomerBrowsePanel({
               ? 'Check the spelling, clear the tag, or register them as a walk-in customer.'
               : 'Register a walk-in customer to start the list.'
           }
+          action={
+            page > 1 ? (
+              <Button variant="secondary" className="min-h-11" onClick={() => onPage(1)}>
+                Back to the first page
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
         <>
@@ -190,22 +200,10 @@ export function CustomerBrowsePanel({
             })}
           </ul>
 
-          {total > pageSize && (
-            <nav aria-label="Customer pages" className="flex items-center justify-between gap-2">
-              <Button variant="secondary" disabled={page <= 1} onClick={() => onPage(page - 1)} className="min-h-11">
-                Previous
-              </Button>
-              <p className="text-sm text-ink-muted" aria-live="polite">
-                Page {page} of {pageCount}
-              </p>
-              <Button variant="secondary" disabled={page >= pageCount} onClick={() => onPage(page + 1)} className="min-h-11">
-                Next
-              </Button>
-            </nav>
-          )}
-          <p className="text-xs text-ink-muted">
-            {total === 1 ? '1 customer' : `${total} customers`}
+          <p role="status" className="m-0 text-xs text-ink-muted">
+            {isRefreshing ? 'Updating the list…' : total <= pageSize ? (total === 1 ? '1 customer' : `${total} customers`) : ''}
           </p>
+          <SimplePager pageNumber={page} pageSize={pageSize} totalCount={total} onPageChange={onPage} />
         </>
       )}
     </div>
