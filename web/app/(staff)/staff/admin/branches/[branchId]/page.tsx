@@ -29,6 +29,7 @@ export default function BranchDetailsPage({ params }: { params: Promise<{ branch
           addressLine: values.addressLine,
           phoneNumber: values.phoneNumber,
           email: values.email,
+          type: values.type,
         })
       }
       onSetActivation={(isActive) => activationMutation.mutateAsync(isActive)}

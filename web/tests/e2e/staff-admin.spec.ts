@@ -1,4 +1,5 @@
 import { test, expect, signInAsStaff, secondStaff } from './fixtures';
+import { expectAxeClean, expectNoHorizontalScroll } from './reports-helpers';
 
 /**
  * Staff account administration — HO-ACC-002 §16 E-G1/E-F1, run against MSW. E-G1's full
@@ -42,4 +43,24 @@ test('E-F1: a non-admin staff member opening /staff/admin/staff-accounts directl
 
   await page.goto('/staff/admin/staff-accounts');
   await expect(page.getByText(/you don.t have permission to do this/i)).toBeVisible();
+});
+
+// HO-P5 §16 E15 (BG-22): the staff list shows each person's outlets (the primary first) and the status the server derives.
+test('E15: the staff list has an Outlet column and a server-derived Status', async ({ page }) => {
+  await signInAsStaff(page);
+  await page.goto('/staff/admin/staff-accounts');
+  await expect(page.getByRole('columnheader', { name: 'Outlet' })).toBeVisible();
+
+  const admin = page.getByRole('row', { name: /Ada Administrator/ });
+  await expect(admin).toContainText('Dhanmondi outlet (primary)');
+  await expect(admin).toContainText('London outlet');
+  await expect(admin).toContainText('Active');
+
+  // No password yet is "Not set up", and a person with no outlet reads as a dash.
+  const newHire = page.getByRole('row', { name: /New Hire, No Password Yet/ });
+  await expect(newHire).toContainText('Not set up');
+  await expect(newHire.getByText('—').first()).toBeVisible();
+
+  await expectAxeClean(page);
+  await expectNoHorizontalScroll(page);
 });

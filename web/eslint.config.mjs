@@ -163,7 +163,14 @@ const eslintConfig = [
     // `parseFloat(`, `parseInt(` and no unary `+` in the Billing components, the Billing API
     // modules or `lib/money/**`. (A later `no-restricted-syntax` block replaces the earlier one's
     // options rather than merging, so the `srcDoc` selectors above are repeated here.)
-    files: ['components/billing/**', 'lib/api/billing-*', 'lib/api/my-billing.ts', 'lib/money/**'],
+    files: [
+      'components/billing/**',
+      // HO-P5 Amended (aj): the per-source cash-up is Billing presentation outside components/billing/.
+      'components/back-office-admin/CashUpSources.tsx',
+      'lib/api/billing-*',
+      'lib/api/my-billing.ts',
+      'lib/money/**',
+    ],
     rules: {
       'no-restricted-syntax': [
         'error',

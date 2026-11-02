@@ -155,6 +155,72 @@ test('E-B2: a staff member assigned to two branches sees the picker, and switchi
   expect(request.headers()['x-branch-id']).toBe(administrationFixtureIds.londonBranchId);
 });
 
+// HO-P5 §16 E15 (BG-21): the outlet card carries the type, the address, today's hours, the delivery areas and the staff count.
+test('E15: outlet cards show the type, address, today\'s hours, delivery areas and staff count; a warehouse can be created', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  // Imported here, not at the top, so the line numbers the baseline list in HO-P5 §1 names (E-B1 at :56) do not move.
+  const { expectAxeClean, expectNoHorizontalScroll } = await import('./reports-helpers');
+  await signInAsStaff(page);
+  await page.goto('/staff/admin/branches');
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Dhanmondi outlet' }) });
+  await expect(card.getByText('Outlet', { exact: true })).toBeVisible();
+  await expect(card.getByText('12 Gulshan Avenue, Dhaka')).toBeVisible();
+  await expect(card.getByText('Today', { exact: true })).toBeVisible();
+  await expect(card.getByText('Delivers to')).toBeVisible();
+  await expect(card.getByText('Dhaka City')).toBeVisible();
+  await expect(card.getByText('2 staff')).toBeVisible();
+
+  await page.goto('/staff/admin/branches/new');
+  const code = `WH${Date.now().toString().slice(-6)}`;
+  await page.getByLabel('Code').fill(code);
+  await page.getByLabel('Name').fill('E2E warehouse');
+  await page.getByLabel('Type').selectOption('Warehouse');
+  const createResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/admin/branches') && response.request().method() === 'POST',
+  );
+  await page.getByRole('button', { name: /create branch/i }).click();
+  const { branchId } = (await (await createResponse).json()) as { branchId: string };
+  await waitForUrlOrGoto(page, new RegExp(`/staff/admin/branches/${branchId}$`), `/staff/admin/branches/${branchId}`);
+  await expect(page.getByLabel('Type')).toHaveValue('Warehouse');
+
+  await page.goto('/staff/admin/branches');
+  const warehouse = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'E2E warehouse' }) });
+  await expect(warehouse.getByText('Warehouse', { exact: true })).toBeVisible();
+  await expect(warehouse.getByText('0 staff')).toBeVisible();
+  await expectAxeClean(page);
+  await expectNoHorizontalScroll(page);
+});
+
+// HO-P5 §16 E15 (BG-23): a roster cell is a button that cycles Morning -> Evening -> Off -> Morning through the server.
+test('E15: a roster cell cycles to the next shift and the change is announced', async ({ page }) => {
+  const { expectAxeClean, expectNoHorizontalScroll } = await import('./reports-helpers');
+  await signInAsStaff(page);
+  await page.goto(`/staff/admin/branches/${administrationFixtureIds.mainBranchId}/roster`);
+
+  const first = page.getByRole('button', { name: /^Nadia Karim, .*Change shift$/ }).first();
+  await expect(first).toBeVisible();
+  const label = (await first.getAttribute('aria-label')) ?? '';
+  const match = /^(Nadia Karim, [^:]+): (Morning|Evening|Off|Custom)/.exec(label);
+  expect(match, label).not.toBeNull();
+  const [, prefix, current] = match as RegExpExecArray;
+  const next = ({ Morning: 'Evening', Evening: 'Off', Off: 'Morning', Custom: 'Morning' } as Record<string, string>)[current!]!;
+
+  const cell = page.getByRole('button', { name: new RegExp(`^${prefix!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: `) }).first();
+  await cell.click();
+  if (current === 'Custom') {
+    // A day with its own hours asks before they are replaced.
+    await expect(page.getByRole('dialog', { name: "Replace this day's hours?" })).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: 'Replace hours' }).click();
+  }
+  await expect(cell).toHaveAttribute('aria-label', new RegExp(`: ${next}`));
+  await expect(page.locator('p[role="status"]', { hasText: new RegExp(`^${prefix!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: ${next}$`) })).toBeAttached();
+
+  await expectAxeClean(page);
+  await expectNoHorizontalScroll(page);
+});
+
 test('E-D1: a staff member requests leave, an administrator approves it, and the roster view marks the days "On leave"', async ({
   page,
 }) => {
