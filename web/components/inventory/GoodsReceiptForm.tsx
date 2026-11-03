@@ -127,7 +127,7 @@ export function GoodsReceiptForm({
     draftId,
     payload: dirty
       ? toDraftRequest(state, {
-          branchId: showBranchChoice ? (branchId ?? null) : null,
+          branchId: branchId ?? null, // always the form's own branch: a draft never moves to the active one
           supplierId: state.source === 'purchase-order' ? (chosenOrder?.supplierId ?? null) : null,
         })
       : null,
@@ -258,7 +258,12 @@ export function GoodsReceiptForm({
     // A save already in flight may be the one that creates the draft: let it land, then delete it.
     autosave.stop();
     await autosave.settle();
-    await onDiscardDraft();
+    try {
+      await onDiscardDraft();
+    } catch (error) {
+      autosave.resume(); // the draft is still open: keep saving what is typed
+      throw error;
+    }
   }
 
   function review(event: React.FormEvent) {
@@ -279,11 +284,12 @@ export function GoodsReceiptForm({
       await autosave.settle(); // the draft must exist before the post names it, and must not appear after it
       await onPost({
         ...toPostRequest(state),
-        ...(showBranchChoice && branchId ? { branchId } : {}),
+        ...(branchId ? { branchId } : {}),
         draftId,
       });
       setDirty(false);
     } catch (error) {
+      autosave.resume(); // refused: the draft is still open, so what is typed next is saved again
       setSubmitting(false);
       setConfirming(false);
       const distributed =

@@ -140,6 +140,7 @@ describe('44 px targets (§7 UI-6) on the S3 controls', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Remove file' })).toHaveClass('min-h-11');
+    expect(screen.getByRole('link', { name: /View certificate/ })).toHaveClass('inline-flex', 'min-h-11');
     expect(screen.getByLabelText('Certificate valid until')).toHaveClass('min-h-11');
   });
 });

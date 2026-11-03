@@ -59,6 +59,8 @@ function NewReceiptContent() {
   );
   const [receiveInto, setReceiveInto] = useState<string | null>(null);
   const [booted, setBooted] = useState(false);
+  // The workspace whose form has been drawn once: its data is the form's own from then on (see `draftReady`).
+  const [drawnFor, setDrawnFor] = useState<string | null>(null);
 
   const draft = useReceiptDraft(workspace.resume ? workspace.id : null);
   const draftLineCodes = (draft.data?.lines ?? []).map((l) => l.skuCode ?? '').filter(Boolean);
@@ -104,6 +106,11 @@ function NewReceiptContent() {
   useEffect(() => {
     if (firstLoad) setBooted(true);
   }, [firstLoad]);
+  const resumedLoaded =
+    workspace.resume && draft.isFetchedAfterMount && !!draft.data && draftSkus.every((q) => !q.isLoading);
+  useEffect(() => {
+    if (resumedLoaded) setDrawnFor(workspace.id);
+  }, [resumedLoaded, workspace.id]);
 
   if (orders.error instanceof ApiForbiddenError) return <AccessRefusedState error={orders.error} />;
 
@@ -134,8 +141,11 @@ function NewReceiptContent() {
     );
   }
 
-  const draftReady =
+  const draftLoaded =
     !workspace.resume || (draft.isFetchedAfterMount && !!draft.data && draftSkus.every((q) => !q.isLoading));
+  // Once drawn, a draft's form stays mounted: the SKU lookups are keyed by the active branch and reload on a sidebar
+  // switch, which must not swap the form (and the text typed in it) for a loading state.
+  const draftReady = draftLoaded || drawnFor === workspace.id;
   if ((!booted && !firstLoad) || !draftReady) return <LoadingState rows={5} />;
 
   const skusByCode: Record<string, SkuLookup | null | undefined> = {};

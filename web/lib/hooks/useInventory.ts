@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   getBatch,
   getBatches,
@@ -61,7 +61,7 @@ import {
   type NearExpiryParams,
   type StockOnHandParams,
 } from '@/lib/api/inventory-reports';
-import { useInventoryQuery, useInvalidateInventory } from './useInventoryQuery';
+import { noRetryOnRefusal, useInventoryQuery, useInvalidateInventory } from './useInventoryQuery';
 
 /** HO-IMP-002 §8.2/§8.3 — receipts, stock, batches, ledger, control, alerts, reports. */
 
@@ -153,12 +153,14 @@ export function useReceiptDrafts(branchId?: string, enabled = true) {
 /** One draft in full. The form takes its first values from it ONCE, so a screen should wait for
  *  `isFetchedAfterMount` rather than build the form from a cached older copy. */
 export function useReceiptDraft(draftId: string | null) {
-  return useInventoryQuery(
-    'receipt-drafts',
-    ['detail', draftId],
-    () => getReceiptDraft(draftId as string),
-    { enabled: !!draftId },
-  );
+  // NOT keyed by the active branch (unlike the other inventory reads): the server filters the detail by id and owner only
+  // (StockQueryHandlers.cs:137), and a draft being worked on must not refetch, and so remount its form, on a sidebar switch.
+  return useQuery({
+    queryKey: ['inventory', 'receipt-drafts', 'detail', draftId],
+    queryFn: () => getReceiptDraft(draftId as string),
+    enabled: !!draftId,
+    retry: noRetryOnRefusal,
+  });
 }
 
 export function useDiscardReceiptDraft() {
@@ -299,6 +301,12 @@ export function useReceiptDraftAutosave(options: {
     clearTimer();
   }, [clearTimer]);
 
+  /** Undo `stop()` after a post or discard was refused: the draft is still open, so edits must be saved again. The change
+   *  effect picks the unsaved form up on the next render. */
+  const resume = useCallback(() => {
+    stopped.current = false;
+  }, []);
+
   /** Resolves once a save already in flight has settled (it may be the one that CREATES the draft), so a post or a
    *  discard goes after it and not before. Call `stop()` first so nothing new starts. */
   const settle = useCallback(async () => {
@@ -316,6 +324,7 @@ export function useReceiptDraftAutosave(options: {
     hasUnsavedChanges: enabled && !closed && key !== null && key !== savedKey,
     flush: () => void run(),
     stop,
+    resume,
     settle,
   };
 }

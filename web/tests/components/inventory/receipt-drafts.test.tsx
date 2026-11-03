@@ -118,7 +118,7 @@ describe('U35 — autosave status and the server refusals, on the form', () => {
     expect(screen.getByRole('button', { name: /review and post/i })).toBeEnabled();
   }, 15000);
 
-  it('posting sends the draft id (so the server closes the draft) and no branch with one branch', async () => {
+  it('posting sends the draft id (so the server closes the draft) and the own branch of the form even with one branch', async () => {
     const { user, onPost } = setup({ branches: [BRANCHES[0]!], branchId: BRANCHES[0]!.id });
     await addLine(user);
     await user.type(screen.getByLabelText(/lot number/i), 'L1');
@@ -129,8 +129,65 @@ describe('U35 — autosave status and the server refusals, on the form', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /post receipt/i }));
     await waitFor(() => expect(onPost).toHaveBeenCalledTimes(1));
     expect(onPost.mock.calls[0]![0]).toMatchObject({ draftId: DRAFT_ID });
-    expect(onPost.mock.calls[0]![0]).not.toHaveProperty('branchId');
+    expect(onPost.mock.calls[0]![0]).toMatchObject({ branchId: BRANCHES[0]!.id });
   });
+});
+
+describe('autosave resumes after a refused post or discard (the draft is still open)', () => {
+  async function typeAndExpectSaved(user: ReturnType<typeof userEvent.setup>, text: string) {
+    await user.type(screen.getByLabelText(/lot number/i), text);
+    await waitFor(
+      () => expect(db.receiptDrafts.find((d) => d.draftId === DRAFT_ID)?.lines[0]?.lotNumber).toContain(text),
+      { timeout: 6000 },
+    );
+  }
+
+  it('after a refused post, an edit is saved again and the status updates', async () => {
+    const onPost = vi.fn().mockRejectedValue(new Error('down'));
+    const { user } = setup({ onPost });
+    await addLine(user);
+    await user.type(screen.getByLabelText(/lot number/i), 'A');
+    await user.type(screen.getByLabelText(/expiry date/i), '2027-01-30');
+    await user.type(screen.getByLabelText(/accepted \(bags\)/i), '4');
+    await user.type(screen.getByLabelText(/^unit cost/i), '10');
+    await user.click(screen.getByRole('button', { name: /review and post/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /post receipt/i }));
+    await waitFor(() => expect(onPost).toHaveBeenCalledTimes(1));
+    await screen.findByText(/nothing was posted/i);
+    await typeAndExpectSaved(user, 'ZZ');
+    expect(screen.getByText(/^Draft saved at \d\d:\d\d/)).toBeInTheDocument();
+  }, 30000);
+
+  it('after a refused discard, an edit is saved again', async () => {
+    const onDiscardDraft = vi.fn().mockRejectedValue(new Error('down'));
+    const { user } = setup({ onDiscardDraft });
+    await addLine(user);
+    await user.type(screen.getByLabelText(/lot number/i), 'A');
+    await user.click(screen.getByRole('button', { name: /discard draft/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /discard draft/i }));
+    await waitFor(() => expect(onDiscardDraft).toHaveBeenCalledTimes(1));
+    // The refusal is shown in the dialog; leave it and carry on typing.
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /cancel/i }));
+    await typeAndExpectSaved(user, 'QQ');
+  }, 30000);
+});
+
+describe('a person in one branch resuming the draft of another branch', () => {
+  it('keeps the own branch of that draft in the save and in the post', async () => {
+    const { user, onPost } = setup({ branchId: ids.londonBranchId });
+    await addLine(user);
+    await user.type(screen.getByLabelText(/lot number/i), 'L1');
+    await waitFor(() => expect(db.receiptDrafts.find((d) => d.draftId === DRAFT_ID)?.branchId).toBe(ids.londonBranchId), {
+      timeout: 6000,
+    });
+    await user.type(screen.getByLabelText(/expiry date/i), '2027-01-30');
+    await user.type(screen.getByLabelText(/accepted \(bags\)/i), '4');
+    await user.type(screen.getByLabelText(/^unit cost/i), '10');
+    await user.click(screen.getByRole('button', { name: /review and post/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /post receipt/i }));
+    await waitFor(() => expect(onPost).toHaveBeenCalledTimes(1));
+    expect(onPost.mock.calls[0]![0]).toMatchObject({ branchId: ids.londonBranchId });
+  }, 30000);
 });
 
 describe('discard and post wait for the save in flight (no orphan draft)', () => {
@@ -396,6 +453,47 @@ describe('U35/U36 — the page', () => {
     const locationReads = urls.filter((u) => u.includes('/inventory/locations'));
     expect(locationReads.length).toBeGreaterThan(0);
     for (const u of locationReads) expect(u).toContain(`branchId=${ids.mainBranchId}`);
+  }, 30000);
+
+  it('a resumed draft stays mounted, with its typed text, when the branch is switched in the sidebar', async () => {
+    await fetch('http://localhost:5005/api/staff/inventory/goods-receipt-drafts/' + DRAFT_ID, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Branch-Id': ids.mainBranchId },
+      body: JSON.stringify({
+        branchId: ids.mainBranchId,
+        supplierId: null,
+        deliveryReference: 'KEEP',
+        lines: [
+          {
+            skuId: ids.foodSkuId,
+            lotNumber: 'L-A',
+            quantityAccepted: '1',
+            quantityRejected: '0',
+            locationId: ids.warehouseId,
+            holdForInspection: false,
+          },
+        ],
+      }),
+    });
+    navigation.search = new URLSearchParams(`draft=${DRAFT_ID}`);
+    const user = userEvent.setup({ delay: 0 });
+    let client!: ReturnType<typeof renderWithClient>['queryClient'];
+    await act(async () => {
+      client = renderWithClient(<NewReceiptPage />).queryClient;
+    });
+    const lot = await screen.findByLabelText(/lot number/i, {}, { timeout: 8000 });
+    await user.type(lot, 'X');
+    act(() => {
+      client.setQueryData(ACTIVE_BRANCH_KEY, ids.londonBranchId); // the sidebar picker
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // The very same input element, not a remounted copy, and the text is still in it.
+    expect(screen.getByLabelText(/lot number/i)).toBe(lot);
+    expect(lot).toHaveValue('L-AX');
+    await user.type(lot, 'Y');
+    await waitFor(() => expect(db.receiptDrafts.find((d) => d.draftId === DRAFT_ID)?.lines[0]?.lotNumber).toBe('L-AXY'), {
+      timeout: 8000,
+    });
   }, 30000);
 
   it('a resumed draft keeps its own saved branch, not the one in the sidebar', async () => {
