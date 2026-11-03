@@ -3,7 +3,11 @@ HANDOVER: HO-P5-WIRING (slice S3, catalogue and stock; BG-9, 10, 12, 13, 14, 16,
 RUN: 1
 COMMITS: feat/p5-s3-catalogue-stock at 1cc4abd (S3 range `git diff 542e7e0 HEAD`; CODE_REVIEW run 3 PASS at 8abd5f5, its four LOWs fixed in 1cc4abd)
 DATE: 2026-11-03 to 2026-11-04
-STATUS: FAIL (one test gap; no product defect)
+STATUS: PASS (integrator update, 2026-11-04, under Amended (ao)). Run 1's verdict was FAIL; that record is commit bb6ecae.
+
+INTEGRATOR UPDATE (2026-11-04, under the owner's 2026-10-31 delegation; not the gate's own words)
+- Amended (ao) adopts the gate's two files into S3 unchanged, so the slice's suite now holds M18's `min-h-11` case, G10 and G1-G9. M18 and R1 are covered, which by the gate's own reading makes the sheet 128 PASS, 0 FAIL, 1 BLOCKED (E12c, no real API running; carried to E18).
+- Rechecked at the same product commit (1cc4abd): tsc exit 0; ESLint on the two files exit 0; `vitest run` of the gate Vitest file: 2 passed. The gate e2e spec passed 18/18 on both projects in run 1 and was not rerun.
 
 The slice's code passes every row it owns:
 - typecheck, lint, the full Vitest suite (one non-S3 timing flake that passes alone, Amended (i)), the build and the served-output check;
