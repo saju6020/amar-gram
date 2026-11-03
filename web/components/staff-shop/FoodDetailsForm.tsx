@@ -154,8 +154,8 @@ export function FoodDetailsForm({
       <fieldset
         className={
           organic
-            ? 'm-0 rounded-[var(--radius-md)] border border-leaf-soft bg-leaf-soft p-4 text-leaf-ink'
-            : 'm-0 border-0 p-0'
+            ? 'm-0 min-w-0 rounded-[var(--radius-md)] border border-leaf-soft bg-leaf-soft p-4 text-leaf-ink'
+            : 'm-0 min-w-0 border-0 p-0'
         }
       >
         <legend className="mb-2 p-0 text-sm font-semibold text-ink">
@@ -166,7 +166,7 @@ export function FoodDetailsForm({
             ? 'This product is marked Certified organic: both fields are needed before it can be published.'
             : 'Optional. Needed only when the product is marked Certified organic.'}
         </p>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Field
             id="fd-certifier"
             label="Organic certifier"
