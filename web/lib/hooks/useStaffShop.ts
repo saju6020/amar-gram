@@ -30,6 +30,7 @@ import {
   type AddSkuRequest,
   type BulkProductAction,
   type CreateProductRequest,
+  PRODUCT_MANAGE_ROLES,
   type OriginInput,
   type ProductImageInput,
   type ProductTransition,
@@ -44,6 +45,8 @@ import { describeApiError, SHOP_CODE_MESSAGES } from '@/lib/api/errors';
 import { PartialSaveError } from '@/lib/shop/submitSection';
 import { getShopLocales } from '@/lib/api/shop-catalogue';
 import { ApiConflictError, ApiForbiddenError, ApiNotFoundError } from '@/lib/api/client';
+import { useBranchScope } from './useBranchScope';
+import { useStaffSession } from './useSession';
 
 /**
  * HO-SHP-002 §8.4 — back-office state. Staff product: `['staff','product', productId]` (it carries
@@ -55,12 +58,24 @@ function noRetryOnRefusal(failureCount: number, error: unknown) {
   );
 }
 
+/**
+ * The list rows carry the stock at the caller's ACTIVE branch (`availableStock`), so the active branch is part of the
+ * key: a branch switch refetches instead of showing the other branch's stock (HO-P5 BG-9).
+ */
 export function useStaffProducts(params: StaffProductListParams) {
+  const { branchId, ready } = useBranchScope();
   return useQuery({
-    queryKey: ['staff', 'products', params],
+    queryKey: ['staff', 'products', params, branchId],
     queryFn: () => getStaffProducts(params),
+    enabled: ready,
     retry: noRetryOnRefusal,
   });
+}
+
+/** Presentation only: does the signed-in role hold `Shop.ProductsManage`? Unknown roles are NOT allowed; the 403 decides. */
+export function useCanManageProducts(): boolean {
+  const session = useStaffSession();
+  return (session.data?.roleIds ?? []).some((role) => PRODUCT_MANAGE_ROLES.includes(role));
 }
 
 export function useStaffProduct(productId: string) {

@@ -53,6 +53,8 @@ function initial(food: StaffFoodDetail | null | undefined): FoodFormValues {
 
 export interface FoodDetailsFormProps {
   product: StaffProductDetail;
+  /** Presentation only (`Shop.ProductsManage`): without it the certificate file can be viewed but not replaced or removed. */
+  canManage?: boolean;
   onSave: (values: FoodFormValues) => Promise<unknown>;
   onReload: () => void;
 }
@@ -64,7 +66,12 @@ export interface FoodDetailsFormProps {
  * fields are optional; publishing needs both only when the product is marked Certified organic.
  * The form starts from the stored labelling returned by the staff read (HO-SHP-001-FU1).
  */
-export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormProps) {
+export function FoodDetailsForm({
+  product,
+  canManage = true,
+  onSave,
+  onReload,
+}: FoodDetailsFormProps) {
   const {
     register,
     handleSubmit,
@@ -187,7 +194,7 @@ export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormPr
             <input
               id="fd-cert-expiry"
               type="date"
-              className={inputClass}
+              className={`${inputClass} min-h-11`}
               aria-invalid={!!errors.organicCertificateExpiresOn}
               {...register('organicCertificateExpiresOn')}
             />
@@ -226,11 +233,21 @@ export function FoodDetailsForm({ product, onSave, onReload }: FoodDetailsFormPr
                       <span className="sr-only"> (opens in a new tab)</span>
                     </a>
                   )}
-                  <Button type="button" variant="ghost" size="sm" onClick={() => choose('')}>
-                    Remove file
-                  </Button>
+                  {canManage && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="min-h-11"
+                      onClick={() => choose('')}
+                    >
+                      Remove file
+                    </Button>
+                  )}
                 </div>
               </>
+            ) : !canManage ? (
+              <p className="text-sm text-ink-muted">No certificate file is on record.</p>
             ) : (
               <FileUploadField
                 id="fd-cert-file"

@@ -12,8 +12,18 @@ const slot = {
   render: ({ value, onChange, error }: { value: string; onChange: (v: string) => void; error: string | null }) => (
     <div>
       <label htmlFor="extra">Extra</label>
-      <input id="extra" value={value} onChange={(e) => onChange(e.target.value)} />
-      {error && <p role="alert">{error}</p>}
+      <input
+        id="extra"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? 'extra-error' : undefined}
+      />
+      {error && (
+        <p id="extra-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   ),
 };
@@ -44,6 +54,17 @@ describe('ScheduleChangeDialog extraField slot', () => {
     expect(onSchedule.mock.calls[0]![2]).toBe('20');
   });
 
+  it('a blank extra field sends no third value', async () => {
+    const user = userEvent.setup();
+    const onSchedule = vi.fn().mockResolvedValue(undefined);
+    open(onSchedule);
+    await user.type(screen.getByLabelText('Amount'), '10');
+    await user.click(screen.getByRole('button', { name: /^schedule$/i }));
+    await waitFor(() => expect(onSchedule).toHaveBeenCalledTimes(1));
+    expect(onSchedule.mock.calls[0]![0]).toBe('10');
+    expect(onSchedule.mock.calls[0]![2]).toBeUndefined();
+  });
+
   it('refuses a bad extra value before any request, and puts a server error on its property under the field', async () => {
     const user = userEvent.setup();
     const onSchedule = vi.fn().mockRejectedValue(
@@ -62,6 +83,9 @@ describe('ScheduleChangeDialog extraField slot', () => {
     await user.type(screen.getByLabelText('Extra'), '5');
     await user.click(screen.getByRole('button', { name: /^schedule$/i }));
     expect(await screen.findByText('Too low.')).toBeInTheDocument();
+    // Under THE FIELD (described by it, marked invalid), not just somewhere in the dialog.
+    expect(screen.getByLabelText('Extra')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Extra')).toHaveAccessibleDescription('Too low.');
   });
 
   it('without the slot nothing is drawn and onSchedule gets exactly two arguments', async () => {

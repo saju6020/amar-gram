@@ -187,7 +187,7 @@ export function ProductDetailsForm({
         >
           <input
             id="pd-district"
-            className={inputClass}
+            className={`${inputClass} min-h-11`}
             maxLength={60}
             aria-invalid={!!errors.districtOfOrigin}
             {...register('districtOfOrigin')}

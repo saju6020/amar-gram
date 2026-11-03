@@ -57,7 +57,7 @@ function ConsignmentsContent() {
           { name: 'to', label: 'Arriving to', type: 'date' },
         ]}
       />
-      {list.values.arrivingWithinDays && (
+      {/^([1-9]|[1-8]\d|90)$/.test(list.values.arrivingWithinDays) && (
         <p className="m-0 flex flex-wrap items-center gap-3 text-sm text-ink">
           <span>
             Showing consignments arriving in the next {list.values.arrivingWithinDays}{' '}

@@ -245,6 +245,7 @@ export function VariantsTable(props: VariantsTableProps) {
             </>
           )}
           <ScheduleChangeDialog
+            key={priceSku.skuId}
             open={scheduling}
             onOpenChange={setScheduling}
             title="Schedule a new price"
@@ -269,7 +270,7 @@ export function VariantsTable(props: VariantsTableProps) {
                     onChange={(event) => onChange(event.target.value)}
                     aria-invalid={error ? true : undefined}
                     aria-describedby="schedule-was-hint"
-                    className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink aria-[invalid=true]:border-danger-ink"
+                    className="min-h-11 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink aria-[invalid=true]:border-danger-ink"
                   />
                   <p id="schedule-was-hint" className="m-0 text-xs text-ink-muted">
                     The higher price this one replaces. It must be more than the amount.

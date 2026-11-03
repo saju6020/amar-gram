@@ -307,6 +307,7 @@ export function StaffProductTable(props: StaffProductTableProps) {
                   header: 'Select',
                   headerClassName: 'w-12',
                   cell: (row: StaffProductSummary) => (
+                    <label className="-m-3 flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
                     <input
                       type="checkbox"
                       className="size-5 accent-leaf"
@@ -320,6 +321,7 @@ export function StaffProductTable(props: StaffProductTableProps) {
                         )
                       }
                     />
+                    </label>
                   ),
                 },
               ]

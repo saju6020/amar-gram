@@ -15,6 +15,9 @@ import type { ProductCategory, ProductKind } from './shop-catalogue';
  * 51); it is typed optional.
  */
 
+/** Roles that hold `Shop.ProductsManage`, for presentation only (the server decides). Shared/Common/Constants/ActionRoles.Shop.cs:14 */
+export const PRODUCT_MANAGE_ROLES: readonly string[] = ['ShopManager', 'Administrator'];
+
 export type ProductStatus = 'Draft' | 'Active' | 'Archived';
 
 export interface StaffProductSummary {
@@ -27,7 +30,7 @@ export interface StaffProductSummary {
   skuCount: number;
   listedOnStorefront: boolean;
   lastUpdatedOn: string;
-  // HO-P5 BG-9 -- Read/ViewModels/StaffProductSummaryViewModel.cs:25-30. All additive; the list sends them
+  // HO-P5 BG-9 -- Read/ViewModels/StaffProductSummaryViewModel.cs:23-28. All additive; the list sends them
   // for the page, only the CSV export leaves them out. Optional here so a reader tolerates a missing one.
   /** `CountryRef { code, name }` (`CatalogueItem.cs:3`); `null` when the product has none. */
   countryOfOrigin?: { code: string; name: string } | null;

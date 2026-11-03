@@ -67,7 +67,18 @@ function NewReceiptContent() {
   const activeBranchId = useActiveBranchId();
   const myBranches = useMyBranches();
   const allBranches = useAdminBranches();
-  const branchId = receiveInto ?? draft.data?.branchId ?? activeBranchId ?? undefined;
+  // The receiving branch belongs to THIS form, fixed when the workspace is created: the branch the caller was in then, or
+  // the saved draft's own branch. A later switch in the sidebar changes neither the draft's branch nor the form (only
+  // the "Receive into" choice does, through its confirm); the lists keep reading the form's branch with `branchId`.
+  const [startBranch, setStartBranch] = useState<string | null>(null);
+  useEffect(() => {
+    if (!startBranch && !workspace.resume && activeBranchId) setStartBranch(activeBranchId);
+  }, [startBranch, workspace.resume, activeBranchId]);
+  const branchId =
+    receiveInto ??
+    (workspace.resume ? draft.data?.branchId : startBranch) ??
+    activeBranchId ??
+    undefined;
   // Another branch's lists are read with `branchId`; its own (the active one) with no parameter.
   const branchParam = branchId && branchId !== activeBranchId ? branchId : undefined;
   const branches = (myBranches.data?.branchIds ?? []).map((id) => ({
@@ -97,6 +108,7 @@ function NewReceiptContent() {
   if (orders.error instanceof ApiForbiddenError) return <AccessRefusedState error={orders.error} />;
 
   function startFresh() {
+    setStartBranch(null);
     setWorkspace(freshWorkspace());
     setReceiveInto(null);
     setPoChoice('');
@@ -104,6 +116,7 @@ function NewReceiptContent() {
   }
 
   function continueDraft(id: string) {
+    setStartBranch(null);
     setWorkspace({ id, resume: true });
     setReceiveInto(null);
     setPoChoice('');

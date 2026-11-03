@@ -130,8 +130,9 @@ describe('U29 — bulk publish / hide BG-10', () => {
     const user = userEvent.setup();
     const onBulkStatus = vi.fn().mockResolvedValue({
       action: 'Unpublish',
-      succeededCount: 1,
-      failedCount: 1,
+      // Deliberately NOT what the items add up to: the screen must show the server's counts, never count the items (§20.4).
+      succeededCount: 7,
+      failedCount: 3,
       items: [
         { productId: 'p1', succeeded: true, status: 'Draft', errorCode: null, propertyName: null, message: null },
         {
@@ -163,7 +164,8 @@ describe('U29 — bulk publish / hide BG-10', () => {
     expect(onBulkStatus).toHaveBeenCalledWith('Unpublish', ['p1', 'p2']);
     // The server's own counts and each failure with the product's name and the server's message (as text).
     const result = await screen.findByRole('status');
-    expect(result).toHaveTextContent('1 updated, 1 not updated');
+    expect(result).toHaveTextContent('7 updated, 3 not updated');
+    expect(result).not.toHaveTextContent('1 updated, 1 not updated');
     expect(result).toHaveTextContent('Mustard Jar: Cannot unpublish from Draft.');
     // Selection cleared after the action.
     expect(screen.queryByRole('region', { name: 'Bulk actions' })).not.toBeInTheDocument();
@@ -531,6 +533,20 @@ describe('U32 — organic certificate BG-14', () => {
     const user = userEvent.setup();
     let body: Record<string, unknown> | null = null;
     server.use(
+      // A role that holds Shop.ProductsManage (presentation gate for the certificate controls).
+      http.get('*/api/staff/session', () =>
+        HttpResponse.json({
+          staffAccountId: 's1',
+          fullName: 'Shop Manager',
+          roleIds: ['ShopManager'],
+          issuedOn: '2026-10-14T00:00:00Z',
+          lastActivityOn: '2026-10-14T00:00:00Z',
+          idleExpiresOn: '2026-10-14T01:00:00Z',
+          absoluteExpiresOn: '2026-10-14T09:00:00Z',
+          idleTimeoutMinutes: 30,
+          serverTime: '2026-10-14T00:00:00Z',
+        }),
+      ),
       http.put('*/api/staff/shop/products/:productId/food', async ({ request }) => {
         body = (await request.json()) as Record<string, unknown>;
         return new HttpResponse(null, { status: 204 });

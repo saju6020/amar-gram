@@ -255,7 +255,9 @@ export function GoodsReceiptForm({
   }
 
   async function discardDraft() {
+    // A save already in flight may be the one that creates the draft: let it land, then delete it.
     autosave.stop();
+    await autosave.settle();
     await onDiscardDraft();
   }
 
@@ -274,6 +276,7 @@ export function GoodsReceiptForm({
     setSubmitting(true);
     autosave.stop();
     try {
+      await autosave.settle(); // the draft must exist before the post names it, and must not appear after it
       await onPost({
         ...toPostRequest(state),
         ...(showBranchChoice && branchId ? { branchId } : {}),
@@ -332,6 +335,7 @@ export function GoodsReceiptForm({
             <SelectField
               id="receipt-branchId"
               label="Receive into"
+              className="min-h-11"
               wrapperClassName="sm:col-span-2 lg:col-span-3"
               value={branchId ?? ''}
               hint="Orders, consignments and locations below are this branch's."

@@ -217,12 +217,15 @@ export function useReceiptDraftAutosave(options: {
   const inFlight = useRef(false);
   const stopped = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const delayRef = useRef(delayMs);
+  const inFlightSave = useRef<Promise<unknown> | null>(null);
   const draftIdRef = useRef(draftId);
   const enabledRef = useRef(enabled);
   useEffect(() => {
     latest.current = { payload, key };
     draftIdRef.current = draftId;
     enabledRef.current = enabled;
+    delayRef.current = delayMs;
   });
 
   const clearTimer = useCallback(() => {
@@ -239,8 +242,11 @@ export function useReceiptDraftAutosave(options: {
       inFlight.current = true;
       setState('saving');
       let retryNow = false;
+      let retryLater = false;
       try {
-        await saveReceiptDraft(draftIdRef.current, body);
+        const sending = saveReceiptDraft(draftIdRef.current, body);
+        inFlightSave.current = sending;
+        await sending;
         savedKeyRef.current = bodyKey;
         setSavedKey(bodyKey);
         setSavedAt(new Date().toISOString());
@@ -258,10 +264,14 @@ export function useReceiptDraftAutosave(options: {
         } else {
           setMessage(describeApiError(error, DRAFT_CODE_MESSAGES));
           setState('error');
+          // A change made while this request was in flight had no timer left to carry it: try it again after a pause.
+          retryLater = latest.current.key !== bodyKey;
         }
       } finally {
+        inFlightSave.current = null;
         inFlight.current = false;
       }
+      if (retryLater && !stopped.current) timer.current = setTimeout(() => void run(), delayRef.current);
       if (!retryNow) return;
     }
   }, [clearTimer]);
@@ -274,14 +284,12 @@ export function useReceiptDraftAutosave(options: {
     return clearTimer;
   }, [key, enabled, delayMs, run, clearTimer]);
 
-  // Leaving the screen with a change waiting for its quiet moment: send it (best effort).
+  // Leaving the screen with a change not yet saved: send it (best effort). The change effect's own cleanup has
+  // already cleared the timer by now, so this goes by what is unsaved, not by whether a timer is pending.
   useEffect(
     () => () => {
-      if (timer.current) {
-        clearTimeout(timer.current);
-        timer.current = null;
-        void run();
-      }
+      const { payload: body, key: bodyKey } = latest.current;
+      if (body && bodyKey !== savedKeyRef.current && !stopped.current && enabledRef.current) void run();
     },
     [run],
   );
@@ -291,6 +299,16 @@ export function useReceiptDraftAutosave(options: {
     clearTimer();
   }, [clearTimer]);
 
+  /** Resolves once a save already in flight has settled (it may be the one that CREATES the draft), so a post or a
+   *  discard goes after it and not before. Call `stop()` first so nothing new starts. */
+  const settle = useCallback(async () => {
+    try {
+      await inFlightSave.current;
+    } catch {
+      // a failed save left nothing behind to wait for
+    }
+  }, []);
+
   return {
     state,
     savedAt,
@@ -298,6 +316,7 @@ export function useReceiptDraftAutosave(options: {
     hasUnsavedChanges: enabled && !closed && key !== null && key !== savedKey,
     flush: () => void run(),
     stop,
+    settle,
   };
 }
 

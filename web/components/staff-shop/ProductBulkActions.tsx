@@ -94,13 +94,13 @@ export function ProductBulkActions({
           <p aria-live="polite" className="m-0 text-sm font-semibold text-ink">
             {count} selected
           </p>
-          <Button variant="primary" size="sm" onClick={() => setPending('Publish')}>
+          <Button variant="primary" size="sm" className="min-h-11" onClick={() => setPending('Publish')}>
             Publish
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => setPending('Unpublish')}>
+          <Button variant="secondary" size="sm" className="min-h-11" onClick={() => setPending('Unpublish')}>
             Hide from shop
           </Button>
-          <Button variant="ghost" size="sm" onClick={onClear}>
+          <Button variant="ghost" size="sm" className="min-h-11" onClick={onClear}>
             Clear
           </Button>
         </div>
@@ -146,7 +146,7 @@ function BulkResult({ outcome, onDismiss }: { outcome: BulkOutcome; onDismiss: (
         </ul>
       )}
       <div>
-        <Button variant="ghost" size="sm" onClick={onDismiss}>
+        <Button variant="ghost" size="sm" className="min-h-11" onClick={onDismiss}>
           Dismiss
         </Button>
       </div>

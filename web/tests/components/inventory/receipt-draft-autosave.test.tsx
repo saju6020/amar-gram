@@ -185,4 +185,93 @@ describe('U35 — receipt draft autosave (ADR-FE-190)', () => {
     expect(save).not.toHaveBeenCalled();
     expect(result.current.state).toBe('idle');
   });
+
+  it('a change not yet saved goes out when the screen is left (the unmount flush)', async () => {
+    save.mockResolvedValue({ draftId: 'draft-1', version: 1, branchId: 'b' });
+    const { rerender, unmount } = mount(null);
+    rerender({ payload: form('A') });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECEIPT_DRAFT_AUTOSAVE_MS / 2); // still inside the quiet moment
+    });
+    expect(save).not.toHaveBeenCalled();
+    await act(async () => {
+      unmount();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledWith('draft-1', form('A'));
+  });
+
+  it('nothing is sent on leaving when everything was saved, or after stop()', async () => {
+    save.mockResolvedValue({ draftId: 'draft-1', version: 1, branchId: 'b' });
+    const first = mount(null);
+    first.rerender({ payload: form('A') });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECEIPT_DRAFT_AUTOSAVE_MS);
+    });
+    expect(save).toHaveBeenCalledTimes(1);
+    first.unmount();
+    const second = mount(null);
+    second.rerender({ payload: form('B') });
+    act(() => second.result.current.stop());
+    second.unmount();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECEIPT_DRAFT_AUTOSAVE_MS);
+    });
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it('a change made while a save is in flight is retried when that save FAILS', async () => {
+    const first = deferred();
+    save.mockReturnValueOnce(first.promise).mockResolvedValue({ draftId: 'draft-1', version: 2, branchId: 'b' });
+    const { result, rerender } = mount(null);
+    rerender({ payload: form('A') });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECEIPT_DRAFT_AUTOSAVE_MS);
+    });
+    rerender({ payload: form('AB') });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECEIPT_DRAFT_AUTOSAVE_MS); // its timer fires while the first is in flight: nothing sent
+    });
+    expect(save).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      first.reject(new Error('network'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.state).toBe('error');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECEIPT_DRAFT_AUTOSAVE_MS);
+    });
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith('draft-1', form('AB'));
+    expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
+  it('settle() waits for the save in flight (the one that may CREATE the draft) before a post or discard goes', async () => {
+    const creating = deferred();
+    save.mockReturnValueOnce(creating.promise);
+    const { result, rerender } = mount(null);
+    rerender({ payload: form('A') });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(RECEIPT_DRAFT_AUTOSAVE_MS);
+    });
+    let settled = false;
+    act(() => {
+      result.current.stop();
+      void result.current.settle().then(() => {
+        settled = true;
+      });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10);
+    });
+    expect(settled).toBe(false);
+    await act(async () => {
+      creating.resolve();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(settled).toBe(true);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
 });
+

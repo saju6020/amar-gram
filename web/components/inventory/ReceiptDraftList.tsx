@@ -61,6 +61,7 @@ export function ReceiptDraftList({
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"
+                className="min-h-11"
                 variant="secondary"
                 aria-label={`Continue the draft${draft.supplierName ? ` for ${draft.supplierName}` : ''}, saved ${formatInZone(draft.updatedOn, timeZoneLabel)}`}
                 onClick={() => onContinue(draft.draftId)}
@@ -69,6 +70,7 @@ export function ReceiptDraftList({
               </Button>
               <Button
                 size="sm"
+                className="min-h-11"
                 variant="ghost"
                 aria-label={`Discard the draft${draft.supplierName ? ` for ${draft.supplierName}` : ''}, saved ${formatInZone(draft.updatedOn, timeZoneLabel)}`}
                 onClick={() => {

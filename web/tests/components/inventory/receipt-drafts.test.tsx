@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import NewReceiptPage from '@/app/(staff)/staff/inventory/receipts/new/page';
 import { GoodsReceiptForm } from '@/components/inventory/GoodsReceiptForm';
+import { ACTIVE_BRANCH_KEY } from '@/lib/hooks/useActiveBranch';
 import { ReceiptDraftList } from '@/components/inventory/ReceiptDraftList';
 import { ApiForbiddenError } from '@/lib/api/client';
 import { inventoryFixtureIds as ids, resetInventoryMockData } from '@/mocks/handlers/inventory';
@@ -132,6 +133,56 @@ describe('U35 — autosave status and the server refusals, on the form', () => {
   });
 });
 
+describe('discard and post wait for the save in flight (no orphan draft)', () => {
+  function gatedPut() {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let started = 0;
+    server.use(
+      http.put('*/api/staff/inventory/goods-receipt-drafts/:id', async ({ params }) => {
+        started += 1;
+        await gate;
+        return HttpResponse.json({ draftId: String(params.id), version: 1, branchId: ids.mainBranchId });
+      }),
+    );
+    return { release, started: () => started };
+  }
+
+  it('Discard does not delete until the creating save has landed', async () => {
+    const { release, started } = gatedPut();
+    const onDiscardDraft = vi.fn().mockResolvedValue(undefined);
+    const { user } = setup({ onDiscardDraft });
+    await addLine(user);
+    await user.type(screen.getByLabelText(/lot number/i), 'L1');
+    await waitFor(() => expect(started()).toBeGreaterThan(0), { timeout: 5000 });
+    await user.click(screen.getByRole('button', { name: /discard draft/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /discard draft/i }));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(onDiscardDraft).not.toHaveBeenCalled();
+    release();
+    await waitFor(() => expect(onDiscardDraft).toHaveBeenCalledTimes(1));
+  }, 20000);
+
+  it('Post does not go until the save in flight has landed', async () => {
+    const { release, started } = gatedPut();
+    const { user, onPost } = setup();
+    await addLine(user);
+    await user.type(screen.getByLabelText(/lot number/i), 'L1');
+    await user.type(screen.getByLabelText(/expiry date/i), '2027-01-30');
+    await user.type(screen.getByLabelText(/accepted \(bags\)/i), '4');
+    await user.type(screen.getByLabelText(/^unit cost/i), '10');
+    await waitFor(() => expect(started()).toBeGreaterThan(0), { timeout: 5000 });
+    await user.click(screen.getByRole('button', { name: /review and post/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /post receipt/i }));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(onPost).not.toHaveBeenCalled();
+    release();
+    await waitFor(() => expect(onPost).toHaveBeenCalledTimes(1));
+  }, 20000);
+});
+
 describe('U35 — Your drafts', () => {
   const drafts = [
     {
@@ -157,6 +208,12 @@ describe('U35 — Your drafts', () => {
     expect(list).toHaveTextContent('Dhanmondi outlet');
     expect(list).toHaveTextContent(/Last saved/);
     expect(list.querySelector('b')).toBeNull();
+  });
+
+  it('Continue and Discard are 44 px targets (§7 UI-6)', () => {
+    renderWithClient(<ReceiptDraftList drafts={drafts} timeZoneLabel="Asia/Dhaka" onContinue={vi.fn()} onDiscard={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /^Continue the draft/ })).toHaveClass('min-h-11');
+    expect(screen.getByRole('button', { name: /^Discard the draft/ })).toHaveClass('min-h-11');
   });
 
   it('Continue opens that draft; Discard confirms, then deletes it', async () => {
@@ -310,6 +367,48 @@ describe('U35/U36 — the page', () => {
     await waitFor(() => expect(screen.getByLabelText(/^location/i)).toHaveValue(''), { timeout: 8000 });
     expect(screen.getByLabelText(/lot number/i)).toHaveValue('KEEP-ME');
     expect(screen.getByLabelText('Receive into')).toHaveValue(ids.londonBranchId);
+  }, 20000);
+
+  it('a branch switch in the sidebar mid-draft changes neither the branch of the form nor the form', async () => {
+    const urls: string[] = [];
+    const listener = ({ request }: { request: Request }) => urls.push(request.url);
+    const user = userEvent.setup({ delay: 0 });
+    let client!: ReturnType<typeof renderWithClient>['queryClient'];
+    await act(async () => {
+      client = renderWithClient(<NewReceiptPage />).queryClient;
+    });
+    const select = await screen.findByLabelText('Receive into', {}, { timeout: 8000 });
+    await waitFor(() => expect(select).toHaveValue(ids.mainBranchId), { timeout: 8000 });
+    await user.click(screen.getByLabelText(/^direct/i));
+    await user.type(screen.getByLabelText(/scan a barcode/i), `${ids.foodBarcode}{Enter}`);
+    await screen.findByRole('listitem', { name: /^line 1:/i }, { timeout: 8000 });
+    await user.type(screen.getByLabelText(/lot number/i), 'STAY');
+
+    server.events.on('request:start', listener);
+    act(() => {
+      client.setQueryData(ACTIVE_BRANCH_KEY, ids.londonBranchId); // the sidebar picker
+    });
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    server.events.removeListener('request:start', listener);
+    expect(screen.getByLabelText('Receive into')).toHaveValue(ids.mainBranchId);
+    expect(screen.getByLabelText(/lot number/i)).toHaveValue('STAY');
+    // The lists the form reads stay the form's branch (explicitly named), not the sidebar's.
+    const locationReads = urls.filter((u) => u.includes('/inventory/locations'));
+    expect(locationReads.length).toBeGreaterThan(0);
+    for (const u of locationReads) expect(u).toContain(`branchId=${ids.mainBranchId}`);
+  }, 30000);
+
+  it('a resumed draft keeps its own saved branch, not the one in the sidebar', async () => {
+    await fetch('http://localhost:5005/api/staff/inventory/goods-receipt-drafts/' + DRAFT_ID, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Branch-Id': ids.mainBranchId },
+      body: JSON.stringify({ branchId: ids.londonBranchId, supplierId: null, deliveryReference: 'LDN', lines: [] }),
+    });
+    navigation.search = new URLSearchParams(`draft=${DRAFT_ID}`);
+    await renderPage();
+    const select = await screen.findByLabelText('Receive into', {}, { timeout: 8000 });
+    expect(select).toHaveValue(ids.londonBranchId);
+    expect(screen.getByLabelText(/delivery reference/i)).toHaveValue('LDN');
   }, 20000);
 
   it('choosing another branch reads the orders, consignments and locations for THAT branch', async () => {
