@@ -59,6 +59,8 @@ function NewReceiptContent() {
   );
   const [receiveInto, setReceiveInto] = useState<string | null>(null);
   const [booted, setBooted] = useState(false);
+  // Set once the post has succeeded: the draft is then closed (404) and the page is on its way to the receipt.
+  const [posted, setPosted] = useState(false);
   // The workspace whose form has been drawn once: its data is the form's own from then on (see `draftReady`).
   const [drawnFor, setDrawnFor] = useState<string | null>(null);
 
@@ -131,7 +133,7 @@ function NewReceiptContent() {
   }
 
   // A draft the server no longer has (closed elsewhere, or another person's) is a 404.
-  if (workspace.resume && draft.error instanceof ApiNotFoundError) {
+  if (workspace.resume && !posted && draft.error instanceof ApiNotFoundError) {
     return (
       <EmptyState
         title="That draft is no longer here"
@@ -202,7 +204,7 @@ function NewReceiptContent() {
         onScan={lookup}
         isPosting={post.isPending}
         timeZoneLabel={zone}
-        onDraftSaved={(id) => router.replace(`${NEW_RECEIPT_PATH}?draft=${id}`, { scroll: false })}
+        onDraftSaved={(id) => !posted && router.replace(`${NEW_RECEIPT_PATH}?draft=${id}`, { scroll: false })}
         onDiscardDraft={async () => {
           try {
             await discard.mutateAsync(workspace.id);
@@ -213,8 +215,9 @@ function NewReceiptContent() {
           startFresh();
         }}
         onPost={async (request) => {
-          const posted = await post.mutateAsync(request);
-          router.push(`/staff/inventory/receipts/${posted.goodsReceiptId}`);
+          const result = await post.mutateAsync(request);
+          setPosted(true);
+          router.push(`/staff/inventory/receipts/${result.goodsReceiptId}`);
         }}
       />
     </div>

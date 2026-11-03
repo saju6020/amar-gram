@@ -355,7 +355,8 @@ test.describe('HO-P5 S3: stock and receiving wiring (E11)', () => {
     await page.getByLabel(/^unit cost/i).fill('450');
     await page.getByRole('button', { name: /review and post/i }).click();
     await (await dialog(page)).getByRole('button', { name: /post receipt/i }).click();
-    await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible();
+    // The receipt page is a cold compile in `next dev` (13-18 s here), so the old page stays up that long.
+    await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible({ timeout: 45_000 });
 
     // Posting closed the draft: its address now says it is gone.
     await page.goto(draftUrl);

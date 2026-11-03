@@ -158,7 +158,8 @@ export function GoodsReceiptForm({
     onDraftSavedRef.current = onDraftSaved;
   });
   const reportedRef = React.useRef(false);
-  const draftSettled = !!autosave.savedAt && !unsaved && !guardHeld;
+  // Never while posting: an address written then would replace the navigation to the receipt that is on its way.
+  const draftSettled = !!autosave.savedAt && !unsaved && !guardHeld && !submitting;
   React.useEffect(() => {
     if (reportedRef.current || !draftSettled) return;
     const timer = setTimeout(() => {
@@ -322,7 +323,10 @@ export function GoodsReceiptForm({
 
   return (
     <form onSubmit={review} noValidate className="flex flex-col gap-4" onBlurCapture={() => autosave.flush()}>
-      <UnsavedChangesGuard when={(unsaved || guardHeld) && !submitting} />
+      {/* Held through a post as well: releasing it at that moment makes the guard step back off its sentinel entry
+          (`history.back()`), which can land AFTER the router has moved on to the receipt and walk the page back to
+          this form (seen when the receipt page is slow to open). A refused post releases it by the usual rules. */}
+      <UnsavedChangesGuard when={unsaved || guardHeld || submitting} />
       <p
         role="status"
         className={
