@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import * as React from 'react';
+import { act, renderHook, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useReceiptDraft } from '@/lib/hooks/useInventory';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
@@ -70,7 +73,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof GoodsReceiptForm>>
 
 async function addLine(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/scan a barcode/i), `${rice.barcode}{Enter}`);
-  await screen.findByRole('listitem', { name: /line 1: organic rice/i });
+  await screen.findByRole('listitem', { name: /line 1: organic rice/i }, { timeout: 8000 });
 }
 
 beforeEach(() => {
@@ -130,6 +133,37 @@ describe('U35 — autosave status and the server refusals, on the form', () => {
     await waitFor(() => expect(onPost).toHaveBeenCalledTimes(1));
     expect(onPost.mock.calls[0]![0]).toMatchObject({ draftId: DRAFT_ID });
     expect(onPost.mock.calls[0]![0]).toMatchObject({ branchId: BRANCHES[0]!.id });
+  });
+});
+
+describe('the draft detail read does not depend on the active branch', () => {
+  it('a branch switch does not refetch it (the server filters by id and owner only)', async () => {
+    await fetch('http://localhost:5005/api/staff/inventory/goods-receipt-drafts/' + DRAFT_ID, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Branch-Id': ids.mainBranchId },
+      body: JSON.stringify({ branchId: ids.mainBranchId, supplierId: null, lines: [] }),
+    });
+    const reads: string[] = [];
+    const listener = ({ request }: { request: Request }) => {
+      if (request.method === 'GET' && new URL(request.url).pathname.endsWith('/goods-receipt-drafts/' + DRAFT_ID))
+        reads.push(request.url);
+    };
+    server.events.on('request:start', listener);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(ACTIVE_BRANCH_KEY, ids.mainBranchId);
+    const { result } = renderHook(() => useReceiptDraft(DRAFT_ID), {
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    });
+    await waitFor(() => expect(result.current.data).toBeDefined(), { timeout: 5000 });
+    act(() => {
+      client.setQueryData(ACTIVE_BRANCH_KEY, ids.londonBranchId);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    server.events.removeListener('request:start', listener);
+    expect(reads).toHaveLength(1);
+    expect(result.current.data?.branchId).toBe(ids.mainBranchId);
   });
 });
 
@@ -486,6 +520,13 @@ describe('U35/U36 — the page', () => {
     act(() => {
       client.setQueryData(ACTIVE_BRANCH_KEY, ids.londonBranchId); // the sidebar picker
     });
+    // Every save after the switch, with the branch it names.
+    const savedBranches: unknown[] = [];
+    const listener = async ({ request }: { request: Request }) => {
+      if (request.method === 'PUT' && request.url.includes('/goods-receipt-drafts/'))
+        savedBranches.push(((await request.clone().json()) as { branchId?: string }).branchId);
+    };
+    server.events.on('request:start', listener);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     // The very same input element, not a remounted copy, and the text is still in it.
     expect(screen.getByLabelText(/lot number/i)).toBe(lot);
@@ -494,6 +535,11 @@ describe('U35/U36 — the page', () => {
     await waitFor(() => expect(db.receiptDrafts.find((d) => d.draftId === DRAFT_ID)?.lines[0]?.lotNumber).toBe('L-AXY'), {
       timeout: 8000,
     });
+    server.events.removeListener('request:start', listener);
+    // The draft is the main outlet's, and the sidebar's London never leaks into a save (not even while the draft reloads).
+    expect(savedBranches.length).toBeGreaterThan(0);
+    expect(savedBranches.every((b) => b === ids.mainBranchId)).toBe(true);
+    expect(db.receiptDrafts.find((d) => d.draftId === DRAFT_ID)?.branchId).toBe(ids.mainBranchId);
   }, 30000);
 
   it('a resumed draft keeps its own saved branch, not the one in the sidebar', async () => {

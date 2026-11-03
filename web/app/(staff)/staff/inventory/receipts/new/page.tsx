@@ -217,7 +217,9 @@ function NewReceiptContent() {
         onPost={async (request) => {
           const result = await post.mutateAsync(request);
           setPosted(true);
-          router.push(`/staff/inventory/receipts/${result.goodsReceiptId}`);
+          // `replace`, not `push`: the unsaved-changes guard is still holding a duplicate history entry for this form,
+          // and pushing on top of it leaves that entry behind (the first Back from the receipt would land on it).
+          router.replace(`/staff/inventory/receipts/${result.goodsReceiptId}`);
         }}
       />
     </div>
