@@ -53,3 +53,33 @@ NOT CHECKED
 SCOPE CHECK
 - files in allowed scope: 24/24. 5415e2a (20 files): web/app/(staff)/staff/{inventory,procurement,shop}/**, web/components/{inventory,staff-shop}/**, web/lib/api/staff-shop.ts, web/lib/hooks/{useInventory,useStaffShop}.ts and web/tests/components/{inventory,staff-shop}/** are in the §13 S3 block, and docs/gates/HO-P5-WIRING-S3-SLICE-REPORT.md is covered by §1 (r). c231bfe (1 file): the slice report, covered by (r). 0b696b8 (3 files): web/lib/drafts/receipt-draft.ts, web/docs/decisions.md and docs/handover/HO-P5-WIRING.md are the integrator's Amended (an) commit.
 - files outside allowed scope: none
+
+---
+
+RUN 3
+GATE: CODE_REVIEW
+HANDOVER: HO-P5-WIRING (slice S3, catalogue and stock)
+COMMITS: run 3. Branch feat/p5-s3-catalogue-stock, HEAD 3ecad89. Range reviewed: 03d9c10..3ecad89 (d81ba2a, the run-2 items; 3ecad89, guard held through a post, no `?draft=` write or "no longer here" flash while posting).
+DATE: 2026-11-03
+STATUS: PASS
+
+SUMMARY (run 3)
+Both run-2 MEDIUMs and both LOWs are fixed. Each fix was reverted on its own (then restored with `git checkout`, tree clean) and its test failed:
+- M1 remount: reverting `drawnFor` (page.tsx:150 to `draftReady = draftLoaded`) fails "a resumed draft stays mounted…" (the lot input is a different element). Reverting only the unbranched draft key (useInventory.ts:158-163) does NOT fail it; see LOW 2.
+- M2 autosave after refusal: removing `autosave.resume()` at GoodsReceiptForm.tsx:293 fails "after a refused post, an edit is saved again…"; removing it at :265 fails "after a refused discard, an edit is saved again".
+- LOW branch: restoring `showBranchChoice &&` in the post (:288) fails "…the own branch of the form even with one branch" and "keeps the own branch of that draft…"; restoring it in the draft payload (:130) fails "keeps the own branch of that draft…".
+- LOW 44 px link: restoring the old class (FoodDetailsForm.tsx:230) fails the review-round "44 px targets" case.
+The 3ecad89 behaviour changes are sound. The guard cannot stick: `submitting` is cleared in the post's catch (GoodsReceiptForm.tsx:294), so a refused post falls back to `unsaved || guardHeld`, as before. On success the page sets `posted` and calls `router.push`. The guard does not intercept a programmatic push, so navigation proceeds and the form unmounts. `draftSettled` (:162) and `onDraftSaved` (page.tsx:207) both skip the address write while posting or posted. `posted` is set only after `mutateAsync` resolves, so a refused post still shows "That draft is no longer here" for a draft that really is gone. The draft detail read no longer waits for the branch scope's `ready`. That is safe: `GET goods-receipt-drafts/{id}` (StaffGoodsReceiptDraftsController.cs:38-40) does not read the active branch. Its new key still sits under the `['inventory','receipt-drafts']` prefix, so invalidation still reaches it.
+
+Checks: `npm run typecheck` clean; `npm run lint` clean (0 warnings); Vitest `receipt-drafts.test.tsx` + `review-round.test.tsx` `--maxWorkers=2`, 37/37 in 3 of 4 runs. In 1 run, an unchanged test timed out (LOW 4). Playwright not run, as instructed.
+
+FINDINGS
+- [LOW] web/components/inventory/GoodsReceiptForm.tsx:329: holding the guard through a post pushes a sentinel history entry even when nothing was unsaved, and `UnsavedChangesGuard` never removes it on unmount. After a successful post the history is [… /new?draft=X, /new?draft=X (sentinel), /receipts/id]. One Back from the receipt shows "That draft is no longer here", and it takes a second Back to leave. Before 3ecad89 a settled form had no sentinel at post time. Fix: on success use `router.replace` when the guard holds a sentinel, or accept this and note it in the slice report.
+- [LOW] web/lib/hooks/useInventory.ts:158-163 + web/tests/components/inventory/receipt-drafts.test.tsx:458-497: the unbranched draft key has no test of its own. "Stays mounted" passes with the key reverted, because `drawnFor` alone keeps the form mounted. Without the key, the refetch after a switch empties `draft.data`, so `branchId` (page.tsx:81-84) falls back to the active branch. A save in that window would move the draft. Fix: in that test, also assert that the saved draft's `branchId` is still `mainBranchId` after the switch.
+- [LOW] 3ecad89 has no Vitest coverage; only E11 (Playwright) covers it. The guard held while `submitting`, `!submitting` in `draftSettled` and `!posted` in page.tsx:136/207 can each be removed with every unit test still passing. Fix: add a form case: a refused post with nothing unsaved releases the guard, and `onDraftSaved` is not called while a post is pending. Add a page case: a successful post does not render "That draft is no longer here".
+- [LOW] web/tests/components/inventory/receipt-drafts.test.tsx:330-333 (pre-existing, unchanged in range): `addLine`'s `findByRole` uses the default 1 s timeout and failed once in 4 runs under `--maxWorkers=2`. Fix: give `addLine` an explicit timeout, as the newer cases do.
+- [SUGGESTION] web/lib/hooks/useInventory.ts:306: `resume()` only clears `stopped`. A change whose timer `stop()` cleared stays unsaved until the next edit or blur. That is harmless today, because opening the review dialog blurs the input and flushes. Re-arming when `key !== savedKey` would make it independent of that.
+
+SCOPE CHECK
+- files in allowed scope: 8/8. web/app/(staff)/staff/inventory/receipts/new/page.tsx, web/components/inventory/GoodsReceiptForm.tsx, web/components/staff-shop/FoodDetailsForm.tsx, web/lib/hooks/useInventory.ts, web/tests/components/inventory/receipt-drafts.test.tsx, web/tests/components/staff-shop/review-round.test.tsx and web/tests/e2e/inventory-flows.spec.ts (§16 E11, S3, "may change") are in the §13 S3 block. docs/gates/HO-P5-WIRING-S3-SLICE-REPORT.md is covered by Amended (r).
+- files outside allowed scope: none
