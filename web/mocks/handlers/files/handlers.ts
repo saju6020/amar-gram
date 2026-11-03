@@ -17,6 +17,7 @@ import { fileStorageFixtureIds, onePixelPngBytes } from './fixtures';
  * `XMLHttpRequest.abort()` (`lib/api/files.ts`) cancels the request before any handler runs.
  */
 async function handleUpload(request: Request): Promise<Response> {
+  const purpose = new URL(request.url).searchParams.get('purpose');
   const formData = await request.formData();
   const file = formData.get('file');
   if (!(file instanceof File)) {
@@ -43,6 +44,7 @@ async function handleUpload(request: Request): Promise<Response> {
   const outcome = await resolveMockUploadOutcome(
     file,
     (fileId, exp) => `${origin}/api/files/${fileId}/content?exp=${exp}&disp=inline&sig=mock`,
+    purpose,
   );
   return HttpResponse.json(outcome.body, { status: outcome.status });
 }

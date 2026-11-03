@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Banner } from '@/components/inventory/fields';
 import { locationKindLabel } from '@/components/inventory/labels';
 import { formatQuantity } from '@/lib/format/inventory';
+import { formatDateOnly, localDateOf } from '@/lib/format/time';
 import { useNarrowContainer } from '@/lib/hooks/useIsNarrow';
 import type { SkuStockMatrix as SkuStockMatrixData, StockMatrixBatch } from '@/lib/api/inventory-stock';
 import { BatchStateBadge, describeBatchState } from './BatchStateBadge';
@@ -13,7 +14,8 @@ import { ExpiryBadge } from './ExpiryBadge';
  * `components/stock/SkuStockMatrix.tsx` — HO-IMP-002 §11.4, US-IMP-06/09. Rows are batches (lot,
  * expiry in words, state in words), columns are locations, cells are on hand / reserved WITH the unit.
  * A real `<table>` with row and column headers; in a narrow area a per-batch list instead, so
- * nothing scrolls sideways. An unusable batch says WHY in text (expired, quarantined, recalled —
+ * nothing scrolls sideways. HO-P5 BG-16: each batch also says when it was received (the branch-local date)
+ * and who supplied it ("—" when the receipt named no supplier). An unusable batch says WHY in text (expired, quarantined, recalled —
  * held, in a quarantine location) and offers no action that would use it — the only link is to the
  * batch page.
  */
@@ -36,6 +38,10 @@ export function SkuStockMatrix({ matrix }: { matrix: SkuStockMatrixData }) {
     const quarantine = cell.locationKind === 'Quarantine' ? ' (in quarantine location)' : '';
     return `${formatQuantity(cell.onHand, unit)} on hand, ${formatQuantity(cell.reserved, unit)} reserved${quarantine}`;
   };
+
+  const receivedText = (batch: StockMatrixBatch): string =>
+    batch.receivedOn ? formatDateOnly(localDateOf(batch.receivedOn, matrix.branchTimeZoneId)) : '—';
+  const supplierText = (batch: StockMatrixBatch): string => batch.supplierName ?? '—';
 
   const header = (batch: StockMatrixBatch) => {
     const inQuarantine = batch.locations.some((c) => c.locationKind === 'Quarantine' && c.onHand !== '0');
@@ -60,6 +66,14 @@ export function SkuStockMatrix({ matrix }: { matrix: SkuStockMatrixData }) {
             <li key={batch.batchId} className="rounded-[var(--radius-md)] border border-border bg-surface p-3">
               {header(batch)}
               <dl className="mt-2 grid grid-cols-[minmax(5rem,8rem)_1fr] gap-x-3 gap-y-1 text-sm">
+                <div className="contents">
+                  <dt className="text-ink-muted">Received</dt>
+                  <dd>{receivedText(batch)}</dd>
+                </div>
+                <div className="contents">
+                  <dt className="text-ink-muted">Supplier</dt>
+                  <dd className="[overflow-wrap:anywhere]">{supplierText(batch)}</dd>
+                </div>
                 {batch.locations.map((cell) => (
                   <div key={cell.locationId} className="contents">
                     <dt className="text-ink-muted">{cell.locationCode}</dt>
@@ -89,6 +103,12 @@ export function SkuStockMatrix({ matrix }: { matrix: SkuStockMatrixData }) {
               <th scope="col" className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-ink-muted">
                 Batch
               </th>
+              <th scope="col" className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-ink-muted">
+                Received
+              </th>
+              <th scope="col" className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-ink-muted">
+                Supplier
+              </th>
               {columns.map(([id, location]) => (
                 <th key={id} scope="col" className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wide text-ink-muted">
                   {location.code}
@@ -103,6 +123,8 @@ export function SkuStockMatrix({ matrix }: { matrix: SkuStockMatrixData }) {
                 <th scope="row" className="px-3 py-2 text-left font-normal">
                   {header(batch)}
                 </th>
+                <td className="px-3 py-2 text-ink">{receivedText(batch)}</td>
+                <td className="px-3 py-2 text-ink [overflow-wrap:anywhere]">{supplierText(batch)}</td>
                 {columns.map(([id]) => (
                   <td key={id} className="px-3 py-2 tabular-nums text-ink">
                     {cellText(batch, id)}

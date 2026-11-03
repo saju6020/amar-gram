@@ -6,7 +6,7 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { FoodDetailsForm } from '@/components/staff-shop/FoodDetailsForm';
 import { setFoodDetails } from '@/lib/api/staff-shop';
 import { isFoodCategory } from '@/lib/shop/labels';
-import { useStaffProduct, useTwoStepSave } from '@/lib/hooks/useStaffShop';
+import { useCanManageProducts, useStaffProduct, useTwoStepSave } from '@/lib/hooks/useStaffShop';
 
 /**
  * `/staff/shop/products/[productId]/food` — food & labelling (US-SHP-03). Food only (U-D2).
@@ -17,6 +17,7 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
   const { productId } = use(params);
   const product = useStaffProduct(productId);
   const twoStep = useTwoStepSave(productId);
+  const canManage = useCanManageProducts();
   const [formKey, setFormKey] = useState(0);
   const p = product.data;
   if (!p) return <LoadingState rows={8} />;
@@ -32,6 +33,7 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
     <FoodDetailsForm
       key={formKey}
       product={p}
+      canManage={canManage}
       onReload={() => {
         // Only a successful refetch brings new values to show; after a failed one the typed
         // values stay (S13).
@@ -51,6 +53,8 @@ export default function ProductFoodPage({ params }: { params: Promise<{ productI
               allergens: v.allergens || null,
               organicCertifier: v.organicCertifier || null,
               organicCertificateNumber: v.organicCertificateNumber || null,
+              organicCertificateExpiresOn: v.organicCertificateExpiresOn || null,
+              organicCertificateFileId: v.organicCertificateFileId || null,
             }),
           null,
           'Labelling saved',

@@ -66,11 +66,14 @@ describe('Food & labelling and Pack sizes — HO-P4 §11.4.6/§11.4.7', () => {
       />,
     );
     expect(screen.getByText('Certified organic')).toBeInTheDocument();
-    // BG-14: no certificate upload or expiry control.
-    expect(screen.queryByLabelText(/expiry|upload/i)).not.toBeInTheDocument();
+    // HO-P5 BG-14 (supersedes "no certificate upload or expiry control"): the expiry date field and the certificate
+    // file uploader are there, labelled, and nothing says "Expired" until the server says so.
+    expect(screen.getByLabelText('Certificate valid until')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Certificate file' })).toBeInTheDocument();
+    expect(screen.queryByText('Expired')).not.toBeInTheDocument();
   });
 
-  it('lists pack, SKU code, price (with the scheduled one), barcode and weight; no "Was" price', () => {
+  it('lists pack, SKU code, price (with the scheduled one), the Was price column, barcode and weight', () => {
     render(
       <VariantsTable
         product={product()}
@@ -82,10 +85,11 @@ describe('Food & labelling and Pack sizes — HO-P4 §11.4.6/§11.4.7', () => {
         onSchedulePrice={vi.fn()}
       />,
     );
-    for (const header of ['Pack', 'SKU code', 'Price', 'Barcode', 'Shipping weight']) {
+    for (const header of ['Pack', 'SKU code', 'Price', 'Was', 'Barcode', 'Shipping weight']) {
       expect(screen.getByRole('columnheader', { name: header })).toBeInTheDocument();
     }
-    expect(screen.queryByRole('columnheader', { name: /was|compare/i })).not.toBeInTheDocument();
+    // HO-P5 BG-13 (supersedes "no Was column"): the product() fixture has no compare-at price, so the cell says "—".
+    expect(screen.queryByRole('columnheader', { name: /compare/i })).not.toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'RICE-1KG' })).toBeInTheDocument();
     expect(screen.getByText(/Scheduled/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add pack size' })).toBeInTheDocument();

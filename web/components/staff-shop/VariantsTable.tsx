@@ -6,8 +6,10 @@ import { StatusPill } from '@/components/back-office/StatusPill';
 import { TableFrame } from '@/components/back-office/TableFrame';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { LoadingState } from '@/components/common/LoadingState';
 import { ScheduleChangeDialog } from '@/components/admin/ScheduleChangeDialog';
+import { MONEY_FORMAT_MESSAGE, MONEY_PATTERN } from '@/lib/money/moneyString';
+import { CATALOGUE_CODE_MESSAGES } from './submitProductSection';
+import { LoadingState } from '@/components/common/LoadingState';
 import { formatMoney } from '@/lib/format/money';
 import { priceCurrencyCode } from '@/lib/shop/currency';
 import { formatBestBefore } from '@/lib/format/shop';
@@ -81,6 +83,8 @@ export interface VariantsTableProps {
     amount: string,
     effectiveFromIso: string,
     currencyCode: string,
+    /** The optional "Was" amount as typed (HO-P5 BG-13); sent through `wireMoney`, compared by the server. */
+    compareAt?: string,
   ) => Promise<unknown>;
 }
 
@@ -88,7 +92,9 @@ export interface VariantsTableProps {
  * HO-SHP-002 §11.6 `VariantsTable` — US-SHP-02. SKUs with their code, barcode, status, CURRENT price,
  * SCHEDULED price and the stock copy (read-only, from the API). **Add SKU**, **Discontinue /
  * Reactivate** (confirmed) and **Prices**: Current / Scheduled / Past (HO-ADM-002's effective-dated
- * pattern) with **Schedule a new price**.
+ * pattern) with **Schedule a new price**. HO-P5 BG-13 adds the **Was** column (the compare-at price of the current
+ * price, and "then {…}" beside a scheduled one) and the optional "Was price" in the schedule dialog. No reorder
+ * column (HO-P4 note stands).
  */
 export function VariantsTable(props: VariantsTableProps) {
   const { product, priceSkuId } = props;
@@ -111,7 +117,7 @@ export function VariantsTable(props: VariantsTableProps) {
           {statusError}
         </p>
       )}
-      <TableFrame label="Pack sizes (scrolls horizontally)" minWidth={900}>
+      <TableFrame label="Pack sizes (scrolls horizontally)" minWidth={980}>
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Pack sizes</caption>
           <thead>
@@ -120,6 +126,7 @@ export function VariantsTable(props: VariantsTableProps) {
                 'Pack',
                 'SKU code',
                 'Price',
+                'Was',
                 'Barcode',
                 'Shipping weight',
                 'Status',
@@ -148,6 +155,14 @@ export function VariantsTable(props: VariantsTableProps) {
                   {sku.scheduledPrice && (
                     <span className="block text-xs text-ink-muted">
                       Scheduled {formatMoney(sku.scheduledPrice)}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {sku.compareAtPrice ? formatMoney(sku.compareAtPrice) : '—'}
+                  {sku.scheduledCompareAtPrice && (
+                    <span className="block text-xs text-ink-muted">
+                      then {formatMoney(sku.scheduledCompareAtPrice)}
                     </span>
                   )}
                 </td>
@@ -230,6 +245,7 @@ export function VariantsTable(props: VariantsTableProps) {
             </>
           )}
           <ScheduleChangeDialog
+            key={priceSku.skuId}
             open={scheduling}
             onOpenChange={setScheduling}
             title="Schedule a new price"
@@ -237,9 +253,38 @@ export function VariantsTable(props: VariantsTableProps) {
             consequence={(date) =>
               `The new price shows on the storefront from ${date}. Orders placed before then keep their price.`
             }
-            codeMessages={SHOP_CODE_MESSAGES}
-            onSchedule={async (value, iso) => {
-              await props.onSchedulePrice(priceSku, value, iso, currencyCode);
+            codeMessages={CATALOGUE_CODE_MESSAGES}
+            extraField={{
+              // HO-P5 BG-13: the optional "Was" price; the server decides whether it exceeds the price.
+              errorProperty: 'CompareAtAmount',
+              validate: (text) => (MONEY_PATTERN.test(text) ? null : MONEY_FORMAT_MESSAGE),
+              render: ({ value, onChange, error }) => (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="schedule-was" className="text-sm font-semibold text-ink">
+                    Was price (optional)
+                  </label>
+                  <input
+                    id="schedule-was"
+                    inputMode="decimal"
+                    value={value}
+                    onChange={(event) => onChange(event.target.value)}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby="schedule-was-hint"
+                    className="min-h-11 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink aria-[invalid=true]:border-danger-ink"
+                  />
+                  <p id="schedule-was-hint" className="m-0 text-xs text-ink-muted">
+                    The higher price this one replaces. It must be more than the amount.
+                  </p>
+                  {error && (
+                    <p role="alert" className="m-0 text-xs font-semibold text-danger-ink">
+                      {error}
+                    </p>
+                  )}
+                </div>
+              ),
+            }}
+            onSchedule={async (value, iso, compareAt) => {
+              await props.onSchedulePrice(priceSku, value, iso, currencyCode, compareAt);
               setScheduling(false);
             }}
           />

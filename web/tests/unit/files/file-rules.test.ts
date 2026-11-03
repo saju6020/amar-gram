@@ -19,6 +19,10 @@ describe('FILE_RULES — mirrors HO-FIL-001 §8.3 (backend FileRules.cs)', () =>
   const expected: Record<FilePurpose, { types: string[]; maxMb: number }> = {
     ProductImage: { types: ['image/jpeg', 'image/png', 'image/webp'], maxMb: 5 },
     ReportExport: { types: ['application/pdf', 'text/csv', 'application/zip'], maxMb: 50 },
+    OrganicCertificate: {
+      types: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      maxMb: 10,
+    },
   };
 
   it.each(Object.entries(expected))(

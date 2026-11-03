@@ -70,6 +70,8 @@ export interface PurchaseOrderListParams {
   to?: string;
   pageNumber?: number;
   pageSize?: number;
+  /** HO-P5 BG-18 -- the branch the receiving form is receiving into (`ProcurementPurchaseOrdersController.cs:24-27`). */
+  branchId?: string;
 }
 
 export async function getPurchaseOrders(

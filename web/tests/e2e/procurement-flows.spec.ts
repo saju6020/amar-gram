@@ -92,7 +92,7 @@ test('E-A2: a food SKU without an expiry date is blocked on the line’s expiry 
   await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible();
 });
 
-test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, restore, post once — confirm shown first', async ({
+test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, resume from ?draft=, post once — confirm shown first', async ({
   page,
 }) => {
   await page.goto('/staff/inventory/receipts/new');
@@ -109,9 +109,11 @@ test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, restore, post 
     await accepted.nth(i).fill('2');
   }
   await expect(page.getByText(/draft saved/i)).toBeVisible();
+  // HO-P5 ADR-FE-190: the draft is on the server; the address names it once the newest change is saved.
+  await expect(page).toHaveURL(/draft=[0-9a-f-]{36}/, { timeout: 20_000 });
+  const draftUrl = page.url();
   await page.reload();
-  await expect(page.getByText('Restore the receipt you were entering?')).toBeVisible();
-  await page.getByRole('button', { name: /restore the draft/i }).click();
+  await expect(page.getByText('Restore the receipt you were entering?')).toHaveCount(0);
   await expect(page.getByRole('listitem', { name: /^line 20:/i })).toBeVisible();
   await expect(page.getByLabel(/^lot number/i).first()).toHaveValue('L-A3-01');
 
@@ -145,9 +147,9 @@ test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, restore, post 
   await confirm.getByRole('button', { name: /post receipt/i }).click();
   await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible();
 
-  // Posted once: the draft is gone and the receipt list shows exactly one new receipt.
-  await page.goto('/staff/inventory/receipts/new');
-  await expect(page.getByText('Restore the receipt you were entering?')).toHaveCount(0);
+  // Posted once: the draft is closed (its address says so) and the receipt list shows exactly one new receipt.
+  await page.goto(draftUrl);
+  await expect(page.getByText('That draft is no longer here')).toBeVisible();
   await page.goto('/staff/inventory/receipts');
   await expect(page.getByRole('link', { name: /^GRN-/ })).toHaveCount(2); // the seeded one plus this
 });

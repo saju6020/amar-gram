@@ -7,6 +7,7 @@ import {
   noContentResponse,
   omit,
   notFoundResponse,
+  resolveBranch,
   violation,
 } from './fixtures';
 import { db, newId, persist } from './store';
@@ -41,7 +42,10 @@ export const lookupHandlers: HttpHandler[] = [
   http.get('*/api/staff/inventory/locations', ({ request }) => {
     const denied = guard(request, ROLES.stockView);
     if (denied) return denied;
-    return HttpResponse.json(locationsOf(branchOf(request)));
+    // BG-18: `branchId` names another branch the caller works in (403 `BranchNotAssigned` otherwise).
+    const branch = resolveBranch(request, new URL(request.url).searchParams.get('branchId'));
+    if (branch instanceof Response) return branch;
+    return HttpResponse.json(locationsOf(branch));
   }),
 
   http.post('*/api/staff/inventory/locations', async ({ request }) => {

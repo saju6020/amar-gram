@@ -38,6 +38,12 @@ export const FILE_RULES: Readonly<Record<FilePurpose, FilePurposeRule>> = {
     allowedContentTypes: ['application/pdf', 'text/csv', 'application/zip'],
     maxSizeInBytes: 50 * ONE_MB,
   },
+  // HO-P5 BG-14 -- `FileRules.cs:33-37`: the certifier's scan or photo of the organic certificate.
+  OrganicCertificate: {
+    purpose: 'OrganicCertificate',
+    allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+    maxSizeInBytes: 10 * ONE_MB,
+  },
 };
 
 export function findFileRule(purpose: FilePurpose): FilePurposeRule {

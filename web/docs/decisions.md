@@ -1289,6 +1289,8 @@ is forbidden scope for a frontend handover (HO-IMP-002 §14) and carries only th
 
 ### ADR-FE-043
 
+**Status.** Superseded by ADR-FE-190 (HO-P5 S3, Amended (an)): receipt drafts are saved on the server, and the `sessionStorage` draft and its restore prompt are gone.
+
 **Decision.** The **goods-receipt form autosaves a draft to `sessionStorage`** per staff member, restores it with an explicit *"Restore the receipt you were entering?"*, and clears it on post
 
 **Why.** Fifty lines typed beside a pallet must survive a reload; nothing in the draft is personal data

@@ -17,6 +17,7 @@ import {
   notFoundResponse,
   paged,
   q,
+  resolveBranch,
   todayDate,
   unitCost,
   violation,
@@ -282,8 +283,11 @@ export const procurementHandlers: HttpHandler[] = [
     const state = url.searchParams.get('receiptState');
     const from = url.searchParams.get('from');
     const to = url.searchParams.get('to');
+    // BG-18: the receiving form lists the orders of the branch it is receiving into (`ProcurementPurchaseOrdersController.cs:24-27`).
+    const branch = resolveBranch(request, url.searchParams.get('branchId'));
+    if (branch instanceof Response) return branch;
     const rows = db.purchaseOrders
-      .filter((po) => po.branchId === branchOf(request))
+      .filter((po) => po.branchId === branch)
       .map(poSummary)
       .filter((po) => !status || po.status === status)
       .filter((po) => !supplierId || po.supplierId === supplierId)

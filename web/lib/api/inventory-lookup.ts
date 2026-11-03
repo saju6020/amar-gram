@@ -70,9 +70,11 @@ export interface StockLocation {
   permittedMovements: string[];
 }
 
-/** The branch's locations — a plain array, not paged. */
-export async function getLocations(): Promise<StockLocation[]> {
-  return apiFetch<StockLocation[]>('/api/staff/inventory/locations');
+/** The branch's locations — a plain array, not paged. HO-P5 BG-18: `branchId` names another branch the
+ *  caller works in (403 `BranchNotAssigned` otherwise, `StaffInventoryLocationsController.cs:21-24`);
+ *  omitted, the active branch. */
+export async function getLocations(branchId?: string): Promise<StockLocation[]> {
+  return apiFetch<StockLocation[]>(`/api/staff/inventory/locations${buildQuery({ branchId })}`);
 }
 
 export interface CreateLocationRequest {

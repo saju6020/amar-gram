@@ -10,7 +10,7 @@ import type {
   BatchStatusChange,
   LedgerEntry,
 } from '@/lib/api/inventory-stock';
-import type { GoodsReceiptDetail } from '@/lib/api/inventory-receipts';
+import type { GoodsReceiptDetail, GoodsReceiptDraftLine } from '@/lib/api/inventory-receipts';
 import type {
   AdjustmentDetail,
   CountDetail,
@@ -37,7 +37,8 @@ import {
  * kept simple and always-fresh in Vitest.
  */
 
-const PERSIST_KEY = '__purrcare_inventory_mock_db__';
+// HO-P5 S3: bumped (v2) so a browser's stale copy does not lack the receipt drafts.
+const PERSIST_KEY = '__purrcare_inventory_mock_db__v2';
 
 export const staffNames: Record<string, string> = {
   [accountsFixtureIds.adminStaffId]: 'Rezwan Ahmed',
@@ -120,6 +121,24 @@ export interface MLedger extends LedgerEntry {
   branchId: string;
 }
 
+/** HO-P5 BG-18 -- a goods-receipt draft as the server keeps it (`GoodsReceiptDraftAggregate`). */
+export interface MDraft {
+  draftId: string;
+  ownerId: string;
+  branchId: string;
+  supplierId: string | null;
+  purchaseOrderId: string | null;
+  consignmentId: string | null;
+  deliveryReference: string | null;
+  receivedOn: string | null;
+  note: string | null;
+  version: number;
+  updatedOn: string;
+  /** Open until a receipt is posted from it or the owner discards it; a closed draft can never be saved again. */
+  status: 'Open' | 'Posted' | 'Discarded';
+  lines: GoodsReceiptDraftLine[];
+}
+
 export interface MockDb {
   seq: number;
   locations: Array<StockLocation & { branchId: string }>;
@@ -150,6 +169,7 @@ export interface MockDb {
     preferredSupplierId: string | null;
     isDefaulted: boolean;
   }>;
+  receiptDrafts: MDraft[];
 }
 
 const LOCATION_MOVEMENTS: Record<StockLocation['kind'], string[]> = {
@@ -1475,6 +1495,24 @@ function seed(): MockDb {
         reorderQuantity: null,
         preferredSupplierId: null,
         isDefaulted: true,
+      },
+    ],
+    // HO-P5 BG-18: one open draft that is ANOTHER staff member's -- the signed-in caller never lists it and gets a 404 for it.
+    receiptDrafts: [
+      {
+        draftId: ids.otherStaffDraftId,
+        ownerId: accountsFixtureIds.stockStaffId,
+        branchId: ids.mainBranchId,
+        supplierId: ids.supplierId,
+        purchaseOrderId: null,
+        consignmentId: null,
+        deliveryReference: 'NADIA-DRAFT',
+        receivedOn: null,
+        note: null,
+        version: 3,
+        updatedOn: instantOffset(-2),
+        status: 'Open',
+        lines: [],
       },
     ],
   };

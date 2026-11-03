@@ -52,6 +52,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ produ
               tags: values.tagList,
               taxClassId: values.taxClassId,
               countryOfOriginCode: values.countryOfOriginCode || null,
+              districtOfOrigin: values.districtOfOrigin.trim() || null,
               listedOnStorefront: values.listedOnStorefront,
               isExpiryTracked: values.isExpiryTracked,
               certifications: values.certifications,

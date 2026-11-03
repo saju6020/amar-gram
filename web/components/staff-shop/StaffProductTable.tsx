@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { ActionLink } from '@/components/back-office/ActionLink';
 import { PageHeader } from '@/components/back-office/PageHeader';
@@ -9,9 +10,17 @@ import { SearchField } from '@/components/back-office/SearchField';
 import { StatusPill } from '@/components/back-office/StatusPill';
 import { buttonVariants } from '@/components/ui/button';
 import { DataTable } from '@/components/common/DataTable';
+import { ProductPackArt } from '@/components/hearth/ProductPackArt';
 import { formatInstantDate } from '@/lib/format/time';
+import { formatMoney } from '@/lib/format/money';
+import { resolveFileUrl } from '@/lib/api/files';
 import { CATEGORY_LABELS, categoryLabel } from '@/lib/shop/labels';
-import type { StaffProductSummary } from '@/lib/api/staff-shop';
+import type {
+  BulkProductAction,
+  BulkProductStatusResult,
+  StaffProductSummary,
+} from '@/lib/api/staff-shop';
+import { ProductBulkActions } from './ProductBulkActions';
 
 export type StaffProductFilterName =
   'q' | 'status' | 'category' | 'brand' | 'kind' | 'listed' | 'barcode' | 'sort';
@@ -28,6 +37,11 @@ export interface StaffProductTableProps {
   /** Writes a pending text field straight to the URL (Enter from a barcode scanner, HW-2). */
   onFlush: (name: StaffProductFilterName) => void;
   exportHref: string;
+  /** HO-P5 BG-10: one `bulk-status` call for the ticked rows. Without it the table has no select column. */
+  onBulkStatus?: (
+    action: BulkProductAction,
+    productIds: string[],
+  ) => Promise<BulkProductStatusResult>;
 }
 
 /** The API's own statuses with the labels the editor already shows (OQ-4). "All" is the empty filter. */
@@ -40,6 +54,37 @@ const STATUS_TABS = [
 const STATUS_TONE = { Draft: 'neutral', Active: 'success', Archived: 'warning' } as const;
 const select =
   'min-h-11 rounded-[var(--radius-md)] border border-border-strong bg-surface px-3 text-sm text-ink';
+
+/** BG-9: "{min}" when the two strings are the same, else "{min} – {max}"; "—" when no active pack size is priced. */
+export function priceRangeText(range: StaffProductSummary['priceRange']): string {
+  if (!range) return '—';
+  return range.min.amount === range.max.amount
+    ? formatMoney(range.min)
+    : `${formatMoney(range.min)} – ${formatMoney(range.max)}`;
+}
+
+/** BG-9: the server's sizes joined, else the count of pack sizes as before. */
+export function packSizesText(row: StaffProductSummary): string {
+  return row.packSizes && row.packSizes.length > 0
+    ? row.packSizes.join(', ')
+    : `${row.skuCount} pack ${row.skuCount === 1 ? 'size' : 'sizes'}`;
+}
+
+/** BG-9: the signed 480 px thumbnail with the server's alt text; the tinted pack placeholder when there is none. */
+function ProductThumb({ image }: { image: StaffProductSummary['primaryImage'] }) {
+  const src = resolveFileUrl(image?.url);
+  if (!image || !src) return <ProductPackArt className="size-10 rounded-[var(--radius-sm)]" />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- ADR-FE-035: no next/image remote config; the URL is the server's signed one
+    <img
+      src={src}
+      alt={image.altText}
+      width={40}
+      height={40}
+      className="size-10 flex-none rounded-[var(--radius-sm)] object-cover"
+    />
+  );
+}
 
 /** A scanner's keyboard-wedge input is digits only; anything else is a name or SKU code search. */
 const isBarcodeLike = (text: string) => /^\d{6,}$/.test(text);
@@ -81,14 +126,29 @@ function SelectFilter({
  * the API's own statuses, category, kind, listed, producer and sort, all in the URL; pagination; and
  * **Export CSV** from the server with the same filters.
  *
- * Left out (the list row lacks the data, BG-9/BG-10): row select boxes and the bulk publish bar,
- * and the Origin, price range, stock, thumbnail and "Organic" columns.
+ * HO-P5 BG-9: each row also shows its thumbnail, Origin, pack sizes, price range, stock and an
+ * "Organic" pill, every one as the server sent it (no figure is worked out here). HO-P5 BG-10: a select
+ * box per row and "Select all on this page" feed the bulk bar (Publish / Hide from shop). The selection is
+ * the current page only (OQ-12): it clears when the page's products change and after an action.
  */
 export function StaffProductTable(props: StaffProductTableProps) {
   const { filters, onFilter, onFlush } = props;
   const urlSearch = filters.barcode || filters.q;
   const [draft, setDraft] = React.useState(urlSearch);
   React.useEffect(() => setDraft(urlSearch), [urlSearch]);
+
+  // OQ-12: the selection is the current page's; a different page or filter (different rows) clears it.
+  const [selected, setSelected] = React.useState<string[]>([]);
+  const pageKey = (props.items ?? []).map((row) => row.productId).join(',');
+  const lastPageKey = React.useRef(pageKey);
+  React.useEffect(() => {
+    if (lastPageKey.current === pageKey) return;
+    lastPageKey.current = pageKey;
+    setSelected([]);
+  }, [pageKey]);
+  const rows = props.items ?? [];
+  const allSelected = rows.length > 0 && rows.every((row) => selected.includes(row.productId));
+  const bulk = props.onBulkStatus;
 
   function commitSearch(raw: string) {
     const text = raw.trim();
@@ -205,6 +265,28 @@ export function StaffProductTable(props: StaffProductTableProps) {
         </details>
       </div>
 
+      {bulk && rows.length > 0 && (
+        <label className="flex min-h-11 w-fit items-center gap-2 text-sm font-semibold text-ink">
+          <input
+            type="checkbox"
+            className="size-5 accent-leaf"
+            checked={allSelected}
+            onChange={(event) =>
+              setSelected(event.target.checked ? rows.map((row) => row.productId) : [])
+            }
+          />
+          Select all on this page
+        </label>
+      )}
+      {bulk && (
+        <ProductBulkActions
+          selectedIds={selected}
+          nameOf={(id) => rows.find((row) => row.productId === id)?.name ?? id}
+          onRun={bulk}
+          onClear={() => setSelected([])}
+        />
+      )}
+
       <DataTable
         caption="Products"
         rows={props.items}
@@ -217,19 +299,61 @@ export function StaffProductTable(props: StaffProductTableProps) {
           description: 'Clear a filter, or add a new product.',
         }}
         pagination={{ totalCount: props.totalCount ?? 0, pageSize: props.pageSize }}
-        rowHref={(row) => `/staff/shop/products/${row.productId}`}
         columns={[
+          ...(bulk
+            ? [
+                {
+                  id: 'select',
+                  header: 'Select',
+                  headerClassName: 'w-12',
+                  cell: (row: StaffProductSummary) => (
+                    <label className="-m-3 flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
+                    <input
+                      type="checkbox"
+                      className="size-5 accent-leaf"
+                      aria-label={`Select ${row.name}`}
+                      checked={selected.includes(row.productId)}
+                      onChange={(event) =>
+                        setSelected((current) =>
+                          event.target.checked
+                            ? [...current, row.productId]
+                            : current.filter((id) => id !== row.productId),
+                        )
+                      }
+                    />
+                    </label>
+                  ),
+                },
+              ]
+            : []),
           {
             id: 'name',
             header: 'Product',
-            cell: (row) => (row.kind === 'Bundle' ? `${row.name} (Kit)` : row.name),
+            cell: (row) => (
+              <span className="flex items-center gap-3">
+                <ProductThumb image={row.primaryImage} />
+                <span className="flex min-w-0 flex-col items-start gap-1">
+                  <Link
+                    href={`/staff/shop/products/${row.productId}`}
+                    className="font-semibold text-ink no-underline hover:underline"
+                  >
+                    {row.kind === 'Bundle' ? `${row.name} (Kit)` : row.name}
+                  </Link>
+                  {row.isOrganic && <StatusPill tone="success">Organic</StatusPill>}
+                </span>
+              </span>
+            ),
           },
           { id: 'category', header: 'Category', cell: (row) => categoryLabel(row.category) },
           { id: 'brand', header: 'Producer', cell: (row) => row.brand },
+          { id: 'origin', header: 'Origin', cell: (row) => row.countryOfOrigin?.name ?? '—' },
+          { id: 'skus', header: 'Pack sizes', cell: (row) => packSizesText(row) },
+          { id: 'price', header: 'Price', cell: (row) => priceRangeText(row.priceRange) },
           {
-            id: 'skus',
-            header: 'Pack sizes',
-            cell: (row) => `${row.skuCount} pack ${row.skuCount === 1 ? 'size' : 'sizes'}`,
+            id: 'stock',
+            header: 'Stock',
+            cell: (row) =>
+              row.availableStock == null ? '—' : `${row.availableStock} available`,
           },
           {
             id: 'listed',

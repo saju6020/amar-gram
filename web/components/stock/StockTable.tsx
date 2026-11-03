@@ -11,12 +11,25 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { StorageChip } from '@/components/inventory/StorageChip';
+import { StatusPill } from '@/components/back-office/StatusPill';
 import { Button } from '@/components/ui/button';
 import { formatDateOrDash, formatQuantity } from '@/lib/format/inventory';
+import { isZeroDecimal } from '@/lib/validation/inventory';
 import type { StockSummary } from '@/lib/api/inventory-stock';
 
 const TH = 'px-4 py-3 text-[13px] font-semibold text-ink-muted';
 const NUMERIC = 'px-4 py-2.5 text-right tabular-nums';
+
+/**
+ * HO-P5 BG-16: the server's reorder level with the item's unit -- "Off" when reordering is switched off for it
+ * ("0"), and "(branch default)" when the branch default stands in for an explicit policy. Nothing is worked out here.
+ */
+export function reorderLevelText(row: StockSummary): string | null {
+  if (row.reorderLevel === undefined) return null;
+  if (isZeroDecimal(row.reorderLevel)) return 'Off';
+  const text = formatQuantity(row.reorderLevel, row.stockUnit);
+  return row.reorderLevelIsDefault ? `${text} (branch default)` : text;
+}
 
 /** One item plus, once first opened, its batch matrix in a row beneath it. */
 function StockRow({
@@ -71,6 +84,12 @@ function StockRow({
         <td className={NUMERIC}>{formatQuantity(row.reserved, row.stockUnit)}</td>
         <td className={`${NUMERIC} font-semibold text-ink`}>{formatQuantity(row.sellable, row.stockUnit)}</td>
         <td className="px-4 py-2.5">{formatDateOrDash(row.nextExpiresOn, 'No expiry date')}</td>
+        <td className="px-4 py-2.5">
+          <div className="flex flex-col items-start gap-1">
+            <span>{reorderLevelText(row) ?? '—'}</span>
+            {row.belowReorderLevel && <StatusPill tone="warning">Below reorder level</StatusPill>}
+          </div>
+        </td>
         <td className="px-4 py-2.5 text-right">
           <Button
             variant="secondary"
@@ -84,7 +103,7 @@ function StockRow({
       </tr>
       {opened && (
         <tr id={detailId} hidden={!open} className="bg-surface-page">
-          <td colSpan={6} className="px-4 pb-4 pt-1 sm:pl-14">
+          <td colSpan={7} className="px-4 pb-4 pt-1 sm:pl-14">
             <StockItemBatches skuId={row.skuId} />
           </td>
         </tr>
@@ -99,8 +118,9 @@ function StockRow({
  * Next expiry — each the server's figure with the item's unit (UI-8) — and an "Adjust" action. A
  * disclosure button on each row (`aria-expanded`) opens that item's batches, loaded on first
  * expand. Filters live in the URL above this table; the name still opens the item's page (batch ×
- * location matrix, FEFO preview, figures such as usable / held / expired). "Reorder at" and the
- * batch "Received" / "Supplier" columns are not built: the API sends neither (BG-16).
+ * location matrix, FEFO preview, figures such as usable / held / expired). HO-P5 BG-16: "Reorder at"
+ * (the server's level, "(branch default)" or "Off") with a "Below reorder level" pill from the server's own
+ * boolean; the expanded batches add "Received" and "Supplier" (see `SkuStockMatrix`).
  */
 export function StockTable({
   rows,
@@ -128,7 +148,7 @@ export function StockTable({
 
   return (
     <div className="flex flex-col gap-3">
-      <TableFrame label="Stock by item (scrolls horizontally)" minWidth={760}>
+      <TableFrame label="Stock by item (scrolls horizontally)" minWidth={900}>
         <table className="relative w-full border-collapse text-sm">
           <caption className="sr-only">Stock by item</caption>
           <thead>
@@ -138,6 +158,7 @@ export function StockTable({
               <th scope="col" className={`${TH} text-right`}>Reserved</th>
               <th scope="col" className={`${TH} text-right`}>Available</th>
               <th scope="col" className={TH}>Next expiry</th>
+              <th scope="col" className={TH}>Reorder at</th>
               <th scope="col" className={TH}>
                 <span className="sr-only">Actions</span>
               </th>

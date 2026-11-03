@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { shopFixtureIds } from '../../mocks/handlers/shop';
 import { test, expect as baseExpect, signInAsStaff } from './fixtures';
 
@@ -206,5 +207,142 @@ test.describe('origins (US-SHP-05, staff)', () => {
     await expect(dialog.getByLabel('Sourcing notes preview').locator('strong')).toHaveText('tofu');
     await dialog.getByRole('button', { name: 'Save origin' }).click();
     await expect(page.getByRole('rowheader', { name: 'Japan' })).toBeVisible();
+  });
+});
+
+/**
+ * HO-P5 S3 (E10) -- the products list columns and bulk bar (BG-9, BG-10), the district and "Was" price (BG-12, BG-13) and the
+ * organic certificate (BG-14), run against MSW. Staff-only data: nothing here is read by the shop.
+ */
+test.describe('HO-P5 S3: catalogue back office wiring (E10)', () => {
+  test('select two products, Hide from shop, read the server result line; a Draft in the batch is listed as not updated', async ({
+    page,
+  }) => {
+    await signInAsStaff(page);
+    await page.goto('/staff/shop/products?status=Active');
+    await expect(page.getByRole('columnheader', { name: 'Origin' })).toBeVisible();
+    for (const header of ['Pack sizes', 'Price', 'Stock']) {
+      await expect(page.getByRole('columnheader', { name: header })).toBeVisible();
+    }
+    const boxes = page.getByRole('checkbox', { name: /^Select (?!all)/ });
+    await expect(boxes.first()).toBeVisible();
+    const first = (await boxes.nth(0).getAttribute('aria-label'))!.replace(/^Select /, '');
+    const second = (await boxes.nth(1).getAttribute('aria-label'))!.replace(/^Select /, '');
+    await boxes.nth(0).check();
+    await boxes.nth(1).check();
+    const bar = page.getByRole('region', { name: 'Bulk actions' });
+    await expect(bar).toContainText('2 selected');
+
+    // 360 px and axe with the bar open: the table scrolls inside its own region, the page does not.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+    const axe = await new AxeBuilder({ page }).analyze();
+    expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+
+    await bar.getByRole('button', { name: 'Hide from shop' }).click();
+    const confirm = page.getByRole('dialog', { name: 'Hide 2 products from the shop?' });
+    await expect(confirm).toBeVisible();
+    await confirm.getByRole('button', { name: 'Hide from shop' }).click();
+    await expect(page.getByText('2 updated, 0 not updated')).toBeVisible();
+    await expect(bar).toBeHidden(); // the selection cleared after the action
+    // The list refetched: both are Draft now, so they left the Active list.
+    await expect(page.getByRole('link', { name: first, exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: second, exact: true })).toHaveCount(0);
+
+    // A Draft cannot be hidden: the server's per-product message is listed with the product's name.
+    await page.goto('/staff/shop/products?status=Draft');
+    const draftBox = page.getByRole('checkbox', { name: /^Select (?!all)/ }).first();
+    const draftName = (await draftBox.getAttribute('aria-label'))!.replace(/^Select /, '');
+    await draftBox.check();
+    await page
+      .getByRole('region', { name: 'Bulk actions' })
+      .getByRole('button', { name: 'Hide from shop' })
+      .click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Hide from shop' }).click();
+    await expect(page.getByText('0 updated, 1 not updated')).toBeVisible();
+    await expect(page.getByText(`${draftName}: Cannot unpublish from Draft.`)).toBeVisible();
+  });
+
+  test('set a district and a "Was" price; a Was price that is not higher is refused under its field', async ({
+    page,
+  }) => {
+    await signInAsStaff(page);
+    const base = `/staff/shop/products/${shopFixtureIds.multiVariantProductId}`;
+    await page.goto(`${base}/variants`);
+    await expect(page.getByRole('columnheader', { name: 'Was' })).toBeVisible();
+    // The seed: the 2 kg pack has a Was price of ৳2,800.00 and a scheduled one.
+    await expect(page.getByRole('row', { name: /OAT-2KG/ })).toContainText('৳2,800.00');
+    await expect(page.getByRole('row', { name: /OAT-2KG/ })).toContainText('then ৳3,000.00');
+
+    await page.getByRole('button', { name: 'Prices for OAT-400G' }).click();
+    await page.getByRole('button', { name: 'Schedule a new price' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Schedule a new price' });
+    await dialog.getByLabel('Amount (BDT)').fill('700');
+    await dialog.getByLabel('Was price (optional)').fill('700');
+    await dialog.getByRole('button', { name: 'Schedule', exact: true }).click();
+    await expect(
+      dialog.getByText('The compare-at price must be greater than the price.'),
+    ).toBeVisible();
+    await expect(dialog.getByLabel('Was price (optional)')).toHaveAttribute('aria-invalid', 'true');
+    await dialog.getByLabel('Was price (optional)').fill('800');
+    await dialog.getByRole('button', { name: 'Schedule', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Current' })).toContainText('৳700.00');
+    await expect(page.getByRole('row', { name: /OAT-400G/ })).toContainText('৳800.00');
+
+    await page.goto(base);
+    const district = page.getByLabel('District of origin');
+    await expect(district).toHaveValue('Dinajpur');
+    await district.fill('Bogura');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('button', { name: 'Save' })).toBeEnabled();
+    await page.reload();
+    await expect(page.getByLabel('District of origin')).toHaveValue('Bogura');
+  });
+
+  test('an expired organic certificate blocks publishing with the message; renewing it lets it through', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await signInAsStaff(page);
+    await page.goto(`/staff/shop/products?q=${encodeURIComponent('Pure Mustard Oil')}`);
+    await page.getByRole('link', { name: 'Pure Mustard Oil', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Pure Mustard Oil' })).toBeVisible();
+    const editorUrl = page.url();
+
+    await page.getByRole('button', { name: 'Unpublish', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Unpublish this product?' })
+      .getByRole('button', { name: 'Unpublish' })
+      .click();
+    await expect(page.getByText('Draft', { exact: true }).first()).toBeVisible();
+
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Publish this product?' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+    await expect(
+      page.getByRole('alert').filter({
+        hasText:
+          'The organic certificate has expired. Update it on Food & labelling before publishing.',
+      }),
+    ).toBeVisible();
+
+    // The server says it has expired: the pill is there, and renewing the date clears it.
+    // (Below 768 px the sections are a select, not tabs, so go to the section by its address.)
+    await page.goto(`${editorUrl}/food`);
+    await expect(page.getByText('Expired', { exact: true })).toBeVisible();
+    await page.getByLabel('Certificate valid until').fill('2031-01-01');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Expired', { exact: true })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Publish this product?' })
+      .getByRole('button', { name: 'Publish' })
+      .click();
+    await expect(page.getByText('Active (in the shop)')).toBeVisible();
   });
 });
