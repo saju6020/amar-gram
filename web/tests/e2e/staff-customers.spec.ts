@@ -73,8 +73,18 @@ test('E5: /staff/customers — search by mobile, select, see the profile, "New o
   await expectAxeClean(page);
   await expectNoHorizontalScroll(page);
 
-  await page.getByRole('link', { name: 'New order' }).click();
-  await expect(page).toHaveURL(/\/staff\/pos\?customerId=/);
+  // HO-P5 Amended (ar): the counter takes the preset into state and replaces its address at once (S2's one-time preset,
+  // PosScreen.tsx), so `?customerId=` lives only for a moment. Assert the link carries it, then that the counter opened
+  // for that customer and the address no longer holds the id.
+  const newOrder = page.getByRole('link', { name: 'New order' });
+  await expect(newOrder).toHaveAttribute(
+    'href',
+    new RegExp(`/staff/pos\\?customerId=${accountsFixtureIds.customerId}`),
+  );
+  await newOrder.click();
+  await expect(page).toHaveURL(/\/staff\/pos$/, { timeout: 20_000 });
+  await expect(page.getByRole('heading', { level: 1, name: /Counter sale/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Sam Rahman/ })).toBeVisible();
 });
 
 // HO-P5 §16 E13 (BG-19, US-ACC-10/11): search by name, read the server's summary, add a note, edit the tags, send a password
