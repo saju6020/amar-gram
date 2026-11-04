@@ -231,7 +231,7 @@ export default function BranchRosterPage({ params }: { params: Promise<{ branchI
               </span>
               <button
                 type="button"
-                className="text-sm font-semibold text-danger-ink underline"
+                className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-danger-ink underline"
                 onClick={() => setPendingCancelException(exception.id)}
               >
                 Cancel
