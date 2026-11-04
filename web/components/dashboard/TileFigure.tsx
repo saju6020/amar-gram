@@ -22,7 +22,7 @@ export function TileFigure({
     <div className="min-w-0">
       <dt className="text-xs font-semibold text-ink-muted">{figure.label}</dt>
       <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-x-2 font-display text-[28px] font-bold leading-tight tabular-nums text-ink [overflow-wrap:anywhere]">
-        <span>{text}</span>
+        <span className="whitespace-nowrap">{text}</span>
         {notRecorded && <span className="sr-only">Not recorded</span>}
       </dd>
     </div>

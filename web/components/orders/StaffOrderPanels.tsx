@@ -15,11 +15,15 @@ import { OrderStatusBadge } from './OrderStatusBadge';
  * returned, the shipment, and the status history **with staff names**. Everything shown is the server's;
  * the only decision made here is which fields exist.
  */
+/** Below `sm` the label sits above its value, so the value gets the card's full width instead of a few characters. */
+const ROW_LIST =
+  'm-0 grid grid-cols-1 gap-x-4 gap-y-0.5 text-sm sm:grid-cols-[minmax(0,9rem)_minmax(0,1fr)] sm:gap-y-1';
+
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
       <dt className="text-ink-muted">{label}</dt>
-      <dd className="m-0 min-w-0 [overflow-wrap:anywhere]">{children}</dd>
+      <dd className="m-0 mb-2 min-w-0 [overflow-wrap:anywhere] sm:mb-0">{children}</dd>
     </>
   );
 }
@@ -29,7 +33,7 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
   const address = [f.line1, f.line2, f.city, f.district, f.postalCode].filter(Boolean).join(', ');
   return (
     <Panel title="Customer and fulfilment">
-      <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
+      <dl className={ROW_LIST}>
         <Row label="Customer">
           {order.customerAnonymised ? (
             'Customer anonymised'
@@ -114,7 +118,7 @@ export function StaffLinesPanel({
 export function PaymentsPanel({ order }: { order: StaffOrderDetail }) {
   return (
     <Panel title="Money">
-      <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
+      <dl className={ROW_LIST}>
         <Row label="Paid"><Amount money={order.amountPaid} /></Row>
         <Row label="Refunded"><Amount money={order.amountRefunded} /></Row>
         <Row label="Refund due"><Amount money={order.refundDue} /></Row>
@@ -161,7 +165,7 @@ export function ShipmentPanel({ order, onEditTracking }: { order: StaffOrderDeta
         )
       }
     >
-      <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
+      <dl className={ROW_LIST}>
         {byRider ? <Row label="Rider">{s.riderName ?? 'Our delivery rider'}</Row> : <Row label="Courier">{s.courierName}</Row>}
         {!byRider && (
           <Row label="Tracking number">

@@ -31,12 +31,12 @@ export function DashboardTile({
   return (
     <section
       aria-labelledby={headingId}
-      className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-surface p-[18px]"
+      className="@container flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-surface p-[18px]"
     >
       <h2 id={headingId} className="text-sm font-semibold text-ink-muted">
         {tile.title}
       </h2>
-      <dl className="m-0 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+      <dl className="m-0 grid grid-cols-1 gap-3 @[20rem]:grid-cols-2">
         {tile.figures.map((figure) => (
           <TileFigure key={figure.key} figure={figure} timeZoneId={timeZoneId} />
         ))}
