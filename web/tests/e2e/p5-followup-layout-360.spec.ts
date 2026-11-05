@@ -54,9 +54,32 @@ test('S4 F4: the customer search field is wide enough to read at 360 px', async 
     const context = document.createElement('canvas').getContext('2d')!;
     context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
     const inner = input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    return { text: context.measureText(input.placeholder).width, inner };
+    // A search input keeps room for the browser's clear (x) button even while empty, which cut the placeholder
+    // in acceptance run 2; that button must be gone while the field is empty for the padding box to be the text's.
+    // getComputedStyle does not apply :placeholder-shown to this pseudo-element, so look for an author rule that
+    // hides the button and whose element part matches this (empty) input.
+    const pseudo = '::-webkit-search-cancel-button';
+    const hidesCancel = Array.from(document.styleSheets).some((sheet) => {
+      const visit = (rules: CSSRuleList): boolean =>
+        Array.from(rules).some((rule) => {
+          if ('cssRules' in rule && !(rule instanceof CSSStyleRule)) return visit((rule as CSSGroupingRule).cssRules);
+          if (!(rule instanceof CSSStyleRule) || rule.style.display !== 'none') return false;
+          return rule.selectorText
+            .split(',')
+            .map((selector) => selector.trim())
+            .some((selector) => selector.endsWith(pseudo) && input.matches(selector.slice(0, -pseudo.length)));
+        });
+      try {
+        return visit(sheet.cssRules);
+      } catch {
+        return false;
+      }
+    });
+    return { text: context.measureText(input.placeholder).width, inner, hidesCancel, empty: input.value === '' };
   });
-  expect(fit.text).toBeLessThanOrEqual(fit.inner);
+  expect(fit.empty).toBe(true);
+  expect(fit.hidesCancel).toBe(true);
+  expect(fit.text, JSON.stringify(fit)).toBeLessThanOrEqual(fit.inner);
   const button = page.getByRole('search', { name: 'Find a customer' }).getByRole('button', { name: 'Search' });
   expect((await button.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   await expectNoHorizontalScroll(page);
