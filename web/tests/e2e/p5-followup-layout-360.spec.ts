@@ -63,7 +63,12 @@ test('S4 F5: the customer profile facts do not break a word mid-word', async ({ 
 
 test('S4 F7: the roster exception Cancel button is at least 44 px tall', async ({ page }) => {
   await page.goto(`/staff/admin/branches/${administrationFixtureIds.mainBranchId}/roster`);
-  const cancels = page.locator('li').getByRole('button', { name: 'Cancel', exact: true });
+  // The page lists only this week's exceptions and the seeded ones are in 2027, so add one for today first.
+  const exceptions = page.getByRole('region', { name: 'Roster exceptions' });
+  await exceptions.getByRole('combobox', { name: 'Staff member' }).selectOption({ label: 'Nadia Karim' });
+  await exceptions.getByRole('textbox', { name: 'Reason' }).fill('Cover at the counter');
+  await exceptions.getByRole('button', { name: 'Add exception' }).click();
+  const cancels = exceptions.locator('li').getByRole('button', { name: 'Cancel', exact: true });
   await expect(cancels.first()).toBeVisible();
   await expectBoxesAtLeast(cancels, 44);
   await expectNoHorizontalScroll(page);
