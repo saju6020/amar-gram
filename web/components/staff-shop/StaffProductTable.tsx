@@ -310,7 +310,7 @@ export function StaffProductTable(props: StaffProductTableProps) {
                   headerClassName: `${TIGHT} w-12`,
                   cellClassName: TIGHT,
                   cell: (row: StaffProductSummary) => (
-                    <label className="-m-3 flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
+                    <label className="-m-2.5 flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
                     <input
                       type="checkbox"
                       className="size-5 accent-leaf"
