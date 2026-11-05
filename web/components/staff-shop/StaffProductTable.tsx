@@ -52,8 +52,8 @@ const STATUS_TABS = [
   { key: 'Archived', label: 'Archived' },
 ];
 const STATUS_TONE = { Draft: 'neutral', Active: 'success', Archived: 'warning' } as const;
-/** DataTable pads every cell `px-4`; eleven columns plus Select need the tighter `px-3` to fit a 1280 px frame. */
-const TIGHT = 'px-3';
+/** DataTable pads every cell `px-4`; eleven columns plus Select need the tighter `px-2.5` to fit a 1280 px frame without a horizontal scroll. */
+const TIGHT = 'px-2.5';
 const select =
   'min-h-11 rounded-[var(--radius-md)] border border-border-strong bg-surface px-3 text-sm text-ink';
 
@@ -352,7 +352,7 @@ export function StaffProductTable(props: StaffProductTableProps) {
           { id: 'category', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Category', cell: (row) => categoryLabel(row.category) },
           { id: 'brand', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Producer', cell: (row) => row.brand },
           { id: 'origin', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Origin', cell: (row) => row.countryOfOrigin?.name ?? '—' },
-          { id: 'skus', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Pack sizes', cell: (row) => packSizesText(row) },
+          { id: 'skus', headerClassName: `${TIGHT} whitespace-normal`, cellClassName: TIGHT, header: 'Pack sizes', cell: (row) => packSizesText(row) },
           { id: 'price', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Price', cell: (row) => priceRangeText(row.priceRange) },
           {
             id: 'stock',
