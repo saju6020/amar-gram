@@ -48,6 +48,15 @@ test('S4 F4: the customer search field is wide enough to read at 360 px', async 
   await expect(field).toBeVisible();
   const box = await field.boundingBox();
   expect(box?.width ?? 0).toBeGreaterThanOrEqual(200);
+  // The label is visually hidden, so the placeholder is the only visible prompt: it must fit whole.
+  const fit = await field.evaluate((input: HTMLInputElement) => {
+    const style = getComputedStyle(input);
+    const context = document.createElement('canvas').getContext('2d')!;
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const inner = input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    return { text: context.measureText(input.placeholder).width, inner };
+  });
+  expect(fit.text).toBeLessThanOrEqual(fit.inner);
   const button = page.getByRole('search', { name: 'Find a customer' }).getByRole('button', { name: 'Search' });
   expect((await button.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   await expectNoHorizontalScroll(page);
@@ -88,7 +97,15 @@ for (const width of [360, 1280]) {
     await page.goto('/staff');
     const figures = page.locator('section[aria-labelledby^="tile-"] dd > span:first-child');
     await expect(figures.first()).toBeVisible();
-    const lineCounts = await figures.evaluateAll((elements) => elements.map((element) => element.getClientRects().length));
+    // Count the text's line boxes (distinct line tops of a Range over it), not the span's own boxes:
+    // the span is a flex item, so it always reports a single box however its text wraps.
+    const lineCounts = await figures.evaluateAll((elements) =>
+      elements.map((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
+      }),
+    );
     for (const count of lineCounts) expect(count).toBe(1);
     // A figure that cannot split must still stay inside its own tile.
     const outside = await figures.evaluateAll(
@@ -193,6 +210,8 @@ test('S2: at 360 px the pick list shows "Expires" inline under the batch and hid
   await expect(region).toBeVisible();
   await expect(region.getByText(/^Expires /).first()).toBeVisible();
   await expect(region.getByRole('columnheader', { name: 'Expires' })).toBeHidden();
+  // The inline label and date must not split a word (acceptance found "Expire / s").
+  expect(await splitWords(region.locator('tbody td'))).toEqual([]);
 });
 
 test('S2: the printed pick list still shows the Expires column', async ({ page }) => {
