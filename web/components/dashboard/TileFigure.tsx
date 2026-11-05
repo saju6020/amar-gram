@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { DashboardFigure } from '@/lib/api/dashboard';
 import { formatFigure, NOT_RECORDED_TEXT } from '@/lib/format/report';
 
@@ -17,12 +18,22 @@ export function TileFigure({
 }) {
   const text = formatFigure(figure.value, figure.type, figure.unit, timeZoneId);
   const notRecorded = text === NOT_RECORDED_TEXT;
+  // A figure stays on one line when it fits; if a very large amount cannot, it may break only after a
+  // thousands separator (never mid-group). `<wbr>` adds no text, so the accessible name is unchanged.
+  const parts = text.split(/(?<=,)/);
 
   return (
     <div className="min-w-0">
       <dt className="text-xs font-semibold text-ink-muted">{figure.label}</dt>
-      <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-x-2 font-display text-[28px] font-bold leading-tight tabular-nums text-ink [overflow-wrap:anywhere]">
-        <span className="whitespace-nowrap">{text}</span>
+      <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-x-2 font-display text-[28px] font-bold leading-tight tabular-nums text-ink">
+        <span>
+          {parts.map((part, index) => (
+            <Fragment key={index}>
+              {index > 0 && <wbr />}
+              {part}
+            </Fragment>
+          ))}
+        </span>
         {notRecorded && <span className="sr-only">Not recorded</span>}
       </dd>
     </div>

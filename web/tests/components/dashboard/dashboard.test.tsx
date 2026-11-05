@@ -121,6 +121,21 @@ describe('DashboardView — U-A series', () => {
     expect(screen.getByText(/Updated 04:42 \(Europe\/London\)/)).toBeInTheDocument();
   });
 
+  it('a large amount may break only after a thousands separator, and reads as one figure', () => {
+    const tile: DashboardTile = {
+      key: 'r',
+      title: 'Receivables',
+      figures: [{ key: 'due', label: 'Due', value: money('1234567.00'), type: 'Money' }],
+      drillDown: null,
+    };
+    render(<DashboardView dashboard={payload([tile])} updatedAt={1} />);
+    const figure = screen.getByText(/567\.00/);
+    const breaks = figure.querySelectorAll('wbr');
+    expect(breaks.length).toBeGreaterThan(0);
+    breaks.forEach((wbr) => expect(wbr.previousSibling?.textContent).toMatch(/,$/));
+    expect(figure.textContent).not.toMatch(/\s/);
+  });
+
   it('shows a tile variance as the server amount only: no word, no sign logic', () => {
     const tile: DashboardTile = {
       key: 'c',
