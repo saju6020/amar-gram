@@ -545,6 +545,17 @@ let customers = new Map(persisted?.customers ?? seedCustomers());
 let staffAccounts = new Map(persisted?.staffAccounts ?? seedStaffAccounts());
 const customerSessions = new Map<string, CustomerSessionRecord>(persisted?.customerSessions ?? []);
 const staffSessions = new Map<string, StaffSessionRecord>(persisted?.staffSessions ?? []);
+/** The mocked captcha shows its fixed answer, ABCDE, so a person trying the register page in mocked mode can read
+ *  and type it (it used to be a 1x1 pixel, which rendered as a blank box). */
+const MOCK_CAPTCHA_IMAGE = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="70" viewBox="0 0 200 70">' +
+    '<rect width="200" height="70" fill="#f3ead6"/>' +
+    '<path d="M8 50 C 50 20, 90 60, 192 22" stroke="#b9a37a" stroke-width="2" fill="none"/>' +
+    '<path d="M8 22 C 60 55, 120 10, 192 48" stroke="#c9b48a" stroke-width="1.5" fill="none"/>' +
+    '<text x="100" y="47" text-anchor="middle" font-family="monospace" font-size="34" font-weight="700" ' +
+    'letter-spacing="8" fill="#2b2a24">ABCDE</text>' +
+    '</svg>',
+)}`;
 const consumedCaptchas = new Map<string, string>(); // captchaId -> answer, removed on first use — never persisted (short-lived by design)
 
 /** Restores every seeded fixture and clears all sessions — call from a test's `beforeEach`. */
@@ -1016,8 +1027,7 @@ export const accountsHandlers: HttpHandler[] = [
     return HttpResponse.json(
       {
         captchaId,
-        imageDataUrl:
-          'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        imageDataUrl: MOCK_CAPTCHA_IMAGE,
         expiresInSeconds: 120,
       },
       { headers: { 'Cache-Control': 'no-store' } },
