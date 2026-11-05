@@ -84,3 +84,9 @@ None.
 ## Gaps left deliberately
 
 Real API not exercised (MSW mocks only). Pixel-level visual review of screenshots is for the acceptance gate.
+
+## Integrator addendum (2026-11-05, after the TEST gate)
+
+The gate's open gap (a figure wider than ~190 px, e.g. a seven-digit taka amount, would still spill because of `whitespace-nowrap`) is closed by 906e3b7: `TileFigure` drops nowrap and `overflow-wrap:anywhere` and inserts `<wbr>` only after each thousands separator, so a figure stays on one line when it fits and otherwise breaks between digit groups, never mid-group. New Vitest case in `tests/components/dashboard/dashboard.test.tsx` (19/19 pass); tsc and eslint clean.
+
+E2E re-run after 906e3b7 (chromium + mobile-360, 2 workers, :3121, E2E_KEEP_ROUTES=1): p5-followup-layout-360, dashboard-home, dashboard-pipeline-360 — 42 passed, 1 failed, 1 flaky, 2 did not run. The failure (dashboard-home E-A2 chromium: `#main-content` never appeared within 60 s, before any tile rendered) and the flake (S4 F4 search field not found) both passed alone with `--repeat-each=2` on both projects (12/12). Cold-route compile, not this change. Verdict unchanged: PASS.
