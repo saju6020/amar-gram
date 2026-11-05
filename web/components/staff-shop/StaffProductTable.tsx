@@ -52,6 +52,8 @@ const STATUS_TABS = [
   { key: 'Archived', label: 'Archived' },
 ];
 const STATUS_TONE = { Draft: 'neutral', Active: 'success', Archived: 'warning' } as const;
+/** DataTable pads every cell `px-4`; eleven columns plus Select need the tighter `px-2.5` to fit a 1280 px frame without a horizontal scroll. */
+const TIGHT = 'px-2.5';
 const select =
   'min-h-11 rounded-[var(--radius-md)] border border-border-strong bg-surface px-3 text-sm text-ink';
 
@@ -305,9 +307,10 @@ export function StaffProductTable(props: StaffProductTableProps) {
                 {
                   id: 'select',
                   header: 'Select',
-                  headerClassName: 'w-12',
+                  headerClassName: `${TIGHT} w-12`,
+                  cellClassName: TIGHT,
                   cell: (row: StaffProductSummary) => (
-                    <label className="-m-3 flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
+                    <label className="-m-2.5 flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
                     <input
                       type="checkbox"
                       className="size-5 accent-leaf"
@@ -329,6 +332,8 @@ export function StaffProductTable(props: StaffProductTableProps) {
           {
             id: 'name',
             header: 'Product',
+            headerClassName: `${TIGHT} min-w-52 sm:min-w-0`,
+            cellClassName: `${TIGHT} min-w-52 sm:min-w-0`,
             cell: (row) => (
               <span className="flex items-center gap-3">
                 <ProductThumb image={row.primaryImage} />
@@ -344,28 +349,34 @@ export function StaffProductTable(props: StaffProductTableProps) {
               </span>
             ),
           },
-          { id: 'category', header: 'Category', cell: (row) => categoryLabel(row.category) },
-          { id: 'brand', header: 'Producer', cell: (row) => row.brand },
-          { id: 'origin', header: 'Origin', cell: (row) => row.countryOfOrigin?.name ?? '—' },
-          { id: 'skus', header: 'Pack sizes', cell: (row) => packSizesText(row) },
-          { id: 'price', header: 'Price', cell: (row) => priceRangeText(row.priceRange) },
+          { id: 'category', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Category', cell: (row) => categoryLabel(row.category) },
+          { id: 'brand', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Producer', cell: (row) => row.brand },
+          { id: 'origin', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Origin', cell: (row) => row.countryOfOrigin?.name ?? '—' },
+          { id: 'skus', headerClassName: `${TIGHT} whitespace-normal`, cellClassName: TIGHT, header: 'Pack sizes', cell: (row) => packSizesText(row) },
+          { id: 'price', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Price', cell: (row) => priceRangeText(row.priceRange) },
           {
             id: 'stock',
             header: 'Stock',
+            headerClassName: TIGHT,
+            cellClassName: TIGHT,
             cell: (row) =>
               row.availableStock == null ? '—' : `${row.availableStock} available`,
           },
           {
             id: 'listed',
             header: 'Listed in shop',
+            headerClassName: `${TIGHT} whitespace-normal`,
+            cellClassName: TIGHT,
             cell: (row) => (row.listedOnStorefront ? 'Yes' : 'No'),
           },
           {
             id: 'status',
             header: 'Status',
+            headerClassName: TIGHT,
+            cellClassName: `${TIGHT} whitespace-nowrap`,
             cell: (row) => <StatusPill tone={STATUS_TONE[row.status]}>{row.status}</StatusPill>,
           },
-          { id: 'updated', header: 'Updated', cell: (row) => formatInstantDate(row.lastUpdatedOn) },
+          { id: 'updated', headerClassName: TIGHT, cellClassName: TIGHT, header: 'Updated', cell: (row) => formatInstantDate(row.lastUpdatedOn) },
         ]}
       />
     </div>

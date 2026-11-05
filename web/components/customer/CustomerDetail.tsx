@@ -50,20 +50,20 @@ export function CustomerDetail({
         </p>
       )}
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+      <dl className="grid grid-cols-1 gap-x-4 gap-y-0.5 text-sm sm:grid-cols-[auto_1fr] sm:gap-y-2">
         <dt className="font-semibold text-ink">Mobile</dt>
-        <dd className="text-ink-muted [overflow-wrap:anywhere]">{customer.mobileNumber ?? '—'}</dd>
+        <dd className="m-0 mb-2 min-w-0 text-ink-muted [overflow-wrap:anywhere] sm:mb-0">{customer.mobileNumber ?? '—'}</dd>
         <dt className="font-semibold text-ink">Email</dt>
-        <dd className="text-ink-muted [overflow-wrap:anywhere]">{customer.emailAddress ?? '—'}</dd>
+        <dd className="m-0 mb-2 min-w-0 text-ink-muted [overflow-wrap:anywhere] sm:mb-0">{customer.emailAddress ?? '—'}</dd>
         {/* HO-P5 BG-19: the district of the default delivery address; absent when they have none. */}
         {customer.area && (
           <>
             <dt className="font-semibold text-ink">Area</dt>
-            <dd className="text-ink-muted [overflow-wrap:anywhere]">{customer.area}</dd>
+            <dd className="m-0 mb-2 min-w-0 text-ink-muted [overflow-wrap:anywhere] sm:mb-0">{customer.area}</dd>
           </>
         )}
         <dt className="font-semibold text-ink">Registration channel</dt>
-        <dd className="text-ink-muted">
+        <dd className="m-0 text-ink-muted">
           {customer.registrationChannel === 'Reception' ? 'Walk-in' : 'Self-service'}
         </dd>
       </dl>
