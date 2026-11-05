@@ -42,21 +42,31 @@ function Sheet({ list, zone }: { list: PickList; zone: string }) {
               <tr className="border-b border-border">
                 <th scope="col" className="py-1 pr-1.5 sm:pr-2">Product</th>
                 <th scope="col" className="py-1 pr-1.5 sm:pr-2">Batch</th>
-                <th scope="col" className="py-1 pr-1.5 sm:pr-2">Expires</th>
-                <th scope="col" className="py-1 pr-1.5 text-right sm:pr-2">Quantity</th>
+                <th scope="col" className="hidden py-1 pr-2 sm:table-cell">Expires</th>
+                <th scope="col" className="py-1 pr-1.5 text-right sm:pr-2">
+                  <span aria-hidden="true" className="sm:hidden">Qty</span>
+                  <span className="max-sm:sr-only">Quantity</span>
+                </th>
                 <th scope="col" className="py-1">Orders</th>
               </tr>
             </thead>
             <tbody>
-              {group.batches.map((batch) => (
+              {group.batches.map((batch) => {
+                const expires = batch.expiresOn ? formatDateOnly(batch.expiresOn) : '—';
+                return (
                 <tr key={batch.batchId} className="border-b border-border align-top last:border-0">
                   <td className="py-1.5 pr-1.5 [overflow-wrap:anywhere] sm:pr-2">{`${batch.productName} ${batch.variantLabel}`.trim()}</td>
-                  <td className="py-1.5 pr-1.5 font-semibold [overflow-wrap:anywhere] sm:pr-2">{batch.batchNumber}</td>
-                  <td className="py-1.5 pr-1.5 whitespace-nowrap sm:pr-2">{batch.expiresOn ? formatDateOnly(batch.expiresOn) : '—'}</td>
+                  <td className="py-1.5 pr-1.5 [overflow-wrap:anywhere] sm:pr-2">
+                    <span className="font-semibold">{batch.batchNumber}</span>
+                    {/* Below `sm` the Expires column is hidden, so the date sits under the batch it belongs to. */}
+                    <span className="block text-ink-muted sm:hidden">Expires {expires}</span>
+                  </td>
+                  <td className="hidden whitespace-nowrap py-1.5 pr-2 sm:table-cell">{expires}</td>
                   <td className="py-1.5 pr-1.5 text-right font-semibold tabular-nums sm:pr-2">{batch.quantity}</td>
                   <td className="py-1.5 [overflow-wrap:anywhere]">{batch.orders.map((o) => `${o.orderNumber} (${o.quantity})`).join(', ')}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           </div>
