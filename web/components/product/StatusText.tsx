@@ -45,7 +45,7 @@ export function RatingText({ rating, compact = false }: { rating: RatingSummary;
         <>
           <span aria-hidden="true">
             {Number.isInteger(average) ? average : average.toFixed(1)}{' '}
-            <span className="text-ink-muted/80">({rating.count})</span>
+            <span>({rating.count})</span>
           </span>
           <span className="sr-only">{full}</span>
         </>
