@@ -55,7 +55,8 @@ export function SearchField({
         onBlur={onBlur}
         onKeyDown={onKeyDown}
         className={cn(
-          'min-h-11 w-full rounded-[var(--radius-md)] bg-surface pl-10 pr-3 text-sm text-ink placeholder:text-ink-muted',
+          // An empty field has nothing to clear, so the browser's clear button gives its room back to the placeholder.
+          'min-h-11 w-full rounded-[var(--radius-md)] bg-surface pl-10 pr-3 text-sm text-ink placeholder:text-ink-muted [&:placeholder-shown::-webkit-search-cancel-button]:hidden',
           scan ? 'border-2 border-leaf' : 'border border-border-strong',
         )}
       />
