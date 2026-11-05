@@ -51,3 +51,65 @@ UNDECLARED DEVIATIONS
 SCOPE CHECK
 - files in allowed scope: 11/11 (web) plus docs/gates artifacts
 - files outside allowed scope: none
+
+---
+
+# Run 2
+
+GATE: ACCEPTANCE
+HANDOVER: P5-FOLLOWUP-LAYOUT (same criteria as run 1)
+COMMITS: run 1 set plus e7cdce1 8d8e2a5 8009c2c (HEAD 8009c2c, branch feat/p5-followup-layout)
+DATE: 2026-11-05
+STATUS: FAIL
+
+PRIOR GATES
+- ARCHITECTURE / SECURITY / CODE_REVIEW: PASS as recorded, up to 1dd9d10. The delta review of c071242, 906e3b7 and e7cdce1 is below (finding 4).
+- TEST: PASS (P5-FOLLOWUP-LAYOUT-TEST.md and its addendum). The integrator reports 42/42 for p5-followup-layout-360 and customers-admin-360 at 8d8e2a5. I re-ran p5-followup-layout-360 myself on chromium and mobile-360: 36/36 pass.
+
+EVIDENCE I GATHERED
+- next dev on :3121 with mocks, at HEAD 8009c2c. Ran the run-1 probe again (acc.spec.ts and probe2.spec.ts, screenshots to the scratchpad): 12/12. Ran the run-2 probe (run2.spec.ts and run2b.spec.ts): 5/5. Ran the repo spec: 36/36.
+- Refreshed acc-customers-360.png and acc-pick-list-360.png. Added acc-customers-360-field.png (the field as rendered) and acc-customers-360-field-no-cancel-button.png (the same field with the UA cancel button hidden, for comparison).
+- The repo spec rewrote pick-list-1280.png as a side effect. I restored it to the committed version.
+
+CRITERIA
+- S4 F4: NOT MET (finding 1 is still open). The panel padding change widened the input from 206 px to 214 px (inner 160 px). The placeholder measures 155.7 px (canvas) and 155.3 px (rendered span), so on paper it fits. On screen it does not: acc-customers-360.png and acc-customers-360-field.png both show "Name, mobile or ema". The cause is Chrome's `input[type=search]` (web/components/back-office/SearchField.tsx:51). Its `::-webkit-search-cancel-button` keeps its layout space even when the field is empty, which takes roughly 10-15 px from the editable area. Two checks prove it:
+  - If I hide that pseudo-element, the full placeholder shows (acc-customers-360-field-no-cancel-button.png).
+  - If I set the input's value to the placeholder text, it scrolls: scrollWidth 221 > clientWidth 212.
+  The typed term "Rahman" no longer scrolls (212 = 212), and the page has no overflow.
+  The new spec assertion (p5-followup-layout-360.spec.ts:51-59) compares the canvas text width with clientWidth minus padding. That cannot see the reserved cancel-button area, so it passes while the defect is visible.
+- S4 F5: MET, unchanged. Each dd is 206 px wide. "01799999999" and "Dhanmondi" are one line each, the email wraps only at its hyphen, and splitWords returns [].
+- S4 F7: MET, unchanged. Cancel is 63 x 44 px at both 360 and 1280.
+- S2 order panels: MET, unchanged. All 14 dd are 198 px wide and splitWords returns [].
+- S2 money tiles: MET, and finding 3 is closed. Every one of the 13 figures is 1 line at 360 and at 1280 by the Range line-top count. The spec now uses the same count (spec:100-108). Sensitivity check: I squeezed each figure to 40 px with overflow-wrap:anywhere. The new count then reported [1,1,1,1,1,5,1,5,5,5,3,5,1]; the 1s are figures short enough to still fit. The old getClientRects() count still reported all 1s. So the test can now fail.
+- S2 pick list: MET, and finding 2 is closed.
+  - At 360 the region's scrollWidth is 182 and its clientWidth is 182, with no page overflow.
+  - splitWords over tbody td returns [] in my probe, and the spec now asserts the same (spec:213-214).
+  - Each inline line reads "Expires / 31 Mar / 2027", breaking only between words. The `[overflow-wrap:normal]` word does not overflow its 52 px cell: the rightmost span ends at x=226 and the td at x=232.
+  - Print at 794 px: the Expires header is visible, the date cell is a table-cell holding "31 Mar 2027", and the inline copy is display:none. The repo print test passes on both projects.
+- S3 F2: MET, unchanged. At 1280 the frame's scrollWidth is 966 and its clientWidth is 966, with Status ending at x=1176. At 360 the Product header is 208 px wide, splitWords returns [], and the page is 2,853 px tall.
+
+FINDING 4: DELTA REVIEW (ARCHITECTURE, SECURITY, CODE QUALITY) OF c071242, 906e3b7, e7cdce1
+- c071242 (DashboardTile.tsx): removes `@container` and switches the dl to `grid-cols-[repeat(auto-fit,minmax(min(100%,12rem),1fr))]`. Presentational only, inside the component, no new dependency. Security: nothing. Quality: fine. Rows of tiles now have uneven heights, which run 1 accepted as a trade-off.
+- 906e3b7 (TileFigure.tsx and dashboard.test.tsx): splits the formatted text on `(?<=,)` and puts React `<wbr />` elements between the parts. There is no dangerouslySetInnerHTML, the text is still React-escaped, and the accessible text is unchanged (covered by the unit test). Architecture: still renders only formatFigure's output, so ADR-FE-131's single rendering path holds. Two LOW quality notes, neither blocking:
+  - (a) Dropping `whitespace-nowrap` means figures with spaces (unit suffix "N unit", dates "dd MMM yyyy", instants) can now wrap between words. No mock figure does, but no test covers it.
+  - (b) Dropping `[overflow-wrap:anywhere]` means a long comma-free figure overflows instead of wrapping. N1 checks containment only on the mock data.
+  - The regex lookbehind needs Safari 16.4 or later. Acceptable for current targets.
+- e7cdce1 (CustomerBrowsePanel.tsx, PickListPage.tsx): class and markup changes only. Security: nothing. Architecture: fine. Quality: the pick-list change is correct and minimal. The F4 change aims at the wrong constraint, because the panel padding was not what clips the placeholder (see F4 above).
+- Conclusion: none of the three adds security or architecture risk. The process gap from run 1 is closed by this review.
+
+SCOPE
+- Out-of-scope work found: none. e7cdce1 changes only the two files tied to findings 1-2. 8d8e2a5 changes only the follow-up spec.
+- Files outside allowed scope: none.
+
+FINDINGS
+- [LOW, blocks this gate] S4 F4 is still not met. The placeholder is visibly clipped at 360 because Chrome reserves the search cancel button's space in `type="search"` (web/components/back-office/SearchField.tsx:46-60). Possible fixes:
+  - a shorter placeholder for this screen;
+  - another ~12 px of width;
+  - hiding the cancel decoration while the field is empty, e.g. `[&:placeholder-shown::-webkit-search-cancel-button]:hidden`. That keeps the clear button when there is text.
+  SearchField is shared, so a change there needs a check of its other callers.
+- [LOW, blocks this gate together with the above] p5-followup-layout-360.spec.ts:51-59. The placeholder-fit assertion uses canvas width against clientWidth minus padding, which cannot see the UA-reserved area, so it passes while the defect is visible. A sound check: set `input.value = input.placeholder` and assert `scrollWidth <= clientWidth`, then clear it. It measured 221 > 212 here.
+- [LOW, non-blocking] TileFigure.tsx: the nowrap and overflow-wrap removals, notes (a) and (b) above.
+- Closed: run-1 finding 2 (Expires split), finding 3 (vacuous dashboard test) and finding 4 (process gap, by this delta review).
+
+UNDECLARED DEVIATIONS
+- e7cdce1 and 8d8e2a5 were reported as fixing the placeholder. The placeholder is still visibly cut, and the new test cannot detect it.
