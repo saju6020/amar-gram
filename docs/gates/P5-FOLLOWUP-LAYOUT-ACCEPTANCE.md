@@ -113,3 +113,68 @@ FINDINGS
 
 UNDECLARED DEVIATIONS
 - e7cdce1 and 8d8e2a5 were reported as fixing the placeholder. The placeholder is still visibly cut, and the new test cannot detect it.
+
+---
+
+# Run 3
+
+GATE: ACCEPTANCE
+HANDOVER: P5-FOLLOWUP-LAYOUT (same criteria as runs 1 and 2)
+COMMITS: run 2 set plus 0018449 fb3fcdc 5701f56 (HEAD 5701f56, branch feat/p5-followup-layout)
+DATE: 2026-11-05
+STATUS: PASS
+
+PRIOR GATES
+- ARCHITECTURE / SECURITY / CODE_REVIEW: PASS as recorded, up to 1dd9d10. Run 2's delta review covers c071242, 906e3b7 and e7cdce1. This run's delta review covers fb3fcdc (below).
+- TEST: PASS (P5-FOLLOWUP-LAYOUT-TEST.md and its addendum). I re-ran the specs myself at HEAD (below).
+
+EVIDENCE I GATHERED
+- Started next dev on :3121 with mocks (NEXT_PUBLIC_USE_MOCKS=true, E2E_KEEP_ROUTES=1) at HEAD 5701f56 and stopped it afterwards.
+- Ran a scratch probe, run3.spec.ts, outside the repo: 4/4 pass. It reads the input's real UA shadow parts through CDP (DOM.getDocument with pierce, DOM.getBoxModel, CSS.getComputedStyleForNode). That shows the rendered state of `::-webkit-search-cancel-button` and the placeholder box directly, not inferred from stylesheets.
+- Repo specs p5-followup-layout-360, customers-admin-360 and ordering-staff on chromium and mobile-360, 2 workers: 82/82 pass.
+- ordering-pos on chromium and mobile-360 (the POS caller of SearchField): 18/18 pass.
+- Re-ran the run-2 probe (run2.spec.ts, without its F4 test): 3/3 pass.
+- Refreshed acc-customers-360.png and acc-customers-360-field.png. The specs rewrote pick-list-1280.png and acc-pick-list-360.png as a side effect, and I restored both to their committed versions.
+
+CRITERIA
+- S4 F4: MET. Run-2 finding 1 is closed.
+  - Empty field at 360: the input is 214 px wide (clientWidth 212). The `-webkit-input-placeholder` box is 160 px wide and the placeholder text measures 155.7 px. The `-webkit-search-cancel-button` part computes `display: none` and has no box, and the editing viewport has the full 160 px. acc-customers-360-field.png shows the whole "Name, mobile or email". The page has no horizontal overflow.
+  - Typed "Rahman": the cancel button is back (`display: block`, a 10x10 box at x=293, visible as an x in the field screenshot). The editing viewport narrows to 146 px, and "Rahman" does not scroll (scrollWidth 212 = clientWidth 212).
+  - Cleared again: the cancel button returns to `display: none`.
+  - Test: 5701f56 asserts that the field is empty and that an author rule with display:none matches `<input>:placeholder-shown::-webkit-search-cancel-button`, then compares the canvas width with the padding box. This is a structural proxy (it checks that the rule exists, not how the field renders). Together with the canvas fit it does guard this regression, and the integrator reports it fails with fb3fcdc reverted. My CDP measurement is independent evidence for the rendered result. Non-blocking.
+- S4 F5: MET. No source change since run 2 (`git diff 8009c2c..HEAD` touches only SearchField.tsx, the spec and docs). The spec passes on both projects.
+- S4 F7: MET. Unchanged, and the spec passes on both projects.
+- S2 order panels: MET. Unchanged, and the spec passes on both projects.
+- S2 money tiles: MET. Probe: all 13 figures are 1 line at 360. The squeeze sensitivity check still gives [1,1,1,1,1,5,1,5,5,5,3,5,1]. The spec passes on both projects.
+- S2 pick list: MET.
+  - At 360 the region's scrollWidth is 182 and its clientWidth is 182, with no page overflow.
+  - splitWords returns [], and the inline Expires span stays inside its 52 px cell (ends at x=226, cell at x=232).
+  - Print: the Expires header is visible, the date cell is a table-cell, and the inline copy is display:none.
+- S3 F2: MET. Unchanged, and the spec passes on both projects (Status fits at 1280, Product column at 360).
+
+DELTA REVIEW OF fb3fcdc (shared SearchField)
+- The change adds one Tailwind arbitrary variant, `[&:placeholder-shown::-webkit-search-cancel-button]:hidden`. It is presentational only, adds no dependency, and adds nothing for security to review. In browsers that don't support the WebKit pseudo-element (Firefox), the selector matches nothing, so it has no effect there.
+- POS scan field (`emphasis="scan"`, type=text): unaffected. Its UA shadow tree has no cancel-button part, so the selector cannot match. The placeholder box and editor are unchanged, at 184 px. ordering-pos passes 18/18.
+- Staff order queue at 360 (type=search): empty, the cancel button is hidden and the placeholder box widens to the full 163 px. Typed "Rafiq", the cancel button appears (10x10) and the editor is 149 px.
+- Report catalogue at 1280: empty, the cancel button is hidden. Typed "sales", it appears.
+- The change also affects CustomerSearchPanel and StaffProductTable. They use the same component and markup, so the same behaviour applies. I did not open them in a browser.
+
+SCOPE
+- Out-of-scope work found: none. fb3fcdc touches only SearchField.tsx, in the minimal form run 2 suggested. 5701f56 touches only the follow-up spec.
+- Files outside allowed scope: none.
+
+FINDINGS
+- [LOW, non-blocking, pre-existing, not caused by this branch] Two other placeholders are still cut at 360. Neither is one of the seven criteria.
+  - The POS scan field: "Scan barcode or type a name" measures 202.6 px against a 184 px box (web/components/pos/PosScanField.tsx:71). This field is type=text, so fb3fcdc cannot affect it.
+  - The staff order queue search: "Order no., customer or mobile" measures 207.8 px against a 163 px box (web/components/orders/StaffOrderQueue.tsx:246). fb3fcdc made it about 14 px wider, which is better but still not enough.
+  Worth a backlog item.
+- [LOW, non-blocking] p5-followup-layout-360.spec.ts:57-82: the hidesCancel assertion is a stylesheet-rule proxy, not a measurement of how the field renders (see F4).
+- Still open from run 2, non-blocking: the TileFigure.tsx notes (a) and (b).
+- Closed: run-2 findings 1 and 2 (F4 placeholder, and a test that could not see the defect).
+
+UNDECLARED DEVIATIONS
+- none
+
+SCOPE CHECK
+- files in allowed scope: 2/2 web files in this delta (SearchField.tsx, p5-followup-layout-360.spec.ts) plus docs/gates artifacts
+- files outside allowed scope: none
