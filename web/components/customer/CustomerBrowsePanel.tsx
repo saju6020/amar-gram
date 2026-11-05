@@ -82,7 +82,7 @@ export function CustomerBrowsePanel({
   const filtered = !!search || !!tag;
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4">
+    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-3 sm:p-4">
       <form onSubmit={submit} role="search" aria-label="Find a customer" className="flex flex-col gap-2 sm:flex-row">
         <SearchField
           id="customer-search"

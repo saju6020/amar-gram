@@ -59,7 +59,9 @@ function Sheet({ list, zone }: { list: PickList; zone: string }) {
                   <td className="py-1.5 pr-1.5 [overflow-wrap:anywhere] sm:pr-2">
                     <span className="font-semibold">{batch.batchNumber}</span>
                     {/* Below `sm` the Expires column is hidden, so the date sits under the batch it belongs to. */}
-                    <span className="block text-ink-muted sm:hidden">Expires {expires}</span>
+                    <span className="block text-ink-muted sm:hidden">
+                      <span className="[overflow-wrap:normal]">Expires</span> {expires}
+                    </span>
                   </td>
                   <td className="hidden whitespace-nowrap py-1.5 pr-2 sm:table-cell">{expires}</td>
                   <td className="py-1.5 pr-1.5 text-right font-semibold tabular-nums sm:pr-2">{batch.quantity}</td>
