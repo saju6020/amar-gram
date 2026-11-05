@@ -1,5 +1,6 @@
 import type { ValidationResponse } from './types';
 import { getActiveBranchId } from '../branch';
+import { mockWorkerReady } from '@/lib/dev/mock-worker';
 
 /**
  * The typed fetch client (the scaffold handover §11.2). Responsibilities, and nothing beyond them:
@@ -290,6 +291,10 @@ export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Prom
     ...rest
   } = init;
   const httpMethod = (method ?? 'GET').toUpperCase();
+
+  // Mocked development mode only (null elsewhere): never let a request race the MSW worker's start.
+  const mocks = mockWorkerReady();
+  if (mocks) await mocks;
 
   // HO-XCT-002 ADR-FE-143 — offline is read-only: refuse before any fetch, queue nothing.
   if (

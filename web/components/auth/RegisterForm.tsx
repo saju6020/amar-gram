@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -59,6 +59,8 @@ export interface RegisterFormProps {
   signInHref?: string;
 }
 
+const noSubscription = () => () => {};
+
 export function RegisterForm({
   captcha,
   onRegister,
@@ -70,6 +72,9 @@ export function RegisterForm({
   const [duplicateField, setDuplicateField] = useState<'mobileNumber' | 'emailAddress' | null>(
     null,
   );
+  // `false` in the server HTML and during hydration, `true` once the form is live (same as lib/hooks/useHydrated,
+  // which components/auth may not import).
+  const hydrated = useSyncExternalStore(noSubscription, () => true, () => false);
 
   const {
     register,
@@ -201,7 +206,8 @@ export function RegisterForm({
         variant="pill"
         size="pillLg"
         className="w-full"
-        disabled={isSubmitting || isPending}
+        // Disabled in the server HTML until the form is live (no plain form post that drops the entries).
+        disabled={isSubmitting || isPending || !hydrated}
         aria-busy={isSubmitting || isPending}
       >
         {isSubmitting || isPending ? 'Creating your account…' : 'Create account'}

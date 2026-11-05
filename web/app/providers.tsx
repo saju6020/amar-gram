@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { apiFetch } from '@/lib/api/client';
+import { mockWorkerReady } from '@/lib/dev/mock-worker';
 import { registerQueryClient } from '@/lib/branch';
 
 // The single QueryClient for the app (the scaffold handover §8.4 — server data lives in TanStack Query,
@@ -109,13 +110,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       ).__apiFetch = apiFetch;
     }
 
-    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
-      void import('@/mocks/browser').then(({ worker }) =>
-        worker.start({ onUnhandledRequest: 'bypass' }).then(() => {
-          (window as unknown as { __mswReady?: boolean }).__mswReady = true;
-        }),
-      );
-    }
+    // Starts (or joins) the mocked-mode worker; `apiFetch` awaits the same promise (lib/dev/mock-worker.ts).
+    void mockWorkerReady();
     // `queryClient` in the deps array below is stable (its own `useState` initialiser only ever
     // runs once), so listing it does not make this effect ever re-run; it is here only because it
     // is now genuinely referenced in the body (the new `__invalidateQueries` hook), which the
