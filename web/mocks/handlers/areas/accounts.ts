@@ -557,6 +557,29 @@ export function resetAccountsMockData(): void {
   if (canPersist) window.sessionStorage.removeItem(PERSIST_KEY);
 }
 
+/** HO-P5 Amended (as): the BG-19 summary fields `StaffCustomerViewModel.cs:11-13` always sends, for the operations
+ *  mock's anonymised read-back (an erased customer keeps its record date and its order figures; its area, tags and
+ *  notes are personal data and read back empty). `null` for an unknown id. */
+export function erasedStaffCustomerSummary(customerId: string): {
+  customerSince: string;
+  area: null;
+  orderCount: number;
+  lifetimeSpend: { amount: string; currencyCode: 'BDT' };
+  tags: string[];
+  noteCount: number;
+} | null {
+  const customer = customers.get(customerId);
+  if (!customer) return null;
+  return {
+    customerSince: customer.registeredOn,
+    area: null,
+    orderCount: customer.orderCount ?? 0,
+    lifetimeSpend: { amount: centsText(customer.lifetimeSpendCents ?? 0), currencyCode: 'BDT' },
+    tags: [],
+    noteCount: 0,
+  };
+}
+
 /** Test-only: forces the given staff token's next session read to report `session_idle_timeout`
  *  (U-G2/U-G4) without needing to fast-forward real or faked wall-clock time through every layer
  *  this mock would otherwise need to model. */

@@ -227,7 +227,7 @@ export function FoodDetailsForm({
                       href={viewUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center font-semibold text-accent"
+                      className="inline-flex min-h-11 items-center font-semibold text-accent-ink"
                     >
                       View certificate
                       <span className="sr-only"> (opens in a new tab)</span>

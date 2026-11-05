@@ -77,6 +77,8 @@ test.describe('StaffShell nav sheet at 360px (staff shell TEST gate, 4th pass, r
     await page.getByRole('button', { name: /collapse menu/i }).click();
     await page.getByRole('button', { name: /expand menu/i }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    expect(await whatIsAtRegisterButtonEdge(page)).toBe('button');
+    // HO-P5 Amended (at): the rail's width animates for 200 ms (`transition-[width]` in staff-shell.tsx), so a box read
+    // straight after the click is mid-animation and the probe lands beside the button. Wait for the layout to settle.
+    await expect.poll(() => whatIsAtRegisterButtonEdge(page), { timeout: 5_000 }).toBe('button');
   });
 });

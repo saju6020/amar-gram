@@ -76,5 +76,8 @@ export default defineConfig({
     command: 'npm run dev',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
+    // HO-P5 Amended (au): keep every compiled route for the run (`next.config.ts`), or route disposal mid-run
+    // serves pages whose client chunk 404s. A server you start yourself needs `E2E_KEEP_ROUTES=1` too.
+    env: { E2E_KEEP_ROUTES: '1' },
   },
 });

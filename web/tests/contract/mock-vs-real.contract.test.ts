@@ -154,6 +154,13 @@ interface Ctx {
   branchId: string | null;
   staffId: string | null;
   quotePath: string;
+  // HO-P5 (§12, §17.1 step 5): ids for the wiring pass's staff reads.
+  productId: string | null;
+  skuId: string | null;
+  customerId: string | null;
+  draftId: string | null;
+  today: string;
+  weekAhead: string;
 }
 interface Endpoint {
   id: string;
@@ -248,6 +255,60 @@ const ENDPOINTS: Endpoint[] = [
     '/api/staff/inventory/stock?pageNumber=1&pageSize=20',
   ]),
   e('GET /api/staff/shop/products', 'staff'),
+  // ---- HO-P5 wiring pass (§12; integration step) ----
+  // S1 store front
+  e('GET /api/shop/delivery-promise', 'anon'),
+  // S2 sales
+  e('GET /api/staff/dashboard', 'staff'),
+  e('GET /api/staff/dashboard/sales-series', 'staff', () => [
+    '/api/staff/dashboard/sales-series?days=14',
+  ]),
+  e('GET /api/staff/orders/status-counts', 'staff'),
+  e('GET /api/staff/riders', 'staff', () => [
+    '/api/staff/riders',
+    '/api/staff/riders?activeOnly=true',
+  ]),
+  e('GET /api/staff/pos/browse', 'staff', () => [
+    '/api/staff/pos/browse?pageNumber=1&pageSize=24',
+    '/api/staff/pos/browse?category=RiceAndGrains&pageNumber=1&pageSize=24',
+  ]),
+  // S3 catalogue and stock
+  e('GET /api/staff/shop/products/{id}', 'staff', (c) =>
+    c.productId ? [`/api/staff/shop/products/${c.productId}`] : [],
+  ),
+  e('GET /api/staff/inventory/stock/{skuId}', 'staff', (c) =>
+    c.skuId ? [`/api/staff/inventory/stock/${c.skuId}`] : [],
+  ),
+  e('GET /api/staff/inventory/alerts/summary', 'staff', () => [
+    '/api/staff/inventory/alerts/summary',
+    '/api/staff/inventory/alerts/summary?arrivalWindowDays=7',
+  ]),
+  e('GET /api/staff/procurement/consignments', 'staff', (c) => [
+    '/api/staff/procurement/consignments?arrivingWithinDays=30',
+    ...(c.branchId ? [`/api/staff/procurement/consignments?branchId=${c.branchId}`] : []),
+  ]),
+  e('GET /api/staff/inventory/goods-receipt-drafts', 'staff'),
+  e('GET /api/staff/inventory/goods-receipt-drafts/{id}', 'staff', (c) =>
+    c.draftId ? [`/api/staff/inventory/goods-receipt-drafts/${c.draftId}`] : [],
+  ),
+  // S4 customers, money and admin
+  e('GET /api/staff/customers/browse', 'staff', () => [
+    '/api/staff/customers/browse?pageNumber=1&pageSize=20',
+  ]),
+  e('GET /api/staff/customers/{id}', 'staff', (c) =>
+    c.customerId ? [`/api/staff/customers/${c.customerId}`] : [],
+  ),
+  e('GET /api/staff/customers/{id}/notes', 'staff', (c) =>
+    c.customerId ? [`/api/staff/customers/${c.customerId}/notes`] : [],
+  ),
+  e('GET /api/staff/billing/cash-ups/{date}', 'staff', (c) => [
+    `/api/staff/billing/cash-ups/${c.today}`,
+  ]),
+  e('GET /api/admin/branches/{id}/roster-cells', 'staff', (c) =>
+    c.branchId
+      ? [`/api/admin/branches/${c.branchId}/roster-cells?from=${c.today}&to=${c.weekAhead}`]
+      : [],
+  ),
 ];
 
 interface Collected {
@@ -361,6 +422,12 @@ async function collect(
   const policyKeys = rowsOf(policies.json)
     .map((p) => idOf(p, 'key', 'policyKey'))
     .filter((k): k is string => !!k);
+  const staffProducts = await who.staff.get('/api/staff/shop/products');
+  const stock = await who.staff.get('/api/staff/inventory/stock?pageNumber=1&pageSize=20');
+  const customers = await who.staff.get('/api/staff/customers/browse?pageNumber=1&pageSize=20');
+  const drafts = await who.staff.get('/api/staff/inventory/goods-receipt-drafts');
+  const day = (offset: number) =>
+    new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
 
   const ctx: Ctx = {
     who,
@@ -372,6 +439,12 @@ async function collect(
     branchId: idOf(rowsOf(branches.json)[0], 'branchId', 'id'),
     staffId: idOf(rowsOf(staff.json)[0], 'staffAccountId', 'id'),
     quotePath,
+    productId: idOf(rowsOf(staffProducts.json)[0], 'productId', 'id'),
+    skuId: idOf(rowsOf(stock.json)[0], 'skuId', 'id'),
+    customerId: idOf(rowsOf(customers.json)[0], 'id', 'customerId'),
+    draftId: idOf(rowsOf(drafts.json)[0], 'draftId', 'id'),
+    today: day(0),
+    weekAhead: day(6),
   };
 
   const side: Side = {};
