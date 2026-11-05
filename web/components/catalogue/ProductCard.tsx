@@ -307,6 +307,24 @@ function CardAction({
   );
 }
 
+/** The price, with a varying price's "From" as a small label so the amount stays on one line. */
+function CardPrice({ item }: { item: CatalogueItem }) {
+  const text = formatPriceRange(item.fromPrice, item.priceVaries);
+  const from = item.fromPrice && item.priceVaries && text.startsWith('From ');
+  return (
+    <p className="m-0 whitespace-nowrap font-display text-lg font-bold leading-tight text-ink">
+      {from ? (
+        <>
+          <span className="font-sans text-xs font-semibold text-ink-muted">From </span>
+          {text.slice('From '.length)}
+        </>
+      ) : (
+        text
+      )}
+    </p>
+  );
+}
+
 /**
  * The leaf eyebrow: the district of origin when the item has one (HO-P5 G1, OQ-5; uppercased by CSS, the
  * text is as sent), otherwise the producer and country.
@@ -375,7 +393,8 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
       {/* A photo (white-backed pack shots) sits on white; the drawn pack keeps its tinted tile (2026-10-16). */}
       <div
         className={cn(
-          'relative grid aspect-square w-full place-items-center overflow-hidden',
+          // 4:3, not square (owner review 2026-11-05: the cards were too tall for what they show).
+          'relative grid aspect-[4/3] w-full place-items-center overflow-hidden',
           imageUrl ? 'border-b border-border bg-surface' : bg,
         )}
       >
@@ -446,12 +465,10 @@ export function ProductCard({ item, lang, headingLevel = 'h2' }: ProductCardProp
           </Link>
         </Heading>
         {organic && <span className="sr-only">Certified organic</span>}
-        <RatingText rating={item.rating} />
+        <RatingText rating={item.rating} compact />
         {item.availability !== 'InStock' && <AvailabilityText availability={item.availability} />}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2.5 gap-y-2 pt-1.5">
-          <p className="m-0 font-display text-xl font-bold leading-tight text-ink">
-            {formatPriceRange(item.fromPrice, item.priceVaries)}
-          </p>
+          <CardPrice item={item} />
           <CardAction
             item={item}
             href={href}

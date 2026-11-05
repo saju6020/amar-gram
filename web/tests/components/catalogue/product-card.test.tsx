@@ -33,7 +33,10 @@ describe('ProductCard — HO-SHP-002 §11.2', () => {
       />,
     );
     const card = within(screen.getByRole('article'));
-    expect(card.getByText('From ৳650.00')).toBeInTheDocument();
+    // "From" is a small label beside the amount (owner review 2026-11-05); the line still reads "From ৳650.00".
+    expect(
+      card.getByText((_, element) => element?.tagName === 'P' && element.textContent === 'From ৳650.00'),
+    ).toBeInTheDocument();
     expect(card.getByText('Out of stock')).toBeInTheDocument();
     expect(card.getByText('4.5 out of 5 (23 reviews)')).toBeInTheDocument();
     expect(card.getByText('Kit')).toBeInTheDocument();
