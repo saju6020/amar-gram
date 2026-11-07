@@ -63,7 +63,7 @@ function seed(): void {
       version: 1,
       name,
       reportKey: 'revenue-by-business-line',
-      reportTitle: 'Revenue by business line',
+      reportTitle: 'Revenue by sales channel',
       branchId: null,
       branchName: 'All branches',
       period: 'PreviousMonth',

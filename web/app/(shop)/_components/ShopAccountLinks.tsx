@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Heart, User } from 'lucide-react';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import { firstName } from '@/lib/shop/helpers';
 
@@ -13,12 +14,15 @@ import { firstName } from '@/lib/shop/helpers';
  */
 export function ShopAccountLinks() {
   const { data: session, isPending } = useCustomerSession();
+  // The session can already be cached when this boundary hydrates (the cart badge loads it first): wait one render so
+  // the first client render matches the server's placeholder.
+  const hydrated = useHydrated();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const query = searchParams.toString();
   const here = `${pathname}${query ? `?${query}` : ''}`;
 
-  if (isPending) return <span className="h-11 w-20" aria-hidden="true" />;
+  if (!hydrated || isPending) return <span className="h-11 w-20" aria-hidden="true" />;
   if (!session) {
     return (
       <Link

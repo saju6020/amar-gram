@@ -5,10 +5,11 @@ import { test as base, expect, type Browser, type BrowserContext, type Page } fr
 
 /**
  * HO-BIL-002 §16 — the E-cases re-run against the REAL API (HO-BIL-001 on master). Manual: needs the
- * API on :5007 (with `Cors__AllowedOrigins__0` = this app's origin), the web app on :3112 started with
- * `NEXT_PUBLIC_USE_MOCKS=false NEXT_PUBLIC_API_BASE_URL=http://localhost:5007`, and `BIL_SEED` pointing at
- * a JSON file written by the seeder (admin, reception and accountant mobiles, a branch with a billing
- * profile and a 15 % tax class, three walk-in customers). Skipped otherwise. Serial: the cases share
+ * API on a scratch database (never amargram_dev), the web app started with `NEXT_PUBLIC_USE_MOCKS=false
+ * NEXT_PUBLIC_API_BASE_URL=<that API>` on `PORT`, and `BIL_SEED` pointing at the `bil-seed.json` that
+ * `node scripts/seed-e2e-real-api.mjs` writes (admin, reception and accountant, a 15 % tax class, three walk-in
+ * customers); `BIL_REAL_API=1`, `API_BASE=<API>`. The full recipe is in web/README.md ("Real-API end-to-end runs").
+ * Skipped otherwise. Serial: the cases share
  * one branch, one till and one set of customers, exactly as a day at the outlet does.
  */
 const SEED_PATH = process.env.BIL_SEED;
@@ -306,7 +307,7 @@ test('E-D3: import the statement, auto-match, match the ambiguous line by hand',
   const d = today();
   const csv = `date,amount,direction,reference,description,bankTransactionId\n${d},${(777.25 + (run % 50)).toFixed(2)},C,TRF-UNIQ-${run},Transfer,T1\n${d},500.50,C,TRF-AMB,Transfer,T2\n`;
   await accountant.goto('/staff/billing/reconciliation/bank');
-  await accountant.getByLabel('Bank account').fill(`Real account ${Date.now()}`);
+  await accountant.getByLabel('Bank account').fill(`Real account ${Date.now().toString(36)}`);
   await accountant.getByLabel('Period from').fill(d);
   await accountant.getByLabel('Period to').fill(d);
   await accountant.getByLabel(/Statement file/).setInputFiles({ name: 'real.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });

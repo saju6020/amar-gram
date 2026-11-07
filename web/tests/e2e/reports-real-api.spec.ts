@@ -7,12 +7,11 @@ import { expectAxeClean, expectNoHorizontalScroll } from './reports-helpers';
 
 /**
  * HO-RPT-002 §16 — the E-cases re-run against the REAL API (HO-RPT-001 on master). Manual: needs
- * the API on :5114 on the throwaway database `amargram_rpt002e2e` (with
- * `Cors__AllowedOrigins__0` = this app's origin), the web app on :3114 started with
- * `NEXT_PUBLIC_USE_MOCKS=false NEXT_PUBLIC_API_BASE_URL=http://localhost:5114`, and `REPORTS_SEED`
- * pointing at the JSON a throwaway seeder wrote (one branch; an administrator, two accountants, a
- * shop manager and a reception account, each with a mobile + password; the accountants
- * have an email address). Skipped otherwise. Serial: the cases share one branch and one schedule.
+ * the API on a scratch database (never amargram_dev), the web app started with `NEXT_PUBLIC_USE_MOCKS=false
+ * NEXT_PUBLIC_API_BASE_URL=<that API>`, and `REPORTS_SEED` pointing at the `rpt-seed.json` that
+ * `node scripts/seed-e2e-real-api.mjs` writes (an administrator, two accountants "Aisha Accountant" and "Mahmud
+ * Accountant", a shop manager and a reception account; sign-in takes an email as well as a mobile). The full recipe is
+ * in web/README.md ("Real-API end-to-end runs"). Skipped otherwise. Serial: the cases share one branch and one schedule.
  */
 const SEED_PATH = process.env.REPORTS_SEED;
 const enabled = process.env.NEXT_PUBLIC_USE_MOCKS === 'false' && !!SEED_PATH;
@@ -127,7 +126,7 @@ test('E-C real: stock, revenue and growth reports open; margin is for the accoun
   }
   await open(page, 'Accountant', '/staff/reports/revenue-by-business-line');
   await slow(
-    page.getByRole('heading', { level: 1, name: 'Revenue by business line' }),
+    page.getByRole('heading', { level: 1, name: 'Revenue by sales channel' }),
   ).toBeVisible();
   await slow(page.getByText(/Margin/).first()).toBeVisible({ timeout: 30_000 });
   await open(page, 'ShopManager', '/staff/reports/revenue-by-business-line');

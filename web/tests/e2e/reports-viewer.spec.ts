@@ -138,7 +138,7 @@ test('E-X1/E-X2: the catalogue and a 12-column report are axe-clean, with the ch
 
   await page.goto('/staff/reports/revenue-by-business-line');
   await expect(
-    page.getByRole('table').or(page.getByRole('list', { name: /Revenue by business line/ })),
+    page.getByRole('table').or(page.getByRole('list', { name: /Revenue by sales channel/ })),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Show chart' }).click();
   await expect(page.getByTestId('chart-data-table')).toBeAttached();
@@ -148,6 +148,6 @@ test('E-X1/E-X2: the catalogue and a 12-column report are axe-clean, with the ch
     await expectNoHorizontalScroll(page);
   }
   await page.setViewportSize({ width: 360, height: 900 });
-  await expect(page.getByRole('list', { name: /Revenue by business line/ })).toBeVisible();
+  await expect(page.getByRole('list', { name: /Revenue by sales channel/ })).toBeVisible();
   await expect(page.locator('#main-content table:not(.sr-only)')).toHaveCount(0);
 });
