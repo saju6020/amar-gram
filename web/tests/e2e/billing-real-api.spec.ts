@@ -307,7 +307,7 @@ test('E-D3: import the statement, auto-match, match the ambiguous line by hand',
   const d = today();
   const csv = `date,amount,direction,reference,description,bankTransactionId\n${d},${(777.25 + (run % 50)).toFixed(2)},C,TRF-UNIQ-${run},Transfer,T1\n${d},500.50,C,TRF-AMB,Transfer,T2\n`;
   await accountant.goto('/staff/billing/reconciliation/bank');
-  await accountant.getByLabel('Bank account').fill(`Real account ${Date.now()}`);
+  await accountant.getByLabel('Bank account').fill(`Real account ${Date.now().toString(36)}`);
   await accountant.getByLabel('Period from').fill(d);
   await accountant.getByLabel('Period to').fill(d);
   await accountant.getByLabel(/Statement file/).setInputFiles({ name: 'real.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
