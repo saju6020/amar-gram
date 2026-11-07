@@ -22,12 +22,12 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
     {
         var branch = await SeedBranchAsync();
         var food = await CreateSkuAsync(branch.Admin.Client, food: true);
-        var litter = await CreateSkuAsync(branch.Admin.Client);
+        var detergent = await CreateSkuAsync(branch.Admin.Client);
 
         var receipt = await PostReceiptAsync(branch.Admin.Client,
         [
             ReceiptLine(food.SkuId, branch.WarehouseId, accepted: 10m, expires: InSixMonths),
-            ReceiptLine(litter.SkuId, branch.ShopId, accepted: 8m, rejected: 2m, rejectionReason: "Damaged"),
+            ReceiptLine(detergent.SkuId, branch.ShopId, accepted: 8m, rejected: 2m, rejectionReason: "Damaged"),
         ]);
 
         Assert.Matches(@"^GRN-\d{4}-\d{6}$", receipt.Number);
@@ -51,7 +51,7 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
         });
 
         var detail = await JsonOkAsync(await branch.Admin.Client.GetAsync($"/api/staff/inventory/goods-receipts/{receipt.ReceiptId}"));
-        var partlyRejected = detail.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("skuId").GetGuid() == litter.SkuId);
+        var partlyRejected = detail.GetProperty("lines").EnumerateArray().Single(l => l.GetProperty("skuId").GetGuid() == detergent.SkuId);
         Assert.Equal("8", partlyRejected.GetProperty("quantityAccepted").GetString());
         Assert.Equal("2", partlyRejected.GetProperty("quantityRejected").GetString());
         Assert.Equal("Damaged", partlyRejected.GetProperty("rejectionReason").GetString());
@@ -93,7 +93,7 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
     {
         var branch = await SeedBranchAsync();
         var food = await CreateSkuAsync(branch.Admin.Client, food: true);
-        var litter = await CreateSkuAsync(branch.Admin.Client);
+        var detergent = await CreateSkuAsync(branch.Admin.Client);
 
         var response = await branch.Admin.Client.PostAsJsonAsync("/api/staff/inventory/goods-receipts", new
         {
@@ -101,7 +101,7 @@ public sealed class InventoryGoodsReceiptEndpointTests(InventoryApiFactory facto
             {
                 ReceiptLine(food.SkuId, branch.WarehouseId, 10m, expires: UtcToday.AddDays(-1)),
                 ReceiptLine(food.SkuId, branch.WarehouseId, 5m),
-                ReceiptLine(litter.SkuId, branch.WarehouseId, 5m, rejected: 1m),
+                ReceiptLine(detergent.SkuId, branch.WarehouseId, 5m, rejected: 1m),
             }
         }, Json);
 

@@ -8,8 +8,8 @@ public sealed class CatalogueQueryTests
     [Fact]
     public void Normalise_TrimsCollapsesLowersAndEscapes()
     {
-        var result = CatalogueQuery.Normalise("  Royal   CANIN%_ ");
-        Assert.Equal("royal canin\\%\\_", result);
+        var result = CatalogueQuery.Normalise("  Chashi   GOLDEN%_ ");
+        Assert.Equal("chashi golden\\%\\_", result);
     }
 
     [Fact]

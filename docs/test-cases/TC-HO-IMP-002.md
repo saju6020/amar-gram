@@ -46,7 +46,7 @@ Statuses record what was **observed**. Mock runs and real-API runs are recorded 
 | U-F2 | badge poll updates the count while an open dialog and its typed text are untouched | same | PASS |
 | U-F3 | near-expiry days remaining and value at risk, server total, CSV is a server URL; unit-less rows omit quantity | same | PASS |
 | U-F4 | recall dialog disabled until the exact lot typed; immediacy and irreversibility stated | same | PASS |
-| U-F5 | trace: purchase, dispense, boarding feed, merged survivor, unshipped, unidentified, contact details, CSV link | same | PASS |
+| U-F5 | trace: purchase, merged survivor, unshipped, unidentified, contact details, CSV link | same | PASS |
 | U-F6, U-F7 | notify confirm with count, result text, log link, repeat run; withdraw says quarantine not sale; close refused while stock held | same | PASS |
 | U-F8 | breach: affected batches with units, quarantine confirm names destination; future time refused; ISO instant sent | same | PASS |
 | U-X1 | server 400 → its field, no `errorCode` in the DOM (supplier, storage profile; line forms in U-C6/U-E) | `inventory/cross-cutting.test.tsx` | PASS |
@@ -73,7 +73,7 @@ Statuses record what was **observed**. Mock runs and real-API runs are recorded 
 | E-F1 | declare, trace, CSV link, notify, notify again | PASS |
 | E-F2 | withdraw quarantines, unsent messages not sent | PASS |
 | E-G1 | breach → quarantine → close | PASS |
-| E-X3 | nurse gets the server's permission state on receiving and suppliers | PASS |
+| E-X3 | a staff member without the action gets the server's permission state on receiving and suppliers | PASS |
 | E-X1 | axe, 46 routes (dialogs all sit on `components/ui/dialog.tsx`) | PASS on `chromium` and `mobile-360` (one cold-start sign-in flake retried) |
 | E-X2 | no horizontal scroll, 46 routes × 4 widths | PASS on `chromium` and `mobile-360` after the 360 px badge/card fix (6 routes had overflowed before it) |
 
@@ -86,7 +86,7 @@ a retry that was needed is reported as "flaky" by Playwright and is listed in th
 Run on 2026-10-09. The API was started from this worktree (merged with master) on `http://localhost:5008` against `catecommerce_dev`
 (already migrated; nothing was migrated), with `Notifications__ApiBaseUrl=http://localhost:5008` and
 `Cors__AllowedOrigins__0=http://localhost:3111`. The web ran on port 3111 with `NEXT_PUBLIC_USE_MOCKS=false`. Staff were the existing
-`e2e.admin` and `e2e.nurse` rows (no seeding was needed); SKUs `E2E-FOOD-1`, `E2E-FOOD-2`, `E2E-LITTER-1`, `E2E-MED-1` already existed.
+`e2e.admin` and a second, non-admin staff row (no seeding was needed); SKUs `E2E-FOOD-1`, `E2E-FOOD-2`, `E2E-RICE-1`, `E2E-MED-1` already existed.
 Command: `E2E_REAL_INVENTORY=1 E2E_API_URL=http://localhost:5008 PORT=3111 npx playwright test --project=chromium tests/e2e/inventory-real-api.spec.ts --workers=1`.
 
 | ID | Case | Result |
@@ -102,7 +102,7 @@ Command: `E2E_REAL_INVENTORY=1 E2E_API_URL=http://localhost:5008 PORT=3111 npx p
 | R-E2 | alerts page and reorder suggestions load | PASS |
 | R-F1 | declare a recall on the lot, read the trace, CSV link, withdraw | PASS |
 | R-G1 | report a storage breach at the dispensary | PASS |
-| R-X3 | nurse reads stock, gets the server permission state on receiving and suppliers | PASS |
+| R-X3 | a staff member without the action reads stock, gets the server permission state on receiving and suppliers | PASS |
 
 **Update 2026-10-09 (owner approved a second e2e admin): R-D2 PASS, full spec 12 passed (1.8 min).** The text below describes the first run, where R-D2 skipped.
 
@@ -240,7 +240,7 @@ Servers: the `next dev` on :3111 and the API on :5008 were stopped after each ru
 
 ### Dev-database change made for the R-D2 re-run (2026-10-09, owner-approved)
 
-Added to `catecommerce_dev` (no migration): staff account `e2e.approver@purrcare.test`, "E2E Approver", role Administrator
+Added to `catecommerce_dev` (no migration): staff account `e2e.approver@amargram.test`, "E2E Approver", role Administrator
 (id 9c9c7580-afc3-4a8b-aecb-a2bbdbdce1bd), assigned to the main branch (00000000-0000-0000-0000-00000000ba1c) and primary there.
 Created through the real API as e2e.admin (`POST /api/staff-accounts`, `PUT /api/admin/staff/{id}/branches`). Staff creation has no
 password step and the password-reset link could not be used (the dev notification render needs an https link; the token is not

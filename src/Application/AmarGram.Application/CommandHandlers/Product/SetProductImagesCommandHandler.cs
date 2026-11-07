@@ -17,9 +17,8 @@ namespace AmarGram.Application.CommandHandlers.Product;
 /// the whole set at once (section 8.3.2), so only a FileId that was not already attached to this
 /// product needs to pass <see cref="StoredFileAggregate.IsEligibleForAttach"/> -- re-submitting an
 /// already-attached image (carried over unchanged from a previous save) must not fail merely
-/// because HO-FIL-001's 30-minute attach window has since elapsed (the same precedent
-/// <c>AddCatPhotoCommandHandler</c> sets, adapted for a wholesale-replace command instead of an
-/// incremental add).
+/// because HO-FIL-001's 30-minute attach window has since elapsed (only newly attached files are
+/// checked, as an incremental add would, adapted here for a wholesale-replace command).
 /// </summary>
 public sealed class SetProductImagesCommandHandler(
     ILogger<SetProductImagesCommandHandler> logger,

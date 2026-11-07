@@ -130,23 +130,23 @@ No longer referenced:
 A command handler **loads its aggregate from the repository itself**:
 
 ```csharp
-public sealed class RecordVaccinationCommandHandler(
-    ILogger<RecordVaccinationCommandHandler> logger,
-    IAggregateRootRepository<CatAggregate> catRepository)
-    : ICommandHandlerAsync<RecordVaccinationCommand>
+public sealed class RecordCertificateCommandHandler(
+    ILogger<RecordCertificateCommandHandler> logger,
+    IAggregateRootRepository<ProductAggregate> productRepository)
+    : ICommandHandlerAsync<RecordCertificateCommand>
 {
-    public async Task<CommandResponse> HandleAsync(RecordVaccinationCommand command)
+    public async Task<CommandResponse> HandleAsync(RecordCertificateCommand command)
     {
-        var cat = await catRepository.GetByIdAsync(command.CatId);
-        if (cat is null)
-            return Fail(BusinessViolationCodes.CatNotFound, nameof(command.CatId),
-                        $"Cat '{command.CatId}' was not found.");
+        var product = await productRepository.GetByIdAsync(command.ProductId);
+        if (product is null)
+            return Fail(BusinessViolationCodes.ProductNotFound, nameof(command.ProductId),
+                        $"Product '{command.ProductId}' was not found.");
 
-        cat.RecordVaccination(command.ToDomainDto());   // invariants live in the aggregate
+        product.RecordCertificate(command.ToDomainDto());   // invariants live in the aggregate
 
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
+        await productRepository.UpdateAsync(product, EventPublishOption.InMemoryPublishOnly);
 
-        return new CommandResponse { IsSuccess = true, Result = cat.Id };
+        return new CommandResponse { IsSuccess = true, Result = product.Id };
     }
 }
 ```
@@ -161,11 +161,11 @@ because it needs to see several:
 
 | Situation | Where it goes |
 |---|---|
-| "A cat cannot be vaccinated twice with the same vaccine on the same day" | **The `CatAggregate`.** It can see its own vaccinations |
-| "This vaccination's next-due date is 12 months out" | **The `CatAggregate`.** Its own data |
+| "A product cannot record the same certification twice on the same day" | **The `ProductAggregate`.** It can see its own certificates |
+| "This certificate's expiry date is 12 months out" | **The `ProductAggregate`.** Its own data |
 | "Allocate stock from the batch expiring soonest (FEFO)" | **A Domain Service** — the rule is about the relationship between many `BatchAggregate`s, and belongs to no one of them |
-| "Is this appointment slot free?" across vet roster, room and existing appointments | **A Domain Service** — spans three aggregates |
-| "Does a cat with this microchip already exist?" | **The handler**, via a repository query. A uniqueness lookup is not domain logic |
+| "Is there enough sellable stock for this order?" across batches, locations and open reservations | **A Domain Service** — spans three aggregates |
+| "Does a product with this barcode already exist?" | **The handler**, via a repository query. A uniqueness lookup is not domain logic |
 
 A Domain Service lives in `Domain/DomainServices/`, takes and returns domain types, and has no
 infrastructure dependency beyond repository interfaces.
@@ -186,9 +186,9 @@ platform's in-memory bus rather than queued to an EventWorker.
 
 They are used for **side effects inside the same request**, not for building read models:
 
-- ✅ recompute a cat's vaccination status when a vaccination is recorded
-- ✅ write an outbox row so the owner gets an SMS
-- ❌ project a `CatViewModel` — there is no read store; the query reads the same tables
+- ✅ recompute a product's certificate status when a certificate is recorded
+- ✅ write an outbox row so the shop manager gets an email
+- ❌ project a `ProductViewModel` — there is no read store; the query reads the same tables
 
 Anything that must leave the process — SMS, email, courier API — is written to an **outbox** table
 in the same transaction and delivered by a background service. That is the only asynchronous

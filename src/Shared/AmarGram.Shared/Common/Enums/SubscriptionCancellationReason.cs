@@ -1,8 +1,7 @@
 namespace AmarGram.Shared.Common.Enums;
 
 /// <summary>
-/// HO-SUB-001 §10.1 -- the churn reasons of SRS §8.3. The first six are chosen by the customer (<c>TastesDidNotSuit</c> replaces the cat-specific reason
-/// of the original, HO-P1); the last three are set by the system or by staff.
+/// HO-SUB-001 §10.1 -- the churn reasons of SRS §8.3. The first six are chosen by the customer; the last three are set by the system or by staff.
 /// </summary>
 public sealed class SubscriptionCancellationReason(int value, string displayName) : Enumeration(value, displayName)
 {

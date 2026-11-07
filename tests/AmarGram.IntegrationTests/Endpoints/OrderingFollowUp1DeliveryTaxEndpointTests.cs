@@ -28,7 +28,7 @@ public sealed class OrderingFollowUp1DeliveryTaxEndpointTests(OrderingApiFactory
     private async Task RefillCartAsync(Shop shop)
     {
         await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Food.SkuId, quantity = 2 }, Json));
-        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Toy.SkuId, quantity = 1 }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Bag.SkuId, quantity = 1 }, Json));
     }
 
     [Fact(Skip = SkipReason)]

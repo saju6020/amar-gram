@@ -38,9 +38,9 @@ identically on master.
   Gate-added temp spec (V-C2, V-C5, V-A2), chromium: 2/2 after correcting two mistakes in my own spec; deleted.
   Master-existing specs on chromium (all 29 non-notification spec files, `real-api` excluded): 392 tests,
   380 passed, 12 failed in the 36 m run; `--last-failed` rerun on a fresh server: 11 passed, 1 failed
-  (`cat-vaccinations` E9), which fails identically on master `cffaa79` in the main checkout.
+  (E9 of a spec for an area since removed), which fails identically on master `cffaa79` in the main checkout.
   The 11 first-run failures were `toBeVisible`/focus timeouts late in a 36-minute single-server run
-  (admin-a11y-responsive E-X2 x5, admin-filters x2, admin-functional E-B1, cat-profile-header E4,
+  (admin-a11y-responsive E-X2 x5, admin-filters x2, admin-functional E-B1, E4 of a spec for an area since removed,
   staff-shell x2); all passed on the rerun, treated as cold-compile/load timeouts.
 - No backend, database or API process was available; no real-API run was attempted.
 - Port 3103 free at the end (netstat); no node process left.
@@ -57,7 +57,7 @@ identically on master.
 | U-B1 | PreferredChannelField both identifiers; mobile only | email disabled with hint | PASS | vitest verbose PASS (preferred-channel.test.tsx) |
 | U-B2 | Channel + matrix cell, one PUT on Save, nothing before | one PUT | PASS | vitest verbose PASS (preferred-channel.test.tsx) |
 | U-B3 | PreferredChannelHasNoDestination | error on field | PASS | vitest verbose PASS (preferred-channel.test.tsx) |
-| U-C1 | VariablePalette insert at caret | `{{catName}}` at caret, caret after | PASS | vitest verbose PASS (template-editor.test.tsx) |
+| U-C1 | VariablePalette insert at caret | the chosen `{{variable}}` at caret, caret after | PASS | vitest verbose PASS (template-editor.test.tsx) |
 | U-C2 | Preview debounce 5 keystrokes; in-flight aborted | one request after 600 ms; earlier aborted | PASS | vitest verbose PASS; real browser (V-C2) confirms. Assertion `signals.some(aborted)` is loose (LOW, CODE_REVIEW already noted); V-C2 checks the specific request. |
 | U-C3 | Preview 400 UnknownTemplatePlaceholder | server message in panel + field; typing not blocked | PASS | vitest verbose PASS (template-editor.test.tsx) |
 | U-C4 | SMS Unicode 2 segments | "2 SMS · Unicode" and note | PASS | vitest verbose PASS (template-editor.test.tsx) |
@@ -96,11 +96,11 @@ identically on master.
 | E-A1 | Inbox shows reminder with View link; badge 1 | notifications-inbox.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-A2 | Open item clears badge | notifications-inbox.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-B1 | Preferred channel email, save, reload shows email | notifications-inbox.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
-| E-C1 | Admin edits template with {{catname}}: preview and save show named error | notifications-templates.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
+| E-C1 | Admin edits template with an unknown placeholder: preview and save show named error | notifications-templates.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-C2 | Fix, save, reset to default: Customised -> Default | notifications-templates.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-D1 | Unsubscribe from link (MSW only): matrix shows email marketing off | notifications-unsubscribe.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-E1 | Log: filter by customer, open failed SMS, resend by email, chain link | notifications-log.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
-| E-E2 | Nurse -> PermissionDeniedState | notifications-log.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
+| E-E2 | Staff member without the permission -> PermissionDeniedState | notifications-log.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-X1 | axe every route, clean and with errors, editor preview open | notifications-a11y-responsive.spec.ts | PASS (61/61) | PASS (61/61) | not run — no API |
 | E-X2 | Every route at 360/768/1024/1440, no h-scroll | notifications-a11y-responsive.spec.ts | PASS (61/61) | PASS (61/61) | not run — no API |
 
@@ -112,7 +112,7 @@ identically on master.
 | R2 | CODE_REVIEW | LOW: Reload had no pending state | U-C7-R, Reload disabled while pending | PASS | "Reload is disabled whi…" test passed in the verbose run. |
 | R3 | SECURITY | srcDoc only inside SandboxedEmailPreview | V-C6 | PASS | see V-C6 |
 | R4 | SECURITY | sandbox="" blocks script | V-C5 | PASS | see V-C5 |
-| M1 | master regression | Specs that existed on master (admin, account, cat, staff, files, home) on chromium, after changes to adminNavItems, portal-header, NotificationPreferenceMatrix | see Environment | PASS | 392 chromium tests of 29 non-notification spec files: 380 passed first run, 12 failed (11 cold/load timeouts, passed on `--last-failed` rerun); 1 (`cat-vaccinations` E9) failed again and fails identically on master `cffaa79` (fixture/date, outside this diff). |
+| M1 | master regression | Specs that existed on master (admin, account, staff, files, home, plus areas since removed) on chromium, after changes to adminNavItems, portal-header, NotificationPreferenceMatrix | see Environment | PASS | 392 chromium tests of 29 non-notification spec files: 380 passed first run, 12 failed (11 cold/load timeouts, passed on `--last-failed` rerun); 1 (E9 of a spec for an area since removed) failed again and fails identically on master `cffaa79` (fixture/date, outside this diff). |
 
 ## Acceptance-criteria coverage (§18)
 

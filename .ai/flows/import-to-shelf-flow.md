@@ -21,7 +21,7 @@ Supplier ──► Purchase order (SKUs, qty, unit cost, currency, expected date
       │
       ▼
 IMPORT CONSIGNMENT ── origin country · shipment ref · HS/tariff code · import permit
-                      health/veterinary certificate · customs declaration · documents
+                      health/phytosanitary certificate · customs declaration · documents
       │
       ▼
 Customs clearance
@@ -50,14 +50,14 @@ Expiry alerts at 90 / 60 / 30 days ──► markdown ──► or expiry ──
 
 ## Key invariants
 - **Expiry date is mandatory** for food and medicine batches (SRS D-2)
-- **An expired batch can never be sold, dispensed or fed — no override exists** (BR-3,
+- **An expired batch can never be sold or used — no override exists** (BR-3,
   FR-IMP-9). This is the hardest rule in the system; it has no administrator bypass
 - Sellable stock excludes expired, quarantined, damaged and reserved quantities (FR-IMP-8)
 - Stock ledger entries are append-only; an adjustment is a new entry with a mandatory reason
 
 ## Cross-module rules
-- Inventory is the **only** module that allocates or deducts stock. Clinic, Boarding and Ordering
-  all call its contract
+- Inventory is the **only** module that allocates or deducts stock. Ordering, the counter and
+  Subscriptions all call its contract
 - Country of origin lives on the Catalog SKU and is surfaced in the storefront's "Shop by
   Country" view (FR-SHP-6); the consignment records where a specific batch actually came from
 

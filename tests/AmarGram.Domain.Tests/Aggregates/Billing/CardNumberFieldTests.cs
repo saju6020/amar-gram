@@ -205,7 +205,7 @@ public sealed class CardNumberFieldTests
     [Fact]
     public void AChargeReportingTag_IsRefused()
     {
-        var request = ChargeRequest("Consultation") with { ReportingTag = "tag 4111 1111 1111 1111" };
+        var request = ChargeRequest("Delivery") with { ReportingTag = "tag 4111 1111 1111 1111" };
 
         AssertRefused(() => new ChargeAggregate(Guid.NewGuid()).Record(request, new ChargeRecordContext("BDT", DateTimeOffset.UtcNow, BillingTestData.Actor())));
     }

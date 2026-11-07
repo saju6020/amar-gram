@@ -1,6 +1,7 @@
 import { isFoodCategory } from '@/lib/shop/labels';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import { findSku } from '../shop/store';
+import { subscriptionOrderSeeds } from '../subscriptions/fixtures';
 import { orderingIds as ids } from './fixtures';
 
 /**
@@ -12,8 +13,10 @@ import { orderingIds as ids } from './fixtures';
  * mock's, so Add to cart on a real product page reaches a real cart line.
  */
 
-// HO-P5 S0: bumped (v2) so a stale sessionStorage copy without riders, picked ticks or the new seeds is not loaded.
-const PERSIST_KEY = '__purrcare_ordering_mock_db__v2';
+// HO-P6 S0: v4 (the subscription-order ids became real GUIDs), v3 for the subscription-channel orders. Unlike the subscriptions
+// mock this store does not reseed daily, so after midnight a persisted tab keeps orders placed relative to the day it was seeded
+// (`placedDaysAgo` off by one against fresh cycle dates); accepted, mocks only. HO-P5 S0: bumped (v2) so a stale sessionStorage copy without riders, picked ticks or the new seeds is not loaded.
+const PERSIST_KEY = '__amargram_ordering_mock_db__v4';
 
 /** Seed ids HO-P5 adds (kept here: `ordering/fixtures.ts` is not S0's file). */
 export const riderIds = {
@@ -149,7 +152,7 @@ export interface DbOrder {
   version: number;
   orderNumber: string;
   placedOn: string;
-  channel: 'Online' | 'Counter';
+  channel: 'Online' | 'Counter' | 'Subscription';
   customerId: string | null;
   customerName: string;
   customerMobile: string | null;
@@ -506,7 +509,7 @@ interface OrderSpec {
   fulfilmentMethod?: DbOrder['fulfilmentMethod'];
   paymentMethod: DbOrder['paymentMethod'];
   lines: DbOrderLine[];
-  channel?: 'Online' | 'Counter';
+  channel?: 'Online' | 'Counter' | 'Subscription';
   customerName?: string;
   customerId?: string | null;
   deliveryChargeCents?: Cents;
@@ -854,7 +857,70 @@ function seedOrders(): DbOrder[] {
     cancelledPaid,
     packedWaiting,
     withRider,
+    ...seedSubscriptionOrders(),
   ];
+}
+
+/**
+ * HO-P6 S0: one `Subscription`-channel order per seeded `Generated` subscription cycle, carrying the cycle's
+ * `orderId` and `orderNumber` (`mocks/handlers/subscriptions/fixtures.ts`). The state of the cycle's order maps
+ * to an order status: awaiting payment is a pending bank transfer, expired is the transfer window closing,
+ * refused is a parcel that came back. Each carries the seeded 10% subscriber discount.
+ */
+function seedSubscriptionOrders(): DbOrder[] {
+  return subscriptionOrderSeeds().map((seed) => {
+    const minutes = seed.placedDaysAgo * 1440;
+    const item = line(1, seed.skuId, seed.quantity);
+    const discount = Math.round(item.subtotalCents / 10);
+    const order = orderFrom({
+      id: seed.orderId,
+      seq: Number(seed.orderNumber.slice(-6)),
+      status: seed.paymentMethod === 'BankTransfer' ? 'PendingPayment' : 'Confirmed',
+      placedMinutesAgo: minutes,
+      fulfilmentMethod: seed.fulfilmentMethod,
+      paymentMethod: seed.paymentMethod,
+      channel: 'Subscription',
+      customerId: seed.customerId,
+      customerName: seed.customerName,
+      lines: [item],
+      extra: { customerMobile: seed.customerMobile, orderDiscountCents: discount },
+    });
+    order.grandTotalCents = order.subtotalCents - discount + order.deliveryChargeCents;
+    order.fulfilment.recipientPhone = seed.customerMobile;
+
+    switch (seed.state) {
+      case 'AwaitingPayment':
+        order.paymentDueBy = hoursFromNow(seed.paymentDueInHours);
+        break;
+      case 'Confirmed':
+        if (order.status === 'PendingPayment') step(order, 'Confirmed', minutes - 60);
+        order.amountPaidCents = order.paymentMethod === 'BankTransfer' ? order.grandTotalCents : 0;
+        break;
+      case 'Expired':
+        order.paymentDueBy = minutesAgo(minutes - 2880);
+        step(order, 'Cancelled', Math.max(1, minutes - 2880));
+        order.cancellationReason = 'PaymentWindowExpired';
+        break;
+      case 'Cancelled':
+        step(order, 'Cancelled', Math.max(1, minutes - 120));
+        order.cancellationReason = 'CustomerRequest';
+        break;
+      case 'Delivered':
+        if (order.status === 'PendingPayment') step(order, 'Confirmed', minutes - 60);
+        step(order, 'Packing', minutes - 600);
+        step(order, 'Dispatched', minutes - 900);
+        step(order, 'Delivered', Math.max(1, minutes - 1200));
+        order.amountPaidCents = order.grandTotalCents;
+        break;
+      case 'Refused':
+        step(order, 'Packing', minutes - 600);
+        step(order, 'Dispatched', minutes - 900);
+        step(order, 'Cancelled', Math.max(1, minutes - 1200));
+        order.cancellationReason = 'StaffDecision';
+        break;
+    }
+    return order;
+  });
 }
 
 function seedRiders(): DbRider[] {

@@ -85,5 +85,5 @@ export const hsCodeString = z
   .trim()
   .regex(
     HS_CODE_PATTERN,
-    'An HS code is four digits followed by up to three groups of two (for example 2309.10).',
+    'An HS code is four digits followed by up to three groups of two (for example 1006.30).',
   );

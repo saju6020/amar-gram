@@ -61,7 +61,7 @@ public abstract class SubscriptionsIntegrationTestBase(OrderingApiFactory factor
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, string> _mobiles = new();
 
     /// <summary>
-    /// <see cref="OrderingShopTestBase.SetUpShopAsync"/>'s shop -- a branch with a billing profile, a food (850.00, 15 %) and a toy (120.00, 0 %) stocked at it and at the storefront, a
+    /// <see cref="OrderingShopTestBase.SetUpShopAsync"/>'s shop -- a branch with a billing profile, a food (850.00, 15 %) and a bag (120.00, 0 %) stocked at it and at the storefront, a
     /// delivery zone for a fresh district and a customer with an address in it -- with the food SKU offered as a subscription (BG-15). Built here rather than called, so the
     /// customer's mobile is remembered and a test that moves the clock by weeks can sign the same customer in again (<see cref="SignInAgainAsync"/>).
     /// </summary>
@@ -70,7 +70,7 @@ public abstract class SubscriptionsIntegrationTestBase(OrderingApiFactory factor
         var context = await CreateContextAsync();
         await SetBillingProfileAsync(context);
         var food = await CreateSkuAsync(context, price: 850m, stock: stock, onStorefront: true, name: foodName ?? "Royal Basmati Rice 2 kg");
-        var toy = await CreateSkuAsync(context, price: 120m, stock: stock, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Feather wand");
+        var bag = await CreateSkuAsync(context, price: 120m, stock: stock, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Jute shopping bag");
         var district = NewDistrict();
         var zoneId = await CreateZoneAsync(context, district, cod: cod, codMax: codMax);
 
@@ -80,7 +80,7 @@ public abstract class SubscriptionsIntegrationTestBase(OrderingApiFactory factor
         _mobiles[customerId] = mobile;
 
         await SetSubscribableAsync(context, food);
-        return new Shop(context, district, zoneId, customer, customerId, addressId, food, toy);
+        return new Shop(context, district, zoneId, customer, customerId, addressId, food, bag);
     }
 
     /// <summary>A fresh signed-in client for a customer a test created (their session does not outlive a test that moves the clock by weeks).</summary>

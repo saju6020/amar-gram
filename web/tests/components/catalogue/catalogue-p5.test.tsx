@@ -200,13 +200,14 @@ describe('the "Was" price is formatted from minor units by string handling (cent
   });
 });
 
-describe('the shop mock store key is pinned at v2 (Amended (b))', () => {
-  it('ignores a stale v1 copy in sessionStorage and persists under the v2 key', async () => {
+describe('the shop mock store key is pinned at v3 (Amended (b), HO-P6 S0)', () => {
+  it('ignores a stale v2 copy in sessionStorage and persists under the v3 key', async () => {
     Object.defineProperty(navigator, 'serviceWorker', { value: {}, configurable: true });
     try {
       window.sessionStorage.clear();
+      // The key the store used before this bump (once the legacy-prefix cleanup merges): an empty catalogue.
       window.sessionStorage.setItem(
-        '__purrcare_shop_mock_db__',
+        '__amargram_shop_mock_db__v2',
         JSON.stringify({ products: [], origins: [], reviews: [], wishlist: [], alerts: [] }),
       );
       vi.resetModules();
@@ -215,7 +216,7 @@ describe('the shop mock store key is pinned at v2 (Amended (b))', () => {
       expect(store.db.products.length).toBeGreaterThan(0);
       expect(store.db.products.some((p) => p.district)).toBe(true);
       store.persist();
-      expect(window.sessionStorage.getItem('__purrcare_shop_mock_db__v2')).not.toBeNull();
+      expect(window.sessionStorage.getItem('__amargram_shop_mock_db__v3')).not.toBeNull();
     } finally {
       Reflect.deleteProperty(navigator, 'serviceWorker');
       window.sessionStorage.clear();

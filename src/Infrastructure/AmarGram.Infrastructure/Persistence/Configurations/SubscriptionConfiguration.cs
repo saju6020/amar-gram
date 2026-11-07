@@ -12,8 +12,8 @@ namespace AmarGram.Infrastructure.Persistence.Configurations;
 /// <summary>
 /// HO-SUB-001 §12.1 -- <c>subscription.subscription</c> with owned <c>Product</c>, <c>Terms</c> and <c>PendingTerms</c> as prefixed columns
 /// (<c>terms_*</c>, <c>pending_terms_*</c>). <c>ix_subscription_live_per_sku</c> is the "one live subscription per customer and SKU" rule (a double-click or a
-/// parallel create is <c>400 SubscriptionAlreadyExists</c>); its status predicate is built from the enumeration, never typed as literals. Adapted from the
-/// original: with the cat retired the index is on <c>(customer_id, sku_id)</c> alone, so it needs no <c>NULLS NOT DISTINCT</c>.
+/// parallel create is <c>400 SubscriptionAlreadyExists</c>); its status predicate is built from the enumeration, never typed as literals. The index is on
+/// <c>(customer_id, sku_id)</c>; neither column is nullable, so it needs no <c>NULLS NOT DISTINCT</c>.
 /// </summary>
 public sealed class SubscriptionConfiguration : IEntityTypeConfiguration<SubscriptionAggregate>
 {

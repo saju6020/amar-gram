@@ -101,15 +101,15 @@ public sealed class DiscountTests
     [Fact]
     public void U_B7_A10PercentCodeScopedToHousehold_DiscountsHouseholdLinesOnly_OrderDiscountIsZero()
     {
-        var litterA = Line(Household1, HouseholdCategory, 85_000);
-        var litterB = Line(Household2, HouseholdCategory, 12_050);
+        var detergentA = Line(Household1, HouseholdCategory, 85_000);
+        var detergentB = Line(Household2, HouseholdCategory, 12_050);
         var food = Line(Food1, FoodCategory, 200_000);
 
-        var result = DiscountRules.Evaluate(Rules(scope: DiscountScope.Categories, categories: [HouseholdCategory]), [litterA, litterB, food], NewCustomer, Now);
+        var result = DiscountRules.Evaluate(Rules(scope: DiscountScope.Categories, categories: [HouseholdCategory]), [detergentA, detergentB, food], NewCustomer, Now);
 
         Assert.True(result.Applied);
-        Assert.Equal(8_500L, result.Application.LineDiscounts[litterA.LineRef].Value);
-        Assert.Equal(1_205L, result.Application.LineDiscounts[litterB.LineRef].Value);   // 1205.0 exactly
+        Assert.Equal(8_500L, result.Application.LineDiscounts[detergentA.LineRef].Value);
+        Assert.Equal(1_205L, result.Application.LineDiscounts[detergentB.LineRef].Value);   // 1205.0 exactly
         Assert.False(result.Application.LineDiscounts.ContainsKey(food.LineRef));
         Assert.Equal(0L, result.Application.OrderDiscount.Value);
         Assert.Empty(result.Application.OrderDiscountShares);

@@ -50,16 +50,16 @@ export const accountsFixtureIds = {
 
   // Staff.
   adminStaffId: 's0000000-0000-0000-0000-000000000001',
-  adminIdentifier: 'admin@purrcare.test',
+  adminIdentifier: 'admin@amargram.test',
   adminPassword: 'AdminPass123!',
   // A non-admin staff member with the Reception role (key names kept for existing callers).
   stockStaffId: 's0000000-0000-0000-0000-000000000002',
-  stockIdentifier: 'stock@purrcare.test',
+  stockIdentifier: 'stock@amargram.test',
   stockPassword: 'StockPass123!',
   noPasswordStaffId: 's0000000-0000-0000-0000-000000000003',
   // A non-admin staff member with the Inventory role: no NotificationLog.View (notifications E-E2).
   inventoryStaffId: 's0000000-0000-0000-0000-000000000004',
-  inventoryIdentifier: 'inventory@purrcare.test',
+  inventoryIdentifier: 'inventory@amargram.test',
   inventoryPassword: 'InventoryPass123!',
 
   // Walk-in / duplicates.
@@ -214,6 +214,64 @@ function seedPreferences() {
   ];
 }
 
+type StoredAddress = StoredCustomer['addresses'][number];
+
+/** HO-P6 S0: the signed-in customer's seeded address book, "Home" (the default) and "Office". The subscriptions mock's
+ *  seeded subscriptions point at these ids (`subscriptionFixtureIds.addresses`, pinned equal by a test). */
+function seedSamAddresses(): StoredAddress[] {
+  return [
+    {
+      id: '5a000000-0000-0000-0000-000000000001',
+      label: 'Home',
+      line1: 'House 7, Road 3, Dhanmondi',
+      line2: null,
+      city: 'Dhaka',
+      district: 'Dhaka',
+      postalCode: '1205',
+      deliveryInstructions: null,
+      isDefault: true,
+    },
+    {
+      id: '5a000000-0000-0000-0000-000000000002',
+      label: 'Office',
+      line1: 'Level 4, 21 Kemal Ataturk Avenue, Banani',
+      line2: null,
+      city: 'Dhaka',
+      district: 'Dhaka',
+      postalCode: '1213',
+      deliveryInstructions: null,
+      isDefault: false,
+    },
+  ];
+}
+
+/** HO-P6 S0: address books of customers the subscriptions seeds name but this mock holds no account for (staff views
+ *  only; they never sign in). Read through `findCustomerAddress` only, never listed or editable. */
+const seedOnlyAddressBooks: ReadonlyArray<{ customerId: string; addressId: string; label: string; line1: string }> = [
+  { customerId: 'c0000000-0000-0000-0000-0000000000a2', addressId: '5a000000-0000-0000-0000-000000000011', label: 'Home', line1: 'House 12, Road 9, Mohammadpur' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a4', addressId: '5a000000-0000-0000-0000-000000000013', label: 'Home', line1: 'Flat 3B, 45 Mirpur Road' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a5', addressId: '5a000000-0000-0000-0000-000000000014', label: 'Home', line1: 'House 88, Sector 7, Uttara' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a6', addressId: '5a000000-0000-0000-0000-000000000015', label: 'Home', line1: 'House 5, Lane 2, Gulshan' },
+];
+
+/**
+ * HO-P6 S0 (Amended (b)): read-only lookup of one address in Accounts' address book, the single source the
+ * subscriptions mock resolves `deliveryAddress` / `deliveryAddressMissing` from (SubscriptionViews.cs:93-102).
+ * `undefined` when the customer has no such address (never added, or deleted).
+ */
+export function findCustomerAddress(
+  customerId: string,
+  addressId: string,
+): { id: string; label: string; line1: string; city: string } | undefined {
+  const customer = customers.get(customerId);
+  const found = customer
+    ? customer.addresses.find((a) => a.id === addressId)
+    : seedOnlyAddressBooks
+        .filter((b) => b.customerId === customerId && b.addressId === addressId)
+        .map((b) => ({ id: b.addressId, label: b.label, line1: b.line1, city: 'Dhaka' }))[0];
+  return found ? { id: found.id, label: found.label, line1: found.line1, city: found.city } : undefined;
+}
+
 function seedCustomers(): Map<string, StoredCustomer> {
   const customers = new Map<string, StoredCustomer>();
 
@@ -229,7 +287,7 @@ function seedCustomers(): Map<string, StoredCustomer> {
     registrationChannel: 'SelfService',
     status: 'Active',
     mergedIntoCustomerId: null,
-    addresses: [],
+    addresses: seedSamAddresses(),
     preferences: seedPreferences(),
     area: 'Dhanmondi',
     orderCount: 3,
@@ -446,8 +504,8 @@ function seedStaffAccounts(): Map<string, StoredStaffAccount> {
     mobileNumber: null,
     emailAddress: accountsFixtureIds.stockIdentifier,
     password: hashPassword(accountsFixtureIds.stockPassword),
-    // Stock.View without receiving or procurement (tests/e2e/fixtures.ts `secondStaff`). HO-P1 swapped the retired
-    // Nurse role for Inventory, which can receive and view procurement; Reception keeps the documented contract
+    // Stock.View without receiving or procurement (tests/e2e/fixtures.ts `secondStaff`). Inventory can receive and
+    // view procurement, so it does not fit here; Reception keeps the documented contract
     // (HO-P4 Amended, E-X3).
     roleIds: ['Reception'],
   });
@@ -505,7 +563,7 @@ interface StaffSessionRecord {
 const canPersist =
   typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
 // HO-P5: bumped when customers gained tags and notes and staff accounts gained a lockout, so an older tab's saved state is not read.
-const PERSIST_KEY = '__purrcare_accounts_mock_db_p5__';
+const PERSIST_KEY = '__amargram_accounts_mock_db_p7__';
 
 function persistMockState(): void {
   if (!canPersist) return;
@@ -1457,7 +1515,7 @@ export const accountsHandlers: HttpHandler[] = [
       {
         headers: {
           'Cache-Control': 'no-store',
-          'Content-Disposition': 'attachment; filename="purrcare-my-data.json"',
+          'Content-Disposition': 'attachment; filename="amargram-my-data.json"',
         },
       },
     );

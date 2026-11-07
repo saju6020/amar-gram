@@ -11,7 +11,7 @@ export interface IconTileProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const SIZES = { sm: 'size-10', md: 'size-11', lg: 'size-16' } as const;
 
-/** A decorative icon container (stroke icons only: no emoji, no paw prints). */
+/** A decorative icon container (stroke icons only: no emoji). */
 export function IconTile({
   tone = 'warm',
   shape = 'disc',

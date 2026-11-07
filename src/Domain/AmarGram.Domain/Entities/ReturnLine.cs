@@ -8,7 +8,7 @@ public sealed record ReturnReceipt(Guid SkuId, Guid BatchId, Guid LocationId, de
 
 /// <summary>
 /// HO-ORD-001 §8.10 -- one line of a return: which order line, how many, why, in what condition, and (after receipt) what came back and what was decided.
-/// <c>RequiresDefectConfirmation</c> is set by the eligibility policy for opened food or used litter claimed defective (BR-10): approval must then record
+/// <c>RequiresDefectConfirmation</c> is set by the eligibility policy for opened food or a used household or care item claimed defective (BR-10): approval must then record
 /// <c>DefectConfirmed</c> with a note.
 /// </summary>
 public sealed class ReturnLine

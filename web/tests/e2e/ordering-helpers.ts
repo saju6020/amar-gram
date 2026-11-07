@@ -39,7 +39,8 @@ export async function addAddress(
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        label: input.label ?? 'Home',
+        // Not "Home"/"Office": Sam's seeded address book already holds those (HO-P6 Amended (e)).
+        label: input.label ?? 'E2E Home',
         line1: 'House 7, Road 3, Dhanmondi',
         city: input.district ?? 'Dhaka',
         district: input.district ?? 'Dhaka',

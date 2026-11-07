@@ -101,7 +101,7 @@ public sealed class HostCompositionTests(AccountsApiFactory factory) : AccountsI
     }
 
     // ACCEPTANCE gate A22 / CODE_REVIEW gate, fifth pass (2026-09-27). PublicSiteStartupGuardHostedService
-    // (CatProfilesModule.cs) validates PublicSite:WebBaseUrl whenever it is non-empty, in every
+    // (registered by NotificationsModule.cs) validates PublicSite:WebBaseUrl whenever it is non-empty, in every
     // environment -- these structural checks don't depend on Development/Testing/Production, so
     // they're exercised in the base Testing environment rather than switching to Production.
     [Theory]

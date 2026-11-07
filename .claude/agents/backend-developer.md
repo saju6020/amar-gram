@@ -44,7 +44,7 @@ Your responsibility is to generate code that strictly follows the architecture a
 4. Domain logic and validation must live inside Aggregate Roots derived from `Platform.Infrastructure.Core.Domain.AggregateRoot`.
 5. Command handlers orchestrate: load the aggregate from `IAggregateRootRepository<TAggregate>`, call **one** mutation method on it, save. Existence and uniqueness checks are repository calls **in the handler**. There is no CommandService layer (ADR-015).
 6. Command handlers report business rule violations by **returning** `CommandResponse.Failure(message, propertyName, errorCode, resourceName)`. They never throw for an expected outcome and never publish a rejection event — the violation becomes the HTTP response body (ADR-014).
-7. Create a service **only** when it is a genuine **Domain Service** in `src/Domain/DomainServices/` — domain logic spanning several aggregates (FEFO allocation, appointment slot availability). A service that would only wrap one repository call must not be created.
+7. Create a service **only** when it is a genuine **Domain Service** in `src/Domain/DomainServices/` — domain logic spanning several aggregates (FEFO allocation, stock demand). A service that would only wrap one repository call must not be created.
 8. Read access is the `DbContext` with `AsNoTracking()` and a `Select` projection into a ViewModel, in a Query Handler. There is no `IReadRepository` and no projection.
 8b. All database calls are async.
 9. Domain events are raised inside aggregate mutation methods with `AddDomainEvent()`, followed by `UpdateVersion()`. There is no `AddBusinessRuleViolationEvent()`.

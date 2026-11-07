@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { test, expect, signInAsCustomer } from './fixtures';
 
 /**
@@ -13,12 +14,31 @@ test.beforeEach(async ({ page }) => {
   await signInAsCustomer(page);
 });
 
+/**
+ * Checks the unread-count link. From `sm` up it is the envelope button in the header; on a phone the
+ * header has no envelope (`max-sm:hidden`), so the same link (named "Messages, N unread") is the
+ * "Messages" row in the account menu: open it, check, and close it again so it does not cover the page.
+ */
+async function expectUnreadLink(page: Page, count: number) {
+  const phone = (page.viewportSize()?.width ?? 1280) < 640;
+  const link = page.getByRole('link', { name: phone ? `Messages, ${count} unread` : `Inbox, ${count} unread messages` });
+  if ((page.viewportSize()?.width ?? 1280) >= 640) {
+    await expect(link).toBeVisible();
+    return;
+  }
+  const menu = page.getByRole('button', { name: /^Account menu for / });
+  await menu.click();
+  await expect(link).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveAttribute('aria-expanded', 'false');
+}
+
 test('E-A1: the inbox shows the order message with a View link to the order page, and the badge counts unread messages', async ({
   page,
 }) => {
   await page.goto('/portal/inbox');
   await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Inbox, 3 unread messages' })).toBeVisible();
+  await expectUnreadLink(page, 3);
 
   await page.getByRole('button', { name: /Order SO-2026-00042 is on its way/ }).click();
   const view = page.getByRole('link', { name: 'View', exact: true });
@@ -27,9 +47,9 @@ test('E-A1: the inbox shows the order message with a View link to the order page
 
 test('E-A2: opening an item clears it from the badge count', async ({ page }) => {
   await page.goto('/portal/inbox');
-  await expect(page.getByRole('link', { name: 'Inbox, 3 unread messages' })).toBeVisible();
+  await expectUnreadLink(page, 3);
   await page.getByRole('button', { name: /Order SO-2026-00042 is on its way/ }).click();
-  await expect(page.getByRole('link', { name: 'Inbox, 2 unread messages' })).toBeVisible();
+  await expectUnreadLink(page, 2);
 
   // The Unread filter now omits the opened item and is kept in the URL.
   await page.getByRole('button', { name: 'Unread', exact: true }).click();

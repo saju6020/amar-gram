@@ -12,7 +12,6 @@ namespace AmarGram.IntegrationTests.Endpoints;
 /// <summary>
 /// HO-SUB-001 section 16 H and X (ADR-247, ADR-248, ADR-238) -- the staff reads and who may use them, the lifecycle reactions to a customer merge and an account deletion, the
 /// CSV-injection guard on the export, and what never reaches a response or a log (a payment token, a cancellation note, a reinstatement reason). Real HTTP, real Orders behind it.
-/// Adapted: the cat events (death, transfer) and the prescription suspension went with the clinic (HO-P1).
 /// </summary>
 public sealed class SubscriptionsStaffAndLifecycleEndpointTests(OrderingApiFactory factory) : SubscriptionsIntegrationTestBase(factory)
 {
@@ -226,7 +225,7 @@ public sealed class SubscriptionsStaffAndLifecycleEndpointTests(OrderingApiFacto
     public async Task I_H3_AMerge_MovesTheDuplicatesSubscriptionsToTheSurvivor_AndCancelsTheOneTheSurvivorAlreadyHas()
     {
         var shop = await SetUpSubscribableShopAsync();
-        await SetSubscribableAsync(shop.Context, shop.Toy);
+        await SetSubscribableAsync(shop.Context, shop.Bag);
         var survivor = shop.Customer;
         var survivorId = shop.CustomerId;
         var duplicate = await AddCustomerAsync(shop);
@@ -235,12 +234,12 @@ public sealed class SubscriptionsStaffAndLifecycleEndpointTests(OrderingApiFacto
         await ExpectAsync(HttpStatusCode.NoContent, await survivor.PutAsJsonAsync("/api/customers/me", new { fullName = "Merged Customer", additionalPhoneNumbers = new[] { shared } }, Json));
         await ExpectAsync(HttpStatusCode.NoContent, await duplicate.Client.PutAsJsonAsync("/api/customers/me", new { fullName = "Merged Customer", additionalPhoneNumbers = new[] { shared } }, Json));
 
-        // The survivor and the duplicate both subscribe to the food; the duplicate also subscribes to the toy.
+        // The survivor and the duplicate both subscribe to the food; the duplicate also subscribes to the bag.
         var survivorFood = (await SubscribeAsync(shop)).GetProperty("id").GetGuid();
         var duplicateFood = await ReadAsync(await ExpectAsync(HttpStatusCode.Created, await duplicate.Client.PostAsJsonAsync("/api/customers/me/subscriptions",
             CreateBody(shop, shop.Food, addressId: duplicate.AddressId), Json)));
-        var duplicateToy = await ReadAsync(await ExpectAsync(HttpStatusCode.Created, await duplicate.Client.PostAsJsonAsync("/api/customers/me/subscriptions",
-            CreateBody(shop, shop.Toy, addressId: duplicate.AddressId), Json)));
+        var duplicateBag = await ReadAsync(await ExpectAsync(HttpStatusCode.Created, await duplicate.Client.PostAsJsonAsync("/api/customers/me/subscriptions",
+            CreateBody(shop, shop.Bag, addressId: duplicate.AddressId), Json)));
 
         await ExpectAsync(HttpStatusCode.OK, await shop.Context.Admin.PostAsJsonAsync($"/api/staff/customers/{duplicate.CustomerId}/merge",
             new { survivingCustomerId = survivorId, reason = "Same person registered twice" }, Json));
@@ -251,11 +250,11 @@ public sealed class SubscriptionsStaffAndLifecycleEndpointTests(OrderingApiFacto
         var cancelled = subscriptions.Single(s => s.Id == duplicateFood.GetProperty("id").GetGuid());             // the survivor already had the food
         Assert.Equal(SubscriptionStatus.Cancelled, cancelled.Status);
         Assert.Equal(SubscriptionCancellationReason.CustomerMerged, cancelled.CancellationReason);
-        Assert.Equal(SubscriptionStatus.Active, subscriptions.Single(s => s.Id == duplicateToy.GetProperty("id").GetGuid()).Status);   // the toy moved over, still live
+        Assert.Equal(SubscriptionStatus.Active, subscriptions.Single(s => s.Id == duplicateBag.GetProperty("id").GetGuid()).Status);   // the bag moved over, still live
 
         // The survivor sees the moved subscription as their own.
         var mine = await ReadAsync(await survivor.GetAsync("/api/customers/me/subscriptions?status=live"));
-        Assert.Contains(mine.GetProperty("items").EnumerateArray(), i => i.GetProperty("id").GetGuid() == duplicateToy.GetProperty("id").GetGuid());
+        Assert.Contains(mine.GetProperty("items").EnumerateArray(), i => i.GetProperty("id").GetGuid() == duplicateBag.GetProperty("id").GetGuid());
         Assert.Equal(2, subscriptions.Count(s => s.Status != SubscriptionStatus.Cancelled));
 
         // The rows are untouched by a re-send of the same event (the handler is idempotent).
@@ -276,10 +275,10 @@ public sealed class SubscriptionsStaffAndLifecycleEndpointTests(OrderingApiFacto
     public async Task I_H4_ErasingACustomersAccount_CancelsEverySubscription_AndNoOrderIsRaisedForThem()
     {
         var shop = await SetUpSubscribableShopAsync();
-        await SetSubscribableAsync(shop.Context, shop.Toy);
+        await SetSubscribableAsync(shop.Context, shop.Bag);
         var food = (await SubscribeAsync(shop)).GetProperty("id").GetGuid();
-        var toy = (await SubscribeAsync(shop, sku: shop.Toy)).GetProperty("id").GetGuid();
-        await ExpectAsync(HttpStatusCode.OK, await PostAsync(shop.Customer, toy, "pause"));
+        var bag = (await SubscribeAsync(shop, sku: shop.Bag)).GetProperty("id").GetGuid();
+        await ExpectAsync(HttpStatusCode.OK, await PostAsync(shop.Customer, bag, "pause"));
         var due = Today.AddDays(3);
 
         await ExpectAsync(HttpStatusCode.OK, await shop.Context.Admin.PostAsJsonAsync($"/api/admin/customers/{shop.CustomerId}/erasure",
@@ -297,6 +296,6 @@ public sealed class SubscriptionsStaffAndLifecycleEndpointTests(OrderingApiFacto
         AdvanceToLocal(due);
         await RunSubscriptionWorkAsync(shop.CustomerId);
         Assert.Empty(await OrdersOfAsync(shop.CustomerId));
-        Assert.NotEqual(food, toy);
+        Assert.NotEqual(food, bag);
     }
 }

@@ -105,7 +105,7 @@ regression cases (R1–R10, all PASS) + 6 acceptance-criteria rows (A1–A5 PASS
 | C7 | Viewer opened from a thumb | Focus trapped; `Esc` restores focus to the thumb | PASS | `tests/components/files/media-viewer.test.tsx` C7 — opens, `Esc`, dialog gone, opener `toHaveFocus()`. |
 | C8 | Image whose `urlExpiresOn` has passed | One re-fetch, then the plain message; no retry loop | PASS | `media-viewer.test.tsx` C8 (on `img` error) and `tests/components/files/file-thumb.test.tsx`'s two C8 cases (refresh succeeds; a **second** failure does not spend a second `onRefresh` call) — all watched pass. |
 | C9 | axe on the uploader (idle, uploading, error) and the viewer | No violations | PASS | e2e, `tests/e2e/files-a11y.spec.ts` — 5 states × 4 widths × 2 projects = 40 executions, all passed in both Playwright runs (see Environment). |
-| C10 | 320 px width | No horizontal scroll; control still operable | PASS | e2e, `tests/e2e/files-overflow.spec.ts` — checked at 360/768/1024/1440 (this repo's own UI-1 floor is 360, not 320 — same substitution `cat-responsive.spec.ts` already established), 5 states × 4 widths + 1 keyboard-operability check per width, both projects — all passed in both Playwright runs. |
+| C10 | 320 px width | No horizontal scroll; control still operable | PASS | e2e, `tests/e2e/files-overflow.spec.ts` — checked at 360/768/1024/1440 (this repo's own UI-1 floor is 360, not 320 — same substitution the earlier responsive specs already established), 5 states × 4 widths + 1 keyboard-operability check per width, both projects — all passed in both Playwright runs. |
 
 ## Integration / end-to-end cases (§16)
 
@@ -142,14 +142,14 @@ fixed in the 2026-09-28 gate-fix round, per both gates' second-pass records.
 | A3 — Every server violation code produces an actionable sentence | C3, C4, R6, R9 | PASS |
 | A4 — A scanner outage reads as a service state | C4 | PASS |
 | A5 — Expired signed URLs recover once and then say so plainly | C8, R4 | PASS |
-| A6 — Known cost measured, not assumed (full-size images on a 3G boarding-diary profile) | Owner decision 2026-09-28 (§1 Amended): deferred to the Phase 6 performance pass, triggered by the first `<FileThumb>` list screen | DEFERRED (owner) — nothing measured yet; was BLOCKED before the decision |
+| A6 — Known cost measured, not assumed (full-size images on a 3G profile) | Owner decision 2026-09-28 (§1 Amended): deferred to the Phase 6 performance pass, triggered by the first `<FileThumb>` list screen | DEFERRED (owner) — nothing measured yet; was BLOCKED before the decision |
 
 ## Cases I could not run
 
 | ID | Why | What would unblock it |
 |---|---|---|
-| A1 (full) | No consuming handover (HO-SHP-002/EMR-002/BRD-002/RPT-002) exists yet, and `PhotoField.tsx` is a known second control | HO-SHP-002 (or whichever consumer lands first) actually importing `<FileUploader>`, and the Cat Profiles photo page conversion (flagged, not owned by this slice — HO-FIL-002 §1's own "not done here" row) |
-| A6 | No Phase 6 performance note in this worktree; no real device/3G profile was measured | The owner's own Phase 6 performance-measurement pass, against a real consuming diary screen |
+| A1 (full) | No consuming handover (HO-SHP-002/EMR-002/BRD-002/RPT-002) exists yet, and `PhotoField.tsx` is a known second control | HO-SHP-002 (or whichever consumer lands first) actually importing `<FileUploader>`, and the `PhotoField.tsx` conversion (flagged, not owned by this slice — HO-FIL-002 §1's own "not done here" row) |
+| A6 | No Phase 6 performance note in this worktree; no real device/3G profile was measured | The owner's own Phase 6 performance-measurement pass, against a real consuming screen |
 | PDF refresh-once (ADR-FE-154 gap) | `<iframe>`-embedded PDFs fire no observable `onerror`; HO-FIL-002 §1 and ARCHITECTURE's carried-forward MEDIUM both record this as a known, undone gap, not something this gate can pass or fail | HO-EMR-002 (the first consumer to pass a PDF through `<MediaViewer>`) picking up the backlog item |
 | Real backend (HO-FIL-001) integration | No real API host, ClamAV, or GCS bucket was started this session; every case ran against MSW fixtures only, per this repo's established pattern for web-only gates | A real API host + ClamAV + GCS/ADC, as HO-FIL-001's own backlog #10 already records as outstanding |
 

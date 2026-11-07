@@ -97,12 +97,9 @@ public sealed class StaffAccountAggregate : AggregateRoot
         var changed = new StaffAccountDetailsChangedEvent
         {
             StaffAccountId = Id,
-            PreviousFullName = FullName,
-            PreviousMobileNumber = MobileNumber?.Value,
-            PreviousEmailAddress = EmailAddress?.Value,
-            NewFullName = dto.FullName,
-            NewMobileNumber = dto.MobileNumber?.Value,
-            NewEmailAddress = dto.EmailAddress?.Value,
+            FullNameChanged = FullName != dto.FullName,
+            MobileNumberChanged = MobileNumber?.Value != dto.MobileNumber?.Value,
+            EmailAddressChanged = EmailAddress?.Value != dto.EmailAddress?.Value,
             CorrelationId = dto.CorrelationId,
             UserContext = dto.UserContext
         };

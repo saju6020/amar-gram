@@ -5,7 +5,7 @@ import { VALID_DRILL_JSON } from '../../mocks/handlers/operations';
 
 /**
  * HO-XCT-002 section 16, re-run against the REAL API (NEXT_PUBLIC_USE_MOCKS=false, API on
- * http://localhost:5113, fresh database catecommerce_xct002e2e, web on :3113). Skipped on mocks.
+ * http://localhost:5113, fresh database amargram_xct002e2e, web on :3113). Skipped on mocks.
  *
  * The offline RELOAD cases (E-A4, E-A5) need the service worker, which exists only in a PRODUCTION
  * build (ADR-FE-140): build with `NEXT_PUBLIC_API_BASE_URL=http://localhost:5113
@@ -70,7 +70,7 @@ async function storedSnapshots(page: Page): Promise<number> {
   return page.evaluate(
     () =>
       new Promise<number>((resolve) => {
-        const open = indexedDB.open('purrcare-offline');
+        const open = indexedDB.open('amargram-offline');
         open.onsuccess = () => {
           const db = open.result;
           if (!db.objectStoreNames.contains('snapshot')) return resolve(0);
@@ -129,7 +129,7 @@ test('E-A1/E-A4/E-A5/E-A6 the service worker serves the board on a reload while 
         page.evaluate(async () => {
           const registration = await navigator.serviceWorker.getRegistration('/staff/');
           const keys = await caches.keys();
-          const shell = keys.find((k) => k.startsWith('purrcare-shell-'));
+          const shell = keys.find((k) => k.startsWith('amargram-shell-'));
           const hit = shell ? await (await caches.open(shell)).match('/staff/offline') : undefined;
           return Boolean(registration?.active) && Boolean(hit);
         }),
@@ -180,7 +180,7 @@ test('E-A8/E-X3 after sign-out the store is wiped, no token is readable, and onl
   expect(audit.cookie).not.toContain('pc_staff_session'); // HttpOnly
   expect(audit.local).toEqual([]);
   expect(audit.session).toEqual([]);
-  expect(audit.databases).toEqual(['purrcare-offline']);
+  expect(audit.databases).toEqual(['amargram-offline']);
 
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/staff\/sign-in/);
@@ -327,7 +327,7 @@ async function deviceRecord(page: Page): Promise<Record<string, unknown> | null>
   return page.evaluate(
     () =>
       new Promise<Record<string, unknown> | null>((resolve) => {
-        const open = indexedDB.open('purrcare-offline');
+        const open = indexedDB.open('amargram-offline');
         open.onerror = () => resolve(null);
         open.onsuccess = () => {
           const db = open.result;
@@ -404,7 +404,7 @@ async function snapshotOwners(page: Page): Promise<string[]> {
   return page.evaluate(
     () =>
       new Promise<string[]>((resolve) => {
-        const open = indexedDB.open('purrcare-offline');
+        const open = indexedDB.open('amargram-offline');
         open.onerror = () => resolve([]);
         open.onsuccess = () => {
           const db = open.result;

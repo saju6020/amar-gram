@@ -15,7 +15,7 @@ import { server } from '../../mocks/server';
  *   CONTRACT_CUSTOMER_EMAIL / CONTRACT_CUSTOMER_PASSWORD   (default JOURNEY_CUSTOMER_*)
  *   E2E_STAFF_ADMIN / E2E_STAFF_PASSWORD                    (the seeded e2e.admin)
  * The API must be on a scratch database (the check places one cash-on-delivery order for the seeded customer when she
- * has none, so the order shapes can be compared); it refuses catecommerce_dev / catecommerce_test.
+ * has none, so the order shapes can be compared); it refuses amargram_dev / amargram_test.
  */
 
 const REAL = (process.env.CONTRACT_API_BASE_URL ?? '').replace(/\/+$/, '');
@@ -553,7 +553,7 @@ describe.skipIf(!REAL)('mock-vs-real contract (GET responses)', () => {
       MOCK,
       {
         customer: ['signed-in-customer@example.com', 'Password123!'],
-        staff: ['admin@purrcare.test', 'AdminPass123!'],
+        staff: ['admin@amargram.test', 'AdminPass123!'],
       },
       { seed: true },
     );
@@ -569,7 +569,7 @@ describe.skipIf(!REAL)('mock-vs-real contract (GET responses)', () => {
       throw new Error(
         `Could not confirm which database ${REAL} uses (GET /api/dev/database); refusing to run.`,
       );
-    if (database === 'catecommerce_dev' || database === 'catecommerce_test')
+    if (database === 'amargram_dev' || database === 'amargram_test')
       throw new Error(
         `${REAL} is on ${database}; the contract check places an order and needs a scratch database.`,
       );

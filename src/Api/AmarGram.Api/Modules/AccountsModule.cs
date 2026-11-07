@@ -213,7 +213,6 @@ public static class AccountsModule
         services.AddScoped<IEventHandlerAsync<PasswordResetRequestedEvent>, AuditPasswordResetRequestedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerPasswordSetEvent>, AuditCustomerPasswordSetHandler>();
         services.AddScoped<IEventHandlerAsync<StaffPasswordSetEvent>, AuditStaffPasswordSetHandler>();
-        services.AddScoped<IEventHandlerAsync<StaffAccountDetailsChangedEvent>, AuditStaffAccountDetailsChangedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerMergedEvent>, AuditCustomerMergedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, AuditCustomerAnonymisedHandler>();
         services.AddScoped<IEventHandlerAsync<CustomerAccountAnonymisedEvent>, ClearAddressBookOnAnonymisedHandler>();

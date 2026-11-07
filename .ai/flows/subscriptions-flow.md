@@ -8,7 +8,7 @@ weeks, delivery or pickup, COD / bank transfer / pay at pickup). When a cycle's 
 worker raises an **ordinary order through Ordering** (channel `Subscription`), and the customer is
 told before it happens and can skip, pause, change or cancel up to a cut-off. There is **no
 auto-charge, no token, no gateway** (ADR-238): a subscription saves re-ordering, not paying.
-Spec: `docs/handover/HO-SUB-001.md` (written in the pet-clinic era; adapted, see below).
+Spec: `docs/handover/HO-SUB-001.md` (adapted for Amar Gram, see below).
 
 ## Modules involved
 | Module | Role |
@@ -57,13 +57,12 @@ customer; an unavailable product also suspends. Staff (`Subscriptions.Manage`) r
 - `SubscriptionClock` is the only time-zone conversion point; its cut-off instant is UTC (Npgsql)
 
 ## Decisions made / adaptations from HO-SUB-001 (HO-P1, HO-P2)
-- **No cat, no prescription diet, no clinic**: no `CatId`, authorisation pass (C10), vet message,
-  `AuthorisationExpired` / `CatDeceased` / `CatOwnerChanged` reasons, or `catalogue category group`
-  rule. Eight templates (not nine). A product is subscribable when staff set `IsSubscribable`
+- **Not built from HO-SUB-001**: the per-subscription authorisation pass (C10), its message and
+  suspension reasons, and the `catalogue category group` rule. Eight templates (not nine). A product is subscribable when staff set `IsSubscribable`
   (`ProductAggregate.Subscription.cs`, `PUT /api/staff/shop/products/{id}` `isSubscribable`, exposed
   on the staff product detail)
-- Live-subscription index is `ix_subscription_live_per_sku` on `(customer_id, sku_id)` (no cat, so no
-  `NULLS NOT DISTINCT`)
+- Live-subscription index is `ix_subscription_live_per_sku` on `(customer_id, sku_id)` (no nullable
+  key column, so no `NULLS NOT DISTINCT`)
 - "C-ORD-1/2/3" are not a separate Orders contract: `PlaceSubscriptionOrderCommandHandler` reuses
   Ordering's own ports and pure `CheckoutPricing`; the quote (`ICheckoutInputsLoader.LoadSubscriptionAsync`)
   stands in for `GetAvailablePaymentMethods`; the mirror handles this codebase's order events

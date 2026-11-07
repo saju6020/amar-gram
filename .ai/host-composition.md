@@ -11,11 +11,11 @@ version is below.
 ## 1. `Program.cs`
 
 ```csharp
-using AmarGram.Application.CommandHandlers.Cat;
-using AmarGram.Application.Commands.Cat;
+using AmarGram.Application.CommandHandlers.Product;
+using AmarGram.Application.Commands.Product;
 using AmarGram.Infrastructure.Persistence;
-using AmarGram.Read.Queries.Cat;
-using AmarGram.Read.QueryHandlers.Cat;
+using AmarGram.Read.Queries.Product;
+using AmarGram.Read.QueryHandlers.Product;
 using AmarGram.Read.ViewModels;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -55,16 +55,16 @@ builder.Services.AddScoped(typeof(IAggregateRootRepository<>), typeof(EfAggregat
 
 // ── Your own: Command Handlers, Validators, Query Handlers, Domain Services ───
 // Command handlers run in THIS host now — there is no CommandWorker.
-builder.Services.AddScoped<ICommandHandlerAsync<RegisterCatCommand>, RegisterCatCommandHandler>();
-builder.Services.AddScoped<IValidator<RegisterCatCommand>, RegisterCatCommandValidator>();
+builder.Services.AddScoped<ICommandHandlerAsync<CreateProductCommand>, CreateProductCommandHandler>();
+builder.Services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
 
-builder.Services.AddScoped<IQueryHandlerAsync<GetCatQuery, CatViewModel?>, GetCatQueryHandler>();
+builder.Services.AddScoped<IQueryHandlerAsync<GetProductQuery, ProductViewModel?>, GetProductQueryHandler>();
 
 // Domain services — only where domain logic spans aggregates (architecture.md §4).
 // builder.Services.AddScoped<IStockAllocationService, FefoStockAllocationService>();
 
 // Domain event handlers — in-process now, no EventConsumerAdapter.
-// builder.Services.AddScoped<IEventHandlerAsync<CatVaccinatedEvent>, RecalculateStatusHandler>();
+// builder.Services.AddScoped<IEventHandlerAsync<ProductCertifiedEvent>, RecalculateStatusHandler>();
 
 var app = builder.Build();
 

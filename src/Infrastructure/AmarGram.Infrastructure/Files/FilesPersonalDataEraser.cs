@@ -18,7 +18,7 @@ namespace AmarGram.Infrastructure.Files;
 /// Mirrors <c>AdministrationPersonalDataEraser</c>'s shape: a row under <c>RetainUntil</c> or
 /// <c>LegalHold</c> is <see cref="ErasureOutcome.Held"/>, not erased -- the object and the audit
 /// trail of who uploaded it must survive for as long as the owning context's own retention rule
-/// says so (e.g. a `LabResult` a vet ordered), even after the uploading customer's account is
+/// says so (e.g. a supplier certificate or an invoice attachment), even after the uploading customer's account is
 /// gone. The stored bytes, the hash and the storage key are never touched -- only the two fields
 /// that identify the uploader.
 /// </summary>

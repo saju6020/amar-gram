@@ -54,7 +54,7 @@ Not run: the full `npm run test:e2e` over every area (handover §17 last paragra
 
 ### E-CAL8 (real API) - NOT RUN
 
-API from this worktree on http://localhost:5011 against `catecommerce_dev` (not migrated), web on :3114 with `NEXT_PUBLIC_USE_MOCKS=false`. The test (`E2E_REAL_CAL8=1`, `-g E-CAL8`) signed in as `e2e.admin@purrcare.test` with `E2E_STAFF_PASSWORD` from `web/.env.e2e.local`. Both attempts were refused by the API ("That mobile number or email and password don't match an account"). Stopped after two refused sign-ins to avoid a lockout. No branch was created in `catecommerce_dev`. Per handover §20.8, E-CAL8 is recorded not run; A2 and A10 must not be marked met on MSW alone. The owner/integrator needs to confirm that the `e2e.admin@purrcare.test` account exists in `catecommerce_dev` with the password in `.env.e2e.local`, then re-run the command above.
+API from this worktree on http://localhost:5011 against `catecommerce_dev` (not migrated), web on :3114 with `NEXT_PUBLIC_USE_MOCKS=false`. The test (`E2E_REAL_CAL8=1`, `-g E-CAL8`) signed in as `e2e.admin@amargram.test` with `E2E_STAFF_PASSWORD` from `web/.env.e2e.local`. Both attempts were refused by the API ("That mobile number or email and password don't match an account"). Stopped after two refused sign-ins to avoid a lockout. No branch was created in `catecommerce_dev`. Per handover §20.8, E-CAL8 is recorded not run; A2 and A10 must not be marked met on MSW alone. The owner/integrator needs to confirm that the `e2e.admin@amargram.test` account exists in `catecommerce_dev` with the password in `.env.e2e.local`, then re-run the command above.
 
 ## Other checks
 

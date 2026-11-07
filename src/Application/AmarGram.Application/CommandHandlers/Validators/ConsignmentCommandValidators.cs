@@ -12,7 +12,7 @@ public sealed class HsCodeInputValidator : AbstractValidator<HsCodeInput>
 {
     public HsCodeInputValidator()
     {
-        RuleFor(h => h.Code).NotEmpty().Must(InventoryRules.IsValidHsCode).WithMessage("An HS code is four digits followed by up to three groups of two (for example 2309.10).");
+        RuleFor(h => h.Code).NotEmpty().Must(InventoryRules.IsValidHsCode).WithMessage("An HS code is four digits followed by up to three groups of two (for example 1006.30).");
         RuleFor(h => h.Description).MaximumLength(200).NoControlCharacters();
     }
 }

@@ -4,7 +4,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 /**
  * HO-POR-002 §16 — the E-A cases re-run against the REAL API (NEXT_PUBLIC_USE_MOCKS=false, API on
- * http://localhost:5014, fresh database catecommerce_por002e2e). Skipped on mocks. It registers its
+ * http://localhost:5014, fresh database amargram_por002e2e). Skipped on mocks. It registers its
  * own customer, so it needs no seed data, and it also pins the dashboard wire contract the mocks
  * were written from (the key set, section states). Re-order and the order/balance tiles with data
  * need orders and invoices that a fresh database does not hold; they are recorded as not run

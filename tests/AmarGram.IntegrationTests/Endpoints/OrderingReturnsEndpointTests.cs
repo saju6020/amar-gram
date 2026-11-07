@@ -23,15 +23,15 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         return (await ReadAsync(response)).GetProperty("courierId").GetGuid();
     }
 
-    /// <summary>A shop with a sealed-or-opened-food SKU (850.00, 15 %) and a toy (120.00, 0 %), one cash-on-delivery order of 2 x food and 1 x toy dispatched and delivered.</summary>
+    /// <summary>A shop with a sealed-or-opened-food SKU (850.00, 15 %) and a bag (120.00, 0 %), one cash-on-delivery order of 2 x food and 1 x bag dispatched and delivered.</summary>
     private async Task<Delivered> DeliveredOrderAsync(DateOnly? foodExpires = null)
     {
         var shop = await SetUpShopAsync(fillCart: false);
         var food = await CreateSkuAsync(shop.Context, price: 850m, stock: 20m, food: true, onStorefront: true, name: "Basmati rice", expires: foodExpires);
-        var toy = shop.Toy;
+        var bag = shop.Bag;
         shop = shop with { Food = food };
         await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = food.SkuId, quantity = 2 }, Json));
-        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = toy.SkuId, quantity = 1 }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = bag.SkuId, quantity = 1 }, Json));
         var orderId = (await PlaceCodOrderAsync(shop)).GetProperty("orderId").GetGuid();
 
         var (reception, _) = await StaffClientAsync(shop.Context, StaffRoles.Reception);
@@ -89,7 +89,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
     {
         var d = await DeliveredOrderAsync();
         var returnId = (await ReadAsync(await ExpectAsync(HttpStatusCode.Created, await d.Shop.Customer.PostAsJsonAsync(
-            $"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(LineOf(d, d.Shop.Toy.SkuId), 1), Json)))).GetProperty("returnRequestId").GetGuid();
+            $"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(LineOf(d, d.Shop.Bag.SkuId), 1), Json)))).GetProperty("returnRequestId").GetGuid();
 
         await ExpectAsync(HttpStatusCode.NoContent, await d.Reception.PostAsJsonAsync($"/api/staff/returns/{returnId}/reject", new { note = "Item shows signs of use" }, Json));
 
@@ -97,14 +97,14 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         Assert.Equal("Rejected", staff.GetProperty("status").GetString());
         Assert.Equal("Item shows signs of use", staff.GetProperty("decisionNote").GetString());
         Assert.Equal(1, await NotificationCountAsync(d.Shop.CustomerId, "order.return-decided"));
-        await AssertErrorAsync(await d.Reception.PostAsJsonAsync($"/api/staff/returns/{returnId}/receive", new { lines = new[] { new { orderLineId = LineOf(d, d.Shop.Toy.SkuId), quantityReceived = 1 } } }, Json), "InvalidReturnTransition");
+        await AssertErrorAsync(await d.Reception.PostAsJsonAsync($"/api/staff/returns/{returnId}/receive", new { lines = new[] { new { orderLineId = LineOf(d, d.Shop.Bag.SkuId), quantityReceived = 1 } } }, Json), "InvalidReturnTransition");
     }
 
     [Fact]
     public async Task TheReturnWindow_ClosesAfterTheConfiguredDays_AndAnotherCustomersOrderIsNotFound()
     {
         var d = await DeliveredOrderAsync();
-        var toyLine = LineOf(d, d.Shop.Toy.SkuId);
+        var bagLine = LineOf(d, d.Shop.Bag.SkuId);
 
         await using (var connection = await OpenConnectionAsync())
         await using (var command = connection.CreateCommand())
@@ -114,14 +114,14 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
             Assert.Equal(1, await command.ExecuteNonQueryAsync());
         }
 
-        var late = await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(toyLine, 1), Json);
+        var late = await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(bagLine, 1), Json);
         await AssertErrorAsync(late, "ReturnWindowClosed");
         Assert.Contains("lines[0]", (await late.Content.ReadAsStringAsync()), StringComparison.OrdinalIgnoreCase);
         var detail = await ReadAsync(await d.Shop.Customer.GetAsync($"/api/customers/me/orders/{d.OrderId}"));
         Assert.False(detail.GetProperty("canRequestReturn").GetBoolean());
 
         var (stranger, _, _) = await RegisterAndSignInCustomerAsync();
-        Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(toyLine, 1), Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await stranger.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(bagLine, 1), Json)).StatusCode);
     }
 
     // ── I-G2 (US-ORD-13 AC2, AC-9, BR-10) ───────────────────────────────────────────────────────────
@@ -153,14 +153,14 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
     {
         var d = await DeliveredOrderAsync();
         var foodLine = LineOf(d, d.Shop.Food.SkuId);
-        var toyLine = LineOf(d, d.Shop.Toy.SkuId);
+        var bagLine = LineOf(d, d.Shop.Bag.SkuId);
 
-        // an opened toy is fine; the opened food (changed mind) is not -> the whole request is refused, naming line 1
+        // an opened bag is fine; the opened food (changed mind) is not -> the whole request is refused, naming line 1
         var response = await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", new
         {
             lines = new object[]
             {
-                new { orderLineId = toyLine, quantity = 1, reason = "ChangedMind", condition = "Opened", customerNote = (string?)null },
+                new { orderLineId = bagLine, quantity = 1, reason = "ChangedMind", condition = "Opened", customerNote = (string?)null },
                 new { orderLineId = foodLine, quantity = 1, reason = "ChangedMind", condition = "Opened", customerNote = (string?)null },
             }
         }, Json);
@@ -171,7 +171,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         Assert.Contains("Lines[1]", text, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(0, await WithDbAsync(db => db.ReturnRequests.AsNoTracking().CountAsync(r => r.OrderId == d.OrderId)));
 
-        Assert.Equal(HttpStatusCode.BadRequest, (await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(toyLine, 1, "NotAReason"), Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(bagLine, 1, "NotAReason"), Json)).StatusCode);
     }
 
     // ── I-G3 (BR-10, the defect path) ───────────────────────────────────────────────────────────────
@@ -201,22 +201,22 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
     }
 
     // ── I-G4 / I-G5 / I-G6 (US-ORD-14) ──────────────────────────────────────────────────────────────
-    private async Task<(Delivered D, Guid ReturnId)> ReceivedReturnAsync(Delivered d, int foodQuantity = 1, int toyQuantity = 1)
+    private async Task<(Delivered D, Guid ReturnId)> ReceivedReturnAsync(Delivered d, int foodQuantity = 1, int bagQuantity = 1)
     {
         var foodLine = LineOf(d, d.Shop.Food.SkuId);
-        var toyLine = LineOf(d, d.Shop.Toy.SkuId);
+        var bagLine = LineOf(d, d.Shop.Bag.SkuId);
         var returnId = (await ReadAsync(await ExpectAsync(HttpStatusCode.Created, await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", new
         {
             lines = new object[]
             {
                 new { orderLineId = foodLine, quantity = foodQuantity, reason = "WrongItem", condition = "Sealed", customerNote = (string?)null },
-                new { orderLineId = toyLine, quantity = toyQuantity, reason = "Damaged", condition = "Opened", customerNote = (string?)null },
+                new { orderLineId = bagLine, quantity = bagQuantity, reason = "Damaged", condition = "Opened", customerNote = (string?)null },
             }
         }, Json)))).GetProperty("returnRequestId").GetGuid();
 
         await ExpectAsync(HttpStatusCode.NoContent, await d.Reception.PostAsJsonAsync($"/api/staff/returns/{returnId}/approve", new { lines = Array.Empty<object>() }, Json));
         await ExpectAsync(HttpStatusCode.NoContent, await d.Reception.PostAsJsonAsync($"/api/staff/returns/{returnId}/receive", new
-        { lines = new object[] { new { orderLineId = foodLine, quantityReceived = foodQuantity }, new { orderLineId = toyLine, quantityReceived = toyQuantity } } }, Json));
+        { lines = new object[] { new { orderLineId = foodLine, quantityReceived = foodQuantity }, new { orderLineId = bagLine, quantityReceived = bagQuantity } } }, Json));
         return (d, returnId);
     }
 
@@ -310,7 +310,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
     public async Task TheReturnsList_IsBranchScoped_FilteredByStatus_AndAnAnonymousCallerIsRefused()
     {
         var d = await DeliveredOrderAsync();
-        var returnId = (await ReadAsync(await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(LineOf(d, d.Shop.Toy.SkuId), 1), Json))).GetProperty("returnRequestId").GetGuid();
+        var returnId = (await ReadAsync(await d.Shop.Customer.PostAsJsonAsync($"/api/customers/me/orders/{d.OrderId}/returns", ReturnBody(LineOf(d, d.Shop.Bag.SkuId), 1), Json))).GetProperty("returnRequestId").GetGuid();
 
         var list = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await d.Reception.GetAsync("/api/staff/returns?status=Requested&pageSize=100")));
         Assert.Contains(list.GetProperty("items").EnumerateArray(), r => r.GetProperty("id").GetGuid() == returnId);
@@ -342,7 +342,7 @@ public sealed class OrderingReturnsEndpointTests(OrderingApiFactory factory) : O
         Assert.True(methods["StoreCredit"].GetProperty("allowed").GetBoolean());
         Assert.False(methods["StoreCredit"].GetProperty("available").GetBoolean());
 
-        // 1 x 850.00 food (+15 %) and 1 x 120.00 toy came back; the suggestion never includes the delivery charge
+        // 1 x 850.00 food (+15 %) and 1 x 120.00 bag came back; the suggestion never includes the delivery charge
         var suggestion = options.GetProperty("suggestedForReturns").EnumerateArray().Single(s => s.GetProperty("returnRequestId").GetGuid() == returnId);
         var order = await LoadOrderAsync(d.OrderId);
         var suggested = AmountOf(suggestion.GetProperty("suggestedAmount"));

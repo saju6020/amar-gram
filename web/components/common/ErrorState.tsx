@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils';
 
 /**
  * `components/common/ErrorState.tsx` — the scaffold handover §11.7, Definition of Done, and NFR-USA-4 ("the
- * message shown is ours, never the server's"). Matches `docs/design/portal/BalancesStates.dc.html`
- * / `CatTileStates.dc.html`'s "unavailable" pattern: an icon that isn't alarm-red (`--ink-muted`,
+ * message shown is ours, never the server's"). Matches `docs/design/portal/BalancesStates.dc.html`'s
+ * "unavailable" pattern: an icon that isn't alarm-red (`--ink-muted`,
  * not `--danger-ink` — this is "couldn't load", not "something is wrong with your data"), a bold
  * one-line title, a reassuring caption, and a **Try again** button that refetches.
  *

@@ -345,7 +345,7 @@ export function IdleLock({ children }: { children: React.ReactNode }) {
           // SEC gate LOW (first pass) — the locked page stays mounted and readable behind the
           // default translucent overlay (ADR-FE-010's own point: never unmount it), which on an
           // unattended reception terminal means a customer's name, phone numbers, addresses and
-          // medical data stay legible on screen after the session has timed out. Opaque here
+          // order details stay legible on screen after the session has timed out. Opaque here
           // closes that; the DOM/form state underneath is completely untouched.
           overlayClassName="bg-surface-page"
           onEscapeKeyDown={(event) => event.preventDefault()}

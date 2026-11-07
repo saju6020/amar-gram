@@ -62,7 +62,7 @@ public sealed class InventoryBreachAndCrossCuttingEndpointTests(InventoryApiFact
         await AssertErrorAsync(await keeper.Client.PostAsync($"{Breaches}/{breachId}/quarantine", null), BusinessViolationCodes.InvalidStorageBreachTransition);
 
         await AssertErrorAsync(await keeper.Client.PostAsJsonAsync($"{Breaches}/{breachId}/close", new { note = "" }, Json), BusinessViolationCodes.InvalidStorageBreachTransition);
-        Assert.Equal(HttpStatusCode.NoContent, (await keeper.Client.PostAsJsonAsync($"{Breaches}/{breachId}/close", new { note = "Written off after the vet inspected it." }, Json)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await keeper.Client.PostAsJsonAsync($"{Breaches}/{breachId}/close", new { note = "Written off after the quality officer inspected it." }, Json)).StatusCode);
         Assert.Equal("Closed", (await JsonOkAsync(await keeper.Client.GetAsync($"{Breaches}/{breachId}"))).GetProperty("summary").GetProperty("status").GetString());
     }
 

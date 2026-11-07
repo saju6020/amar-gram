@@ -42,7 +42,13 @@ test('the nav sheet closes on browser Back and does not trap focus afterwards', 
   await trigger.focus();
   await trigger.press('Enter');
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByRole('dialog').getByRole('link', { name: 'Inventory', exact: true }).click();
+  // The sheet's groups are collapsible (only the current page's group starts open) and the link is
+  // labelled "Inventory & batches" (staff-nav-groups.ts), so open its group first.
+  await page.getByRole('dialog').getByRole('button', { name: 'Catalogue & stock' }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('link', { name: 'Inventory & batches', exact: true })
+    .click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.waitForURL('**/staff/inventory');
 

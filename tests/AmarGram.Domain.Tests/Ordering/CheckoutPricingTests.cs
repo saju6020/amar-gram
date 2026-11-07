@@ -121,7 +121,7 @@ public sealed class CheckoutPricingTests
     public void TheDeliveryCharge_AddsTheWeightBandSurcharge_ForTheCartsTotalShippingWeight()
     {
         var heavy = Sku("Jute bag 10 kg", 500m) with { ShippingWeightGrams = 10_000 };
-        var light = Sku("Toy", 100m) with { ShippingWeightGrams = 200 };
+        var light = Sku("Bag", 100m) with { ShippingWeightGrams = 200 };
         var zone = new DeliveryZoneFacts(ZoneId, "Dhaka city", BranchId, true, null,
         [
             new ZoneServiceFacts(DeliveryServiceLevel.Standard, true, new ZoneChargeRules(60m, null, [new WeightBand(2000, 0m), new WeightBand(5000, 40m), new WeightBand(null, 100m)]), 1, []),
@@ -151,7 +151,7 @@ public sealed class CheckoutPricingTests
     {
         // 2 x 850.00 (VAT 15 %), 1 x 120.00 (VAT 0 %), a 10 % order code, delivery 60.00
         var a = Line(Sku("Food", 850m), 2, rate: 15m);
-        var b = Line(Sku("Toy", 120m), 1, rate: 0m);
+        var b = Line(Sku("Bag", 120m), 1, rate: 0m);
         var quote = CheckoutPricing.Quote(Inputs([a, b], discount: Percent10Order(), discountText: "save10"));
 
         Assert.Equal(182_000L, quote.Totals.Subtotal.Value);
@@ -167,9 +167,9 @@ public sealed class CheckoutPricingTests
         Assert.Equal(22_950L, food.TaxAmount.Value);
         Assert.Equal(175_950L, food.LineTotal.Value); // 1700 - 170 + 229.50
 
-        var toy = quote.Lines.Single(l => l.LineRef == b.LineId);
-        Assert.Equal(1_200L, toy.OrderDiscountShare.Value);
-        Assert.Equal(0L, toy.TaxAmount.Value);
+        var bag = quote.Lines.Single(l => l.LineRef == b.LineId);
+        Assert.Equal(1_200L, bag.OrderDiscountShare.Value);
+        Assert.Equal(0L, bag.TaxAmount.Value);
 
         Assert.True(quote.Discount!.Applied);
         Assert.Equal("SAVE10", quote.Discount.Code);
