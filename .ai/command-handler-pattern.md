@@ -22,14 +22,14 @@ Immutable, data only.
 - Located in `src/Application/Commands/[ContextName]/`.
 
 ```csharp
-namespace AmarGram.Application.Commands.Cat;
+namespace AmarGram.Application.Commands.Product;
 
-public sealed class RecordVaccinationCommand : Command
+public sealed class RecordCertificateCommand : Command
 {
-    public required Guid CatId { get; init; }
-    public required Guid VaccineId { get; init; }
+    public required Guid ProductId { get; init; }
+    public required Guid CertificationId { get; init; }
     public required Guid BatchId { get; init; }
-    public required DateOnly AdministeredOn { get; init; }
+    public required DateOnly IssuedOn { get; init; }
     public required Guid AdministeredByVetId { get; init; }
     public string? Notes { get; init; }
 }
@@ -51,17 +51,17 @@ Shape validation only.
 - Located in `src/Application/CommandHandlers/Validators/` (flat).
 
 ```csharp
-public sealed class RecordVaccinationCommandValidator
-    : AbstractValidator<RecordVaccinationCommand>
+public sealed class RecordCertificateCommandValidator
+    : AbstractValidator<RecordCertificateCommand>
 {
-    public RecordVaccinationCommandValidator()
+    public RecordCertificateCommandValidator()
     {
-        RuleFor(x => x.CatId).NotEmpty();
-        RuleFor(x => x.VaccineId).NotEmpty();
+        RuleFor(x => x.ProductId).NotEmpty();
+        RuleFor(x => x.CertificationId).NotEmpty();
         RuleFor(x => x.BatchId).NotEmpty();
-        RuleFor(x => x.AdministeredOn)
+        RuleFor(x => x.IssuedOn)
             .LessThanOrEqualTo(_ => DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("A vaccination cannot be recorded with a future date.");
+            .WithMessage("A certificate cannot be recorded with a future date.");
     }
 }
 ```
@@ -84,36 +84,36 @@ using Platform.Infrastructure.Core.Commands;
 using Platform.Infrastructure.Core.Domain;
 using Platform.Infrastructure.Core.Validation;
 
-namespace AmarGram.Application.CommandHandlers.Cat;
+namespace AmarGram.Application.CommandHandlers.Product;
 
-public sealed class RecordVaccinationCommandHandler(
-    ILogger<RecordVaccinationCommandHandler> logger,
-    IAggregateRootRepository<CatAggregate> catRepository)
-    : ICommandHandlerAsync<RecordVaccinationCommand>
+public sealed class RecordCertificateCommandHandler(
+    ILogger<RecordCertificateCommandHandler> logger,
+    IAggregateRootRepository<ProductAggregate> productRepository)
+    : ICommandHandlerAsync<RecordCertificateCommand>
 {
-    public async Task<CommandResponse> HandleAsync(RecordVaccinationCommand command)
+    public async Task<CommandResponse> HandleAsync(RecordCertificateCommand command)
     {
         logger.LogInformation(
-            "Recording vaccination for cat {CatId}. CorrelationId: {CorrelationId}",
-            command.CatId, command.CorrelationId);
+            "Recording certificate for product {ProductId}. CorrelationId: {CorrelationId}",
+            command.ProductId, command.CorrelationId);
 
         // 1. Load the aggregate — directly, no service layer.
-        var cat = await catRepository.GetByIdAsync(command.CatId);
-        if (cat is null)
+        var product = await productRepository.GetByIdAsync(command.ProductId);
+        if (product is null)
             return Violation(
-                $"Cat '{command.CatId}' was not found.",
-                nameof(command.CatId),
-                BusinessViolationCodes.CatNotFound);
+                $"Product '{command.ProductId}' was not found.",
+                nameof(command.ProductId),
+                BusinessViolationCodes.ProductNotFound);
 
         // 2. The aggregate enforces its own invariants and raises its own domain events.
-        cat.RecordVaccination(command.ToDomainDto());
+        product.RecordCertificate(command.ToDomainDto());
 
         // 3. Persist. EventPublishOption is REQUIRED — InMemoryPublishOnly publishes the
         //    aggregate's domain events in-process (Core 1.0.34). Never QueuePublishOnly:
         //    there is no queue.
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
+        await productRepository.UpdateAsync(product, EventPublishOption.InMemoryPublishOnly);
 
-        return new CommandResponse { IsSuccess = true, Result = cat.Id };
+        return new CommandResponse { IsSuccess = true, Result = product.Id };
     }
 
     private static CommandResponse Violation(string message, string property, string code)
@@ -123,7 +123,7 @@ public sealed class RecordVaccinationCommandHandler(
             errorMessage: message,
             propertyName: property,
             errorCode: code,
-            resourceName: nameof(CatAggregate));
+            resourceName: nameof(ProductAggregate));
 
         return new CommandResponse { IsSuccess = false, ValidationResult = validationResponse };
     }
@@ -139,10 +139,10 @@ every failure path.
 Into the response body:
 
 ```
-POST /api/cats/{id}/vaccinations
+POST /api/staff/products/{id}/certificates
 400 Bad Request
-{ "errors": [ { "propertyName": "CatId", "errorCode": "CatNotFound",
-                "errorMessage": "Cat '…' was not found." } ] }
+{ "errors": [ { "propertyName": "ProductId", "errorCode": "ProductNotFound",
+                "errorMessage": "Product '…' was not found." } ] }
 ```
 
 No rejection event, no `INotifiedByEventHandler`, no notification subsystem, no polling. ADR-005
@@ -156,10 +156,10 @@ carry the violation. That constraint is gone.
 Still a repository call, still in the handler:
 
 ```csharp
-var exists = await catRepository.ExistAsync(c => c.MicrochipNumber == command.Microchip);
+var exists = await productRepository.ExistAsync(c => c.Barcode == command.Barcode);
 if (exists)
-    return Violation($"A cat with microchip '{command.Microchip}' is already registered.",
-                     nameof(command.Microchip), BusinessViolationCodes.ResourceAlreadyExists);
+    return Violation($"A product with barcode '{command.Barcode}' is already registered.",
+                     nameof(command.Barcode), BusinessViolationCodes.ResourceAlreadyExists);
 ```
 
 A uniqueness lookup is not domain logic and does not need a service to wrap it. If the same check
@@ -185,12 +185,12 @@ public interface IStockAllocationService
 
 | Rule | Where it lives |
 |---|---|
-| "A cat cannot get the same vaccine twice on one day" | **`CatAggregate`** — its own state |
-| "Next-due is 12 months after administration" | **`CatAggregate`** — its own data |
-| "A stay cannot start if vaccinations are overdue" | **`CatAggregate`** exposes the status; the handler checks it |
+| "A product cannot get the same certification twice on one day" | **`ProductAggregate`** — its own state |
+| "A certificate expires 12 months after issue" | **`ProductAggregate`** — its own data |
+| "A product cannot be listed as certified organic if its certificate has expired" | **`ProductAggregate`** exposes the status; the handler checks it |
 | "Allocate from the soonest-expiring batch (FEFO)" | **Domain Service** — spans many batches |
-| "Is this appointment slot free?" (roster + room + bookings) | **Domain Service** — spans three aggregates |
-| "Does this microchip already exist?" | **Handler**, via repository. Not domain logic |
+| "Is there enough sellable stock for this order?" (batches + locations + reservations) | **Domain Service** — spans three aggregates |
+| "Does this barcode already exist?" | **Handler**, via repository. Not domain logic |
 
 Rules for a Domain Service:
 
@@ -208,12 +208,12 @@ in the handler.
 
 | Rule | Lives in |
 |---|---|
-| "CatId must not be empty" | Validator |
+| "ProductId must not be empty" | Validator |
 | "Administered date cannot be in the future" | Validator |
-| "Cat must exist" | Handler — repository load, null check |
-| "Microchip must be unique" | Handler — repository filter |
-| "Cannot vaccinate twice with the same vaccine on the same day" | **Aggregate** |
-| "Next-due date is 12 months out" | **Aggregate** |
+| "Product must exist" | Handler — repository load, null check |
+| "Barcode must be unique" | Handler — repository filter |
+| "Cannot record the same certification twice on the same day" | **Aggregate** |
+| "Expiry date is 12 months out" | **Aggregate** |
 | "Illegal status transition" | **Aggregate** — may throw |
 | "Allocate stock FEFO" | **Domain Service** |
 

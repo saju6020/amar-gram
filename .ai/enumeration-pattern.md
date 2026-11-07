@@ -59,7 +59,7 @@ Store the **`Value`**, never the display name — display names are for humans a
 builder.Property(x => x.Status)
        .HasConversion(
            status => status.Value,
-           value  => Enumeration.FromValue<AppointmentStatus>(value))
+           value  => Enumeration.FromValue<OrderStatus>(value))
        .HasColumnName("status")
        .IsRequired();
 ```
@@ -68,14 +68,14 @@ Register it once as a convention if the same type appears on many entities:
 
 ```csharp
 protected override void ConfigureConventions(ModelConfigurationBuilder builder)
-    => builder.Properties<AppointmentStatus>().HaveConversion<EnumerationConverter<AppointmentStatus>>();
+    => builder.Properties<OrderStatus>().HaveConversion<EnumerationConverter<OrderStatus>>();
 ```
 
 Two consequences worth knowing:
 
 - **A converted property cannot be used in a `Where` on the read side unless you compare the
-  converted value.** `Where(x => x.Status == AppointmentStatus.Booked)` translates correctly;
-  `Where(x => x.Status.DisplayName == "Booked")` does not, and will fail or fall back to
+  converted value.** `Where(x => x.Status == OrderStatus.Confirmed)` translates correctly;
+  `Where(x => x.Status.DisplayName == "Confirmed")` does not, and will fail or fall back to
   client-side evaluation.
 - **Read models usually map the raw `int` or a `string`,** not the `Enumeration` type. The read
   side exists to feed a screen, and a ViewModel carrying `"Booked"` is simpler than one carrying
@@ -97,14 +97,6 @@ Derived from the state machines in `docs/SRS.md` Appendix C.
 
 | Type | Context | Values |
 |---|---|---|
-| `AppointmentStatus` | Appointment | Booked, CheckedIn, InConsultation, Completed, Cancelled, NoShow |
-| `SurgeryStatus` | Surgery | Scheduled, PreOp, InTheatre, Recovery, Discharged, Cancelled |
-| `TriagePriority` | Appointment | Routine, Urgent, Emergency |
-| `PrescriptionStatus` | Prescription | Issued, Dispensed, Completed, Expired, Cancelled |
-| `VaccinationStatus` | Cat | Current, DueSoon, Overdue |
-| `BoardingStayStatus` | BoardingStay | Enquiry, Reserved, Confirmed, CheckedIn, CheckedOut, Cancelled, NoShow |
-| `BoardingUnitType` | BoardingUnit | Standard, Deluxe, Family, Isolation |
-| `IncidentSeverity` | BoardingStay | Low, Medium, High |
 | `OrderStatus` | Order | PendingPayment, Confirmed, Packing, Dispatched, Delivered, Cancelled, Returned, Refunded |
 | `PaymentMethod` | Invoice | CashOnDelivery, CashInStore, CardInStore, BankTransfer |
 | `BatchStatus` | Batch | InTransit, Received, Available, Quarantined, Recalled, Expired, WrittenOff |

@@ -12,13 +12,6 @@ Shared), not separate projects per context. A context is a folder and a namespac
 
 | Context | Aggregates | SRS |
 |---|---|---|
-| **Cat** | `CatAggregate` — identity, weight history, vaccinations, flags | §4.2 |
-| **Appointment** | `AppointmentAggregate` — slot, status, triage priority | §4.3 |
-| **Visit** | `VisitAggregate` — vitals, SOAP note, diagnoses, treatments | §4.3 |
-| **Surgery** | `SurgeryAggregate` — checklist, consent, anaesthesia log, report | §4.4 |
-| **Prescription** | `PrescriptionAggregate`, `DietAuthorisation` | §4.5 |
-| **BoardingUnit** | `BoardingUnitAggregate` — type, capacity, rate | §4.6 |
-| **BoardingStay** | `BoardingStayAggregate` — dates, care profile, tasks, incidents | §4.6 |
 | **Product** | `ProductAggregate`, SKUs, country of origin | §4.7 |
 | **Supplier** | `SupplierAggregate`, `PurchaseOrderAggregate` | §4.8 |
 | **Consignment** | `ConsignmentAggregate` — import permits, certificates, landed cost | §4.8 |
@@ -32,14 +25,14 @@ Shared), not separate projects per context. A context is a folder and a namespac
 
 ## The one that matters most
 
-**`CatAggregate` is shared across all four business lines.** A cat treated in the clinic is the
-same record used to gate prescription diets in the shop and to validate vaccination status at
-boarding check-in (SRS §1.2). It is the reason this is one product rather than three.
+**`ProductAggregate` is shared across every sales channel.** The same product and SKU record is
+sold in the online shop, rung up at the counter, delivered on a subscription and received into
+stock from a consignment. It is the reason this is one product rather than several.
 
-Practical consequence: `CatAggregate` is loaded by command handlers in several contexts. That is
-expected. What it must **not** become is a dumping ground — clinical detail belongs to `Visit`,
-stay detail to `BoardingStay`, and the cat keeps only what is true of the cat regardless of which
-business line is asking.
+Practical consequence: `ProductAggregate` is read by command handlers in several contexts. That is
+expected. What it must **not** become is a dumping ground — stock detail belongs to `Batch` and the
+stock ledger, order detail to `Order`, and the product keeps only what is true of the product
+regardless of which channel is asking.
 
 ---
 
@@ -47,13 +40,13 @@ business line is asking.
 
 1. **One aggregate mutated per command.** If a use case appears to need two, the boundary is
    probably wrong — raise it rather than widening the transaction.
-2. **Aggregates reference each other by id**, never by navigation property. A `BoardingStay`
-   holds a `CatId`, not a `CatAggregate`.
-3. **An aggregate must not load an unbounded collection.** Vaccinations on a cat are bounded and
-   belong inside it. Weight history, care logs and stock ledger entries are not — keep them out
+2. **Aggregates reference each other by id**, never by navigation property. An `OrderAggregate`
+   line holds a `SkuId`, not a `ProductAggregate`.
+3. **An aggregate must not load an unbounded collection.** The SKUs of a product are bounded and
+   belong inside it. Price history, order history and stock ledger entries are not — keep them out
    of the aggregate and query them from the Read layer.
 4. **Cross-aggregate domain logic goes to a Domain Service** in `Domain.DomainServices` — FEFO
-   allocation, appointment slot availability. Not to an application-layer service.
+   allocation, stock demand. Not to an application-layer service.
 
 ---
 
@@ -64,9 +57,6 @@ where it actually belongs:
 
 | Rule | SRS | Belongs to |
 |---|---|---|
-| A cat cannot board with overdue vaccinations | BR-1 | `CatAggregate` exposes vaccination status; the boarding command handler checks it |
-| A therapeutic diet needs a live authorisation | BR-2 | `DietAuthorisation` (Prescription context); the order handler checks it |
 | Expired batches are never sellable or usable | BR-3 | `BatchAggregate` — its own state |
 | Allocate the soonest-expiring batch (FEFO) | BR-4 | **Domain Service** — spans many batches |
-| Surgery cannot start without consent | BR-5 | `SurgeryAggregate` — its own state |
-| A recall must trace every cat that received a batch | FR-IMP-11 | A query across order lines, dispensing records and stay feeding logs — Read layer |
+| A recall must trace every customer who received a batch | FR-IMP-11 | A query across order lines and the stock ledger — Read layer |

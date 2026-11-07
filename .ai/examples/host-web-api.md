@@ -3,7 +3,7 @@
 A complete vertical slice through the single host, from HTTP to database and back. This is the
 shape every feature should match.
 
-Feature: **record a vaccination for a cat** (SRS FR-CAT-5, FR-CAT-7).
+Feature: **record a certificate for a product**.
 
 ---
 
@@ -22,13 +22,13 @@ builder.Services.AddDbContext<AmarGramDbContext>(o =>
     o.UseNpgsql(builder.Configuration.GetConnectionString("AmarGram")));
 builder.Services.AddScoped(typeof(IAggregateRootRepository<>), typeof(EfAggregateRootRepository<>));
 
-builder.Services.AddScoped<ICommandHandlerAsync<RecordVaccinationCommand>,
-                           RecordVaccinationCommandHandler>();
-builder.Services.AddScoped<IValidator<RecordVaccinationCommand>,
-                           RecordVaccinationCommandValidator>();
-builder.Services.AddScoped<IQueryHandlerAsync<GetVaccinationHistoryQuery,
-                                              IReadOnlyList<VaccinationHistoryItem>>,
-                           GetVaccinationHistoryQueryHandler>();
+builder.Services.AddScoped<ICommandHandlerAsync<RecordCertificateCommand>,
+                           RecordCertificateCommandHandler>();
+builder.Services.AddScoped<IValidator<RecordCertificateCommand>,
+                           RecordCertificateCommandValidator>();
+builder.Services.AddScoped<IQueryHandlerAsync<GetCertificateHistoryQuery,
+                                              IReadOnlyList<CertificateHistoryItem>>,
+                           GetCertificateHistoryQueryHandler>();
 ```
 
 ---
@@ -41,19 +41,19 @@ Thin: mint the id, stamp the context, dispatch, map.
 namespace AmarGram.Api.Controllers;
 
 [ApiController]
-[Route("api/cats/{catId:guid}/vaccinations")]
-public sealed class VaccinationController(IInMemoryDispatcher dispatcher) : ControllerBase
+[Route("api/staff/products/{productId:guid}/certificates")]
+public sealed class CertificateController(IInMemoryDispatcher dispatcher) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Record(
-        Guid catId, [FromBody] RecordVaccinationRequest request)
+        Guid productId, [FromBody] RecordCertificateRequest request)
     {
-        var command = new RecordVaccinationCommand
+        var command = new RecordCertificateCommand
         {
-            CatId               = catId,
-            VaccineId           = request.VaccineId,
+            ProductId               = productId,
+            CertificationId           = request.CertificationId,
             BatchId             = request.BatchId,
-            AdministeredOn      = request.AdministeredOn,
+            IssuedOn      = request.IssuedOn,
             AdministeredByVetId = request.AdministeredByVetId,
             Notes               = request.Notes,
             CorrelationId       = HttpContext.TraceIdentifier,
@@ -63,15 +63,15 @@ public sealed class VaccinationController(IInMemoryDispatcher dispatcher) : Cont
         var response = await dispatcher.SendAsync(command);
 
         return response.IsSuccess
-            ? CreatedAtAction(nameof(GetHistory), new { catId }, response.Result)
+            ? CreatedAtAction(nameof(GetHistory), new { productId }, response.Result)
             : BadRequest(response.ValidationResult);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetHistory(Guid catId)
+    public async Task<IActionResult> GetHistory(Guid productId)
     {
         var response = await dispatcher.GetResultAsync(
-            new GetVaccinationHistoryQuery { CatId = catId });
+            new GetCertificateHistoryQuery { ProductId = productId });
 
         return Ok(response.Result);
     }
@@ -98,27 +98,27 @@ What is **no longer** here, compared with the previous Api controller:
 ## 3. Command + validator
 
 ```csharp
-public sealed class RecordVaccinationCommand : Command
+public sealed class RecordCertificateCommand : Command
 {
-    public required Guid CatId { get; init; }
-    public required Guid VaccineId { get; init; }
+    public required Guid ProductId { get; init; }
+    public required Guid CertificationId { get; init; }
     public required Guid BatchId { get; init; }
-    public required DateOnly AdministeredOn { get; init; }
+    public required DateOnly IssuedOn { get; init; }
     public required Guid AdministeredByVetId { get; init; }
     public string? Notes { get; init; }
 }
 
-public sealed class RecordVaccinationCommandValidator
-    : AbstractValidator<RecordVaccinationCommand>
+public sealed class RecordCertificateCommandValidator
+    : AbstractValidator<RecordCertificateCommand>
 {
-    public RecordVaccinationCommandValidator()
+    public RecordCertificateCommandValidator()
     {
-        RuleFor(x => x.CatId).NotEmpty();
-        RuleFor(x => x.VaccineId).NotEmpty();
+        RuleFor(x => x.ProductId).NotEmpty();
+        RuleFor(x => x.CertificationId).NotEmpty();
         RuleFor(x => x.BatchId).NotEmpty();
-        RuleFor(x => x.AdministeredOn)
+        RuleFor(x => x.IssuedOn)
             .LessThanOrEqualTo(_ => DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("A vaccination cannot be recorded with a future date.");
+            .WithMessage("A certificate cannot be recorded with a future date.");
     }
 }
 ```
@@ -128,33 +128,33 @@ public sealed class RecordVaccinationCommandValidator
 ## 4. Handler — loads the aggregate itself
 
 ```csharp
-public sealed class RecordVaccinationCommandHandler(
-    ILogger<RecordVaccinationCommandHandler> logger,
-    IAggregateRootRepository<CatAggregate> catRepository)
-    : ICommandHandlerAsync<RecordVaccinationCommand>
+public sealed class RecordCertificateCommandHandler(
+    ILogger<RecordCertificateCommandHandler> logger,
+    IAggregateRootRepository<ProductAggregate> productRepository)
+    : ICommandHandlerAsync<RecordCertificateCommand>
 {
-    public async Task<CommandResponse> HandleAsync(RecordVaccinationCommand command)
+    public async Task<CommandResponse> HandleAsync(RecordCertificateCommand command)
     {
-        var cat = await catRepository.GetByIdAsync(command.CatId);
-        if (cat is null)
+        var product = await productRepository.GetByIdAsync(command.ProductId);
+        if (product is null)
         {
             var validation = new ValidationResponse();
             validation.AddError(
-                errorMessage: $"Cat '{command.CatId}' was not found.",
-                propertyName: nameof(command.CatId),
-                errorCode: BusinessViolationCodes.CatNotFound,
-                resourceName: nameof(CatAggregate));
+                errorMessage: $"Product '{command.ProductId}' was not found.",
+                propertyName: nameof(command.ProductId),
+                errorCode: BusinessViolationCodes.ProductNotFound,
+                resourceName: nameof(ProductAggregate));
 
             return new CommandResponse { IsSuccess = false, ValidationResult = validation };
         }
 
-        cat.RecordVaccination(command.ToDomainDto());   // invariants + domain event inside
+        product.RecordCertificate(command.ToDomainDto());   // invariants + domain event inside
 
         // EventPublishOption is a required argument. InMemoryPublishOnly publishes the
         // aggregate's domain events in-process. Never QueuePublishOnly — there is no queue.
-        await catRepository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly);
+        await productRepository.UpdateAsync(product, EventPublishOption.InMemoryPublishOnly);
 
-        return new CommandResponse { IsSuccess = true, Result = cat.Id };
+        return new CommandResponse { IsSuccess = true, Result = product.Id };
     }
 }
 ```
@@ -168,27 +168,27 @@ two, and the failure path became four lines.
 ## 5. Aggregate — where the rules actually live
 
 ```csharp
-public class CatAggregate : AggregateRoot
+public class ProductAggregate : AggregateRoot
 {
-    private readonly List<Vaccination> _vaccinations = new();
-    public IReadOnlyList<Vaccination> Vaccinations => _vaccinations;
+    private readonly List<Certificate> _certificates = new();
+    public IReadOnlyList<Certificate> Certificates => _certificates;
 
-    public void RecordVaccination(RecordVaccinationDto dto)
+    public void RecordCertificate(RecordCertificateDto dto)
     {
-        // an invariant of THIS cat's own state — so it lives here, not in the handler
-        if (_vaccinations.Any(v => v.VaccineId == dto.VaccineId
-                                && v.AdministeredOn == dto.AdministeredOn))
+        // an invariant of THIS product's own state — so it lives here, not in the handler
+        if (_certificates.Any(v => v.CertificationId == dto.CertificationId
+                                && v.IssuedOn == dto.IssuedOn))
             throw new InvalidOperationException(
-                "This vaccine has already been recorded for this cat on this date.");
+                "This certification has already been recorded for this product on this date.");
 
-        var vaccination = Vaccination.Create(dto);
-        _vaccinations.Add(vaccination);
+        var certificate = Certificate.Create(dto);
+        _certificates.Add(certificate);
 
-        AddDomainEvent(new VaccinationRecordedEvent
+        AddDomainEvent(new CertificateRecordedEvent
         {
-            CatId         = Id,
-            VaccineId     = dto.VaccineId,
-            NextDueOn     = vaccination.NextDueOn,
+            ProductId         = Id,
+            CertificationId     = dto.CertificationId,
+            ExpiresOn     = certificate.ExpiresOn,
             CorrelationId = dto.CorrelationId,
             UserContext   = dto.UserContext
         });
@@ -203,24 +203,24 @@ public class CatAggregate : AggregateRoot
 ## 6. Query side
 
 ```csharp
-public sealed class GetVaccinationHistoryQueryHandler(
-    ILogger<GetVaccinationHistoryQueryHandler> logger,
+public sealed class GetCertificateHistoryQueryHandler(
+    ILogger<GetCertificateHistoryQueryHandler> logger,
     AmarGramDbContext db)
-    : IQueryHandlerAsync<GetVaccinationHistoryQuery, IReadOnlyList<VaccinationHistoryItem>>
+    : IQueryHandlerAsync<GetCertificateHistoryQuery, IReadOnlyList<CertificateHistoryItem>>
 {
-    public async Task<QueryResponse<IReadOnlyList<VaccinationHistoryItem>>> HandleAsync(
-        GetVaccinationHistoryQuery query)
+    public async Task<QueryResponse<IReadOnlyList<CertificateHistoryItem>>> HandleAsync(
+        GetCertificateHistoryQuery query)
     {
-        var items = await db.Cats
+        var items = await db.Products
             .AsNoTracking()
-            .Where(c => c.Id == query.CatId)
-            .SelectMany(c => c.Vaccinations)
-            .OrderByDescending(v => v.AdministeredOn)
-            .Select(v => new VaccinationHistoryItem(
-                v.VaccineId, v.AdministeredOn, v.NextDueOn))
+            .Where(c => c.Id == query.ProductId)
+            .SelectMany(c => c.Certificates)
+            .OrderByDescending(v => v.IssuedOn)
+            .Select(v => new CertificateHistoryItem(
+                v.CertificationId, v.IssuedOn, v.ExpiresOn))
             .ToListAsync();
 
-        return new QueryResponse<IReadOnlyList<VaccinationHistoryItem>> { Result = items };
+        return new QueryResponse<IReadOnlyList<CertificateHistoryItem>> { Result = items };
     }
 }
 ```
@@ -233,14 +233,14 @@ immediacy is the practical gain from ADR-012.
 ## 7. What happens on dispatch, in order
 
 ```
-POST /api/cats/{id}/vaccinations
+POST /api/staff/products/{id}/certificates
   │
-  ├─ IValidationService runs IValidator<RecordVaccinationCommand>   → invalid? 400
-  ├─ IDispatcher resolves ICommandHandlerAsync<RecordVaccinationCommand> from DI
-  ├─ handler: repository.GetByIdAsync → cat.RecordVaccination(...)
-  │            → repository.UpdateAsync(cat, EventPublishOption.InMemoryPublishOnly)
+  ├─ IValidationService runs IValidator<RecordCertificateCommand>   → invalid? 400
+  ├─ IDispatcher resolves ICommandHandlerAsync<RecordCertificateCommand> from DI
+  ├─ handler: repository.GetByIdAsync → product.RecordCertificate(...)
+  │            → repository.UpdateAsync(product, EventPublishOption.InMemoryPublishOnly)
   ├─ repository: SaveChangesAsync, then publishes the domain events in-process
-  ├─ IEventHandlerAsync<VaccinationRecordedEvent> runs (recompute status, queue an SMS via outbox)
+  ├─ IEventHandlerAsync<CertificateRecordedEvent> runs (recompute status, queue an SMS via outbox)
   └─ 201 Created { id }
 
   … seconds later, the outbox dispatcher delivers the SMS, out of band

@@ -3,8 +3,8 @@ Fixed Issues
 1. [Shop (SHP) - all pages] No loader when I am navigating and the display is taking time
    - Fixed 2026-10-15: added a loading screen (`loading.tsx`, the shared `LoadingState` skeleton) to the shop, customer portal and staff areas. It shows inside the page frame as soon as a link is clicked, until the next page is ready.
 2. [Shop (SHP) - banner] in all pages the banner is apearing multiple time with text "Marker-Shop-Banner-584bcd27 Shop banner" the page is broken
-   - Cause: test data, not a page bug. Backend tests that were not given their own database fell back to `catecommerce_dev`, the database the running app reads, so every test run added more "Marker-…" banners, brands and products.
-   - Fixed 2026-10-15: every test fallback now points at `catecommerce_test`, never `catecommerce_dev`.
+   - Cause: test data, not a page bug. Backend tests that were not given their own database fell back to `amargram_dev`, the database the running app reads, so every test run added more "Marker-…" banners, brands and products.
+   - Fixed 2026-10-15: every test fallback now points at `amargram_test`, never `amargram_dev`.
    - Cleaned up 2026-10-15 (owner: "keep only one banner, remove rest"): 89 test banners in the dev database were unpublished; only "Marker-Shop-Banner-212a7f89" stays. They were unpublished, not deleted, because the table refuses permanent deletes.
 3. [Shop (SHP) - catalogue filter] After bran fields in left filter two many checkbox is there. I am not sure this is required.. if required then it should be
    - Fixed 2026-10-15: the Brand filter now shows the top 8 brands and a "Show all N brands" button. Ticked brands always stay visible, and the search box still finds any brand. Test: `web/tests/components/catalogue/brand-filter-collapse.test.tsx`.
@@ -12,7 +12,7 @@ Fixed Issues
 4. [Shop (SHP)]-No cart icon and count is showing.. when I am in shop pages the cart icon along with count should be shown somewhere may at top
    - Fixed 2026-10-15: the shop header now shows the cart (basket icon + "Cart", linking to /cart) on every shop page, with the item count beside it once the cart has something in it. It works for guests too. It reuses the portal's existing `CartBadge`.
 5.  [Shop (SHP)]When I click on checkout its taking me to the login page but there is nothing for signup. there should be a signup option with keptcha
-   - Fixed 2026-10-15: the sign-in page now has "New to PurrCare? Create an account", which opens the existing register page (it already has the CAPTCHA). The checkout return is kept: register's "Sign in" link carries `?next=/checkout`, so after signing in the customer goes straight back to checkout.
+   - Fixed 2026-10-15: the sign-in page now has a "Create an account" link, which opens the existing register page (it already has the CAPTCHA). The checkout return is kept: register's "Sign in" link carries `?next=/checkout`, so after signing in the customer goes straight back to checkout.
 6. [Shop (SHP)] Still no loader is showing when its taking time. I become confused am I clicked or not after clicking since the movement is hapeening after some times 2-3 seconds[All Areas]
    - Fixed 2026-10-15: a thin progress bar across the top of the screen now starts the moment any internal link is clicked (or a search is submitted) and goes when the new page appears, in every area (shop, portal, staff, sign-in). The #1 loading screens only showed in some cases (not between pages in the same section, not while the dev server compiles a page); the bar covers those. Checked in a real browser. Test: `web/tests/components/issues-4-5-6.test.tsx`.
 7. the chout page is showing a long popup. I think this is regarding privcy policy.. add only one sample policy and make page perfect. now one long poppup is showing and checkout details is blocking by that.
@@ -27,7 +27,7 @@ Fixed Issues
    - Fixed 2026-10-15 (data, owner approved): a 0% tax rate was added to the 4,595 dev tax classes that had none. Nothing was deleted. (17 unpublished draft products point at a tax class that no longer exists; they never appear in the shop.)
    - Fixed 2026-10-15 (screen): when every item is left out, the review step now says "None of the items in your cart can be ordered right now, so there is nothing to price", with a link back to the cart, instead of a column of 0.00s. Test added to `web/tests/components/checkout/checkout.test.tsx` (20/20 pass).
    - Checked in a real browser: the review step lists the item with its price and tax, then Items subtotal, discounts, Delivery, Tax and Total (for example ৳150.00).
-   - Note for testing: all stock in dev is at "Main clinic". The collection step picks the first branch by default, which is a test branch ("Audit Test Branch") with no stock, so items show as sold out there. Choose Main clinic. A delivery charge appears once a delivery zone covers the address (for example the Dhaka zone).
+   - Note for testing: all stock in dev is at the main branch. The collection step picks the first branch by default, which is a test branch ("Audit Test Branch") with no stock, so items show as sold out there. Choose the main branch. A delivery charge appears once a delivery zone covers the address (for example the Dhaka zone).
 
 New Issues
 -------------
