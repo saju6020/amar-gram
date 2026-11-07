@@ -16,6 +16,8 @@ export interface BuyBoxProps {
   stockAlert?: React.ReactNode;
   /** The action slot: the quantity stepper, *Add to basket* and wishlist row (or HO-ORD-002's own). */
   actions?: React.ReactNode;
+  /** HO-P6: the optional Subscribe offer, drawn under the actions row. Absent leaves the buy box as it was. */
+  subscribe?: React.ReactNode;
   /** The quantity chosen in the buy row. It only changes the note beside the price, never the price. */
   quantity?: number;
   /** HO-P5 G5: the public delivery promise's lead time for the delivery card. */
@@ -37,6 +39,7 @@ export function BuyBox({
   wishlist,
   stockAlert,
   actions,
+  subscribe,
   quantity = 1,
   leadTimeDays,
 }: BuyBoxProps) {
@@ -69,6 +72,7 @@ export function BuyBox({
         </p>
       )}
       <div data-slot="buy-box-actions">{actions}</div>
+      {subscribe && <div data-slot="buy-box-subscribe">{subscribe}</div>}
       {wishlist && <div className="flex flex-col gap-2">{wishlist}</div>}
       {stockAlert && (
         <div id="stock-alert" className="scroll-mt-24 rounded-card bg-surface-sunken p-4">
