@@ -135,6 +135,8 @@ export interface MockProduct {
   taxClassId: string;
   isExpiryTracked: boolean;
   firstPublishedOn: string | null;
+  /** HO-P6 S0: Read/ViewModels/StaffProductDetailViewModel.cs:63. Absent = false (a stale persisted copy). */
+  isSubscribable?: boolean;
 }
 
 export const COUNTRY_NAMES: Record<string, string> = {
@@ -233,6 +235,7 @@ function product(
     taxClassId: shopFixtureIds.taxClassId,
     isExpiryTracked: false,
     firstPublishedOn: '2026-06-01T00:00:00Z',
+    isSubscribable: false,
     ...p,
   };
 }
@@ -394,6 +397,15 @@ function seedGenerated(): MockProduct[] {
   }
   return out;
 }
+
+/**
+ * HO-P6 S0: the food products a customer can subscribe to (oats with three sizes, rice, gur, garam masala with
+ * two sizes, mustard oil, honey, red lentils, mango pickle, dates). Every other product, kits and household
+ * items included, is not offered. This is the one list: `subscriptions/fixtures.ts` derives `SUBSCRIBABLE_SKU_IDS` from it.
+ */
+export const SUBSCRIBABLE_PRODUCT_NUMBERS: ReadonlySet<string> = new Set(
+  [1, 2, 3, 4, 5, 6, 8, 9, 10].map((n) => uuid('a', n)),
+);
 
 export function seedProducts(): MockProduct[] {
   const hand: MockProduct[] = [
@@ -638,7 +650,10 @@ export function seedProducts(): MockProduct[] {
     juteBag.skus[0]!.skuId = uuid('b', 9999);
     juteBag.skus[0]!.inStock = false;
   }
-  return [...hand, ...generated];
+  return [...hand, ...generated].map((p) => ({
+    ...p,
+    isSubscribable: SUBSCRIBABLE_PRODUCT_NUMBERS.has(p.productId),
+  }));
 }
 
 export interface MockOrigin {

@@ -11,7 +11,8 @@ test('E-E1: add three addresses, change default, remove one — one default thro
 }) => {
   await page.goto('/portal/account/addresses');
 
-  for (const label of ['Home', 'Office', 'Parents']) {
+  // Sam's seeded book already holds "Home" (default) and "Office" (HO-P6 Amended (e)): this spec's own addresses are labelled apart.
+  for (const label of ['E2E Home', 'E2E Office', 'E2E Parents']) {
     await page.getByRole('button', { name: 'Add address' }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Label').fill(label);
@@ -31,7 +32,7 @@ test('E-E1: add three addresses, change default, remove one — one default thro
   // root — every broader ancestor also matches both text filters, since text content bubbles up.
   const officeCard = page
     .locator('div')
-    .filter({ hasText: 'Office' })
+    .filter({ hasText: 'E2E Office' })
     .filter({ hasText: 'Make default' })
     .last();
   await officeCard.getByRole('button', { name: 'Make default' }).click();
@@ -39,12 +40,15 @@ test('E-E1: add three addresses, change default, remove one — one default thro
 
   const homeCard = page
     .locator('div')
-    .filter({ hasText: 'Home' })
+    .filter({ hasText: 'E2E Home' })
     .filter({ hasText: 'Remove' })
     .last();
   await homeCard.getByRole('button', { name: 'Remove' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Remove', exact: true }).click();
-  await expect(page.getByText('Home')).toHaveCount(0);
+  await expect(page.getByText('E2E Home')).toHaveCount(0);
+  // The seeded addresses are untouched.
+  await expect(page.getByText('Home', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('Office', { exact: true })).toHaveCount(1);
   await expect(page.getByText('Default', { exact: true })).toHaveCount(1);
 });
 

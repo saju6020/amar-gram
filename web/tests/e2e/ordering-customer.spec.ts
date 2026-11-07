@@ -92,8 +92,10 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await startCheckoutDelivery(page);
 
-    // Section 1: delivery to the saved address.
-    await expect(page.getByLabel('Home')).toBeChecked();
+    // Section 1: delivery to a saved address. Sam's seeded default (Home) is preselected; this spec's own is picked as a customer would.
+    await expect(page.getByLabel(/^Home/)).toBeChecked();
+    await page.getByLabel(/^E2E Home/).click();
+    await expect(page.getByLabel(/^E2E Home/)).toBeChecked();
     // Section 2: service level and a time window, in branch time.
     await expect(page.getByRole('radio', { name: /Standard delivery/ })).toBeChecked();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
@@ -151,6 +153,8 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await addAddress(page, { label: 'Gazipur home', district: 'Gazipur', postalCode: '1700' });
     await page.goto('/checkout');
+    // The seeded in-zone default is preselected; choose the Gazipur address just added.
+    await page.getByLabel(/^Gazipur home/).click();
     await expect(
       page.getByText(/We don.t deliver to Gazipur yet. You can collect your order instead./),
     ).toBeVisible();
