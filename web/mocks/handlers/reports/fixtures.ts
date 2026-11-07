@@ -190,7 +190,7 @@ const ALL_ENTRIES: ReportCatalogueEntry[] = [
   }),
   entry({
     key: 'revenue-by-business-line',
-    title: 'Revenue by business line',
+    title: 'Revenue by sales channel',
     description: 'Net revenue for the shop, with margin where costs are known.',
     category: 'Financial',
     timeBucketed: true,
