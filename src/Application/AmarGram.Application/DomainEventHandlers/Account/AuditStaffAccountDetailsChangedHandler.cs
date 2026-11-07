@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AmarGram.Domain.Aggregates.Audit;
 using AmarGram.Domain.DomainServices;
 using AmarGram.Domain.Events.Account;
@@ -11,7 +12,8 @@ using Platform.Infrastructure.Core.Events;
 namespace AmarGram.Application.DomainEventHandlers.Account;
 
 /// <summary>Owner, 2026-10-20: audits an administrator's edit of a staff member's name and sign-in identifiers, with
-/// that administrator as the actor and the values before and after.</summary>
+/// that administrator as the actor and the names of the fields changed. The values before and after are in the DataChange row
+/// the audit interceptor writes in the same transaction (an event carries no personal data, HO-ACC-001 section 11.5).</summary>
 public sealed class AuditStaffAccountDetailsChangedHandler(
     ILogger<AuditStaffAccountDetailsChangedHandler> logger,
     IAggregateRootRepository<AuditEntryAggregate> auditRepository,
@@ -27,14 +29,19 @@ public sealed class AuditStaffAccountDetailsChangedHandler(
         entry.Record(new AuditEntryDto(
             EntityType: "StaffAccount", EntityId: @event.StaffAccountId, Action: "StaffAccountDetailsChanged",
             Reason: "ChangedByAdministrator", ActorUserId: @event.UserContext.UserId, OccurredOn: timeProvider.GetUtcNow(),
-            BeforeValue: Describe(@event.PreviousFullName, @event.PreviousMobileNumber, @event.PreviousEmailAddress),
-            AfterValue: Describe(@event.NewFullName, @event.NewMobileNumber, @event.NewEmailAddress),
+            BeforeValue: null, AfterValue: JsonSerializer.Serialize(new { changedFields = ChangedFields(@event) }),
             UserContext: @event.UserContext, CorrelationId: @event.CorrelationId,
-            Category: AuditCategory.DataChange, IpAddress: clientIpAccessor.GetClientIpAddress()));
+            Category: AuditCategory.BusinessEvent, IpAddress: clientIpAccessor.GetClientIpAddress()));
 
         await auditRepository.SaveAsync(entry, EventPublishOption.DoNotPublish);
     }
 
-    private static string Describe(string fullName, string? mobile, string? email) =>
-        $"FullName={fullName}; MobileNumber={mobile ?? "-"}; EmailAddress={email ?? "-"}";
+    private static string[] ChangedFields(StaffAccountDetailsChangedEvent @event)
+    {
+        var fields = new List<string>();
+        if (@event.FullNameChanged) fields.Add("FullName");
+        if (@event.MobileNumberChanged) fields.Add("MobileNumber");
+        if (@event.EmailAddressChanged) fields.Add("EmailAddress");
+        return [.. fields];
+    }
 }

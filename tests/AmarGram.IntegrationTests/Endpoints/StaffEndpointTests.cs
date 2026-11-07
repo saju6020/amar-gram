@@ -181,6 +181,18 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
             db.Set<AmarGram.Domain.Aggregates.Audit.AuditEntryAggregate>(),
             e => e.EntityId == memberId && e.Action == "StaffAccountDetailsChanged");
         Assert.Equal(administratorId, audit.ActorUserId);
+        Assert.Contains("FullName", audit.AfterValue);
+        Assert.Contains("EmailAddress", audit.AfterValue);
+        Assert.DoesNotContain("MobileNumber", audit.AfterValue);
+        Assert.DoesNotContain(email, audit.AfterValue);
+
+        // The values before and after live in the DataChange row the audit interceptor writes in the same transaction.
+        var dataChange = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.SingleAsync(
+            db.Set<AmarGram.Domain.Aggregates.Audit.AuditEntryAggregate>(),
+            e => e.EntityId == memberId && e.Action == "StaffAccountDetailsChangedEvent");
+        Assert.Contains("Renamed Receptionist", dataChange.AfterValue);
+        Assert.Contains(email, dataChange.AfterValue);
+        Assert.DoesNotContain("Renamed Receptionist", dataChange.BeforeValue);
     }
 
     [Fact]
