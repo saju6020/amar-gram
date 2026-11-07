@@ -74,11 +74,12 @@ export function AdminNav({ roleIds, rosterHref }: { roleIds: string[]; rosterHre
             More administration
           </summary>
           <nav aria-label="More administration pages" className="mt-1">
-            <ul className="flex flex-wrap gap-2">
+            {/* One scrolling row below sm: an open list of 15 wrapped chips is ~700 px tall at 360 px and pushes the page's own content (the Backup page's two warnings, HO-XCT-002 E-D1) below the fold. */}
+            <ul className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
               {moreItems.map((item) => {
                 const isActive = isWithin(pathname, item.href);
                 return (
-                  <li key={item.href}>
+                  <li key={item.href} className="flex-none">
                     <Link
                       href={item.href}
                       aria-current={isActive ? 'page' : undefined}
