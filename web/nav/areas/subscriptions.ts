@@ -1,3 +1,4 @@
+import { SUBSCRIPTION_VIEW_ROLES } from '@/lib/api/staff-subscriptions';
 import type { NavArea } from '../types';
 
 /**
@@ -11,5 +12,14 @@ export const subscriptionsNav: NavArea = {
   key: 'subscriptions',
   label: 'Subscriptions',
   audience: 'both',
-  items: [],
+  items: [
+    // HO-P6 S2 (§11.3.2): the staff list. Presentation-only role limit (Subscriptions.View); the server's 403 has the last word.
+    {
+      label: 'Subscriptions',
+      href: '/staff/subscriptions',
+      icon: 'repeat',
+      audience: 'staff',
+      roles: SUBSCRIPTION_VIEW_ROLES,
+    },
+  ],
 };

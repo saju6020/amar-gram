@@ -40,6 +40,7 @@ export const STAFF_NAV_GROUPS: readonly StaffNavGroup[] = [
       { href: '/staff/orders', label: 'Orders' },
       { href: '/staff/pos', label: 'Counter sale', icon: 'shopping-basket' },
       { href: '/staff/customers', label: 'Customers', icon: 'user-search' },
+      { href: '/staff/subscriptions', label: 'Subscriptions', match: '/staff/subscriptions' },
       { href: '/staff/returns', label: 'Returns' },
       { href: '/staff/notifications', label: 'Messages', icon: 'inbox' },
       { href: '/staff/customers/new', label: 'Register walk-in' },
