@@ -7,20 +7,20 @@ at the time, since CODE_REVIEW was writing in parallel on this same worktree). *
 `fdec8b0`, `ed92088` and the doc-only `913d204`; see the "Second pass note" below the summary.
 
 First-pass test-only additions (all committed by the integrator since):
-- `tests/CatEcommerce.IntegrationTests/Endpoints/LegacyCsrfTokenHashTests.cs` (new file, 3 cases)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/HostCompositionTests.cs` (2 new cases)
-- `tests/CatEcommerce.IntegrationTests/Persistence/MigrationsOnAnEmptyDatabaseTests.cs` (new file, 1 case)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/StaffSessionEndpointTests.cs` (1 new case)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/DuplicateCustomerGroupsEndpointTests.cs` (4 new cases)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/ProfileEndpointTests.cs` (4 new cases + 1 existing
+- `tests/AmarGram.IntegrationTests/Endpoints/LegacyCsrfTokenHashTests.cs` (new file, 3 cases)
+- `tests/AmarGram.IntegrationTests/Endpoints/HostCompositionTests.cs` (2 new cases)
+- `tests/AmarGram.IntegrationTests/Persistence/MigrationsOnAnEmptyDatabaseTests.cs` (new file, 1 case)
+- `tests/AmarGram.IntegrationTests/Endpoints/StaffSessionEndpointTests.cs` (1 new case)
+- `tests/AmarGram.IntegrationTests/Endpoints/DuplicateCustomerGroupsEndpointTests.cs` (4 new cases)
+- `tests/AmarGram.IntegrationTests/Endpoints/ProfileEndpointTests.cs` (4 new cases + 1 existing
   case's assertion strengthened — see FLAKY TEST DIAGNOSIS in the first-pass gate file)
 
 Second-pass test additions (by the developer, fixing ACCEPTANCE's 1st-pass FAIL):
-- `tests/CatEcommerce.IntegrationTests/Endpoints/AuditImmutabilityTests.cs` grew from 3 to 13 cases
+- `tests/AmarGram.IntegrationTests/Endpoints/AuditImmutabilityTests.cs` grew from 3 to 13 cases
   (`5be2458`, `913d204`) — see U-A8, I-A10–I-A16.
-- `tests/CatEcommerce.IntegrationTests/AccountsApiFactory.cs` gained `WithFixedRemoteIpAddress`.
-- `tests/CatEcommerce.Domain.Tests/Aggregates/CustomerAccountAggregateTests.cs` and
-  `tests/CatEcommerce.Application.Tests/CommandHandlers/Account/MergeCustomerCommandHandlerTests.cs`
+- `tests/AmarGram.IntegrationTests/AccountsApiFactory.cs` gained `WithFixedRemoteIpAddress`.
+- `tests/AmarGram.Domain.Tests/Aggregates/CustomerAccountAggregateTests.cs` and
+  `tests/AmarGram.Application.Tests/CommandHandlers/Account/MergeCustomerCommandHandlerTests.cs`
   each gained one `MergedOn`/`TimeProvider` test (`1975810`) — see U-A10, U-A11.
 No test was added for `ed92088` (AuthController's `TimeProvider` fix) or `fdec8b0` (the 16-handler
 `OccurredOn` switch) — see R15, R16.
@@ -61,7 +61,7 @@ not counted separately here — see its own PASS/caveat/BLOCKED marks, which mir
 
 ## Environment
 
-- **Platform**: .NET 9.0.300. `dotnet build CatEcommerce.sln` — 0 warnings, 0 errors, confirmed before
+- **Platform**: .NET 9.0.300. `dotnet build AmarGram.sln` — 0 warnings, 0 errors, confirmed before
   writing this sheet (the "stop on red build" rule) and again after every set of test additions below.
 - **Database**: PostgreSQL at `localhost:5432`, database `catecommerce_dev` (port confirmed open, real
   connection used throughout — no mocking of Postgres anywhere in this suite). Shared with development,
@@ -69,8 +69,8 @@ not counted separately here — see its own PASS/caveat/BLOCKED marks, which mir
   (`AddAccountsAuditBackfillTests`, `MigrationsOnAnEmptyDatabaseTests`) additionally create and drop
   their own disposable scratch databases on the same server, per §16.1's ban on touching
   `catecommerce_dev` itself for migration-state tests.
-- **Test projects**: `CatEcommerce.Domain.Tests` (160 tests), `CatEcommerce.Infrastructure.Tests` (28),
-  `CatEcommerce.Application.Tests` (64), `CatEcommerce.IntegrationTests` (124, real HTTP via
+- **Test projects**: `AmarGram.Domain.Tests` (160 tests), `AmarGram.Infrastructure.Tests` (28),
+  `AmarGram.Application.Tests` (64), `AmarGram.IntegrationTests` (124, real HTTP via
   `WebApplicationFactory<Program>`, environment `Testing`, against the shared database and, for two
   files, disposable scratch databases).
 - **VPN**: up, per task briefing (not otherwise exercised — no external service is called anywhere in
@@ -84,19 +84,19 @@ not counted separately here — see its own PASS/caveat/BLOCKED marks, which mir
   I-A2 (×2 cases), I-A3, I-I2–I-I5, I-J1–I-J4; 4 for two deferred items with no committed test: D3,
   D13 (×3 cases)), and fixed one genuinely flaky
   existing case (`TwoConcurrentAddsAtNineAddresses_OneSucceedsOneConflictsNeverEleven` — see the gate
-  file). Final count: **376/376**, confirmed with two full, independent `dotnet test CatEcommerce.sln`
+  file). Final count: **376/376**, confirmed with two full, independent `dotnet test AmarGram.sln`
   runs after every change in this sheet was in place.
-- **Second pass** (`913d204`): `dotnet build CatEcommerce.sln` — 0 warnings, 0 errors. `dotnet test
-  CatEcommerce.sln` once, per this round's (deliberately shorter) brief: **388/388**
+- **Second pass** (`913d204`): `dotnet build AmarGram.sln` — 0 warnings, 0 errors. `dotnet test
+  AmarGram.sln` once, per this round's (deliberately shorter) brief: **388/388**
   (`Domain.Tests` 161, `Infrastructure.Tests` 28, `Application.Tests` 65, `IntegrationTests` 134),
   matching the developer's own reported figure exactly.
 
 ## Unit cases
 
-`tests/CatEcommerce.Domain.Tests` and `tests/CatEcommerce.Application.Tests`, per §15's routing rule
+`tests/AmarGram.Domain.Tests` and `tests/AmarGram.Application.Tests`, per §15's routing rule
 (U-A8 is the one row §15 itself routes to `IntegrationTests` instead — see its own row below).
-Evidence for every row in this table: `dotnet test tests/CatEcommerce.Domain.Tests` — **160/160
-passed**, and `dotnet test tests/CatEcommerce.Application.Tests` — **64/64 passed**, both confirmed
+Evidence for every row in this table: `dotnet test tests/AmarGram.Domain.Tests` — **160/160
+passed**, and `dotnet test tests/AmarGram.Application.Tests` — **64/64 passed**, both confirmed
 across two independent full-suite runs (2026-09-25), and both included in the two full-solution runs
 recorded in the Environment section above.
 
@@ -109,11 +109,11 @@ recorded in the Environment section above.
 | U-A5 | Reflect over `CustomerAccountAggregate` after `Anonymise` | Every public string is null, the placeholder, or on the short allow-list | PASS | `CustomerAccountAggregateTests.cs`, same run |
 | U-A6 | `AuditEntryAggregate.Record` twice | `AuditEntryAlreadyRecorded` | PASS | `AuditEntryAggregateTests.cs`, same run |
 | U-A7 | Reflect over `AuditEntryAggregate` | `Record` is the only public mutator | PASS | `AuditEntryAggregateTests.cs`, same run |
-| U-A8 | Change-capture on a modified `CatAggregate` (§15 routes this to `IntegrationTests`) | One `DataChange` row, correct before/after, `xmin` excluded | PASS | **Second pass, no longer weak.** `AuditImmutabilityTests` now asserts before/after value content directly across every shape ACCEPTANCE's A28 finding named — insert, scalar update, replaced value object (×2: email, login throttle), owned-collection add/remove, and `xmin` exclusion — see I-A10–I-A16. **Independently reproved non-decorative this pass**: restored the pre-fix `AuditChangeCaptureInterceptor` (commit `e07a2d8`) in this worktree, rebuilt (0 warnings/errors), re-ran the 13-test file — **6 of 13 failed**: `AddingASecondAddress_TheNewAddressAppearsOnlyInAfter`, `RemovingAnAddress_TheRemovedAddressAppearsInBeforeAndNotInAfter`, `ChangingEmail_OldToNew_BeforeHasTheOldValueAfterHasTheNew`, `FailedSignIn_RecordsFailedCountGoingFromZeroToOne`, `SettingEmail_FromNull_TheNewAddressAppearsOnlyInAfter`, `Registration_ProducesADataChangeAuditRowInTheSameTransactionWithIp` — each on the exact content assertion its name describes (e.g. `Assert.Null(row.Before)` failed because the pre-fix code built a non-null before-snapshot for an insert). Restored the fix, rebuilt, re-ran — **13/13 passed**. `xmin` exclusion additionally confirmed against real rows: a read-only query (`default_transaction_read_only = on`) found zero rows with `"xmin"`/`"Xmin"` as an actual JSON key across all 25,816 rows in the shared `audit.audit_entry` table |
+| U-A8 | Change-capture on a modified aggregate root (§15 routes this to `IntegrationTests`) | One `DataChange` row, correct before/after, `xmin` excluded | PASS | **Second pass, no longer weak.** `AuditImmutabilityTests` now asserts before/after value content directly across every shape ACCEPTANCE's A28 finding named — insert, scalar update, replaced value object (×2: email, login throttle), owned-collection add/remove, and `xmin` exclusion — see I-A10–I-A16. **Independently reproved non-decorative this pass**: restored the pre-fix `AuditChangeCaptureInterceptor` (commit `e07a2d8`) in this worktree, rebuilt (0 warnings/errors), re-ran the 13-test file — **6 of 13 failed**: `AddingASecondAddress_TheNewAddressAppearsOnlyInAfter`, `RemovingAnAddress_TheRemovedAddressAppearsInBeforeAndNotInAfter`, `ChangingEmail_OldToNew_BeforeHasTheOldValueAfterHasTheNew`, `FailedSignIn_RecordsFailedCountGoingFromZeroToOne`, `SettingEmail_FromNull_TheNewAddressAppearsOnlyInAfter`, `Registration_ProducesADataChangeAuditRowInTheSameTransactionWithIp` — each on the exact content assertion its name describes (e.g. `Assert.Null(row.Before)` failed because the pre-fix code built a non-null before-snapshot for an insert). Restored the fix, rebuilt, re-ran — **13/13 passed**. `xmin` exclusion additionally confirmed against real rows: a read-only query (`default_transaction_read_only = on`) found zero rows with `"xmin"`/`"Xmin"` as an actual JSON key across all 25,816 rows in the shared `audit.audit_entry` table |
 | U-A9 | Change-capture on a `CustomerAccountAggregate` with a credential | `password_hash`, `security_stamp` written as `"[redacted]"` | PASS | `EventPersonalDataReflectionTests.cs` / audit redaction cases, part of the 160/160. Also independently re-confirmed at integration level this pass — see I-A16 |
 | U-A10 | `MergeInto` sets `MergedOn` to the exact caller-supplied timestamp, not a wall-clock read | Aggregate's `MergedOn` equals the DTO's `MergedOn` exactly | PASS | **New test, second pass.** `CustomerAccountAggregateTests.MergeInto_SetsMergedOnToTheSuppliedTimestamp` (added at `1975810`, a CODE_REVIEW MEDIUM fix) — watched pass individually and as part of the 161/161 |
 | U-A11 | `MergeCustomerCommandHandler` threads `TimeProvider.GetUtcNow()` into `CustomerMergeDto.MergedOn`, not `DateTimeOffset.UtcNow` read inside the aggregate | Handler-level: survivor's `MergedOn` equals the injected `FakeTimeProvider`'s time | PASS | **New test, second pass.** `MergeCustomerCommandHandlerTests.HandleAsync_Success_SetsMergedOnToTheTimeProvidersTime` (added at `1975810`) — watched pass individually and as part of the 65/65 |
-| U-X1 | Reflect over every `Event` type in `CatEcommerce.Domain` | No property named like `/name\|mobile\|phone\|email\|address\|line\|password\|hash\|token\|stamp/i` except the allow-listed booleans and ids | PASS | `EventPersonalDataReflectionTests.cs`, same run |
+| U-X1 | Reflect over every `Event` type in `AmarGram.Domain` | No property named like `/name\|mobile\|phone\|email\|address\|line\|password\|hash\|token\|stamp/i` except the allow-listed booleans and ids | PASS | `EventPersonalDataReflectionTests.cs`, same run |
 | U-B1 | `Register` valid | Properties set; `SelfService`, `Active`, stamp non-empty; one event; version bumped | PASS | `CustomerAccountAggregateTests.cs`, same run |
 | U-B2 | `Register` with neither identifier | `IdentifierRequired` | PASS | `CustomerAccountAggregateTests.cs`, same run |
 | U-B3 | Reflect: `CustomerAccountAggregate`, its DTOs and ViewModels | No `Verif*`, `Otp*`, `TwoFactor*`, `Captcha*` member | PASS | `CustomerAccountAggregateTests.cs`, same run |
@@ -122,7 +122,7 @@ recorded in the Environment section above.
 | U-B6 | Handler: mobile exists | `MobileNumberAlreadyRegistered`, message mentions log in and reset, contains no "email"; hasher never called | PASS | `RegisterCustomerCommandHandlerTests.cs`, same run |
 | U-B7 | Handler: email exists, mobile not supplied | `EmailAddressAlreadyRegistered`, message contains no "mobile"/"phone" | PASS | `RegisterCustomerCommandHandlerTests.cs`, same run |
 | U-B8 | Handler: breached | `BreachedPassword`; no hash, no save | PASS | `RegisterCustomerCommandHandlerTests.cs`, same run |
-| U-B9 | Captcha service: 1 000 issues | Unique ids; answers from the alphabet, correct length | PASS | `MemoryCacheCaptchaServiceTests.cs` (`CatEcommerce.IntegrationTests/Unit/`), part of the 124 — routed there per §15 ("exercises Infrastructure") |
+| U-B9 | Captcha service: 1 000 issues | Unique ids; answers from the alphabet, correct length | PASS | `MemoryCacheCaptchaServiceTests.cs` (`AmarGram.IntegrationTests/Unit/`), part of the 124 — routed there per §15 ("exercises Infrastructure") |
 | U-B10 | Captcha verify: right answer different case/spaces; replay after right; replay after wrong; after TTL; null/blank | true; false; false; false; false — no exception | PASS | `MemoryCacheCaptchaServiceTests.cs`, same |
 | U-B11 | Captcha overflow beyond `MaxOutstandingChallenges` | No exception, bounded; overflow fails verify | PASS | `MemoryCacheCaptchaServiceTests.cs`, same |
 | U-B12 | Renderer | PNG signature, 200×70, answer not in the bytes | PASS | `SkiaCaptchaImageRendererTests.cs`, same |
@@ -178,10 +178,10 @@ recorded in the Environment section above.
 
 ## Integration cases
 
-`tests/CatEcommerce.IntegrationTests` — real HTTP through `WebApplicationFactory<Program>`, environment
+`tests/AmarGram.IntegrationTests` — real HTTP through `WebApplicationFactory<Program>`, environment
 `Testing`, against the shared `catecommerce_dev` (two files use disposable scratch databases instead —
 noted per row). Evidence for every PASS row below: two independent full runs of
-`dotnet test tests/CatEcommerce.IntegrationTests` — **124/124 passed** both times (2026-09-25),
+`dotnet test tests/AmarGram.IntegrationTests` — **124/124 passed** both times (2026-09-25),
 individually re-confirmed with a `--filter` run against each named test class while writing this sheet.
 
 | ID | Case | Expected | Status | Evidence |
@@ -238,7 +238,7 @@ individually re-confirmed with a `--filter` run against each named test class wh
 | I-E7 | `PUT` a transactional cell off | `400`, nothing applied | PASS | `ProfileEndpointTests.PutTransactionalCellOff_Returns400AndAppliesNothing` |
 | I-E8 | Any `/me` endpoint as guest or staff | `401` | PASS | `ProfileEndpointTests.MeEndpoint_AsGuestOrStaff_Returns401` |
 | I-F1 | Administrator creates a staff account with roles | `201`; roles stored in catalogue order; `hasPassword: false` | PASS | `StaffEndpointTests.Administrator_CreatesStaffAccount_RolesStoredInCatalogueOrderAndHasPasswordFalse` |
-| I-F2 | A `Nurse` calls `POST /api/staff-accounts` directly | `403 ActionNotPermitted`; one `AuthorizationDenied` audit row — US-ACC-07 AC2 | PASS | `StaffEndpointTests.NonAdministrator_CallingCreateStaffAccount_Returns403AndAudits` |
+| I-F2 | A `Reception` staff member calls `POST /api/staff-accounts` directly | `403 ActionNotPermitted`; one `AuthorizationDenied` audit row — US-ACC-07 AC2 | PASS | `StaffEndpointTests.NonAdministrator_CallingCreateStaffAccount_Returns403AndAudits` |
 | I-F3 | A customer session calls it | `401` | PASS | `StaffEndpointTests.CustomerSession_CallingStaffEndpoint_Returns401` |
 | I-F4 | Replace roles | `204`; member's existing staff session → `401` on next request | PASS | `StaffEndpointTests.ChangeRoles_RotatesStamp_AffectedMembersExistingSessionIs401OnNextRequest` |
 | I-F5 | `GET /api/staff-roles` | 8 roles, 20 capabilities | PASS | `StaffEndpointTests.StaffRoles_ReturnsEightRolesAndTwentyCapabilities` |

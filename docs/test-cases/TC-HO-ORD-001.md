@@ -7,10 +7,10 @@ Written: 2026-10-09  ·  Executed: 2026-10-09 (implementer's own run) and 2026-1
 Gate-fix round: 2026-10-09 (ARCHITECTURE FAIL: 1 BLOCKER, 4 HIGH) -- rows below marked **gate fix** are new or changed; C24 (I-G5, I-G6) is removed.
 
 > Statuses record what was observed. Integration rows ran against the per-branch database `catecommerce_ord`
-> (never `catecommerce_dev`); the test factory refuses an unset or dev `CATECOMMERCE_TEST_DB`.
+> (never `catecommerce_dev`); the test factory refuses an unset or dev `AMARGRAM_TEST_DB`.
 > `SKIPPED` rows are skipped in code with the reason in the `Skip` text.
 
-## Unit (CatEcommerce.Domain.Tests / Ordering)
+## Unit (AmarGram.Domain.Tests / Ordering)
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
@@ -21,7 +21,7 @@ Gate-fix round: 2026-10-09 (ARCHITECTURE FAIL: 1 BLOCKER, 4 HIGH) -- rows below 
 | U-H2 | `CompleteCounterSale` | three history rows | PASS | `OrderAggregateTests.U_H2_*` |
 | U-H3 | `ReceiptTextRenderer` | every line at most 48 columns; totals right-aligned; amounts whole | PASS | `PosTests` |
 
-## Integration (CatEcommerce.IntegrationTests / Endpoints)
+## Integration (AmarGram.IntegrationTests / Endpoints)
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
@@ -71,7 +71,7 @@ Gate-fix round: 2026-10-09 (ARCHITECTURE FAIL: 1 BLOCKER, 4 HIGH) -- rows below 
 Notes. GF-7b has no HTTP row: it would need a test database with no active 0 % tax class, which the shared database can never be (every test branch creates one and other areas' tax classes persist). The throw happens before anything is written, in the one place both the placement and the transfer paths build charges.
 ## TEST gate (2026-10-10) -- cases handed over by the ARCHITECTURE re-check, and the full re-run
 
-Environment. .NET 9 build green (0 errors). Database `catecommerce_ord` (Npgsql connection string in `CATECOMMERCE_TEST_DB`; never `catecommerce_dev`). In-process `WebApplicationFactory` host, real PostgreSQL 17 on localhost:5432. No broker, courier or SMS provider is involved in this slice. Unit suites: Domain 1773, Application 372, Infrastructure 172, all passed. Integration suite, full run: 1325 total / 1315 passed / 3 failed / 7 skipped (details below). New file: `tests/CatEcommerce.IntegrationTests/Endpoints/OrderingTestGateEndpointTests.cs` (12 tests).
+Environment. .NET 9 build green (0 errors). Database `catecommerce_ord` (Npgsql connection string in `AMARGRAM_TEST_DB`; never `catecommerce_dev`). In-process `WebApplicationFactory` host, real PostgreSQL 17 on localhost:5432. No broker, courier or SMS provider is involved in this slice. Unit suites: Domain 1773, Application 372, Infrastructure 172, all passed. Integration suite, full run: 1325 total / 1315 passed / 3 failed / 7 skipped (details below). New file: `tests/AmarGram.IntegrationTests/Endpoints/OrderingTestGateEndpointTests.cs` (12 tests).
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|

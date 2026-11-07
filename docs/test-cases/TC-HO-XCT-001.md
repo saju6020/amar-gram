@@ -11,10 +11,10 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
 
 ## Environment
 
-- Per-branch database `catecommerce_xct` (`CATECOMMERCE_TEST_DB` = its full connection string). The XCT factory refuses
+- Per-branch database `catecommerce_xct` (`AMARGRAM_TEST_DB` = its full connection string). The XCT factory refuses
   `catecommerce_dev` and `catecommerce_test` by name.
 - Unit suites need no database. Integration suite: real HTTP through TestServer, workers off, `RetentionWorkCycle` driven by hand.
-- Owner decision 2026-10-10: Boarding (BRD) and Subscriptions (SUB) are skipped; their duties are unregistered and nothing here invents them.
+- Owner decision 2026-10-10: Subscriptions (SUB) is skipped; its duties are unregistered and nothing here invents them.
 - Docker backup drill (I-G*) needs image pulls and an isolated host: see section G.
 
 ## A — classification and guards
@@ -87,14 +87,11 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
 |---|---|---|---|---|
 | U-D1 | ETag, different `generatedOn` | Same | Application.Tests `OfflineSnapshotEtagTests` | PASS |
 | U-D2 | ETag, one status change | Different | same | PASS |
-| U-D4 | No boarding source | `boardingTasks` `NotAvailable` | same | PASS |
 | U-D5 | `validUntil` Asia/Dhaka 2026-10-12 | `2026-10-13T02:00:00+06:00` | same | PASS |
-| I-D1 | Receptionist, 3 appointments (1 cancelled) | `200`, 2 items sorted, ETag, `no-store, private`, audit row | `XctSnapshotEndpointTests` | PASS |
+| I-D1 | Receptionist requests the snapshot (HO-P1 retired its sections) | `200`, no sections, ETag, `no-store, private`, audit row | `XctSnapshotEndpointTests` | PASS |
 | I-D2 | `If-None-Match` | `304`, no new audit row | same | PASS |
-| I-D3 | Check one in; old ETag | `200`, new ETag | same | PASS |
 | I-D4 | Poll snapshot + ping for 40 fake minutes, idle 30 | `401 session_idle_timeout` at minute 31 | same | PASS |
 | I-D5 | Customer / anonymous / Inventory staff | `403` (customer, adapted: RequireActionFilter answers 403 to an authenticated customer, ACC U-A6), `401`, `403` | same | PASS |
-| I-D7 | No boarding source | `boardingTasks` omitted `NotAvailable` | `XctSnapshotEndpointTests` | PASS |
 | I-D8 | Ping anonymous and staff | `204`, `no-store`, no body; `lastActivityOn` unchanged | same | PASS |
 | I-D9 | Body scan of I-D1 | No field beyond §12.4 | same | PASS |
 
@@ -165,7 +162,7 @@ Not exercised: the S3 transport (no S3-compatible image could be pulled; backlog
 ## Summary (2026-10-12, build agent)
 
 Unit: Domain.Tests 1 919, Application.Tests 427, Infrastructure.Tests 189 -- all pass. Integration (`catecommerce_xct`): the Xct* classes (retention, erasure, snapshot, web vitals, operations, roles, deploy conventions) pass; one full run of the whole suite: 1 505 passed, 5 skipped (the BackupDrill fact unless `RUN_BACKUP_DRILL=1`, plus four pre-existing skips), 2 unrelated failures that pass in isolation (backlog row 13). The backup drill was executed in full once (section G) and its JSON accepted by the real endpoint.
-Deferred (owner decision 2026-10-10, Boarding and Subscriptions skipped): the `boardingTasks` section, the `boarding-media` purge source and the Boarding/Subscriptions erasers: `docs/backlog/XCT.md` rows 1-3.
+Deferred (owner decision 2026-10-10, Subscriptions skipped): the Subscriptions eraser: `docs/backlog/XCT.md` rows 1-3.
 Gates are not run by the build agent.
 
 ## Gate fix round (2026-10-12) -- added cases
@@ -207,7 +204,7 @@ The script-level cases (TG-1 to TG-6) use a stub `pgbackrest` on `PATH` (`deploy
 STATUS of the gate: FAIL (one HIGH, test-only: backlog row 53). Details in `docs/gates/HO-XCT-001-TEST.md`.
 
 Re-observed by the gate, not taken from the build agent: unit suites 1919 / 435 / 189 pass; full integration run 1513 total, 1497 passed, 11 failed, 5 skipped; two further full drill runs (I-G1 to I-G6 and I-G8 PASS in both); the BackupDrill fact against drill B's results PASS.
-Rows in sections A to F whose home is `XctSnapshotEndpointTests` (I-D1, I-D2, I-D3, I-D4, I-D5, I-D8, and the no-branch-header refusal) are **FAIL on re-run**, not PASS: the tests fix the fake clock at 2026-10-12 04:00Z and now answer 401 at the first admin POST (row 53). Their PASS marks above were true when written and are not true now. Every other row in A to F has its test class green in the gate's full run. I-D6 stays DEFERRED.
+Rows in sections A to F whose home is `XctSnapshotEndpointTests` (I-D1, I-D2, I-D4, I-D5, I-D8, and the no-branch-header refusal) are **FAIL on re-run**, not PASS: the tests fix the fake clock at 2026-10-12 04:00Z and now answer 401 at the first admin POST (row 53). Their PASS marks above were true when written and are not true now. Every other row in A to F has its test class green in the gate's full run. I-D6 stays DEFERRED.
 Counts for the TG rows: 13 total, 11 PASS, 2 FAIL (TG-9: runbook has no positive restore check, row 52; TG-12: full suite red, row 53), 0 BLOCKED, 0 NOT RUN. For section G, I-G4 (endpoint acceptance) and I-G7 were re-observed (BackupDrill fact PASS; DeployConventionTests 5 of 5).
 
 ### Gate fix 2026-10-13 (TEST gate rows 52, 53, 55) -- results

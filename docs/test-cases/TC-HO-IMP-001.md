@@ -27,8 +27,8 @@ Written: 2026-10-07 (the implementer's first sheet, rewritten by the TEST gate) 
 
 ## Environment
 
-- Build: `dotnet build CatEcommerce.sln`, 0 warnings, 0 errors.
-- Database: `catecommerce_imp` only (`CATECOMMERCE_TEST_DB` exported in the same command as every run). `catecommerce_dev` never used. PostgreSQL reachable; the database was already migrated to the branch's migrations.
+- Build: `dotnet build AmarGram.sln`, 0 warnings, 0 errors.
+- Database: `catecommerce_imp` only (`AMARGRAM_TEST_DB` exported in the same command as every run). `catecommerce_dev` never used. PostgreSQL reachable; the database was already migrated to the branch's migrations.
 - Unit suites (`--no-build`): Domain 1065/1065, Application 197/197, Infrastructure 119/119.
 - Integration, Inventory classes (`FullyQualifiedName~Inventory`): 134/134 (121 existing + 13 added by this gate); the 133 run before the last added test were green four times in a row.
 - Integration, whole project (run before the last four added tests): 880 passed, 2 failed — both outside Inventory, both passed when re-run alone (see T15).
@@ -170,7 +170,7 @@ Written: 2026-10-07 (the implementer's first sheet, rewritten by the TEST gate) 
 | I-I5 | Notify again | requested 0, alreadyNotified 4 | PASS | second run in `I_I4_NotifyEnqueuesOneRequestPerRecipient_*` |
 | I-I6 | Withdraw before notices sent | `Quarantined`; pending notices cancelled `SubjectNoLongerApplies` | PASS | `I_I6_AWithdrawnRecallGoesToQuarantine_*` plus **added**: `InventoryRecallDeliveryEndpointTests.I_I6_WithdrawingTheRecallBeforeDeliveryCancelsThePendingNotices_NothingIsSent` — after withdraw and the real delivery pass the request is `Suppressed` with reason `SubjectNoLongerApplies`, no notification row exists. NOTE the observable form is a suppressed REQUEST, not a `Cancelled` notification: the guard fires at expansion, so the §16 wording "pending notices `Cancelled`" does not literally occur in this flow (INFO, behaviour is correct) |
 | I-I7 | Recall and reservation concurrently, 20 repetitions | never a reservation committed after the recall | PASS | Existing `I_I7_ARecallAndAReservationOnTheSameBatchAtTheSameTime_*` (20 rounds; one reserver) PLUS **added**: `InventoryTestGateEndpointTests.I_I7_SixReserversHammerOneBatchWhileItIsRecalled_*` — 6 parallel reservers committing one unit at a time against a recall; 148 reservations committed before the recall landed over 5 rounds (a genuine interleaving), every reserver ended refused by plan or by `tg_stock_batch_not_usable`, and committed count = `reserved` = trace length every round |
-| I-I8 | Nurse recalls; nurse reads trace | 403; 403 | PASS | `I_I8_OnlyRecallManagersMayRecallOrReadTheTrace` (also trace.csv and notify) |
+| I-I8 | A Reception staff member recalls; reads the trace | 403; 403 | PASS | `I_I8_OnlyRecallManagersMayRecallOrReadTheTrace` (also trace.csv and notify) |
 | I-I9 | Close with stock held; write off; close | 400 `RecallStockStillHeld`; 204; 204 | PASS | `I_I9_ARecallCannotBeClosedWhileStockIsHeld_UntilItIsWrittenOffAsRecallDisposal` |
 | I-J1 | Breach at a second store, two batches; quarantine; close | flagged + alert; stock moved with breach reference | PASS | `InventoryBreachAndCrossCuttingEndpointTests.I_J1_AReportedBreachFlagsTheBatchesHeld_*` |
 | I-J2 | Storage profile on receipt and stock reads | `storage` present | PASS | `I_J2_TheStorageProfileComesWithTheStockReads` |
@@ -212,7 +212,7 @@ Written: 2026-10-07 (the implementer's first sheet, rewritten by the TEST gate) 
 | T12 | 8 parallel creates of one supplier code | PASS | **Added**: `EightParallelCreatesOfOneSupplierCode_*` — exactly one 201, the rest 400 `SupplierCodeAlreadyExists`, none 500 |
 | T13 | 8 parallel opens of a count at one location | PASS | **Added**: `EightParallelOpensOfACountAtOneLocation_*` — exactly one opens, the rest 400 `CountLocationBusy`, none 500 |
 | T14 | FI-1 against the REAL trigger and table, two sessions | PASS | **Added**: `FI1_TheRealLedgerTriggerIsTheTwoStatementShape_AndTwoSessionsSellingTheLastUnitSerialise_*` — `pg_get_functiondef('inventory.fn_apply_ledger_entry')` contains `ON CONFLICT (batch_id, location_id) DO NOTHING` and `UPDATE inventory.stock_position`, no `DO UPDATE`; the second session is observed WAITING ON A LOCK in `pg_stat_activity` (polled, no fixed sleep) while the first is uncommitted; after the first commits, the second fails `23514 ck_stock_position_balance`; one sale in the ledger. The scratch-schema facts tests (FI1 literal shape: a spurious 23514; FI1 last-unit race; FI2; FI4; FI5) also PASS |
-| T15 | Known Shop flakes re-run alone | PASS | `ShopCataloguePerformanceTests.I_E11` PASS alone (it failed in the whole-project run under load); `ShopBundlePrescriptionEndpointTests.FiltersCache_IsKeyedOnTheParsedCategory_JunkInputDoesNotGrowIt` PASS alone (it passed in the whole-project run). NEW, not on your list: `TimingEnumerationTests.CustomerSignIn_LockedAccount_StillCallsVerifyAgainstDummy` failed in the whole-project run (a timing comparison, Account area) and PASSED alone |
+| T15 | Known Shop flakes re-run alone | PASS | `ShopCataloguePerformanceTests.I_E11` PASS alone (it failed in the whole-project run under load); `the Shop bundle endpoint tests (FiltersCache_IsKeyedOnTheParsedCategory_JunkInputDoesNotGrowIt; class since removed in HO-P1)` PASS alone (it passed in the whole-project run). NEW, not on your list: `TimingEnumerationTests.CustomerSignIn_LockedAccount_StillCallsVerifyAgainstDummy` failed in the whole-project run (a timing comparison, Account area) and PASSED alone |
 
 ## Acceptance-criteria coverage (§18)
 

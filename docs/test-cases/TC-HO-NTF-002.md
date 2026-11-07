@@ -100,7 +100,7 @@ identically on master.
 | E-C2 | Fix, save, reset to default: Customised -> Default | notifications-templates.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-D1 | Unsubscribe from link (MSW only): matrix shows email marketing off | notifications-unsubscribe.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-E1 | Log: filter by customer, open failed SMS, resend by email, chain link | notifications-log.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
-| E-E2 | Nurse -> PermissionDeniedState | notifications-log.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
+| E-E2 | Staff member without the permission -> PermissionDeniedState | notifications-log.spec.ts | PASS (short specs 15/15) | PASS (15/15) | not run — no API |
 | E-X1 | axe every route, clean and with errors, editor preview open | notifications-a11y-responsive.spec.ts | PASS (61/61) | PASS (61/61) | not run — no API |
 | E-X2 | Every route at 360/768/1024/1440, no h-scroll | notifications-a11y-responsive.spec.ts | PASS (61/61) | PASS (61/61) | not run — no API |
 

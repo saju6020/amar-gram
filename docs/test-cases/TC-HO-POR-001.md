@@ -42,8 +42,8 @@ Test counts observed (2026-10-10/11, head 38a1c2f0 plus the TEST gate's test-onl
 
 ## Environment
 
-- Worktree D:/my-repo/cat_ecommerce-wt/POR-001, branch ho/POR-001. `dotnet build CatEcommerce.sln -p:NuGetAudit=false`: 0 warnings, 0 errors.
-- Database: ONLY `catecommerce_por` (created for this branch and migrated to master with `dotnet ef database update --connection`). `CATECOMMERCE_TEST_DB` is the full connection string,
+- Worktree D:/my-repo/cat_ecommerce-wt/POR-001, branch ho/POR-001. `dotnet build AmarGram.sln -p:NuGetAudit=false`: 0 warnings, 0 errors.
+- Database: ONLY `catecommerce_por` (created for this branch and migrated to master with `dotnet ef database update --connection`). `AMARGRAM_TEST_DB` is the full connection string,
   exported in the same command as every run. `PortalApiFactory` throws at construction when it is unset or names `catecommerce_dev` or `catecommerce_test` (observed: a run without the variable failed all tests at once).
 - Suites (TEST gate, 2026-10-10/11): Domain 1886 passed; Application 427 passed (47 Portal); Infrastructure 174 passed; Integration: see "Full-suite result (TEST gate)".
 - Hosts: one in-process TestServer per test class (FakeTimeProvider that does not tick, real-clock cookie expiry), plus derived hosts (`WithWebHostBuilder`) for I-B5 and I-X1.
@@ -52,14 +52,14 @@ Test counts observed (2026-10-10/11, head 38a1c2f0 plus the TEST gate's test-onl
 
 ## Unit cases (handover section 15)
 
-Tests are in `tests/CatEcommerce.Application.Tests/QueryHandlers/Portal/` (`PortalConventionTests`, `PortalReaderTests`, `PortalDashboardComposerTests`) unless named otherwise.
+Tests are in `tests/AmarGram.Application.Tests/QueryHandlers/Portal/` (`PortalConventionTests`, `PortalReaderTests`, `PortalDashboardComposerTests`) unless named otherwise.
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
 | U-A1 | Reflection over every `.Portal` type | No aggregate, event, configuration or event handler (ADR-257) | PASS | `PortalConventionTests.U_A1_NoPortalTypeIsAnAggregate_AnEvent_AConfiguration_OrAnEventHandler`, `U_A1_ThereIsNoPortalSchemaTableOrDbSet` |
 | U-A2 | Constructors in `Read.QueryHandlers.Portal**` | No DbContext, dispatcher or repository (ADR-258) | PASS | `PortalConventionTests.U_A2_NoPortalQueryHandlerOrReaderTakesADbContext_ADispatcher_OrARepository` |
 | U-A3 | Every `Portal*` ViewModel, recursive | No property of another module's ViewModel (ADR-259) | PASS | `PortalConventionTests.U_A3_NoPortalViewModelHoldsAnotherModulesViewModel_Recursively` |
-| U-A4 | `PortalController` | `[RequireCustomerSession]` on every action; no route contains `pay` (ADR-264) | PASS | `tests/CatEcommerce.IntegrationTests/Unit/PortalControllerConventionTests`: `U_A4_EveryPortalAction_...`, `U_A4_NoPortalRouteContainsPay`, `ThePortalController_InjectsTheDispatcherAndTheUserContextProviderOnly` (lives in the Api-referencing project) |
+| U-A4 | `PortalController` | `[RequireCustomerSession]` on every action; no route contains `pay` (ADR-264) | PASS | `tests/AmarGram.IntegrationTests/Unit/PortalControllerConventionTests`: `U_A4_EveryPortalAction_...`, `U_A4_NoPortalRouteContainsPay`, `ThePortalController_InjectsTheDispatcherAndTheUserContextProviderOnly` (lives in the Api-referencing project) |
 | U-B1 | Balances reader throws | balances `Unavailable`, data null, others Ready, one Error log with section and correlation id | PASS | `PortalDashboardComposerTests.U_B1_ABalancesReaderThatThrows_...`, `U_B1_TheLogLineCarriesNoCustomerDataOrUpstreamPayload` |
 | U-B2 | Reader throws `OperationCanceledException` | Propagates | PASS | `PortalDashboardComposerTests.U_B2_ACancelledRead_Propagates_NoSectionResult` |
 | U-B11 | Balances: BDT 1500 and USD 20 | Two entries, no total; zero -> `hasOutstanding = false`, `[]` | PASS (adapted) | `PortalReaderTests.U_B11_...`. Billing returns ONE commerce-currency Money, so each Money is one entry and is never added to another (1 Amended). Also `Balances_OpenInvoicesOnly_OldestDueFirst_LimitFive_...`, `Balances_WalksInvoicePages_...` |
@@ -85,7 +85,7 @@ Tests are in `tests/CatEcommerce.Application.Tests/QueryHandlers/Portal/` (`Port
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
 | I-A1 | Host starts with `ValidateScopes` + `ValidateOnBuild` | Every reader and upstream handler resolves | PASS | `PortalDashboardEndpointTests.I_A1_TheComposingHandlerAndItsReadersResolve`. This is also the **7 spike**: a Scoped query handler that takes other `IQueryHandlerAsync<,>` instances by constructor resolves under scope validation and runs through `IInMemoryDispatcher` (first dashboard call 200) |
-| I-A2 | EF model before and after | No new entity, table or migration; probe migration is empty | PASS | `PortalDashboardSectionsEndpointTests.I_A2_ThePortalOwnsNoEntityTableOrMigration`; CLI: `dotnet ef migrations add PortalProbe` (connection via `ConnectionStrings__CatEcommerce` = `catecommerce_por`) produced `Up` and `Down` with empty bodies and an unchanged model snapshot; the two probe files were deleted and the snapshot restored (`git status` clean of Migrations) |
+| I-A2 | EF model before and after | No new entity, table or migration; probe migration is empty | PASS | `PortalDashboardSectionsEndpointTests.I_A2_ThePortalOwnsNoEntityTableOrMigration`; CLI: `dotnet ef migrations add PortalProbe` (connection via `ConnectionStrings__AmarGram` = `catecommerce_por`) produced `Up` and `Down` with empty bodies and an unchanged model snapshot; the two probe files were deleted and the snapshot restored (`git status` clean of Migrations) |
 | I-A3 | Each endpoint without a session; staff session only | `401 session_invalid` both | PASS | `PortalDashboardEndpointTests.I_A3_...` (dashboard only: the portal has one endpoint; re-order is retired) |
 | I-A4 | Re-order without `X-CSRF-Token` | `403 csrf_token_invalid` | RETIRED | Re-order retired (owner-delegated decision 2026-10-10, owner to review): the portal has no re-order; Orders' own endpoint is used |
 | I-B1 | New customer, nothing recorded | every section Ready and empty | PASS (scope) (2026-10-10: also `PortalOrdersEndpointTests.Orders_ACustomerWithNoOrders_...` PASS; subscriptions deferred by owner, key absent by design) | `PortalDashboardEndpointTests.I_B1_...` and `PortalDashboardSectionsEndpointTests.I_B1_...` PASS for customer, balances. orders: the empty-state test in `PortalOrdersEndpointTests` PASS; subscriptions deferred by owner |
@@ -146,7 +146,7 @@ Tests are in `tests/CatEcommerce.Application.Tests/QueryHandlers/Portal/` (`Port
 
 ## Full-suite result (TEST gate)
 
-Run on `catecommerce_por` only, `CATECOMMERCE_TEST_DB` exported in the same command. Build 0 errors; 3 warnings, none in Portal files (two CS0108 in Api/Read, one xUnit2000 in the Ordering tests, all from master).
+Run on `catecommerce_por` only, `AMARGRAM_TEST_DB` exported in the same command. Build 0 errors; 3 warnings, none in Portal files (two CS0108 in Api/Read, one xUnit2000 in the Ordering tests, all from master).
 
 - Domain 1886 passed; Application 427 passed (47 Portal); Infrastructure 174 passed.
 - Integration, whole project, first full run: **1476 total, 1472 passed, 2 skipped, 2 failed**, neither in the Portal:

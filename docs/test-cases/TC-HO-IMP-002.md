@@ -73,7 +73,7 @@ Statuses record what was **observed**. Mock runs and real-API runs are recorded 
 | E-F1 | declare, trace, CSV link, notify, notify again | PASS |
 | E-F2 | withdraw quarantines, unsent messages not sent | PASS |
 | E-G1 | breach → quarantine → close | PASS |
-| E-X3 | nurse gets the server's permission state on receiving and suppliers | PASS |
+| E-X3 | a staff member without the action gets the server's permission state on receiving and suppliers | PASS |
 | E-X1 | axe, 46 routes (dialogs all sit on `components/ui/dialog.tsx`) | PASS on `chromium` and `mobile-360` (one cold-start sign-in flake retried) |
 | E-X2 | no horizontal scroll, 46 routes × 4 widths | PASS on `chromium` and `mobile-360` after the 360 px badge/card fix (6 routes had overflowed before it) |
 
@@ -86,7 +86,7 @@ a retry that was needed is reported as "flaky" by Playwright and is listed in th
 Run on 2026-10-09. The API was started from this worktree (merged with master) on `http://localhost:5008` against `catecommerce_dev`
 (already migrated; nothing was migrated), with `Notifications__ApiBaseUrl=http://localhost:5008` and
 `Cors__AllowedOrigins__0=http://localhost:3111`. The web ran on port 3111 with `NEXT_PUBLIC_USE_MOCKS=false`. Staff were the existing
-`e2e.admin` and `e2e.nurse` rows (no seeding was needed); SKUs `E2E-FOOD-1`, `E2E-FOOD-2`, `E2E-RICE-1`, `E2E-MED-1` already existed.
+`e2e.admin` and a second, non-admin staff row (no seeding was needed); SKUs `E2E-FOOD-1`, `E2E-FOOD-2`, `E2E-RICE-1`, `E2E-MED-1` already existed.
 Command: `E2E_REAL_INVENTORY=1 E2E_API_URL=http://localhost:5008 PORT=3111 npx playwright test --project=chromium tests/e2e/inventory-real-api.spec.ts --workers=1`.
 
 | ID | Case | Result |
@@ -102,7 +102,7 @@ Command: `E2E_REAL_INVENTORY=1 E2E_API_URL=http://localhost:5008 PORT=3111 npx p
 | R-E2 | alerts page and reorder suggestions load | PASS |
 | R-F1 | declare a recall on the lot, read the trace, CSV link, withdraw | PASS |
 | R-G1 | report a storage breach at the dispensary | PASS |
-| R-X3 | nurse reads stock, gets the server permission state on receiving and suppliers | PASS |
+| R-X3 | a staff member without the action reads stock, gets the server permission state on receiving and suppliers | PASS |
 
 **Update 2026-10-09 (owner approved a second e2e admin): R-D2 PASS, full spec 12 passed (1.8 min).** The text below describes the first run, where R-D2 skipped.
 

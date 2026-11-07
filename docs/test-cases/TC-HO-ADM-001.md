@@ -11,15 +11,15 @@ change; nothing in it changes this sheet. Verdicts in
 
 Test-only additions made by this TEST gate (uncommitted — listed here so the acceptance gate can see
 them; the integrator commits):
-- `tests/CatEcommerce.IntegrationTests/Endpoints/AdminAuthorizationDenialAndNulFilterCrossAreaEndpointTests.cs`
-  (new file, 8 cases) — the `AuthorizationDenied` audit row (I-A3's own wording, never previously
+- `tests/AmarGram.IntegrationTests/Endpoints/AdminAuthorizationDenialAndNulFilterCrossAreaEndpointTests.cs`
+  (new file, 8 cases) — the `AuthorizationDenied` audit row (never previously
   checked) and the global `NulByteRejectionFilter`'s effect on Accounts sign-in/registration, both
   named explicitly by the SECURITY/ARCHITECTURE fifth-pass gates as owed to this gate.
-- `tests/CatEcommerce.IntegrationTests/Endpoints/AdminAuditEntriesEndpointTests.cs` (+3 cases): the
+- `tests/AmarGram.IntegrationTests/Endpoints/AdminAuditEntriesEndpointTests.cs` (+3 cases): the
   CSV-injection guard exercised through the real export (U-E1), and the `AuditLogExported` row
   actually searched for (I-E2) — the existing `ExportCsv_ReturnsCsvAndAuditsTheExport` asserts the CSV
   response only, never either of those two things its own name claims.
-- `tests/CatEcommerce.IntegrationTests/Endpoints/AdminContentPolicyEndpointTests.cs` (+1 case):
+- `tests/AmarGram.IntegrationTests/Endpoints/AdminContentPolicyEndpointTests.cs` (+1 case):
   accepting a policy version that has been superseded (U-F5) — no existing test tries to accept
   anything other than the then-current version.
 
@@ -29,20 +29,20 @@ No source file was changed. No test was weakened or deleted.
 ("close them before ACCEPTANCE so no acceptance criterion is untested"). Unlike the sixth pass above,
 this one DOES include source changes -- exactly two, both to make I-E3 testable, recorded in
 `docs/handover/HO-ADM-001.md` Amended (38):
-- `src/Infrastructure/CatEcommerce.Infrastructure/Configuration/AuditExportOptions.cs` (new): `MaxRows`,
+- `src/Infrastructure/AmarGram.Infrastructure/Configuration/AuditExportOptions.cs` (new): `MaxRows`,
   defaulting to `AuditExportRules.MaxRows` (50,000, unchanged), bound from configuration section
-  `AuditExport` (`src/Api/CatEcommerce.Api/appsettings.json` gains that section, `MaxRows: 50000`).
-- `src/Api/CatEcommerce.Api/Controllers/AdminAuditEntriesController.cs`: `Export` now reads the cap
+  `AuditExport` (`src/Api/AmarGram.Api/appsettings.json` gains that section, `MaxRows: 50000`).
+- `src/Api/AmarGram.Api/Controllers/AdminAuditEntriesController.cs`: `Export` now reads the cap
   from `IOptions<AuditExportOptions>` instead of the constant directly; `AdministrationModule.cs`
   registers the binding.
 
-New test files: `tests/CatEcommerce.Domain.Tests/DomainServices/StaffAvailabilityTests.cs`,
-`tests/CatEcommerce.Domain.Tests/ValueObjects/MoneyTests.cs`,
-`tests/CatEcommerce.Domain.Tests/Common/StaffLeaveApprovedEventShapeTests.cs`,
-`tests/CatEcommerce.Application.Tests/CommandHandlers/Administration/LeaveCommandHandlersTests.cs`,
-`tests/CatEcommerce.IntegrationTests/Unit/ActionRolesCoverageTests.cs`,
-`tests/CatEcommerce.IntegrationTests/Endpoints/AdminGlobalSettingsLiveEffectEndpointTests.cs`,
-`tests/CatEcommerce.IntegrationTests/Endpoints/AdminLogCaptureEndpointTests.cs`. Extended:
+New test files: `tests/AmarGram.Domain.Tests/DomainServices/StaffAvailabilityTests.cs`,
+`tests/AmarGram.Domain.Tests/ValueObjects/MoneyTests.cs`,
+`tests/AmarGram.Domain.Tests/Common/StaffLeaveApprovedEventShapeTests.cs`,
+`tests/AmarGram.Application.Tests/CommandHandlers/Administration/LeaveCommandHandlersTests.cs`,
+`tests/AmarGram.IntegrationTests/Unit/ActionRolesCoverageTests.cs`,
+`tests/AmarGram.IntegrationTests/Endpoints/AdminGlobalSettingsLiveEffectEndpointTests.cs`,
+`tests/AmarGram.IntegrationTests/Endpoints/AdminLogCaptureEndpointTests.cs`. Extended:
 `AdminRosterLeaveEndpointTests.cs` (+1), `AdminContentPolicyEndpointTests.cs` (+1),
 `AdminAuditEntriesEndpointTests.cs` (+1, plus one rename: `ExportCsv_ReturnsCsvAndAuditsTheExport` ->
 `ExportCsv_ReturnsCsvResponseWithHeaderRow`, since the old name promised auditing its own body never
@@ -55,7 +55,7 @@ checked). `AdministrationApiFactory.cs` gains `WithLoweredAuditExportCap(int)` a
   the gate's own named example): two pre-existing, unrelated classes hard-assert an ambient global
   setting value with no capture/restore of their own, against the exact settings this pass's own
   tests mutate. Both now carry `[Collection(AdministrationGlobalSettingsCollection.Name)]`:
-  `AdminCatalogueSettingsEndpointTests` (`booking.slotHoldMinutes` == `"10"`) and, found in the same
+  `AdminCatalogueSettingsEndpointTests` (`orders.pickupCollectionDays` == `"7"`) and, found in the same
   sweep, HO-ACC-001's own `StaffSessionEndpointTests` (`security.staffIdleTimeoutMinutes` ==
   `30`, on ACC-001's behalf). Chosen over "capture/restore per assertion" as the broadest, safest fix
   the gate itself named -- see the class-level doc comments on both files for the full reasoning.
@@ -63,8 +63,8 @@ checked). `AdministrationApiFactory.cs` gains `WithLoweredAuditExportCap(int)` a
   + `AdministrationModule`'s `ValidateDataAnnotations().ValidateOnStart()` (the same pattern
   `AccountOptions` already uses) -- `AdminAuditEntriesEndpointTests.HostStartup_AuditExportMaxRowsOutOfRange_FailsToStart`
   (theory: `0`, `-1`, `50001`) and the boundary positive control at `50000`.
-- **[LOW] U-D7's enforcement point given its own end-to-end test.**
-  `AdminCatalogueSettingsEndpointTests.SetServicePrice_NegativeAmount_Returns400`.
+- **[LOW] U-D7's enforcement point given its own end-to-end test** (a price endpoint of an area
+  since removed in HO-P1).
 
 **Ninth pass (2026-09-26): ACCEPTANCE gate first pass, closing A6/U-C1/U-C3/I-C1 and
 A10/I-D5 (Amended (45)-(47)).** No source file was changed for A6. A10's investigation found
@@ -107,8 +107,8 @@ A10/I-D5 closed** (Amended (45)-(47)).
 
 | | Count |
 |---|---|
-| Total | 90 |
-| PASS (fully covered) | 83 |
+| Total | 84 |
+| PASS (fully covered) | 77 |
 | PASS (partial/indirect — see row) | 7 |
 | FAIL | 0 |
 | BLOCKED | 0 |
@@ -127,8 +127,8 @@ were not targeted by this round (only A6, A10 were asked for) and are left hones
 names exactly what remains unwatched in its own Evidence column, and the two corresponding
 acceptance criteria (A7, A9) are marked `Partially covered` in the table below, not `Covered`.
 
-Breakdown (as of the ninth pass): 31 §15 unit-case rows, 31 §16 integration-case rows, 12 rows from
-the sixth-gate pass (N1–N12, all fully PASS), 16 regression rows from earlier gates (all fully PASS,
+Breakdown (as of the ninth pass): 29 §15 unit-case rows, 28 §16 integration-case rows, 11 rows from
+the sixth-gate pass (N1–N12 less N3, all fully PASS), 16 regression rows from earlier gates (all fully PASS,
 including R3, a doc-comment-only finding read directly rather than run). The 17 rows this sheet
 originally marked `BLOCKED` (11 unit, 6 integration) became `PASS — written seventh pass` at the
 seventh pass, each with its own new test named in the row; two were marked with "one claim corrected",
@@ -145,9 +145,9 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
   migrations were applied. The database is already up to date." `dotnet dotnet-ef migrations
   has-pending-model-changes` reported "No changes have been made to the model since the last
   migration." — clean.
-- **`CATECOMMERCE_TEST_DB` note (worth recording, not a product defect):** `CatEcommerceApiFactory`
+- **`AMARGRAM_TEST_DB` note (worth recording, not a product defect):** `AmarGramApiFactory`
   reads this variable as the **whole Npgsql connection string**, not a bare database name
-  (`tests/CatEcommerce.IntegrationTests/CatEcommerceApiFactory.cs:37-39`). Setting it to
+  (`tests/AmarGram.IntegrationTests/AmarGramApiFactory.cs:37-39`). Setting it to
   `catecommerce_adm` alone (as this gate's own instruction phrased it) produces a malformed
   connection string and an immediate Npgsql parse exception on every test that touches the database —
   the first integration run against that value showed 225/275 failing with `500`s and one raw
@@ -156,9 +156,9 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
   Username=postgres;Password=postgres`, matching the worktree's own
   `appsettings.Development.json`), after which the suite ran cleanly. Recorded here so the next
   person pointing a gate at a named branch database does not lose time to the same false signal.
-- Unit suites: `CatEcommerce.Domain.Tests`, `CatEcommerce.Application.Tests`,
-  `CatEcommerce.Infrastructure.Tests` — no database needed, ran against the built assemblies directly.
-- Integration suite: `CatEcommerce.IntegrationTests` — real HTTP via `WebApplicationFactory`, real
+- Unit suites: `AmarGram.Domain.Tests`, `AmarGram.Application.Tests`,
+  `AmarGram.Infrastructure.Tests` — no database needed, ran against the built assemblies directly.
+- Integration suite: `AmarGram.IntegrationTests` — real HTTP via `WebApplicationFactory`, real
   Postgres (`catecommerce_adm`), real host (`ADR-010` single host), cookies and CSRF handled per
   `AdministrationIntegrationTestBase`. Every controller in the solution is reachable from this host,
   which is what makes the cross-area NUL-filter tests (Accounts sign-in/registration) executable from
@@ -173,18 +173,18 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
   that a result is reported as observed.
 - After both corrections, ran the full solution's test suite **twice** (flakiness check). Both runs
   are reported under each row's Evidence; a row is `PASS` only if both runs agreed. **Final tally,
-  seventh/eighth pass, both runs identical:** `CatEcommerce.Domain.Tests` 190/190,
-  `CatEcommerce.Application.Tests` 68/68, `CatEcommerce.Infrastructure.Tests` 28/28,
-  `CatEcommerce.IntegrationTests` 275/275 — **561/561**, no flakiness observed.
+  seventh/eighth pass, both runs identical:** `AmarGram.Domain.Tests` 190/190,
+  `AmarGram.Application.Tests` 68/68, `AmarGram.Infrastructure.Tests` 28/28,
+  `AmarGram.IntegrationTests` 275/275 — **561/561**, no flakiness observed.
 - **Ninth pass (ACCEPTANCE gate first pass, 2026-09-26):** the ACCEPTANCE gate's own run recorded
   606/606 at its own head (`Domain.Tests` 216/216, `Application.Tests` 73/73,
   `Infrastructure.Tests` 28/28, `IntegrationTests` 289/289) before this pass's new tests. After adding
   5 unit tests (`StaffAvailabilityTests`), 2 integration tests (`AdminRosterLeaveEndpointTests`), 2
   integration tests (`AdminGlobalSettingsLiveEffectEndpointTests`) and one new 22-test integration
-  file (`CatVaccineFullAuthorizationMatrixTests`), ran the full solution's test suite **twice** again,
-  same `CATECOMMERCE_TEST_DB` full connection string. **Both runs identical:**
-  `CatEcommerce.Domain.Tests` 221/221, `CatEcommerce.Application.Tests` 73/73,
-  `CatEcommerce.Infrastructure.Tests` 28/28, `CatEcommerce.IntegrationTests` 315/315 — **637/637**, no
+  file (for an area since removed in HO-P1), ran the full solution's test suite **twice** again,
+  same `AMARGRAM_TEST_DB` full connection string. **Both runs identical:**
+  `AmarGram.Domain.Tests` 221/221, `AmarGram.Application.Tests` 73/73,
+  `AmarGram.Infrastructure.Tests` 28/28, `AmarGram.IntegrationTests` 315/315 — **637/637**, no
   flakiness observed. `dotnet build`: 0 warnings, 0 errors. `dotnet dotnet-ef
   migrations has-pending-model-changes`: "No changes have been made to the model since the last
   migration." — clean (no source/model change was needed for any of the three items).
@@ -203,20 +203,18 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
 | U-B5 | Cancelled closure ignored | Ignored by the calendar | PASS | `BranchCalendarTests.OpenIntervals_CancelledClosure_IsIgnored` — green both runs |
 | U-B6 | Active-branch resolution: 5 scenarios | primary / `BranchNotAssigned` / primary / sole branch / `BranchAssignmentRequired` | PASS | `ActiveBranchAccessEndpointTests` (integration-level, per §15's own header note that Infrastructure/Api-class rows live in `IntegrationTests`): `Mine_HeaderNamesAnAssignedBranch_ResolvesToThatBranch`, `..._HeaderNamesABranchNotInAssignment_Returns200WithAssignmentAndRefusalCode`, `..._NoHeader_ResolvesToPrimaryAssignedBranch`, `..._NoHeaderNoAssignment_MultipleActiveBranchesExist_Returns200WithRefusalCode` — all green both runs. (Amended (19): `/mine` itself never 403s any more; the refusal is now a field, not a status code — the *other* branch-needing endpoints still enforce `BranchNotAssigned`/`BranchAssignmentRequired` as before, proven by `SetRosterPattern_ThenAvailability_ReflectsTheShift`'s explicit assignment step and `RosterableRoleRequired_AccountantOnlyStaff_Returns400`) |
 | U-C1 | `StaffAvailability` rules 1–7 | As stated, one row each | PASS — **written seventh/ninth pass** | Rules 1, 3, 6 via `SetRosterPattern_ThenAvailability_ReflectsTheShift`. Rule 3 also has its own dedicated domain test (U-C2), rule 6's `restrictToOpeningHours=false` half its own (U-C4). Ninth pass adds the remaining four: rule 5 (`Intervals_ApprovedLeaveCoveringTheDate_RemovesTheWholeDay`, with the "requested leave changes nothing" negative half), rule 4 (`Intervals_ExtraShiftException_AddsAnIntervalOnADayWithNoPatternSlot`, `Intervals_ShiftCancelledException_ShortensOrRemovesTheShift`), rule 2 as composed with `StaffAvailability` (`Intervals_BranchClosedWholeDay_RestrictToOpeningHoursTrue_ReturnsNoIntervalThatDay` — the closure computation itself remains `BranchCalendar`'s own, already covered by `BranchCalendarTests`), and rule 7 (`Intervals_AbuttingPatternShiftAndExtraShift_MergeIntoOneInterval`, plus the fully-cancelled-shift case proving no zero-length interval ever survives). All seven rules now have a dedicated `StaffAvailabilityTests` case |
-| U-C2 | Next pattern effective Wednesday | Mon–Tue current, Wed+ next | PASS — **written seventh pass** | `StaffAvailabilityTests.Intervals_NextPatternEffectiveOnASpecificDate_EarlierDateUsesCurrent_LaterDateUsesNext` (pure domain-service test, `CatEcommerce.Domain.Tests`): both patterns carry a slot on the same day of week at different times, a week apart, so only rule 3's per-date selection explains which time comes back for which date |
+| U-C2 | Next pattern effective Wednesday | Mon–Tue current, Wed+ next | PASS — **written seventh pass** | `StaffAvailabilityTests.Intervals_NextPatternEffectiveOnASpecificDate_EarlierDateUsesCurrent_LaterDateUsesNext` (pure domain-service test, `AmarGram.Domain.Tests`): both patterns carry a slot on the same day of week at different times, a week apart, so only rule 3's per-date selection explains which time comes back for which date |
 | U-C3 | Approved leave vs requested leave | Only approved removes days | PASS — **written ninth pass** | `StaffAvailabilityTests.Intervals_ApprovedLeaveCoveringTheDate_RemovesTheWholeDay` directly observes both halves: an Approved leave request removes the day entirely; the same leave NOT passed into `approvedLeave` (exactly what the caller does for a merely-Requested leave — see `Intervals`'s own rule-5 code comment) leaves the shift showing. `AdminRosterLeaveEndpointTests.ApprovedLeaveDay_ThenGetAvailability_ExcludesThatDay` (I-C1) confirms the same end to end through the real API |
 | U-C4 | `restrictToOpeningHours=false`, shift outside hours | Interval present, `OutsideOpeningHours=true` | PASS — **written seventh pass** | `StaffAvailabilityTests.Intervals_ShiftOutsideOpeningHours_RestrictFalse_ReturnsFullIntervalFlagged_RestrictTrue_ReturnsNone` -- same file as U-C2, also proves the contrasting `restrictToOpeningHours=true` case (no interval survives clipping) as a negative control |
 | U-C5 | Leave: approve twice; cancel approved ended yesterday | `LeaveNotPending`; `LeaveCannotBeCancelled` | PASS — **written seventh pass** | `LeaveCommandHandlersTests.ApproveLeave_AlreadyApproved_ReturnsLeaveNotPending` / `.CancelLeave_ApprovedAndAlreadyEnded_ReturnsLeaveCannotBeCancelled` (handler-level, fake repository — same precedent as `SetBranchActivationCommandHandlerTests`, I-B4) |
 | U-C6 | `StaffLeaveApprovedEvent` reflection | Only 4 named fields (+ inherited) | PASS — **written seventh pass** | `StaffLeaveApprovedEventShapeTests.HasExactlyFourDeclaredProperties_NoFreeText` asserts exactly `LeaveRequestId`/`StaffAccountId`/`StartsOn`/`EndsOn` and no `string`-typed property at all |
-| U-C7 | Handler: nurse requests leave for someone else | `ActionNotPermitted` | PASS — **written seventh pass** | `LeaveCommandHandlersTests.RequestLeave_NurseRequestsForSomeoneElse_ReturnsActionNotPermitted` (handler-level) — distinct from `NurseApprovingLeave_Returns403` (I-C5), the *decision* path |
+| U-C7 | Handler: a Reception staff member requests leave for someone else | `ActionNotPermitted` | PASS — **written seventh pass** | `LeaveCommandHandlersTests.RequestLeave_ReceptionRequestsForSomeoneElse_ReturnsActionNotPermitted` (handler-level) — distinct from `ReceptionApprovingLeave_Returns403` (I-C5), the *decision* path |
 | U-C8 | Handler: overlapping request (sequential) | `LeaveOverlapsExistingLeave` | PASS (adjacent, not identical) | `TwoOverlappingLeaveRequests_SentConcurrently_OnlyOneSucceeds` proves the **database-level** GiST exclusion race (Amended (12)), which is a different code path from the handler's own sequential pre-check this row asks for. The pre-check itself (a plain second `POST` after the first has already committed) is not separately tested |
 | U-C9 | Handler: sole administrator approves own leave | Allowed; note prefixed | PASS — **written seventh pass** | `LeaveCommandHandlersTests.ApproveLeave_SoleAdministratorApprovesOwnRequest_IsAllowedAndNotePrefixed` (plus a negative-control sibling with a second administrator present, refused instead) |
-| U-D2 | Price "at t": past/current/scheduled | Greatest `EffectiveFrom ≤ t` | PASS | `CreateServiceAndPrice_PublicServicesShowsCurrentPriceOnly` — green both runs (public endpoint returns current only; `/prices` shows history) |
-| U-D3 | `SetServicePrice`, `EffectiveFrom` one minute ago | `PriceCannotBeBackdated` | PASS | `AdminCatalogueSettingsEndpointTests.SetServicePrice_Backdated_Returns400` — green both runs |
 | U-D4 | Settings: unknown key; out of bounds; non-overridable branch override; mixed valid+invalid | Each code; nothing applied on mixed list | PASS (partial) | `ChangeSettings_InvalidValue_NothingApplied` proves the mixed-list all-or-nothing case, green both runs. Unknown key, out-of-bounds alone, and non-overridable-branch-override are not separately tested |
 | U-D5 | Resolution order: branch override → global → default | Each wins in turn | PASS — **written seventh pass, isolation widened eighth pass** | `AdminGlobalSettingsLiveEffectEndpointTests.SettingResolutionOrder_BranchOverride_ThenGlobal_ThenDefault_EachWinsInTurn`: sets a global value distinct from the registry's own fixed `default`, observes it take effect; sets a branch override distinct from both, observes it win; clears the override, observes fallback to global. The default->global link is proven by the registry `default` field never moving while `effectiveValue` does; `CachedBusinessSettings.Resolve`'s own one-line `globalValue ?? definition.Default` fallback is not independently exercised beyond that, honestly noted in the test's own doc comment. **CODE_REVIEW eighth pass (HIGH):** this test mutates `booking.slotHoldMinutes`, the exact global setting `AdminCatalogueSettingsEndpointTests.GetSettings_ReturnsEveryRegistryKeyWithBoundsAndEffectiveValue` hard-asserted the ambient value of with no isolation of its own — that whole class now also carries `[Collection(AdministrationGlobalSettingsCollection.Name)]`, closing the cross-class race the gate found (different collections run concurrently by default in xUnit v2; both classes hit the same physical database row) |
 | U-D6 | Every `SettingDefinitions` default within its own bounds; keys unique | As stated | PASS (uniqueness only) | `SettingDefinitionsAggregationTests.All_RealAdministrationRegistry_HasNoDuplicateKeys` — green both runs. **No test checks every default is within its own declared bounds** — a copy-paste bounds/default mismatch would not be caught |
-| U-D7 | `Money`: no `double`, scale 2, negative rejected | As stated | PASS — **written seventh pass, one claim corrected, closed eighth pass** | `MoneyTests` (new file): `Constructor_TakesDecimalNotDouble` (reflection over the one constructor), `Constructor_RoundsToTwoDecimalPlaces_BankersRounding` (theory, including two banker's-rounding midpoints). "Negative rejected" does **not** hold for this type — its own doc comment says non-negativity is "each owning aggregate's job, not this type's" (enforced instead by `SetServicePriceCommandValidator.Amount.GreaterThanOrEqualTo(0)`); `Constructor_NegativeAmount_IsNotRejectedByThisType` proves the actual, deliberate behaviour instead of asserting the original wording. Also covers currency-code casing/length, `MinorUnits`/`FromMinorUnits` round-trip, and both operators. **Eighth pass (CODE_REVIEW LOW):** the aggregate-level enforcement the correction rests its argument on now has its own end-to-end proof — `AdminCatalogueSettingsEndpointTests.SetServicePrice_NegativeAmount_Returns400` (`POST /api/admin/services/{id}/prices`, `amount: "-5.00"` -> `400`) |
+| U-D7 | `Money`: no `double`, scale 2, negative rejected | As stated | PASS — **written seventh pass, one claim corrected, closed eighth pass** | `MoneyTests` (new file): `Constructor_TakesDecimalNotDouble` (reflection over the one constructor), `Constructor_RoundsToTwoDecimalPlaces_BankersRounding` (theory, including two banker's-rounding midpoints). "Negative rejected" does **not** hold for this type — its own doc comment says non-negativity is "each owning aggregate's job, not this type's" (enforced instead by each price command's validator, e.g. `ScheduleSkuPriceCommandValidator`); `Constructor_NegativeAmount_IsNotRejectedByThisType` proves the actual, deliberate behaviour instead of asserting the original wording. Also covers currency-code casing/length, `MinorUnits`/`FromMinorUnits` round-trip, and both operators. **Eighth pass (CODE_REVIEW LOW):** the aggregate-level enforcement the correction rests its argument on was given its own end-to-end proof, through a price endpoint since removed in HO-P1 |
 | U-E1 | CSV writer: `=HYPERLINK(...)`, `+1`, `-1`, `@x` | Each cell prefixed `'` | PASS — **written this gate** | N1 below (`ExportCsv_ReasonBeginningWithAFormulaCharacter_IsEscapedWithALeadingApostrophe`, 4 theory cases). `BuildCsv`/`Escape` are private methods on the controller with no unit-test seam, so exercised through the real export instead, as the row's own header note permits ("Infrastructure/Api-class rows in IntegrationTests as plain unit tests") |
 | U-E2 | Query validator: missing range; range >366 days | `400` each | PASS | `AdminAuditEntriesEndpointTests.MissingDateRange_Returns400` (green both runs). The >366-day half is not separately tested — see "Gaps left deliberately" |
 | U-F1 | `LimitedMarkup.Validate`: `<script>`, `<b>`, `javascript:`, `data:`, `http:` link | `InvalidContentMarkup`/`InvalidContentLink` | PASS (partial) | `ContentWithScriptTag_Returns400InvalidContentMarkup` — green both runs. Only the `<script>` case is exercised; `<b>`, `javascript:`, `data:`, plain `http:` are not separately probed |
@@ -230,7 +228,6 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
 | I-A1 | Host starts, scope validation on | Every registration resolves | PASS | Not a standalone test, but every one of the ~100 `AdministrationApiFactory`-based tests in this run builds the full host with `ValidateScopes`/`ValidateOnBuild` on (§12.7) before it can do anything else; a broken registration would fail every one of them at host build, not just one. Watched: all green, both runs |
-| I-A3 | Nurse `POST .../deceased` | `403`; one `AuthorizationDenied` audit row | PASS — **written this gate** | N7 below (`NurseMarksCatDeceased_Returns403_AndWritesOneAuthorizationDeniedAuditRow`). The 403 half alone was already proven by `AccountantOnlyStaff_CannotMarkCatDeceased_Returns403` (a different, also-disallowed role); no existing test had searched the audit log for the row at all |
 | I-B1 | Migration on empty database | `admin` schema, every table/index; `MAIN` seeded, no hours | PASS | `MigrationsOnAnEmptyDatabaseTests` — green both runs (creates a scratch database, applies every migration, drops it) |
 | I-B2 | Create branch, hours, holiday, half-day closure, calendar | Intervals exact; holiday absent; half-day shortened | PASS | `AdminBranchEndpointTests.CreateBranch_SetHours_AddClosure_CalendarReflectsBoth` — green both runs |
 | I-B3 | Duplicate branch code; duplicate room name same branch; same name other branch | `400`; `400`; `201` | PASS | `DuplicateBranchCode_Returns400`, `DuplicateRoomNameInSameBranch_Returns400_DifferentBranch_Returns201` — green both runs |
@@ -239,14 +236,12 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
 | I-B6 | `GET /api/branches` anonymous | Contact details + hours; no internal ids | PASS | `AdminBranchEndpointTests.PublicBranchesEndpoint_ReturnsContactDetails_NoAuth` — green both runs |
 | I-C1 | Set pattern, extra shift, approve leave day, `GET` availability | Exact intervals; leave day empty; extra shift present | PASS — **written ninth pass** | `SetRosterPattern_ThenAvailability_ReflectsTheShift` (pattern). `ApprovedLeaveDay_ThenGetAvailability_ExcludesThatDay`: sets a pattern, confirms the shift via `/availability`, has the staff member request and the admin approve leave over that day, re-queries and confirms the day is now empty. `ExtraShiftException_ThenGetAvailability_IncludesTheExtraShift`: confirms an empty day, adds an `ExtraShift` roster exception, re-queries and confirms the interval now appears |
 | I-C2 | Schedule next pattern, advance `FakeTimeProvider`, `GET` roster | Promoted lazily, on read | PASS — **written seventh pass, one claim corrected** | `AdminRosterLeaveEndpointTests.ScheduleNextPattern_AdvancePastEffectiveDate_NotPromotedByABareRead_PromotedByTheNextCommand`. §8.5's own table (line 270) says promotion is "applied by the availability calculator on read" -- that half is `StaffAvailabilityTests` (U-C2), a pure computed effective-pattern selection with no persisted state. The raw roster *listing* (`GetBranchRostersQueryHandler`) is a plain DB projection with no promotion call at all -- this test proves a bare `GET` of it does **not** promote the stored split, even well past the effective date, and that the next roster-loading *command* (scheduling a third pattern) does promote it first, exactly matching `PromoteDuePattern`'s own doc comment ("called lazily by any command that loads this roster... never by a background job") |
-| I-C3 | Nurse requests, admin approves | `201`; `204`; `Approved`; audit row w/ decider | PASS | `RequestLeave_Approve_MarksApprovedAndAudited` — green both runs |
+| I-C3 | Reception staff member requests, admin approves | `201`; `204`; `Approved`; audit row w/ decider | PASS | `RequestLeave_Approve_MarksApprovedAndAudited` — green both runs |
 | I-C4 | Event spy on approval | `StaffLeaveApprovedEvent` raised once, right range | PASS (indirect, not a spy) | No dedicated event-spy test exists (contrast the pattern `EventPersonalDataReflectionTests`/spies elsewhere in the suite use). `ApproveLeave_WithDecisionNote_AuditRowIncludesTheNote` proves the event fired at least once (its handler, `AuditLeaveDecisionHandler`, only runs because the event was raised) and that the resulting row is correct, but does not assert "exactly once" or inspect the event's own field values directly |
-| I-C5 | Nurse approves a request | `403` | PASS | `NurseApprovingLeave_Returns403` — green both runs |
+| I-C5 | Reception staff member approves a request | `403` | PASS | `ReceptionApprovingLeave_Returns403` — green both runs |
 | I-C6 | Roster for `Accountant`-only staff | `400 StaffNotRosterable` | PASS | `RosterableRoleRequired_AccountantOnlyStaff_Returns400` — green both runs |
-| I-D1 | Service + current price + scheduled price; `GET /api/services` | Current only; `/prices` shows both | PASS | `CreateServiceAndPrice_PublicServicesShowsCurrentPriceOnly` — green both runs |
-| I-D2 | Two prices, same `EffectiveFrom`, concurrently | One `201`, one `400`, never two rows | PASS | `TwoPricesWithSameEffectiveDate_Returns400` (sequential) and `..._SentConcurrently_OneCreatedOneRejected_NeverTwoRows` (the actual race) — both green both runs |
 | I-D4 | Change `security.staffIdleTimeoutMinutes` to 5; idle 6 minutes | `401 session_idle_timeout` | PASS — **written seventh pass, isolation widened eighth pass** | `AdminGlobalSettingsLiveEffectEndpointTests.ChangeStaffIdleTimeoutMinutes_IdleSession_TimesOutAtTheNewValue`. Isolation: a dedicated `[Collection(AdministrationGlobalSettingsCollection.Name)]` marked `DisableParallelization = true`, reading the original value first and restoring it in `finally`. Uses `AdministrationApiFactory.WithFakeTimeProvider()` (new, mirrors `AccountsApiFactory`'s own). The refusal body's own `idleTimeoutMinutes` field is asserted as `5`, not the registry default `30` — direct proof the changed value, not the seed default, governed the timeout. **CODE_REVIEW eighth pass (HIGH), found while grepping the whole project for this finding:** HO-ACC-001's own `StaffSessionEndpointTests.PassiveGet_IdleExpired_AsTheFirstRequestAfterIdling_ReturnsSessionIdleTimeoutNotIdentity` hard-asserts the ambient `idleTimeoutMinutes` is `30` (the registry default) with no isolation of its own, against this exact global setting — that class (a different factory type, `AccountsApiFactory`, but the same physical database) now also carries `[Collection(AdministrationGlobalSettingsCollection.Name)]`, edited on HO-ACC-001's behalf and recorded in Amended (42) |
-| I-D5 | Any settings change | `DataChange` audit row, before/after | PASS — **written ninth pass** | `ChangeGlobalSetting_AuditsADataChangeRowWithBeforeAndAfterValues`: changes `booking.slotHoldMinutes` globally, searches `/api/admin/audit-entries` for the resulting `BusinessSettingsChangedEvent` row on `BusinessSettingsAggregate` at `SettingScopes.GlobalId`, asserts `beforeValue`/`afterValue` contain the old/new values. `ChangeBranchSettingOverride_AuditsADataChangeRowWithTheAfterValue`: same for a branch override on a fresh branch (after-value only — a first-write insert has no before). Confirms `BusinessSettingsAggregate.Change`/`ClearOverride`'s `UpdateVersion()` call does mark the root `Modified` in EF even though the actual mutation lives in the owned `Values` collection — no source change was needed |
+| I-D5 | Any settings change | `DataChange` audit row, before/after | PASS — **written ninth pass** | `ChangeGlobalSetting_AuditsADataChangeRowWithBeforeAndAfterValues`: changes `orders.pickupCollectionDays` globally, searches `/api/admin/audit-entries` for the resulting `BusinessSettingsChangedEvent` row on `BusinessSettingsAggregate` at `SettingScopes.GlobalId`, asserts `beforeValue`/`afterValue` contain the old/new values. `ChangeBranchSettingOverride_AuditsADataChangeRowWithTheAfterValue`: same for a branch override on a fresh branch (after-value only — a first-write insert has no before). Confirms `BusinessSettingsAggregate.Change`/`ClearOverride`'s `UpdateVersion()` call does mark the root `Modified` in EF even though the actual mutation lives in the owned `Values` collection — no source change was needed |
 | I-D6 | `GET /api/admin/settings` | Every key with bounds, unit, default, effective value | PASS | `GetSettings_ReturnsEveryRegistryKeyWithBoundsAndEffectiveValue` — green both runs |
 | I-E1 | Search by actor/entity/action/category/range | Correct rows; `actorDisplayName` populated | PASS | `SearchByActor_FindsTheChangeItMade`, `SearchByCategory_LowerCase_Returns200AndFiltersCorrectly` — green both runs |
 | I-E2 | Export CSV: streamed, header, injection-guarded, `AuditLogExported` row | As stated | PASS — **written this gate for the two unverified halves** | `ExportCsv_ReturnsCsvResponseWithHeaderRow` (renamed seventh pass from `ExportCsv_ReturnsCsvAndAuditsTheExport`) already proved "streamed" + "header" (green both runs). N1 (this gate) proves "injection-guarded" for real. N2 (this gate, `ExportCsv_WritesOneAuditLogExportedRow_FindableBySearchingForIt`) proves the audit row is actually written and searchable — the existing test's own name claimed this but never checked it |
@@ -259,7 +254,7 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
 | I-F5 | Publish v2 | v2 pending again; v1 acceptance retained with its version | PASS | Same test as I-F4, second half — green both runs |
 | I-F6 | Content with `<script>` | `400 InvalidContentMarkup` | PASS | `ContentWithScriptTag_Returns400InvalidContentMarkup` — green both runs |
 | I-F7 | Maintenance on; status; admin endpoint; staff sign-in | `maintenanceMode: true`; admin `200`; sign-in `200` | PASS | `MaintenanceMode_NeverBlocksAdminApiOrStaffSignIn` — green both runs |
-| I-X1 | Log capture across all cases | No secret/policy-body/note text at Information+ | PASS — **written seventh pass, one claim corrected** | `AdminLogCaptureEndpointTests.RepresentativeFlows_CarryingFreeTextFields_LeaveNoTraceInTheLogs`. **Correction:** the earlier claim that "no log-capture harness exists anywhere in the tree for either HO-ACC-001 or this handover" was wrong -- `CatEcommerceApiFactory.WithCapturedLogs()` already existed and is already used by HO-ACC-001's own `SessionResolutionFailureTests`; this is that harness's first use for Administration. Marker-tagged free text (a policy body, a leave note and decision note, the maintenance message, a branch phone number) is asserted absent from the captured logs at ANY level, not just Information+ (a broader, still-valid check) |
+| I-X1 | Log capture across all cases | No secret/policy-body/note text at Information+ | PASS — **written seventh pass, one claim corrected** | `AdminLogCaptureEndpointTests.RepresentativeFlows_CarryingFreeTextFields_LeaveNoTraceInTheLogs`. **Correction:** the earlier claim that "no log-capture harness exists anywhere in the tree for either HO-ACC-001 or this handover" was wrong -- `AmarGramApiFactory.WithCapturedLogs()` already existed and is already used by HO-ACC-001's own `SessionResolutionFailureTests`; this is that harness's first use for Administration. Marker-tagged free text (a policy body, a leave note and decision note, the maintenance message, a branch phone number) is asserted absent from the captured logs at ANY level, not just Information+ (a broader, still-valid check) |
 
 ## New cases written this gate (N1–N12)
 
@@ -267,7 +262,6 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
 |---|---|---|---|---|
 | N1 | `AdminAuditEntriesEndpointTests.ExportCsv_ReasonBeginningWithAFormulaCharacter_IsEscapedWithALeadingApostrophe` (4 theory cases: `=`, `+`, `-`, `@`) | U-E1, I-E2 | PASS (after one self-correction) | The `=` case's original decision note (`=HYPERLINK("...")`) failed on first execution — the assertion didn't account for `Escape`'s own doubling of embedded quotes; the product was correct, the test's expected string wasn't. Fixed to a quote-free `=1+1` case. 4/4 green on both of the two full-suite passes after the fix. See Environment |
 | N2 | `AdminAuditEntriesEndpointTests.ExportCsv_WritesOneAuditLogExportedRow_FindableBySearchingForIt` | I-E2 | PASS | Green both runs |
-| N3 | `AdminAuthorizationDenialAndNulFilterCrossAreaEndpointTests.NurseMarksCatDeceased_Returns403_AndWritesOneAuthorizationDeniedAuditRow` | I-A3 | PASS | Green both runs |
 | N4 | `...ShopManagerPublishesPolicyVersion_Returns403_AndWritesOneAuthorizationDeniedAuditRow` | I-A3-shaped, `Policies.Manage` denial | PASS | Green both runs |
 | N5 | `...CustomerSignIn_NulInIdentifier_Returns400ContainsControlCharacter_NotInvalidCredentials` | ARCH pass-5 MEDIUM 1 (NUL cross-area effect) | PASS | Green both runs |
 | N6 | `...CustomerSignIn_NulInPassword_Returns400ContainsControlCharacter_NotInvalidCredentials` | same | PASS | Green both runs |
@@ -297,7 +291,7 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
 | R14 | SECURITY pass 5 | Leave GiST exclusion constraint closes the sequential pre-check's race | `TwoOverlappingLeaveRequests_SentConcurrently_OnlyOneSucceeds` | PASS | Green both runs |
 | R15 | SECURITY pass 5 | CSV export `Cache-Control: no-store` | `ExportCsv_ReturnsCsvResponseWithHeaderRow` (renamed seventh pass) | PASS | Green both runs |
 | R16 | ARCHITECTURE pass 5 (MEDIUM 1) | Global NUL filter's cross-area effect on Accounts sign-in/registration — flagged as unverified by any committed test | N5–N10 (this gate) | PASS | See N5–N10 above |
-| R17 | ARCHITECTURE/SECURITY pass 5 | I-A3's `AuthorizationDenied` audit row never actually searched for by any test | N3, N4 (this gate) | PASS | See N3–N4 above |
+| R17 | ARCHITECTURE/SECURITY pass 5 | I-A3's `AuthorizationDenied` audit row never actually searched for by any test | N4 (this gate) | PASS | See N4 above |
 
 ## Acceptance-criteria coverage (§18)
 
@@ -306,10 +300,9 @@ wording. U-C1/U-C3/I-C1/I-D5 (the ACCEPTANCE gate's own NOT MET criteria) are no
 | A1 (ADM-01 AC1, calendar) | U-B3, U-B4, I-B2 | Covered |
 | A2 (ADM-01 AC2, second branch, branch-assigned staff) | I-B2, I-B5, U-B6 | Covered |
 | A3 (ADM-02 AC1, every endpoint matches Appendix D) | U-A1, U-A2 (now proven, seventh pass) | Covered |
-| A4 (ADM-02 AC2, 403 + logged) | I-A3 (now proven for real, N3/N4) | Covered |
+| A4 (ADM-02 AC2, 403 + logged) | N4 | Covered |
 | A6 (ADM-03 AC1, availability) | U-C1 (now fully proven, ninth pass), U-C2/U-C4 (seventh pass), U-C3 (ninth pass), I-C1 (ninth pass), I-C2 (seventh pass) | Covered |
 | A7 (ADM-03 AC2, server half — event) | U-C6 (now proven, seventh pass), I-C4 (indirect, not a spy) | **Partially covered** — only I-C4's "exactly once" / field-level spy assertion remains unwatched (unchanged; out of this round's scope) |
-| A8 (ADM-04 AC, price effective-dating) | U-D2, U-D3, I-D1, I-D2 | Covered |
 | A9 (ADM-05 AC1, every setting editable/validated) | U-D4 (partial), U-D5 (now proven, seventh pass), U-D6 (uniqueness only), I-D6 | **Partially covered** — no test checks every default is within its own bounds (unchanged; out of this round's scope) |
 | A10 (ADM-05 AC2, audited with before/after) | I-D5 (now directly watched, ninth pass) | Covered |
 | A11 (ADM-05, changes take effect without restart) | I-D4 (now proven, seventh pass) | Covered — `AdminGlobalSettingsLiveEffectEndpointTests`, isolated via `AdministrationGlobalSettingsCollection` |

@@ -14,12 +14,12 @@ Written: 2026-10-14  ·  Executed: 2026-10-14 (see the Evidence column)
 
 ## Summary
 
-Rows counted across the unit, end-to-end, regression, mutation and whole-run tables (107, after the ACCEPTANCE follow-up of 2026-10-14). The acceptance table has its own status column.
+Rows counted across the unit, end-to-end, regression, mutation and whole-run tables (106: 107 after the ACCEPTANCE follow-up of 2026-10-14, less one row for a section HO-P1 removed). The acceptance table has its own status column.
 
 | | Count |
 |---|---|
-| Total | 107 |
-| PASS | 99 |
+| Total | 106 |
+| PASS | 98 |
 | FAIL | 2 (E-B2: four other-slice routes over the 170 kB budget, backlog row 68; E-B1: `/` and `/shop/products/[slug]` over 2500 ms, SHP's; both filed per row 109) |
 | PARTIAL | 2 (E-A1 MSW and real: owner-accepted, row 108) |
 | BLOCKED | 4 (U-X1, E-C4 MSW, E-C4 real, E-X2) |
@@ -30,7 +30,7 @@ Rows counted across the unit, end-to-end, regression, mutation and whole-run tab
 - Worktree D:/my-repo/cat_ecommerce-wt/XCT-002, branch ho/XCT-002, head 0b69692a plus this gate's test-only changes. Windows 11, Node via nvm, .NET SDK 9.0.300.
 - Unit: vitest 5.0.1 (jsdom), `--maxWorkers=2`.
 - MSW Playwright: `next dev`, `NEXT_PUBLIC_USE_MOCKS=true`, chromium, PORT 3113, `--workers=1`.
-- Real API: `dotnet run` of src/Api/CatEcommerce.Api on http://localhost:5113 in Development with environment-variable settings; PostgreSQL on localhost:5432, database `catecommerce_xct002e2e` (dropped, recreated and migrated to head `20261013180959_AttachRetentionGuardsToReportingTables` for the final run; two Administrator accounts seeded by SQL with an Argon2id hash I generated). `catecommerce_dev` and `catecommerce_test` were never opened. Web: `next build` with `NEXT_PUBLIC_USE_MOCKS=false`, `NEXT_PUBLIC_API_BASE_URL=http://localhost:5113`, then `next start -p 3113`, `XCT_PROD_BUILD=1`.
+- Real API: `dotnet run` of src/Api/AmarGram.Api on http://localhost:5113 in Development with environment-variable settings; PostgreSQL on localhost:5432, database `catecommerce_xct002e2e` (dropped, recreated and migrated to head `20261013180959_AttachRetentionGuardsToReportingTables` for the final run; two Administrator accounts seeded by SQL with an Argon2id hash I generated). `catecommerce_dev` and `catecommerce_test` were never opened. Web: `next build` with `NEXT_PUBLIC_USE_MOCKS=false`, `NEXT_PUBLIC_API_BASE_URL=http://localhost:5113`, then `next start -p 3113`, `XCT_PROD_BUILD=1`.
 - Sweeps: tests/perf/playwright.config.ts, `next dev` with MSW, one audience at a time.
 - Runs were sequential. No browser or server was left running; .next, test-results and the logs were removed.
 - The sheet that stood here before (the builder's) is in git at 0b69692a.
@@ -53,7 +53,6 @@ A handover case with no matching test is marked at execution time.
 | U-A9 | OfflineBanner in each state | Offline / degraded / recovered wording; role=status; text not colour; link only with valid snapshot | PASS | Full vitest run (232 files) and a verbose run of the four XCT dirs (12 files, 131 tests, 0 failed): board-and-banner U-A9 (6 tests) |
 | U-A10 | OfflineBoard with a valid snapshot | Both lists sorted, saved-at time, no action button | PASS | Full vitest run (232 files) and a verbose run of the four XCT dirs (12 files, 131 tests, 0 failed): board-and-banner U-A10 |
 | U-A11 | Expired snapshot; different staffAccountId; no snapshot | Three distinct explanations, no data | PASS | Full vitest run (232 files) and a verbose run of the four XCT dirs (12 files, 131 tests, 0 failed): board-and-banner U-A11 (4 tests) |
-| U-A12 | boardingTasks omitted NotPermitted / NotAvailable | Each reason in its own words | PASS | Full vitest run (232 files) and a verbose run of the four XCT dirs (12 files, 131 tests, 0 failed): board-and-banner U-A12 |
 | U-A14 | OfflineIdleLock after idleTimeoutMinutes | Data replaced by locked message; input before resets the timer | PASS | Full vitest run (232 files) and a verbose run of the four XCT dirs (12 files, 131 tests, 0 failed): board-and-banner U-A14; board-security idle timer cases |
 | U-A15 | Recovery while on the board | Routed to ?from=, queries invalidated, announcement | PASS | Full vitest run (232 files) and a verbose run of the four XCT dirs (12 files, 131 tests, 0 failed): board-and-banner U-A15 (3 tests) |
 | U-A16 | Sign-out; person change | Store cleared in both cases | PASS | Full vitest run (232 files) and a verbose run of the four XCT dirs (12 files, 131 tests, 0 failed): store-and-sync U-A16 (8 wipe-path tests) |
@@ -84,7 +83,7 @@ Two runs where the handover says so: MSW (`xct-offline`, `xct-operations`; `next
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
-| E-A1 (MSW) | Reception opted in, snapshot, go offline | Within 30 s banner; list stays; actions disabled with reason | PARTIAL | Corrected 2026-10-14 (ACCEPTANCE row 110): xct-offline E-A1/E-A2/E-A6 asserts the banner and goes straight to the board; it never asserts that the front desk keeps today's list or that its actions are disabled with a reason. The front desk's check-in and walk-in buttons are not disabled (they fail fast, XCT row 65); owner accepted as built 2026-10-14 (row 108; APT.md W21). Shared controls: U-A7. |
+| E-A1 (MSW) | Reception opted in, snapshot, go offline | Within 30 s banner; list stays; actions disabled with reason | PARTIAL | Corrected 2026-10-14 (ACCEPTANCE row 110): xct-offline E-A1/E-A2/E-A6 asserts the banner and goes straight to the board; it never asserts that the front desk keeps today's list or that its actions are disabled with a reason. The front desk's own action buttons are not disabled (they fail fast, XCT row 65); owner accepted as built 2026-10-14 (row 108; APT.md W21). Shared controls: U-A7. |
 | E-A1 (real) | Same against the real API | Same | PARTIAL | Corrected 2026-10-14 (row 110): xct-real-api "E-A1/E-A4/E-A5/E-A6" passed, but asserts the board heading and zero buttons, not the front desk's list or disabled actions; same owner acceptance as the MSW row. |
 | E-A2 (MSW) | Open the board from the banner | Both lists read-only with saved-at | PASS | MSW run: xct-offline + xct-operations, chromium, PORT 3113, workers=1, next dev: 14 passed. xct-offline E-A1/E-A2/E-A6 (board opened while online, then the connection dropped) |
 | E-A3 (MSW) | Try a write while offline | Blocked before any request; nothing queued | PASS | MSW run: xct-offline + xct-operations, chromium, PORT 3113, workers=1, next dev: 14 passed. xct-offline E-A3 |
@@ -168,10 +167,10 @@ PASS means the suite caught it (a test failed). A surviving mutation is a FAIL o
 |---|---|---|---|---|
 | T1 | `tsc --noEmit` | 0 errors | PASS | `npx tsc --noEmit` clean (after my test changes) |
 | T2 | `eslint . --max-warnings 0` | 0 problems | PASS | `npx eslint . --max-warnings 0` clean |
-| T3 | `vitest run --maxWorkers=2` (full); known flakes rerun alone | All pass | PASS | Full run: 232 files, 1648 tests, 2 failed: goods-receipt-form U-C6 and staff-booking-slots "SlotNoLongerAvailable" (neither in this area). Alone: staff-booking-slots 2/2 passed; goods-receipt-form failed once alone (6/7), then 7/7 twice. shared-pieces did not fail. See backlog row 103. |
+| T3 | `vitest run --maxWorkers=2` (full); known flakes rerun alone | All pass | PASS | Full run: 232 files, 1648 tests, 2 failed: goods-receipt-form U-C6 and a spec since removed in HO-P1 (neither in this area). Alone: the removed spec 2/2 passed; goods-receipt-form failed once alone (6/7), then 7/7 twice. shared-pieces did not fail. See backlog row 103. |
 | T4 | `next build` | Succeeds | PASS | `next build` (mocks) compiled in 57 s, lint and types clean; a second build with NEXT_PUBLIC_USE_MOCKS=false also compiled |
 | T5 | MSW Playwright xct-offline, xct-operations (workers=1, PORT 3113) | All pass | PASS | 14 passed (4.5 min) chromium, PORT 3113, workers=1 |
-| T6 | MSW Playwright regression: staff-auth, staff-customers, appointments-frontdesk, admin-functional | All pass | PASS | 20 passed (4.5 min): admin-functional 9, appointments-frontdesk 3, staff-auth 6, staff-customers 2 |
+| T6 | MSW Playwright regression: staff-auth, staff-customers, admin-functional, plus one spec since removed in HO-P1 | All pass | PASS | 20 passed (4.5 min): admin-functional 9, staff-auth 6, staff-customers 2, the removed spec 3 |
 | T7 | xct-real-api on a production build | All pass or documented skips | PASS | Final clean run on a freshly migrated DB: 10 passed, 1 failed (E-A9 only because of the 429 sign-in limit); E-A9 alone passed after 70 s. Earlier runs: 401 (my seed hash was wrong, fixed), and one E-C3 failure (spec race, fixed). |
 | T8 | Full 235-route 360 px sweep | No overflow | PASS | 235 routes x 4 widths, 0 failed |
 | T9 | Full 235-route axe sweep | Zero serious/critical | PASS | 235 routes, 0 failed |
@@ -180,7 +179,7 @@ PASS means the suite caught it (a test failed). A surviving mutation is a FAIL o
 
 | Criterion | Covered by | Status |
 |---|---|---|
-| A1 lists visible offline, read-only | U-A10, U-A12, E-A1, E-A2 | PASS |
+| A1 lists visible offline, read-only | U-A10, E-A1, E-A2 | PASS |
 | A2 survive reload offline | E-A4, E-A5 (real, prod) | PASS |
 | A3 offline announced, writes disabled, nothing lost or queued | U-A7, U-A8, U-A9, E-A3, E-A1 | PASS (owner): shared controls disabled (U-A7); the front desk's own buttons fail fast, accepted as built by the owner 2026-10-14 (row 108) |
 | A4 refresh on return | U-A15, E-A6 | PASS |

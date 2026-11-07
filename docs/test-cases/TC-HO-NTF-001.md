@@ -23,9 +23,9 @@ in HO-NTF-001-TEST.md.)
 
 ## Environment
 
-- Build: `dotnet build CatEcommerce.sln` — 0 warnings, 0 errors, both before and after the additions
+- Build: `dotnet build AmarGram.sln` — 0 warnings, 0 errors, both before and after the additions
   below.
-- Database: `CATECOMMERCE_TEST_DB` / `ConnectionStrings__CatEcommerce` =
+- Database: `AMARGRAM_TEST_DB` / `ConnectionStrings__AmarGram` =
   `Host=localhost;Port=5432;Database=catecommerce_ntf;Username=postgres;Password=postgres`. Dropped
   and recreated twice (once for the "before" run, once for the "after" run) via
   `dotnet ef database drop --force` / `dotnet ef database update`, both against the single squashed
@@ -54,7 +54,7 @@ in HO-NTF-001-TEST.md.)
 | U-A6 | Email body `<b>`, `javascript:`, Text-var link target | Rejected | PASS | `TemplateRulesTests.EmailBodyWithHtmlTag_IsRejected` / `EmailLinkTarget_TextVariable_IsRejected` |
 | U-A7 | SMS body `<`/link syntax | `InvalidTemplateText` | PASS | `TemplateRulesTests.SmsBodyWithAngleBracketOrLinkSyntax_IsRejected` |
 | U-A8 | Every shipped definition's defaults | Valid; keys unique/well-formed | PASS | `TemplateRulesTests.EveryShippedDefinition_DefaultsPassValidation_AndKeysAreUniqueAndWellFormed` |
-| U-A9 | A malicious customer-supplied name renders literally | No markup/expansion | PASS | `NotificationRendererTests.MaliciousCatName_RendersAsLiteralText_NoMarkupNoExpansion` |
+| U-A9 | A malicious customer-supplied name renders literally | No markup/expansion | PASS | `NotificationRendererTests.MaliciousCustomerName_RendersAsLiteralText_NoMarkupNoExpansion` |
 | U-A10 | `<script>` in a value | Encoded in HTML, literal in text | PASS | `NotificationRendererTests.ScriptTagInValue_IsHtmlEncodedInHtmlBody_LiteralInTextBody` |
 | U-A11 | `dueOn` formatting | `12 Oct 2026` | PASS | `NotificationRendererTests.DateVariable_RendersInvariantEnglishFormat` |
 | U-A12 | SMS segment counting | 1/2/1 UCS-2/2 UCS-2 | PASS | `SmsSegmentsTests.Gsm7_160Characters_OneSegment` / `_161Characters_TwoSegments` / `Ucs2_70CharactersWithNonGsmChar_OneSegment` / `Ucs2_71Characters_TwoSegments` |
@@ -94,7 +94,7 @@ in HO-NTF-001-TEST.md.)
 | I-A3 | Save with an unknown placeholder | 400 `UnknownTemplatePlaceholder` | PASS | `NotificationTemplateEndpointTests.SaveWithUnknownPlaceholder_Returns400NamingTheVariable` |
 | I-A4 | Preview unsaved content | 200, rendered, writes nothing | PASS | `NotificationTemplateEndpointTests.Preview_RendersSampleData_WritesNothing` |
 | I-A5 | Two saves, same expected version | One 204, one 409 | PASS | `NotificationTemplateEndpointTests.TwoSavesWithSameExpectedVersion_SecondReturns409` |
-| I-A6 | ShopManager preview/save; nurse view | 200/403/403 | PASS | `NotificationTemplateEndpointTests.ShopManager_CanPreviewAndCannotSave_NurseCannotView` |
+| I-A6 | ShopManager preview/save; Inventory view | 200/403/403 | PASS | `NotificationTemplateEndpointTests.ShopManager_CanPreviewAndCannotSave_InventoryCannotView` |
 | I-A7 | Template save audited | `DataChange` row with before/after | PASS | `NotificationTemplateEndpointTests.TemplateSave_WritesAuditDataChangeRow` |
 | — | Preview/save malformed input | 400 not 500 | PASS | `NotificationTemplateEndpointTests.Preview_MalformedInput_Returns400NotServerError` (`[Theory]`), `Save_NullContentsEntry_Returns400NotServerError` |
 | I-B1 | Reset by mobile, deliver | Expanded; SMS Sent; no inbox copy; redacted after | PASS | `PasswordResetDeliveryEndpointTests.ResetRequestByMobile_DeliversSms_NoInboxCopy_RedactedAfterSend` |
@@ -127,7 +127,7 @@ in HO-NTF-001-TEST.md.)
 | I-D3 | Resend Undeliverable SMS on email | 201, `resendOfId`, audit row | PASS | `NotificationLogAndInboxEndpointTests.Resend_UndeliverableSmsOnEmail_Creates201WithNewIdAndAuditRow` |
 | I-D4 | Resend secret / in-app / 4th resend | 400 each, correct reasons | PASS | `NotificationLogAndInboxEndpointTests.Resend_SecretNotification_InApp_AndFourthResend_AllRefused`, `ResendLimitReached_AfterThreeResends` |
 | I-D5 | Resend after mobile changed | Sent to new number | PASS | Covered by `Resend_UndeliverableSmsOnEmail_Creates201WithNewIdAndAuditRow`'s cross-channel re-render path and `ResendCrossChannelBodyOverflow_FallsBackToOriginalFields_Returns201_Never500`; no test changes the mobile specifically mid-scenario — see Gaps. |
-| I-D6 | Nurse opens log | 403 | PASS | `NotificationLogAndInboxEndpointTests.NurseCannotViewLog` |
+| I-D6 | Inventory staff member opens log | 403 | PASS | `NotificationLogAndInboxEndpointTests.InventoryCannotViewLog` |
 | I-D7 | Log without range / >93 days | 400 each | PASS | `NotificationLogAndInboxEndpointTests.LogWithoutRange_Returns400_AndOver93Days_Returns400` |
 | — | Log/inbox pageSize/pageNumber over limit | 400 | PASS (added this pass) | `NotificationLogAndInboxEndpointTests.LogPageSizeOrPageNumberOverLimit_Returns400`, `InboxPageSizeOverLimit_Returns400` — **no test existed for this before this gate** |
 | I-D8 | Inbox newest-first, unread count, mark read | Correct | PASS | `NotificationLogAndInboxEndpointTests.Inbox_NewestFirst_UnreadCount_MarkRead` |
@@ -139,7 +139,7 @@ in HO-NTF-001-TEST.md.)
 | I-E3 | One-click POST, no cookies | 200, consent revoked | PASS | `UnsubscribeEndpointTests.OneClickUnsubscribe_NoCookies_RevokesConsent` |
 | I-E4 | 21 unsubscribe posts/minute | 429 on 21st | PASS | `UnsubscribeEndpointTests.Unsubscribe_OverPermitLimit_Returns429` |
 | I-E5 | Pending marketing email after unsubscribe | Cancelled `RecipientOptedOut` | PASS | `UnsubscribeEndpointTests.UnsubscribeBeforeDelivery_PendingNotificationIsCancelledRecipientOptedOut` |
-| I-X1 | Log capture across all cases, no body/destination/token/variable | Nothing leaked | BLOCKED | `NotificationsApiFactory` has no `WithCapturedLogs()` support (unlike `CatEcommerceApiFactory`/`FilesApiFactory`) — no harness exists to run this case for Notifications. SECURITY gate verified the "never log the message" contract by code read (sender doc comments, `ProviderResponse` truncation) and by I-B3/I-B16's absence-of-token assertions on the STORED log, not the live logger output. Would need `NotificationsApiFactory.WithCapturedLogs()` added first. |
+| I-X1 | Log capture across all cases, no body/destination/token/variable | Nothing leaked | BLOCKED | `NotificationsApiFactory` has no `WithCapturedLogs()` support (unlike `AmarGramApiFactory`/`FilesApiFactory`) — no harness exists to run this case for Notifications. SECURITY gate verified the "never log the message" contract by code read (sender doc comments, `ProviderResponse` truncation) and by I-B3/I-B16's absence-of-token assertions on the STORED log, not the live logger output. Would need `NotificationsApiFactory.WithCapturedLogs()` added first. |
 | — | Migration apply from empty (`notify` schema) | All tables/columns created | PASS (added this pass) | `NotificationSchemaMigrationTests.EveryMigration_AppliedInOrderFromEmpty_ProducesTheFullNotifySchema` — **`MigrationsOnAnEmptyDatabaseTests` never checked the `notify` schema at all before this gate** |
 | — | `has-pending-model-changes` | Clean | PASS | Executed via `dotnet ef migrations has-pending-model-changes` against the real `catecommerce_ntf` database, before and after this gate's additions — "No changes have been made to the model since the last migration." both times. Not a persistent xUnit test (an EF CLI/environment check, not application behaviour). |
 
@@ -188,9 +188,9 @@ in HO-NTF-001-TEST.md.)
 
 | ID | Why | What would unblock it |
 |---|---|---|
-| U-B14 | No isolated `AccountRecipientDirectory` unit test (merge/anonymise resolution) exists; only exercised through integration tests that also exercise other things | Add a focused `AccountRecipientDirectoryTests` against a real `CatEcommerceDbContext`, seeding a merged chain and an anonymised account directly |
+| U-B14 | No isolated `AccountRecipientDirectory` unit test (merge/anonymise resolution) exists; only exercised through integration tests that also exercise other things | Add a focused `AccountRecipientDirectoryTests` against a real `AmarGramDbContext`, seeding a merged chain and an anonymised account directly |
 | I-C4 | No test drives a branch-specific `notifications.quietHours` override for a Notification request's own `BranchId` | Add a case seeding a branch override and a request carrying that `BranchId` |
-| I-X1 | `NotificationsApiFactory` has no `WithCapturedLogs()` — the harness `CatEcommerceApiFactory`/`FilesApiFactory` already have | Add the same capture hook to `NotificationsApiFactory` and run a representative set of flows (reset, resend, unsubscribe) through it, asserting no body/destination/token/variable value appears at any log level |
+| I-X1 | `NotificationsApiFactory` has no `WithCapturedLogs()` — the harness `AmarGramApiFactory`/`FilesApiFactory` already have | Add the same capture hook to `NotificationsApiFactory` and run a representative set of flows (reset, resend, unsubscribe) through it, asserting no body/destination/token/variable value appears at any log level |
 
 ## Gaps left deliberately
 
@@ -217,14 +217,14 @@ yet. All four are closed this pass.
 
 | ID | First-pass reason | Status | Evidence |
 |---|---|---|---|
-| U-B14 | No isolated `AccountRecipientDirectory` unit test existed | PASS | `AccountRecipientDirectoryTests` (new file, 3 cases): `ResolveAsync_TwoHopMergeChain_ResolvesToTheFinalSurvivor` (a genuine two-hop merge chain, not just one link), `ResolveAsync_AnonymisedCustomer_ResolvesInactive`, `FindMergedDuplicatesAsync_OneHopMerge_ReturnsTheDuplicate` — all call `INotificationRecipientDirectory` directly against a real `CatEcommerceDbContext`, seeded through the same staff/customer HTTP endpoints the rest of the suite already trusts (merge, deletion/anonymise). |
+| U-B14 | No isolated `AccountRecipientDirectory` unit test existed | PASS | `AccountRecipientDirectoryTests` (new file, 3 cases): `ResolveAsync_TwoHopMergeChain_ResolvesToTheFinalSurvivor` (a genuine two-hop merge chain, not just one link), `ResolveAsync_AnonymisedCustomer_ResolvesInactive`, `FindMergedDuplicatesAsync_OneHopMerge_ReturnsTheDuplicate` — all call `INotificationRecipientDirectory` directly against a real `AmarGramDbContext`, seeded through the same staff/customer HTTP endpoints the rest of the suite already trusts (merge, deletion/anonymise). |
 | I-C4 | No test drove a branch-specific `notifications.quietHours` override | PASS | `QuietHoursEndpointTests.BranchQuietHoursOverride_AppliesToARequestCarryingThatBranchId` (new) — a fresh branch's own override ("09:00-10:00" Asia/Dhaka, a window the shared default 21:00-08:00 never covers) is set via `PUT /api/admin/settings?branchId=...`, and a notification carrying that `BranchId` at 09:30 Asia/Dhaka is deferred to 10:00 — only possible if `QuietHoursCalendar` genuinely read THIS branch's override rather than falling back to the main branch or the global default. |
-| I-X1 | Believed no log-capture harness existed for Notifications | PASS | The first pass's own stated reason was **wrong**, not merely unaddressed: `NotificationsApiFactory : CatEcommerceApiFactory`, and `WithCapturedLogs()` is a plain public instance method on the base class with no override anywhere in this tree — already inherited, simply never used here (`AdministrationApiFactory`'s own `AdminLogCaptureEndpointTests`, TEST gate seventh pass, made the identical discovery for its own area). `NotificationLogCaptureEndpointTests.RepresentativeFlows_NeverLogTokenLinkOrRenderedVariableValues` (new) drives a password-reset round trip through a capturing factory and asserts none of `"reset-password#token="` or the raw mobile number appear in any captured log line, at any level. |
+| I-X1 | Believed no log-capture harness existed for Notifications | PASS | The first pass's own stated reason was **wrong**, not merely unaddressed: `NotificationsApiFactory : AmarGramApiFactory`, and `WithCapturedLogs()` is a plain public instance method on the base class with no override anywhere in this tree — already inherited, simply never used here (`AdministrationApiFactory`'s own `AdminLogCaptureEndpointTests`, TEST gate seventh pass, made the identical discovery for its own area). `NotificationLogCaptureEndpointTests.RepresentativeFlows_NeverLogTokenLinkOrRenderedVariableValues` (new) drives a password-reset round trip through a capturing factory and asserts none of `"reset-password#token="` or the raw mobile number appear in any captured log line, at any level. |
 | R6 (ARCHITECTURE HIGH 5, item 27) | `NotificationPersonalDataEraser` registered but never invoked by any test | PASS | `NotificationPersonalDataEraserTests` (new file, 2 cases): `EraseAsync_RedactsTheCustomersOwnNotificationAndRequest_ThenIsIdempotent` (seeds a real Sent notification and its request via the normal delivery pipeline, calls `EraseAsync` directly via `IEnumerable<IPersonalDataEraser>`, and watches both rows redacted — then calls it a second time and watches `Completed` with no further change, per the interface's own idempotency contract) and `EraseAsync_CustomerWithNoNotificationData_ReturnsCompletedWithoutThrowing` (contract item 4). |
 
 ### Environment (this pass)
 
-- Build: `dotnet build CatEcommerce.sln` — 0 warnings, 0 errors.
+- Build: `dotnet build AmarGram.sln` — 0 warnings, 0 errors.
 - Database: `catecommerce_ntf`, dropped and recreated with `psql` and migrated with
   `dotnet ef database update` **twice** (once per full suite run below); `dotnet ef migrations
   has-pending-model-changes` reported clean both times.
@@ -257,11 +257,11 @@ eraser cases.)
 
 ### New test files this pass (test-only; no production code touched beyond what `d5d06da`/`217024a` already fixed)
 
-- `tests/CatEcommerce.IntegrationTests/Endpoints/QuietHoursEndpointTests.cs`:
+- `tests/AmarGram.IntegrationTests/Endpoints/QuietHoursEndpointTests.cs`:
   `BranchQuietHoursOverride_AppliesToARequestCarryingThatBranchId` (I-C4).
-- `tests/CatEcommerce.IntegrationTests/Endpoints/AccountRecipientDirectoryTests.cs` (new file, U-B14).
-- `tests/CatEcommerce.IntegrationTests/Endpoints/NotificationLogCaptureEndpointTests.cs` (new file, I-X1).
-- `tests/CatEcommerce.IntegrationTests/Endpoints/NotificationPersonalDataEraserTests.cs` (new file, R6).
+- `tests/AmarGram.IntegrationTests/Endpoints/AccountRecipientDirectoryTests.cs` (new file, U-B14).
+- `tests/AmarGram.IntegrationTests/Endpoints/NotificationLogCaptureEndpointTests.cs` (new file, I-X1).
+- `tests/AmarGram.IntegrationTests/Endpoints/NotificationPersonalDataEraserTests.cs` (new file, R6).
 
 ### Never marked PASS without watching it (this pass)
 
