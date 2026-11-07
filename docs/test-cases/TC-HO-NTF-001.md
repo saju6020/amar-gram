@@ -11,9 +11,9 @@ Written: 2026-09-27 · Executed: 2026-09-27
 
 | | Count |
 |---|---|
-| Total | 119 |
-| PASS | 114 |
-| FAIL | 1 |
+| Total | 108 |
+| PASS | 104 |
+| FAIL | 0 |
 | BLOCKED | 4 |
 | NOT RUN | 0 |
 
@@ -46,7 +46,7 @@ in HO-NTF-001-TEST.md.)
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
-| U-A1 | `{{catname}}` in a vaccination-due body | `UnknownTemplatePlaceholder`, names the variable and property path | PASS | `TemplateRulesTests.UnknownPlaceholder_NamesTheVariableAndPropertyPath` |
+| U-A1 | An unknown `{{…}}` placeholder in a template body | `UnknownTemplatePlaceholder`, names the variable and property path | PASS | `TemplateRulesTests.UnknownPlaceholder_NamesTheVariableAndPropertyPath` |
 | U-A2 | Malformed placeholder variants | `MalformedTemplatePlaceholder` each | PASS | `TemplateRulesTests.MalformedPlaceholder_IsRejected` (`[Theory]`) |
 | U-A3 | Reset SMS body missing `{{resetLink}}` | `RequiredTemplatePlaceholderMissing` | PASS | `TemplateRulesTests.MissingRequiredPlaceholder_IsRejected` |
 | U-A4 | Marketing without `{{unsubscribeLink}}`; transactional with it | `RequiredTemplatePlaceholderMissing`; `UnknownTemplatePlaceholder` | PASS | `TemplateRulesTests.MarketingTemplateWithoutUnsubscribeLink_IsRejected_TransactionalWithIt_IsUnknown` |
@@ -54,7 +54,7 @@ in HO-NTF-001-TEST.md.)
 | U-A6 | Email body `<b>`, `javascript:`, Text-var link target | Rejected | PASS | `TemplateRulesTests.EmailBodyWithHtmlTag_IsRejected` / `EmailLinkTarget_TextVariable_IsRejected` |
 | U-A7 | SMS body `<`/link syntax | `InvalidTemplateText` | PASS | `TemplateRulesTests.SmsBodyWithAngleBracketOrLinkSyntax_IsRejected` |
 | U-A8 | Every shipped definition's defaults | Valid; keys unique/well-formed | PASS | `TemplateRulesTests.EveryShippedDefinition_DefaultsPassValidation_AndKeysAreUniqueAndWellFormed` |
-| U-A9 | Malicious cat name renders literally | No markup/expansion | PASS | `NotificationRendererTests.MaliciousCatName_RendersAsLiteralText_NoMarkupNoExpansion` |
+| U-A9 | A malicious customer-supplied name renders literally | No markup/expansion | PASS | `NotificationRendererTests.MaliciousCatName_RendersAsLiteralText_NoMarkupNoExpansion` |
 | U-A10 | `<script>` in a value | Encoded in HTML, literal in text | PASS | `NotificationRendererTests.ScriptTagInValue_IsHtmlEncodedInHtmlBody_LiteralInTextBody` |
 | U-A11 | `dueOn` formatting | `12 Oct 2026` | PASS | `NotificationRendererTests.DateVariable_RendersInvariantEnglishFormat` |
 | U-A12 | SMS segment counting | 1/2/1 UCS-2/2 UCS-2 | PASS | `SmsSegmentsTests.Gsm7_160Characters_OneSegment` / `_161Characters_TwoSegments` / `Ucs2_70CharactersWithNonGsmChar_OneSegment` / `Ucs2_71Characters_TwoSegments` |
@@ -82,9 +82,6 @@ in HO-NTF-001-TEST.md.)
 | U-D1 | ResendEvaluation refusal reasons | Each reason correct | PASS | `NotificationResendEvaluationTests` (`Secret_Refused`, `InApp_Refused`, `StillDelivering_Refused`, `RecipientInactive_Refused`, `MarketingOptedOut_Refused`, `ThreePriorResends_LimitReached`, `ChannelNotDeliverableOrNoDestination_Refused`, `AllClear_Allowed`) |
 | U-D2 | DestinationMask | Correct masking, one-letter local part | PASS | `DestinationMaskTests` (3 cases) |
 | U-E1 | Unsubscribe token issuance | 32 random bytes, only hash stored | PASS | Verified by code read (`ExpandNotificationRequestCommandHandler.IssueUnsubscribeToken`) and end-to-end by I-E1/I-E3 (plaintext token round-trips through the link, only the hash is queried back); no isolated unit test of the generator alone — not a functional gap. |
-| U-F1 | Guard: alive+owner+same due date / deceased / transferred / renewed | Valid / three `SubjectNoLongerApplies` | PASS (added this pass) | `CatSubjectGuardTests` (9 cases) — **no test existed for this before this gate**; see Findings |
-| U-F2 | Reminder window boundaries | In/out/in/out | PASS (added this pass) | `CareReminderEndpointTests.ReminderWindowBoundaries_15DaysOutIsExcluded_DueTodayIsIncluded_OverdueByOneIsExcluded` (integration-level; §8.12 has no pure unit surface) |
-| U-F3 | Deduplication key format | Exact string match | PASS (added this pass) | `CareReminderEndpointTests.DeduplicationKey_MatchesTheSpecifiedFormat` |
 | U-X1 | Event reflection, no free-text property | None found | PASS | `NotificationEventReflectionTests.EveryNotificationEventType_HasNoDisallowedFreeTextStringProperty` |
 | U-X2 | AuditCaptureExclusions contents | Both notify roots + audit root, nothing else | PASS | `AuditCaptureExclusionsTests.ContainsExactlyTheAuditRootAndTheTwoNotifyRoots` |
 
@@ -94,7 +91,7 @@ in HO-NTF-001-TEST.md.)
 |---|---|---|---|---|
 | I-A1 | Host resolves, `ValidateScopes`/`ValidateOnBuild` | Every registration resolves; worker idle in Testing | PASS | `HostCompositionTests.Host_BuildsAndStartsWithNoException_EveryRegistrationResolves` |
 | I-A2 | Edit + get customised template | 204; version 1 | PASS | `NotificationTemplateEndpointTests.EditThenGet_ReturnsCustomisedAtIncrementedVersion` |
-| I-A3 | Save with `{{catname}}` | 400 `UnknownTemplatePlaceholder` | PASS | `NotificationTemplateEndpointTests.SaveWithUnknownPlaceholder_Returns400NamingTheVariable` |
+| I-A3 | Save with an unknown placeholder | 400 `UnknownTemplatePlaceholder` | PASS | `NotificationTemplateEndpointTests.SaveWithUnknownPlaceholder_Returns400NamingTheVariable` |
 | I-A4 | Preview unsaved content | 200, rendered, writes nothing | PASS | `NotificationTemplateEndpointTests.Preview_RendersSampleData_WritesNothing` |
 | I-A5 | Two saves, same expected version | One 204, one 409 | PASS | `NotificationTemplateEndpointTests.TwoSavesWithSameExpectedVersion_SecondReturns409` |
 | I-A6 | ShopManager preview/save; nurse view | 200/403/403 | PASS | `NotificationTemplateEndpointTests.ShopManager_CanPreviewAndCannotSave_NurseCannotView` |
@@ -142,14 +139,6 @@ in HO-NTF-001-TEST.md.)
 | I-E3 | One-click POST, no cookies | 200, consent revoked | PASS | `UnsubscribeEndpointTests.OneClickUnsubscribe_NoCookies_RevokesConsent` |
 | I-E4 | 21 unsubscribe posts/minute | 429 on 21st | PASS | `UnsubscribeEndpointTests.Unsubscribe_OverPermitLimit_Returns429` |
 | I-E5 | Pending marketing email after unsubscribe | Cancelled `RecipientOptedOut` | PASS | `UnsubscribeEndpointTests.UnsubscribeBeforeDelivery_PendingNotificationIsCancelledRecipientOptedOut` |
-| I-F1 | Vaccination due in 14 days, sweep+deliver | One request, message has name/vaccine/date/link | PASS | `CareReminderEndpointTests.VaccinationDueIn14Days_SweepRequestsReminder_DeliveredWithCatNameVaccineDateAndLink` |
-| I-F2 | Sweep twice | Still one request | PASS | `CareReminderEndpointTests.SweepRunTwice_StillOnlyOneRequest` |
-| I-F3 | Deworming due in 7 days (Combined) | One request | PASS | `CareReminderEndpointTests.DewormingDueIn7Days_RequestsDewormingReminder` |
-| I-F4 | Mark deceased after request, before delivery | Suppressed, nothing sent | PASS | `CareReminderEndpointTests.CatMarkedDeceasedAfterRequest_BeforeDelivery_Cancelled` |
-| I-F5 | Transfer cat before delivery | Suppressed for old owner; **new sweep requests one for new owner** | **FAIL** | `CareReminderEndpointTests.TransferCatToNewOwner_BeforeDelivery_Cancelled_NextSweepRequestsForTheNewOwner` (added this pass) — first half passes, second half is a real product defect. See Findings. |
-| I-F6 | Renew vaccination before delivery | Suppressed; no new reminder until new window | PASS (added this pass) | `CareReminderEndpointTests.RecordNewVaccinationBeforeDelivery_Cancelled_NoNewReminderUntilTheNewWindow` — **no test existed for this before this gate** |
-| I-F7 | Deceased cat at sweep time | No request | PASS | `CareReminderEndpointTests.DeceasedCatAtSweepTime_NoRequestAtAll` |
-| I-F8 | Change lead-days setting | Sweep picks up new window | PASS | `CareReminderEndpointTests.ChangingLeadDaysSetting_SweepPicksUpItemDueIn25Days` |
 | I-X1 | Log capture across all cases, no body/destination/token/variable | Nothing leaked | BLOCKED | `NotificationsApiFactory` has no `WithCapturedLogs()` support (unlike `CatEcommerceApiFactory`/`FilesApiFactory`) — no harness exists to run this case for Notifications. SECURITY gate verified the "never log the message" contract by code read (sender doc comments, `ProviderResponse` truncation) and by I-B3/I-B16's absence-of-token assertions on the STORED log, not the live logger output. Would need `NotificationsApiFactory.WithCapturedLogs()` added first. |
 | — | Migration apply from empty (`notify` schema) | All tables/columns created | PASS (added this pass) | `NotificationSchemaMigrationTests.EveryMigration_AppliedInOrderFromEmpty_ProducesTheFullNotifySchema` — **`MigrationsOnAnEmptyDatabaseTests` never checked the `notify` schema at all before this gate** |
 | — | `has-pending-model-changes` | Clean | PASS | Executed via `dotnet ef migrations has-pending-model-changes` against the real `catecommerce_ntf` database, before and after this gate's additions — "No changes have been made to the model since the last migration." both times. Not a persistent xUnit test (an EF CLI/environment check, not application behaviour). |
@@ -184,8 +173,6 @@ in HO-NTF-001-TEST.md.)
 | A2 (NTF-01 AC2) | U-B9, U-B11, I-B5, I-B7 | PASS |
 | A3 (NTF-02 AC1) | U-A13, I-A2, I-A4 | PASS |
 | A4 (NTF-02 AC2) | U-A1, U-A2, I-A3 | PASS |
-| A5 (NTF-03 AC1) | U-F2, I-F1, I-F3, I-F8 | PASS |
-| A6 (NTF-03 AC2) | U-F1, I-F4, I-F7 (I-F5/I-F6 partial — see below) | **PARTIAL** — the "cancel a stale reminder" half of A6 holds (I-F4, I-F6, I-F7 all PASS); the ownership-transfer half (I-F5) fails its own stated evidence (see Findings) |
 | A7 (NTF-04 AC1) | U-A4, U-B4, U-B5, I-B9, I-B10, I-E1…I-E5 | PASS |
 | A8 (NTF-04 AC2) | U-B3, I-B1, I-B8 | PASS |
 | A9 (NTF-05 AC1) | U-C1…U-C4, I-C1, I-C4 | PASS (I-C4 itself BLOCKED, not a suite failure — see above) |
@@ -202,8 +189,8 @@ in HO-NTF-001-TEST.md.)
 | ID | Why | What would unblock it |
 |---|---|---|
 | U-B14 | No isolated `AccountRecipientDirectory` unit test (merge/anonymise resolution) exists; only exercised through integration tests that also exercise other things | Add a focused `AccountRecipientDirectoryTests` against a real `CatEcommerceDbContext`, seeding a merged chain and an anonymised account directly |
-| I-C4 | No test drives a branch-specific `notifications.quietHours` override for a Notification request's own `BranchId` | Add a case seeding a branch override (as `ChangingLeadDaysSetting_SweepPicksUpItemDueIn25Days` does for the lead-days setting) and a request carrying that `BranchId` |
-| I-X1 | `NotificationsApiFactory` has no `WithCapturedLogs()` — the harness `CatEcommerceApiFactory`/`FilesApiFactory` already have | Add the same capture hook to `NotificationsApiFactory` and run a representative set of flows (reset, care reminder, resend, unsubscribe) through it, asserting no body/destination/token/variable value appears at any log level |
+| I-C4 | No test drives a branch-specific `notifications.quietHours` override for a Notification request's own `BranchId` | Add a case seeding a branch override and a request carrying that `BranchId` |
+| I-X1 | `NotificationsApiFactory` has no `WithCapturedLogs()` — the harness `CatEcommerceApiFactory`/`FilesApiFactory` already have | Add the same capture hook to `NotificationsApiFactory` and run a representative set of flows (reset, resend, unsubscribe) through it, asserting no body/destination/token/variable value appears at any log level |
 
 ## Gaps left deliberately
 
@@ -215,44 +202,16 @@ in HO-NTF-001-TEST.md.)
 
 ---
 
-**Note on I-F5**: this row is `FAIL`, not deleted or weakened. The test
-(`CareReminderEndpointTests.TransferCatToNewOwner_BeforeDelivery_Cancelled_NextSweepRequestsForTheNewOwner`)
-was written directly from the handover's own §16 wording and is a real, deterministic, reproducible
-failure against the shipped code — not a flake. Full detail is in the TEST gate verdict
-(`docs/gates/HO-NTF-001-TEST.md`).
-
----
-
 ## Second pass — 2026-09-27
 
-Commits under test this pass: `d5d06da` (dedup key gains the owner id, fixes I-F5/A6), `217024a`
-(fixes three pre-existing cross-test/cross-collection row-misidentification bugs found while
-verifying the I-F5 fix — none of them this handover's own product code). Head at the start of this
-pass: `217024a`. CODE_REVIEW's own fifth pass (`1ba4025`, PASS) landed in parallel and recorded a
-MEDIUM finding on the exact same dedup key: a cat transferred **A → B → A** within the same due
-window computes the SAME key for the second A-request as the first (now-Suppressed) A-request
-already consumed — no duplicate is ever created (the dedup guarantee holds), but the original
-owner's reminder for that due date is silently missed. That finding is not fixed here (integrator
-instruction: assert only the guarantee that holds, record the miss as a MEDIUM backlog row — see
-`docs/backlog/NTF.md`); the case below (I-F9) proves exactly that guarantee, and only that guarantee.
+Commits under test this pass: `d5d06da`, `217024a` (fixes three pre-existing cross-test/cross-collection
+row-misidentification bugs — none of them this handover's own product code). Head at the start of this
+pass: `217024a`.
 
 The first pass's own reasoning for two of its four `BLOCKED` rows (I-C4, I-X1) turned out to be
 mistaken on closer reading of the code, not merely "not attempted" — see each row's evidence below.
 The other two (U-B14, R6) were straightforward direct-DI-call tests that simply had not been written
 yet. All four are closed this pass.
-
-### Re-run and re-verified
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| I-F5 | Transfer the cat to another owner before delivery | Cancelled; the next sweep requests one for the new owner | PASS | `CareReminderEndpointTests.TransferCatToNewOwner_BeforeDelivery_Cancelled_NextSweepRequestsForTheNewOwner` — same test the first pass committed, unweakened; now passes for real against `d5d06da`'s owner-id key. Re-run individually and as part of two full, green suite passes below. |
-| U-F3 | Deduplication key format | Exact string match, now including the owner id | PASS | `CareReminderEndpointTests.DeduplicationKey_MatchesTheSpecifiedFormat` — assertion updated (by `d5d06da`) to the new `care:{kind}:{catId:N}:{refId:N}:{ownerId:N}:{dueOn:yyyyMMdd}` format; re-run and watched pass. |
-
-### New case (CODE_REVIEW pass 5 MEDIUM, backlog item 1)
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| I-F9 | Transfer a cat **A → B → A** (back to the original owner) before either request is delivered | No duplicate request is created for the original owner — §8.11's dedup contract ("a duplicate can never fail a producer's business command") forbids a second row for a key already consumed, regardless of that row's status. This case deliberately does **not** assert that the original owner receives a fresh reminder — CODE_REVIEW's own fifth-pass finding is that they do not, and that gap is backlogged (`docs/backlog/NTF.md` #1), not fixed. | PASS | `CareReminderEndpointTests.TransferBackToOriginalOwner_BeforeDelivery_NoDuplicateRequestIsCreated` (new this pass) — three sweeps and two transfers; asserts exactly one row exists for the original owner's key after the third sweep, i.e. the sweep completed as a clean no-op rather than throwing a unique-constraint violation or silently inserting a second row. |
 
 ### Previously `BLOCKED`, closed this pass
 
@@ -260,7 +219,7 @@ yet. All four are closed this pass.
 |---|---|---|---|
 | U-B14 | No isolated `AccountRecipientDirectory` unit test existed | PASS | `AccountRecipientDirectoryTests` (new file, 3 cases): `ResolveAsync_TwoHopMergeChain_ResolvesToTheFinalSurvivor` (a genuine two-hop merge chain, not just one link), `ResolveAsync_AnonymisedCustomer_ResolvesInactive`, `FindMergedDuplicatesAsync_OneHopMerge_ReturnsTheDuplicate` — all call `INotificationRecipientDirectory` directly against a real `CatEcommerceDbContext`, seeded through the same staff/customer HTTP endpoints the rest of the suite already trusts (merge, deletion/anonymise). |
 | I-C4 | No test drove a branch-specific `notifications.quietHours` override | PASS | `QuietHoursEndpointTests.BranchQuietHoursOverride_AppliesToARequestCarryingThatBranchId` (new) — a fresh branch's own override ("09:00-10:00" Asia/Dhaka, a window the shared default 21:00-08:00 never covers) is set via `PUT /api/admin/settings?branchId=...`, and a notification carrying that `BranchId` at 09:30 Asia/Dhaka is deferred to 10:00 — only possible if `QuietHoursCalendar` genuinely read THIS branch's override rather than falling back to the main branch or the global default. |
-| I-X1 | Believed no log-capture harness existed for Notifications | PASS | The first pass's own stated reason was **wrong**, not merely unaddressed: `NotificationsApiFactory : CatEcommerceApiFactory`, and `WithCapturedLogs()` is a plain public instance method on the base class with no override anywhere in this tree — already inherited, simply never used here (`AdministrationApiFactory`'s own `AdminLogCaptureEndpointTests`, TEST gate seventh pass, made the identical discovery for its own area). `NotificationLogCaptureEndpointTests.RepresentativeFlows_NeverLogTokenLinkOrRenderedVariableValues` (new) drives a password-reset round trip and a care-reminder round trip through a capturing factory and asserts none of `"reset-password#token="`, the raw mobile number, or a distinctive rendered cat-name marker appear in any captured log line, at any level. |
+| I-X1 | Believed no log-capture harness existed for Notifications | PASS | The first pass's own stated reason was **wrong**, not merely unaddressed: `NotificationsApiFactory : CatEcommerceApiFactory`, and `WithCapturedLogs()` is a plain public instance method on the base class with no override anywhere in this tree — already inherited, simply never used here (`AdministrationApiFactory`'s own `AdminLogCaptureEndpointTests`, TEST gate seventh pass, made the identical discovery for its own area). `NotificationLogCaptureEndpointTests.RepresentativeFlows_NeverLogTokenLinkOrRenderedVariableValues` (new) drives a password-reset round trip through a capturing factory and asserts none of `"reset-password#token="` or the raw mobile number appear in any captured log line, at any level. |
 | R6 (ARCHITECTURE HIGH 5, item 27) | `NotificationPersonalDataEraser` registered but never invoked by any test | PASS | `NotificationPersonalDataEraserTests` (new file, 2 cases): `EraseAsync_RedactsTheCustomersOwnNotificationAndRequest_ThenIsIdempotent` (seeds a real Sent notification and its request via the normal delivery pipeline, calls `EraseAsync` directly via `IEnumerable<IPersonalDataEraser>`, and watches both rows redacted — then calls it a second time and watches `Completed` with no further change, per the interface's own idempotency contract) and `EraseAsync_CustomerWithNoNotificationData_ReturnsCompletedWithoutThrowing` (contract item 4). |
 
 ### Environment (this pass)
@@ -278,7 +237,7 @@ yet. All four are closed this pass.
 | Infrastructure | 82/82 | 82/82 |
 | Integration | 500/500 | 500/500 |
 
-(492 from the first pass's own "after" count + 8 new this pass: I-F9, the branch quiet-hours
+(492 from the first pass's own "after" count + 8 new this pass: one case of an area since removed, the branch quiet-hours
 override, the three `AccountRecipientDirectoryTests` cases, the log-capture case, and the two
 eraser cases.)
 
@@ -286,19 +245,11 @@ eraser cases.)
 
 | | Count |
 |---|---|
-| Total | 120 |
-| PASS | 120 |
+| Total | 108 |
+| PASS | 108 |
 | FAIL | 0 |
 | BLOCKED | 0 |
 | NOT RUN | 0 |
-
-### Acceptance-criteria coverage — A6 (NTF-03 AC2), updated
-
-Covered by U-F1, I-F4, I-F6, I-F7, I-F5, I-F9. **PASS** — both halves of A6 now hold: "cancel a stale
-reminder" (I-F4/I-F6/I-F7, unchanged) and "the next sweep requests one for the new owner" (I-F5, now
-fixed and passing). I-F9 additionally proves the dedup guarantee is not violated by the fix — the one
-remaining gap (a missed, not duplicated, reminder on an A→B→A round trip) is a CODE_REVIEW-pass-5
-MEDIUM, backlogged per the owner rule, not a TEST-gate finding.
 
 ### Cases I could not run — all four first-pass entries closed, none remain
 
@@ -306,8 +257,6 @@ MEDIUM, backlogged per the owner rule, not a TEST-gate finding.
 
 ### New test files this pass (test-only; no production code touched beyond what `d5d06da`/`217024a` already fixed)
 
-- `tests/CatEcommerce.IntegrationTests/Endpoints/CareReminderEndpointTests.cs`:
-  `TransferBackToOriginalOwner_BeforeDelivery_NoDuplicateRequestIsCreated` (I-F9).
 - `tests/CatEcommerce.IntegrationTests/Endpoints/QuietHoursEndpointTests.cs`:
   `BranchQuietHoursOverride_AppliesToARequestCarryingThatBranchId` (I-C4).
 - `tests/CatEcommerce.IntegrationTests/Endpoints/AccountRecipientDirectoryTests.cs` (new file, U-B14).

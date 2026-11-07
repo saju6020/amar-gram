@@ -25,9 +25,8 @@ Gate-fix round: 2026-10-09 (ARCHITECTURE FAIL: 1 BLOCKER, 4 HIGH) -- rows below 
 
 | ID | Case | Expected | Status | Evidence |
 |---|---|---|---|---|
-| I-B..C | Configuration, cart, guest cookie, merge, prescription lines, out of stock | per §16.2 | PASS | `Ordering*Configuration*`, `OrderingCartEndpointTests` |
+| I-B..C | Configuration, cart, guest cookie, merge, out of stock | per §16.2 | PASS | `Ordering*Configuration*`, `OrderingCartEndpointTests` |
 | I-D1..D14 | Quote, placement (atomic with Billing), concurrency on the last unit, double submit, discount last use, no card data in `ordering.*` | per §16.2 | PASS | `OrderingPlacementEndpointTests`, `OrderStockTests` |
-| I-D5, I-D5b, I-C4 authorised cat | Diet gate against the REAL HO-PHM-001 `IDietAuthorisationGate` (2026-10-10, after the merge of master): a Rx line without a cat cannot be placed (`PrescriptionCatRequired`); an authorised Rx line is placed with its cat; an authorisation that lapses between quote and placement refuses the old quote (`409 CheckoutQuoteChanged`) and a fresh quote excludes the line (`PrescriptionAuthorisationExpired`) | per §16.2 | PASS | `OrderingPlacementEndpointTests.I_D5_*`, `I_D5b_*`; `OrderingCartEndpointTests.I_C4_AnAuthorisedCat_*` (authorisation seeded through `DietAuthorisationAggregate`, the table the real gate reads) |
 | I-D15 | Maintenance mode blocks placement | — | PASS (reflection only) | a global flip is unsafe in the shared database |
 | I-E2..E11 | Transfer reference, confirmation with second approval, expiry, cancellation + credit note, re-order, reconciliation issues, customer data events | per §16.2 | PASS | `OrderingPaymentEndpointTests`, `OrderingPaymentFaultEndpointTests`, `OrderingCustomerDataEndpointTests` |
 | I-F1..F12 | Packing, dispatch (BR-14), collection, tracking, COD delivery, delivery failure, FEFO override, courier webhook (HMAC, dedupe), pick list, manifest | per §16.2 | PASS | `OrderingFulfilmentEndpointTests` (15) |
@@ -39,7 +38,6 @@ Gate-fix round: 2026-10-09 (ARCHITECTURE FAIL: 1 BLOCKER, 4 HIGH) -- rows below 
 | ~~I-G5, I-G6~~ | ~~Restock / write-off decisions (C24)~~ -- **removed, gate fix 3**: disposition is Inventory's quarantine workflow (OQ-19) | — | REMOVED | tests and endpoint deleted |
 | I-G7..G9 | Refund options, cash refund with receipt and credit note, over-refund, idempotent edge, branch scoping | per §16.2 | PASS | `I_G7_*`, `I_G8_*`, `I_G9_*` |
 | I-H1 | Barcode lookup with FEFO batch; cash sale with change; ledger entries of the same kind as online | per §16.2 | PASS | `OrderingPosEndpointTests.I_H1_*` |
-| I-H2 | Rx SKU without a customer and cat | `400 PrescriptionCatRequired` | PASS | `I_H2_*` |
 | I-H3 | Receipt structured data and 48-column text | per §16.2 | PASS | `I_H3_*` |
 | I-H4 | POS double submit with one key | one sale | PASS | `I_H4_*` |
 
@@ -61,7 +59,7 @@ Gate-fix round: 2026-10-09 (ARCHITECTURE FAIL: 1 BLOCKER, 4 HIGH) -- rows below 
 | GF-6a | Counter sale to a new mobile creates a passwordless Reception-channel customer who carries the order and the invoice; a second sale finds the same customer | one account | PASS | `ACounterSale_ToANewMobile_...` |
 | GF-6b | Walk-in customer who later self-registers with the same mobile gets `MobileNumberAlreadyRegistered` with the reset offer; still one account | `400`, "reset your password" | PASS | `TheWalkInCustomer_WhoLaterRegistersOnline_...` |
 | GF-6c | Name and a valid mobile are required; a refused sale leaves no account | `400`; zero accounts | PASS | `ACounterSale_NeedsTheCustomersNameAndAValidMobile`, `ARefusedSale_LeavesNoWalkInAccountBehind` |
-| GF-6d | An existing customer found by mobile is used (not duplicated); the typed name is ignored; a prescription food without a cat is refused | one account | PASS | `ASaleToAKnownCustomer_...`, `I_H2_*` |
+| GF-6d | An existing customer found by mobile is used (not duplicated); the typed name is ignored | one account | PASS | `ASaleToAKnownCustomer_...` |
 | GF-7a | Weight bands applied to the cart's shipping weight (600 g, 3,000 g, 10,000 g, across lines); a SKU without a weight counts as 0 g | 60 / 100 / 160 / 160 | PASS | `CheckoutPricingTests.TheDeliveryCharge_AddsTheWeightBandSurcharge_*`, `ASkuWithoutAShippingWeight_*` |
 | GF-7b | No 0 % tax class: the delivery charge cannot be invoiced; a clean business refusal, not a 5xx. With a class it becomes a `Fee` charge; with no delivery the class is not needed | `DeliveryTaxClassNotConfigured` (a `DomainRuleViolationException` the handlers map to 400) | PASS (unit) | `OrderBillingTests` (2) |
 | GF-8 | Reconciliation issues: another branch neither lists nor resolves (404); the owner branch resolves | per HO-ORD-001 Amended (gate fix 8) | PASS | `AReconciliationIssue_IsListedAndResolvedOnlyByItsOwnBranch` |
@@ -92,7 +90,6 @@ Environment. .NET 9 build green (0 errors). Database `catecommerce_ord` (Npgsql 
 | T6 | Cash refund on a fully paid, fully allocated invoice (payment Unallocated = 0 before) | Billing records a refund of the whole amount against the credit note | PASS | `T6_*`: precondition Unallocated = 0 asserted; afterwards Billing `refund` rows for the credit note sum to 40.00 on the order's payment |
 | FULL-U | Domain, Application, Infrastructure unit suites | green | PASS | 1773 / 372 / 172 passed, 0 failed |
 | FULL-I | Integration suite | green | FAIL (3) | `T4a` (F-1); `I_E11` p95 1976 ms under full-suite load, PASS alone (known load flake); `ShopStaffProductDetailReadEndpointTests.FU1_T1...` (another area's test, upload step `400`), PASS alone 3 of 3 |
-| SKIP | Diet gate | un-skipped 2026-10-10 | PASS | `I_C4`, `I_D5`, `I_D5b` now run against the real PHM gate (see the I-D5 row). Still skipped, not ORD: `ClinicalRecordGateTests.G5` (known EMR defect), `BillingTestGateEndpointTests.XI_15` |
 
 ### Existing tests judged weak
 
@@ -108,7 +105,6 @@ Evidence is the handover's own; status is from the 2026-10-10 full run.
 |---|---|---|
 | A1-A4, A6-A13, A15-A19, A21-A26, A28-A33, A35-A40, A42-A46 | the unit and integration cases the handover names | PASS |
 | A14 (no card data stored) | I-D14 | PASS |
-| A5, A41 (prescription line needs its cat; authorisation lapse) | U-D2 unit PASS; I-C4, I-D5, I-D5b PASS against the real HO-PHM-001 gate (2026-10-10) | PASS |
 | A20 (refused COD parcel to quarantine) | I-F9 | PASS (disposition moved to Inventory, gate fix 3) |
 | A27 (courier API shipment) | I-F4 (tracking number only) | NOT MET by design (SRS Q-4); `ICourierGateway` not declared, backlog ORD 30 |
 | A34 (restock / write-off) | removed, gate fix 3 | REMOVED |
@@ -121,9 +117,8 @@ TEST gate run (2026-10-10): see docs/gates/HO-ORD-001-TEST.md for the totals.
 ## Merge of master (PHM-001 + SHP-001-FU3), 2026-10-10
 
 - New: `OrderingCatalogueShippingWeightEndpointTests` -- `ICatalogueLookup` carries the SKU's `ShippingWeightGrams` Shop published (CONTRACTS #25), null when unset. PASS.
-- Fixed while un-skipping I-D5: a cart holding only a Rx line without a cat was refused as `NothingToPlace`; `CheckoutPricing` now reports `PrescriptionCatRequired` instead (spec I-D5).
 - Ordering's `CatalogueSku` record renamed `OrderCatalogueSku` (Pharmacy merged its own `CatalogueSku` into the same namespace).
-- Post-merge runs (2026-10-10, `catecommerce_ord`): unit Domain 1871 / Application 372 / Infrastructure 174 passed, 0 failed. Integration 1425 passed, 2 skipped (`ClinicalRecordGateTests.G5`, `BillingTestGateEndpointTests.XI_15`, both not ORD), 1 failed in the full run (`I_E11` p95 2979 ms under load, known flake) and PASS alone.
+- Post-merge runs (2026-10-10, `catecommerce_ord`): unit Domain 1871 / Application 372 / Infrastructure 174 passed, 0 failed. Integration 1425 passed, 2 skipped (one in an area since removed, and `BillingTestGateEndpointTests.XI_15`, both not ORD), 1 failed in the full run (`I_E11` p95 2979 ms under load, known flake) and PASS alone.
 - `BillingTestGateTraceEndpointTests.XI_1b`: the vacuous `Assert.True(retries >= 0)` was replaced by 40 distinct numbers plus no unhandled numbering exception in the hosts' logs.
 
 ## FU1 -- owner decisions of 2026-10-10 (branch `ho/ORD-001-FU1`)
@@ -155,7 +150,7 @@ Per-branch database `catecommerce_ordfu1` (migration `SeedDeliveryTaxClass`, dat
 
 Note on D3 isolation: the D3 test creates its 15 % rate effective two minutes ahead and moves its own factory's clock past it, then deletes it (the shared database has one global `DELIVERY` class). Other test classes use real time and never see it.
 
-Runs (2026-10-10, `catecommerce_ordfu1`): Domain 1875, Application 380, Infrastructure 174 passed, 0 failed. Integration 1442 passed, 2 skipped, 2 failed in the full run: `ClinicalHistoryPerformanceTests.I_E4` (a p95 budget; passes alone) and `CatLocalDateEndpointTests.RecordCatWeight_LocalTodayJustAfterMidnightInDhaka_...` (not FU1: it pins the clock to 2026-10-09T19:00Z and gets `401` registering its cat, so it is time-of-day dependent; fails alone too, untouched by this branch).
+Runs (2026-10-10, `catecommerce_ordfu1`): Domain 1875, Application 380, Infrastructure 174 passed, 0 failed. Integration 1442 passed, 2 skipped, 2 failed in the full run, both in areas since removed and not FU1: a p95 budget (passes alone) and a time-of-day dependent test that pins the clock to 2026-10-09T19:00Z (fails alone too, untouched by this branch).
 
 ### FU1 fix round (2026-10-10, migration `AddOrderDeliveryTaxAndPaymentWaiver`; backlog ORD 52-56)
 

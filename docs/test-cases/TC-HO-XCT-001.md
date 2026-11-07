@@ -15,7 +15,6 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
   `catecommerce_dev` and `catecommerce_test` by name.
 - Unit suites need no database. Integration suite: real HTTP through TestServer, workers off, `RetentionWorkCycle` driven by hand.
 - Owner decision 2026-10-10: Boarding (BRD) and Subscriptions (SUB) are skipped; their duties are unregistered and nothing here invents them.
-  HO-SRG-001 is on another branch and is not depended on.
 - Docker backup drill (I-G*) needs image pulls and an isolated host: see section G.
 
 ## A — classification and guards
@@ -24,8 +23,7 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
 |---|---|---|---|---|
 | U-A1 | Every `(schema, table)` of the EF model (owned included, views excluded) vs `RecordClassification` | Set equality, no duplicates | Infrastructure.Tests `RecordClassificationConventionTests` | PASS |
 | U-A2 | Source scan of `src/**/*.cs` | No `ExecuteDelete`, raw DELETE/TRUNCATE, `DISABLE TRIGGER`, `session_replication_role` outside the allow-list (**adapted**: `EfIdempotencyStore.cs`, Ordering's purge of `ops.idempotency_record`, is a named, reasoned exception) | Infrastructure.Tests `HardDeleteSourceScanTests` | PASS |
-| U-A3 | Interceptor: `Remove(cat)` | `ProtectedRecordDeletionException` before SQL | Infrastructure.Tests `HardDeleteGuardInterceptorTests` | PASS |
-| U-A4 | Interceptor: owned allergy removed via `UpdateMedicalProfile` | Allowed | same | PASS |
+| U-A3 | Interceptor: `Remove(customer)` | `ProtectedRecordDeletionException` before SQL | Infrastructure.Tests `HardDeleteGuardInterceptorTests` | PASS |
 | U-A5 | Interceptor: owned `CustomerDeliveryAddress` removed with owner untracked | Refused | same | PASS |
 | U-A6 | Interceptor: tracked `Remove` of a `customer_session` row | Refused | same | PASS |
 | U-A7 | Every `Forbidden` entry | In `AddRetentionGuards` literal list, or `audit.audit_entry`, or attached by a later migration | Infrastructure.Tests `RetentionGuardMigrationTests` | PASS |
@@ -33,9 +31,8 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
 | I-A1 | Host starts with scope validation | All registrations resolve incl. erasers, worker, purger | IntegrationTests `XctGuardEndpointTests` | PASS |
 | I-A2 | Migrations on an empty database | Function + both triggers on every `Forbidden` table except `audit.audit_entry`; `ops` tables and indexes | IntegrationTests `XctSchemaMigrationTests` | PASS |
 | I-A3 | For **every** `Forbidden` table: `pg_trigger` | BEFORE DELETE row trigger and BEFORE TRUNCATE statement trigger (every table, not a sample) | same | PASS |
-| I-A4 | Raw DELETE of own cat; TRUNCATE of `clinic.appointment` in a rolled-back txn | Both `P0001` "Hard delete … not permitted" | `XctGuardEndpointTests` | PASS |
-| I-A5 | Test-only controller calling `db.Remove(cat)` | `409 RecordIsRetained`, row still exists | same | PASS |
-| I-A6 | `UpdateMedicalProfile` removes an allergy through the shipped endpoint | `200`, allergy row gone | same | PASS |
+| I-A4 | Raw DELETE of own customer; TRUNCATE of a `Forbidden` table in a rolled-back txn | Both `P0001` "Hard delete … not permitted" | `XctGuardEndpointTests` | PASS |
+| I-A5 | Test-only controller calling `db.Remove(customer)` | `409 RecordIsRetained`, row still exists | same | PASS |
 | I-A7 | `DatabaseRoleGuard` in Production as superuser/owner | Startup fails with the stated message | `XctRoleGuardTests` | PASS |
 | I-A8 | Guard with a `roles.sql` role in a scratch database | Starts; role's `ALTER TABLE … DISABLE TRIGGER` refused | same | PASS |
 
@@ -57,7 +54,7 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
 | I-B1 | Customer self-deletes | Ledger with scopes, source `SelfService` | `XctErasureEndpointTests` | PASS |
 | I-B2 | Erasure pass | account, notification `Completed`; administration `Held` if accepted else `Completed` | same | PASS |
 | I-B3 | Advance clock past hold; pass | IP null; request `Completed`; `ErasureRequestCompleted` BusinessEvent | same | PASS |
-| I-B4 | Clinical/financial rows after erasure | Still present | same | PASS |
+| I-B4 | Financial rows after erasure | Still present | same | PASS |
 | I-B5 | Admin erasure with channel + identity check | `200 {isReapplication:false}`; audit row; source `StaffOnBehalf` | same | PASS |
 | I-B6 | Same again | `200 {isReapplication:true}`; nothing written | same | PASS |
 | I-B7 | Receptionist | `403`, `AuthorizationDenied` row | same | PASS |
@@ -74,16 +71,15 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
 | U-C3 | Work cycle with a throwing unit | Logged; next unit runs; run `CompletedWithErrors` | IntegrationTests `XctRetentionWorkerTests` | PASS |
 | U-C4 | Daily trigger, Asia/Dhaka, sweepHour 2, 01:59 / 02:00 / 02:30 | No / yes / no | Application.Tests `RetentionSchedulingTests` | PASS |
 | U-C5 | Erasure back-off | Retried at 15, 60, 240, 1440 min | same | PASS |
-| U-C6 | `CatClinicalReviewSource` | Counts 2; oldest anchor (adapted: CreatedDate cannot be back-dated through the repository, so the integration test seeds cats deceased 8 y / 3 y ago and asserts the count delta of exactly 1) | IntegrationTests | PASS |
 | I-C1 | Own ended sessions 40 d / 10 d, securityArtefactDays 30 | 40 d gone, 10 d stays; BusinessEvent row | `XctRetentionWorkerTests` | PASS |
 | I-C2 | Own notification 25 months / 1 month | Old `[redacted]`, destination null; young untouched | same | PASS |
 | I-C3 | Web-vital batches 100 d / 10 d | Old purged, young kept | `XctWebVitalsEndpointTests` (run in Phase E) | PASS |
 | I-C4 | Fake `IRetentionPurgeSource` | Called with right cutoff; result on the pass | same | PASS |
 | I-C5 | `POST retention/runs` twice | `201` then `409` | same | PASS |
 | I-C6 | `GET runs/{id}` | Passes with counts; `Succeeded` | same | PASS |
-| I-C7 | `GET retention/review` | Cat-clinical row; the "nothing is deleted automatically" note | same | PASS |
-| I-C8 | `GET retention/schedule`; lower `retention.clinicalYears` | Reflects immediately; DataChange row | same | PASS |
-| I-C9 | Clinical rows after C1..C3 | Still present | same | PASS |
+| I-C7 | `GET retention/review` | Financial review rows; the "nothing is deleted automatically" note | same | PASS |
+| I-C8 | `GET retention/schedule`; lower `retention.financialYears` | Reflects immediately; DataChange row | same | PASS |
+| I-C9 | Financial rows after C1..C3 | Still present | same | PASS |
 
 ## D — offline snapshot and ping
 
@@ -91,16 +87,13 @@ Written: 2026-10-11 (before any production code)  ·  Executed: see the Status c
 |---|---|---|---|---|
 | U-D1 | ETag, different `generatedOn` | Same | Application.Tests `OfflineSnapshotEtagTests` | PASS |
 | U-D2 | ETag, one status change | Different | same | PASS |
-| U-D3 | Sections: Caretaker vs Reception | `appointments` `NotPermitted` / present | same | PASS |
 | U-D4 | No boarding source | `boardingTasks` `NotAvailable` | same | PASS |
 | U-D5 | `validUntil` Asia/Dhaka 2026-10-12 | `2026-10-13T02:00:00+06:00` | same | PASS |
-| U-D6 | Clinic source status filter | Held/Cancelled out; walk-ins in; handlingNote only if high-risk | IntegrationTests | PASS |
 | I-D1 | Receptionist, 3 appointments (1 cancelled) | `200`, 2 items sorted, ETag, `no-store, private`, audit row | `XctSnapshotEndpointTests` | PASS |
 | I-D2 | `If-None-Match` | `304`, no new audit row | same | PASS |
 | I-D3 | Check one in; old ETag | `200`, new ETag | same | PASS |
 | I-D4 | Poll snapshot + ping for 40 fake minutes, idle 30 | `401 session_idle_timeout` at minute 31 | same | PASS |
 | I-D5 | Customer / anonymous / Inventory staff | `403` (customer, adapted: RequireActionFilter answers 403 to an authenticated customer, ACC U-A6), `401`, `403` | same | PASS |
-| I-D6 | Caretaker with boarding | **DEFERRED** — Boarding skipped by owner (2026-10-10) | — | DEFERRED |
 | I-D7 | No boarding source | `boardingTasks` omitted `NotAvailable` | `XctSnapshotEndpointTests` | PASS |
 | I-D8 | Ping anonymous and staff | `204`, `no-store`, no body; `lastActivityOn` unchanged | same | PASS |
 | I-D9 | Body scan of I-D1 | No field beyond §12.4 | same | PASS |
@@ -172,7 +165,7 @@ Not exercised: the S3 transport (no S3-compatible image could be pulled; backlog
 ## Summary (2026-10-12, build agent)
 
 Unit: Domain.Tests 1 919, Application.Tests 427, Infrastructure.Tests 189 -- all pass. Integration (`catecommerce_xct`): the Xct* classes (retention, erasure, snapshot, web vitals, operations, roles, deploy conventions) pass; one full run of the whole suite: 1 505 passed, 5 skipped (the BackupDrill fact unless `RUN_BACKUP_DRILL=1`, plus four pre-existing skips), 2 unrelated failures that pass in isolation (backlog row 13). The backup drill was executed in full once (section G) and its JSON accepted by the real endpoint.
-Deferred (owner decision 2026-10-10, Boarding and Subscriptions skipped): I-D6, the `boardingTasks` section, the `boarding-media` purge source and the Boarding/Subscriptions erasers: `docs/backlog/XCT.md` rows 1-3.
+Deferred (owner decision 2026-10-10, Boarding and Subscriptions skipped): the `boardingTasks` section, the `boarding-media` purge source and the Boarding/Subscriptions erasers: `docs/backlog/XCT.md` rows 1-3.
 Gates are not run by the build agent.
 
 ## Gate fix round (2026-10-12) -- added cases
@@ -184,8 +177,7 @@ Gates are not run by the build agent.
 | U-B12 | C3 identity check: only the four codes validate; free text and an empty value are refused; the audit row holds the code and no free text; the endpoint answers 400 to an identifier-bearing string | PASS (`ErasureCommandHandlerTests`, `XctErasureEndpointTests`) |
 | U-B13 | C1 lost insert race: reload in a fresh scope, top up, succeed; a real failure with no ledger afterwards is not swallowed | PASS (`OpenErasureRequestRaceTests`) |
 | I-B3 (extended) | The hold date equals the local (Asia/Dhaka) acceptance date plus the period | PASS (`XctErasureEndpointTests`) |
-| U-C6 (extended) | Cat anchor: death, later visit, visit only, created only; a 20:30 UTC instant is the next day in Dhaka | PASS (`CatClinicalAnchorTests`) |
-| I-C9 (rewritten) | Own cat and owner survive a pass; a raw DELETE of the cat is refused `P0001` (negative control) | PASS (`XctRetentionWorkerTests`) |
+| I-C9 (rewritten) | Own customer and their orders survive a pass; a raw DELETE of the customer is refused `P0001` (negative control) | PASS (`XctRetentionWorkerTests`) |
 | I-A8 (extended) | `DatabaseRoleGuard` refuses a NOINHERIT member of the owning role | PASS (`XctDatabaseRoleAndSchemaTests`) |
 | I-C8 (Q3) | Regulatory reports `ReviewOnly` | PASS (Q3 handler; schedule endpoint test) |
 
@@ -215,7 +207,7 @@ The script-level cases (TG-1 to TG-6) use a stub `pgbackrest` on `PATH` (`deploy
 STATUS of the gate: FAIL (one HIGH, test-only: backlog row 53). Details in `docs/gates/HO-XCT-001-TEST.md`.
 
 Re-observed by the gate, not taken from the build agent: unit suites 1919 / 435 / 189 pass; full integration run 1513 total, 1497 passed, 11 failed, 5 skipped; two further full drill runs (I-G1 to I-G6 and I-G8 PASS in both); the BackupDrill fact against drill B's results PASS.
-Rows in sections A to F whose home is `XctSnapshotEndpointTests` (U-D3, I-D1, I-D2, I-D3, I-D4, I-D5, I-D8, and the no-branch-header refusal) are **FAIL on re-run**, not PASS: the tests fix the fake clock at 2026-10-12 04:00Z and now answer 401 at the first admin POST (row 53). Their PASS marks above were true when written and are not true now. Every other row in A to F has its test class green in the gate's full run. I-D6 stays DEFERRED.
+Rows in sections A to F whose home is `XctSnapshotEndpointTests` (I-D1, I-D2, I-D3, I-D4, I-D5, I-D8, and the no-branch-header refusal) are **FAIL on re-run**, not PASS: the tests fix the fake clock at 2026-10-12 04:00Z and now answer 401 at the first admin POST (row 53). Their PASS marks above were true when written and are not true now. Every other row in A to F has its test class green in the gate's full run. I-D6 stays DEFERRED.
 Counts for the TG rows: 13 total, 11 PASS, 2 FAIL (TG-9: runbook has no positive restore check, row 52; TG-12: full suite red, row 53), 0 BLOCKED, 0 NOT RUN. For section G, I-G4 (endpoint acceptance) and I-G7 were re-observed (BackupDrill fact PASS; DeployConventionTests 5 of 5).
 
 ### Gate fix 2026-10-13 (TEST gate rows 52, 53, 55) -- results
