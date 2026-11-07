@@ -28,3 +28,34 @@ NOTES (no action)
 SCOPE CHECK
 - files in allowed scope: 37/37 (web components, lib hook, mocks, nav, tests, docs/gates and docs/test-cases; no src/ or backend file touched)
 - files outside allowed scope: none
+
+---
+
+RUN 2
+COMMITS: a7c54ad..ed1e613 (fix commit ed1e613; ARCHITECTURE/SECURITY record commits ignored)
+DATE: 2026-11-07
+STATUS: PASS
+
+FINDINGS
+- [LOW] web/tests/components/staff-subscriptions/staff-detail.test.tsx (new "Try again" test) — relies on two real React Query retry delays per page and 6000 ms `findByText` timeouts, so it is slow and could flake on a loaded machine. Fix: construct the test client with `retryDelay: 0` or fake timers; not blocking.
+
+PRIOR FINDINGS, VERIFIED
+- MEDIUM Show more dead end: fixed. `CycleHistory.tsx` renders "Try again" (calls `more.retry`, which refetches only the errored pages and keeps loaded ones) whenever `more.isError`; "Show more" and "All N entries shown" are hidden meanwhile. The new test fails page 2, then page 3, asserts both buttons/text states, and that page 2 stays loaded.
+- LOW weak `> 51` assertion: fixed (exact row count, exact footer text, dates and order numbers unique).
+- LOW unpaid page past the end: fixed (`totalCount > 0 && items.length === 0` shows "That page is past the end of the list." with a first-page button; `url.set({ page: undefined })` deletes the key); tested.
+- LOW stale suspension reason sent: fixed in the `filters` memo; tested against the recorded request.
+- LOW export alert stale after filter change: fixed (`reset` in an effect keyed on `filters`); tested. The memoised `filters` keeps identity between renders, so the alert is not cleared spuriously.
+- LOW role note on empty actions / flash: fixed (`allowedStaffActions` empty or `session.isPending` returns null before the role note); both cases tested. A session that errors leaves `isPending` false and shows the note, which is acceptable.
+- LOW staffCopy naming/duplication: hoisted to lib/subscriptions/copy.ts as `staffScheduleLockedText` etc.; staffCopy.ts keeps titles and intros only.
+- SECURITY LOW `encodeURIComponent` on link ids: present on every changed link (customer, subscription row, Open, order links in history and unpaid card); tested for the row link.
+
+NEW-CODE CHECKS
+- copy.ts hoist is additive: the diff adds exports below the S0 block and one import (`pendingStatusChangeText` from labels, already a dependency of the module; no import cycle, labels.ts imports only api types and dates). No S0 string or signature changed. `tests/unit/subscriptions` (S0) passes.
+- Dialog sentences moved verbatim (`reinstateDescription`, `reinstatedMessage`, `staffCancelDescription`, `STAFF_CANCELLED_MESSAGE`, `staffCancelScheduledMessage`); outputs identical to the inline strings.
+- Mock: a non-GUID id is now 404 before the role check on T5/T6/T7/T8, as routing precedes `[RequireAction]` for a `{id:guid}` constraint; `due-tomorrow` still handed on from T5. Blank reinstate reason text `'Reason' must not be empty.` matches FluentValidation's default for a NotEmpty carrying only `WithErrorCode` (SubscriptionCommandValidators.cs:104). The cancel NotEmpty keeps its custom message, which the validator does set (:69-70). Correct.
+- STAFF_UNPAID_INTRO reworded (no longer states who may restart); harmless and more accurate.
+- `npx vitest run tests/components/staff-subscriptions tests/unit/subscriptions tests/unit/staff-nav-groups.test.ts --maxWorkers=2`: 13 files, 224 tests pass. Playwright and the full suite not run.
+
+SCOPE CHECK
+- files in allowed scope: 19/19 changed web files (components, hook, copy, mock, tests)
+- files outside allowed scope: none
