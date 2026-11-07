@@ -1,7 +1,7 @@
 # TC-HO-P6-SUBSCRIPTIONS-S0 — Subscriptions frontend: shared contract, mocks, seeds
 
 Handover: docs/handover/HO-P6-SUBSCRIPTIONS.md (S0 rows U1–U7, §16 E1, §18 A1/A2, Amended (a)–(d))
-Commit(s) under test: 46f9a58 (branch feat/p6-s0-contract)
+Commit(s) under test: 46f9a58 (run 1), 0c5fb48 plus c49d8df (run 2) (branch feat/p6-s0-contract)
 Written: 2026-11-07 (sheet written, all rows NOT RUN, before any test was executed)  ·  Executed: 2026-11-07
 
 > Statuses record what was observed. IDs U1–U7 are the handover's; X*, E1*, R* were assigned by the TEST gate
@@ -11,8 +11,8 @@ Written: 2026-11-07 (sheet written, all rows NOT RUN, before any test was execut
 
 | | Count |
 |---|---|
-| Total | 32 |
-| PASS | 32 (run 2; run 1 was 26 PASS, 3 FAIL) |
+| Total | 34 (the run-2 row X2/X3 re-runs two earlier cases) |
+| PASS | 34 (run 2; run 1 was 26 PASS, 3 FAIL) |
 | FAIL | 0 (run 2) |
 | BLOCKED | 0 |
 | NOT RUN | 0 |
@@ -78,7 +78,7 @@ Attribution of X5a-c to S0: observed errors point at the two seeded Sam addresse
 |---|---|---|
 | A1 contract mirrors server; mock applies schedule rules | U1–U5, U7 | PASS |
 | A2 no date/money arithmetic, no card UI, guard can fail | U3, U6, no-card-ui | PASS |
-| E1 "seeds change nothing visible" | E1a–E1e pass; but X5a–c show the address seed IS visible to run-only specs | PASS for the five named specs; FAIL for X5 |
+| E1 "seeds change nothing visible" | E1a–E1e pass; X5a–c showed the address seed visible to run-only specs, resolved by Amended (e)/(f) | PASS (run 2) |
 
 ## Cases I could not run
 

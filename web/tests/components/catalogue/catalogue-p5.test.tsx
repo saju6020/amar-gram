@@ -201,12 +201,18 @@ describe('the "Was" price is formatted from minor units by string handling (cent
 });
 
 describe('the shop mock store key is pinned at v3 (Amended (b), HO-P6 S0)', () => {
-  it('persists under the v3 key', async () => {
+  it('ignores a stale v2 copy in sessionStorage and persists under the v3 key', async () => {
     Object.defineProperty(navigator, 'serviceWorker', { value: {}, configurable: true });
     try {
       window.sessionStorage.clear();
+      // The key the store used before this bump (once the legacy-prefix cleanup merges): an empty catalogue.
+      window.sessionStorage.setItem(
+        '__amargram_shop_mock_db__v2',
+        JSON.stringify({ products: [], origins: [], reviews: [], wishlist: [], alerts: [] }),
+      );
       vi.resetModules();
       const store = await import('@/mocks/handlers/shop/store');
+      // The stale copy would have left no products and hidden the HO-P5 districts.
       expect(store.db.products.length).toBeGreaterThan(0);
       expect(store.db.products.some((p) => p.district)).toBe(true);
       store.persist();
