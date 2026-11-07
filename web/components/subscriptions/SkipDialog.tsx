@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSkipSubscriptionDelivery } from '@/lib/hooks/useSubscriptions';
-import { skipConfirmTitle } from '@/lib/subscriptions/copy';
+import { SKIP_DESCRIPTION, skipConfirmTitle } from '@/lib/subscriptions/copy';
 import { describeSubscriptionError } from '@/lib/subscriptions/errors';
 import type { ActionDialogProps } from './dialogTypes';
 import { SubscriptionDialog } from './SubscriptionDialog';
@@ -40,7 +40,7 @@ export function SkipDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={skipConfirmTitle(cycleOn)}
-      description="We won't place an order for this delivery. Your other deliveries stay as they are."
+      description={SKIP_DESCRIPTION}
       confirmLabel="Skip this delivery"
       pendingLabel="Skipping…"
       cancelLabel="Keep it"

@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { MySubscriptionsList } from '@/components/subscriptions/MySubscriptionsList';
 import { SubscriptionDetail } from '@/components/subscriptions/SubscriptionDetail';
-import { warningLine } from '@/components/subscriptions/subscriptionText';
+import { warningLine } from '@/lib/subscriptions/copy';
 import type { CustomerSubscriptionDetail, SubscriptionCycle, SubscriptionView } from '@/lib/api/subscriptions';
 import { customerDetailOf, findSubscription, subscriptionViewOf } from '@/mocks/handlers/subscriptions/store';
 import { formatCycleDate } from '@/lib/subscriptions/dates';

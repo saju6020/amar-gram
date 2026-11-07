@@ -5,7 +5,12 @@ import { bannerWarnClass, cardClass } from '@/components/hearth/card';
 import type { PublicBranch } from '@/lib/api/admin-branches';
 import type { SubscriptionView } from '@/lib/api/subscriptions';
 import {
+  CHOOSE_ANOTHER_ADDRESS,
   DELIVERY_ADDRESS_MISSING_TEXT,
+  NO_DELIVERY_SCHEDULED,
+  endedOnText,
+  pendingChangeLines,
+  placeText,
   NEXT_DELIVERY_HELP,
   PAUSED_NO_DELIVERIES_TEXT,
   cutoffSentence,
@@ -21,7 +26,6 @@ import {
   suspensionReasonCustomerText,
 } from '@/lib/subscriptions/labels';
 import { cn } from '@/lib/utils';
-import { pendingLines, placeText } from './subscriptionText';
 
 export function Panel({
   id,
@@ -79,10 +83,10 @@ export function NextDeliveryPanel({ subscription }: { subscription: Subscription
         <p className="m-0 text-ink">{PAUSED_NO_DELIVERIES_TEXT}</p>
       ) : status === 'Cancelled' ? (
         <p className="m-0 text-ink">
-          {`Ended on ${formatCommerceInstantLong(subscription.cancelledOn, subscription.commerceTimeZoneId)}.`}
+          {`${endedOnText(formatCommerceInstantLong(subscription.cancelledOn, subscription.commerceTimeZoneId))}.`}
         </p>
       ) : (
-        <p className="m-0 text-ink-muted">No delivery is scheduled.</p>
+        <p className="m-0 text-ink-muted">{`${NO_DELIVERY_SCHEDULED}.`}</p>
       )}
     </Panel>
   );
@@ -120,7 +124,7 @@ export function SuspensionBanner({
 
 /** What is scheduled, each with the date the server names (`pending.appliesFromCycleOn`). Absent when nothing is. */
 export function PendingChangesPanel({ subscription }: { subscription: SubscriptionView }) {
-  const lines = pendingLines(subscription);
+  const lines = pendingChangeLines(subscription, 'customer');
   if (lines.length === 0) return null;
   return (
     <Panel id="sub-pending-h" title="Scheduled changes">
@@ -169,7 +173,7 @@ export function TermsPanel({
               onClick={onChooseAddress}
               className="min-h-11 font-semibold text-accent-ink underline"
             >
-              Choose another address
+              {CHOOSE_ANOTHER_ADDRESS}
             </button>
           )}
         </p>

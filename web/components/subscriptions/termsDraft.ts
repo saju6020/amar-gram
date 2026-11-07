@@ -3,6 +3,7 @@ import type {
   SubscriptionPaymentMethod,
   SubscriptionTerms,
 } from '@/lib/api/subscriptions';
+import { CHOOSE_OUTLET_ERROR, CHOOSE_PAYMENT_ERROR } from '@/lib/subscriptions/copy';
 import { SUBSCRIPTION_CODE_MESSAGES, type SubscriptionFieldErrors } from '@/lib/subscriptions/errors';
 
 /**
@@ -63,9 +64,9 @@ export function draftProblems(draft: TermsDraft, maxQuantity: number): Subscript
     problems.deliveryAddressId = SUBSCRIPTION_CODE_MESSAGES.DeliveryAddressNotFound;
   }
   if (draft.fulfilment === 'Pickup' && !draft.branchId) {
-    problems.pickupBranchId = 'Choose an outlet to collect from.';
+    problems.pickupBranchId = CHOOSE_OUTLET_ERROR;
   }
-  if (!draft.paymentMethod) problems.paymentMethod = "Choose how you'll pay for each order.";
+  if (!draft.paymentMethod) problems.paymentMethod = CHOOSE_PAYMENT_ERROR;
   return problems;
 }
 

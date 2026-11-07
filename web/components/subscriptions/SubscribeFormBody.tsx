@@ -11,7 +11,7 @@ import {
   useCreateSubscription,
   useRefreshPaymentMethods,
 } from '@/lib/hooks/useSubscriptions';
-import { firstDeliveryHelp } from '@/lib/subscriptions/copy';
+import { SUBSCRIBE_FAILED_TITLE, firstDeliveryHelp } from '@/lib/subscriptions/copy';
 import {
   hasSubscriptionCode,
   subscriptionFieldErrors,
@@ -153,7 +153,7 @@ export function SubscribeFormBody({
           <>
             <p className="m-0 flex items-center gap-2 font-bold">
               <TriangleAlert size={16} aria-hidden="true" />
-              We couldn&rsquo;t start your subscription
+              {SUBSCRIBE_FAILED_TITLE}
             </p>
             <ul className="m-0 list-disc pl-6">
               {messages.map((message) => (

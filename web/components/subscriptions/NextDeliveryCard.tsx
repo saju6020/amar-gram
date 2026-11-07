@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Repeat } from 'lucide-react';
 import { useNextSubscription } from '@/lib/hooks/useSubscriptions';
 import { quantityAndIntervalLabel } from '@/lib/subscriptions/labels';
-import { nextDeliveryLine } from './subscriptionText';
+import { nextDeliveryLine } from '@/lib/subscriptions/copy';
 
 /**
  * The overview's "Next delivery" card (HO-P6 §11.2.9, OQ-8): the soonest live subscription, read from C3

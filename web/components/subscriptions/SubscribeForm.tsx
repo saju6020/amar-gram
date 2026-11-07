@@ -9,7 +9,7 @@ import { HearthEmpty } from '@/components/hearth/HearthEmpty';
 import { buttonVariants } from '@/components/ui/button';
 import { ApiNotFoundError } from '@/lib/api/client';
 import { useSubscriptionOptions } from '@/lib/hooks/useSubscriptions';
-import { ALREADY_SUBSCRIBED_TEXT } from '@/lib/subscriptions/copy';
+import { ALREADY_SUBSCRIBED_TEXT, SUBSCRIBE_NOT_OFFERED_TITLE, SUBSCRIBE_PAGE_INTRO } from '@/lib/subscriptions/copy';
 import { PRODUCT_NOT_FOUND_MESSAGE } from '@/lib/subscriptions/errors';
 import { SubscribeFormBody } from './SubscribeFormBody';
 
@@ -33,7 +33,7 @@ export function SubscribeForm({ skuId }: { skuId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <GreetingHeader title="Subscribe">
-        A repeat delivery of this product. Change, skip, pause or cancel whenever you like.
+        {SUBSCRIBE_PAGE_INTRO}
       </GreetingHeader>
 
       {query.isPending ? (
@@ -57,7 +57,7 @@ export function SubscribeForm({ skuId }: { skuId: string }) {
         />
       ) : !options.subscribable ? (
         <HearthEmpty
-          title="This product can't be subscribed to right now."
+          title={SUBSCRIBE_NOT_OFFERED_TITLE}
           description={options.notSubscribableReason ?? undefined}
           action={SHOP_LINK}
         />

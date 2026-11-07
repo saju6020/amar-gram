@@ -10,7 +10,13 @@ import type { SubscriptionView } from '@/lib/api/subscriptions';
 import type { PagedResult } from '@/lib/api/types';
 import { useMySubscriptions } from '@/lib/hooks/useSubscriptions';
 import { useUrlParams } from '@/lib/hooks/useUrlParams';
-import { EMPTY_SUBSCRIPTIONS_TEXT, SUBSCRIPTIONS_LIST_INTRO } from '@/lib/subscriptions/copy';
+import {
+  EMPTY_SUBSCRIPTIONS_TEXT,
+  LIST_PAST_END_TEXT,
+  NO_CANCELLED_TEXT,
+  NO_CANCELLED_TITLE,
+  SUBSCRIPTIONS_LIST_INTRO,
+} from '@/lib/subscriptions/copy';
 import { StateTabs } from './StateTabs';
 import { SubscriptionCard } from './SubscriptionCard';
 
@@ -63,7 +69,7 @@ export function MySubscriptionsList() {
     <ErrorState onRetry={() => void active.refetch()} />
   ) : active.data && active.data.items.length === 0 && active.data.totalCount > 0 ? (
     <HearthEmpty
-      title="That page is past the end of your list."
+      title={LIST_PAST_END_TEXT}
       action={
         <Button variant="pill" size="pillMd" onClick={() => params.set({ page: undefined })}>
           Go to the first page
@@ -81,7 +87,7 @@ export function MySubscriptionsList() {
         }
       />
     ) : (
-      <HearthEmpty title="No cancelled subscriptions." description="Subscriptions you cancel are kept here." />
+      <HearthEmpty title={NO_CANCELLED_TITLE} description={NO_CANCELLED_TEXT} />
     )
   ) : (
     <div className="flex flex-col gap-4">

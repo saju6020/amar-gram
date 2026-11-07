@@ -6,7 +6,7 @@ import { quantityAndIntervalLabel } from '@/lib/subscriptions/labels';
 import { cn } from '@/lib/utils';
 import { ProductThumb } from './ProductThumb';
 import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
-import { nextDeliveryLine, warningLine } from './subscriptionText';
+import { nextDeliveryLine, warningLine } from '@/lib/subscriptions/copy';
 
 /**
  * One subscription on "My subscriptions" (HO-P6 §11.2.4): the whole card opens it. Picture, product and pack, "2 × every 4

@@ -11,7 +11,15 @@ import {
   useSubscriptionPaymentMethods,
 } from '@/lib/hooks/useSubscriptions';
 import type { SubscriptionOptions, SubscriptionPaymentMethod } from '@/lib/api/subscriptions';
-import { howPayingWorks } from '@/lib/subscriptions/copy';
+import {
+  PAYMENT_HEADING,
+  PAY_CHECKING,
+  PAY_CHECK_FAILED,
+  PAY_CHOOSE_ADDRESS,
+  PAY_CHOOSE_OUTLET,
+  howPayingWorks,
+  paymentSwapNote,
+} from '@/lib/subscriptions/copy';
 import type { SubscriptionFieldErrors } from '@/lib/subscriptions/errors';
 import { intervalLabel, subscriptionPaymentMethodLabel } from '@/lib/subscriptions/labels';
 import { cn } from '@/lib/utils';
@@ -87,7 +95,10 @@ export function TermsFields({
       // Only a swap of a method the customer had is announced; the first choice on arrival is not.
       if (draft.paymentMethod && chosen) {
         setSwapNote(
-          `${subscriptionPaymentMethodLabel(draft.paymentMethod)} isn't available for this order, so we chose ${subscriptionPaymentMethodLabel(first.method)}.`,
+          paymentSwapNote(
+            subscriptionPaymentMethodLabel(draft.paymentMethod),
+            subscriptionPaymentMethodLabel(first.method),
+          ),
         );
       }
     } else if (draft.paymentMethod && chosen) onChange({ paymentMethod: null });
@@ -157,22 +168,22 @@ export function TermsFields({
 
       <section aria-labelledby={`${idPrefix}-pay-h`} className="flex flex-col gap-3">
         <h2 id={`${idPrefix}-pay-h`} className={SECTION_HEADING}>
-          How you&rsquo;ll pay for each order
+          {PAYMENT_HEADING}
         </h2>
         {!addressOrBranchId ? (
           <p className="m-0 text-sm text-ink-muted">
             {draft.fulfilment === 'Delivery'
-              ? 'Choose a delivery address to see how you can pay.'
-              : 'Choose an outlet to see how you can pay.'}
+              ? PAY_CHOOSE_ADDRESS
+              : PAY_CHOOSE_OUTLET}
           </p>
         ) : methods.isPending ? (
           <p role="status" className="m-0 text-sm text-ink-muted">
-            Checking how you can pay…
+            {PAY_CHECKING}
           </p>
         ) : methods.isError ? (
           <p role="status" className={cn(bannerWarnClass, 'm-0 font-semibold')}>
             <TriangleAlert size={15} aria-hidden="true" className="mt-0.5 flex-none" />
-            We couldn&rsquo;t check how you can pay just now. Please try again.
+            {PAY_CHECK_FAILED}
           </p>
         ) : (
           <div

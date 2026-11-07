@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import type { SubscriptionCycle } from '@/lib/api/subscriptions';
 import { useNarrowContainer } from '@/lib/hooks/useIsNarrow';
 import { useMySubscriptionCycles } from '@/lib/hooks/useSubscriptions';
+import { MORE_CYCLES_FAILED, MORE_CYCLES_LOADING, NO_CYCLES_TEXT } from '@/lib/subscriptions/copy';
 import { formatCycleDate } from '@/lib/subscriptions/dates';
 import { cycleOutcomeText } from '@/lib/subscriptions/labels';
 import { Panel } from './DetailPanels';
@@ -58,13 +59,13 @@ function MoreCycles({ id, page, zone, layout }: { id: string; page: number; zone
     const failed = !query.isFetching;
     const content = failed ? (
       <span className="flex flex-wrap items-center gap-3 text-sm text-ink-muted">
-        We couldn&rsquo;t load more deliveries just now.
+        {MORE_CYCLES_FAILED}
         <Button variant="pillSecondary" size="pillMd" onClick={() => void query.refetch()}>
           Try again
         </Button>
       </span>
     ) : (
-      'Loading more…'
+      MORE_CYCLES_LOADING
     );
     return layout === 'table' ? (
       <tr>
@@ -136,7 +137,7 @@ export function CycleHistory({
     <Panel id="sub-history-h" title="Deliveries so far">
       <div ref={ref}>
         {cycles.length === 0 ? (
-          <p className="m-0 text-ink-muted">No orders yet. Your first one is placed on the delivery date.</p>
+          <p className="m-0 text-ink-muted">{NO_CYCLES_TEXT}</p>
         ) : layout === 'table' ? (
           <table className="w-full border-collapse text-left text-sm">
             <caption className="sr-only">Deliveries so far, newest first</caption>

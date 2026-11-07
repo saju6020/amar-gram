@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useResumeSubscription, useSubscriptionOptions } from '@/lib/hooks/useSubscriptions';
-import { firstDeliveryHelp } from '@/lib/subscriptions/copy';
+import { RESUME_DATE_FALLBACK_HELP, RESUME_DESCRIPTION, firstDeliveryHelp, resumeTitle } from '@/lib/subscriptions/copy';
 import { subscriptionFieldErrors, type SubscriptionFieldErrors } from '@/lib/subscriptions/errors';
 import type { ActionDialogProps } from './dialogTypes';
 import { FirstDeliveryField } from './FirstDeliveryField';
@@ -40,8 +40,8 @@ export function ResumeDialog({ subscription, open, onOpenChange, onDone }: Actio
     <SubscriptionDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={`Resume ${subscription.product.productName}?`}
-      description="Orders start again. Choose the date of the first delivery, or leave it empty for the earliest we can do."
+      title={resumeTitle(subscription.product.productName)}
+      description={RESUME_DESCRIPTION}
       confirmLabel="Resume subscription"
       pendingLabel="Resuming…"
       pending={resume.isPending}
@@ -56,7 +56,7 @@ export function ResumeDialog({ subscription, open, onOpenChange, onDone }: Actio
         min={range?.earliestFirstDeliveryOn}
         max={range?.latestFirstDeliveryOn}
         help={
-          range ? firstDeliveryHelp(range) : 'Leave it empty to start with the earliest delivery.'
+          range ? firstDeliveryHelp(range) : RESUME_DATE_FALLBACK_HELP
         }
         error={errors.firstDeliveryOn}
       />

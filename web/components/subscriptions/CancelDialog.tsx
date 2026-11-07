@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { pillTextareaClass } from '@/components/hearth/fields';
 import type { SubscriptionCustomerCancellationReason } from '@/lib/api/subscriptions';
 import { useCancelSubscription } from '@/lib/hooks/useSubscriptions';
-import { cancelConfirmLocked } from '@/lib/subscriptions/copy';
+import { CANCEL_NOTE_LABEL, CANCEL_REASON_REQUIRED, CANCEL_UNLOCKED, cancelConfirmLocked, cancelTitle } from '@/lib/subscriptions/copy';
 import { subscriptionFieldErrors, type SubscriptionFieldErrors } from '@/lib/subscriptions/errors';
 import { CUSTOMER_CANCELLATION_REASON_OPTIONS } from '@/lib/subscriptions/labels';
 import type { ActionDialogProps } from './dialogTypes';
@@ -34,7 +34,7 @@ export function CancelDialog({ subscription, open, onOpenChange, onDone }: Actio
 
   async function confirm() {
     if (!reason) {
-      setErrors({ reason: 'Choose a reason so we know how to improve.' });
+      setErrors({ reason: CANCEL_REASON_REQUIRED });
       return;
     }
     setErrors({});
@@ -54,11 +54,11 @@ export function CancelDialog({ subscription, open, onOpenChange, onDone }: Actio
       onOpenChange={onOpenChange}
       wide
       destructive
-      title={`Cancel ${subscription.product.productName}?`}
+      title={cancelTitle(subscription.product.productName)}
       description={
         locked
           ? cancelConfirmLocked(subscription.nextDeliveryOn!)
-          : 'Your subscription ends now and no more orders are placed.'
+          : CANCEL_UNLOCKED
       }
       confirmLabel="Cancel subscription"
       pendingLabel="Cancelling…"
@@ -89,7 +89,7 @@ export function CancelDialog({ subscription, open, onOpenChange, onDone }: Actio
       </fieldset>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="cancel-note" className="text-[13px] font-semibold text-ink">
-          Anything else you&rsquo;d like to tell us? (optional)
+          {CANCEL_NOTE_LABEL}
         </label>
         <textarea
           id="cancel-note"

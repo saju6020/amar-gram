@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePauseSubscription } from '@/lib/hooks/useSubscriptions';
-import { PAUSE_CONFIRM_UNLOCKED, pauseConfirmLocked } from '@/lib/subscriptions/copy';
+import { PAUSE_CONFIRM_UNLOCKED, pauseConfirmLocked, pauseTitle } from '@/lib/subscriptions/copy';
 import { describeSubscriptionError } from '@/lib/subscriptions/errors';
 import type { ActionDialogProps } from './dialogTypes';
 import { SubscriptionDialog } from './SubscriptionDialog';
@@ -33,7 +33,7 @@ export function PauseDialog({ subscription, open, onOpenChange, onDone }: Action
     <SubscriptionDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={`Pause ${subscription.product.productName}?`}
+      title={pauseTitle(subscription.product.productName)}
       description={locked ? pauseConfirmLocked(subscription.nextDeliveryOn!) : PAUSE_CONFIRM_UNLOCKED}
       confirmLabel="Pause subscription"
       pendingLabel="Pausing…"

@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useWithdrawPendingSubscriptionChanges } from '@/lib/hooks/useSubscriptions';
+import { WITHDRAW_DESCRIPTION, WITHDRAW_TITLE, pendingChangeLines } from '@/lib/subscriptions/copy';
 import { describeSubscriptionError } from '@/lib/subscriptions/errors';
 import type { ActionDialogProps } from './dialogTypes';
 import { SubscriptionDialog } from './SubscriptionDialog';
-import { pendingLines } from './subscriptionText';
 import { useResetOnOpen } from './useResetOnOpen';
 
 /** Withdraw scheduled changes (HO-P6 §11.2.6): lists exactly what will not happen, from the server's `pending`. */
@@ -13,7 +13,7 @@ export function WithdrawDialog({ subscription, open, onOpenChange, onDone }: Act
   const withdraw = useWithdrawPendingSubscriptionChanges(subscription.id);
   const [error, setError] = useState<string | null>(null);
   useResetOnOpen(open, () => setError(null));
-  const lines = pendingLines(subscription);
+  const lines = pendingChangeLines(subscription, 'customer');
 
   async function confirm() {
     setError(null);
@@ -30,8 +30,8 @@ export function WithdrawDialog({ subscription, open, onOpenChange, onDone }: Act
     <SubscriptionDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Withdraw scheduled changes?"
-      description="These changes will not happen, and your subscription carries on as it is now:"
+      title={WITHDRAW_TITLE}
+      description={WITHDRAW_DESCRIPTION}
       confirmLabel="Withdraw changes"
       pendingLabel="Withdrawing…"
       cancelLabel="Keep them"

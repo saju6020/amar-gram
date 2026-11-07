@@ -8,6 +8,14 @@ import { Button } from '@/components/ui/button';
 import type { DeliveryAddress, DeliveryAddressRequest } from '@/lib/api/account';
 import type { PublicBranch } from '@/lib/api/admin-branches';
 import type { SubscriptionFulfilment } from '@/lib/api/subscriptions';
+import {
+  ADDRESSES_FAILED_TEXT,
+  FULFILMENT_DELIVERY_HINT,
+  FULFILMENT_PICKUP_HINT,
+  NO_OUTLET_TEXT,
+  NO_SAVED_ADDRESS_TEXT,
+  OUTLETS_LOADING_TEXT,
+} from '@/lib/subscriptions/copy';
 import { subscriptionFulfilmentLabel } from '@/lib/subscriptions/labels';
 import { FieldError } from './FieldError';
 
@@ -77,7 +85,7 @@ export function FulfilmentFields({
             icon={value === 'Delivery' ? <Truck size={20} aria-hidden="true" /> : <Store size={22} aria-hidden="true" />}
             title={subscriptionFulfilmentLabel(value)}
           >
-            {value === 'Delivery' ? 'We bring each order to your door.' : 'Pick each order up when it is ready.'}
+            {value === 'Delivery' ? FULFILMENT_DELIVERY_HINT : FULFILMENT_PICKUP_HINT}
           </OptionCard>
         ))}
       </div>
@@ -89,11 +97,11 @@ export function FulfilmentFields({
           </h3>
           {addressesFailed && (
             <p role="status" className="m-0 text-sm text-ink-muted">
-              We couldn&rsquo;t load your addresses just now. You can add one below.
+              {ADDRESSES_FAILED_TEXT}
             </p>
           )}
           {addresses && addresses.length === 0 && (
-            <p className="m-0 text-sm text-ink-muted">You haven&rsquo;t saved an address yet.</p>
+            <p className="m-0 text-sm text-ink-muted">{NO_SAVED_ADDRESS_TEXT}</p>
           )}
           <div
             ref={groupRef}
@@ -142,11 +150,11 @@ export function FulfilmentFields({
           </h3>
           {!branches && (
             <p role="status" className="m-0 text-sm text-ink-muted">
-              Loading outlets…
+              {OUTLETS_LOADING_TEXT}
             </p>
           )}
           {branches && branches.length === 0 && (
-            <p className="m-0 text-sm text-ink-muted">No outlet is open for collection right now.</p>
+            <p className="m-0 text-sm text-ink-muted">{NO_OUTLET_TEXT}</p>
           )}
           <div
             role="radiogroup"

@@ -7,6 +7,7 @@ import {
   useRefreshPaymentMethods,
   useSubscriptionOptions,
 } from '@/lib/hooks/useSubscriptions';
+import { CHANGE_TERMS_DESCRIPTION, changeTitle, OPTIONS_FAILED, OPTIONS_LOADING } from '@/lib/subscriptions/copy';
 import {
   hasSubscriptionCode,
   subscriptionFieldErrors,
@@ -78,8 +79,8 @@ export function ChangeTermsDialog({
       open={open}
       onOpenChange={onOpenChange}
       wide
-      title={`Change ${subscription.product.productName}`}
-      description="Your changes apply from the delivery named when you save."
+      title={changeTitle(subscription.product.productName)}
+      description={CHANGE_TERMS_DESCRIPTION}
       confirmLabel="Save changes"
       pendingLabel="Saving…"
       pending={change.isPending}
@@ -89,7 +90,7 @@ export function ChangeTermsDialog({
       <UnsavedChangesGuard when={dirty} />
       {options.isPending ? (
         <p role="status" className="m-0 text-sm text-ink-muted">
-          Loading your options…
+          {OPTIONS_LOADING}
         </p>
       ) : options.data ? (
         <TermsFields
@@ -103,7 +104,7 @@ export function ChangeTermsDialog({
         />
       ) : (
         <p role="status" className="m-0 text-sm font-semibold text-danger-ink">
-          We couldn&rsquo;t load your options just now. Close this and try again.
+          {OPTIONS_FAILED}
         </p>
       )}
     </SubscriptionDialog>

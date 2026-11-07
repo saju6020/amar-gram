@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Repeat } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { useSubscriptionOptions } from '@/lib/hooks/useSubscriptions';
-import { ALREADY_SUBSCRIBED_TEXT, subscribeOfferLabel } from '@/lib/subscriptions/copy';
+import { ALREADY_SUBSCRIBED_TEXT, OFFER_HELP, subscribeOfferLabel } from '@/lib/subscriptions/copy';
 
 /**
  * The product page's Subscribe offer (HO-P6 §11.2.2, ADR-FE-195, OQ-1, OQ-2). Rendered by the page only for a signed-in
@@ -46,7 +46,7 @@ export function SubscribeOffer({ skuId }: { skuId: string }) {
         <Repeat size={16} aria-hidden="true" />
         {subscribeOfferLabel(data.discountPercent)}
       </Link>
-      <p className="m-0 text-[13px] text-ink-muted">Get this on repeat. Skip, pause or cancel any time.</p>
+      <p className="m-0 text-[13px] text-ink-muted">{OFFER_HELP}</p>
     </div>
   );
 }
