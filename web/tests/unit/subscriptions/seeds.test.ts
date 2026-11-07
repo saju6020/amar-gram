@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db as orderingDb, resetOrderingMockData } from '@/mocks/handlers/ordering/store';
 import { orderingIds } from '@/mocks/handlers/ordering/fixtures';
 import { db as shopDb, resetShopMockData } from '@/mocks/handlers/shop/store';
+import { getBranchSnapshot } from '@/mocks/handlers/admin/branches';
 import { isGuid } from '@/lib/validation/guid';
 import { SUBSCRIBABLE_SKU_IDS, seedDates, subscriptionOrderSeeds, subscriptionFixtureIds as ids } from '@/mocks/handlers/subscriptions/fixtures';
 import {
@@ -243,6 +244,12 @@ describe('seeds: every id is a GUID (isGuid decides a route id)', () => {
       ...Object.values(ids.skus),
       ...subscriptionOrderSeeds().map((o) => o.orderId),
     ];
+    // The ids accounts.ts actually resolves (hand-typed there), not only the ones the fixtures name.
+    const resolved = [ids.customerId, ...Object.values(ids.otherCustomers)].flatMap((customerId) =>
+      Object.values(ids.addresses).flatMap((a) => findCustomerAddress(customerId, a)?.id ?? []),
+    );
+    expect(resolved).toHaveLength(Object.values(ids.addresses).length - 1); // all but `removed`
+    all.push(...resolved);
     expect(all.length).toBeGreaterThan(40);
     for (const value of all) expect(isGuid(value), value).toBe(true);
   });
@@ -264,5 +271,17 @@ describe('seeds: addresses come from the accounts address book (Amended (b))', (
     expect(findCustomerAddress(ids.customerId, ids.addresses.samOffice)).toMatchObject({ label: 'Office' });
     // Another customer's address id is not in this customer's book.
     expect(findCustomerAddress(ids.customerId, ids.addresses.farhana)).toBeUndefined();
+  });
+});
+
+describe('seeds: pickup branches come from the administration mock', () => {
+  it('a seeded pickup subscription takes the branch name from getBranchSnapshot; an unknown branch gives none', () => {
+    const pickup = db.subscriptions.find((x) => x.terms.pickupBranchId)!;
+    const branchId = pickup.terms.pickupBranchId!;
+    const view = subscriptionViewOf(pickup).terms;
+    expect(view.pickupBranch).toEqual({ id: branchId, name: getBranchSnapshot(branchId)!.name });
+    // Server: SubscriptionViews.cs:109-114 finds no branch row, so `pickupBranch` is null.
+    const unknown = { ...pickup, terms: { ...pickup.terms, pickupBranchId: 'd0000000-0000-0000-0000-00000000dead' } };
+    expect(subscriptionViewOf(unknown).terms.pickupBranch).toBeNull();
   });
 });
