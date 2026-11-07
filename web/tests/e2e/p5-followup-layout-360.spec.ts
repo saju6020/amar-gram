@@ -42,14 +42,9 @@ async function expectBoxesAtLeast(locator: Locator, height: number): Promise<voi
   for (const value of heights) expect(value).toBeGreaterThanOrEqual(height);
 }
 
-test('S4 F4: the customer search field is wide enough to read at 360 px', async ({ page }) => {
-  await page.goto('/staff/customers');
-  const field = page.getByRole('searchbox', { name: 'Name, mobile or email' });
-  await expect(field).toBeVisible();
-  const box = await field.boundingBox();
-  expect(box?.width ?? 0).toBeGreaterThanOrEqual(200);
-  // The label is visually hidden, so the placeholder is the only visible prompt: it must fit whole.
-  const fit = await field.evaluate((input: HTMLInputElement) => {
+/** Whether an empty search field's placeholder fits whole inside the input (no ellipsis, no cut-off). */
+async function placeholderFit(field: Locator) {
+  return field.evaluate((input: HTMLInputElement) => {
     const style = getComputedStyle(input);
     const context = document.createElement('canvas').getContext('2d')!;
     context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
@@ -77,6 +72,16 @@ test('S4 F4: the customer search field is wide enough to read at 360 px', async 
     });
     return { text: context.measureText(input.placeholder).width, inner, hidesCancel, empty: input.value === '' };
   });
+}
+
+test('S4 F4: the customer search field is wide enough to read at 360 px', async ({ page }) => {
+  await page.goto('/staff/customers');
+  const field = page.getByRole('searchbox', { name: 'Name, mobile or email' });
+  await expect(field).toBeVisible();
+  const box = await field.boundingBox();
+  expect(box?.width ?? 0).toBeGreaterThanOrEqual(200);
+  // The label is visually hidden, so the placeholder is the only visible prompt: it must fit whole.
+  const fit = await placeholderFit(field);
   expect(fit.empty).toBe(true);
   expect(fit.hidesCancel).toBe(true);
   expect(fit.text, JSON.stringify(fit)).toBeLessThanOrEqual(fit.inner);
@@ -84,6 +89,22 @@ test('S4 F4: the customer search field is wide enough to read at 360 px', async 
   expect((await button.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
   await expectNoHorizontalScroll(page);
 });
+
+/** The placeholder is the only visible prompt of these fields (their labels are visually hidden), so it must fit whole. */
+for (const [name, path, field] of [
+  ['POS scan field', '/staff/pos', 'Scan a barcode'],
+  ['order queue search', '/staff/orders', 'Search orders'],
+] as const) {
+  test(`LOW: the ${name} placeholder fits whole at 360 px`, async ({ page }) => {
+    await page.goto(path);
+    const input = page.getByRole(name === 'POS scan field' ? 'textbox' : 'searchbox', { name: field });
+    await expect(input).toBeVisible();
+    const fit = await placeholderFit(input);
+    expect(fit.empty).toBe(true);
+    expect(fit.text, JSON.stringify(fit)).toBeLessThanOrEqual(fit.inner);
+    await expectNoHorizontalScroll(page);
+  });
+}
 
 test('S4 F5: the customer profile facts do not break a word mid-word', async ({ page }) => {
   await page.goto(`/staff/customers/${accountsFixtureIds.customerId}`);
@@ -141,6 +162,54 @@ for (const width of [360, 1280]) {
     await expectNoHorizontalScroll(page);
   });
 }
+
+test('LOW: a dashboard figure never leaves its unit alone on a line, and a long unbroken figure stays in its tile', async ({ page }) => {
+  // Two made-up figures (the seed has neither): a number with a unit, and text with no comma or space.
+  await page.addInitScript(() => {
+    (window as unknown as { __dashboardExtraTiles: unknown[] }).__dashboardExtraTiles = [
+      {
+        key: 'edge.cases',
+        title: 'Edge cases',
+        drillDown: null,
+        figures: [
+          { key: 'unit', label: 'Handling time', value: 12345678901, type: 'Integer', unit: 'h' },
+          { key: 'long', label: 'Reference', value: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', type: 'Text' },
+        ],
+      },
+    ];
+  });
+  await page.goto('/staff');
+  const tile = page.locator('section[aria-labelledby="tile-edge.cases"]');
+  await expect(tile).toBeVisible();
+  const unitFigure = tile.locator('dd > span:first-child').first();
+  const longFigure = tile.locator('dd > span:first-child').nth(1);
+
+  // Squeeze the tile through every width from 120 to 260 px: the unit must share a line with its number at each.
+  const orphaned = await unitFigure.evaluate((span) => {
+    const section = span.closest('section') as HTMLElement;
+    const text = Array.from(span.childNodes).find((node) => node.nodeType === Node.TEXT_NODE && /\sh$/.test(node.textContent ?? ''));
+    if (!text) return ['no text node ends in the unit'];
+    const content = text.textContent ?? '';
+    const bad: number[] = [];
+    for (let width = 120; width <= 260; width += 2) {
+      section.style.width = `${width}px`;
+      const top = (index: number) => {
+        const range = document.createRange();
+        range.setStart(text, index);
+        range.setEnd(text, index + 1);
+        return Math.round(range.getBoundingClientRect().top);
+      };
+      if (top(content.length - 1) !== top(content.length - 3)) bad.push(width);
+    }
+    section.style.width = '';
+    return bad;
+  });
+  expect(orphaned).toEqual([]);
+
+  const [figureBox, tileBox] = [await longFigure.boundingBox(), await tile.boundingBox()];
+  expect((figureBox?.x ?? 0) + (figureBox?.width ?? 0)).toBeLessThanOrEqual((tileBox?.x ?? 0) + (tileBox?.width ?? 0) + 1);
+  await expectNoHorizontalScroll(page);
+});
 
 test('S2: the pick list sheet shows its Quantity and Orders columns at 360 px', async ({ page }) => {
   await page.goto('/staff/fulfilment/pick-list');

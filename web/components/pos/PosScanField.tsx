@@ -68,7 +68,7 @@ export function PosScanField({ inputRef, onAdd }: { inputRef: RefObject<HTMLInpu
         id="pos-scan"
         label="Scan a barcode"
         emphasis="scan"
-        placeholder="Scan barcode or type a name"
+        placeholder="Scan barcode or name"
         value={scanner.value}
         onChange={scanner.setValue}
         onKeyDown={scanner.onKeyDown}
