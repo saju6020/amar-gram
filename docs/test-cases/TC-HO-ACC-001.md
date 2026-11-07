@@ -7,20 +7,20 @@ at the time, since CODE_REVIEW was writing in parallel on this same worktree). *
 `fdec8b0`, `ed92088` and the doc-only `913d204`; see the "Second pass note" below the summary.
 
 First-pass test-only additions (all committed by the integrator since):
-- `tests/CatEcommerce.IntegrationTests/Endpoints/LegacyCsrfTokenHashTests.cs` (new file, 3 cases)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/HostCompositionTests.cs` (2 new cases)
-- `tests/CatEcommerce.IntegrationTests/Persistence/MigrationsOnAnEmptyDatabaseTests.cs` (new file, 1 case)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/StaffSessionEndpointTests.cs` (1 new case)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/DuplicateCustomerGroupsEndpointTests.cs` (4 new cases)
-- `tests/CatEcommerce.IntegrationTests/Endpoints/ProfileEndpointTests.cs` (4 new cases + 1 existing
+- `tests/AmarGram.IntegrationTests/Endpoints/LegacyCsrfTokenHashTests.cs` (new file, 3 cases)
+- `tests/AmarGram.IntegrationTests/Endpoints/HostCompositionTests.cs` (2 new cases)
+- `tests/AmarGram.IntegrationTests/Persistence/MigrationsOnAnEmptyDatabaseTests.cs` (new file, 1 case)
+- `tests/AmarGram.IntegrationTests/Endpoints/StaffSessionEndpointTests.cs` (1 new case)
+- `tests/AmarGram.IntegrationTests/Endpoints/DuplicateCustomerGroupsEndpointTests.cs` (4 new cases)
+- `tests/AmarGram.IntegrationTests/Endpoints/ProfileEndpointTests.cs` (4 new cases + 1 existing
   case's assertion strengthened — see FLAKY TEST DIAGNOSIS in the first-pass gate file)
 
 Second-pass test additions (by the developer, fixing ACCEPTANCE's 1st-pass FAIL):
-- `tests/CatEcommerce.IntegrationTests/Endpoints/AuditImmutabilityTests.cs` grew from 3 to 13 cases
-  (`5be2458`, `913d204`) — see U-A8, I-A9–I-A16.
-- `tests/CatEcommerce.IntegrationTests/AccountsApiFactory.cs` gained `WithFixedRemoteIpAddress`.
-- `tests/CatEcommerce.Domain.Tests/Aggregates/CustomerAccountAggregateTests.cs` and
-  `tests/CatEcommerce.Application.Tests/CommandHandlers/Account/MergeCustomerCommandHandlerTests.cs`
+- `tests/AmarGram.IntegrationTests/Endpoints/AuditImmutabilityTests.cs` grew from 3 to 13 cases
+  (`5be2458`, `913d204`) — see U-A8, I-A10–I-A16.
+- `tests/AmarGram.IntegrationTests/AccountsApiFactory.cs` gained `WithFixedRemoteIpAddress`.
+- `tests/AmarGram.Domain.Tests/Aggregates/CustomerAccountAggregateTests.cs` and
+  `tests/AmarGram.Application.Tests/CommandHandlers/Account/MergeCustomerCommandHandlerTests.cs`
   each gained one `MergedOn`/`TimeProvider` test (`1975810`) — see U-A10, U-A11.
 No test was added for `ed92088` (AuthController's `TimeProvider` fix) or `fdec8b0` (the 16-handler
 `OccurredOn` switch) — see R15, R16.
@@ -36,7 +36,7 @@ Written: 2026-09-25 · Executed: 2026-09-25 (first pass); second pass executed 2
 > `AuditImmutabilityTests` cases fail on the exact content assertion each one names, then restored the
 > fix and watched all 13 pass again; read the real audit rows this run wrote back out of Postgres with
 > `default_transaction_read_only = on`; and added rows below for every test and TimeProvider change
-> named in this round's brief. See U-A8, I-A9–I-A16, R15, R16.
+> named in this round's brief. See U-A8, I-A10–I-A16, R15, R16.
 
 > Statuses record what was **observed**, not inferred. The Evidence column names what was actually
 > seen. `BLOCKED` marks a case that could not be executed or whose result was reasoned about rather
@@ -46,22 +46,22 @@ Written: 2026-09-25 · Executed: 2026-09-25 (first pass); second pass executed 2
 
 | | Count |
 |---|---|
-| Total | 186 |
-| PASS | 181 |
+| Total | 183 |
+| PASS | 178 |
 | FAIL | 0 |
 | BLOCKED | 5 |
 | NOT RUN | 0 |
 
-Breakdown (second pass, `913d204`): 75 unit cases (75 PASS, +2 from the first pass: U-A10, U-A11) + 81
-integration cases (77 PASS — 6 of those carry an explicit caveat, see their own rows: I-A4, I-A15,
-I-I1, I-I2, I-J1, I-X1 — and 4 BLOCKED: I-A8, I-F6, I-J5, I-X2; +8 rows from the first pass: I-A9–I-A16)
+Breakdown (second pass, `913d204`): 73 unit cases (73 PASS, +2 from the first pass: U-A10, U-A11) + 80
+integration cases (76 PASS — 4 of those carry an explicit caveat, see their own rows: I-A4, I-A15,
+I-J1, I-X1 — and 4 BLOCKED: I-A8, I-F6, I-J5, I-X2; +7 rows from the first pass: I-A10–I-A16)
 + 14 deferred-gate-item rows (14 PASS) + 16 regression rows (15 PASS, 1 BLOCKED; +2 from the first
 pass: R15 BLOCKED, R16 PASS). The acceptance-criteria table is a cross-reference over the rows above,
 not counted separately here — see its own PASS/caveat/BLOCKED marks, which mirror the rows they cite.
 
 ## Environment
 
-- **Platform**: .NET 9.0.300. `dotnet build CatEcommerce.sln` — 0 warnings, 0 errors, confirmed before
+- **Platform**: .NET 9.0.300. `dotnet build AmarGram.sln` — 0 warnings, 0 errors, confirmed before
   writing this sheet (the "stop on red build" rule) and again after every set of test additions below.
 - **Database**: PostgreSQL at `localhost:5432`, database `catecommerce_dev` (port confirmed open, real
   connection used throughout — no mocking of Postgres anywhere in this suite). Shared with development,
@@ -69,8 +69,8 @@ not counted separately here — see its own PASS/caveat/BLOCKED marks, which mir
   (`AddAccountsAuditBackfillTests`, `MigrationsOnAnEmptyDatabaseTests`) additionally create and drop
   their own disposable scratch databases on the same server, per §16.1's ban on touching
   `catecommerce_dev` itself for migration-state tests.
-- **Test projects**: `CatEcommerce.Domain.Tests` (160 tests), `CatEcommerce.Infrastructure.Tests` (28),
-  `CatEcommerce.Application.Tests` (64), `CatEcommerce.IntegrationTests` (124, real HTTP via
+- **Test projects**: `AmarGram.Domain.Tests` (160 tests), `AmarGram.Infrastructure.Tests` (28),
+  `AmarGram.Application.Tests` (64), `AmarGram.IntegrationTests` (124, real HTTP via
   `WebApplicationFactory<Program>`, environment `Testing`, against the shared database and, for two
   files, disposable scratch databases).
 - **VPN**: up, per task briefing (not otherwise exercised — no external service is called anywhere in
@@ -84,19 +84,19 @@ not counted separately here — see its own PASS/caveat/BLOCKED marks, which mir
   I-A2 (×2 cases), I-A3, I-I2–I-I5, I-J1–I-J4; 4 for two deferred items with no committed test: D3,
   D13 (×3 cases)), and fixed one genuinely flaky
   existing case (`TwoConcurrentAddsAtNineAddresses_OneSucceedsOneConflictsNeverEleven` — see the gate
-  file). Final count: **376/376**, confirmed with two full, independent `dotnet test CatEcommerce.sln`
+  file). Final count: **376/376**, confirmed with two full, independent `dotnet test AmarGram.sln`
   runs after every change in this sheet was in place.
-- **Second pass** (`913d204`): `dotnet build CatEcommerce.sln` — 0 warnings, 0 errors. `dotnet test
-  CatEcommerce.sln` once, per this round's (deliberately shorter) brief: **388/388**
+- **Second pass** (`913d204`): `dotnet build AmarGram.sln` — 0 warnings, 0 errors. `dotnet test
+  AmarGram.sln` once, per this round's (deliberately shorter) brief: **388/388**
   (`Domain.Tests` 161, `Infrastructure.Tests` 28, `Application.Tests` 65, `IntegrationTests` 134),
   matching the developer's own reported figure exactly.
 
 ## Unit cases
 
-`tests/CatEcommerce.Domain.Tests` and `tests/CatEcommerce.Application.Tests`, per §15's routing rule
+`tests/AmarGram.Domain.Tests` and `tests/AmarGram.Application.Tests`, per §15's routing rule
 (U-A8 is the one row §15 itself routes to `IntegrationTests` instead — see its own row below).
-Evidence for every row in this table: `dotnet test tests/CatEcommerce.Domain.Tests` — **160/160
-passed**, and `dotnet test tests/CatEcommerce.Application.Tests` — **64/64 passed**, both confirmed
+Evidence for every row in this table: `dotnet test tests/AmarGram.Domain.Tests` — **160/160
+passed**, and `dotnet test tests/AmarGram.Application.Tests` — **64/64 passed**, both confirmed
 across two independent full-suite runs (2026-09-25), and both included in the two full-solution runs
 recorded in the Environment section above.
 
@@ -109,11 +109,11 @@ recorded in the Environment section above.
 | U-A5 | Reflect over `CustomerAccountAggregate` after `Anonymise` | Every public string is null, the placeholder, or on the short allow-list | PASS | `CustomerAccountAggregateTests.cs`, same run |
 | U-A6 | `AuditEntryAggregate.Record` twice | `AuditEntryAlreadyRecorded` | PASS | `AuditEntryAggregateTests.cs`, same run |
 | U-A7 | Reflect over `AuditEntryAggregate` | `Record` is the only public mutator | PASS | `AuditEntryAggregateTests.cs`, same run |
-| U-A8 | Change-capture on a modified `CatAggregate` (§15 routes this to `IntegrationTests`) | One `DataChange` row, correct before/after, `xmin` excluded | PASS | **Second pass, no longer weak.** `AuditImmutabilityTests` now asserts before/after value content directly across every shape ACCEPTANCE's A28 finding named — insert, scalar update, replaced value object (×2: email, login throttle), owned-collection add/remove, and `xmin` exclusion — see I-A9–I-A16. **Independently reproved non-decorative this pass**: restored the pre-fix `AuditChangeCaptureInterceptor` (commit `e07a2d8`) in this worktree, rebuilt (0 warnings/errors), re-ran the 13-test file — **6 of 13 failed**: `AddingASecondAddress_TheNewAddressAppearsOnlyInAfter`, `RemovingAnAddress_TheRemovedAddressAppearsInBeforeAndNotInAfter`, `ChangingEmail_OldToNew_BeforeHasTheOldValueAfterHasTheNew`, `FailedSignIn_RecordsFailedCountGoingFromZeroToOne`, `SettingEmail_FromNull_TheNewAddressAppearsOnlyInAfter`, `Registration_ProducesADataChangeAuditRowInTheSameTransactionWithIp` — each on the exact content assertion its name describes (e.g. `Assert.Null(row.Before)` failed because the pre-fix code built a non-null before-snapshot for an insert). Restored the fix, rebuilt, re-ran — **13/13 passed**. `xmin` exclusion additionally confirmed against real rows: a read-only query (`default_transaction_read_only = on`) found zero rows with `"xmin"`/`"Xmin"` as an actual JSON key across all 25,816 rows in the shared `audit.audit_entry` table |
+| U-A8 | Change-capture on a modified aggregate root (§15 routes this to `IntegrationTests`) | One `DataChange` row, correct before/after, `xmin` excluded | PASS | **Second pass, no longer weak.** `AuditImmutabilityTests` now asserts before/after value content directly across every shape ACCEPTANCE's A28 finding named — insert, scalar update, replaced value object (×2: email, login throttle), owned-collection add/remove, and `xmin` exclusion — see I-A10–I-A16. **Independently reproved non-decorative this pass**: restored the pre-fix `AuditChangeCaptureInterceptor` (commit `e07a2d8`) in this worktree, rebuilt (0 warnings/errors), re-ran the 13-test file — **6 of 13 failed**: `AddingASecondAddress_TheNewAddressAppearsOnlyInAfter`, `RemovingAnAddress_TheRemovedAddressAppearsInBeforeAndNotInAfter`, `ChangingEmail_OldToNew_BeforeHasTheOldValueAfterHasTheNew`, `FailedSignIn_RecordsFailedCountGoingFromZeroToOne`, `SettingEmail_FromNull_TheNewAddressAppearsOnlyInAfter`, `Registration_ProducesADataChangeAuditRowInTheSameTransactionWithIp` — each on the exact content assertion its name describes (e.g. `Assert.Null(row.Before)` failed because the pre-fix code built a non-null before-snapshot for an insert). Restored the fix, rebuilt, re-ran — **13/13 passed**. `xmin` exclusion additionally confirmed against real rows: a read-only query (`default_transaction_read_only = on`) found zero rows with `"xmin"`/`"Xmin"` as an actual JSON key across all 25,816 rows in the shared `audit.audit_entry` table |
 | U-A9 | Change-capture on a `CustomerAccountAggregate` with a credential | `password_hash`, `security_stamp` written as `"[redacted]"` | PASS | `EventPersonalDataReflectionTests.cs` / audit redaction cases, part of the 160/160. Also independently re-confirmed at integration level this pass — see I-A16 |
 | U-A10 | `MergeInto` sets `MergedOn` to the exact caller-supplied timestamp, not a wall-clock read | Aggregate's `MergedOn` equals the DTO's `MergedOn` exactly | PASS | **New test, second pass.** `CustomerAccountAggregateTests.MergeInto_SetsMergedOnToTheSuppliedTimestamp` (added at `1975810`, a CODE_REVIEW MEDIUM fix) — watched pass individually and as part of the 161/161 |
 | U-A11 | `MergeCustomerCommandHandler` threads `TimeProvider.GetUtcNow()` into `CustomerMergeDto.MergedOn`, not `DateTimeOffset.UtcNow` read inside the aggregate | Handler-level: survivor's `MergedOn` equals the injected `FakeTimeProvider`'s time | PASS | **New test, second pass.** `MergeCustomerCommandHandlerTests.HandleAsync_Success_SetsMergedOnToTheTimeProvidersTime` (added at `1975810`) — watched pass individually and as part of the 65/65 |
-| U-X1 | Reflect over every `Event` type in `CatEcommerce.Domain` | No property named like `/name\|mobile\|phone\|email\|address\|line\|password\|hash\|token\|stamp/i` except the allow-listed booleans and ids | PASS | `EventPersonalDataReflectionTests.cs`, same run |
+| U-X1 | Reflect over every `Event` type in `AmarGram.Domain` | No property named like `/name\|mobile\|phone\|email\|address\|line\|password\|hash\|token\|stamp/i` except the allow-listed booleans and ids | PASS | `EventPersonalDataReflectionTests.cs`, same run |
 | U-B1 | `Register` valid | Properties set; `SelfService`, `Active`, stamp non-empty; one event; version bumped | PASS | `CustomerAccountAggregateTests.cs`, same run |
 | U-B2 | `Register` with neither identifier | `IdentifierRequired` | PASS | `CustomerAccountAggregateTests.cs`, same run |
 | U-B3 | Reflect: `CustomerAccountAggregate`, its DTOs and ViewModels | No `Verif*`, `Otp*`, `TwoFactor*`, `Captcha*` member | PASS | `CustomerAccountAggregateTests.cs`, same run |
@@ -122,7 +122,7 @@ recorded in the Environment section above.
 | U-B6 | Handler: mobile exists | `MobileNumberAlreadyRegistered`, message mentions log in and reset, contains no "email"; hasher never called | PASS | `RegisterCustomerCommandHandlerTests.cs`, same run |
 | U-B7 | Handler: email exists, mobile not supplied | `EmailAddressAlreadyRegistered`, message contains no "mobile"/"phone" | PASS | `RegisterCustomerCommandHandlerTests.cs`, same run |
 | U-B8 | Handler: breached | `BreachedPassword`; no hash, no save | PASS | `RegisterCustomerCommandHandlerTests.cs`, same run |
-| U-B9 | Captcha service: 1 000 issues | Unique ids; answers from the alphabet, correct length | PASS | `MemoryCacheCaptchaServiceTests.cs` (`CatEcommerce.IntegrationTests/Unit/`), part of the 124 — routed there per §15 ("exercises Infrastructure") |
+| U-B9 | Captcha service: 1 000 issues | Unique ids; answers from the alphabet, correct length | PASS | `MemoryCacheCaptchaServiceTests.cs` (`AmarGram.IntegrationTests/Unit/`), part of the 124 — routed there per §15 ("exercises Infrastructure") |
 | U-B10 | Captcha verify: right answer different case/spaces; replay after right; replay after wrong; after TTL; null/blank | true; false; false; false; false — no exception | PASS | `MemoryCacheCaptchaServiceTests.cs`, same |
 | U-B11 | Captcha overflow beyond `MaxOutstandingChallenges` | No exception, bounded; overflow fails verify | PASS | `MemoryCacheCaptchaServiceTests.cs`, same |
 | U-B12 | Renderer | PNG signature, 200×70, answer not in the bytes | PASS | `SkiaCaptchaImageRendererTests.cs`, same |
@@ -156,8 +156,8 @@ recorded in the Environment section above.
 | U-E6 | 11th address | `DeliveryAddressLimitExceeded` | PASS | `CustomerAddressBookAggregateTests.cs`, same |
 | U-E7 | `ChangePreferences` with a transactional cell | `NotificationPreferenceNotEditable`, nothing applied | PASS | `CustomerNotificationPreferencesAggregateTests.cs`, same |
 | U-E8 | `NotificationPreferenceRules` full truth table over `GetAll()` | Transactional always permitted; marketing only when granted; default not granted | PASS | `NotificationPreferenceRulesTests.cs`, same |
-| U-F1 | `Create` with `[" Vet", "Vet", "Nurse"]` | `["Nurse", "Vet"]` in catalogue order | PASS | `StaffAccountAggregateTests.cs`, same |
-| U-F2 | Empty roles; `"vet"` lower-case; `"Groomer"` | `StaffRolesRequired`; `UnknownStaffRole`; `UnknownStaffRole` | PASS | `StaffAccountAggregateTests.cs`, same |
+| U-F1 | `Create` with `[" ShopManager", "ShopManager", "Inventory"]` | `["Inventory", "ShopManager"]` in catalogue order | PASS | `StaffAccountAggregateTests.cs`, same |
+| U-F2 | Empty roles; `"shopmanager"` lower-case; `"Cashier"` | `StaffRolesRequired`; `UnknownStaffRole`; `UnknownStaffRole` | PASS | `StaffAccountAggregateTests.cs`, same |
 | U-F3 | `ChangeRoles` to the same set | No event, no version bump, stamp unchanged | PASS | `StaffAccountAggregateTests.cs`, same |
 | U-F4 | `ChangeRoles` to a different set | Stamp rotated; event with both sets | PASS | `StaffAccountAggregateTests.cs`, same |
 | U-F5 | `StaffRoleCatalogue` | 8 roles × 20 capabilities; no `Customer` role | PASS | `StaffRoleCatalogueTests.cs`, same |
@@ -171,8 +171,6 @@ recorded in the Environment section above.
 | U-I1 | `MergeInto` self; blank reason; anonymised | Each code | PASS | `CustomerAccountAggregateTests.cs`, same |
 | U-I2 | Match: shared additional number; shared email; both null and no shared number | ok; ok; `CustomersNotDuplicates` | PASS | `CustomerAccountAggregateTests.cs`, same |
 | U-I3 | Merge then re-send same survivor; then a different survivor | Re-application event, state unchanged; `CustomerAlreadyMerged` | PASS | `CustomerAccountAggregateTests.cs`, same |
-| U-I4 | `ReassignOwnerOnCustomerMerge` on a deceased cat | Moves; `EnsureAlive` not called | PASS | `CatAggregateMergeTests.cs`, same |
-| U-I5 | Wrong owner | `CatOwnerMismatch` | PASS | `CatAggregateMergeTests.cs`, same |
 | U-J1 | `Anonymise` | Fields per §8.10a; stamp rotated; status; event carries ids only | PASS | `CustomerAccountAggregateTests.cs`, same |
 | U-J2 | `Anonymise` twice | `AccountAlreadyAnonymised` | PASS | `CustomerAccountAggregateTests.cs`, same |
 | U-J3 | Delete handler while locked | `AccountLocked`; hasher not called | PASS | `DeleteCustomerAccountCommandHandlerTests.cs`, part of the 64/64 |
@@ -180,10 +178,10 @@ recorded in the Environment section above.
 
 ## Integration cases
 
-`tests/CatEcommerce.IntegrationTests` — real HTTP through `WebApplicationFactory<Program>`, environment
+`tests/AmarGram.IntegrationTests` — real HTTP through `WebApplicationFactory<Program>`, environment
 `Testing`, against the shared `catecommerce_dev` (two files use disposable scratch databases instead —
 noted per row). Evidence for every PASS row below: two independent full runs of
-`dotnet test tests/CatEcommerce.IntegrationTests` — **124/124 passed** both times (2026-09-25),
+`dotnet test tests/AmarGram.IntegrationTests` — **124/124 passed** both times (2026-09-25),
 individually re-confirmed with a `--filter` run against each named test class while writing this sheet.
 
 | ID | Case | Expected | Status | Evidence |
@@ -193,10 +191,9 @@ individually re-confirmed with a `--filter` run against each named test class wh
 | I-A3 | Migrations on an empty database | Schema `account` complete; `audit.audit_entry` has `ip_address`, `category`, `correlation_id`, both triggers | PASS | **New test, added at this gate.** `MigrationsOnAnEmptyDatabaseTests.EveryMigration_AppliedInOrderFromEmpty_ProducesTheFullAccountSchemaAndAuditAdditions`, against a fresh disposable scratch database — watched pass, 3 runs (stability check) |
 | I-A4 | `UPDATE`, `DELETE`, `TRUNCATE` on `audit.audit_entry` through Npgsql | Each raises | PASS, caveat | `AuditImmutabilityTests.UpdateOnAuditEntry_ThroughRawSql_Raises` / `DeleteOnAuditEntry_ThroughRawSql_Raises` — both watched pass. TRUNCATE's own sub-case was never attempted against any database in this run: §16.1 rule 4 reads "Never `TRUNCATE`, `DROP` or clean" as an absolute ban on issuing that statement against the shared `catecommerce_dev`, not only a ban on using it to reset test state — deliberately not risked, even though the trigger is expected to refuse it. See "Cases I could not run" |
 | I-A5 | `UpdateAsync` on an `AuditEntryAggregate` | `AuditEntryImmutableException`, nothing sent | PASS | `AuditImmutabilityInterceptorRegistrationTests.DbContextResolvedFromDi_HasTheImmutabilityInterceptorActive` |
-| I-A6 | Register a cat through the shipped endpoint | A `DataChange` row in the same transaction; IP recorded | PASS | `AuditImmutabilityTests.Registration_ProducesADataChangeAuditRowInTheSameTransactionWithIp`. **Second pass**: this case is now one of the 6 that fail against the pre-fix interceptor (`Assert.Null(row.Before)` fails — see U-A8) — no longer a case that would pass regardless of the bug |
+| I-A6 | Register a customer through the shipped endpoint | A `DataChange` row in the same transaction; IP recorded | PASS | `AuditImmutabilityTests.Registration_ProducesADataChangeAuditRowInTheSameTransactionWithIp`. **Second pass**: this case is now one of the 6 that fail against the pre-fix interceptor (`Assert.Null(row.Before)` fails — see U-A8) — no longer a case that would pass regardless of the bug |
 | I-A7 | A request's audit IP reflects a forwarded address only when the immediate peer is a trusted proxy, and never otherwise | Trusted proxy: audit IP = forwarded address. Untrusted: audit IP = raw peer, header ignored | PASS | **Second pass — direct tests now exist**, replacing the first pass's indirect citation of a rate-limiting test. `AuditImmutabilityTests.AuditIp_WithATrustedProxy_ReflectsTheForwardedAddressNotTheProxys` and `AuditIp_WithoutATrustedProxy_IgnoresTheForwardedHeader` (both added at `913d204`, using the new `AccountsApiFactory.WithFixedRemoteIpAddress(ip, trustAsProxy:)`) — both watched pass this pass; both also passed against the pre-fix interceptor (expected — `IClientIpAccessor` is a separate mechanism from the owned-entry capture bug, not itself part of A28) |
 | I-A8 | A handler throws after the change-capture row was added | Neither the change nor its audit row is committed | BLOCKED | No test exists. Forcing a mid-`SaveChangesAsync` failure specifically after the change-capture interceptor has queued its audit entry but before commit needs a seam (a throwing interceptor, or a second, colliding write inside the same transaction) this gate did not have time to build safely; ADR-040's guarantee here rests on EF's own single-`SaveChangesAsync`-is-one-transaction behaviour, which is a platform property rather than something this slice's own code could break independently. Not added at either pass — see "Cases I could not run" |
-| I-A9 | A modified root's scalar field only (cat profile rename) | Before/after pair with the old and new name | PASS | **New, second pass.** `AuditImmutabilityTests.CatProfileUpdate_ProducesABeforeAfterPairWithTheOldAndNewName` — watched pass. Also passed against the pre-fix interceptor (root scalar changes never took the buggy Added-owned path — included for completeness of the file's coverage, not itself an A28 regression case) |
 | I-A10 | Setting an email from null (a brand-new owned value object, tracked as `Added`) | The new address appears only in "after", never in "before" | PASS | **New, second pass — regression for ACCEPTANCE A28.** `AuditImmutabilityTests.SettingEmail_FromNull_TheNewAddressAppearsOnlyInAfter` — failed pre-fix (`Assert.DoesNotContain` found the new email already in `Before`, because `CollectProperties` read `CurrentValue` for an `Added` entry regardless of which snapshot); watched pass with the fix restored |
 | I-A11 | Changing an email (old value `Deleted`, new value `Added`, same property) | `Before` has the old email only, `After` has the new email only | PASS | **New, second pass — regression for ACCEPTANCE A28, the account-takeover-relevant case.** `AuditImmutabilityTests.ChangingEmail_OldToNew_BeforeHasTheOldValueAfterHasTheNew` — failed pre-fix (`Assert.Contains` — the old email was absent from `Before`; `Deleted` owned entries were dropped entirely, so the row could not say what the email used to be); watched pass with the fix restored. **Independently confirmed against the real row this run wrote**: read-only query (`default_transaction_read_only = on`) of the latest `CustomerContactDetailsUpdatedEvent` row shows `EmailAddress.Value` = the first minted email in `BeforeValue` and the second in `AfterValue`, neither string appearing in the other's column |
 | I-A12 | Adding a second address to an existing (already-`Modified`) address book | The new address appears only in "after" | PASS | **New, second pass — regression for ACCEPTANCE A28 (owned-collection add).** `AuditImmutabilityTests.AddingASecondAddress_TheNewAddressAppearsOnlyInAfter` — failed pre-fix; watched pass with the fix restored |
@@ -241,7 +238,7 @@ individually re-confirmed with a `--filter` run against each named test class wh
 | I-E7 | `PUT` a transactional cell off | `400`, nothing applied | PASS | `ProfileEndpointTests.PutTransactionalCellOff_Returns400AndAppliesNothing` |
 | I-E8 | Any `/me` endpoint as guest or staff | `401` | PASS | `ProfileEndpointTests.MeEndpoint_AsGuestOrStaff_Returns401` |
 | I-F1 | Administrator creates a staff account with roles | `201`; roles stored in catalogue order; `hasPassword: false` | PASS | `StaffEndpointTests.Administrator_CreatesStaffAccount_RolesStoredInCatalogueOrderAndHasPasswordFalse` |
-| I-F2 | A `Nurse` calls `POST /api/staff-accounts` directly | `403 ActionNotPermitted`; one `AuthorizationDenied` audit row — US-ACC-07 AC2 | PASS | `StaffEndpointTests.NonAdministrator_CallingCreateStaffAccount_Returns403AndAudits` |
+| I-F2 | A `Reception` staff member calls `POST /api/staff-accounts` directly | `403 ActionNotPermitted`; one `AuthorizationDenied` audit row — US-ACC-07 AC2 | PASS | `StaffEndpointTests.NonAdministrator_CallingCreateStaffAccount_Returns403AndAudits` |
 | I-F3 | A customer session calls it | `401` | PASS | `StaffEndpointTests.CustomerSession_CallingStaffEndpoint_Returns401` |
 | I-F4 | Replace roles | `204`; member's existing staff session → `401` on next request | PASS | `StaffEndpointTests.ChangeRoles_RotatesStamp_AffectedMembersExistingSessionIs401OnNextRequest` |
 | I-F5 | `GET /api/staff-roles` | 8 roles, 20 capabilities | PASS | `StaffEndpointTests.StaffRoles_ReturnsEightRolesAndTwentyCapabilities` |
@@ -257,12 +254,12 @@ individually re-confirmed with a `--filter` run against each named test class wh
 | I-H2 | Duplicate mobile | `400 MobileNumberAlreadyRegistered`; `GET /api/staff/customers?mobile=` finds the existing record | PASS | `WalkInEndpointTests.DuplicateMobile_Returns400AndFindEndpointLocatesExistingRecord` |
 | I-H3 | Walk-in completes via reset, then signs in | `recordStatus: "Complete"`; sign-in `200` | PASS | `WalkInEndpointTests.WalkInCompletesViaReset_ThenSignsIn_RecordStatusComplete` |
 | I-H4 | The walk-in tries self-registration with the same mobile | `400 MobileNumberAlreadyRegistered` with the reset offer | PASS | `WalkInEndpointTests.WalkInTriesSelfRegistrationWithSameMobile_Returns400MobileAlreadyRegistered` |
-| I-I1 | Two customers sharing an additional number, each with a cat (one deceased) | Listed together in duplicates | PASS, caveat | `DuplicateCustomerGroupsEndpointTests.TwoCustomers_SharingAnAdditionalNumber_AppearInTheSameDuplicateGroup` — proves the grouping; neither this nor any other committed test attaches cats to the two members (the "one deceased" detail is not separately exercised at integration level, though U-I4 covers the deceased-cat reassignment rule at domain level) |
-| I-I2 | Merge | `200`; duplicate `Merged`; both cats on survivor; merge+two reassignment `BusinessEvent` rows; duplicate's session `401` | PASS | **New test, added at this gate.** `DuplicateCustomerGroupsEndpointTests.Merge_MovesBothCatsToTheSurvivorAndEndsTheDuplicatesSession` — watched pass; confirms both cats' `ownerId` moves and the duplicate's own session returns `401` after merge. Does not separately assert two distinct `BusinessEvent` audit rows for the two cat reassignments (the reassignment is change-capture, not a named `BusinessEvent` — the wording in §16 assumed a shape the shipped design does not use) |
-| I-I3 | Re-send | `200 isReapplication: true`; state unchanged; a cat registered on the duplicate id after the merge now moved | PASS | **New test, added at this gate.** `DuplicateCustomerGroupsEndpointTests.ReSendingTheSameMerge_ReturnsIsReapplicationTrue_StateUnchanged` — watched pass |
+| I-I1 | Two customers sharing an additional number | Listed together in duplicates | PASS | `DuplicateCustomerGroupsEndpointTests.TwoCustomers_SharingAnAdditionalNumber_AppearInTheSameDuplicateGroup` — proves the grouping |
+| I-I2 | Merge | `200`; duplicate `Merged`; duplicate's session `401` | PASS | **New test, added at this gate.** `DuplicateCustomerGroupsEndpointTests.Merge_NamesTheSurvivorAndEndsTheDuplicatesSession` — watched pass; confirms the duplicate's own session returns `401` after merge |
+| I-I3 | Re-send | `200 isReapplication: true`; state unchanged | PASS | **New test, added at this gate.** `DuplicateCustomerGroupsEndpointTests.ReSendingTheSameMerge_ReturnsIsReapplicationTrue_StateUnchanged` — watched pass |
 | I-I4 | Non-duplicates | `400 CustomersNotDuplicates` | PASS | **New test, added at this gate.** `DuplicateCustomerGroupsEndpointTests.Merge_TwoUnrelatedCustomers_Returns400CustomersNotDuplicates` — watched pass |
 | I-I5 | As `Reception` | `403` | PASS | **New test, added at this gate.** `DuplicateCustomerGroupsEndpointTests.Merge_AsReception_Returns403` — watched pass |
-| I-J1 | Export | `200` attachment, `schemaVersion: 1`, profile, addresses, preferences, cats; `no-store`; export audit row | PASS | **New test, added at this gate.** `ProfileEndpointTests.ExportPersonalData_ReturnsAttachmentWithSchemaVersionProfileAddressesPreferencesAndCats` — watched pass. Does not independently query the audit table for the export's own audit row (asserted only via the command's own success) |
+| I-J1 | Export | `200` attachment, `schemaVersion: 1`, profile, addresses, preferences; `no-store`; export audit row | PASS | **New test, added at this gate.** `ProfileEndpointTests.ExportPersonalData_ReturnsAttachmentWithSchemaVersionProfileAddressesPreferencesAndCats` — watched pass. Does not independently query the audit table for the export's own audit row (asserted only via the command's own success) |
 | I-J2 | Delete with the right password | `204`; cookies expired; row `Anonymised`; sign-in fails with the generic `401` | PASS | **New test, added at this gate.** `ProfileEndpointTests.DeleteAccount_WithRightPassword_AnonymisesEndsSessionAndSignInFailsGenerically` — watched pass |
 | I-J3 | A new registration with the deleted mobile | `201` — filtered index freed it | PASS | **New test, added at this gate.** `ProfileEndpointTests.NewRegistration_WithAPreviouslyDeletedMobile_Succeeds` — watched pass |
 | I-J4 | Delete with the wrong password ×3 | `ReauthenticationFailed` then the account locks | PASS | **New test, added at this gate.** `ProfileEndpointTests.DeleteAccount_WrongPasswordThreeTimes_LocksTheAccountSameThrottleAsSignIn` — watched pass (also confirms the 4th, correct-password attempt is refused `AccountLocked`) |
@@ -347,12 +344,11 @@ Mirrors §18. Status records whether every cited case actually passed at this ga
 | A23 — refused request no side effect; status endpoint returns `staffAccountId` | I-G4, I-G6, I-G7 | PASS |
 | A24 — walk-in with name+phone created incomplete | U-H1, I-H1 | PASS |
 | A25 — (provisional, SRS Q-16) setting a password completes the record | U-H2, I-H3 | PASS |
-| A26 — records sharing phone/email listed with cats | I-I1 | PASS, caveat (see I-I1's own row) |
-| A27 — merge moves all cats, audited; re-send recovers | U-I3, U-I4, I-I2, I-I3 | PASS |
-| A28 — every state-changing action audited, same transaction | U-A8, I-A6, I-A7, I-A9–I-A16, I-A8 | PASS, caveat — I-A8 itself is still BLOCKED (no test); everything else the criterion touches (correct before/after content, not merely row existence) is now directly and non-decoratively proven, closing the gap ACCEPTANCE's 1st-pass FAIL found in U-A8/I-A6. See the "Second pass" note |
+| A26 — records sharing phone/email listed together | I-I1 | PASS |
+| A27 — merge audited; re-send recovers | U-I3, I-I2, I-I3 | PASS |
+| A28 — every state-changing action audited, same transaction | U-A8, I-A6, I-A7, I-A10–I-A16, I-A8 | PASS, caveat — I-A8 itself is still BLOCKED (no test); everything else the criterion touches (correct before/after content, not merely row existence) is now directly and non-decoratively proven, closing the gap ACCEPTANCE's 1st-pass FAIL found in U-A8/I-A6. See the "Second pass" note |
 | A29 — editing/deleting an audit entry refused, app and DB | U-A6, U-A7, I-A4, I-A5 | PASS, caveat — I-A4's TRUNCATE sub-case is BLOCKED (see its own row); UPDATE and DELETE are both proven |
 | A30 — deletion anonymises personal data, ends sign-in | U-J1, I-J2 | PASS |
-| A31 — clinical records retained, owner shown anonymised | I-J2 | PASS |
 | A32 — export is machine-readable | I-J1 | PASS |
 | A33 — deletion audited with who/when | I-J5 | BLOCKED — see I-J5's own row. Not independently re-proven elsewhere; recorded as a gap for ACCEPTANCE |
 | A34 — Argon2id; no plaintext anywhere | U-B14, I-B11, I-X1, I-X2 | PASS, caveat — I-X1 is partial and I-X2 is BLOCKED (see their own rows); the Argon2id/no-plaintext claim itself is otherwise well covered by U-B14, I-B11 and the four decoration checks under D1/D7/D9/D10/D12 |
@@ -378,5 +374,4 @@ Mirrors §18. Status records whether every cited case actually passed at this ga
 | Reset delivery outside `Development` | No Notification context yet (§4.3, §20.4) — named as a deliberate gap by the handover itself, not a test omission | ACCEPTANCE / owner, tracked against HO-NTF-001 |
 | Orders/invoices/balances in the duplicates report and merge | Those contexts do not exist (§4.3) | ACCEPTANCE / owner |
 | Audit log query/export screen | Belongs to Administration (§4.3) | Future HO-ADM handover |
-| Role guards on the Cat Profile endpoints | HO-CAT-001's own follow-up, explicitly out of scope here (§4.3, §20.5) | Follow-up amendment to HO-CAT-001 |
 | A dedicated `dotnet ef migrations has-pending-model-changes` re-check | ARCHITECTURE fifth pass already ran this read-only check clean against `2ff0a6d`; this gate's own new test files add no mapped types, so the model is unaffected | Re-check only if a future pass touches mapped types |

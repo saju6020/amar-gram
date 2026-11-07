@@ -14,8 +14,7 @@ namespace AmarGram.Shared.Common.Constants;
 ///
 /// <c>audit.audit_entry</c> is also classified here, per §10.3 ("Audit |
 /// Forbidden (HO-ACC-001's triggers, F33) | D-5") and ADR-341 (only the owning area classifies a
-/// table) -- this closes the intentional, temporary gap <c>RecordClassification.CatProfiles.cs</c>
-/// left open until Accounts landed. The two immutability triggers enforcing "Forbidden" here are
+/// table) -- Accounts is the owning area. The two immutability triggers enforcing "Forbidden" here are
 /// <c>AmarGramDbContext.Accounts.cs</c>'s migration (F33).
 ///
 /// The three Security tables (customer_session, staff_session, password_reset_token) have no

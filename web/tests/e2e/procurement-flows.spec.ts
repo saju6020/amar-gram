@@ -162,7 +162,7 @@ test('E-B1: plan a consignment, add documents, clear it, receive against it, all
   await page.getByLabel(/^shipment reference/i).fill('SHP-E2E-1');
   await page.getByLabel(/PO-2026-000002/).check();
   await page.getByRole('button', { name: /add an HS code/i }).click();
-  await page.getByLabel('HS code 1', { exact: true }).fill('2309.10');
+  await page.getByLabel('HS code 1', { exact: true }).fill('1006.30');
   await page.getByRole('button', { name: /plan consignment/i }).click();
   await expect(page.getByRole('heading', { name: /^CN-/ })).toBeVisible();
 

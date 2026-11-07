@@ -15,7 +15,7 @@ public sealed class ConsignmentTests
 
     private static ConsignmentDetailsDto Details(
         string? permit = "IP-1", string? certificate = "HC-1", string? declaration = "CD-1", IReadOnlyList<HsCodeDto>? hs = null, string country = "DE") =>
-        new(country, "BL-123456", [Guid.NewGuid()], hs ?? [new HsCodeDto("2309.10", "Animal feed")], permit, certificate, declaration, new DateOnly(2026, 11, 1), Actor());
+        new(country, "BL-123456", [Guid.NewGuid()], hs ?? [new HsCodeDto("1006.30", "Rice")], permit, certificate, declaration, new DateOnly(2026, 11, 1), Actor());
 
     private static ConsignmentAggregate Planned(ConsignmentDetailsDto? details = null)
     {
@@ -120,13 +120,13 @@ public sealed class ConsignmentTests
     // ── U-C2 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
     [Theory]
-    [InlineData("2309.10", true)]
-    [InlineData("230910", true)]
-    [InlineData("23.09", false)]
+    [InlineData("1006.30", true)]
+    [InlineData("100630", true)]
+    [InlineData("10.06", false)]
     [InlineData("ABCD", false)]
-    [InlineData("2309", true)]
-    [InlineData("2309.10.90.11", true)]
-    [InlineData("2309.10.90.11.22", false)]
+    [InlineData("1006", true)]
+    [InlineData("1006.30.90.11", true)]
+    [InlineData("1006.30.90.11.22", false)]
     public void U_C2_HsCodePattern(string code, bool valid)
     {
         Assert.Equal(valid, InventoryRules.IsValidHsCode(code));

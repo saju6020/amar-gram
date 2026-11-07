@@ -191,15 +191,15 @@ const bootstrap = sql(
   `
   INSERT INTO account.staff_account ("Id", full_name, mobile_number, email_address, failed_login_count, security_stamp, role_ids,
     "CreatedBy", "CreatedDate", "LastUpdatedDate", "LastUpdatedBy", "TenantId", "VerticalId", "IsMarkedToDelete", "Version")
-  SELECT gen_random_uuid(), 'Farhana Akter', '+8801711000001', 'e2e.admin@purrcare.test', 0, gen_random_uuid(), ARRAY['Administrator']::varchar(50)[],
+  SELECT gen_random_uuid(), 'Farhana Akter', '+8801711000001', 'e2e.admin@amargram.test', 0, gen_random_uuid(), ARRAY['Administrator']::varchar(50)[],
     '00000000-0000-0000-0000-000000000000', now(), now(), '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', false, 1
-  WHERE NOT EXISTS (SELECT 1 FROM account.staff_account WHERE email_address = 'e2e.admin@purrcare.test')
+  WHERE NOT EXISTS (SELECT 1 FROM account.staff_account WHERE email_address = 'e2e.admin@amargram.test')
   RETURNING 1`,
 );
 log(
   bootstrap === '1'
-    ? 'inserted the bootstrap Administrator e2e.admin@purrcare.test (password set next, via reset)'
+    ? 'inserted the bootstrap Administrator e2e.admin@amargram.test (password set next, via reset)'
     : 'bootstrap Administrator already present',
 );
 

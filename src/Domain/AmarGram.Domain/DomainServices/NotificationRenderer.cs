@@ -89,7 +89,7 @@ public static partial class NotificationRenderer
     /// <summary>Owner decision 2026-10-15: a plain-http link to this machine (<c>http://localhost</c>, <c>http://127.0.0.1</c>)
     /// is allowed so password reset works on a developer's machine. It is reachable only in Development/Testing: every link
     /// is built from <c>PublicSite:WebBaseUrl</c>, which startup refuses unless it is https outside those environments
-    /// (CatProfilesModule). Any other http link is still refused.</summary>
+    /// (<c>PublicSiteStartupGuardHostedService</c>). Any other http link is still refused.</summary>
     private static bool IsLocalDevelopmentLink(string raw) =>
         Uri.TryCreate(raw, UriKind.Absolute, out var uri)
         && uri.Scheme == Uri.UriSchemeHttp

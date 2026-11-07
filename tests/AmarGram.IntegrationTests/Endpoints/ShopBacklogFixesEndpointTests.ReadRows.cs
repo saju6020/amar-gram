@@ -28,7 +28,7 @@ public sealed partial class ShopBacklogFixesEndpointTests
     public async Task Row15_ALiveProductWithNoSkus_IsNotA404ForReviewEligibility()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("NoSku"), "Skuless Toy");
+        var product = await CreateProductAsync(staff, NewBrand("NoSku"), "Skuless Bag");
         // HO-XCT-001 ADR-299: a SKU row is retained (Forbidden), so "no SKUs" is made by moving the SKU to a second product.
         var holder = await CreateProductAsync(staff, NewBrand("NoSkuHolder"), "Sku Holder");
         await ExecuteSqlAsync($"UPDATE product.sku SET product_id = {holder.ProductId} WHERE product_id = {product.ProductId}");

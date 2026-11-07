@@ -8,7 +8,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_admin_settings_mock_db__';
+const PERSIST_KEY = '__amargram_admin_settings_mock_db__';
 
 /** `mocks/handlers/admin/settings.ts` — HO-ADM-002 §12, HO-ADM-001 §10.2/§12.4. The full settings
  *  registry, with one branch override (§12's own fixture requirement). */

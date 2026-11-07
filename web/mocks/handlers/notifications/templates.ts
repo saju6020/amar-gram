@@ -374,7 +374,7 @@ function validateContents(def: Definition, contents: Array<Content | null>): Vio
         return {
           propertyName: prop,
           errorCode: 'MalformedTemplatePlaceholder',
-          errorMessage: `"${fragment}" is not a valid placeholder. Write placeholders like {{catName}}.`,
+          errorMessage: `"${fragment}" is not a valid placeholder. Write placeholders like {{customerName}}.`,
         };
       }
       for (const match of text.matchAll(PLACEHOLDER)) {

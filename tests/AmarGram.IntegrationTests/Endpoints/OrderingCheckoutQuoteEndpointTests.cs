@@ -13,15 +13,15 @@ namespace AmarGram.IntegrationTests;
 public sealed class OrderingCheckoutQuoteEndpointTests(OrderingApiFactory factory) : OrderingIntegrationTestBase(factory)
 {
     private sealed record Shop(
-        OrderingContext Context, string District, Guid ZoneId, HttpClient Customer, Guid CustomerId, Guid AddressId, OrderingSku Food, OrderingSku Toy);
+        OrderingContext Context, string District, Guid ZoneId, HttpClient Customer, Guid CustomerId, Guid AddressId, OrderingSku Food, OrderingSku Bag);
 
-    /// <summary>One branch with a 15 % food (850.00) and a 0 % toy (120.00), stocked at the branch and at the storefront; a Standard-60.00 zone for a district; and a
-    /// signed-in customer with an address in it, every pending policy accepted and 2 x food + 1 x toy in the cart -- the worked cart of U-D1.</summary>
+    /// <summary>One branch with a 15 % food (850.00) and a 0 % bag (120.00), stocked at the branch and at the storefront; a Standard-60.00 zone for a district; and a
+    /// signed-in customer with an address in it, every pending policy accepted and 2 x food + 1 x bag in the cart -- the worked cart of U-D1.</summary>
     private async Task<Shop> SetUpAsync(bool cod = true, decimal? codMax = null, object[]? windows = null, decimal? freeOver = null, int lead = 1, bool fillCart = true)
     {
         var context = await CreateContextAsync();
         var food = await CreateSkuAsync(context, price: 850m, stock: 50m, onStorefront: true, name: "Royal Basmati Rice 2 kg");
-        var toy = await CreateSkuAsync(context, price: 120m, stock: 50m, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Feather wand");
+        var bag = await CreateSkuAsync(context, price: 120m, stock: 50m, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Jute shopping bag");
         var district = NewDistrict();
         var zoneId = await CreateZoneAsync(context, district, cod: cod, codMax: codMax, slotWindows: windows, freeOver: freeOver, leadTimeDays: lead);
 
@@ -32,10 +32,10 @@ public sealed class OrderingCheckoutQuoteEndpointTests(OrderingApiFactory factor
         if (fillCart)
         {
             await ExpectAsync(HttpStatusCode.Created, await customer.PostAsJsonAsync("/api/cart/lines", new { skuId = food.SkuId, quantity = 2 }, Json));
-            await ExpectAsync(HttpStatusCode.Created, await customer.PostAsJsonAsync("/api/cart/lines", new { skuId = toy.SkuId, quantity = 1 }, Json));
+            await ExpectAsync(HttpStatusCode.Created, await customer.PostAsJsonAsync("/api/cart/lines", new { skuId = bag.SkuId, quantity = 1 }, Json));
         }
 
-        return new Shop(context, district, zoneId, customer, customerId, addressId, food, toy);
+        return new Shop(context, district, zoneId, customer, customerId, addressId, food, bag);
     }
 
     private static string QuoteUrl(Shop shop, string fulfilment = "Delivery", string? payment = "CashOnDelivery", string? code = null, string? level = null, string? slotDate = null,
@@ -83,7 +83,7 @@ public sealed class OrderingCheckoutQuoteEndpointTests(OrderingApiFactory factor
         Assert.Equal(15m, food.GetProperty("taxRatePercent").GetDecimal());
         Assert.Equal("229.50", food.GetProperty("taxAmount").GetProperty("amount").GetString());
         Assert.Equal("1759.50", food.GetProperty("lineTotal").GetProperty("amount").GetString());
-        Assert.Equal("0.00", lines[shop.Toy.SkuId].GetProperty("taxAmount").GetProperty("amount").GetString());
+        Assert.Equal("0.00", lines[shop.Bag.SkuId].GetProperty("taxAmount").GetProperty("amount").GetString());
 
         Assert.True(quote.GetProperty("discount").GetProperty("applied").GetBoolean());
         Assert.Equal(code.Code, quote.GetProperty("discount").GetProperty("code").GetString());
@@ -188,15 +188,15 @@ public sealed class OrderingCheckoutQuoteEndpointTests(OrderingApiFactory factor
     public async Task ASkuThatIsNoLongerPurchasable_IsExcludedAndTheRestStaysPlaceable()
     {
         var shop = await SetUpAsync();
-        // the shop manager unpublishes the toy after the customer added it
+        // the shop manager unpublishes the bag after the customer added it
         var staff = shop.Context.Admin;
-        await ExpectAsync(HttpStatusCode.NoContent, await staff.PostAsJsonAsync($"/api/staff/shop/products/{shop.Toy.ProductId}/unpublish",
-            new { expectedVersion = await ProductVersionAsync(staff, shop.Toy.ProductId) }, Json));
+        await ExpectAsync(HttpStatusCode.NoContent, await staff.PostAsJsonAsync($"/api/staff/shop/products/{shop.Bag.ProductId}/unpublish",
+            new { expectedVersion = await ProductVersionAsync(staff, shop.Bag.ProductId) }, Json));
 
         var quote = await QuoteAsync(shop, QuoteUrl(shop));
 
         var excluded = Assert.Single(quote.GetProperty("excludedLines").EnumerateArray());
-        Assert.Equal(shop.Toy.SkuId, excluded.GetProperty("skuId").GetGuid());
+        Assert.Equal(shop.Bag.SkuId, excluded.GetProperty("skuId").GetGuid());
         Assert.Equal("NowUnavailable", excluded.GetProperty("reasonCode").GetString());
         Assert.Contains(quote.GetProperty("changes").EnumerateArray(), c => c.GetProperty("kind").GetString() == "NowUnavailable");
         Assert.Single(quote.GetProperty("lines").EnumerateArray());
@@ -363,7 +363,7 @@ public sealed class OrderingCheckoutQuoteEndpointTests(OrderingApiFactory factor
         var expired = await CreateDiscountAsync(shop.Context, validTo: Now.AddDays(-1));
         Assert.Equal("DiscountCodeExpired", (await QuoteAsync(shop, QuoteUrl(shop, code: expired.Code))).GetProperty("discount").GetProperty("reasonCode").GetString());
 
-        var notForThese = await CreateDiscountAsync(shop.Context, scope: "Categories", categoryIds: [2]); // litter; the cart holds food and a toy
+        var notForThese = await CreateDiscountAsync(shop.Context, scope: "Categories", categoryIds: [2]); // honey; the cart holds rice and a jute bag
         Assert.Equal("DiscountNotApplicableToItems", (await QuoteAsync(shop, QuoteUrl(shop, code: notForThese.Code))).GetProperty("discount").GetProperty("reasonCode").GetString());
     }
 

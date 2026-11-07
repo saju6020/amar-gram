@@ -33,7 +33,7 @@ function Sprout() {
 }
 
 /**
- * The shop's logo (Amar Gram pivot, 2026-10-23; replaces the PurrCare badge): a tilted banana-leaf badge
+ * The shop's logo: a tilted banana-leaf badge
  * with the sprout, "Amar" in ink and "Gram" in leaf green (both in the display font), and a small "Shop" tag. Reads
  * "Amar Gram Shop".
  * Sized from the link's font size, so the header's `text-xl md:text-2xl` scales it.

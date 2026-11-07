@@ -206,7 +206,7 @@ describe('the shop mock store key is pinned at v2 (Amended (b))', () => {
     try {
       window.sessionStorage.clear();
       window.sessionStorage.setItem(
-        '__purrcare_shop_mock_db__',
+        '__amargram_shop_mock_db__',
         JSON.stringify({ products: [], origins: [], reviews: [], wishlist: [], alerts: [] }),
       );
       vi.resetModules();
@@ -215,7 +215,7 @@ describe('the shop mock store key is pinned at v2 (Amended (b))', () => {
       expect(store.db.products.length).toBeGreaterThan(0);
       expect(store.db.products.some((p) => p.district)).toBe(true);
       store.persist();
-      expect(window.sessionStorage.getItem('__purrcare_shop_mock_db__v2')).not.toBeNull();
+      expect(window.sessionStorage.getItem('__amargram_shop_mock_db__v2')).not.toBeNull();
     } finally {
       Reflect.deleteProperty(navigator, 'serviceWorker');
       window.sessionStorage.clear();

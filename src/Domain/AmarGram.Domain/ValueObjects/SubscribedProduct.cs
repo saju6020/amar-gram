@@ -2,7 +2,7 @@ namespace AmarGram.Domain.ValueObjects;
 
 /// <summary>
 /// HO-SUB-001 §8.2 -- the display snapshot of the subscribed SKU, taken at creation. Reads prefer the catalogue's current names; this is the fallback when
-/// the product has since been renamed or archived. Adapted: the original's <c>IsPrescriptionDiet</c> is retired with the clinic (HO-P1).
+/// the product has since been renamed or archived.
 /// </summary>
 public sealed record SubscribedProduct
 {

@@ -18,8 +18,8 @@ namespace AmarGram.Api.Filters;
 ///
 /// Gate fix 2026-09-26 (ARCH LOW / CR LOW): dispatches the existing, projected
 /// <see cref="GetSystemStatusQuery"/> through <see cref="IInMemoryDispatcher"/> instead of reading
-/// <c>AmarGramDbContext</c> directly -- the same precedent <c>RequireActionFilter</c> already
-/// set with <see cref="GetCatOwnerQuery"/>, and it stops this filter from materialising the whole
+/// <c>AmarGramDbContext</c> directly -- filters read through projected queries, not the
+/// DbContext, and it stops this filter from materialising the whole
 /// aggregate for two columns.
 /// </summary>
 public sealed class MaintenanceModeFilter(IInMemoryDispatcher dispatcher, IUserContextProvider userContextProvider) : IAsyncActionFilter

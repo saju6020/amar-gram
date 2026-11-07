@@ -140,7 +140,7 @@ public sealed class NotifyStockAlertCommandHandler(
             new Dictionary<string, string>
             {
                 ["productName"] = product.Name,
-                // A single-variant product has no axes: "Royal Canin (Royal Canin)" would read oddly.
+                // A single-variant product has no axes: "Chashi Rice (Chashi Rice)" would read oddly.
                 ["variantLabel"] = sku.HasAnyAxis ? sku.Label(product.Name) : "Standard",
                 ["productLink"] = linkBuilder.ProductLink(product.Slug, sku.Id)
             },

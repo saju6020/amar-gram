@@ -23,10 +23,10 @@ public sealed class ShopBacklogFixesCatalogueApplicationTests
 {
     private static UserContext Ctx() => new(Guid.NewGuid(), Guid.NewGuid()) { Roles = ["ShopManager"] };
 
-    private static ProductAggregate NewProduct(string slug = "scratch-post")
+    private static ProductAggregate NewProduct(string slug = "bamboo-broom")
     {
         var product = new ProductAggregate(Guid.NewGuid());
-        product.Create(new ProductCreateDto(ProductKind.Standard, "Scratch Post", "Acme", ProductCategory.HouseholdAndCare,
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Bamboo Broom", "Acme", ProductCategory.HouseholdAndCare,
             null, Guid.NewGuid(), slug, null, null, Ctx(), Guid.NewGuid()));
         return product;
     }

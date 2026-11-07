@@ -10,9 +10,7 @@ namespace AmarGram.Infrastructure.Fakes.Inventory;
 ///
 /// Originally:
 /// Fail-closed: every mutating/planning method reports <c>InsufficientStock</c> (HO-IMP-001 §10.4's
-/// own code name). No consumer can build on stock existing before Inventory is real -- the
-/// precedent is HO-SHP-001's own already-specified deny-all diet stub (ADR-084), applied here to
-/// stock instead. <see cref="GetBranchBalancesAsync"/> is the one read-only exception: it succeeds
+/// own code name). No consumer can build on stock existing before Inventory is real. <see cref="GetBranchBalancesAsync"/> is the one read-only exception: it succeeds
 /// with an empty list, which is the truthful answer ("no balances exist") rather than a fabricated
 /// denial. Literal violation-code strings are used rather than a
 /// <c>BusinessViolationCodes.Inventory.cs</c> partial file, so this fake never collides with the

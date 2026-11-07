@@ -3,7 +3,7 @@ import { dateIn, dialog, pickSku, wedgeScan } from './inventory-helpers';
 
 /**
  * HO-IMP-002 §5.1 / §16 - the E-cases re-run against the REAL API (no MSW). Opt-in only: it needs a
- * live API, `NEXT_PUBLIC_USE_MOCKS=false`, the e2e staff in `catecommerce_dev` and four SKUs created
+ * live API, `NEXT_PUBLIC_USE_MOCKS=false`, the e2e staff in `amargram_dev` and four SKUs created
  * through the staff shop API (E2E-FOOD-1 "E2E Rice", E2E-FOOD-2 "E2E Organic rice 5 kg", E2E-BAG-1,
  * E2E-CHILLED-1; every real SKU is `each` and whole-only, OQ-19), and stock locations named "Cold
  * store" and "Back store". Credentials come from `E2E_STAFF_*` (git-ignored `web/.env.e2e.local`).

@@ -30,7 +30,7 @@ See `.ai/persistence-ef-core.md` for the full pattern.
 - The platform's `IAggregateRootRepository<TAggregate>` contract is retained and reimplemented
 - Concurrency via PostgreSQL `xmin` mapped as a row version (ADR-016)
 - Indexes declared in EF configuration and applied by migrations, never by a manual script
-- Soft delete is the default; clinical and financial records are never hard-deleted (SRS C-3, D-6)
+- Soft delete is the default; order, stock and financial records are never hard-deleted (SRS C-3, D-6)
 
 ## Remaining work
 - **VERIFY** where `IAggregateRootRepository<TAggregate>` is declared — `Core` or

@@ -72,14 +72,14 @@ discouraged (ADR-019).
 
   ```csharp
   [HttpPost]
-  public async Task<IActionResult> RegisterCat([FromBody] RegisterCatRequest request)
+  public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
   {
-      var command = request.ToCommand(catId: Guid.NewGuid(), userContext: UserContext);
+      var command = request.ToCommand(productId: Guid.NewGuid(), userContext: UserContext);
 
       var response = await _dispatcher.SendAsync(command);
 
       return response.IsSuccess
-          ? CreatedAtAction(nameof(GetCat), new { id = response.Result }, response.Result)
+          ? CreatedAtAction(nameof(GetProduct), new { id = response.Result }, response.Result)
           : BadRequest(response.ValidationResult);
   }
   ```

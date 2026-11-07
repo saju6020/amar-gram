@@ -1,9 +1,8 @@
 namespace AmarGram.Shared.Common.Constants;
 
 /// <summary>
-/// HO-SUB-001 §10.4 -- Subscriptions' own violation codes (ADR-341 per-area partial). Adapted: the cat and prescription codes
-/// (<c>CatRequiredForPrescriptionDiet</c>, <c>CatNotAllowedForProduct</c>, <c>PrescriptionAuthorisationRequired</c>) are retired with the clinic (HO-P1),
-/// and <c>PickupBranchUnavailable</c> (Orders) replaces <c>PickupBranchNotAvailable</c>. Already declared elsewhere and reused:
+/// HO-SUB-001 §10.4 -- Subscriptions' own violation codes (ADR-341 per-area partial).
+/// <c>PickupBranchUnavailable</c> (Orders) replaces <c>PickupBranchNotAvailable</c>. Already declared elsewhere and reused:
 /// <c>DeliveryAddressNotFound</c> (Accounts), <c>PaymentMethodUnavailable</c> (Orders), <c>CancellationReasonRequired</c> (base), <c>StaleVersion</c> (Billing).
 /// </summary>
 public static partial class BusinessViolationCodes

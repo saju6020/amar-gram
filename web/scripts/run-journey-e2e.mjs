@@ -86,11 +86,11 @@ try {
 const apiBase = `http://localhost:${apiPort}`;
 const webBase = `http://localhost:${webPort}`;
 const customer = {
-  email: process.env.JOURNEY_CUSTOMER_EMAIL ?? 'customer@purrcare.test',
+  email: process.env.JOURNEY_CUSTOMER_EMAIL ?? 'customer@amargram.test',
   password: process.env.SEED_CUSTOMER_PASSWORD,
 };
 const staff = {
-  identifier: process.env.E2E_STAFF_ADMIN ?? 'e2e.admin@purrcare.test',
+  identifier: process.env.E2E_STAFF_ADMIN ?? 'e2e.admin@amargram.test',
   password: process.env.SEED_STAFF_PASSWORD,
 };
 

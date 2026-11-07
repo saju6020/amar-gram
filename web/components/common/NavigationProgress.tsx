@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 
 /** Give up after this long, so a navigation that never completes (offline, an error) cannot leave the bar stuck. */
 const SAFETY_TIMEOUT_MS = 15_000;
-const START_EVENT = 'purrcare:navigation-start';
+const START_EVENT = 'amargram:navigation-start';
 
 /**
  * Starts the top progress bar for a navigation the click listener cannot see — a `router.push`

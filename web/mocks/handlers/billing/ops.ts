@@ -655,7 +655,7 @@ export const opsBillingHandlers: HttpHandler[] = [
       headers: {
         'Content-Type': 'application/zip',
         'X-Export-Sha256': sha,
-        'Content-Disposition': `attachment; filename="purrcare-accounts-${from}-${to}.zip"`,
+        'Content-Disposition': `attachment; filename="amargram-accounts-${from}-${to}.zip"`,
       },
     });
   }),

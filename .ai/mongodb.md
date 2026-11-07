@@ -20,7 +20,7 @@
 | `IReadRepository.GetItemsAsync` | The `DbContext` with `AsNoTracking()` + `Select`, in a Query Handler |
 | `IStateRepository`, `IEventRepository` | Gone. One database, no event store |
 | Three databases: read / state / event | One PostgreSQL database, optionally grouped into schemas per bounded context |
-| Collections named `$"{typeof(T).Name}s"` implicitly | Explicit `ToTable("cat")` in an `IEntityTypeConfiguration<T>` |
+| Collections named `$"{typeof(T).Name}s"` implicitly | Explicit `ToTable("product")` in an `IEntityTypeConfiguration<T>` |
 | `[BsonIgnoreExtraElements]` on every class, not inherited | Nothing. Mapping is external to the domain |
 | `Expression<Func<T,bool>>` passed to a repository | LINQ against `DbSet<T>` inside the repository |
 | "No transaction API exists — do not reach for `ITransactionalRepository`" | Real transactions exist via EF Core |
@@ -34,7 +34,7 @@ The old guidance warned against unbounded embedded arrays in a document (ADR-006
 relational equivalent of that concern is not about storage but about aggregate size:
 
 **An aggregate must not load an unbounded collection.** Where history grows without limit —
-weight history, status history, boarding care logs, stock ledger entries — keep it out of the
+price history, status history, stock ledger entries — keep it out of the
 aggregate and query it from the read side.
 
 See `.ai/persistence-ef-core.md` §2.

@@ -31,7 +31,7 @@ improvising a solution shape from memory.
 
 Do not guess these. Wrong answers are expensive to unwind:
 
-- **Root namespace and solution name** (e.g. `CatEcommerce`) — it lands in every namespace and every
+- **Root namespace and solution name** (e.g. `AmarGram`) — it lands in every namespace and every
   `.csproj`.
 - **First bounded context and its first aggregate.** Building one feature end to end proves the
   wiring; an empty skeleton proves nothing.

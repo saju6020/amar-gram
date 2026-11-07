@@ -14,7 +14,7 @@ namespace AmarGram.IntegrationTests;
 /// </summary>
 public sealed class OrderingBackOfficeGapsEndpointTests(OrderingApiFactory factory) : OrderingShopTestBase(factory)
 {
-    private const decimal Total = 1097.50m; // 1 x food (850.00 + 15 % = 977.50) + 1 x toy (120.00 at 0 %)
+    private const decimal Total = 1097.50m; // 1 x food (850.00 + 15 % = 977.50) + 1 x bag (120.00 at 0 %)
 
     // ── helpers ─────────────────────────────────────────────────────────────────────────────────────
     private async Task<Guid> CreateCourierAsync(OrderingContext context)
@@ -44,18 +44,18 @@ public sealed class OrderingBackOfficeGapsEndpointTests(OrderingApiFactory facto
     private static JsonElement FigureOf(JsonElement tile, string key) =>
         tile.GetProperty("figures").EnumerateArray().Single(f => f.GetProperty("key").GetString() == key).GetProperty("value");
 
-    private sealed record Till(Shop Shop, HttpClient Cashier, OrderingSku Food, OrderingSku Toy);
+    private sealed record Till(Shop Shop, HttpClient Cashier, OrderingSku Food, OrderingSku Bag);
 
     private async Task<Till> TillAsync()
     {
         var shop = await SetUpShopAsync(fillCart: false);
         var food = await CreateSkuAsync(shop.Context, price: 850m, stock: 20m, food: true, name: "Basmati rice " + Guid.NewGuid().ToString("N")[..6]);
-        var toy = await CreateSkuAsync(shop.Context, price: 120m, stock: 20m, taxClassId: shop.Context.ZeroTaxClassId, name: "Feather wand " + Guid.NewGuid().ToString("N")[..6]);
+        var bag = await CreateSkuAsync(shop.Context, price: 120m, stock: 20m, taxClassId: shop.Context.ZeroTaxClassId, name: "Jute shopping bag " + Guid.NewGuid().ToString("N")[..6]);
         var (cashier, _) = await StaffClientAsync(shop.Context, StaffRoles.Reception);
-        return new Till(shop, cashier, food, toy);
+        return new Till(shop, cashier, food, bag);
     }
 
-    private static object Lines(Till till) => new[] { new { skuId = till.Food.SkuId, quantity = 1 }, new { skuId = till.Toy.SkuId, quantity = 1 } };
+    private static object Lines(Till till) => new[] { new { skuId = till.Food.SkuId, quantity = 1 }, new { skuId = till.Bag.SkuId, quantity = 1 } };
 
     private static object Cash(decimal amount) => new { method = "Cash", amount };
 
@@ -207,7 +207,7 @@ public sealed class OrderingBackOfficeGapsEndpointTests(OrderingApiFactory facto
         var withSlot = placed.GetProperty("orderId").GetGuid();
 
         var (reception, _) = await StaffClientAsync(shop.Context, StaffRoles.Reception);
-        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Toy.SkuId, quantity = 1 }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Bag.SkuId, quantity = 1 }, Json));
         var noSlot = await PlaceOrderAsync(shop);
 
         var list = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await reception.GetAsync("/api/staff/orders")));
@@ -317,9 +317,9 @@ public sealed class OrderingBackOfficeGapsEndpointTests(OrderingApiFactory facto
         Assert.Equal("0.00", FigureOf(none, "amount").GetProperty("amount").GetString());
 
         var viaRider = await PlaceOrderAsync(shop);
-        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Toy.SkuId, quantity = 1 }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Bag.SkuId, quantity = 1 }, Json));
         var viaRider2 = await PlaceOrderAsync(shop);
-        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Toy.SkuId, quantity = 1 }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Bag.SkuId, quantity = 1 }, Json));
         var viaCourier = await PlaceOrderAsync(shop);
         foreach (var id in new[] { viaRider, viaRider2, viaCourier })
             await ExpectAsync(HttpStatusCode.NoContent, await reception.PostAsync($"/api/staff/orders/{id}/packing", null));

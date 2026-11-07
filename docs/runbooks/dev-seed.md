@@ -12,26 +12,24 @@ looked up before it is created.
 
 | Area | Seeded |
 |---|---|
-| Staff (password `SEED_STAFF_PASSWORD`) | `e2e.admin@purrcare.test` Administrator (Farhana Akter), `e2e.approver@purrcare.test` Administrator (Shirin Sultana), `e2e.shopmanager@purrcare.test` Shop manager, `e2e.reception@purrcare.test` Reception, `e2e.inventory@purrcare.test` Inventory. All are assigned to Main outlet as their primary branch. |
+| Staff (password `SEED_STAFF_PASSWORD`) | `e2e.admin@amargram.test` Administrator (Farhana Akter), `e2e.approver@amargram.test` Administrator (Shirin Sultana), `e2e.shopmanager@amargram.test` Shop manager, `e2e.reception@amargram.test` Reception, `e2e.inventory@amargram.test` Inventory. All are assigned to Main outlet as their primary branch. |
 | Branch | The migration's main branch (`…ba1c`), renamed **Main outlet**, with its address in Dhanmondi, Dhaka 1209, a phone number, an email address, and opening hours of Saturday to Thursday 09:00–20:00 (closed on Friday). It also gets a sample billing profile. |
 | Tax | Class **Standard** (`STANDARD`) at 0%. The migration's `DELIVERY` class gets a 0% rate if it has none. |
 | Shop | The products in `web/scripts/data/amargram-catalogue.json` (HO-P2 §1.5): 44 published organic and everyday products across all 11 categories, from 9 producers (the API's `brand`), with 84 SKUs priced from ৳70 to ৳3,950. Food products have their country of origin, ingredients, storage, shelf life, net weight and allergens; about half carry certifications, and the certified-organic ones have a certifier and certificate number. The district of origin goes into the description and a tag, because the API keeps only the country. The origin countries are set up as featured sourcing origins. There are no images. |
 | Stock | Supplier *Gram Distribution Ltd* (`GRAM-BD`), then 1 purchase order (issued), then 1 goods receipt of 24 units per SKU at Main outlet › Shop floor. Expiry-tracked SKUs get lot `SEED-2610-nn`, expiring 2027-09-30. Every SKU is sellable. |
 | Content | One published **Shop** banner ("Free delivery in Dhaka on orders over ৳2,000") and 3 published FAQs. The **privacy** policy requires acceptance; the **terms** policy does not. Both have version 1 published. |
 | Delivery | Zone **Dhaka** covering the whole Dhaka district, with cash on delivery allowed. Its Standard service costs ৳60, is free over ৳2,000, has a lead time of 1 day, and has two windows a day (10–14 and 15–19) from Saturday to Thursday. It also sets up a clearly fake bank-transfer account. |
-| Customer (password `SEED_CUSTOMER_PASSWORD`) | **Ayesha Rahman**, `customer@purrcare.test`, mobile `01819123456`. She has the address *Home*, House 12, Road 5, Block C, Mohammadpur, Dhaka 1207. She has not accepted the privacy policy yet, so the UI asks her once. |
+| Customer (password `SEED_CUSTOMER_PASSWORD`) | **Ayesha Rahman**, `customer@amargram.test`, mobile `01819123456`. She has the address *Home*, House 12, Road 5, Block C, Mohammadpur, Dhaka 1207. She has not accepted the privacy policy yet, so the UI asks her once. |
 
-These are **not** seeded: appointments, rosters, visits, orders, invoices, vaccines and drugs, product
-images, and any discount codes.
+These are **not** seeded: rosters, orders, invoices, product images, and any discount codes.
 
-Effective dates: the API refuses tax rates, service prices and boarding rate cards dated in the past,
-so they take effect when the seed runs, not on 2026-01-01. SKU prices start 30 seconds before the run.
+Effective dates: the API refuses tax rates dated in the past, so they take effect when the seed runs, not on 2026-01-01. SKU prices start 30 seconds before the run.
 
 ## Why one row is written directly
 
 Every staff endpoint needs a signed-in Administrator, and the `DevUser` fallback does not help here:
 `RequireActionFilter` answers 401 to any caller without a session. So the API cannot create the first
-staff account. `seed-dev-db.mjs` inserts that single row (`e2e.admin@purrcare.test`) without a
+staff account. `seed-dev-db.mjs` inserts that single row (`e2e.admin@amargram.test`) without a
 password, the same way `CreateStaffAccountCommand` would. Everything after that goes through the API,
 including that admin's password, which is set by the normal reset flow.
 

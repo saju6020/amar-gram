@@ -61,7 +61,7 @@ Written: 2026-10-31 (before any command ran)  ·  Executed: 2026-10-31
 |---|---|---|---|---|
 | B1 | `next build` completes | exit 0 | PASS | exit 0, 1m15s |
 | B2 | No mock handlers or seed data in the production output | zero hits in `.next` output | PASS | grep over all `.next` js/json/html/rsc/map: 0 files for `__purrcare_ordering_mock_db__` and `__purrcare`, Rafiq Hasan, Jahid Alam, Kamal Mia, Mizanur Rahman, Shirin Akter, order id `...112`, the rider-note text, BOC-2026-0142, Bangladesh Organic Council, Sam Rahman, Nolen Gur Sandesh, Chapainawabganj, setupWorker, createWorker, "Our delivery rider", rider mobile. Only hits: "Kalijira Rice" and "msw/browser" in `.next/cache/webpack/*-production/0.pack` (the build cache, not served output; "Kalijira Rice" is in source at `components/catalogue/ProductCard.tsx`, not a seed). `mockServiceWorker` / `NEXT_PUBLIC_USE_MOCKS` appear in 2 layout chunks only as the guard call with `nodeEnv:"production"` inlined. |
-| B3 | `public/mockServiceWorker.js` served, known LOW | present, no seeds | PASS | File present (msw 2.15.0), tracked, not git-ignored; 0 matches for Rafiq, purrcare, Kalijira. Confirms the SECURITY LOW as stated. |
+| B3 | `public/mockServiceWorker.js` served, known LOW | present, no seeds | PASS | File present (msw 2.15.0), tracked, not git-ignored; 0 matches for Rafiq, the retired brand name, Kalijira. Confirms the SECURITY LOW as stated. |
 | E1a | `ordering-customer-orders.spec.ts` | pass | PASS | chunk 1: 60 passed with E1b and E1c (both projects, 2 workers, no failure) |
 | E1b | `portal-dashboard.spec.ts` | pass | PASS | same chunk |
 | E1c | `ordering-staff.spec.ts` | pass | PASS | same chunk |
