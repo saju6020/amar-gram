@@ -28,3 +28,36 @@ NOTES (no action)
 SCOPE CHECK
 - files in allowed scope: 32/32 (web mocks, lib, tests, docs; no backend or src/ file touched)
 - files outside allowed scope: none
+
+---
+
+## Run 2
+
+GATE: CODE_REVIEW
+HANDOVER: HO-P6-SUBSCRIPTIONS (slice S0)
+COMMITS: 86db19d..ca1fb2c (fixes in ca1fb2c)
+DATE: 2026-11-07
+STATUS: PASS
+
+RUN 1 FINDINGS, VERIFIED
+- HIGH non-GUID ids: FIXED. `id()` pads the prefix to 8 chars; the `5a` literals in areas/accounts.ts (Sam's two plus four seed-only rows) are 8-char; no `5a0000000`/`5b0000000`/`f50000000` remains (grep). New seeds test runs `isGuid` over subscriptions, cycles, addresses, skus and subscription order ids (>40 values) and fails on the old shape. Store keys bumped (subscriptions v2, ordering v4, accounts p7); no stale key literal left.
+- MEDIUM vacuous stale-key test: FIXED by dropping the stale claim; the test now pins the v3 write only and the purrcare literal is gone.
+- LOW `> 0` assertions: FIXED, both now `toBe(subscriptionOrderSeeds().length)`.
+- LOW clock edge: FIXED, tests at 19:00Z/17:59Z for today and 17:59:59Z/18:00:00Z for the cut-off; a UTC-based `today` would fail them.
+- LOW branch directory: FIXED, `getBranchSnapshot` (exists, exported, returns a Branch with `name`) replaces `BRANCH_DIRECTORY`; no remaining references.
+- LOW ordering reseed: accepted and recorded (Amended (d)(3) and a comment in ordering/store.ts).
+- LOW dateParts: FIXED with a round-trip check; tests cover 02-31, 04-31 and leap day 2028-02-29 (a Tuesday).
+- LOW duplicate date formatter: FIXED, `day()` delegates to `formatCycleDate`. Both produced `ddd d MMM`; the parity tests still pass.
+
+NEW FINDINGS
+- [LOW] web/tests/unit/subscriptions/seeds.test.ts:237-249 — the GUID test reads `ids.addresses` from subscriptions/fixtures.ts, not the literals typed by hand in areas/accounts.ts, so those could drift or turn non-GUID again unnoticed (the existing address-resolution test would still catch a mismatch with the subscriptions ids, but not a malformed pair). Fix: also assert `isGuid` on the addressId of the `findCustomerAddress` results already resolved in the next describe.
+- [LOW] web/mocks/handlers/subscriptions/store.ts:320 — no test pins that a pickup subscription's `pickupBranch` name now comes from the Administration mock (and an unknown branch id gives undefined). Fix: one assertion on a seeded pickup subscription's view.
+
+No new defect found in the id builder, key bumps, branch lookup, dateParts (year < 100 cannot reach it; the regex is 4-digit) or the formatCycleDate reuse. Second look at the full 86db19d..ca1fb2c diff found nothing run 1 missed.
+
+CHECKS
+- `npx vitest run tests/unit/subscriptions tests/components/back-office-sales/mock-refusals.test.ts tests/components/back-office-sales/test-gate-s2.test.tsx tests/components/catalogue/catalogue-p5.test.tsx --maxWorkers=2`: 10 files, 180 tests pass. No Playwright, no full suite.
+
+SCOPE CHECK
+- files in allowed scope: 13/13 changed in ca1fb2c (web mocks, lib, tests, handover Amended row; areas/accounts.ts ids and key only, authorised by Amended (b)/(c)/(d))
+- files outside allowed scope: none
