@@ -219,7 +219,7 @@ describe('submitting (U14)', () => {
     expect(screen.getByRole('radio', { name: 'Every 6 weeks' })).toBeChecked();
   });
 
-  it('SubscriptionAlreadyExists re-reads the options and links to the existing subscription; PaymentMethodUnavailable re-reads the payment methods', async () => {
+  it("PaymentMethodUnavailable shows the server's sentence and re-reads the payment methods", async () => {
     const user = userEvent.setup();
     const methods = recordRequests('/subscriptions/payment-methods');
     await formReady();
@@ -246,6 +246,38 @@ describe('submitting (U14)', () => {
     expect((await screen.findAllByText('That payment method is not available for this order.')).length).toBeGreaterThan(0);
     await waitFor(() => expect(methods.urls.length).toBeGreaterThan(before));
     methods.stop();
+  });
+
+  it('SubscriptionAlreadyExists re-reads the options and then links to the existing subscription', async () => {
+    const user = userEvent.setup();
+    await formReady();
+    server.use(
+      http.post('*/api/customers/me/subscriptions', () =>
+        HttpResponse.json(
+          {
+            errors: [
+              {
+                propertyName: 'SkuId',
+                errorCode: 'SubscriptionAlreadyExists',
+                errorMessage: 'You already have a subscription for this product. You can change it from your subscriptions.',
+              },
+            ],
+            isValid: false,
+          },
+          { status: 400 },
+        ),
+      ),
+      // The re-read of C1 now knows the subscription that was started in another window.
+      http.get('*/api/customers/me/subscriptions/options', () =>
+        HttpResponse.json({ ...optionsOf(ids.customerId, OATS_2KG)!, existingSubscriptionId: ids.mine.activeUnlocked }),
+      ),
+    );
+    await user.click(screen.getByRole('button', { name: 'Start subscription' }));
+    expect(await screen.findByText('You already subscribe to this.')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Manage your subscription' })).toHaveAttribute(
+      'href',
+      `/portal/subscriptions/${ids.mine.activeUnlocked}`,
+    );
   });
 
   it('the button is busy while in flight, announced, and is the only thing disabled', async () => {
