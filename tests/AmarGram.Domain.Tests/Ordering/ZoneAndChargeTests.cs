@@ -322,7 +322,7 @@ public sealed class ZoneAndChargeTests
     public void TheBankTransferAccount_IsASingleton_WithAllRequiredFields()
     {
         var account = new BankTransferAccountAggregate(BankTransferAccountAggregate.SingletonId);
-        account.Create("Purr Care Ltd", "1234567890", "Sample Bank", "Gulshan", " 012345678 ", true, User);
+        account.Create("Amar Gram Ltd", "1234567890", "Sample Bank", "Gulshan", " 012345678 ", true, User);
         Assert.Equal("012345678", account.RoutingNumber);
 
         foreach (var blank in new[] { "", "  " })

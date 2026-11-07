@@ -17,7 +17,7 @@ namespace AmarGram.Application.CommandHandlers.Subscription;
 /// HO-SUB-001 §11.4 C1 (US-SUB-01 AC1) -- start a subscription. The handler checks what spans records (the SKU is on offer, the live count, no duplicate, the
 /// terms can be served by Orders' own rules) and the aggregate checks what it can see (the terms and the first date). Then <c>Create</c>, the
 /// <c>subscription.created</c> message in the same save, and the save. A parallel duplicate loses to <c>ix_subscription_live_per_sku</c> (<c>400
-/// SubscriptionAlreadyExists</c>, mapped by the exception filter). Adapted: no cat, no authorisation; a product is subscribable when staff mark it so (BG-15).
+/// SubscriptionAlreadyExists</c>, mapped by the exception filter). A product is subscribable when staff mark it so (BG-15).
 /// </summary>
 public sealed class CreateSubscriptionCommandHandler(
     IAggregateRootRepository<SubscriptionAggregate> subscriptions,

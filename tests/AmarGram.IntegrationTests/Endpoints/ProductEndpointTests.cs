@@ -14,11 +14,11 @@ public sealed class ProductEndpointTests(ShopApiFactory factory) : ShopIntegrati
     {
         var client = await SignInAsShopManagerAsync();
         var taxClassId = await SeedActiveTaxClassAsync(UniqueCode("TAX"));
-        var slug = UniqueSlug("scratch-post");
+        var slug = UniqueSlug("bamboo-broom");
 
         var create = await client.PostAsJsonAsync("/api/staff/shop/products", new
         {
-            kind = "Standard", name = "Scratch Post", brand = "Acme", category = "HouseholdAndCare",
+            kind = "Standard", name = "Bamboo Broom", brand = "Acme", category = "HouseholdAndCare",
             taxClassId, slug
         }, Json);
 
@@ -30,7 +30,7 @@ public sealed class ProductEndpointTests(ShopApiFactory factory) : ShopIntegrati
         Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
         var detailBody = await detail.Content.ReadFromJsonAsync<JsonElement>(Json);
 
-        Assert.Equal("Scratch Post", detailBody.GetProperty("name").GetString());
+        Assert.Equal("Bamboo Broom", detailBody.GetProperty("name").GetString());
         Assert.Equal("Draft", detailBody.GetProperty("status").GetString());
         Assert.Equal(slug, detailBody.GetProperty("slug").GetString());
     }

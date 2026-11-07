@@ -63,7 +63,7 @@ internal static class ReturnHandlerSupport
 /// <summary>
 /// HO-ORD-001 §11.4 C22 (US-ORD-13, BR-10, ADR-210) -- a return request. A customer's is on their own order (<c>404</c> otherwise); staff file one on the customer's behalf for an
 /// order of their active branch. <see cref="ReturnEligibilityPolicy"/> judges every line (the window in branch-local days, the quantity left after earlier and
-/// open returns, opened food and used litter unless a batch is recalled or the reason is a defect); <b>any refused line refuses the whole request</b> with a reason per line
+/// open returns, opened food and used household or care items unless a batch is recalled or the reason is a defect); <b>any refused line refuses the whole request</b> with a reason per line
 /// (<c>Lines[i]</c>) so the customer can resubmit without it. An eligible request is <c>Requested</c>, waiting for staff approval.
 /// </summary>
 public sealed class RequestReturnCommandHandler(

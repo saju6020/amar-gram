@@ -6,8 +6,7 @@ namespace AmarGram.Infrastructure.Documents;
 /// Registers the embedded Bengali fallback font (Noto Sans Bengali, SIL Open Font License 1.1, bundled
 /// under Documents/Fonts/) once per process. The default font (Lato) has no Bengali glyphs, so every
 /// QuestPDF document names this family second in its <c>FontFamily(...)</c> calls and QuestPDF falls
-/// back to it for any glyph Lato does not have. Moved here from the retired medical-history renderer
-/// (HO-P1), which used to own this registration.
+/// back to it for any glyph Lato does not have.
 /// </summary>
 public static class QuestPdfFonts
 {

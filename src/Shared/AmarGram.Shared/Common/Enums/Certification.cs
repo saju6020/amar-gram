@@ -1,7 +1,6 @@
 namespace AmarGram.Shared.Common.Enums;
 
-/// <summary>HO-P2 §1.3 -- a food product's certifications and claims (multi-select, food only; replaced
-/// the pet-food health focus). <see cref="CertifiedOrganic"/> needs the organic certifier and certificate
+/// <summary>HO-P2 §1.3 -- a food product's certifications and claims (multi-select, food only). <see cref="CertifiedOrganic"/> needs the organic certifier and certificate
 /// number in the food details before the product can be published.</summary>
 public sealed class Certification(int value, string displayName) : Enumeration(value, displayName)
 {

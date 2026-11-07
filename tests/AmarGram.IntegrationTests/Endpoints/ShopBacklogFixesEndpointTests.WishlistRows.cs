@@ -28,7 +28,7 @@ public sealed partial class ShopBacklogFixesEndpointTests
     public async Task Row18_Wishlist_RefusesASkuOfADraftProduct_AsUnknown()
     {
         var staff = await SignInAsShopManagerAsync();
-        var draft = await CreateProductAsync(staff, NewBrand("WishDraft"), "Draft Toy", publish: false);
+        var draft = await CreateProductAsync(staff, NewBrand("WishDraft"), "Draft Bag", publish: false);
         var (customer, _) = await RegisterAndSignInCustomerAsync();
 
         Assert.Equal(HttpStatusCode.NotFound, (await customer.PutAsync($"/api/customers/me/wishlist/items/{draft.SkuId}", null)).StatusCode);
@@ -39,7 +39,7 @@ public sealed partial class ShopBacklogFixesEndpointTests
     public async Task Row18_Wishlist_RefusesASkuOfAnUnlistedProduct()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("WishHidden"), "Hidden Toy");
+        var product = await CreateProductAsync(staff, NewBrand("WishHidden"), "Hidden Bag");
         await UnlistAsync(staff, product.ProductId);
         var (customer, _) = await RegisterAndSignInCustomerAsync();
 

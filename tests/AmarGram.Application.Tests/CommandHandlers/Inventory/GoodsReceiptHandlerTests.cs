@@ -50,9 +50,9 @@ public sealed class GoodsReceiptHandlerTests
     {
         var rig = new Rig();
         var food = rig.Skus.Add(expiryRequired: true, stockClass: StockClass.Food);
-        var litter = rig.Skus.Add();
+        var detergent = rig.Skus.Add();
 
-        var response = await rig.Handler().HandleAsync(rig.Command(rig.Line(food, expires: Today.AddMonths(6)), rig.Line(litter, accepted: 8m, rejected: 2m, reason: "Damaged")));
+        var response = await rig.Handler().HandleAsync(rig.Command(rig.Line(food, expires: Today.AddMonths(6)), rig.Line(detergent, accepted: 8m, rejected: 2m, reason: "Damaged")));
 
         Assert.True(response.IsSuccess, string.Join("; ", response.ValidationResult?.Errors.Select(e => e.ErrorCode) ?? []));
         var receipt = Assert.Single(rig.Receipts.Saved);
@@ -92,9 +92,9 @@ public sealed class GoodsReceiptHandlerTests
     {
         var rig = new Rig();
         var food = rig.Skus.Add(expiryRequired: true, stockClass: StockClass.Food);
-        var litter = rig.Skus.Add();
+        var detergent = rig.Skus.Add();
 
-        var response = await rig.Handler().HandleAsync(rig.Command(rig.Line(food), rig.Line(litter, accepted: 5m, rejected: 1m)));
+        var response = await rig.Handler().HandleAsync(rig.Command(rig.Line(food), rig.Line(detergent, accepted: 5m, rejected: 1m)));
 
         Assert.False(response.IsSuccess);
         Assert.Equal(2, response.ValidationResult!.Errors.Count());

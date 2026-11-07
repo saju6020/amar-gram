@@ -73,7 +73,7 @@ public static partial class NotificationTemplateCatalogue
             [
                 OrderText("orderNumber", "The order number.", "ORD-2026-000123"),
                 OrderText("amountDue", "The amount to transfer, formatted with its currency.", "BDT 1,927.50"),
-                OrderText("bankAccountName", "The shop's bank account name.", "Purr Care Ltd"),
+                OrderText("bankAccountName", "The shop's bank account name.", "Amar Gram Ltd"),
                 OrderText("bankAccountNumber", "The shop's bank account number.", "1234567890"),
                 OrderText("bankName", "The shop's bank.", "Sample Bank"),
                 OrderText("bankBranch", "The shop's bank branch.", "Gulshan", [NotificationChannel.Email, NotificationChannel.InApp]),

@@ -95,7 +95,7 @@ public static class SubscriptionCheckout
 /// <summary>
 /// HO-SUB-001 §8.11 (ADR-245, ADR-246) -- builds and enqueues the subscription messages. Called from a <b>command handler, before its save</b>, through
 /// <see cref="INotificationOutbox"/> (HO-NTF-001 ADR-056/057) -- never from a domain event handler. The customer is always the recipient. Every dynamic value
-/// is display text; no free text (a note, a reason, an address) and no clinical or cat data ever goes into a variable.
+/// is display text; no free text (a note, a reason, an address) ever goes into a variable.
 /// </summary>
 public static class SubscriptionNotifications
 {

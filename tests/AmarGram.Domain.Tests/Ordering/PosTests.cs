@@ -74,10 +74,10 @@ public sealed class PosTests
     }
 
     // U-H3
-    private static ReceiptText Receipt(string description = "Royal Canin Golden Dry Food Persian Sterilised 2 kg Value Pack", string branch = "Amar Gram Gulshan Branch") => new(
+    private static ReceiptText Receipt(string description = "Chashi Golden Chinigura Rice Aromatic Polished 2 kg Value Pack", string branch = "Amar Gram Gulshan Branch") => new(
         branch, ["House 12, Road 5, Gulshan Avenue, Dhaka 1212, Bangladesh"], ["Amar Gram Test Ltd", "Tax reg: BIN-0000012345-0101"], "INV-2026-000123", "ORD-20261009-0042", "2026-10-09 14:05",
         "Nusrat Jahan Rahman-Chowdhury", "BDT",
-        [new ReceiptTextLine(description, 12, "12,850.00", "154,200.00", "1,000.00", "Tax 15%: 23,130.00"), new ReceiptTextLine("Feather wand", 1, "120.00", "120.00", null, "Tax 0%: 0.00")],
+        [new ReceiptTextLine(description, 12, "12,850.00", "154,200.00", "1,000.00", "Tax 15%: 23,130.00"), new ReceiptTextLine("Jute shopping bag", 1, "120.00", "120.00", null, "Tax 0%: 0.00")],
         [("Subtotal", "154,320.00"), ("Discount", "-1,000.00"), ("Tax", "23,130.00"), ("TOTAL BDT", "176,450.00")],
         [("CardInStore", "100,000.00"), ("CashInStore", "76,450.00")], "3,550.00", "Thank you for choosing Amar Gram. Please keep this receipt for returns within seven days.");
 
@@ -88,7 +88,7 @@ public sealed class PosTests
 
         var lines = text.Split('\n').Select(l => l.TrimEnd('\r')).ToList();
         Assert.All(lines, l => Assert.True(l.Length <= ReceiptTextRenderer.Columns, $"'{l}' is {l.Length} columns"));
-        Assert.Contains("Royal Canin Golden Dry Food Persian", text);
+        Assert.Contains("Chashi Golden Chinigura Rice", text);
     }
 
     [Fact]

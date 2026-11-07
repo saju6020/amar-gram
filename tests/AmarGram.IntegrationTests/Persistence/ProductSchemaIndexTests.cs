@@ -9,7 +9,7 @@ namespace AmarGram.IntegrationTests.Persistence;
 /// <summary>
 /// SHP backlog row 44 -- HO-SHP-001 §12.1: the storefront filter indexes cover Active products only,
 /// the protein-source index is gone (HO-P2 §1.3), and the "newest" index is DESC. Applies every migration to a
-/// scratch database (same pattern as <c>CatSchemaIndexTests</c>) and reads <c>pg_indexes</c>.
+/// scratch database (same pattern as <c>BillingSchemaMigrationTests</c>) and reads <c>pg_indexes</c>.
 /// </summary>
 public sealed class ProductSchemaIndexTests : IAsyncLifetime
 {

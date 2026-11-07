@@ -4,7 +4,7 @@ using Platform.Infrastructure.Core.Commands;
 namespace AmarGram.Application.Commands.Subscription;
 
 // HO-SUB-001 §11.1. Data only; ids minted by the controller or the worker; ValidateCommand = true everywhere. Enumeration-typed fields are parsed by the controller
-// (a bad value is a 400 there), as Ordering's PlaceOrderCommand does. Adapted: C10 (resume after authorisation) and the cat fields went with the clinic (HO-P1).
+// (a bad value is a 400 there), as Ordering's PlaceOrderCommand does.
 
 /// <summary>C1 (US-SUB-01 AC1) -- start a subscription. The caller is the signed-in customer; the response carries the new subscription's id.</summary>
 public sealed class CreateSubscriptionCommand : Command

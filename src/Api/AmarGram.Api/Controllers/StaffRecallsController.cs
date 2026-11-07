@@ -16,7 +16,7 @@ namespace AmarGram.Api.Controllers;
 
 /// <summary>
 /// HO-IMP-001 section 12.4 (US-IMP-11) -- batch recalls. A recall applies to the batch at EVERY location and branch, so these endpoints are not scoped to the
-/// active branch; every one needs <c>Recalls.Manage</c> (the trace holds customers' names and contact details, so a nurse can neither recall nor read it).
+/// active branch; every one needs <c>Recalls.Manage</c> (the trace holds customers' names and contact details, so a role without it can neither recall nor read it).
 /// The CSV form of the trace is audited as a <c>BusinessEvent</c>, <c>RecallTraceExported</c>.
 /// </summary>
 [ApiController]

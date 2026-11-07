@@ -41,7 +41,7 @@ public sealed class StaffAccountAggregateTests
     {
         var staff = new StaffAccountAggregate(Guid.NewGuid());
         var ex = Assert.Throws<DomainRuleViolationException>(() => staff.Create(new StaffAccountCreationDto(
-            "Name", MobileNumber.Create("01712345678"), null, ["vet"], TestUserContext.Create(), Guid.NewGuid())));
+            "Name", MobileNumber.Create("01712345678"), null, ["reception"], TestUserContext.Create(), Guid.NewGuid())));
         Assert.Equal("UnknownStaffRole", ex.ErrorCode);
     }
 
@@ -50,7 +50,7 @@ public sealed class StaffAccountAggregateTests
     {
         var staff = new StaffAccountAggregate(Guid.NewGuid());
         var ex = Assert.Throws<DomainRuleViolationException>(() => staff.Create(new StaffAccountCreationDto(
-            "Name", MobileNumber.Create("01712345678"), null, ["Groomer"], TestUserContext.Create(), Guid.NewGuid())));
+            "Name", MobileNumber.Create("01712345678"), null, ["Gardener"], TestUserContext.Create(), Guid.NewGuid())));
         Assert.Equal("UnknownStaffRole", ex.ErrorCode);
     }
 
