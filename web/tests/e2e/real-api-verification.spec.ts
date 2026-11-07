@@ -43,6 +43,13 @@ test('register a customer, sign in, edit profile (email change + current passwor
   // Profile edit — add an email (canEditEmail is true for a self-registered customer, so this
   // exercises the email-change + current-password step-up, HO-ACC-001 §1 Amended (17)).
   await page.goto('/portal/account/profile');
+  // A database whose privacy policy requires acceptance (the dev seed) asks a new customer once, in a modal
+  // that blocks the page; a bare database has no policy and shows nothing. Accept it when it is there.
+  const policies = page.getByRole('dialog', { name: 'Updated policies' });
+  if (await policies.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false)) {
+    await policies.getByRole('button', { name: 'Accept' }).click();
+    await expect(policies).toBeHidden();
+  }
   await expect(page.getByLabel('Full name')).toHaveValue('Real API Customer');
   const emailInput = page.getByLabel(/^email$/i);
   await emailInput.fill(email);
