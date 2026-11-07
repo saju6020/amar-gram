@@ -88,7 +88,7 @@ export type SubscriptionCycleOrderState =
   | 'Delivered'
   | 'Refused';
 
-/** Shared/Common/Enums/SubscriptionPendingStatusChange.cs (Pause, Cancel) */
+/** Shared/Common/Enums/SubscriptionPendingStatusChange.cs:6-7 (Pause, Cancel) */
 export type SubscriptionPendingStatusChange = 'Pause' | 'Cancel';
 
 /** Domain/DomainServices/SubscriptionSchedule.cs:26-34 */

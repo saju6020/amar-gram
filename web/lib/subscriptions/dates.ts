@@ -69,19 +69,14 @@ export function formatCommerceInstant(
   commerceTimeZoneId: string,
 ): string {
   if (!instant) return '—';
-  const at = new Date(instant);
-  if (Number.isNaN(at.getTime())) return '—';
-  const parts = new Intl.DateTimeFormat('en-US', {
+  return formatInZone(instant, commerceTimeZoneId, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-    timeZone: commerceTimeZoneId,
-  }).formatToParts(at);
-  const day = `${pick(parts, 'weekday')} ${pick(parts, 'day')} ${pick(parts, 'month')}`;
-  return `${day}, ${pick(parts, 'hour')}:${pick(parts, 'minute')} (${commerceTimeZoneId})`;
+  });
 }
 
 /** An instant with its date and year, e.g. `"18 Oct 2026, 00:00 (Asia/Dhaka)"`, for records (suspended, restarted, cancelled). */
