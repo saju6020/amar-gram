@@ -93,3 +93,21 @@ describe('activeStaffHref', () => {
     expect(activeStaffHref(groups, pathname)).toBe(expected);
   });
 });
+
+// HO-P6 S2 (U33): the Subscriptions link sits in Sales right after Customers, is current on its sub-routes, and moves no other link.
+describe('Subscriptions entry (HO-P6 S2)', () => {
+  it('is in Sales after Customers, current on /unpaid and a detail page, with no other group changed', () => {
+    const groups = groupStaffNav(staffAreas);
+    const sales = groups.find((g) => g.key === 'sales')!;
+    const hrefs = sales.items.map((i) => i.href);
+    expect(hrefs.indexOf('/staff/subscriptions')).toBe(hrefs.indexOf('/staff/customers') + 1);
+    expect(sales.items.find((i) => i.href === '/staff/subscriptions')).toMatchObject({ label: 'Subscriptions', icon: 'repeat' });
+    expect(activeStaffHref(groups, '/staff/subscriptions')).toBe('/staff/subscriptions');
+    expect(activeStaffHref(groups, '/staff/subscriptions/unpaid')).toBe('/staff/subscriptions');
+    expect(activeStaffHref(groups, '/staff/subscriptions/5b000000-0000-0000-0000-000000000011')).toBe('/staff/subscriptions');
+    for (const key of ['overview', 'stock', 'money', 'admin']) {
+      expect(groups.find((g) => g.key === key)!.items.map((i) => i.href)).not.toContain('/staff/subscriptions');
+    }
+    expect(groups.some((g) => g.key === 'more')).toBe(false);
+  });
+});
