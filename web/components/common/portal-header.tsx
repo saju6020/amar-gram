@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { ChevronDown, Lock, LogOut, Mail, Package, Receipt, Store, User } from 'lucide-react';
 import { useCustomerProfile } from '@/lib/hooks/useAccount';
 import { useCustomerSession } from '@/lib/hooks/useSession';
+import { useUnreadCount } from '@/lib/hooks/useInbox';
+import { BADGE_CAP, inboxAccessibleName } from '@/components/inbox/InboxBadge';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { HearthLogo } from '@/components/hearth/HearthLogo';
 import { SearchForm } from '@/components/shop/SearchBox';
@@ -92,6 +94,8 @@ function AccountMenu({ fullName }: { fullName: string }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
   const profile = useCustomerProfile();
+  // The phone has no envelope button in the header (it is `max-sm:hidden`), so the unread count lives on this row.
+  const unread = useUnreadCount().data?.count ?? 0;
   const firstName = fullName.trim().split(/\s+/)[0] ?? fullName;
 
   useEffect(() => {
@@ -180,9 +184,22 @@ function AccountMenu({ fullName }: { fullName: string }) {
             </Link>
           </li>
           <li className="sm:hidden">
-            <Link href="/portal/inbox" className={row}>
+            <Link
+              href="/portal/inbox"
+              className={row}
+              aria-label={unread > 0 ? inboxAccessibleName(unread) : undefined}
+            >
               <Mail size={18} aria-hidden="true" className="text-ink-muted" />
               Messages
+              {unread > 0 && (
+                <span
+                  aria-hidden="true"
+                  data-testid="inbox-unread-count"
+                  className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-warm-ink px-1.5 text-[11px] font-bold leading-5 text-white"
+                >
+                  {unread > BADGE_CAP ? `${BADGE_CAP}+` : unread}
+                </span>
+              )}
             </Link>
           </li>
           <li>

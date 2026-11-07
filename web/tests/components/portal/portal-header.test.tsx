@@ -114,3 +114,28 @@ describe('customer header — the name menu', () => {
     expect(screen.queryByText('Secure checkout')).not.toBeInTheDocument();
   });
 });
+
+describe('customer header - the unread count on a phone', () => {
+  it('names the Messages row with the unread count (the header has no envelope below sm) and shows it as a bubble', async () => {
+    server.use(
+      http.get('*/api/customers/me/inbox/unread-count', () => HttpResponse.json({ count: 3 })),
+    );
+    const user = userEvent.setup();
+    renderWithClient(<PortalHeader />);
+    await user.click(screen.getByRole('button', { name: 'Account menu for Ayesha Rahman' }));
+    const row = await screen.findByRole('link', { name: 'Inbox, 3 unread messages' });
+    expect(row).toHaveAttribute('href', '/portal/inbox');
+    expect(row).toHaveTextContent('Messages');
+    expect(row).toHaveTextContent('3');
+  });
+
+  it('keeps the plain "Messages" name when nothing is unread', async () => {
+    server.use(
+      http.get('*/api/customers/me/inbox/unread-count', () => HttpResponse.json({ count: 0 })),
+    );
+    const user = userEvent.setup();
+    renderWithClient(<PortalHeader />);
+    await user.click(screen.getByRole('button', { name: 'Account menu for Ayesha Rahman' }));
+    expect(await screen.findByRole('link', { name: 'Messages' })).toHaveAttribute('href', '/portal/inbox');
+  });
+});
