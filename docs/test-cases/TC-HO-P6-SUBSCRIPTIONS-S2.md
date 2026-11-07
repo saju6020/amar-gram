@@ -15,7 +15,7 @@ Written: 2026-11-07 (by the implementer, with the build; the TEST gate re-runs e
 | Rows | 37 |
 | PASS | 35 |
 | PASS with baseline (E12: only the §1 baseline cases fail, same lines, same reasons, with and without the new link) | 1 |
-| NOT RUN (belongs to the TEST gate) | 1 (E12 remainder: `admin-a11y-responsive`) |
+| NOT RUN (belongs to the TEST gate) | 0 (E12 remainder closed by T10) |
 | FAIL / BLOCKED | 0 |
 
 ## Environment
@@ -71,7 +71,7 @@ stopped afterwards; no tracked screenshot or report was overwritten (`git status
 | E11 | `subscriptions-staff-a11y.spec.ts` (18 cases: 8 screens/dialogs/413 at 1280 and 360, plus dialog focus trap/Escape/return and the link nav): zero serious/critical | pass | PASS | 36 passed on both projects |
 | E11b | `subscriptions-staff-real-api.spec.ts` | skips without `E2E_REAL_API=1` | PASS (skips) | 10 skipped on both projects; NOT RUN against a real API |
 | E12 | Run-only: `staff-shell-*`, `staff-auth`, `staff-customers` (52 cases) | only the §1 baseline fails | PASS with baseline | 45 passed, 7 failed. Baseline cases: `staff-shell-toggle` :29 (360 and 1440, both projects) and `staff-shell-sheet-closes-on-back-navigation` :30 (both projects). With the S2 nav edits stashed, the same cases fail at the same lines (`reachedToggle` :44, the "Inventory" link :45). `staff-auth` :152 failed once on a cold-compile 45 s timeout in the sign-in fixture and passed when re-run alone. `staff-shell-manual-expand-overflow` :37 (a baseline case) passed. No Tab-count or link-count change from the new link was found (§20.3) |
-| E12b | Run-only: `admin-a11y-responsive` | pass | NOT RUN | TEST gate |
+| E12b | Run-only: `admin-a11y-responsive` | pass | PASS | TEST gate T10 |
 
 ## Not covered by S2 (by design)
 
@@ -88,3 +88,22 @@ Vitest suite and the rest of the §16 run-only set are the TEST gate's. The acce
 | G4 | No role note while the session loads; none on a cancelled subscription | PASS | staff-detail.test.tsx |
 | G5 | Mock: non-GUID id is 404 before the role check (T5-T8); blank reason text and code | PASS | mock-refusals.test.ts |
 | G6 | Re-run: tsc, lint, 20 Vitest files / 472 tests (--maxWorkers=2); Playwright `--workers=1` chromium + mobile-360 on PORT 3129: the four S2 specs (real-API 10 skipped) plus `staff-shell-toggle` and `staff-shell-sheet-closes-on-back-navigation`: 86 passed, 10 skipped, 0 failed (the two staff-shell baseline cases now pass) | PASS | this round |
+
+## TEST gate run (2026-11-07, 678a404)
+
+Written before running; every row starts NOT RUN and is updated one at a time below.
+
+| ID | Case | Expected | Status | Evidence |
+|---|---|---|---|---|
+| T1 | `tsc --noEmit` | exit 0 | PASS | `npx tsc --noEmit` exit 0 |
+| T2 | `npm run lint` | exit 0 | PASS | `npm run lint` (--max-warnings 0) exit 0 |
+| T3 | Full Vitest `--maxWorkers=2` | all pass | PASS | 255 files passed, 1 skipped; 2493 tests passed, 62 skipped; 538 s at --maxWorkers=2; no flaky file |
+| T4 | E9 `subscriptions-staff.spec.ts`, chromium + mobile-360, 2 workers | pass | PASS | Run 1 (4 S2 specs together, chromium + mobile-360, --workers=2): 76 passed, 10 skipped, 0 failed; E9 12 cases x 2 projects |
+| T5 | E10 `subscriptions-staff-360.spec.ts` | pass | PASS | same run: E10 8 cases x 2 passed |
+| T6 | E11 `subscriptions-staff-a11y.spec.ts` | pass | PASS | same run: E11 18 cases x 2 passed |
+| T7 | E11b `subscriptions-staff-real-api.spec.ts` | NOT RUN (real API) | NOT RUN (real API) | 10 skipped (5 x 2 projects) in run 1 without E2E_REAL_API=1; no backend started |
+| T8 | E12 run-only `staff-shell-*` (all 6 specs): no Tab/link count moved by the Sales link | pass | PASS | Run 2: all 6 staff-shell-* specs passed on both projects, including staff-shell-toggle :29 and sheet-closes-on-back-navigation :30 (baseline cases now pass). No Tab/link count moved by the Sales link (Amended (h) icon in place) |
+| T9 | E12 run-only `staff-auth`, `staff-customers` | pass | PASS | staff-auth: all passed (incl. :152). staff-customers: under load in run 2 chromium :11 (`getByText('Incomplete')` not found, 5 s) and :32 (URL stayed /duplicates) failed; rerun alone with --workers=1 both projects: 10 passed. Recorded as load flake, not S2 (spec files do not touch subscription routes) |
+| T10 | E12 run-only `admin-a11y-responsive` | pass | PASS | Run 2: admin-a11y-responsive all passed both projects (run 2 total 284 passed, 2 failed = the two flakes above) |
+| T11 | Colour-literal back-up check (U40) `rg` over components app | no hits in S2 files | PASS | rg over components/staff-subscriptions and app/(staff)/staff/subscriptions: 0 hits; over components app: 0 hits |
+| T12 | A12/A13/A17/A18 criteria each map to a passing case (see coverage table in gate record) | covered | PASS | A12 -> U27-U29, E9; A13 -> U30-U32, E9; A17/A18 (360 and a11y) -> E10, E11, U40; all those cases PASS above |
