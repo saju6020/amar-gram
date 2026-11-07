@@ -61,10 +61,10 @@ public sealed class ProductAggregateTests
     public void AddSku_SecondSkuWithNoAxis_ThrowsVariantAttributesRequired()
     {
         var product = CreateStandardProduct();
-        product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG", null, "2 kg", null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG", null, "2 kg", null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() =>
-            product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-4KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid()));
+            product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-4KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.Equal(BusinessViolationCodes.VariantAttributesRequired, ex.ErrorCode);
     }
@@ -73,10 +73,10 @@ public sealed class ProductAggregateTests
     public void AddSku_DuplicateVariantCaseInsensitive_Throws()
     {
         var product = CreateStandardProduct();
-        product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG-SAL", null, "2 kg", "Salmon", null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG-SAL", null, "2 kg", "Salmon", null, null), TestUserContext.Create(), Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() =>
-            product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG-SAL-2", null, "2 KG", "salmon", null, null), TestUserContext.Create(), Guid.NewGuid()));
+            product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG-SAL-2", null, "2 KG", "salmon", null, null), TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.Equal(BusinessViolationCodes.DuplicateVariant, ex.ErrorCode);
     }
@@ -207,11 +207,11 @@ public sealed class ProductAggregateTests
     public void Publish_UnpricedActiveSku_MessageNamesSkuCode()
     {
         var product = CreateStandardProduct();
-        product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         var facts = new PublicationFacts([], true, []);
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid()));
-        Assert.Contains("RC-K-2KG", ex.Message);
+        Assert.Contains("CH-R-2KG", ex.Message);
     }
 
     [Fact]

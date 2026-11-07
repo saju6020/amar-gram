@@ -65,7 +65,6 @@ public static partial class BusinessViolationCodes
     public const string CannotMergeCustomerIntoItself = nameof(CannotMergeCustomerIntoItself);
     public const string CustomerAlreadyMerged = nameof(CustomerAlreadyMerged);
     public const string CustomersNotDuplicates = nameof(CustomersNotDuplicates);
-    public const string CatOwnerMismatch = nameof(CatOwnerMismatch);
     // HO-P4 BG-19: staff notes and tags on a customer
     public const string InvalidCustomerNote = nameof(InvalidCustomerNote);
     public const string CustomerNoteLimitExceeded = nameof(CustomerNoteLimitExceeded);
