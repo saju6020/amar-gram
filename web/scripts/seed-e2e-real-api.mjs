@@ -106,6 +106,7 @@ async function main() {
   // 3. tax class VAT15
   const taxClasses = items(await get('/api/admin/tax-classes'));
   const standard = taxClasses.find((t) => t.code === 'STANDARD') ?? taxClasses[0];
+  if (!standard) throw new Error('No tax class exists on this API; seed the reference data (migrations) before running this script.');
   let vat = taxClasses.find((t) => t.code === 'VAT15');
   if (!vat) {
     const created = (
@@ -257,6 +258,7 @@ async function main() {
       null,
       1,
     ),
+    { mode: 0o600 }, // holds the staff password
   );
   writeFileSync(
     join(OUT, 'rpt-seed.json'),
@@ -273,6 +275,7 @@ async function main() {
       null,
       1,
     ),
+    { mode: 0o600 }, // holds the staff password
   );
   log(`done. BIL_SEED=${join(OUT, 'bil-seed.json')} REPORTS_SEED=${join(OUT, 'rpt-seed.json')}`);
 }
