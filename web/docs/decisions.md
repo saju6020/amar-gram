@@ -2052,3 +2052,95 @@ Appended; the entry above is left as written. **The "no upload" half is supersed
 **Why.** BG-23; the server owns the presets and the Reception-only rule
 
 **Status.** Binding for HO-P5 S4. Amends HO-P4 §11.6.9.
+
+## ADR-FE-109 … ADR-FE-114 — Subscription screens: routes, schedule ownership, dates, payment, staff lists (HO-P6)
+
+### ADR-FE-109
+
+**Decision.** **Customer subscriptions are routes under `/portal/subscriptions`** (the list, `new/[skuId]` and `[subscriptionId]`), matching the notification links the server builds (`NotificationLinkBuilder.cs:23-28`). Subscribing is one page, not a stepper, and the SKU is a path segment. The catalogue entry is the product page's Subscribe offer (ADR-FE-195)
+
+**Why.** Six fields fit one screen, and a path segment has no parameter to lose at sign-in
+
+**Status.** Binding for HO-P6 S1.
+
+### ADR-FE-110
+
+**Decision.** **The server owns the schedule.** Actions render only from `allowedActions` / `allowedStaffActions`; lock wording only from `isLocked`, `changeCutoffOn` and `followingDeliveryOn`; the effect of a change only from the change result's `message` and `appliesFromCycleOn`. The client never adds days or weeks to a date, never compares a date with today to decide anything, and never predicts a delivery
+
+**Why.** US-SUB-02 AC2 promises the person is told which delivery a change affects. A client guess that disagrees with the server is worse than no guess
+
+**Status.** Binding for every HO-P6 slice; proved by the source scan in `tests/unit/subscriptions/source-guard.test.ts`.
+
+### ADR-FE-111
+
+**Decision.** **A reminder's skip link never acts on load.** `?skip=yyyy-MM-dd` opens a confirmation for exactly that date when it equals `skippableCycleOn`. Otherwise it explains "That delivery can no longer be skipped." and, when `skippableCycleOn` is set, offers "Skip the delivery on {date} instead". Nothing mutates on load; the parameter is removed with `router.replace` after it is read. The query string survives sign-in (`CustomerSessionGuard.tsx:41-49`), so a signed-out click still lands on the confirmation
+
+**Why.** A GET must never change state (a mail scanner or link preview fetches links), and a stale link must not skip the wrong delivery
+
+**Status.** Binding for HO-P6 S1.
+
+### ADR-FE-112
+
+**Decision.** **Subscription dates are date-only strings**, formatted by `lib/subscriptions/dates.ts` with UTC arithmetic for layout only; `new Date('yyyy-MM-dd')` is never used. Instants (`changeCutoffOn`, `paymentExpiresOn`, `cancelledOn`, `suspendedOn`, `reinstatedOn`) go through `formatInZone` with `commerceTimeZoneId`, the zone named
+
+**Why.** A local-time parse of a date-only string is off by one day for anyone west of UTC
+
+**Status.** Binding for every HO-P6 slice. The mock (`mocks/**`) is the server and may do date arithmetic (ADR-FE-193).
+
+### ADR-FE-113
+
+**Decision.** **No payment capture anywhere, and no estimate computed in the browser.** The payment method is a stated intention with the shared copy ("No card needed. Each delivery creates an order that you pay for by {method}"). Unavailable methods stay in the list, disabled, with Orders' reason as text. Before a subscription exists the form shows the unit price, the discount rate as text and the note, with no total; the server's `estimate` appears from the detail onwards
+
+**Why.** ADR-238 (no auto-charge) and C-5 forbid card UI; ADR-317 and ADR-FE-092 forbid money arithmetic in the browser
+
+**Status.** Binding for every HO-P6 slice.
+
+### ADR-FE-114
+
+**Decision.** **Staff subscription lists keep their filters in the URL**, sort and page on the server, and export through `export.csv` with the same filters (no paging parameters) via `downloadBillingFile`. A 413 is shown as the server's sentence. The client never builds CSV
+
+**Why.** UI-4; the server owns the CSV-injection guard and the row cap
+
+**Status.** Binding for HO-P6 S2.
+
+## ADR-FE-193 … ADR-FE-197 — Subscriptions: mock, cache, offer, inline address, touch points (HO-P6)
+
+### ADR-FE-193
+
+**Decision.** **The subscriptions mock is the server's rules, ported.** One store (`mocks/handlers/subscriptions/store.ts`) and one port of `SubscriptionSchedule.cs` (`schedule.ts`: `isLocked`, `followingCycleOn`, `skippableCycleOn`, `allowedActions`, every change function and `describe` with the server's exact sentences). The mock's clock is real time in `Asia/Dhaka` with the cut-off setting; seeds are relative to today. The mock keeps both 400 shapes (the `ValidationResponse` and the controller's `{ error }`). Its settings are fixed constants mirroring `SettingDefinitions.Subscriptions.cs`, except the discount, which is seeded at `"10.00"` so the discount UI is exercised. The mock may do date arithmetic: it is the server
+
+**Why.** The screens render from `allowedActions` and `message`, so a mock that guesses them hides defects that only the real schedule would show
+
+**Status.** Binding for HO-P6. Applies ADR-FE-185 to a stateful rule set.
+
+### ADR-FE-194
+
+**Decision.** **Subscription cache rule.** A customer change result's `subscription` replaces the `subscription` part of the detail cache (its `cycles` are kept), then the list, the cycles and the options are invalidated. Create (201) seeds the detail key with `cycles: []` and invalidates the list. A staff reinstate or cancel invalidates the whole `['staff','subscriptions']` prefix and the staff detail is re-read, because those two endpoints return the plain `SubscriptionViewModel`, not the staff detail
+
+**Why.** Patching a cache from a response that lacks the staff fields would drop them
+
+**Status.** Binding for HO-P6 S1 and S2. Amends ADR-FE-093.
+
+### ADR-FE-195
+
+**Decision.** **The product page Subscribe offer** is shown only to a signed-in customer, for the selected SKU, from the options read, under the purchase row. "Subscribe & save {n}%" when the discount is not zero, else "Subscribe"; "You already subscribe to this" with a "Manage" link when `existingSubscriptionId` is set; nothing when the SKU cannot be subscribed to or while loading. Nothing for a signed-out visitor
+
+**Why.** The public product read carries no `isSubscribable` (backend gap BG-S1), and the options read needs a customer session. OQ-1 of HO-P6
+
+**Status.** Binding for HO-P6 S1.
+
+### ADR-FE-196
+
+**Decision.** **Adding an address while subscribing is inline**, with the shared `AddressForm` (import-only), as checkout does. The new address is selected. No detour and no `sessionStorage`
+
+**Why.** The form's other choices must survive; a detour that stored them would break "nothing from a form in storage"
+
+**Status.** Binding for HO-P6 S1.
+
+### ADR-FE-197
+
+**Decision.** **Back-office touch points read their own subscription endpoint** (due-tomorrow, the customer summary) and degrade silently: a 403 or a failed read hides the tab or the row and never shows an error banner on the host screen. The product flag is sent as the boolean the editor shows, in the same details `PUT`
+
+**Why.** The host screens (dashboard, customer profile, product editor) work for roles that cannot view subscriptions
+
+**Status.** Binding for HO-P6 S3. Applies ADR-FE-184 and ADR-FE-185.
