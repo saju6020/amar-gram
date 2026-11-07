@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -133,8 +133,17 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   // The current page's link stays in view in a long menu (e.g. Team & settings at the bottom).
+  // Scrolls the menu's own container, not `element.scrollIntoView()`: Chrome treats that as the
+  // "sequential focus navigation starting point", so the first Tab on a fresh page skipped the skip
+  // link and the menu toggle and landed on the link after the current page's (keyboard users must
+  // start from the top of the page).
+  const navScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    document.querySelector('aside [aria-current="page"]')?.scrollIntoView?.({ block: 'center' });
+    const container = navScrollRef.current;
+    const current = container?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!container || !current) return;
+    const offset = current.getBoundingClientRect().top - container.getBoundingClientRect().top;
+    container.scrollTop += offset - (container.clientHeight - current.offsetHeight) / 2;
   }, [pathname]);
 
   // Per-item `audience` (nav/types.ts) overrides the area's own audience, for an area whose
@@ -263,7 +272,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
+        <div ref={navScrollRef} className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
           <NavSections
             sections={groups}
             activeHref={activeHref}
