@@ -81,3 +81,7 @@ No real API, database or broker was used (the machine's 5005, 3127 and 3129 belo
 |---|---|---|---|
 | R1 | E5/E6 "44 px controls" for the inline address form | PASS | Amended (j): `AddressForm` fields and Cancel/Save are 44 px; the 360 spec checks them (not the 24 px X). Re-run: 64 passed on both projects with `account-area` and `ordering-customer`; `accounts-a11y-responsive -g ddress` 10 passed; Vitest 16 files / 249 tests |
 | R2 | Mock: cash on delivery in the band between the discounted and the undiscounted total | accepted deviation | the quote the mock asks Orders' pricing for is not discounted, so the mock refuses in a narrow band the server accepts (§20.5, noted in `customer.ts`) |
+
+## Re-run after the CODE_REVIEW/SECURITY/ARCHITECTURE fixes
+
+New cases: history page-2 and page-3 failure and recovery; `?page=9` and Cancelled-tab past-the-end; `?tab=cancelled` survives a reload; `aria-controls` only on the selected tab; payment-swap status line; mock validates the body before ownership and answers a non-GUID id 404 before the session check. Results: Vitest 27 files / 386 tests PASS; Playwright chromium + mobile-360 84 PASS, 4 skipped (real API), 0 FAIL; tsc and lint clean.

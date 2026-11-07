@@ -34,7 +34,7 @@ export function NextDeliveryCard() {
       <p className="m-0 text-[15px] text-ink-muted">{quantityAndIntervalLabel(terms.quantity, terms.intervalWeeks)}</p>
       <p className="m-0 text-[15px] text-ink">{nextDeliveryLine(subscription)}</p>
       <Link
-        href={`/portal/subscriptions/${subscription.id}`}
+        href={`/portal/subscriptions/${encodeURIComponent(subscription.id)}`}
         className="mt-auto inline-flex min-h-11 items-center font-semibold text-accent-ink"
       >
         Manage

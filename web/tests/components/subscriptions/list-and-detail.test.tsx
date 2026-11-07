@@ -10,7 +10,7 @@ import type { CustomerSubscriptionDetail, SubscriptionCycle, SubscriptionView } 
 import { customerDetailOf, findSubscription, subscriptionViewOf } from '@/mocks/handlers/subscriptions/store';
 import { formatCycleDate } from '@/lib/subscriptions/dates';
 import { currentUrl, setUrl } from '../common/nav-mock';
-import { ids, mockControls, recordRequests, renderWithClient, resetSubscriptions, signIn, signOut } from './helpers';
+import { settle, ids, mockControls, recordRequests, renderWithClient, resetSubscriptions, signIn, signOut } from './helpers';
 
 vi.mock('next/navigation', () => import('../common/nav-mock'));
 
@@ -129,8 +129,7 @@ describe('My subscriptions (U15)', () => {
 
     server.use(http.get('*/api/customers/me/subscriptions', () => HttpResponse.json({}, { status: 500 })));
     renderWithClient(<MySubscriptionsList />);
-    // The read is retried once before it is called failed.
-    expect(await screen.findByRole('button', { name: 'Try again' }, { timeout: 4000 })).toBeVisible();
+        expect(await screen.findByRole('button', { name: 'Try again' })).toBeVisible();
   });
 
   it('?page=2 requests that page', async () => {
@@ -257,7 +256,7 @@ describe('suspension (U22)', () => {
     server.use(http.get('*/api/branches', () => HttpResponse.json({}, { status: 500 })));
     const first = await detailReady(ids.mine.suspendedUnpaid);
     await screen.findByText(/paused after unpaid orders/);
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await settle(150);
     expect(screen.queryByRole('list', { name: 'Contact the shop' })).toBeNull();
     first.unmount();
 
@@ -353,5 +352,79 @@ describe('history (U23)', () => {
     expect(await screen.findByText(/^Subscribed\. Your first delivery is on \w{3} \d+ \w{3}\.$/)).toBeVisible();
     await waitFor(() => expect(currentUrl()).toBe(`/portal/subscriptions/${ids.mine.activeUnlocked}`));
     expect(screen.getByText(/^Subscribed\./).closest('[role="status"]')).not.toBeNull();
+  });
+});
+
+describe('the list past the end, and the tab in the address (CR fixes)', () => {
+  it('?page=9 says the page is past the end and offers the first page, never "No subscriptions yet"', async () => {
+    const user = userEvent.setup();
+    setUrl('/portal/subscriptions?page=9');
+    renderWithClient(<MySubscriptionsList />);
+    expect(await screen.findByText('That page is past the end of your list.')).toBeVisible();
+    expect(screen.queryByText(/No subscriptions yet/)).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Go to the first page' }));
+    expect(currentUrl()).toBe('/portal/subscriptions');
+    expect(await screen.findByRole('list', { name: 'Current subscriptions' })).toBeVisible();
+  });
+
+  it('the Cancelled tab is ?tab=cancelled: a reload keeps it, and its last page past the end is explained', async () => {
+    const user = userEvent.setup();
+    setUrl('/portal/subscriptions');
+    const first = renderWithClient(<MySubscriptionsList />);
+    await user.click(await screen.findByRole('tab', { name: /^Cancelled/ }));
+    expect(currentUrl()).toBe('/portal/subscriptions?tab=cancelled');
+    first.unmount();
+    renderWithClient(<MySubscriptionsList />);
+    expect(await screen.findByRole('tab', { name: /^Cancelled/, selected: true })).toBeVisible();
+    expect(await screen.findByText('Raw Forest Honey · 500 g')).toBeVisible();
+
+    setUrl('/portal/subscriptions?tab=cancelled&page=2');
+    expect(await screen.findByText('That page is past the end of your list.')).toBeVisible();
+  });
+
+  it('only the selected tab points aria-controls at a panel that exists', async () => {
+    setUrl('/portal/subscriptions');
+    renderWithClient(<MySubscriptionsList />);
+    const live = await screen.findByRole('tab', { name: /^Current/ });
+    const cancelled = await screen.findByRole('tab', { name: /^Cancelled/ });
+    expect(document.getElementById(live.getAttribute('aria-controls')!)).not.toBeNull();
+    expect(cancelled).not.toHaveAttribute('aria-controls');
+  });
+});
+
+describe('history "Show more" failing (CR fixes)', () => {
+  it('a failed page 2, then a failed page 3, each retried alone while the loaded pages stay and "Show more" waits', async () => {
+    mockControls.addCycles(ids.mine.activeUnlocked, 30);
+    const user = userEvent.setup();
+    let failPage: number | null = 2;
+    server.use(
+      http.get(`*/api/customers/me/subscriptions/${ids.mine.activeUnlocked}/cycles`, ({ request }) => {
+        const page = Number(new URL(request.url).searchParams.get('pageNumber'));
+        if (page === failPage) return HttpResponse.json({}, { status: 500 });
+        return undefined;
+      }),
+    );
+    await detailReady(ids.mine.activeUnlocked);
+    const rows = () => within(screen.getByRole('table')).getAllByRole('row').length;
+    const firstRows = rows();
+    await user.click(screen.getByRole('button', { name: 'Show more' }));
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    expect(rows()).toBeGreaterThanOrEqual(firstRows);
+
+    failPage = 3;
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    await screen.findByRole('button', { name: 'Show more' });
+    const afterTwo = rows();
+    expect(afterTwo).toBeGreaterThan(firstRows);
+    await user.click(screen.getByRole('button', { name: 'Show more' }));
+    expect(await screen.findByRole('button', { name: 'Try again' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    expect(rows()).toBeGreaterThanOrEqual(afterTwo);
+
+    failPage = null;
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull());
+    expect(rows()).toBeGreaterThan(afterTwo);
   });
 });

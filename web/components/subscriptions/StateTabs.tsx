@@ -57,7 +57,7 @@ export function StateTabs({
             role="tab"
             id={`${idPrefix}-tab-${tab.id}`}
             aria-selected={position === index}
-            aria-controls={`${idPrefix}-panel-${tab.id}`}
+            aria-controls={position === index ? `${idPrefix}-panel-${tab.id}` : undefined}
             tabIndex={position === index ? 0 : -1}
             onClick={() => onSelect(tab.id)}
             onKeyDown={(event) => onKeyDown(event, position)}

@@ -367,12 +367,22 @@ function termsFrom(body: Record<string, unknown>, fulfilment: Fulfilment, paymen
 
 // ---- the handlers -----------------------------------------------------------------------------------------------
 
-type Run = (sub: DbSubscription) => ReturnType<typeof changeResultOf> | Response;
-
-/** `SubscriptionChangeFlow.RunAsync` (SubscriptionCustomerCommandHandlers.cs:244-255): own subscription, else 404; a violation is a 400. */
-function ownedChange(id: string, request: Request, run: Run): Response {
-  if (!hasCustomerSession(request)) return unauthorised();
+/**
+ * `SubscriptionChangeFlow.RunAsync` (SubscriptionCustomerCommandHandlers.cs:244-255) behind the controller. In the server's
+ * order: a route id that is not a GUID does not match (404, before any session check); the session; then the request is bound
+ * and validated (`refuse`: model binding, the controller's enumeration parse, the command validator), all before the
+ * handler looks the subscription up (own subscription, else 404); a schedule violation is a 400.
+ */
+function ownedChange(
+  id: string,
+  request: Request,
+  refuse: () => Response | null,
+  run: (sub: DbSubscription) => ReturnType<typeof changeResultOf> | Response,
+): Response {
   if (!GUID.test(id)) return notFound();
+  if (!hasCustomerSession(request)) return unauthorised();
+  const refused = refuse();
+  if (refused) return refused;
   const sub = findOwnSubscription(CUSTOMER_ID, id);
   if (!sub) return notFound();
   try {
@@ -454,20 +464,23 @@ export const customerSubscriptionsHandlers: HttpHandler[] = [
 
   // C4: GET {id} (CustomerSubscriptionsController.cs:65-74). One flat object with `cycles`.
   http.get(`${API}/:id`, ({ request, params }) => {
-    if (!hasCustomerSession(request)) return unauthorised();
+    // A route id that is not a GUID does not match the route: 404 before the session check.
     const id = String(params.id);
-    const sub = GUID.test(id) ? findOwnSubscription(CUSTOMER_ID, id) : undefined;
+    if (!GUID.test(id)) return notFound();
+    if (!hasCustomerSession(request)) return unauthorised();
+    const sub = findOwnSubscription(CUSTOMER_ID, id);
     return sub ? HttpResponse.json(customerDetailOf(sub)) : notFound();
   }),
 
   // C5: GET {id}/cycles (CustomerSubscriptionsController.cs:76-86).
   http.get(`${API}/:id/cycles`, ({ request, params }) => {
-    if (!hasCustomerSession(request)) return unauthorised();
     const id = String(params.id);
+    if (!GUID.test(id)) return notFound();
+    if (!hasCustomerSession(request)) return unauthorised();
     const url = new URL(request.url);
     const paging = readPaging(url);
     if (!paging.ok) return paging.response;
-    const sub = GUID.test(id) ? findOwnSubscription(CUSTOMER_ID, id) : undefined;
+    const sub = findOwnSubscription(CUSTOMER_ID, id);
     if (!sub) return notFound();
     const page = pagedResult(cyclesOf(sub.id), paging.pageNumber, paging.pageSize);
     return HttpResponse.json({ ...page, items: page.items.map(cycleViewOf) });
@@ -541,8 +554,9 @@ export const customerSubscriptionsHandlers: HttpHandler[] = [
 
   // C7: PUT {id}/terms (CustomerSubscriptionsController.cs:109-120; handler :88-139).
   http.put(`${API}/:id/terms`, async ({ request, params }) => {
-    if (!hasCustomerSession(request)) return unauthorised();
     const id = String(params.id);
+    if (!GUID.test(id)) return notFound();
+    if (!hasCustomerSession(request)) return unauthorised();
     const body = await readBody(request);
     if (!body) return bindingError('request');
     const parsed = parseFulfilmentAndPayment(body);
@@ -561,7 +575,6 @@ export const customerSubscriptionsHandlers: HttpHandler[] = [
     }
     if (problems.length > 0) return refuse(problems);
 
-    if (!GUID.test(id)) return notFound();
     const sub = findOwnSubscription(CUSTOMER_ID, id);
     if (!sub) return notFound(); // :99-102
     if (sub.version !== version) {
@@ -585,28 +598,33 @@ export const customerSubscriptionsHandlers: HttpHandler[] = [
   // C8: POST {id}/skip (CustomerSubscriptionsController.cs:122-126).
   http.post(`${API}/:id/skip`, async ({ request, params }) => {
     const body = await readBody(request);
-    return ownedChange(String(params.id), request, (sub) => {
-      const cycleOn = body?.cycleOn;
-      if (typeof cycleOn !== 'string' || !DATE_ONLY.test(cycleOn)) return bindingError('cycleOn');
-      return changeResultOf(sub, skipDeliveryOf(sub, cycleOn));
-    });
+    const cycleOn = body?.cycleOn;
+    return ownedChange(
+      String(params.id),
+      request,
+      () => (typeof cycleOn !== 'string' || !DATE_ONLY.test(cycleOn) ? bindingError('cycleOn') : null),
+      (sub) => changeResultOf(sub, skipDeliveryOf(sub, cycleOn as string)),
+    );
   }),
 
   // C9: POST {id}/pause (CustomerSubscriptionsController.cs:128-130).
   http.post(`${API}/:id/pause`, ({ request, params }) =>
-    ownedChange(String(params.id), request, (sub) => changeResultOf(sub, pauseOf(sub))),
+    ownedChange(String(params.id), request, () => null, (sub) => changeResultOf(sub, pauseOf(sub))),
   ),
 
   // C10: POST {id}/resume (CustomerSubscriptionsController.cs:132-136; handler :168-189). The body is optional.
   http.post(`${API}/:id/resume`, async ({ request, params }) => {
     const text = await request.clone().text();
     const body = text.trim() === '' ? {} : await readBody(request);
-    return ownedChange(String(params.id), request, (sub) => {
-      if (!body) return bindingError('request');
-      const firstDeliveryOn = body.firstDeliveryOn;
-      if (firstDeliveryOn != null && (typeof firstDeliveryOn !== 'string' || !DATE_ONLY.test(firstDeliveryOn))) {
-        return bindingError('firstDeliveryOn');
-      }
+    const firstDeliveryOn = body?.firstDeliveryOn;
+    return ownedChange(
+      String(params.id),
+      request,
+      () =>
+        !body || (firstDeliveryOn != null && (typeof firstDeliveryOn !== 'string' || !DATE_ONLY.test(firstDeliveryOn)))
+          ? bindingError(body ? 'firstDeliveryOn' : 'request')
+          : null,
+      (sub) => {
       if (sub.status === 'Suspended') {
         // :175-177 SubscriptionSuspendedMessage (SubscriptionMessages.cs:34-37), with the setting's value of 2.
         return refuseOne(
@@ -621,42 +639,47 @@ export const customerSubscriptionsHandlers: HttpHandler[] = [
         return refuseOne('SubscriptionId', 'SkuNotSubscribable', 'This product is not available to subscribe to right now.'); // :180-185
       }
       return changeResultOf(sub, resumeOf(sub, typeof firstDeliveryOn === 'string' ? firstDeliveryOn : null));
-    });
+      },
+    );
   }),
 
   // C11: POST {id}/cancel (CustomerSubscriptionsController.cs:138-146; validator SubscriptionCommandValidators.cs:58-72).
   http.post(`${API}/:id/cancel`, async ({ request, params }) => {
     const body = await readBody(request);
-    return ownedChange(String(params.id), request, (sub) => {
-      const reason = parseName(body?.reason, ALL_REASONS);
-      if (!reason) {
-        return plainError(
-          'reason must be one of NoLongerNeeded, TooMuchStock, TastesDidNotSuit, TooExpensive, SwitchingProduct, Other.',
-        ); // :141-142
-      }
-      const note = typeof body?.note === 'string' ? body.note : null;
-      const problems: Problem[] = [];
-      if (note && note.length > MAX_NOTE_LENGTH) {
-        problems.push({
-          propertyName: 'Note',
-          errorCode: 'MaximumLengthValidator',
-          errorMessage: `The length of 'Note' must be ${MAX_NOTE_LENGTH} characters or fewer. You entered ${note.length} characters.`,
-        }); // :63
-      }
-      if (!(CUSTOMER_REASONS as readonly string[]).includes(reason)) {
-        problems.push({
-          propertyName: 'Reason',
-          errorCode: 'PredicateValidator',
-          errorMessage: 'is not a reason a customer can choose.',
-        }); // :66
-      }
-      if (problems.length > 0) return refuse(problems);
-      return changeResultOf(sub, cancelOf(sub, CUSTOMER_ID, reason, note));
-    });
+    const reason = parseName(body?.reason, ALL_REASONS);
+    const note = typeof body?.note === 'string' ? body.note : null;
+    return ownedChange(
+      String(params.id),
+      request,
+      () => {
+        if (!reason) {
+          return plainError(
+            'reason must be one of NoLongerNeeded, TooMuchStock, TastesDidNotSuit, TooExpensive, SwitchingProduct, Other.',
+          ); // :141-142
+        }
+        const problems: Problem[] = [];
+        if (note && note.length > MAX_NOTE_LENGTH) {
+          problems.push({
+            propertyName: 'Note',
+            errorCode: 'MaximumLengthValidator',
+            errorMessage: `The length of 'Note' must be ${MAX_NOTE_LENGTH} characters or fewer. You entered ${note.length} characters.`,
+          }); // :63
+        }
+        if (!(CUSTOMER_REASONS as readonly string[]).includes(reason)) {
+          problems.push({
+            propertyName: 'Reason',
+            errorCode: 'PredicateValidator',
+            errorMessage: 'is not a reason a customer can choose.',
+          }); // :66
+        }
+        return problems.length > 0 ? refuse(problems) : null;
+      },
+      (sub) => changeResultOf(sub, cancelOf(sub, CUSTOMER_ID, reason!, note)),
+    );
   }),
 
   // C12: DELETE {id}/pending-changes (CustomerSubscriptionsController.cs:148-152).
   http.delete(`${API}/:id/pending-changes`, ({ request, params }) =>
-    ownedChange(String(params.id), request, (sub) => changeResultOf(sub, withdrawPendingOf(sub))),
+    ownedChange(String(params.id), request, () => null, (sub) => changeResultOf(sub, withdrawPendingOf(sub))),
   ),
 ];

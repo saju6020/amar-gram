@@ -19,7 +19,7 @@ function OrderLink({ cycle }: { cycle: SubscriptionCycle }) {
   if (!cycle.orderId || !cycle.orderNumber) return <span className="text-ink-muted">No order</span>;
   return (
     <Link
-      href={`/portal/orders/${cycle.orderId}`}
+      href={`/portal/orders/${encodeURIComponent(cycle.orderId)}`}
       className="inline-flex min-h-11 items-center font-semibold text-accent-ink"
     >
       {cycle.orderNumber}
@@ -53,28 +53,29 @@ function CycleRow({ cycle, zone, layout }: { cycle: SubscriptionCycle; zone: str
 function MoreCycles({ id, page, zone, layout }: { id: string; page: number; zone: string; layout: Layout }) {
   const [next, setNext] = useState(false);
   const query = useMySubscriptionCycles(id, page);
-  if (query.isPending) {
-    return layout === 'table' ? (
-      <tr>
-        <td colSpan={3} role="status" className="py-2 text-sm text-ink-muted">
-          Loading more…
-        </td>
-      </tr>
-    ) : (
-      <li role="status" className="text-sm text-ink-muted">
-        Loading more…
-      </li>
-    );
-  }
   if (!query.data) {
+    // Loading, or failed: only this page is retried; the pages above stay, and "Show more" waits for it.
+    const failed = !query.isFetching;
+    const content = failed ? (
+      <span className="flex flex-wrap items-center gap-3 text-sm text-ink-muted">
+        We couldn&rsquo;t load more deliveries just now.
+        <Button variant="pillSecondary" size="pillMd" onClick={() => void query.refetch()}>
+          Try again
+        </Button>
+      </span>
+    ) : (
+      'Loading more…'
+    );
     return layout === 'table' ? (
       <tr>
-        <td colSpan={3} className="py-2 text-sm text-ink-muted">
-          We couldn&rsquo;t load more deliveries just now.
+        <td colSpan={3} role={failed ? undefined : 'status'} className="py-2 text-sm text-ink-muted">
+          {content}
         </td>
       </tr>
     ) : (
-      <li className="text-sm text-ink-muted">We couldn&rsquo;t load more deliveries just now.</li>
+      <li role={failed ? undefined : 'status'} className="text-sm text-ink-muted">
+        {content}
+      </li>
     );
   }
   const more = query.data.totalCount > page * query.data.pageSize;

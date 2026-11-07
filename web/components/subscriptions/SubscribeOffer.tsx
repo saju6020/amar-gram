@@ -26,7 +26,7 @@ export function SubscribeOffer({ skuId }: { skuId: string }) {
         <span>{ALREADY_SUBSCRIBED_TEXT}</span>
         <span aria-hidden="true">·</span>
         <Link
-          href={`/portal/subscriptions/${data.existingSubscriptionId}`}
+          href={`/portal/subscriptions/${encodeURIComponent(data.existingSubscriptionId)}`}
           className="inline-flex min-h-11 items-center font-semibold text-accent-ink"
         >
           Manage
@@ -40,7 +40,7 @@ export function SubscribeOffer({ skuId }: { skuId: string }) {
   return (
     <div data-testid="subscribe-offer" className="flex flex-col gap-1.5">
       <Link
-        href={`/portal/subscriptions/new/${skuId}`}
+        href={`/portal/subscriptions/new/${encodeURIComponent(skuId)}`}
         className={buttonVariants({ variant: 'pillSecondary', size: 'pillMd', className: 'w-full sm:w-auto' })}
       >
         <Repeat size={16} aria-hidden="true" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Banknote, Landmark, Store, TriangleAlert } from 'lucide-react';
 import { OptionCard } from '@/components/hearth/OptionCard';
 import { bannerWarnClass } from '@/components/hearth/card';
@@ -75,14 +75,22 @@ export function TermsFields({
   }, [preselect, draft.fulfilment, draft.addressId, addresses, onChange]);
 
   const methodList = methods.data;
+  const [swapNote, setSwapNote] = useState('');
   useEffect(() => {
     if (!preselect || !methodList) return;
     // Nothing chosen yet, or the chosen method is not offered for this address and quantity: take the first one that is.
     const chosen = methodList.find((m) => m.method === draft.paymentMethod);
     if (chosen?.isAvailable) return;
     const first = methodList.find((m) => m.isAvailable);
-    if (first) onChange({ paymentMethod: first.method });
-    else if (draft.paymentMethod && chosen) onChange({ paymentMethod: null });
+    if (first) {
+      onChange({ paymentMethod: first.method });
+      // Only a swap of a method the customer had is announced; the first choice on arrival is not.
+      if (draft.paymentMethod && chosen) {
+        setSwapNote(
+          `${subscriptionPaymentMethodLabel(draft.paymentMethod)} isn't available for this order, so we chose ${subscriptionPaymentMethodLabel(first.method)}.`,
+        );
+      }
+    } else if (draft.paymentMethod && chosen) onChange({ paymentMethod: null });
   }, [preselect, draft.paymentMethod, methodList, onChange]);
 
   return (
@@ -198,6 +206,9 @@ export function TermsFields({
             })}
           </div>
         )}
+        <p role="status" className="m-0 text-[13px] font-semibold text-warning-ink empty:hidden">
+          {swapNote}
+        </p>
         <FieldError id={`${idPrefix}-payment-error`}>{errors.paymentMethod}</FieldError>
         {draft.paymentMethod && (
           <p className="m-0 text-[13px] text-ink-muted">{howPayingWorks(draft.paymentMethod)}</p>

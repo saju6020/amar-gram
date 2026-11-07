@@ -11,6 +11,7 @@ import { currentUrl, setUrl } from '../common/nav-mock';
 import {
   defaultAddress,
   ids,
+  settle,
   recordRequests,
   renderWithClient,
   resetSubscriptions,
@@ -114,7 +115,7 @@ describe('payment methods (U11)', () => {
     renderWithClient(<SubscribeForm skuId={OATS_2KG} />);
     await screen.findByRole('button', { name: 'Start subscription' });
     expect(screen.getByText('Choose a delivery address to see how you can pay.')).toBeVisible();
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await settle(400);
     expect(requests.urls).toEqual([]);
 
     const user = userEvent.setup();
@@ -138,14 +139,15 @@ describe('payment methods (U11)', () => {
     await user.type(quantity, '2');
 
     // The list is re-read for the new quantity (debounced), so look the radio up again each time.
-    await waitFor(() => expect(screen.getByRole('radio', { name: /^Cash on delivery/ })).toBeDisabled(), { timeout: 4000 });
+    await waitFor(() => expect(screen.getByRole('radio', { name: /^Cash on delivery/ })).toBeDisabled());
     const reason = screen.getByText(/Cash on delivery is available for orders up to/);
     expect(screen.getByRole('radio', { name: /^Cash on delivery/ }).getAttribute('aria-describedby')).toBe(reason.id);
     expect(requests.urls.some((u) => u.includes(`deliveryAddressId=${defaultAddress().id}`))).toBe(true);
     // The quantity is sent, debounced: the last request is for two.
-    await waitFor(() => expect(requests.urls.at(-1)).toContain('quantity=2'), { timeout: 4000 });
-    // Bank transfer is the one available, and is chosen for the customer.
+    await waitFor(() => expect(requests.urls.at(-1)).toContain('quantity=2'));
+    // Bank transfer is the one available, and is chosen for the customer; the swap is announced politely.
     expect(screen.getByRole('radio', { name: 'Bank transfer' })).toBeChecked();
+    expect(await screen.findByText("Cash on delivery isn't available for this order, so we chose Bank transfer.")).toBeVisible();
     requests.stop();
   });
 });

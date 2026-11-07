@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -45,12 +44,13 @@ function Pager({
 
 /**
  * `/portal/subscriptions` — HO-P6 §11.2.4, US-SUB-01/02/06. State tabs **Current ({n})** and **Cancelled ({n})**, each count
- * from its own query (OQ-19); the tab is component state and the page is `?page=`. A card per subscription, an empty
+ * from its own query (OQ-19); the tab is `?tab=cancelled` and the page is `?page=`. A card per subscription, an empty
  * state that points at the shop, and a retry when a read fails.
  */
 export function MySubscriptionsList() {
   const params = useUrlParams();
-  const [tab, setTab] = useState<Tab>('live');
+  // The tab and the page are both in the address, so a reload or a shared link keeps them.
+  const tab: Tab = params.get('tab') === 'cancelled' ? 'cancelled' : 'live';
   const page = Math.max(1, Number(params.get('page')) || 1);
   const live = useMySubscriptions('live', tab === 'live' ? page : 1);
   const cancelled = useMySubscriptions('cancelled', tab === 'cancelled' ? page : 1);
@@ -61,6 +61,15 @@ export function MySubscriptionsList() {
     <LoadingState rows={4} label="Loading your subscriptions…" />
   ) : active.isError && !active.data ? (
     <ErrorState onRetry={() => void active.refetch()} />
+  ) : active.data && active.data.items.length === 0 && active.data.totalCount > 0 ? (
+    <HearthEmpty
+      title="That page is past the end of your list."
+      action={
+        <Button variant="pill" size="pillMd" onClick={() => params.set({ page: undefined })}>
+          Go to the first page
+        </Button>
+      }
+    />
   ) : !active.data || active.data.items.length === 0 ? (
     tab === 'live' ? (
       <HearthEmpty
@@ -94,10 +103,7 @@ export function MySubscriptionsList() {
         label="Subscriptions"
         idPrefix="subs"
         selected={tab}
-        onSelect={(id) => {
-          setTab(id as Tab);
-          params.set({});
-        }}
+        onSelect={(id) => params.set({ tab: id === 'cancelled' ? 'cancelled' : undefined })}
         tabs={[
           { id: 'live', label: `Current${count(live)}` },
           { id: 'cancelled', label: `Cancelled${count(cancelled)}` },

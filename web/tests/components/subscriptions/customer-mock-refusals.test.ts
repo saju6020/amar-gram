@@ -319,3 +319,23 @@ describe('C7 to C12 changes (CustomerSubscriptionsController.cs:109-152)', () =>
     expect(result.subscription.pending).toBeNull();
   });
 });
+
+describe('order of the checks (ARCH fix)', () => {
+  it("the request is bound and validated before the subscription is looked up: a bad body on someone else's id is a 400, not a 404", async () => {
+    const body = await refusal(
+      apiFetch(`/api/customers/me/subscriptions/${others.active}/cancel`, { method: 'POST', body: {} }),
+    );
+    expect(body.error).toMatch(/^reason must be one of/);
+    const skip = await refusal(skipSubscriptionDelivery(others.active, 'soon'));
+    expect(skip.errors).not.toEqual(expect.arrayContaining([expect.objectContaining({ errorCode: expect.any(String) })]));
+    // A good body on someone else's id is then the bodiless 404.
+    expect(await rejection(cancelSubscription(others.active, { reason: 'Other' }))).toBeInstanceOf(ApiNotFoundError);
+  });
+
+  it('a route id that is not a GUID is a 404 before the session is checked', async () => {
+    document.cookie = 'pc_session=; path=/; max-age=0';
+    expect(await rejection(getMySubscription('not-a-guid'))).toBeInstanceOf(ApiNotFoundError);
+    expect(await rejection(pauseSubscription('not-a-guid'))).toBeInstanceOf(ApiNotFoundError);
+    expect(await rejection(getMySubscription(mine.activeUnlocked))).toBeInstanceOf(ApiUnauthorizedError);
+  });
+});

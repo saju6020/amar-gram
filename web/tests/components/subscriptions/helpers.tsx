@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import { http, HttpResponse } from 'msw';
+import { vi } from 'vitest';
 import { server } from '@/mocks/server';
 import { createControls } from '@/mocks/handlers/subscriptions/control';
 import { subscriptionFixtureIds } from '@/mocks/handlers/subscriptions/fixtures';
@@ -13,7 +14,7 @@ export const ids = subscriptionFixtureIds;
 
 export function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({
-    defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } },
+    defaultOptions: { queries: { retry: false, retryDelay: 0, staleTime: 0 }, mutations: { retry: false } },
   });
   return { client, ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>) };
 }
@@ -80,4 +81,18 @@ export function recordRequests(part: string): { urls: string[]; stop: () => void
   };
   server.events.on('request:start', listener);
   return { urls, stop: () => server.events.removeListener('request:start', listener) };
+}
+
+/**
+ * Lets `ms` of simulated time pass (debounces, retry delays) without a real sleep, then yields to pending promises, so "nothing
+ * was requested" and "nothing appeared" can be asserted afterwards.
+ */
+export async function settle(ms: number): Promise<void> {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    await vi.advanceTimersByTimeAsync(ms);
+  } finally {
+    vi.useRealTimers();
+  }
+  await Promise.resolve();
 }

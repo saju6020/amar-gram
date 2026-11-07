@@ -17,7 +17,7 @@ export function SubscriptionCard({ subscription }: { subscription: SubscriptionV
   const { product, terms } = subscription;
   return (
     <Link
-      href={`/portal/subscriptions/${subscription.id}`}
+      href={`/portal/subscriptions/${encodeURIComponent(subscription.id)}`}
       className={cn(
         cardClass,
         'flex gap-4 rounded-[20px] px-4 py-4 text-ink no-underline transition-colors hover:border-leaf sm:px-5',

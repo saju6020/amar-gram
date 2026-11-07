@@ -95,7 +95,7 @@ export function SubscribeFormBody({
           : {}),
       });
       onCreated();
-      router.push(`/portal/subscriptions/${view.id}?subscribed=1`);
+      router.push(`/portal/subscriptions/${encodeURIComponent(view.id)}?subscribed=1`);
     } catch (error) {
       if (hasSubscriptionCode(error, 'PaymentMethodUnavailable')) void refreshMethods();
       if (hasSubscriptionCode(error, 'SubscriptionAlreadyExists')) onRefreshOptions();

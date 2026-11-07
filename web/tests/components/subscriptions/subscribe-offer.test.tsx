@@ -7,7 +7,7 @@ import { BuyBox } from '@/components/product/BuyBox';
 import { SubscribeOffer } from '@/components/subscriptions/SubscribeOffer';
 import { resetShopMockData, shopFixtureIds } from '@/mocks/handlers/shop';
 import { mockDetail, signInForTest, signOutForTest } from '../product/test-utils';
-import { ids, mockControls, recordRequests, renderWithClient, resetSubscriptions, signIn, signOut } from './helpers';
+import { settle, ids, mockControls, recordRequests, renderWithClient, resetSubscriptions, signIn, signOut } from './helpers';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
@@ -44,7 +44,7 @@ describe('SubscribeOffer (U8)', () => {
     const requests = recordRequests('/subscriptions/options');
     renderWithClient(<SubscribeOffer skuId={mockDetail(shopFixtureIds.kitSlug).skus[0]!.skuId} />);
     await waitFor(() => expect(requests.urls.length).toBe(1));
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await settle(150);
     expect(screen.queryByTestId('subscribe-offer')).toBeNull();
     requests.stop();
   });
@@ -61,7 +61,7 @@ describe('SubscribeOffer (U8)', () => {
   it('a failed read shows nothing and no error', async () => {
     server.use(http.get('*/api/customers/me/subscriptions/options', () => HttpResponse.json({}, { status: 500 })));
     renderWithClient(<SubscribeOffer skuId={shopFixtureIds.skuOats2kg} />);
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await settle(400);
     expect(screen.queryByTestId('subscribe-offer')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -88,7 +88,7 @@ describe('the offer on the product page (U8)', () => {
     const requests = recordRequests('/subscriptions/options');
     page();
     await screen.findByRole('button', { name: /Add to (cart|basket)/ });
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await settle(400);
     expect(screen.queryByTestId('subscribe-offer')).toBeNull();
     expect(requests.urls).toEqual([]);
     requests.stop();

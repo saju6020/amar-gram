@@ -48,7 +48,7 @@ export function SubscribeForm({ skuId }: { skuId: string }) {
           description={`${options.sku.productName}${options.sku.variantLabel ? `, ${options.sku.variantLabel}` : ''}`}
           action={
             <Link
-              href={`/portal/subscriptions/${options.existingSubscriptionId}`}
+              href={`/portal/subscriptions/${encodeURIComponent(options.existingSubscriptionId)}`}
               className={buttonVariants({ variant: 'pill', size: 'pillMd' })}
             >
               Manage your subscription

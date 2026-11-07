@@ -21,6 +21,20 @@ import { renderWithClient, resetPortalMock, serveDashboard } from './helpers';
 
 afterEach(() => resetPortalMock());
 
+/** Resolves when the subscriptions list (C3) has been answered, so "the card is absent" is asserted after the answer. */
+function c3Answered(): Promise<void> {
+  return new Promise((resolve) => {
+    const done = ({ request }: { request: Request }) => {
+      if (request.url.includes('/api/customers/me/subscriptions')) {
+        server.events.removeListener('response:mocked', done);
+        // The query settles a tick after the response.
+        setTimeout(resolve, 0);
+      }
+    };
+    server.events.on('response:mocked', done);
+  });
+}
+
 const tile = (id: string) => screen.findByTestId(`tile-${id}`);
 
 describe('Portal dashboard — greeting and empty states (US-POR-01)', () => {
@@ -191,14 +205,18 @@ describe('Portal dashboard — states', () => {
         ),
       );
       serveDashboard(fullDashboard());
+      const answered = c3Answered();
       const first = renderWithClient(<PortalDashboard />);
       await tile('orders');
+      await answered;
       expect(screen.queryByTestId('next-delivery')).toBeNull();
       first.unmount();
 
       server.use(http.get('*/api/customers/me/subscriptions', () => HttpResponse.json({}, { status: 500 })));
+      const failed = c3Answered();
       renderWithClient(<PortalDashboard />);
       expect(await tile('orders')).toBeVisible();
+      await failed;
       expect(await screen.findByTestId('default-address')).toBeVisible();
       expect(screen.queryByTestId('next-delivery')).toBeNull();
       expect(screen.queryByRole('alert')).toBeNull();

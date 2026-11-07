@@ -20,9 +20,12 @@ const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 export function SkipLinkHandler({
   subscription,
   onSkip,
+  fresh,
 }: {
   subscription: SubscriptionView;
   onSkip: (cycleOn: string) => void;
+  /** The detail has been re-read from the server: a cached copy must not decide that a date can no longer be skipped. */
+  fresh: boolean;
 }) {
   const params = useSearchParams();
   const pathname = usePathname();
@@ -32,14 +35,14 @@ export function SkipLinkHandler({
   const raw = params.get('skip');
 
   useEffect(() => {
-    if (handled.current || raw === null) return;
+    if (handled.current || raw === null || !fresh) return;
     handled.current = true;
     if (DATE_ONLY.test(raw)) {
       if (raw === subscription.skippableCycleOn) onSkip(raw);
       else setStale(true);
     }
     router.replace(pathname, { scroll: false });
-  }, [raw, subscription.skippableCycleOn, onSkip, pathname, router]);
+  }, [raw, fresh, subscription.skippableCycleOn, onSkip, pathname, router]);
 
   if (!stale) return null;
   return (

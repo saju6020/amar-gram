@@ -130,7 +130,7 @@ export function SubscriptionDetail({ id }: { id: string }) {
         {shown}
       </div>
 
-      <SkipLinkHandler subscription={subscription} onSkip={openSkip} />
+      <SkipLinkHandler subscription={subscription} onSkip={openSkip} fresh={!query.isFetching} />
       <SuspensionBanner subscription={subscription} outlets={outlets.data} />
 
       <div className="grid items-start gap-5 lg:grid-cols-2">

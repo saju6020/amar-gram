@@ -13,7 +13,7 @@ Branch `feat/p6-s1-customer` from `feat/p6-s0-contract` at `2a61f70` (S0, all fi
 - Superseded (listed in §2): `tests/components/portal/{account-sidebar,account-p3,dashboard}.test.tsx`, `tests/e2e/portal-dashboard.spec.ts`.
 - Docs: this report and `docs/test-cases/TC-HO-P6-SUBSCRIPTIONS-S1.md`.
 
-No `src/`, config, dependency or lockfile change. Nothing in `lib/subscriptions/**`, `lib/api/*subscriptions.ts`, the S0 store, schedule or controls, `accounts.ts`, `AddressForm`, `CustomerSessionGuard`, `nextPath` or `(auth)` was edited. S1 owns no ADR (S0 recorded ADR-FE-109 to 114 and 193 to 197).
+No `src/`, config, dependency or lockfile change. Nothing in `lib/subscriptions/**`, `lib/api/*subscriptions.ts`, the S0 store, schedule or controls, `accounts.ts`, `CustomerSessionGuard`, `nextPath` or `(auth)` was edited. S1 owns no ADR (S0 recorded ADR-FE-109 to 114 and 193 to 197). `AddressForm.tsx` is edited only as Amended (j) says (44 px on its fields and Cancel/Save), nothing else in it.
 
 ## 2. Superseded assertions, old to new
 
@@ -95,3 +95,12 @@ Paths: `C` = `src/Api/AmarGram.Api/Controllers/CustomerSubscriptionsController.c
 ## 9. After Amended (j)
 
 AddressForm 44 px change; `tsc` and `lint` clean. Playwright at `--workers=1`, chromium and mobile-360, PORT=3128, mocks on: `subscriptions-customer`, `subscriptions-customer-360`, `account-area`, `ordering-customer`: 64 passed, 0 failed; `accounts-a11y-responsive -g ddress`: 10 passed. Vitest (`tests/components/account`, `checkout`, `subscriptions`): 16 files / 249 tests passed. Dev server on 3128 killed.
+
+## 10. CODE_REVIEW, SECURITY and ARCHITECTURE fixes (phase 1)
+
+- CR MEDIUM 1: `CycleHistory` "Show more" failure shows "Try again" for the failed page only; loaded pages stay, "Show more" is hidden until it loads. Test fails page 2, then page 3, and recovers.
+- CR MEDIUM 2: `MySubscriptionsList` past the last page says "That page is past the end of your list." with "Go to the first page" (never "No subscriptions yet" when `totalCount` > 0). Tests: `?page=9`, and the Cancelled tab's page 2.
+- CR LOWs: a polite status line announces a payment-method swap; dashboard U25 awaits the C3 answer; the test QueryClient has `retryDelay: 0` and the real sleeps and `{ timeout: 4000 }` waits are gone (`settle()` with simulated time); the tab is `?tab=cancelled` (with `?page=`); `StateTabs` sets `aria-controls` only on the selected tab; `SkipLinkHandler` waits for the re-read (`fresh`) before saying a date can no longer be skipped.
+- SEC LOW: ids are `encodeURIComponent`-ed in the five hrefs and the router push.
+- ARCH LOW 3: in the customer mock a non-GUID route id is a 404 before the session check, and the body is bound and validated before the ownership lookup (C7, C8, C10, C11); tests added. ARCH LOW 6: §1 reworded. Deferred by the integrator: the copy hoist, the `totalCount` alias, the Sam-only mock.
+- Re-run: `tsc`, `lint` clean; Vitest (`components/subscriptions`, `portal`, `product`, `unit/subscriptions`, `guards`) 27 files / 386 tests; Playwright `--workers=1` chromium + mobile-360 on PORT=3128 (`subscriptions-customer`, `-360`, `-a11y`, `portal-dashboard`): 84 passed, 4 skipped (real-API). Dev server on 3128 killed.
