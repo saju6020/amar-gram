@@ -20,3 +20,10 @@ These specs are run-only (§14, §16 E8); not edited or weakened. Fix options fo
 Also noted: dates test relies on the runner's TZ env (not self-proving); store-key values and the mock `day()` reuse have no direct unit assertion. No tests were edited. No production bug beyond the above.
 
 Cleanup: own next dev (port 3126) killed; no chrome-headless-shell left; no tracked screenshots modified.
+
+## Run 2 (0c5fb48): PASS
+
+- Amendment audit (diff 46f9a58..0c5fb48 of web/tests): no assertion removed or loosened. account-area: labels renamed to "E2E Home/Office/Parents" throughout and the final count check kept (now on "E2E Home"), plus new checks that seeded Home and Office remain once each. ordering-customer E-B1: the `Home` checked assertion is kept (anchored `^Home`), plus selecting and asserting "E2E Home". E-B3: adds a click on the Gazipur radio; the out-of-zone text and collection-radio assertions are unchanged. Helper default label "E2E Home" only. (The `.check()` -> click + toBeChecked swap mentioned in the brief is not in this diff for these files; nothing to audit.)
+- Gaps closed by test-only additions in web/tests/unit/subscriptions/hardening.test.ts (9 tests): zone independence set inside the test with the offset asserted (proves the switch), `day()` reuse, the four store-key literals.
+- Results: tsc exit 0, lint exit 0, subscriptions Vitest 8 files / 128 tests passed; e2e 322 passed / 0 failed (E1 five specs, account-area, ordering-customer, ordering-customer-orders, accounts-a11y-responsive; chromium + mobile-360).
+- Cleanup: own next dev on 3126 killed, no headless shells left, no tracked screenshots changed.

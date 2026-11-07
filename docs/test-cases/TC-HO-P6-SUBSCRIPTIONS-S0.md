@@ -11,9 +11,9 @@ Written: 2026-11-07 (sheet written, all rows NOT RUN, before any test was execut
 
 | | Count |
 |---|---|
-| Total | 29 |
-| PASS | 26 |
-| FAIL | 3 (X5a, X5b, X5c: run-only specs broken by S0's seeded addresses) |
+| Total | 32 |
+| PASS | 32 (run 2; run 1 was 26 PASS, 3 FAIL) |
+| FAIL | 0 (run 2) |
 | BLOCKED | 0 |
 | NOT RUN | 0 |
 
@@ -55,9 +55,9 @@ No tracked screenshot was overwritten (`git status` clean apart from this sheet)
 | E1d | portal-dashboard | pass | PASS | same run |
 | E1e | shop-product | pass | PASS | same run |
 | X5-ok | accounts-a11y-responsive (address book axe/responsive) | pass | PASS | 196 passed in the x5 run |
-| X5a | account-area.spec.ts:9 "E-E1: add three addresses, change default, remove one" (both projects) | pass | FAIL | `account-area.spec.ts:47` `expect(page.getByText('Home')).toHaveCount(0)` Received 1 (earlier log: "locator resolved to 5 elements"). Sam now starts with a seeded Home; the spec's own Home is removed and the seeded one remains. Failed on both projects, in two runs, with retries |
-| X5b | ordering-customer.spec.ts:89 "E-B1/E-B8: COD delivery order is placed once" (both projects) | pass | FAIL | `ordering-customer.spec.ts:96` `getByLabel('Home')` strict-mode violation: resolved to 2 radios, "Home (default) House 7, Road…" (seeded) and "Home House 7, Road 3,…" |
-| X5c | ordering-customer.spec.ts:146 "E-B3: an address outside every zone offers collection" (both projects) | pass | FAIL | `ordering-customer.spec.ts:156` "We don't deliver to Gazipur yet…" not found: with a seeded in-zone default address, checkout selects that instead of the added Gazipur one |
+| X5a | account-area.spec.ts:9 "E-E1: add three addresses, change default, remove one" (both projects) | pass | PASS (run 2) | Run 1 FAIL (`account-area.spec.ts:47` Home count 1, seeded Home). Run 2 at 0c5fb48: passes on both projects; spec now uses "E2E Home/Office/Parents" and additionally asserts seeded Home and Office remain (count 1 each) |
+| X5b | ordering-customer.spec.ts:89 "E-B1/E-B8: COD delivery order is placed once" (both projects) | pass | PASS (run 2) | Run 1 FAIL (strict-mode violation on `getByLabel("Home")`). Run 2: passes both projects; asserts seeded Home preselected, then selects "E2E Home" and asserts it checked |
+| X5c | ordering-customer.spec.ts:146 "E-B3: an address outside every zone offers collection" (both projects) | pass | PASS (run 2) | Run 1 FAIL (seeded default preselected). Run 2: passes both projects; spec clicks the Gazipur radio then asserts the same out-of-zone text and collection fallback |
 
 Attribution of X5a-c to S0: observed errors point at the two seeded Sam addresses (`mocks/handlers/areas/accounts.ts`, `addresses: seedSamAddresses()` replacing `[]`, Amended (b)). The base commit c176fd8 was not re-run, so "passed before" is inferred from `addresses: []` in the diff, not watched.
 
@@ -91,3 +91,15 @@ None.
 | TZ independence of `formatCycleDate` is not proven by the test itself (it relies on the TZ env being applied by the runner) | TZ cannot be changed inside a test file reliably; the two env runs are the handover's method | S0 implementer |
 | Mock store `day()` reuse and store-key values have no unit assertion | needs product-adjacent test additions beyond a gate | S0 implementer |
 | X5a-c baseline not re-run at c176fd8 | machine budget | integrator if disputed |
+
+## Run 2 (0c5fb48 plus hardening.test.ts)
+
+| ID | Case | Status | Evidence |
+|---|---|---|---|
+| H1 | dates give the same output under New York, Dhaka, Kiritimati, Pago Pago set inside the test, with the offset asserted so the switch is proven | PASS | tests/unit/subscriptions/hardening.test.ts, 4 cases; subscriptions folder 8 files / 128 tests passed |
+| H2 | `day()` equals `formatCycleDate` and leaves "2026-02-31" as text | PASS | same file |
+| H3 | the four persist keys are the bumped literals (read from source) | PASS | same file, 4 cases |
+| E2R | run-2 e2e: E1 five specs + account-area + ordering-customer + ordering-customer-orders + accounts-a11y-responsive, chromium + mobile-360, 2 workers | PASS | 322 passed, 0 failed |
+| X2/X3 | tsc and lint after the changes | PASS | both exit 0 |
+
+Gaps from run 1 (TZ self-proof, day() reuse, store keys) are closed by H1-H3. Baseline for X5 still not re-run at c176fd8 (moot: specs pass now).
