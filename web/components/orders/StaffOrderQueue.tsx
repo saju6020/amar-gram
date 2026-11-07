@@ -237,13 +237,14 @@ export function StaffOrderQueue() {
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Orders"
+        actionsClassName="max-sm:w-full"
         description="Every order at the active branch, newest first. The list refreshes every 30 seconds."
         actions={
           <form role="search" aria-label="Order search" className="w-full sm:w-[340px]" onSubmit={(event) => event.preventDefault()}>
             <SearchField
               id="oq-search"
               label="Search orders"
-              placeholder="Order no., customer or mobile"
+              placeholder="Order no., name or mobile"
               value={values.search}
               onChange={(value) => set('search', value)}
               onBlur={() => flush('search')}
