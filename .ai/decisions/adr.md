@@ -1029,7 +1029,7 @@ the platform.
 
 ---
 
-## ADR-023: removed (cat-care product retired)
+## ADR-023: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2621,7 +2621,7 @@ than a Notification-owned flag keeps consent in the one place ADR-058 already re
 
 ---
 
-## ADR-065: removed (cat-care product retired)
+## ADR-065: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2729,7 +2729,7 @@ engine.
 
 ---
 
-## ADR-084: removed (cat-care product retired)
+## ADR-084: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2777,7 +2777,7 @@ out-of-stock items.
 
 ---
 
-## ADR-089: removed (cat-care product retired)
+## ADR-089: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2863,43 +2863,43 @@ and reviews to the survivor idempotently, closing duplicates on collision;
 stay, credited to "A verified buyer".
 **Reason:** HO-ACC-001 ADR-039 / ADR-041 bind every context holding a customer id.
 
-## ADR-067: removed (cat-care product retired)
+## ADR-067: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-068: removed (cat-care product retired)
+## ADR-068: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-069: removed (cat-care product retired)
+## ADR-069: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-070: removed (cat-care product retired)
+## ADR-070: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-071: removed (cat-care product retired)
+## ADR-071: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-072: removed (cat-care product retired)
+## ADR-072: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-073: removed (cat-care product retired)
+## ADR-073: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-074: removed (cat-care product retired)
+## ADR-074: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-075: removed (cat-care product retired)
+## ADR-075: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-076: removed (cat-care product retired)
+## ADR-076: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2908,7 +2908,7 @@ stay, credited to "A verified buyer".
 Dated, append-only notes on ADR-077…096 recorded while building Phases F–H. The detail and the
 reasons are in `docs/handover/HO-SHP-001.md` §1 "Amended" (rows dated 2026-10-04).
 
-- **ADR-084.** removed (cat-care product retired)
+- **ADR-084.** Superseded — feature removed (HO-P1)
 - **ADR-082 (2026-10-04, integrator recommendation, confirmed by the owner 2026-10-04).** Production availability is FAIL-CLOSED per §4.3: `Shop:InterimAvailabilityFromPrice` (default false) gates the interim price-based approximation, which only the Testing environment enables.
 - **ADR-082 / ADR-085 (availability, bundles).** Availability for every storefront read, the
   stock-alert handlers and the worker is answered at one seam (`SkuSellability` behind
@@ -2919,79 +2919,79 @@ reasons are in `docs/handover/HO-SHP-001.md` §1 "Amended" (rows dated 2026-10-0
 - **ADR-090 (localisation).** Enabled locales reach command handlers through the Domain port
   `IContentLocaleSettings` (Application cannot reference Infrastructure's options). `?locale=`
   applies to every public read that shows a name.
-- **ADR-089.** removed (cat-care product retired)
+- **ADR-089.** Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-117: removed (cat-care product retired)
+## ADR-117: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-118: removed (cat-care product retired)
+## ADR-118: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-119: removed (cat-care product retired)
+## ADR-119: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-120: removed (cat-care product retired)
+## ADR-120: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-121: removed (cat-care product retired)
+## ADR-121: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-122: removed (cat-care product retired)
+## ADR-122: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-123: removed (cat-care product retired)
+## ADR-123: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-124: removed (cat-care product retired)
+## ADR-124: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-125: removed (cat-care product retired)
+## ADR-125: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-126: removed (cat-care product retired)
+## ADR-126: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-127: removed (cat-care product retired)
+## ADR-127: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-128: removed (cat-care product retired)
+## ADR-128: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-129: removed (cat-care product retired)
+## ADR-129: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-130: removed (cat-care product retired)
+## ADR-130: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-131: removed (cat-care product retired)
+## ADR-131: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-132: removed (cat-care product retired)
+## ADR-132: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-133: removed (cat-care product retired)
+## ADR-133: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-134: removed (cat-care product retired)
+## ADR-134: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -3461,7 +3461,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 
 ---
 
-## ADR-262: removed (cat-care product retired)
+## ADR-262: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -3719,75 +3719,75 @@ There is no shared account, no reserved number (`01000000000` is an ordinary num
 
 ---
 
-## ADR-137: removed (cat-care product retired)
+## ADR-137: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-138: removed (cat-care product retired)
+## ADR-138: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-139: removed (cat-care product retired)
+## ADR-139: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-140: removed (cat-care product retired)
+## ADR-140: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-141: removed (cat-care product retired)
+## ADR-141: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-142: removed (cat-care product retired)
+## ADR-142: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-143: removed (cat-care product retired)
+## ADR-143: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-144: removed (cat-care product retired)
+## ADR-144: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-145: removed (cat-care product retired)
+## ADR-145: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-146: removed (cat-care product retired)
+## ADR-146: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-147: removed (cat-care product retired)
+## ADR-147: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-148: removed (cat-care product retired)
+## ADR-148: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-149: removed (cat-care product retired)
+## ADR-149: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-150: removed (cat-care product retired)
+## ADR-150: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-151: removed (cat-care product retired)
+## ADR-151: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-152: removed (cat-care product retired)
+## ADR-152: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-153: removed (cat-care product retired)
+## ADR-153: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-154: removed (cat-care product retired)
+## ADR-154: Superseded — feature removed (HO-P1)
 
 ## ADR-216 -- Amended 2026-10-10 (owner decisions D1, D2; HO-ORD-001-FU1; backlog ORD 43, 47)
 
@@ -3831,39 +3831,39 @@ There is no shared account, no reserved number (`01000000000` is an ordinary num
 **Reason:** One reader is the only place that knows an upstream shape (ADR-259); a dashboard that offers an action its owning page withholds is a defect.
 **Update 2026-10-10 (owner-delegated decision 2026-10-10, owner to review):** items (1) and (2) are superseded: Orders added `trackingNumber` and `canReorder` (its own `CustomerOrderRules.CanReorder`) to its list item; the reader passes both through and the portal's four-status set is deleted. Item (4) is superseded: re-order is retired (ADR-263), not blocked.
 
-## ADR-157: removed (cat-care product retired)
+## ADR-157: Superseded — feature removed (HO-P1)
 
-## ADR-158: removed (cat-care product retired)
+## ADR-158: Superseded — feature removed (HO-P1)
 
-## ADR-159: removed (cat-care product retired)
+## ADR-159: Superseded — feature removed (HO-P1)
 
-## ADR-160: removed (cat-care product retired)
+## ADR-160: Superseded — feature removed (HO-P1)
 
-## ADR-161: removed (cat-care product retired)
+## ADR-161: Superseded — feature removed (HO-P1)
 
-## ADR-162: removed (cat-care product retired)
+## ADR-162: Superseded — feature removed (HO-P1)
 
-## ADR-163: removed (cat-care product retired)
+## ADR-163: Superseded — feature removed (HO-P1)
 
-## ADR-164: removed (cat-care product retired)
+## ADR-164: Superseded — feature removed (HO-P1)
 
-## ADR-165: removed (cat-care product retired)
+## ADR-165: Superseded — feature removed (HO-P1)
 
-## ADR-166: removed (cat-care product retired)
+## ADR-166: Superseded — feature removed (HO-P1)
 
-## ADR-167: removed (cat-care product retired)
+## ADR-167: Superseded — feature removed (HO-P1)
 
-## ADR-168: removed (cat-care product retired)
+## ADR-168: Superseded — feature removed (HO-P1)
 
-## ADR-169: removed (cat-care product retired)
+## ADR-169: Superseded — feature removed (HO-P1)
 
-## ADR-170: removed (cat-care product retired)
+## ADR-170: Superseded — feature removed (HO-P1)
 
-## ADR-171: removed (cat-care product retired)
+## ADR-171: Superseded — feature removed (HO-P1)
 
-## ADR-172: removed (cat-care product retired)
+## ADR-172: Superseded — feature removed (HO-P1)
 
-## ADR-173: removed (cat-care product retired)
+## ADR-173: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -4071,7 +4071,7 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 **Decision:** An *active* customer in a period has at least one issued invoice in it; *new* = the first issued invoice ever falls in the period; *returning* = had one before. Acquisition source = `RegistrationChannel`. HO-BIL-001 keeps issued invoices on the customer id they were issued to, so `rv_customer_activity` resolves a merged customer to the survivor itself. Anonymised customers count but are never named beyond the stored placeholder.
 **Reason:** SRS 8.3 names the reports but not their definitions.
 
-## ADR-292: removed (cat-care product retired)
+## ADR-292: Superseded — feature removed (HO-P1)
 
 ## ADR-277 … ADR-292 — revisions (HO-RPT-001 gate fix round)
 
@@ -4087,44 +4087,44 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 
 ---
 
-## ADR-344: removed (cat-care product retired)
+## ADR-344: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-345: removed (cat-care product retired)
+## ADR-345: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-346: removed (cat-care product retired)
+## ADR-346: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-344 … ADR-346 — revisions: removed (cat-care product retired)
+## ADR-344 … ADR-346 — revisions: Superseded — feature removed (HO-P1)
 
 ## Retired area block (ADR-350 ... ADR-369)
 
 The handover reserved ADR-217 ... ADR-236, which other areas had already taken on master; the block was renumbered **ADR-350 = old 217 ... ADR-369 = old 236** (checked free on master and on every open `ho/*` branch; the highest id used anywhere was 347). Each entry states the decision **as built**; where the build departs from the handover the departure is named.
 
-- **ADR-350 (old 217).** removed (cat-care product retired)
-- **ADR-351 (old 218).** removed (cat-care product retired)
-- **ADR-352 (old 219).** removed (cat-care product retired)
-- **ADR-353 (old 220).** removed (cat-care product retired)
-- **ADR-354 (old 221).** removed (cat-care product retired)
-- **ADR-355 (old 222).** removed (cat-care product retired)
-- **ADR-356 (old 223).** removed (cat-care product retired)
-- **ADR-357 (old 224).** removed (cat-care product retired)
-- **ADR-358 (old 225).** removed (cat-care product retired)
-- **ADR-359 (old 226).** removed (cat-care product retired)
-- **ADR-360 (old 227).** removed (cat-care product retired)
-- **ADR-361 (old 228).** removed (cat-care product retired)
-- **ADR-362 (old 229).** removed (cat-care product retired)
-- **ADR-363 (old 230).** removed (cat-care product retired)
-- **ADR-364 (old 231).** removed (cat-care product retired)
-- **ADR-365 (old 232).** removed (cat-care product retired)
-- **ADR-366 (old 233).** removed (cat-care product retired)
-- **ADR-367 (old 234).** removed (cat-care product retired)
-- **ADR-368 (old 235).** removed (cat-care product retired)
-- **ADR-369 (old 236).** removed (cat-care product retired)
+- **ADR-350 (old 217).** Superseded — feature removed (HO-P1)
+- **ADR-351 (old 218).** Superseded — feature removed (HO-P1)
+- **ADR-352 (old 219).** Superseded — feature removed (HO-P1)
+- **ADR-353 (old 220).** Superseded — feature removed (HO-P1)
+- **ADR-354 (old 221).** Superseded — feature removed (HO-P1)
+- **ADR-355 (old 222).** Superseded — feature removed (HO-P1)
+- **ADR-356 (old 223).** Superseded — feature removed (HO-P1)
+- **ADR-357 (old 224).** Superseded — feature removed (HO-P1)
+- **ADR-358 (old 225).** Superseded — feature removed (HO-P1)
+- **ADR-359 (old 226).** Superseded — feature removed (HO-P1)
+- **ADR-360 (old 227).** Superseded — feature removed (HO-P1)
+- **ADR-361 (old 228).** Superseded — feature removed (HO-P1)
+- **ADR-362 (old 229).** Superseded — feature removed (HO-P1)
+- **ADR-363 (old 230).** Superseded — feature removed (HO-P1)
+- **ADR-364 (old 231).** Superseded — feature removed (HO-P1)
+- **ADR-365 (old 232).** Superseded — feature removed (HO-P1)
+- **ADR-366 (old 233).** Superseded — feature removed (HO-P1)
+- **ADR-367 (old 234).** Superseded — feature removed (HO-P1)
+- **ADR-368 (old 235).** Superseded — feature removed (HO-P1)
+- **ADR-369 (old 236).** Superseded — feature removed (HO-P1)
 
 ---
 
@@ -4201,7 +4201,7 @@ thumbnails) for product images.
 - **ADR-241.** **Generation is orchestrated by the worker, one scope per command**: request query, `PlaceSubscriptionOrderCommand`, `RecordSubscriptionCycleCommand`. Orders is never dispatched from inside a Subscriptions handler (F23). Crash recovery is re-running the pass: the order idempotency key (`SubscriptionKeys.OrderIdempotencyGuid`) returns the original order and `ix_subscription_cycle_per_date` keeps one cycle row.
 - **ADR-242.** **Price at generation**: no price is stored; Orders prices each cycle. The subscriber discount (`subscription.discountPercent`, default 0) is a labelled order discount and is snapshotted on the cycle. System-placed orders carry no price-change acknowledgement; the pre-charge notice carries the estimate.
 - **ADR-243.** **Order outcomes are mirrored, not owned**: idempotent handlers of Orders' events update the cycle's state, never enqueue and never touch the subscription. The unpaid streak is **derived** (`UnpaidCycleRule`); suspension is a worker-nominated command that re-checks the rule and, after a reinstatement, counts only cycles processed since.
-- **ADR-244.** removed (cat-care product retired)
+- **ADR-244.** Superseded — feature removed (HO-P1)
 - **ADR-245.** **Pre-charge notice**: a timed producer in the worker (`RequestNotificationCommand`, key `sub:notice:{id}:{date}`), notice date = cycle - max(noticeDays, cutoffDays + 1), `NotAfter` = the cut-off, guarded by `SubscriptionCycleDue`, not sent when the person chose the date inside the notice window.
 - **ADR-246.** **Payment reminder** for a held bank-transfer subscription order: enqueued with the cycle record, `SendAfter = expiry - paymentReminderHours`, `NotAfter = expiry`, guarded by the mirrored `AwaitingPayment`. Orders owns the expiry.
 - **ADR-247.** **Lifecycle**: customer merged -> reassign to the survivor (a duplicate the survivor already has is cancelled `CustomerMerged`, then moves too); account anonymised -> cancel and clear the note. Handlers are idempotent and never enqueue.

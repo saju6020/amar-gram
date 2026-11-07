@@ -917,7 +917,7 @@ of that server; app code never imports it.
 
 ---
 
-## ADR-FE-024 … ADR-FE-028: removed (cat-care product retired)
+## ADR-FE-024 … ADR-FE-028: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -985,7 +985,7 @@ implies a purchase.
 
 **Status.** Built as specified.
 
-### ADR-FE-033: removed (cat-care product retired)
+### ADR-FE-033: Superseded — feature removed (HO-P1)
 
 ### ADR-FE-034 — The product editor is route-based sections under one layout
 
@@ -1045,25 +1045,25 @@ notes go through `LimitedMarkup`.
 
 **Status.** Built as specified.
 
-### ADR-FE-049: removed (cat-care product retired)
+### ADR-FE-049: Superseded — feature removed (HO-P1)
 
-### ADR-FE-050: removed (cat-care product retired)
+### ADR-FE-050: Superseded — feature removed (HO-P1)
 
-### ADR-FE-051: removed (cat-care product retired)
+### ADR-FE-051: Superseded — feature removed (HO-P1)
 
-### ADR-FE-052: removed (cat-care product retired)
+### ADR-FE-052: Superseded — feature removed (HO-P1)
 
-### ADR-FE-053: removed (cat-care product retired)
+### ADR-FE-053: Superseded — feature removed (HO-P1)
 
-### ADR-FE-054: removed (cat-care product retired)
+### ADR-FE-054: Superseded — feature removed (HO-P1)
 
-### ADR-FE-055: removed (cat-care product retired)
+### ADR-FE-055: Superseded — feature removed (HO-P1)
 
-### ADR-FE-056: removed (cat-care product retired)
+### ADR-FE-056: Superseded — feature removed (HO-P1)
 
-### ADR-FE-057: removed (cat-care product retired)
+### ADR-FE-057: Superseded — feature removed (HO-P1)
 
-### ADR-FE-058: removed (cat-care product retired)
+### ADR-FE-058: Superseded — feature removed (HO-P1)
 
 ## ADR-FE-079 … ADR-FE-086 — Billing frontend slice (HO-BIL-002)
 
@@ -1202,7 +1202,7 @@ is forbidden scope for a frontend handover (HO-IMP-002 §14) and carries only th
 
 **Why.** ADR-107's separation of requester and approver must be obvious, not discovered on submit
 
-## ADR-FE-164: removed (cat-care product retired)
+## ADR-FE-164: Superseded — feature removed (HO-P1)
 
 ## ADR-FE-170 … ADR-FE-172 — Branch calendar view (HO-ADM-002-FU1)
 
@@ -1220,7 +1220,7 @@ ADR-FE-172 is held for amendments.
 
 **Why.** Extends ADR-FE-017 (no calendar library, no sideways scroll). Keeps month links shareable and safe with the Back button. One Tab stop keeps a 31-cell grid usable from the keyboard
 
-## ADR-FE-059 … ADR-FE-068: removed (cat-care product retired)
+## ADR-FE-059 … ADR-FE-068: Superseded — feature removed (HO-P1)
 
 ## ADR-FE-089 … ADR-FE-098 — Cart, checkout and orders (HO-ORD-002)
 
@@ -1338,7 +1338,7 @@ ADR-FE-124 and ADR-FE-125 (signed media URLs and the stay diary) are **retired**
 
 ---
 
-## ADR-FE-069 … ADR-FE-078: removed (cat-care product retired)
+## ADR-FE-069 … ADR-FE-078: Superseded — feature removed (HO-P1)
 
 ## ADR-FE-139 … ADR-FE-148 — Cross-cutting and Technical frontend slice (HO-XCT-002)
 
@@ -1512,7 +1512,7 @@ Numbering: `ADR-FE-139…148` are the block HO-XCT-002 §9 names for itself and 
 
 ---
 
-## ADR-FE-099 … ADR-FE-108: removed (cat-care product retired)
+## ADR-FE-099 … ADR-FE-108: Superseded — feature removed (HO-P1)
 
 ## ADR-FE-173 — Hearth customer layer (foundation)
 
