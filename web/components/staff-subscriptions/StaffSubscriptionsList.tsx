@@ -64,15 +64,18 @@ export function StaffSubscriptionsList() {
   const { values, setValue, flush } = useUrlFilterState(STAFF_FILTER_FIELDS, {}, ['q']);
   const canExport = useCanExportSubscriptions();
 
-  const filters = useMemo<StaffSubscriptionFilters>(
-    () => ({
-      status: known(values.status, SUBSCRIPTION_STATUSES),
-      suspensionReason: known(values.suspensionReason, SUBSCRIPTION_SUSPENSION_REASONS),
+  const filters = useMemo<StaffSubscriptionFilters>(() => {
+    const status = known(values.status, SUBSCRIPTION_STATUSES);
+    return {
+      status,
+      // A reason only means something for a suspended subscription (the select is disabled otherwise), so a stale one in the address is not sent.
+      suspensionReason:
+        !status || status === 'Suspended' ? known(values.suspensionReason, SUBSCRIPTION_SUSPENSION_REASONS) : undefined,
       paymentMethod: known(values.paymentMethod, SUBSCRIPTION_PAYMENT_METHODS),
       q: values.q.trim() || undefined,
       sort: values.sort || undefined,
-    }),
-    [values.status, values.suspensionReason, values.paymentMethod, values.q, values.sort],
+    };
+  }, [values.status, values.suspensionReason, values.paymentMethod, values.q, values.sort],
   );
   const page = Math.max(1, Math.trunc(Number(values.page)) || 1);
   const query = useStaffSubscriptions({ ...filters, pageNumber: page, pageSize: PAGE_SIZE });
@@ -107,7 +110,7 @@ export function StaffSubscriptionsList() {
         columns={COLUMNS}
         rows={query.data?.items}
         getRowId={(r) => r.id}
-        rowHref={(r) => `/staff/subscriptions/${r.id}`}
+        rowHref={(r) => `/staff/subscriptions/${encodeURIComponent(r.id)}`}
         isLoading={query.isLoading}
         isError={query.isError}
         onRetry={() => void query.refetch()}

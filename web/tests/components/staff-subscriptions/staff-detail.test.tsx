@@ -6,7 +6,7 @@ import { server } from '@/mocks/server';
 import { StaffSubscriptionDetailScreen } from '@/components/staff-subscriptions/StaffSubscriptionDetailScreen';
 import { createControls } from '../../../mocks/handlers/subscriptions/control';
 import { subscriptionFixtureIds } from '../../../mocks/handlers/subscriptions/fixtures';
-import { findSubscription } from '../../../mocks/handlers/subscriptions/store';
+import { cyclesOf, findSubscription } from '../../../mocks/handlers/subscriptions/store';
 import { accountsFixtureIds } from '../../../mocks/handlers/areas/accounts';
 import { actAs, freshStore, recordRequests, renderScreen } from './helpers';
 
@@ -73,8 +73,7 @@ describe('U30 staff detail', () => {
   it.each([['Reception'], ['Accountant'], ['Inventory']])('%s sees the record and the who-can-act sentence, no actions', async (role) => {
     actAs(role);
     open(SUSPENDED);
-    await screen.findByRole('heading', { level: 1 });
-    expect(screen.getByText('Only a shop manager or an administrator can restart or cancel a subscription.')).toBeInTheDocument();
+    expect(await screen.findByText('Only a shop manager or an administrator can restart or cancel a subscription.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Restart' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cancel subscription' })).not.toBeInTheDocument();
   });
@@ -98,18 +97,61 @@ describe('U30 staff detail', () => {
     expect(screen.getByRole('link', { name: 'All subscriptions' })).toHaveAttribute('href', '/staff/subscriptions');
   });
 
-  it('pages the history past the 50 the detail carries ("Show more" = T6 page 2)', async () => {
+  it('pages the history past the 50 the detail carries ("Show more" = T6 page 2), with every entry once', async () => {
     createControls().addCycles(ACTIVE, 55);
+    const total = cyclesOf(ACTIVE).length; // the 2 seeded cycles and the 55 added
+    expect(total).toBe(57);
     const seen = recordRequests(`/api/staff/subscriptions/${ACTIVE}/cycles`);
     const user = userEvent.setup();
     open(ACTIVE);
     const history = await screen.findByRole('region', { name: 'Order history' });
     expect(within(history).getAllByRole('row')).toHaveLength(51); // header + 50
     await user.click(within(history).getByRole('button', { name: 'Show more' }));
-    await waitFor(() => expect(within(history).getAllByRole('row').length).toBeGreaterThan(51));
+    await waitFor(() => expect(within(history).getAllByRole('row')).toHaveLength(total + 1));
     expect(seen[0]!.searchParams.get('pageNumber')).toBe('2');
-    expect(await within(history).findByText(/All \d+ entries shown/)).toBeInTheDocument();
+    expect(await within(history).findByText(`All ${total} entries shown. Order numbers open the staff order page.`)).toBeInTheDocument();
     expect(within(history).queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
+    // No entry is repeated across the pages: every delivery date and every order number appears once.
+    const rows = within(history).getAllByRole('row').slice(1);
+    const dates = rows.map((row) => within(row).getAllByRole('cell')[0]!.textContent);
+    expect(new Set(dates).size).toBe(dates.length);
+    const orders = within(history).queryAllByRole('link', { name: /^ORD-/ }).map((l) => l.textContent);
+    expect(new Set(orders).size).toBe(orders.length);
+  });
+
+  it('keeps a "Try again" when a later page fails, hides "All … entries shown" meanwhile, and recovers (page 2, then page 3)', async () => {
+    createControls().addCycles(ACTIVE, 105); // 107 in all: 50 + 50 + 7
+    const total = cyclesOf(ACTIVE).length;
+    const failures: Record<string, number> = { '2': 2, '3': 2 }; // the automatic retry fails too, so the error shows
+    server.use(
+      http.get(`*/api/staff/subscriptions/${ACTIVE}/cycles`, ({ request }) => {
+        const page = new URL(request.url).searchParams.get('pageNumber')!;
+        if ((failures[page] ?? 0) > 0) {
+          failures[page]! -= 1;
+          return HttpResponse.json({}, { status: 500 });
+        }
+        return undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    open(ACTIVE);
+    const history = await screen.findByRole('region', { name: 'Order history' });
+
+    await user.click(within(history).getByRole('button', { name: 'Show more' }));
+    expect(await within(history).findByText("We couldn’t load more orders.", {}, { timeout: 6000 })).toBeInTheDocument();
+    expect(within(history).queryByText(/entries shown/)).not.toBeInTheDocument();
+    expect(within(history).queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
+    await user.click(within(history).getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(within(history).getAllByRole('row')).toHaveLength(101));
+    expect(within(history).queryByText("We couldn’t load more orders.")).not.toBeInTheDocument();
+
+    await user.click(within(history).getByRole('button', { name: 'Show more' }));
+    expect(await within(history).findByText("We couldn’t load more orders.", {}, { timeout: 6000 })).toBeInTheDocument();
+    expect(within(history).getAllByRole('row')).toHaveLength(101); // page 2 stays
+    expect(within(history).queryByText(/entries shown/)).not.toBeInTheDocument();
+    await user.click(within(history).getByRole('button', { name: 'Try again' }));
+    expect(await within(history).findByText(`All ${total} entries shown. Order numbers open the staff order page.`)).toBeInTheDocument();
+    expect(within(history).getAllByRole('row')).toHaveLength(total + 1);
   });
 
   it('shows the server estimate as sent, with the leading minus as text', async () => {
@@ -298,5 +340,23 @@ describe('U32 staff cancel', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(posts).toHaveLength(0);
     server.events.removeAllListeners();
+  });
+});
+
+describe('who may act is not guessed', () => {
+  it('shows neither buttons nor the role note while the session is loading, and nothing at all when no action is allowed', async () => {
+    server.use(http.get('*/api/staff/session', async () => new Promise(() => undefined))); // never answers
+    open(SUSPENDED);
+    await screen.findByRole('region', { name: 'Records' });
+    expect(screen.queryByText(/Only a shop manager/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Restart' })).not.toBeInTheDocument();
+  });
+
+  it('a read-only role gets no role note on a cancelled subscription (there is nothing to do)', async () => {
+    actAs('Reception');
+    const view = open(CANCELLED);
+    await screen.findByRole('region', { name: 'Records' });
+    await waitFor(() => expect(view.client.getQueryData(['session', 'staff'])).toBeTruthy());
+    expect(screen.queryByText(/Only a shop manager/)).not.toBeInTheDocument();
   });
 });

@@ -170,3 +170,30 @@ describe('U28 export', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(PERMISSION_DENIED_MESSAGE);
   });
 });
+
+describe('review fixes', () => {
+  it('does not send a stale suspension reason when the status is not Suspended', async () => {
+    setUrl('/staff/subscriptions?status=Active&suspensionReason=UnpaidCycles');
+    const seen = recordRequests('/api/staff/subscriptions');
+    renderScreen(<StaffSubscriptionsList />);
+    await screen.findByRole('table', { name: 'Subscriptions' });
+    expect(seen[0]!.searchParams.get('status')).toBe('Active');
+    expect(seen[0]!.searchParams.has('suspensionReason')).toBe(false);
+  });
+
+  it('clears an export refusal when the filters change', async () => {
+    const user = userEvent.setup();
+    download.mockRejectedValueOnce(new ApiError('Something went wrong. Please try again.', 413));
+    renderScreen(<StaffSubscriptionsList />);
+    await user.click(await screen.findByRole('button', { name: 'Export CSV' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Status'), 'Paused');
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  });
+
+  it('puts an id in a link path encoded', async () => {
+    renderScreen(<StaffSubscriptionsList />);
+    const link = await screen.findByRole('link', { name: /Garam Masala Blend · 750 g/ });
+    expect(link.getAttribute('href')).toBe(`/staff/subscriptions/${encodeURIComponent(ids.others.dueTomorrow)}`);
+  });
+});

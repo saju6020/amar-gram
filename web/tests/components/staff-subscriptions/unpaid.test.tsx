@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { UnpaidSubscriptionsScreen } from '@/components/staff-subscriptions/UnpaidSubscriptionsScreen';
 import { subscriptionFixtureIds, subscriptionSeeds } from '../../../mocks/handlers/subscriptions/fixtures';
 import { setUrl } from '../common/nav-mock';
@@ -59,5 +60,16 @@ describe('U29 unpaid worklist', () => {
     actAs('Cashier');
     renderScreen(<UnpaidSubscriptionsScreen />);
     expect(await screen.findByText('You don’t have permission to do this.')).toBeInTheDocument();
+  });
+});
+
+describe('a page past the end', () => {
+  it('says so and offers the first page, not "nothing is suspended"', async () => {
+    setUrl('/staff/subscriptions/unpaid?page=99');
+    renderScreen(<UnpaidSubscriptionsScreen />);
+    expect(await screen.findByText('That page is past the end of the list.')).toBeInTheDocument();
+    expect(screen.queryByText('No unpaid subscriptions.')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Go to the first page' }));
+    expect(await screen.findByRole('region', { name: 'Suspended' })).toBeInTheDocument();
   });
 });

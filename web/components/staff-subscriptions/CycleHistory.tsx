@@ -45,7 +45,7 @@ export function CycleHistory({ subscriptionId, cycles, zone }: { subscriptionId:
       header: 'Order',
       cell: (c) =>
         c.orderId && c.orderNumber ? (
-          <Link href={`/staff/orders/${c.orderId}`} className={`${LINK_TARGET} text-accent-ink hover:underline`}>
+          <Link href={`/staff/orders/${encodeURIComponent(c.orderId)}`} className={`${LINK_TARGET} text-accent-ink hover:underline`}>
             {c.orderNumber}
           </Link>
         ) : (
@@ -65,8 +65,17 @@ export function CycleHistory({ subscriptionId, cycles, zone }: { subscriptionId:
           getRowId={(c) => c.id}
           emptyState={{ title: 'No orders yet.', description: 'The first order is placed on the first delivery date.' }}
         />
-        {more.isError && <p role="alert" className="text-sm font-semibold text-danger-ink">We couldn&rsquo;t load more orders. Try again.</p>}
-        {mayHaveMore && (
+        {more.isError && (
+          <div className="flex flex-wrap items-center gap-3">
+            <p role="alert" className="text-sm font-semibold text-danger-ink">
+              We couldn&rsquo;t load more orders.
+            </p>
+            <Button variant="secondary" className="min-h-11" onClick={more.retry}>
+              Try again
+            </Button>
+          </div>
+        )}
+        {mayHaveMore && !more.isError && (
           <div>
             <Button
               variant="secondary"
@@ -79,7 +88,7 @@ export function CycleHistory({ subscriptionId, cycles, zone }: { subscriptionId:
             </Button>
           </div>
         )}
-        {!mayHaveMore && shown.length > 0 && (
+        {!mayHaveMore && !more.isError && shown.length > 0 && (
           <p className="text-sm text-ink-muted">{`All ${shown.length} ${shown.length === 1 ? 'entry' : 'entries'} shown. Order numbers open the staff order page.`}</p>
         )}
       </div>

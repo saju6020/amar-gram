@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PermissionDeniedState } from '@/components/admin/PermissionDeniedState';
 import { Button } from '@/components/ui/button';
 import type { StaffSubscriptionDetail } from '@/lib/api/staff-subscriptions';
+import { useStaffSession } from '@/lib/hooks/useSession';
 import { useCanManageSubscriptions } from '@/lib/hooks/useStaffSubscriptions';
 import { STAFF_ACTIONS_ROLE_NOTE } from '@/lib/subscriptions/copy';
 import { staffSubscriptionActionLabel } from '@/lib/subscriptions/labels';
@@ -22,13 +23,14 @@ export function StaffActions({
   onDone: (message: string) => void;
 }) {
   const canManage = useCanManageSubscriptions();
+  const session = useStaffSession();
   const [dialog, setDialog] = useState<'reinstate' | 'cancel' | null>(null);
   const [denied, setDenied] = useState(false);
 
   if (denied) return <PermissionDeniedState />;
+  // Nothing to offer or explain: no allowed action, or who may act is not known yet (no flash of the role note).
+  if (subscription.allowedStaffActions.length === 0 || session.isPending) return null;
   if (!canManage) return <p className="max-w-md text-sm text-ink-muted">{STAFF_ACTIONS_ROLE_NOTE}</p>;
-  if (subscription.allowedStaffActions.length === 0) return null;
-
   const can = (action: string) => subscription.allowedStaffActions.includes(action as 'Reinstate' | 'Cancel');
   const shared = { subscription, onDone, onForbidden: () => setDenied(true) };
   return (

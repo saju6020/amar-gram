@@ -59,6 +59,16 @@ export function UnpaidSubscriptionsScreen() {
         <LoadingState variant="table" rows={5} label="Loading unpaid subscriptions…" />
       ) : query.isError ? (
         <ErrorState onRetry={() => void query.refetch()} />
+      ) : items.length === 0 && (query.data?.totalCount ?? 0) > 0 ? (
+        // A page past the end (a stale or edited address): the list is not empty, so do not say it is.
+        <EmptyState
+          title="That page is past the end of the list."
+          action={
+            <Button variant="secondary" className="min-h-11" onClick={() => url.set({ page: undefined })}>
+              Go to the first page
+            </Button>
+          }
+        />
       ) : items.length === 0 ? (
         <EmptyState
           title="No unpaid subscriptions."

@@ -259,3 +259,28 @@ describe('U34 404 and the rule codes', () => {
     expect(detail).toMatchObject({ cancellationReason: 'StaffCancelled', cancellationNote: 'Moving', allowedStaffActions: [] });
   });
 });
+
+describe('U34 review fixes', () => {
+  it('a non-GUID id is a 404 before the role check (no route matches), for every verb', async () => {
+    setMockSubscriptionRoles(['Cashier']);
+    for (const run of [
+      () => getStaffSubscription('not-a-guid'),
+      () => getStaffSubscriptionCycles('not-a-guid'),
+      () => reinstateSubscription('not-a-guid', { reason: 'ok' }),
+      () => staffCancelSubscription('not-a-guid', { note: 'ok' }),
+    ]) {
+      expect(await failure(run)).toBeInstanceOf(ApiNotFoundError);
+    }
+    // A real id still meets the role check.
+    expect(await failure(() => getStaffSubscription(ids.others.active))).toBeInstanceOf(ApiForbiddenError);
+  });
+
+  it("a blank reinstate reason carries FluentValidation's default text with the code the validator sets (SubscriptionCommandValidators.cs:104)", async () => {
+    const error = await failure(() => reinstateSubscription(ids.others.suspendedUnpaid, { reason: ' ' }));
+    expect((error as ApiValidationError).response.errors?.[0]).toMatchObject({
+      propertyName: 'Reason',
+      errorCode: 'ReinstatementReasonRequired',
+      errorMessage: "'Reason' must not be empty.",
+    });
+  });
+});

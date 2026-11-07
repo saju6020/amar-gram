@@ -19,7 +19,7 @@ import { EstimatePanel, RecordsPanel } from './DetailPanelsMore';
 import { StaffActions } from './StaffActions';
 import { SubscriptionStatusPill } from './SubscriptionStatusPill';
 import { productLine } from './SubscriptionRowCells';
-import { SUSPENDED_NO_ORDERS } from './staffCopy';
+import { SUSPENDED_NO_ORDERS } from '@/lib/subscriptions/copy';
 
 const BACK_LINK =
   'inline-flex min-h-11 w-fit items-center gap-1 text-sm font-semibold text-accent-ink no-underline hover:underline';

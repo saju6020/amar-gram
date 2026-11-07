@@ -7,7 +7,7 @@ import { orderStateLabel } from '@/lib/subscriptions/labels';
 import { cn } from '@/lib/utils';
 import { SubscriptionStatusPill } from './SubscriptionStatusPill';
 import { CustomerLink, LINK_TARGET, productLine } from './SubscriptionRowCells';
-import { unpaidInARow } from './staffCopy';
+import { unpaidInARow } from '@/lib/subscriptions/copy';
 
 /**
  * One row of the unpaid worklist (§11.3.4): the customer, the product, how many unpaid orders in a row, and each unpaid
@@ -32,7 +32,7 @@ export function UnpaidSubscriptionCard({ item }: { item: UnpaidSubscription }) {
           </p>
         </div>
         <Link
-          href={`/staff/subscriptions/${item.id}`}
+          href={`/staff/subscriptions/${encodeURIComponent(item.id)}`}
           aria-label={`Open ${item.customer.name}'s subscription to ${item.product.productName}`}
           className={cn(buttonVariants({ variant: 'secondary' }), 'min-h-11 no-underline')}
         >
@@ -44,7 +44,7 @@ export function UnpaidSubscriptionCard({ item }: { item: UnpaidSubscription }) {
           <li key={cycle.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className="font-semibold text-ink">{formatCycleDate(cycle.cycleOn)}</span>
             {cycle.orderId && cycle.orderNumber ? (
-              <Link href={`/staff/orders/${cycle.orderId}`} className={`${LINK_TARGET} text-accent-ink hover:underline`}>
+              <Link href={`/staff/orders/${encodeURIComponent(cycle.orderId)}`} className={`${LINK_TARGET} text-accent-ink hover:underline`}>
                 {cycle.orderNumber}
               </Link>
             ) : (

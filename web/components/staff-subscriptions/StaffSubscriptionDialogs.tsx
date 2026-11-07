@@ -4,13 +4,17 @@ import type { StaffSubscriptionDetail } from '@/lib/api/staff-subscriptions';
 import { useReinstateSubscription, useStaffCancelSubscription } from '@/lib/hooks/useStaffSubscriptions';
 import {
   REINSTATE_DATE_HELP,
-  nextDeliveryLabel,
+  STAFF_CANCELLED_MESSAGE,
+  reinstateDescription,
   reinstateTitle,
+  reinstatedMessage,
+  staffCancelDescription,
   staffCancelLockedText,
+  staffCancelScheduledMessage,
   staffCancelTitle,
 } from '@/lib/subscriptions/copy';
 import { SUBSCRIPTION_CODE_MESSAGES } from '@/lib/subscriptions/errors';
-import { cancellationReasonLabel, pendingStatusChangeText } from '@/lib/subscriptions/labels';
+import { cancellationReasonLabel } from '@/lib/subscriptions/labels';
 import { StaffActionDialog } from './StaffActionDialog';
 
 interface DialogProps {
@@ -32,7 +36,7 @@ export function ReinstateDialog({ subscription, open, onOpenChange, onDone, onFo
       onOpenChange={onOpenChange}
       onForbidden={onForbidden}
       title={reinstateTitle(customer, subscription.product.productName)}
-      description={`The subscription becomes active again and orders resume. ${customer} is told it has restarted.`}
+      description={reinstateDescription(customer)}
       textField="reason"
       textLabel="Reason"
       textHint="Kept on the subscription's record."
@@ -42,7 +46,7 @@ export function ReinstateDialog({ subscription, open, onOpenChange, onDone, onFo
       dismissLabel="Keep suspended"
       onSubmit={async (reason, date) => {
         const view = await reinstate.mutateAsync({ reason, ...(date ? { firstDeliveryOn: date } : {}) });
-        onDone(view.nextDeliveryOn ? `Restarted. ${nextDeliveryLabel(view.nextDeliveryOn)}.` : 'Restarted.');
+        onDone(reinstatedMessage(view.nextDeliveryOn));
       }}
     />
   );
@@ -62,7 +66,7 @@ export function StaffCancelDialog({ subscription, open, onOpenChange, onDone, on
       description={
         locked
           ? staffCancelLockedText(subscription.nextDeliveryOn!)
-          : `No more orders will be placed. ${customer} is told.`
+          : staffCancelDescription(customer)
       }
       textField="note"
       textLabel="Note"
@@ -75,8 +79,8 @@ export function StaffCancelDialog({ subscription, open, onOpenChange, onDone, on
         const view = await cancel.mutateAsync({ note });
         onDone(
           view.status === 'Cancelled'
-            ? 'Subscription cancelled.'
-            : `Cancellation scheduled. ${pendingStatusChangeText('Cancel', view.pending?.appliesFromCycleOn)}.`,
+            ? STAFF_CANCELLED_MESSAGE
+            : staffCancelScheduledMessage(view.pending?.appliesFromCycleOn),
         );
       }}
     />

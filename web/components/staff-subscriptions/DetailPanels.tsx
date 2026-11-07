@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Panel } from '@/components/back-office/Panel';
 import type { StaffSubscriptionDetail } from '@/lib/api/staff-subscriptions';
-import { cutoffSentence } from '@/lib/subscriptions/copy';
+import { ADDRESS_REMOVED_STAFF, cutoffSentence, staffScheduleLockedText } from '@/lib/subscriptions/copy';
 import { formatCycleDate } from '@/lib/subscriptions/dates';
 import {
   intervalLabel,
@@ -12,7 +12,6 @@ import {
   subscriptionPaymentMethodLabel,
 } from '@/lib/subscriptions/labels';
 import { CustomerLink, nextDeliveryText } from './SubscriptionRowCells';
-import { ADDRESS_REMOVED_STAFF, staffLockedText } from './staffCopy';
 
 export function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -69,7 +68,7 @@ export function SchedulePanel({ subscription }: { subscription: StaffSubscriptio
         {nextDeliveryOn && changeCutoffOn && (
           <DetailRow label="Changes">
             {cutoffSentence({ changeCutoffOn, nextDeliveryOn, commerceTimeZoneId })}
-            {isLocked && <span className="mt-1 block font-semibold">{staffLockedText(nextDeliveryOn)}</span>}
+            {isLocked && <span className="mt-1 block font-semibold">{staffScheduleLockedText(nextDeliveryOn)}</span>}
           </DetailRow>
         )}
         <DetailRow label="Scheduled changes">

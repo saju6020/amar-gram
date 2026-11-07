@@ -1,5 +1,5 @@
 import { formatCommerceInstant, formatCycleDate, formatPercentText, isZeroPercent } from './dates';
-import { subscriptionPaymentMethodLabel } from './labels';
+import { pendingStatusChangeText, subscriptionPaymentMethodLabel } from './labels';
 
 /**
  * `lib/subscriptions/copy.ts` — HO-P6 S0, §8.6. One module so every subscription screen says the same thing.
@@ -136,3 +136,34 @@ export const PRODUCT_UNAVAILABLE_TEXT = "This product can't be bought right now"
 export const EMPTY_SUBSCRIPTIONS_TEXT = 'No subscriptions yet. Look for Subscribe on a product page.';
 export const PAUSED_NO_DELIVERIES_TEXT = 'Paused: no deliveries until you resume.';
 export const EXPORT_TOO_MANY_ROWS = 'Too many rows to export. Narrow the filters.';
+
+// ---- staff voice (HO-P6 S2, Amended (i)) ---------------------------------------------------------------
+
+export const NO_DELIVERY_PAUSED = 'None while paused';
+export const NO_DELIVERY_SUSPENDED = 'None while suspended';
+export const NO_DELIVERY_CANCELLED = 'None: cancelled';
+export const NEVER_RECORDED = 'Never: none recorded';
+export const NOT_CANCELLED = 'Not cancelled';
+export const SUSPENDED_NO_ORDERS = 'No orders are placed until staff restart it. The customer has been told.';
+export const ADDRESS_REMOVED_STAFF = "The delivery address was removed from the customer's address book.";
+
+/** Shown to staff when the server says `isLocked`: "The delivery on Tue 20 Oct is already being prepared." (the customer's version is `lockedSentence`). */
+export const staffScheduleLockedText = (nextDeliveryOn: string): string =>
+  `The delivery on ${formatCycleDate(nextDeliveryOn)} is already being prepared.`;
+
+/** "3 unpaid in a row" (the Unpaid worklist) and the compact "3 unpaid" (the list). */
+export const unpaidInARow = (streak: number): string => `${streak} unpaid in a row`;
+export const unpaidShort = (streak: number): string => `${streak} unpaid`;
+
+/** The Restart dialog's description and the sentence announced after it succeeds (the date is the server's). */
+export const reinstateDescription = (customerName: string): string =>
+  `The subscription becomes active again and orders resume. ${customerName} is told it has restarted.`;
+export const reinstatedMessage = (nextDeliveryOn: string | null): string =>
+  nextDeliveryOn ? `Restarted. ${nextDeliveryLabel(nextDeliveryOn)}.` : 'Restarted.';
+
+/** The staff Cancel dialog's description when the delivery is not locked, and the sentences announced after it succeeds. */
+export const staffCancelDescription = (customerName: string): string =>
+  `No more orders will be placed. ${customerName} is told.`;
+export const STAFF_CANCELLED_MESSAGE = 'Subscription cancelled.';
+export const staffCancelScheduledMessage = (appliesFromCycleOn: string | null | undefined): string =>
+  `Cancellation scheduled. ${pendingStatusChangeText('Cancel', appliesFromCycleOn)}.`;

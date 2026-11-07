@@ -93,6 +93,8 @@ export function useStaffSubscriptionMoreCycles(id: string, lastPage: number) {
       totalCount: results.at(-1)?.data?.totalCount ?? null,
       isFetching: results.some((result) => result.isFetching),
       isError: results.some((result) => result.isError),
+      /** Asks again for the pages that failed (the loaded ones are kept). */
+      retry: () => results.forEach((result) => result.isError && void result.refetch()),
     }),
   });
 }

@@ -3,7 +3,7 @@ import { formatCycleDate } from '@/lib/subscriptions/dates';
 import { orderStateLabel, quantityAndIntervalLabel } from '@/lib/subscriptions/labels';
 import type { SubscriptionCycle, SubscriptionProduct } from '@/lib/api/subscriptions';
 import type { StaffSubscriptionRow } from '@/lib/api/staff-subscriptions';
-import { NO_DELIVERY_CANCELLED, NO_DELIVERY_PAUSED, NO_DELIVERY_SUSPENDED, unpaidShort } from './staffCopy';
+import { NO_DELIVERY_CANCELLED, NO_DELIVERY_PAUSED, NO_DELIVERY_SUSPENDED, unpaidShort } from '@/lib/subscriptions/copy';
 
 /** "Cold-pressed mustard oil · 1 L". */
 export function productLine(product: SubscriptionProduct): string {
@@ -15,7 +15,7 @@ export const LINK_TARGET = 'inline-flex min-h-11 items-center';
 
 export function CustomerLink({ id, name }: { id: string; name: string }) {
   return (
-    <Link href={`/staff/customers/${id}`} className={`${LINK_TARGET} font-semibold text-accent-ink hover:underline`}>
+    <Link href={`/staff/customers/${encodeURIComponent(id)}`} className={`${LINK_TARGET} font-semibold text-accent-ink hover:underline`}>
       {name}
     </Link>
   );

@@ -100,3 +100,12 @@ Reused from S0: every label in `lib/subscriptions/labels.ts`, and from `copy.ts`
 ## 10. BLOCKED
 
 None. Item 1 in section 7 is a one-line need outside the block (§20.1) that does not stop the slice.
+
+## 11. Gate-fix round (ARCHITECTURE, SECURITY, CODE_REVIEW findings)
+
+- Strings hoisted into `lib/subscriptions/copy.ts` under handover Amended (i) (also records BG-S10). `staffCopy.ts` keeps page titles and intros. `staffLockedText` became `staffScheduleLockedText` (the cancel dialog's `staffCancelLockedText` is unchanged). The dialog descriptions and result sentences are now `reinstateDescription`, `reinstatedMessage`, `staffCancelDescription`, `STAFF_CANCELLED_MESSAGE`, `staffCancelScheduledMessage`. The who-can-act sentence is S0's `STAFF_ACTIONS_ROLE_NOTE` only; the Unpaid intro no longer restates it.
+- Mock: a non-GUID id is a 404 before the role check on T5-T8. A blank reinstate reason now carries FluentValidation's default text "'Reason' must not be empty." with the code the validator sets (SubscriptionCommandValidators.cs:104 uses `.WithErrorCode` only; the same default is copied by `areas/accounts.ts:2007`, `admin/rosters.ts:384`, `billing/ops.ts:220`). Not confirmed against a live server.
+- "Show more" error path: a failed page keeps a "Try again" button (retries only the failed pages), hides "All N entries shown" while errored, keeps the pages already loaded. Test fails page 2 then page 3 and recovers.
+- Unpaid `?page=` past the end says so and offers "Go to the first page". The list drops a stale `suspensionReason` unless the status is empty or Suspended. The export refusal is cleared when the filters change. `StaffActions` renders nothing while the session is loading or when no staff action is allowed.
+- Ids in link paths are `encodeURIComponent`-ed. The history test now asserts exact row counts (57 cycles, 58 rows) and no repeated date or order number.
+- Verification: see TC sheet "Gate-fix round". Hashes of this round are in the hand-back message.

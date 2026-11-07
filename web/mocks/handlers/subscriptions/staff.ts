@@ -271,18 +271,20 @@ export const staffSubscriptionsHandlers: HttpHandler[] = [
   http.get(`${API}/:id`, ({ request, params }) => {
     const id = idParam(params.id);
     if (id === undefined) return undefined;
+    if (id === null) return notFound(); // no route matches a non-GUID: 404 before any filter runs
     if (lacksRole(request, MOCK_VIEW_ROLES)) return forbidden();
-    const s = id ? findSubscription(id) : undefined;
+    const s = findSubscription(id);
     return s ? HttpResponse.json(staffDetailOf(s)) : notFound();
   }),
 
   // T6 -- cycles, newest first (:91-100)
   http.get(`${API}/:id/cycles`, ({ request, params }) => {
     const id = idParam(params.id);
+    if (!id) return notFound(); // a non-GUID matches no route
     if (lacksRole(request, MOCK_VIEW_ROLES)) return forbidden();
     const paging = readPaging(new URL(request.url));
     if (paging instanceof Response) return paging;
-    const s = id ? findSubscription(id) : undefined;
+    const s = findSubscription(id);
     if (!s) return notFound(); // :99
     return HttpResponse.json(pagedOf(cyclesOf(s.id).map(cycleViewOf), paging.pageNumber, paging.pageSize));
   }),
@@ -290,6 +292,7 @@ export const staffSubscriptionsHandlers: HttpHandler[] = [
   // T7 -- reinstate (:102-114); the validator runs before the handler (SubscriptionCommandValidators.cs:99-106)
   http.post(`${API}/:id/reinstate`, async ({ request, params }) => {
     const id = idParam(params.id);
+    if (!id) return notFound(); // a non-GUID matches no route
     if (lacksRole(request, MOCK_MANAGE_ROLES)) return forbidden();
     const body = await readBody(request);
     const firstDeliveryOn = body.firstDeliveryOn;
@@ -297,11 +300,13 @@ export const staffSubscriptionsHandlers: HttpHandler[] = [
       return bindingError('firstDeliveryOn');
     }
     const reason = typeof body.reason === 'string' ? body.reason : '';
-    if (reason.trim() === '') return violation('Reason', 'ReinstatementReasonRequired', 'Give a reason for restarting this subscription.'); // validators :104
+    // validators :104 sets only `.WithErrorCode(ReinstatementReasonRequired)` on NotEmpty, so the text is FluentValidation's default, as the other
+    // NotEmpty mocks copy it (areas/accounts.ts:2007, admin/rosters.ts:384, billing/ops.ts:220): "'Reason' must not be empty."
+    if (reason.trim() === '') return violation('Reason', 'ReinstatementReasonRequired', "'Reason' must not be empty.");
     if (reason.length > MAX_NOTE_LENGTH) {
       return violation('Reason', 'MaximumLengthValidator', `The length of 'Reason' must be ${MAX_NOTE_LENGTH} characters or fewer. You entered ${reason.length} characters.`);
     }
-    const s = id ? findSubscription(id) : undefined;
+    const s = findSubscription(id);
     if (!s) return notFound(); // SubscriptionWorkerCommandHandlers.cs:157
     if (s.status === 'Suspended' && !isPurchasable(s.skuId)) {
       // :160-165 (SubscriptionMessages.SkuNotSubscribableInactive)
@@ -318,6 +323,7 @@ export const staffSubscriptionsHandlers: HttpHandler[] = [
   // T8 -- staff cancel (:116-128); the reason is always StaffCancelled and the note is required (validators :58-71)
   http.post(`${API}/:id/cancel`, async ({ request, params }) => {
     const id = idParam(params.id);
+    if (!id) return notFound(); // a non-GUID matches no route
     if (lacksRole(request, MOCK_MANAGE_ROLES)) return forbidden();
     const body = await readBody(request);
     const note = typeof body.note === 'string' ? body.note : '';
@@ -325,7 +331,7 @@ export const staffSubscriptionsHandlers: HttpHandler[] = [
       return violation('Note', 'MaximumLengthValidator', `The length of 'Note' must be ${MAX_NOTE_LENGTH} characters or fewer. You entered ${note.length} characters.`);
     }
     if (note.trim() === '') return violation('Note', 'CancellationReasonRequired', 'Give a reason for cancelling this subscription.'); // :69-70
-    const s = id ? findSubscription(id) : undefined;
+    const s = findSubscription(id);
     if (!s) return notFound(); // SubscriptionCustomerCommandHandlers.cs:211
     try {
       cancelOf(s, accountsFixtureIds.adminStaffId, 'StaffCancelled', note, commerceClock());

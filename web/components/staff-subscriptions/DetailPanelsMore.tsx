@@ -1,11 +1,10 @@
 import { Amount } from '@/components/billing/Amount';
 import { Panel } from '@/components/back-office/Panel';
 import type { StaffSubscriptionDetail } from '@/lib/api/staff-subscriptions';
-import { estimateDiscountLabel } from '@/lib/subscriptions/copy';
+import { NEVER_RECORDED, NOT_CANCELLED, estimateDiscountLabel } from '@/lib/subscriptions/copy';
 import { formatCommerceInstantLong, isZeroPercent } from '@/lib/subscriptions/dates';
 import { cancellationReasonLabel, suspensionReasonLabel } from '@/lib/subscriptions/labels';
 import { DetailList, DetailRow } from './DetailPanels';
-import { NEVER_RECORDED, NOT_CANCELLED } from './staffCopy';
 
 /** The server's estimate as sent (SubscriptionViewModels.cs:18-19); nothing is added up here (ADR-FE-113). Absent when the SKU has no price. */
 export function EstimatePanel({ estimate }: { estimate: StaffSubscriptionDetail['estimate'] }) {

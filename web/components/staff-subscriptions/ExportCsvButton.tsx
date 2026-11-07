@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api/client';
@@ -22,6 +23,9 @@ function exportMessage(error: unknown): string {
  */
 export function ExportCsvButton({ filters }: { filters: StaffSubscriptionFilters }) {
   const exporter = useExportSubscriptions();
+  const { reset } = exporter;
+  // A refusal belongs to the filters it was raised for: new filters start clean.
+  useEffect(() => reset(), [filters, reset]);
   return (
     <span className="inline-flex flex-col items-start gap-1">
       <Button

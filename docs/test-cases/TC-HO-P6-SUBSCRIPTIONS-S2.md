@@ -77,3 +77,14 @@ stopped afterwards; no tracked screenshot or report was overwritten (`git status
 
 T3 (due tomorrow) and T9 (customer summary) are S3's. The real-API run (E18) and `npm run test:contract` are the integrator's. The full
 Vitest suite and the rest of the §16 run-only set are the TEST gate's. The acceptance screenshots are the ACCEPTANCE gate's.
+
+## Gate-fix round (after ARCHITECTURE, SECURITY, CODE_REVIEW)
+
+| ID | Case | Status | Evidence |
+|---|---|---|---|
+| G1 | Show more: page 2 then page 3 each fail twice; "Try again" shown, "All N entries shown" hidden, loaded pages kept, recovers; exact row counts (57 cycles, 58 rows), no repeated date or order number | PASS | staff-detail.test.tsx |
+| G2 | Unpaid `?page=99` says the page is past the end and offers the first page | PASS | unpaid.test.tsx |
+| G3 | Stale `suspensionReason` not sent unless status is empty or Suspended; export refusal cleared when filters change; encoded ids in links | PASS | staff-list.test.tsx |
+| G4 | No role note while the session loads; none on a cancelled subscription | PASS | staff-detail.test.tsx |
+| G5 | Mock: non-GUID id is 404 before the role check (T5-T8); blank reason text and code | PASS | mock-refusals.test.ts |
+| G6 | Re-run: tsc, lint, 20 Vitest files / 472 tests (--maxWorkers=2); Playwright `--workers=1` chromium + mobile-360 on PORT 3129: the four S2 specs (real-API 10 skipped) plus `staff-shell-toggle` and `staff-shell-sheet-closes-on-back-navigation`: 86 passed, 10 skipped, 0 failed (the two staff-shell baseline cases now pass) | PASS | this round |
