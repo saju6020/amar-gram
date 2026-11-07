@@ -127,7 +127,7 @@ test('E-C real: stock, revenue and growth reports open; margin is for the accoun
   }
   await open(page, 'Accountant', '/staff/reports/revenue-by-business-line');
   await slow(
-    page.getByRole('heading', { level: 1, name: 'Revenue by business line' }),
+    page.getByRole('heading', { level: 1, name: 'Revenue by sales channel' }),
   ).toBeVisible();
   await slow(page.getByText(/Margin/).first()).toBeVisible({ timeout: 30_000 });
   await open(page, 'ShopManager', '/staff/reports/revenue-by-business-line');
