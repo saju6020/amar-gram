@@ -11,9 +11,9 @@ Written: 2026-11-07 by the implementer, after the in-batch runs of handover §17
 | | Count |
 |---|---|
 | Total | 43 |
-| PASS | 38 |
+| PASS | 39 |
 | FAIL | 0 |
-| BLOCKED | 1 (R1: the shared AddressForm dialog is under 44 px, §20.1) |
+| BLOCKED | 0 (R1 resolved by Amended (j)) |
 | NOT RUN | 3 (X1b the full Vitest suite, E8 the run-only chunks, E18 the real API; all the TEST gate's or the integrator's) |
 | NOTE | 1 (R2, an accepted mock deviation) |
 
@@ -79,5 +79,5 @@ No real API, database or broker was used (the machine's 5005, 3127 and 3129 belo
 
 | ID | Row | Status | Note |
 |---|---|---|---|
-| R1 | E5/E6 "44 px controls" for the inline address form | BLOCKED (§20.1) | `components/account/AddressForm.tsx` and `components/ui/dialog.tsx` are §14-forbidden and import-only. Its inputs are 38 px, its Cancel and Save 40 px and its close button 24 px. The 360 spec checks only the width for that one dialog. Checkout's address dialog has the same sizes. Needs the owner of those files |
+| R1 | E5/E6 "44 px controls" for the inline address form | PASS | Amended (j): `AddressForm` fields and Cancel/Save are 44 px; the 360 spec checks them (not the 24 px X). Re-run: 64 passed on both projects with `account-area` and `ordering-customer`; `accounts-a11y-responsive -g ddress` 10 passed; Vitest 16 files / 249 tests |
 | R2 | Mock: cash on delivery in the band between the discounted and the undiscounted total | accepted deviation | the quote the mock asks Orders' pricing for is not discounted, so the mock refuses in a narrow band the server accepts (§20.5, noted in `customer.ts`) |

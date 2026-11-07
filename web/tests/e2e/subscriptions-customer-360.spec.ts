@@ -92,9 +92,14 @@ test('Subscribe: delivery, the inline address form, and pickup', async ({ page }
   await page.getByRole('button', { name: 'Add a new address' }).click();
   const dialog = page.getByRole('dialog', { name: 'Add address' });
   await expect(dialog).toBeVisible();
-  // The shared AddressForm (components/account, import-only here) has 38 to 40 px fields and buttons: only the width is
-  // checked for it, and the height is reported to the integrator (S1 slice report, §20.1).
+  // Handover Amended (j): the dialog's fields and its Cancel and Save buttons are 44 px; its 24 px close X is not checked.
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  const small = await dialog.evaluate((root) =>
+    Array.from(root.querySelectorAll('input, textarea, select, button:not([aria-label="Close"])'))
+      .map((el) => ({ name: (el.textContent || el.id).trim(), h: el.getBoundingClientRect().height }))
+      .filter((x) => x.h < 43.5),
+  );
+  expect(small, 'address dialog controls under 44 px').toEqual([]);
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
 
