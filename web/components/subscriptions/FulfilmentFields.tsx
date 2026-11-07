@@ -130,6 +130,8 @@ export function FulfilmentFields({
             onSubmit={async (values) => {
               const created = await onAddAddress(values);
               if (created?.addressId) onAddress(created.addressId);
+              // AddressForm only closes itself for a returned value; this dialog is closed here, as checkout's is.
+              setAdding(false);
             }}
           />
         </div>

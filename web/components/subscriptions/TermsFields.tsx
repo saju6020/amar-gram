@@ -76,9 +76,13 @@ export function TermsFields({
 
   const methodList = methods.data;
   useEffect(() => {
-    if (!preselect || draft.paymentMethod || !methodList) return;
+    if (!preselect || !methodList) return;
+    // Nothing chosen yet, or the chosen method is not offered for this address and quantity: take the first one that is.
+    const chosen = methodList.find((m) => m.method === draft.paymentMethod);
+    if (chosen?.isAvailable) return;
     const first = methodList.find((m) => m.isAvailable);
     if (first) onChange({ paymentMethod: first.method });
+    else if (draft.paymentMethod && chosen) onChange({ paymentMethod: null });
   }, [preselect, draft.paymentMethod, methodList, onChange]);
 
   return (
