@@ -401,9 +401,9 @@ function seedGenerated(): MockProduct[] {
 /**
  * HO-P6 S0: the food products a customer can subscribe to (oats with three sizes, rice, gur, garam masala with
  * two sizes, mustard oil, honey, red lentils, mango pickle, dates). Every other product, kits and household
- * items included, is not offered. The subscriptions mock seeds subscriptions on these SKUs.
+ * items included, is not offered. This is the one list: `subscriptions/fixtures.ts` derives `SUBSCRIBABLE_SKU_IDS` from it.
  */
-const SUBSCRIBABLE_PRODUCT_NUMBERS: ReadonlySet<string> = new Set(
+export const SUBSCRIBABLE_PRODUCT_NUMBERS: ReadonlySet<string> = new Set(
   [1, 2, 3, 4, 5, 6, 8, 9, 10].map((n) => uuid('a', n)),
 );
 

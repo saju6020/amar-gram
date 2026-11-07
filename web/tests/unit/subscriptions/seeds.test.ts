@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db as orderingDb, resetOrderingMockData } from '@/mocks/handlers/ordering/store';
 import { orderingIds } from '@/mocks/handlers/ordering/fixtures';
 import { db as shopDb, resetShopMockData } from '@/mocks/handlers/shop/store';
-import { seedDates, subscriptionFixtureIds as ids } from '@/mocks/handlers/subscriptions/fixtures';
+import { SUBSCRIBABLE_SKU_IDS, seedDates, subscriptionFixtureIds as ids } from '@/mocks/handlers/subscriptions/fixtures';
 import {
   customerDetailOf,
   customerSummaryOf,
@@ -17,6 +17,7 @@ import {
   subscriptionViewOf,
   unpaidItems,
 } from '@/mocks/handlers/subscriptions/store';
+import { findCustomerAddress } from '@/mocks/handlers/areas/accounts';
 import { createControls } from '@/mocks/handlers/subscriptions/control';
 
 /** HO-P6 U5: the §11.1.5 seed inventory, by id, and the shapes the builders produce. */
@@ -106,6 +107,8 @@ describe('seeds: products and orders', () => {
     expect(yes.length).toBeGreaterThanOrEqual(3);
     expect(yes.some((p) => p.skus.length >= 2)).toBe(true);
     expect(shopDb.products.some((p) => p.isSubscribable === false)).toBe(true);
+    // The one subscribable list: the shop's, and the SKUs the subscription fixtures are built on.
+    expect([...SUBSCRIBABLE_SKU_IDS].sort()).toEqual(Object.values(ids.skus).sort());
     // Every seeded subscription is on a subscribable SKU.
     for (const s of db.subscriptions) {
       const product = shopDb.products.find((p) => p.skus.some((k) => k.skuId === s.skuId));
@@ -227,5 +230,24 @@ describe('controls', () => {
     expect(customerDetailOf(get(ids.mine.paused)).cycles).toHaveLength(12);
     controls.reset();
     expect(optionsOf(ids.customerId, ids.skus.oats2kg)!.discountPercent).toBe('10.00');
+  });
+});
+
+describe('seeds: addresses come from the accounts address book (Amended (b))', () => {
+  it('every seeded subscription address resolves there, and the removed one does not', () => {
+    for (const s of db.subscriptions) {
+      const view = subscriptionViewOf(s).terms;
+      if (s.id === ids.mine.addressMissing) continue;
+      if (s.terms.deliveryAddressId) {
+        expect(view.deliveryAddressMissing, s.id).toBe(false);
+        expect(view.deliveryAddress?.id).toBe(s.terms.deliveryAddressId);
+      }
+    }
+    const missing = subscriptionViewOf(get(ids.mine.addressMissing)).terms;
+    expect(missing).toMatchObject({ deliveryAddress: null, deliveryAddressMissing: true });
+    expect(findCustomerAddress(ids.customerId, ids.addresses.samHome)).toMatchObject({ label: 'Home' });
+    expect(findCustomerAddress(ids.customerId, ids.addresses.samOffice)).toMatchObject({ label: 'Office' });
+    // Another customer's address id is not in this customer's book.
+    expect(findCustomerAddress(ids.customerId, ids.addresses.farhana)).toBeUndefined();
   });
 });

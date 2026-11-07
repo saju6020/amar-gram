@@ -5,9 +5,9 @@ import {
   savePersisted,
   zonedTimeToUtcIso,
 } from '../admin/fixtures';
+import { findCustomerAddress } from '../areas/accounts';
 import { findSku } from '../shop/store';
 import {
-  addressDirectory,
   customerDirectory,
   paymentExpiresOn as seededPaymentExpiresOn,
   cycleOrderRef,
@@ -58,9 +58,8 @@ import {
  * then call the mutations here, which are the aggregate's (`SubscriptionAggregate.cs`) and apply
  * `schedule.ts` for every schedule change.
  *
- * The catalogue (names, prices, stock, `isSubscribable`) is the shop mock's; the address book the
- * subscriptions mock resolves is its own directory (`fixtures.ts`), because the accounts mock's book is not
- * readable from here (see the S0 report).
+ * The catalogue (names, prices, stock, `isSubscribable`) is the shop mock's; the address book is the accounts
+ * mock's (`findCustomerAddress`), read, never copied (HO-P6 Amended (b)).
  */
 
 const PERSIST_KEY = '__amargram_subscriptions_mock_db__v1';
@@ -113,14 +112,6 @@ export interface DbSubscription {
   reinstatementReason: string | null;
 }
 
-export interface DbAddress {
-  customerId: string;
-  id: string;
-  label: string;
-  line1: string;
-  city: string;
-}
-
 interface Db {
   /** The local date the seeds were made for; a copy from another day is reseeded (seeds are relative to today). */
   seededOn: string;
@@ -128,7 +119,6 @@ interface Db {
   discountPercent: string;
   subscriptions: DbSubscription[];
   cycles: DbCycle[];
-  addresses: DbAddress[];
 }
 
 /** Branches the pickup terms can name (Administration's `GET /api/branches` ids). */
@@ -209,7 +199,6 @@ function seed(now: Date = new Date()): Db {
     discountPercent: DISCOUNT_SEED,
     subscriptions,
     cycles,
-    addresses: addressDirectory.map((a) => ({ ...a })),
   };
 }
 
@@ -275,15 +264,8 @@ export const findLiveFor = (customerId: string, skuId: string): DbSubscription |
 export const countLive = (customerId: string): number =>
   db.subscriptions.filter((s) => s.customerId === customerId && isLive(s)).length;
 
-export function findAddress(customerId: string, addressId: string): DbAddress | undefined {
-  return db.addresses.find((a) => a.customerId === customerId && a.id === addressId);
-}
-
-/** Adds an address the subscriptions mock should resolve (the accounts mock's book is not readable from here). */
-export function registerAddress(address: DbAddress): void {
-  if (!findAddress(address.customerId, address.id)) db.addresses.push(address);
-  persist();
-}
+/** Accounts' address book is the single source (SubscriptionViews.cs:93-102): an address added or deleted there is what this sees. */
+export const findAddress = findCustomerAddress;
 
 export const cyclesOf = (subscriptionId: string): DbCycle[] =>
   db.cycles

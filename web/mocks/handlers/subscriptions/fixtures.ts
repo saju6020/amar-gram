@@ -1,6 +1,6 @@
 import { accountsFixtureIds } from '../areas/accounts';
 import { administrationFixtureIds, zonedTimeToUtcIso } from '../admin/fixtures';
-import { shopFixtureIds } from '../shop/fixtures';
+import { seedProducts, shopFixtureIds } from '../shop/fixtures';
 import {
   COMMERCE_ZONE,
   SUBSCRIPTION_SETTINGS,
@@ -89,10 +89,14 @@ export const subscriptionFixtureIds = {
   },
 } as const;
 
-/** The SKUs the shop mock marks `isSubscribable` (read by `shop/fixtures.ts` through the same ids): at least three, one product with two SKUs. */
-export const SUBSCRIBABLE_SKU_IDS: readonly string[] = [
-  ...Object.values(subscriptionFixtureIds.skus),
-];
+/**
+ * The SKUs the shop mock marks `isSubscribable`: the single list lives in `shop/fixtures.ts`
+ * (`SUBSCRIBABLE_PRODUCT_NUMBERS`; this file already imports that module, so the shop cannot import this one)
+ * and this is derived from it. The seeds below are built on `subscriptionFixtureIds.skus`, which a test pins to this list.
+ */
+export const SUBSCRIBABLE_SKU_IDS: readonly string[] = seedProducts()
+  .filter((p) => p.isSubscribable)
+  .flatMap((p) => p.skus.map((s) => s.skuId));
 
 export const customerDirectory: ReadonlyArray<{ id: string; name: string; mobile: string | null }> = [
   { id: subscriptionFixtureIds.customerId, name: 'Sam Rahman', mobile: accountsFixtureIds.customerMobile },
@@ -103,21 +107,6 @@ export const customerDirectory: ReadonlyArray<{ id: string; name: string; mobile
   { id: subscriptionFixtureIds.otherCustomers.shirin, name: 'Shirin Akter', mobile: '01712000006' },
 ];
 
-/** Addresses the subscriptions mock itself knows (the accounts mock's address book is not readable from here). */
-export const addressDirectory: ReadonlyArray<{
-  customerId: string;
-  id: string;
-  label: string;
-  line1: string;
-  city: string;
-}> = [
-  { customerId: subscriptionFixtureIds.customerId, id: subscriptionFixtureIds.addresses.samHome, label: 'Home', line1: 'House 7, Road 3, Dhanmondi', city: 'Dhaka' },
-  { customerId: subscriptionFixtureIds.customerId, id: subscriptionFixtureIds.addresses.samOffice, label: 'Office', line1: 'Level 4, 21 Kemal Ataturk Avenue, Banani', city: 'Dhaka' },
-  { customerId: subscriptionFixtureIds.otherCustomers.farhana, id: subscriptionFixtureIds.addresses.farhana, label: 'Home', line1: 'House 12, Road 9, Mohammadpur', city: 'Dhaka' },
-  { customerId: subscriptionFixtureIds.otherCustomers.tanvir, id: subscriptionFixtureIds.addresses.tanvir, label: 'Home', line1: 'Flat 3B, 45 Mirpur Road', city: 'Dhaka' },
-  { customerId: subscriptionFixtureIds.otherCustomers.mizanur, id: subscriptionFixtureIds.addresses.mizanur, label: 'Home', line1: 'House 88, Sector 7, Uttara', city: 'Dhaka' },
-  { customerId: subscriptionFixtureIds.otherCustomers.shirin, id: subscriptionFixtureIds.addresses.shirin, label: 'Home', line1: 'House 5, Lane 2, Gulshan', city: 'Dhaka' },
-];
 
 // ---- seed shapes ------------------------------------------------------------------------------------------
 

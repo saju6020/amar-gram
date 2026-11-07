@@ -214,6 +214,64 @@ function seedPreferences() {
   ];
 }
 
+type StoredAddress = StoredCustomer['addresses'][number];
+
+/** HO-P6 S0: the signed-in customer's seeded address book, "Home" (the default) and "Office". The subscriptions mock's
+ *  seeded subscriptions point at these ids (`subscriptionFixtureIds.addresses`, pinned equal by a test). */
+function seedSamAddresses(): StoredAddress[] {
+  return [
+    {
+      id: '5a0000000-0000-0000-0000-000000000001',
+      label: 'Home',
+      line1: 'House 7, Road 3, Dhanmondi',
+      line2: null,
+      city: 'Dhaka',
+      district: 'Dhaka',
+      postalCode: '1205',
+      deliveryInstructions: null,
+      isDefault: true,
+    },
+    {
+      id: '5a0000000-0000-0000-0000-000000000002',
+      label: 'Office',
+      line1: 'Level 4, 21 Kemal Ataturk Avenue, Banani',
+      line2: null,
+      city: 'Dhaka',
+      district: 'Dhaka',
+      postalCode: '1213',
+      deliveryInstructions: null,
+      isDefault: false,
+    },
+  ];
+}
+
+/** HO-P6 S0: address books of customers the subscriptions seeds name but this mock holds no account for (staff views
+ *  only; they never sign in). Read through `findCustomerAddress` only, never listed or editable. */
+const seedOnlyAddressBooks: ReadonlyArray<{ customerId: string; addressId: string; label: string; line1: string }> = [
+  { customerId: 'c0000000-0000-0000-0000-0000000000a2', addressId: '5a0000000-0000-0000-0000-000000000011', label: 'Home', line1: 'House 12, Road 9, Mohammadpur' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a4', addressId: '5a0000000-0000-0000-0000-000000000013', label: 'Home', line1: 'Flat 3B, 45 Mirpur Road' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a5', addressId: '5a0000000-0000-0000-0000-000000000014', label: 'Home', line1: 'House 88, Sector 7, Uttara' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a6', addressId: '5a0000000-0000-0000-0000-000000000015', label: 'Home', line1: 'House 5, Lane 2, Gulshan' },
+];
+
+/**
+ * HO-P6 S0 (Amended (b)): read-only lookup of one address in Accounts' address book, the single source the
+ * subscriptions mock resolves `deliveryAddress` / `deliveryAddressMissing` from (SubscriptionViews.cs:93-102).
+ * `undefined` when the customer has no such address (never added, or deleted).
+ */
+export function findCustomerAddress(
+  customerId: string,
+  addressId: string,
+): { id: string; label: string; line1: string; city: string } | undefined {
+  const customer = customers.get(customerId);
+  const found = customer
+    ? customer.addresses.find((a) => a.id === addressId)
+    : seedOnlyAddressBooks
+        .filter((b) => b.customerId === customerId && b.addressId === addressId)
+        .map((b) => ({ id: b.addressId, label: b.label, line1: b.line1, city: 'Dhaka' }))[0];
+  return found ? { id: found.id, label: found.label, line1: found.line1, city: found.city } : undefined;
+}
+
 function seedCustomers(): Map<string, StoredCustomer> {
   const customers = new Map<string, StoredCustomer>();
 
@@ -229,7 +287,7 @@ function seedCustomers(): Map<string, StoredCustomer> {
     registrationChannel: 'SelfService',
     status: 'Active',
     mergedIntoCustomerId: null,
-    addresses: [],
+    addresses: seedSamAddresses(),
     preferences: seedPreferences(),
     area: 'Dhanmondi',
     orderCount: 3,
