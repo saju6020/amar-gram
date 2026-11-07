@@ -41,7 +41,10 @@ describe('U47i - GET …/orders refuses what status-counts refuses (StaffOrdersC
   it('a well-formed filter still lists, and a channel name matches whatever its case', async () => {
     const page = await listStaffOrders({ fulfilment: 'Delivery' } as never);
     expect(page.items.length).toBeGreaterThan(0);
-    await expect(listStaffOrders({ channel: 'subscription' } as never)).resolves.toMatchObject({ totalCount: 0 });
+    // HO-P6 S0 seeds Subscription-channel orders, so the lower-case name lists them (it listed none before).
+    const subscription = await listStaffOrders({ channel: 'subscription' } as never);
+    expect(subscription.totalCount).toBeGreaterThan(0);
+    expect(subscription.items.every((o) => o.channel === 'Subscription')).toBe(true);
   });
 });
 

@@ -202,7 +202,8 @@ describe('status-counts - StaffOrdersController.cs:139-158, StaffOrderQueryHandl
       expect(await statusOf(() => getStaffOrderStatusCounts(filters))).toBe(400);
     }
     // A name matches whatever its case, as EnumerationParsing does; `Subscription` is a channel the filter accepts.
-    await expect(getStaffOrderStatusCounts({ channel: 'subscription' })).resolves.toMatchObject({ total: 0 });
+    // HO-P6 S0 seeds Subscription-channel orders, so the lower-case name counts them (it counted none before).
+    expect((await getStaffOrderStatusCounts({ channel: 'subscription' })).total).toBeGreaterThan(0);
   });
 });
 
