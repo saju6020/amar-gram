@@ -1,9 +1,9 @@
 /**
  * The customer account menu (docs/design/store/Account.dc.html, HO-P3 S4): Overview, My orders, Wishlist, My reviews,
- * Billing, Profile & addresses (D-6 keeps the working features the design does not show; Subscriptions is not added
- * until G2 closes). The same list drives the desktop sidebar and the phone's row of pills.
+ * Billing, Profile & addresses (D-6 keeps the working features the design does not show), and Subscriptions after My
+ * orders (HO-P6, ADR-FE-109). The same list drives the desktop sidebar and the phone's row of pills.
  */
-export type AccountIcon = 'home' | 'package' | 'heart' | 'star' | 'receipt' | 'user';
+export type AccountIcon = 'home' | 'package' | 'repeat' | 'heart' | 'star' | 'receipt' | 'user';
 
 export interface AccountLink {
   label: string;
@@ -29,6 +29,7 @@ export const ACCOUNT_GROUPS: readonly AccountGroup[] = [
     links: [
       { label: 'Overview', href: ACCOUNT_HOME, icon: 'home' },
       { label: 'My orders', href: '/portal/orders', icon: 'package' },
+      { label: 'Subscriptions', href: '/portal/subscriptions', icon: 'repeat' },
       { label: 'Wishlist', href: '/portal/wishlist', icon: 'heart' },
       { label: 'My reviews', href: '/portal/reviews', icon: 'star' },
       { label: 'Billing', href: '/portal/billing', icon: 'receipt' },
@@ -40,6 +41,7 @@ export const ACCOUNT_GROUPS: readonly AccountGroup[] = [
 /** The phone's row of pills starts with the landing page, My orders (the approved design). */
 export const PHONE_PILL_ORDER: readonly string[] = [
   '/portal/orders',
+  '/portal/subscriptions',
   '/portal/wishlist',
   '/portal/reviews',
   '/portal/billing',

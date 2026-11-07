@@ -159,12 +159,52 @@ describe('Portal dashboard — states', () => {
     expect(screen.queryByTestId('dashboard-skeleton')).toBeNull();
   });
 
-  it('U-A11b: the dashboard never shows a subscriptions tile, nor a placeholder for it', async () => {
-    serveDashboard(fullDashboard());
-    renderWithClient(<PortalDashboard />);
-    await tile('orders');
-    expect(screen.queryByRole('heading', { name: /subscription/i })).toBeNull();
-    expect(screen.queryByTestId('tile-subscriptions')).toBeNull();
+  it('U-A11b (HO-P6 U25): the dashboard payload has no subscriptions key; the "Next delivery" card comes only from the subscriptions endpoint', async () => {
+    document.cookie = 'pc_session=test; path=/';
+    try {
+      const body = fullDashboard();
+      expect(Object.keys(body)).not.toContain('subscriptions');
+      serveDashboard(body);
+      renderWithClient(<PortalDashboard />);
+      await tile('orders');
+      // No tile for subscriptions in the dashboard payload, and no heading invented for one.
+      expect(screen.queryByTestId('tile-subscriptions')).toBeNull();
+      // The card is the soonest live subscription of C3: its product, "Next delivery on {date}" and a Manage link.
+      const card = await screen.findByTestId('next-delivery');
+      expect(within(card).getByRole('heading', { level: 2, name: 'Next delivery' })).toBeVisible();
+      expect(within(card).getByText(/^Next delivery on /)).toBeVisible();
+      expect(within(card).getByRole('link', { name: 'Manage' })).toHaveAttribute(
+        'href',
+        expect.stringMatching(/^\/portal\/subscriptions\/[0-9a-f-]{36}$/),
+      );
+    } finally {
+      document.cookie = 'pc_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
+  });
+
+  it('U25: with no live subscription, or when C3 fails, the card is absent and nothing else changes', async () => {
+    document.cookie = 'pc_session=test; path=/';
+    try {
+      server.use(
+        http.get('*/api/customers/me/subscriptions', () =>
+          HttpResponse.json({ items: [], pageNumber: 1, pageSize: 1, totalCount: 0 }),
+        ),
+      );
+      serveDashboard(fullDashboard());
+      const first = renderWithClient(<PortalDashboard />);
+      await tile('orders');
+      expect(screen.queryByTestId('next-delivery')).toBeNull();
+      first.unmount();
+
+      server.use(http.get('*/api/customers/me/subscriptions', () => HttpResponse.json({}, { status: 500 })));
+      renderWithClient(<PortalDashboard />);
+      expect(await tile('orders')).toBeVisible();
+      expect(await screen.findByTestId('default-address')).toBeVisible();
+      expect(screen.queryByTestId('next-delivery')).toBeNull();
+      expect(screen.queryByRole('alert')).toBeNull();
+    } finally {
+      document.cookie = 'pc_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
   });
 
   it('U-A12: a delivered section whose key is absent reads "Not available yet", not empty and not an error', async () => {

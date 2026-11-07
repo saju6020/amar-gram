@@ -3,7 +3,17 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Heart, House, LogOut, Package, Receipt, Star, User, type LucideIcon } from 'lucide-react';
+import {
+  Heart,
+  House,
+  LogOut,
+  Package,
+  Receipt,
+  Repeat,
+  Star,
+  User,
+  type LucideIcon,
+} from 'lucide-react';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { useCustomerProfile } from '@/lib/hooks/useAccount';
 import { useMyOrders } from '@/lib/hooks/useMyOrders';
@@ -20,6 +30,7 @@ import {
 const ICONS: Record<AccountIcon, LucideIcon> = {
   home: House,
   package: Package,
+  repeat: Repeat,
   heart: Heart,
   star: Star,
   receipt: Receipt,
