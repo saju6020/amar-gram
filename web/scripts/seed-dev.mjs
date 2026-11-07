@@ -20,7 +20,7 @@
 // product names its own `category`/`subcategory`; non-food products have no food details. `--extra <file.json>
 // --only-extra` adds only the products in another file of the same shape (plus their origins, prices and opening stock)
 // to an already-seeded database, e.g. the dev API on :5005.
-//   - an Administrator staff row for e2e.admin@purrcare.test exists. The API cannot create the very
+//   - an Administrator staff row for e2e.admin@amargram.test exists. The API cannot create the very
 //     first staff account (every staff endpoint needs a signed-in Administrator), so seed-dev-db.mjs
 //     inserts that one row without a password; this script then sets its password through the normal
 //     reset flow.
@@ -73,35 +73,35 @@ const SHOP_FLOOR_LOCATION_ID = '00000000-0000-0000-0000-0000000051a1'; // "Shop 
 const STAFF = [
   {
     key: 'admin',
-    email: 'e2e.admin@purrcare.test',
+    email: 'e2e.admin@amargram.test',
     fullName: 'Farhana Akter',
     mobile: '01711000001',
     roles: ['Administrator'],
   },
   {
     key: 'shopmanager',
-    email: 'e2e.shopmanager@purrcare.test',
+    email: 'e2e.shopmanager@amargram.test',
     fullName: 'Nusrat Jahan',
     mobile: '01711000002',
     roles: ['ShopManager'],
   },
   {
     key: 'reception',
-    email: 'e2e.reception@purrcare.test',
+    email: 'e2e.reception@amargram.test',
     fullName: 'Tanvir Hossain',
     mobile: '01711000003',
     roles: ['Reception'],
   },
   {
     key: 'inventory',
-    email: 'e2e.inventory@purrcare.test',
+    email: 'e2e.inventory@amargram.test',
     fullName: 'Rafiq Islam',
     mobile: '01711000004',
     roles: ['Inventory'],
   },
   {
     key: 'approver',
-    email: 'e2e.approver@purrcare.test',
+    email: 'e2e.approver@amargram.test',
     fullName: 'Shirin Sultana',
     mobile: '01711000005',
     roles: ['Administrator'],
@@ -110,7 +110,7 @@ const STAFF = [
 
 const CUSTOMER = {
   fullName: 'Ayesha Rahman',
-  email: 'customer@purrcare.test',
+  email: 'customer@amargram.test',
   mobile: '01819123456',
   address: {
     label: 'Home',
@@ -128,7 +128,7 @@ const BRANCH = {
   timeZoneId: 'Asia/Dhaka',
   addressLine: 'House 34, Road 7, Dhanmondi, Dhaka 1209',
   phoneNumber: '+8801711000100',
-  email: 'hello@purrcare.test',
+  email: 'hello@amargram.test',
   // Saturday to Thursday, 09:00-20:00; closed on Friday.
   hours: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'].map((d) => ({
     dayOfWeek: d,
@@ -209,7 +209,7 @@ const POLICIES = [
       '### Your choices',
       'You can update your details, change notification preferences, download your data or ask us to delete your account from your profile at any time.',
       '### Contact',
-      'Questions about this policy: hello@purrcare.test or +880 1711-000100.',
+      'Questions about this policy: hello@amargram.test or +880 1711-000100.',
     ]),
   },
   {
@@ -287,7 +287,7 @@ const BILLING_PROFILE = {
   taxRegistrationNumber: '000000000-0000',
   addressLines: ['House 34, Road 7, Dhanmondi', 'Dhaka 1209', 'Bangladesh'],
   phone: '+8801711000100',
-  email: 'billing@purrcare.test',
+  email: 'billing@amargram.test',
   invoiceFooter:
     'Thank you for shopping with Amar Gram. Sample data - not a real business.',
 };
@@ -547,7 +547,7 @@ async function seedBranch(staffIds) {
   }
 }
 
-// Tax rates, service prices and boarding rate cards cannot be effective in the past (the API refuses
+// Tax rates cannot be effective in the past (the API refuses
 // a backdated one), so they start a few seconds from now. SKU prices allow 60 s of backdating.
 const soon = () => new Date(Date.now() + 3000).toISOString();
 const justNow = () => new Date(Date.now() - 30_000).toISOString();

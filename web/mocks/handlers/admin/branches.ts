@@ -13,7 +13,7 @@ import {
 } from './fixtures';
 
 // HO-P5: bumped when a branch gained a `type`, so an older tab's saved branches (without one) are not read.
-const PERSIST_KEY = '__purrcare_admin_branches_mock_db_p5__';
+const PERSIST_KEY = '__amargram_admin_branches_mock_db_p5__';
 
 /** `mocks/handlers/admin/branches.ts` — HO-ADM-002 §12, HO-ADM-001 §12.4. Branches, opening
  *  hours, closures, staff branch assignment and the active-branch feed. Two branches in
@@ -109,7 +109,7 @@ function seedBranches(): Map<string, Branch> {
     timeZoneId: 'Asia/Dhaka',
     addressLine: '12 Gulshan Avenue, Dhaka',
     phoneNumber: '+880212345678',
-    email: 'main@purrcare.test',
+    email: 'main@amargram.test',
     isActive: true,
     type: 'Outlet',
     weeklyHours: [
@@ -132,7 +132,7 @@ function seedBranches(): Map<string, Branch> {
     timeZoneId: 'Europe/London',
     addressLine: '5 Baker Street, London',
     phoneNumber: '+442071234567',
-    email: 'london@purrcare.test',
+    email: 'london@amargram.test',
     isActive: true,
     type: 'Outlet',
     weeklyHours: [

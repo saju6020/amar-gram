@@ -179,7 +179,7 @@ test('E-CAL7: a new closure closes the day, cancelling it reopens the day, witho
  * E-CAL8 - the real-API run (HO-ADM-002-FU1 §16): E-B1 and E-CAL2's 1 Jan / Sunday / Saturday checks
  * against a branch this test creates itself (a fresh database has no hours on the seeded MAIN), then
  * deactivates. Opt-in: needs the API running, `NEXT_PUBLIC_USE_MOCKS=false`, and the e2e administrator in
- * `catecommerce_dev` (`E2E_STAFF_ADMIN_IDENTIFIER` / `E2E_STAFF_PASSWORD` from git-ignored
+ * `amargram_dev` (`E2E_STAFF_ADMIN_IDENTIFIER` / `E2E_STAFF_PASSWORD` from git-ignored
  * `web/.env.e2e.local`, exported to the shell).
  *
  *   E2E_REAL_CAL8=1 PORT=3114 npx playwright test tests/e2e/admin-branch-calendar.spec.ts -g E-CAL8 --project=chromium --workers=1

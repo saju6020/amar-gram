@@ -13,7 +13,7 @@ import { orderingIds as ids } from './fixtures';
  */
 
 // HO-P5 S0: bumped (v2) so a stale sessionStorage copy without riders, picked ticks or the new seeds is not loaded.
-const PERSIST_KEY = '__purrcare_ordering_mock_db__v2';
+const PERSIST_KEY = '__amargram_ordering_mock_db__v2';
 
 /** Seed ids HO-P5 adds (kept here: `ordering/fixtures.ts` is not S0's file). */
 export const riderIds = {

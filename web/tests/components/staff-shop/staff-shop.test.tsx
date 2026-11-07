@@ -177,11 +177,11 @@ describe('Food section — US-SHP-03', () => {
   });
 
   it('U-D2: a household product has no food section', async () => {
-    const litter = db.products.find((p) => p.category === 'HouseholdAndCare')!;
+    const detergent = db.products.find((p) => p.category === 'HouseholdAndCare')!;
     await act(async () => {
       renderWithClient(
         <Suspense fallback={null}>
-          <ProductFoodPage params={Promise.resolve({ productId: litter.productId })} />
+          <ProductFoodPage params={Promise.resolve({ productId: detergent.productId })} />
         </Suspense>,
       );
     });

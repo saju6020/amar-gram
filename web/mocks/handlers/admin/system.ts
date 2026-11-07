@@ -3,7 +3,7 @@ import { noContent, loadPersisted, savePersisted, clearPersisted } from './fixtu
 
 /** `mocks/handlers/admin/system.ts` — HO-ADM-002 §12, HO-ADM-001 §8.8/§12.4, ADR-053. */
 
-const PERSIST_KEY = '__purrcare_admin_system_mock_db__';
+const PERSIST_KEY = '__amargram_admin_system_mock_db__';
 
 interface Status {
   maintenanceMode: boolean;

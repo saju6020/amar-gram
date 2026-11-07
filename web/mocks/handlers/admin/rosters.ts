@@ -13,7 +13,7 @@ import { getMockStaffRoleIds } from '../areas/accounts';
 import { getBranchSnapshot, getBranchClosures, isStaffAssignedToBranch } from './branches';
 import { getApprovedLeaveForStaff } from './leave';
 
-const PERSIST_KEY = '__purrcare_admin_rosters_mock_db__';
+const PERSIST_KEY = '__amargram_admin_rosters_mock_db__';
 
 /** `mocks/handlers/admin/rosters.ts` — HO-ADM-002 §12, HO-ADM-001 §8.4/§8.5/§12.4. Weekly
  *  patterns (current + a scheduled next), roster exceptions, and the availability calculation. */

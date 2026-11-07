@@ -76,7 +76,7 @@ export const DialogContent = React.forwardRef<
      *  default `bg-ink/40` (40% tint) overlay. `IdleLock`'s own lock overlay is the one current
      *  user: the locked page stays mounted and readable behind the default translucent overlay
      *  (ADR-FE-010), which on an unattended terminal means a customer's name, phone numbers,
-     *  addresses and medical data stay legible on screen after the session has timed out — an
+     *  addresses and order details stay legible on screen after the session has timed out — an
      *  opaque fill closes that without touching the DOM/focus-trap/Escape behaviour every other
      *  dialog in the app still gets unchanged. */
     overlayClassName?: string;

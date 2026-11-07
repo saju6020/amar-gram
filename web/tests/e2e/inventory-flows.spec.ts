@@ -193,8 +193,8 @@ test('E-E2: a low-stock alert and a reorder suggestion lead to a pre-filled purc
   await page.goto('/staff/inventory/alerts');
   await expect(page.getByRole('cell', { name: /below reorder point/i }).first()).toBeVisible();
   await page.goto('/staff/procurement/reorder');
-  await expect(page.locator('main')).toContainText('Adult wet food pouches, tuna');
-  await page.getByRole('checkbox', { name: /select adult wet food/i }).check();
+  await expect(page.locator('main')).toContainText('Sundarban honey, 500 g jar');
+  await page.getByRole('checkbox', { name: /select sundarban honey/i }).check();
   await page.getByRole('link', { name: /build the order for meridian/i }).click();
   await expect(page.getByRole('heading', { name: /new purchase order/i })).toBeVisible();
   await expect(page.getByLabel('Supplier')).toHaveValue(ids.supplierId);

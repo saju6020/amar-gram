@@ -22,7 +22,7 @@ import {
  */
 
 // HO-P5 Amended (b): bumped so a browser's stale copy does not hide the new district, certificate and "Was" price seeds.
-const PERSIST_KEY = '__purrcare_shop_mock_db__v2';
+const PERSIST_KEY = '__amargram_shop_mock_db__v2';
 
 export interface MockAlert {
   stockAlertId: string;

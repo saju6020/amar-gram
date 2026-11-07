@@ -28,7 +28,7 @@ export type ProductCategory =
   | 'SnacksAndSweets'
   | 'HouseholdAndCare';
 
-/** HO-P2 §1.3 — replaces the pet-food health focus. Multi-select. */
+/** HO-P2 §1.3 — a food product's certifications and claims. Multi-select. */
 export type Certification = 'CertifiedOrganic' | 'PesticideFree' | 'Traditional' | 'Halal';
 
 export interface CountryRef {

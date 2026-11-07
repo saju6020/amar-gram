@@ -242,7 +242,7 @@ describe('U47 — reorder level and batch received / supplier (StockQueryHandler
     }
     const below = (await call('GET', '/api/staff/inventory/stock?belowReorderPoint=true&pageSize=100')).json.items as any[];
     expect(below.map((r) => r.skuId).sort()).toEqual(all.filter((r) => r.belowReorderLevel).map((r) => r.skuId).sort());
-    // The wet food SKU has an EXPLICIT policy of 10 at the warehouse: the level is that policy, not the default.
+    // The honey SKU has an EXPLICIT policy of 10 at the warehouse: the level is that policy, not the default.
     const wet = all.find((r) => r.skuId === ids.wetFoodSkuId);
     if (wet) expect(wet).toMatchObject({ reorderLevel: '10', reorderLevelIsDefault: false });
   });

@@ -13,7 +13,7 @@ import { billingIds as ids } from './fixtures';
  */
 
 // HO-P5: bumped when the cash-up gained per-source counts and a staff-collected cash source.
-const PERSIST_KEY = '__purrcare_billing_mock_db_p5__';
+const PERSIST_KEY = '__amargram_billing_mock_db_p5__';
 export const ZONE = 'Asia/Dhaka';
 export const CURRENCY = 'BDT';
 export const APPROVAL_THRESHOLD_CENTS = 5_000_000; // BDT 50,000.00
@@ -913,7 +913,7 @@ function seed(): Db {
         taxRegistrationNumber: 'BIN 004512345-0101',
         addressLines: ['House 12, Road 5, Dhanmondi', 'Dhaka 1209'],
         phone: '+88 02 5511 0000',
-        email: 'accounts@purrcare.test',
+        email: 'accounts@amargram.test',
         invoiceFooter: 'Thank you for shopping with Amar Gram. Goods sold are not returnable once opened.',
         bankAccounts: [
           { bankName: 'City Bank', accountName: 'Amar Gram Ltd', accountNumber: '1234-567890-01', branchName: 'Dhanmondi', routingNumber: '225261719' },

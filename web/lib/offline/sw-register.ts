@@ -14,7 +14,7 @@
 
 export const SW_URL = '/staff/sw.js';
 export const SW_SCOPE = '/staff/';
-const CACHE_PREFIX = 'purrcare-';
+const CACHE_PREFIX = 'amargram-';
 
 export interface ServiceWorkerPolicyInput {
   nodeEnv: string | undefined;

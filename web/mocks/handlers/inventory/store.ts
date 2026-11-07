@@ -38,7 +38,7 @@ import {
  */
 
 // HO-P5 S3: bumped (v2) so a browser's stale copy does not lack the receipt drafts.
-const PERSIST_KEY = '__purrcare_inventory_mock_db__v2';
+const PERSIST_KEY = '__amargram_inventory_mock_db__v2';
 
 export const staffNames: Record<string, string> = {
   [accountsFixtureIds.adminStaffId]: 'Rezwan Ahmed',
@@ -288,7 +288,7 @@ function seed(): MockDb {
       skuId: ids.wetFoodSkuId,
       productId: 'f2000000-0000-4000-8000-000000000004',
       skuCode: 'FD-ADT-POUCH',
-      displayName: 'Adult wet food pouches, tuna',
+      displayName: 'Sundarban honey, 500 g jar',
       barcode: '4000000000017',
       stockClass: 'Food',
       expiryRequired: true,
@@ -467,7 +467,7 @@ function seed(): MockDb {
         id: ids.poPartId,
         number: 'PO-2026-000001',
         supplierId: ids.supplierId,
-        supplierName: 'Meridian Pet Supplies Ltd',
+        supplierName: 'Meridian Organic Supplies Ltd',
         status: 'Issued',
       },
     ],
@@ -918,7 +918,7 @@ function seed(): MockDb {
     alert('a2000000-0000-4000-8000-000000000003', 'LowStock', 'Open', {
       skuId: ids.wetFoodSkuId,
       skuCode: 'FD-ADT-POUCH',
-      displayName: 'Adult wet food pouches, tuna',
+      displayName: 'Sundarban honey, 500 g jar',
       locationId: ids.warehouseId,
       locationCode: 'WH1',
       quantityAtRaise: '8',
@@ -1130,7 +1130,7 @@ function seed(): MockDb {
     receivedOn: instantOffset(-10),
     receivedBy: ACTOR_ID,
     supplierId: ids.supplierId,
-    supplierName: 'Meridian Pet Supplies Ltd',
+    supplierName: 'Meridian Organic Supplies Ltd',
     purchaseOrderId: ids.poPartId,
     purchaseOrderNumber: 'PO-2026-000001',
     consignmentId: ids.consignmentClearedId,
@@ -1451,8 +1451,8 @@ function seed(): MockDb {
       [skus[1]!.productId]: { productId: skus[1]!.productId, storage: fridge, version: 2 },
     },
     suppliers: [
-      supplier(ids.supplierId, 'MERIDIAN', 'Meridian Pet Supplies Ltd', 'DE', 'BDT', 14, true),
-      supplier(ids.supplier2Id, 'VETPHARMA', 'VetPharma Distribution', 'US', 'USD', 21, true),
+      supplier(ids.supplierId, 'MERIDIAN', 'Meridian Organic Supplies Ltd', 'DE', 'BDT', 14, true),
+      supplier(ids.supplier2Id, 'AGRONEXUS', 'AgroNexus Distribution', 'US', 'USD', 21, true),
       supplier(ids.inactiveSupplierId, 'OLDCO', 'Old Co Imports', 'TH', 'BDT', 30, false),
     ],
     purchaseOrders,
