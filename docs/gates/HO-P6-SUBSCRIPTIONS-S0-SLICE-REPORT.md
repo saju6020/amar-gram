@@ -38,11 +38,14 @@ The handover's §16 E1 row ("The seeds change nothing visible until S1-S3 build 
 
 OQ-1 to OQ-19 take their recommended defaults (Amended (a)); S0 builds only those that touch the contract and mocks:
 - OQ-17: the subscriber discount is seeded at "10.00" (`discountPercent`) and exposed by the mock control.
+- OQ-4: the "Next delivery on {date}" wording (`web/lib/subscriptions/copy.ts:32`).
+- OQ-5: the six customer cancellation-reason texts (`web/lib/subscriptions/labels.ts:67-73`).
+- OQ-3 (form wording only): the estimate note with no total (`web/lib/subscriptions/copy.ts:74-78`).
 - Cut-off and notice: `changeCutoffDays` 2 and the notice rule from `SubscriptionTerms`, ported as is (`schedule.ts`).
 - The staff unpaid window and the due-tomorrow rule follow the server's query handlers (no default taken).
 - OQ-20 (USER_STORIES.md wording) goes to the owner and is not edited.
 
-The other OQ defaults belong to S1 to S3 (screens) and are not built here.
+The other OQ defaults belong to S1 to S3 (screens) and are not built here. S1 to S3 reuse the strings above rather than writing their own. (Corrected after ACCEPTANCE run 2.)
 
 ## 4. Mock refusals and rules added, with the server file:line mirrored
 
