@@ -563,7 +563,7 @@ interface StaffSessionRecord {
 const canPersist =
   typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
 // HO-P5: bumped when customers gained tags and notes and staff accounts gained a lockout, so an older tab's saved state is not read.
-const PERSIST_KEY = '__purrcare_accounts_mock_db_p5__';
+const PERSIST_KEY = '__amargram_accounts_mock_db_p6__';
 
 function persistMockState(): void {
   if (!canPersist) return;
