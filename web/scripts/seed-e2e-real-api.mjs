@@ -225,8 +225,8 @@ async function main() {
     ['Billing Walkin Two', '01911000002'],
     ['Billing Walkin Three', '01911000003'],
   ]) {
-    const found = items(await get(`/api/staff/customers?search=${encodeURIComponent(name)}`)).find(
-      (c) => (c.fullName ?? c.name) === name,
+    const found = items(await get(`/api/staff/customers?mobile=${mobile}`)).find(
+      (c) => c.fullName === name,
     );
     let id = found?.customerId ?? found?.id;
     if (!id) {
