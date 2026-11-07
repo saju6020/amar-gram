@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { House, ShoppingBasket, Store, User } from 'lucide-react';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +24,11 @@ function currentTab(pathname: string): 'home' | 'shop' | 'basket' | 'account' | 
  */
 export function MobileTabBar() {
   const pathname = usePathname();
-  const { data: session } = useCustomerSession();
+  const { data: cachedSession } = useCustomerSession();
+  // The session can already be cached when the page hydrates (the header loads it first): read it from the next
+  // render on, so the first client render matches the server HTML.
+  const hydrated = useHydrated();
+  const session = hydrated ? cachedSession : null;
   if (pathname === '/cart' || pathname.startsWith('/cart/')) return null;
 
   const current = currentTab(pathname);
