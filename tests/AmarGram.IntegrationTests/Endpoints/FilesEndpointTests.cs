@@ -118,7 +118,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
     public async Task Upload_csv_with_an_hta_payload_after_benign_csv_content_is_rejected()
     {
         using var client = await SignedInStaffClientAsync(StaffRoles.Administrator);
-        var benignPrefix = string.Concat(Enumerable.Repeat("name,age\nWhiskers,3\n", 18)); // > 360 bytes
+        var benignPrefix = string.Concat(Enumerable.Repeat("name,age\nAbdullah,3\n", 18)); // > 360 bytes
         var content = System.Text.Encoding.ASCII.GetBytes(benignPrefix + "<HTA:APPLICATION/><script language=vbscript>msgbox 1</script>");
 
         using var form = BuildUpload(content, "report.csv", "text/csv");

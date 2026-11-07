@@ -41,7 +41,7 @@ public sealed class StaffAccountAggregateTests
     {
         var staff = new StaffAccountAggregate(Guid.NewGuid());
         var ex = Assert.Throws<DomainRuleViolationException>(() => staff.Create(new StaffAccountCreationDto(
-            "Name", MobileNumber.Create("01712345678"), null, ["vet"], TestUserContext.Create(), Guid.NewGuid())));
+            "Name", MobileNumber.Create("01712345678"), null, ["reception"], TestUserContext.Create(), Guid.NewGuid())));
         Assert.Equal("UnknownStaffRole", ex.ErrorCode);
     }
 
@@ -50,7 +50,7 @@ public sealed class StaffAccountAggregateTests
     {
         var staff = new StaffAccountAggregate(Guid.NewGuid());
         var ex = Assert.Throws<DomainRuleViolationException>(() => staff.Create(new StaffAccountCreationDto(
-            "Name", MobileNumber.Create("01712345678"), null, ["Groomer"], TestUserContext.Create(), Guid.NewGuid())));
+            "Name", MobileNumber.Create("01712345678"), null, ["Gardener"], TestUserContext.Create(), Guid.NewGuid())));
         Assert.Equal("UnknownStaffRole", ex.ErrorCode);
     }
 
@@ -96,7 +96,7 @@ public sealed class StaffAccountAggregateTests
     }
     // Owner, 2026-10-20: an administrator edits the name and sign-in identifiers.
     [Fact]
-    public void UpdateDetails_Changed_RaisesEventWithBeforeAndAfter_StampUnchanged()
+    public void UpdateDetails_Changed_RaisesEventNamingChangedFields_StampUnchanged()
     {
         var staff = Create("Inventory");
         staff.ClearEvents();
@@ -109,9 +109,9 @@ public sealed class StaffAccountAggregateTests
         Assert.Equal("staff@example.test", staff.EmailAddress?.Value);
         Assert.Equal(stampBefore, staff.SecurityStamp);
         var changed = Assert.IsType<AmarGram.Domain.Events.Account.StaffAccountDetailsChangedEvent>(Assert.Single(staff.Events));
-        Assert.Equal("Staff Person", changed.PreviousFullName);
-        Assert.Null(changed.PreviousEmailAddress);
-        Assert.Equal("staff@example.test", changed.NewEmailAddress);
+        Assert.True(changed.FullNameChanged);
+        Assert.True(changed.EmailAddressChanged);
+        Assert.False(changed.MobileNumberChanged);
     }
 
     [Fact]

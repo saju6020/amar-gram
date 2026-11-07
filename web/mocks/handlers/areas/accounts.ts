@@ -50,16 +50,16 @@ export const accountsFixtureIds = {
 
   // Staff.
   adminStaffId: 's0000000-0000-0000-0000-000000000001',
-  adminIdentifier: 'admin@purrcare.test',
+  adminIdentifier: 'admin@amargram.test',
   adminPassword: 'AdminPass123!',
   // A non-admin staff member with the Reception role (key names kept for existing callers).
   stockStaffId: 's0000000-0000-0000-0000-000000000002',
-  stockIdentifier: 'stock@purrcare.test',
+  stockIdentifier: 'stock@amargram.test',
   stockPassword: 'StockPass123!',
   noPasswordStaffId: 's0000000-0000-0000-0000-000000000003',
   // A non-admin staff member with the Inventory role: no NotificationLog.View (notifications E-E2).
   inventoryStaffId: 's0000000-0000-0000-0000-000000000004',
-  inventoryIdentifier: 'inventory@purrcare.test',
+  inventoryIdentifier: 'inventory@amargram.test',
   inventoryPassword: 'InventoryPass123!',
 
   // Walk-in / duplicates.
@@ -504,8 +504,8 @@ function seedStaffAccounts(): Map<string, StoredStaffAccount> {
     mobileNumber: null,
     emailAddress: accountsFixtureIds.stockIdentifier,
     password: hashPassword(accountsFixtureIds.stockPassword),
-    // Stock.View without receiving or procurement (tests/e2e/fixtures.ts `secondStaff`). HO-P1 swapped the retired
-    // Nurse role for Inventory, which can receive and view procurement; Reception keeps the documented contract
+    // Stock.View without receiving or procurement (tests/e2e/fixtures.ts `secondStaff`). Inventory can receive and
+    // view procurement, so it does not fit here; Reception keeps the documented contract
     // (HO-P4 Amended, E-X3).
     roleIds: ['Reception'],
   });
@@ -1515,7 +1515,7 @@ export const accountsHandlers: HttpHandler[] = [
       {
         headers: {
           'Cache-Control': 'no-store',
-          'Content-Disposition': 'attachment; filename="purrcare-my-data.json"',
+          'Content-Disposition': 'attachment; filename="amargram-my-data.json"',
         },
       },
     );

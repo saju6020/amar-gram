@@ -46,7 +46,7 @@ public sealed class EfAggregateRootRepository<TAggregate>(
         // the aggregate is already tracked. DbSet.Update() on an already-tracked aggregate walks
         // the whole navigation graph and marks every NOT-yet-tracked reachable entity as
         // Modified rather than Added -- including an owned-collection item just added in this
-        // request (e.g. CatAggregate.AddPhoto's new CatPhoto). EF then emits an UPDATE for a row
+        // request (e.g. a new ProductImage added by ProductAggregate). EF then emits an UPDATE for a row
         // that does not exist yet, "0 rows affected", and the xmin concurrency check throws
         // DbUpdateConcurrencyException on a perfectly ordinary first write. Only call Update()
         // when the aggregate is genuinely untracked (e.g. reconstructed outside this context);

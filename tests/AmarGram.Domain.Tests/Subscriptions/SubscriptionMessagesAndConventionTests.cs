@@ -12,7 +12,7 @@ using static AmarGram.Domain.Tests.Subscriptions.SubscriptionTestSupport;
 
 namespace AmarGram.Domain.Tests.Subscriptions;
 
-/// <summary>HO-SUB-001 §15 E and X -- the eight subscription templates (the ninth, the clinic's, went with HO-P1), the display text, and the conventions that keep a payment token
+/// <summary>HO-SUB-001 §15 E and X -- the eight subscription templates, the display text, and the conventions that keep a payment token
 /// and free text out of the slice (ADR-238, §11.5).</summary>
 public sealed class SubscriptionMessagesAndConventionTests
 {
@@ -31,7 +31,7 @@ public sealed class SubscriptionMessagesAndConventionTests
     {
         var found = NotificationTemplateCatalogue.Definitions.Where(d => d.Key.StartsWith("subscription.", StringComparison.Ordinal)).Select(d => d.Key).OrderBy(k => k);
         Assert.Equal(Keys.OrderBy(k => k), found);
-        Assert.DoesNotContain(NotificationTemplateCatalogue.Definitions, d => d.Key == "subscription.authorisation-lapsed");   // the clinic's message is retired
+        Assert.DoesNotContain(NotificationTemplateCatalogue.Definitions, d => d.Key == "subscription.authorisation-lapsed");   // a retired message stays absent
     }
 
     [Theory]
@@ -180,7 +180,7 @@ public sealed class SubscriptionMessagesAndConventionTests
     }
 
     [Fact]
-    public void TheAggregate_IsEntirelyFreeOfTheRetiredClinicVocabulary()
+    public void TheAggregate_IsEntirelyFreeOfTheRetiredVocabulary()
     {
         var names = SubscriptionDomainTypes().SelectMany(t => t.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly).Select(m => m.Name)).ToList();
         Assert.DoesNotContain(names, n => Regex.IsMatch(n, "Cat(Id|Name|Deceased)|Prescription|Authoris|Diet", RegexOptions.IgnoreCase));

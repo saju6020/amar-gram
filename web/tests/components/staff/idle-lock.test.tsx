@@ -199,7 +199,7 @@ describe('IdleLock — US-ACC-08', () => {
 
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
@@ -344,7 +344,7 @@ describe('IdleLock — US-ACC-08', () => {
     );
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
@@ -490,7 +490,7 @@ describe('IdleLock — US-ACC-08', () => {
     );
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
@@ -535,7 +535,7 @@ describe('IdleLock — US-ACC-08', () => {
 
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'stock@purrcare.test',
+      'stock@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'StockPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
@@ -757,7 +757,7 @@ describe('IdleLock — US-ACC-08', () => {
     // proof the mutation ran despite the frozen `false`.
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));

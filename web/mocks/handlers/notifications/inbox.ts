@@ -10,7 +10,7 @@ import {
   notFound,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_notifications_inbox_mock_db__';
+const PERSIST_KEY = '__amargram_notifications_inbox_mock_db__';
 
 /** `mocks/handlers/notifications/inbox.ts` — HO-NTF-002 §12, HO-NTF-001 §12.4. An inbox with read,
  *  unread and linked items, one with an unsafe `linkPath`, and one whose body is markup (all of it

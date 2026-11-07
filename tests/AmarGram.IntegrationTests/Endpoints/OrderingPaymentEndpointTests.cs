@@ -252,9 +252,9 @@ public sealed class OrderingPaymentEndpointTests(OrderingApiFactory factory) : O
     {
         var (shop, orderId, _) = await TransferOrderAsync();
 
-        // the toy is archived meanwhile and the food's price moves (done before the clock jump: a 49-hour jump would end the staff session)
+        // the bag is archived meanwhile and the food's price moves (done before the clock jump: a 49-hour jump would end the staff session)
         await ExpectAsync(HttpStatusCode.NoContent, await shop.Context.Admin.PostAsJsonAsync(
-            $"/api/staff/shop/products/{shop.Toy.ProductId}/archive", new { expectedVersion = await ProductVersionAsync(shop.Context.Admin, shop.Toy.ProductId) }, Json));
+            $"/api/staff/shop/products/{shop.Bag.ProductId}/archive", new { expectedVersion = await ProductVersionAsync(shop.Context.Admin, shop.Bag.ProductId) }, Json));
         await SchedulePriceAsync(shop.Context.Admin, shop.Food.SkuId, 900m);
 
         Factory.Clock.Advance(TimeSpan.FromHours(49));
@@ -264,7 +264,7 @@ public sealed class OrderingPaymentEndpointTests(OrderingApiFactory factory) : O
         var result = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, response));
         Assert.Equal(1, result.GetProperty("addedCount").GetInt32());
         var unavailable = Assert.Single(result.GetProperty("unavailable").EnumerateArray());
-        Assert.Equal("Feather wand", unavailable.GetProperty("productName").GetString());
+        Assert.Equal("Jute shopping bag", unavailable.GetProperty("productName").GetString());
         Assert.Equal("NotPurchasable", unavailable.GetProperty("reason").GetString());
 
         var cart = await ReadAsync(await shop.Customer.GetAsync("/api/cart"));

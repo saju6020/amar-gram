@@ -17,8 +17,7 @@ namespace AmarGram.Domain.Aggregates.Subscription;
 /// the same rules; this class applies the result, records the event and bumps the version. One aggregate is mutated per command, with the one recorded
 /// exception of recording a processed cycle (ADR-240).
 ///
-/// Adapted for the organic shop (HO-P1, HO-P2): the cat, the prescription authorisation and the clinic reactions are gone; a product is subscribable when staff
-/// mark it so. Every mutation ends <c>UpdateVersion()</c>; <c>xmin</c> turns a race into a <c>409</c> (ADR-016).
+/// A product is subscribable when staff mark it so. Every mutation ends <c>UpdateVersion()</c>; <c>xmin</c> turns a race into a <c>409</c> (ADR-016).
 /// </summary>
 public sealed class SubscriptionAggregate : AggregateRoot
 {

@@ -19,7 +19,7 @@ interface Row {
 
 const rows: Row[] = [
   { id: '1', name: 'Organic rice 5 kg' },
-  { id: '2', name: 'Mittens' },
+  { id: '2', name: 'Shamima' },
 ];
 
 const columns: Array<DataTableColumn<Row>> = [
@@ -90,7 +90,7 @@ describe('DataTable', () => {
     );
     expect(screen.getByRole('table', { name: 'Orders' })).toBeInTheDocument();
     expect(screen.getByText('Organic rice 5 kg')).toBeInTheDocument();
-    expect(screen.getByText('Mittens')).toBeInTheDocument();
+    expect(screen.getByText('Shamima')).toBeInTheDocument();
   });
 
   it('writes a sort change to the URL — U29', async () => {

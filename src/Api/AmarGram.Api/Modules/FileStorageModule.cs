@@ -141,7 +141,7 @@ public static class FileStorageModule
 
         // ── Query handlers ───────────────────────────────────────────────────────────────────────
         // Gate-fix 2026-09-27 (ARCHITECTURE LOW, second pass): FIL's own "ids -> §12.4 signed
-        // shapes" helper, consumed here and by CatProfilesModule's GetCatProfileQueryHandler.
+        // shapes" helper.
         services.AddScoped<IStoredFileSigningBatcher, StoredFileSigningBatcher>();
         services.AddScoped<IQueryHandlerAsync<GetStoredFileQuery, StoredFileViewModel?>, GetStoredFileQueryHandler>();
         services.AddScoped<IQueryHandlerAsync<GetStoredFileForServingQuery, StoredFileServingInfo?>, GetStoredFileForServingQueryHandler>();

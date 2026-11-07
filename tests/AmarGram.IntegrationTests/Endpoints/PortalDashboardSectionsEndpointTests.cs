@@ -253,7 +253,7 @@ internal sealed class OrderingShopHelper(OrderingApiFactory factory) : OrderingS
         var shop = await SetUpShopAsync(fillCart: false);
         var addressId = await AddAddressAsync(customerClient, shop.District);
         await ExpectAsync(HttpStatusCode.Created, await customerClient.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Food.SkuId, quantity = 2 }, Json));
-        await ExpectAsync(HttpStatusCode.Created, await customerClient.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Toy.SkuId, quantity = 1 }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await customerClient.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Bag.SkuId, quantity = 1 }, Json));
         await PlaceCodOrderAsync(shop with { Customer = customerClient, CustomerId = customerId, AddressId = addressId });
     }
 }

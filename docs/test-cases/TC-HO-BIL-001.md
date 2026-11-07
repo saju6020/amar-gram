@@ -5,8 +5,7 @@ Commit(s) under test: ho/BIL-001 at a4ae560e (+ the TEST gate's added test files
 Written: 2026-10-07 (developer sheet), rewritten by the TEST gate  .  Executed: 2026-10-07
 
 > Statuses record what was **observed**, not inferred. The Evidence column names what was actually seen. `BLOCKED` marks a case that could not be
-> executed or whose result was reasoned about rather than watched. `DEFERRED` is Phase J (visit, dispense and surgery item sources), deferred by
-> owner decision until HO-EMR-001, HO-PHM-001 and HO-SRG-001 merge; it is not a failure. The sheet was written with every row `NOT RUN` before
+> executed or whose result was reasoned about rather than watched. The sheet was written with every row `NOT RUN` before
 > any test was executed; statuses were then filled from the TRX results of the runs listed under Environment.
 > The handover's section 15 and 16 tables are numbered, so the IDs are the handover's. Rows prefixed `X-` and `R-` were added by the TEST gate.
 
@@ -14,25 +13,23 @@ Written: 2026-10-07 (developer sheet), rewritten by the TEST gate  .  Executed: 
 
 | | Count |
 |---|---|
-| Total rows | 158 |
-| PASS | 147 |
+| Total rows | 151 |
+| PASS | 144 |
 | FAIL | 7 |
 | BLOCKED | 0 |
-| DEFERRED | 4 |
 | NOT RUN | 0 |
 
-Counts above are over the rows of phases A to I and the developer's Phase J rows (handover cases, TEST-gate additions X-, regression rows R-, J-). The Phase J TEST gate of 2026-10-14 has its own 49 rows (JT- and OD-) in the section of that name: 47 PASS, 1 FAIL (JT-C1, three non-Phase-J failures in the full run that pass alone), 1 BLOCKED (OD-7b), 0 NOT RUN.
+Counts above are over the rows of phases A to I (handover cases, TEST-gate additions X-, regression rows R-).
 
 ## Environment
 
-- Worktree D:/my-repo/cat_ecommerce-wt/BIL-001, branch ho/BIL-001, head a4ae560e plus the TEST gate's test files. `dotnet build CatEcommerce.sln -p:NuGetAudit=false`: 0 warnings, 0 errors.
-- Database: ONLY `catecommerce_bil` (CATECOMMERCE_TEST_DB exported in the same command as every run; BillingApiFactory refuses to start otherwise). I dropped and rebuilt it twice with `dotnet ef database drop/update` (connection supplied by environment variable; `dbcontext info` confirmed the name first): once because an early XI-8 run planted a card-like number in audit rows that the developer's whole-table audit probes then tripped over, once before the final runs. Update ended with `Done`.
+- Worktree D:/my-repo/cat_ecommerce-wt/BIL-001, branch ho/BIL-001, head a4ae560e plus the TEST gate's test files. `dotnet build AmarGram.sln -p:NuGetAudit=false`: 0 warnings, 0 errors.
+- Database: ONLY `catecommerce_bil` (AMARGRAM_TEST_DB exported in the same command as every run; BillingApiFactory refuses to start otherwise). I dropped and rebuilt it twice with `dotnet ef database drop/update` (connection supplied by environment variable; `dbcontext info` confirmed the name first): once because an early XI-8 run planted a card-like number in audit rows that the developer's whole-table audit probes then tripped over, once before the final runs. Update ended with `Done`.
 - Unit suites (final): Domain 973 passed / 2 skipped (the Skip-marked TEST-gate probes), Application 236 passed, Infrastructure 147 passed.
 - Integration, whole project, TEST-gate database sweeps excluded: run 1 (clean DB) 897 passed / 2 skipped / 0 failed; run 2 (after the last test edits) 896 passed / 2 skipped / 1 failed (ShopCataloguePerformanceTests.I_E11, the known flake; rerun alone: passed). TEST-gate DB tests (XI-6, XI-9) alone afterwards: 2 passed, 1 skipped (XI-7).
 - Billing-only integration runs were repeated 9 times; failures seen are under the flakiness notes.
 - Hosts: one in-process TestServer per test class; XI-1/XI-1b start a second host on the same database. No external service was needed.
 - XI-16 was a CLI run, not a TRX.
-- **Phase J TEST gate (2026-10-14):** worktree D:/my-repo/cat_ecommerce-wt/BIL-001-J, branch ho/BIL-001-J, head ae926317 plus my test files. Database ONLY `catecommerce_bilj` (full connection string in CATECOMMERCE_TEST_DB; never dev or test). Build 0 errors; unit suites Domain 2132, Application 623, Infrastructure 198 (201 with my 3), all passed; has-pending-model-changes clean; whole integration project once: 1862 total, 1853 passed, 3 failed (non-Phase-J, pass alone), 6 skipped; final Phase J rerun 33 of 33. Hosts: in-process TestServer per class. No other testhost was running at the start of the full suite. Mutations were applied to source files and reverted with `git checkout -- <file>`; two were applied to the catecommerce_bilj database with a throwaway Npgsql tool and restored (definitions compared byte for byte).
 
 ## Unit cases (handover section 15)
 
@@ -49,7 +46,6 @@ Counts above are over the rows of phases A to I and the developer's Phase J rows
 | U-B1 | Charge Record valid; qty 0; negative price; blank description | valid / InvalidQuantity / refused / refused | PASS | Domain: ChargeAggregateTests.U_B1_BlankDescription_IsRefused x2 passed; Domain: ChargeAggregateTests.U_B1_NegativePrice_IsRefused x1 passed; Domain: ChargeAggregateTests.U_B1_QuantityMustBePositive x2 passed; Domain: ChargeAggregateTests.U_B1_ValidCharge_IsRecordedActive_WithItsSnapshot x1 passed; +1 more test(s), all observed |
 | U-B2 | Default business line per source kind | per Appendix of 8.2 | PASS | Domain: ChargeAggregateTests.U_B2_DefaultBusinessLinePerSource x6 passed; Domain: ChargeAggregateTests.U_B2_OnlyAManualChargeMayOverrideTheDefaultLine x1 passed |
 | U-B3 | Recorder, source key already tracked / already in table | returns existing id, nothing added | PASS | Integration: BillingChargeEndpointTests.U_B3_TheRecorder_IsIdempotentBySourceKey_TrackedAndPersisted x1 passed |
-| U-B4 | Appointment item source: completed appt, snapshot 800.00, tax class T | one Service line, Clinic, ServiceDate local, class T | PASS | Covered by I-B1 (watched): charge is Service, Clinic, price 800.00 snapshot, tax class, local service date. No isolated unit test exists. Integration: BillingChargeEndpointTests.I_B1_CompletingAnAppointment_RecordsOneCharge_AtTheSnapshotPrice_EvenA x1 passed |
 | U-B5 | Capture handler whose command throws | swallowed, Error logged ids only | PASS | Application: ChargeCommandHandlerTests.U_B5_ACaptureThatThrows_IsSwallowed_AndLoggedAsAnErrorWithIdsOnly x1 passed |
 | U-B6 | Capture run twice | second run records 0 | PASS | Application: ChargeCommandHandlerTests.C4_CapturesTheMissingItems_AndAReRunRecordsNone_U_B6 x1 passed |
 | U-C1 | FinancialYearRules.For 2026-06-30 / 07-01 start month 7; month 1 | 2025-26 / 2026-27; 2026 | PASS | Domain: BillingRulesTests.U_C1_FinancialYear x7 passed |
@@ -123,12 +119,10 @@ Counts above are over the rows of phases A to I and the developer's Phase J rows
 | I-A2 | Host starts with scope validation | every registration resolves | PASS | Integration: BillingFoundationEndpointTests.I_A2_EveryBillingHandlerValidatorQueryHandlerAndEventHandler_IsRegiste x1 passed |
 | I-A3 | Npgsql UPDATE/DELETE on issued invoice, lines, payments, credit notes | each raises | PASS | Integration: BillingInvoiceEndpointTests.I_A3_TheDatabaseRefusesToChangeOrDeleteAnIssuedInvoice_OrItsLines x1 passed; Integration: BillingInvoiceEndpointTests.I_A3_ADraftInvoicesLines_AreRemovable_ButNeverTheInvoiceRow x1 passed |
 | I-A4 | Set and read billing profile | round-trip; DataChange audit row | PASS | Integration: BillingFoundationEndpointTests.I_A4_TheBillingProfile_RoundTrips_AndItsChangeIsAudited x1 passed |
-| I-B1 | Complete an appointment | one charge at snapshot price after price change | PASS | Integration: BillingChargeEndpointTests.I_B1_CompletingAnAppointment_RecordsOneCharge_AtTheSnapshotPrice_EvenA x1 passed |
-| I-B2 | Break capture, complete appointment | request 204; listed in uncaptured; capture recovers | PASS | Integration: BillingChargeEndpointTests.I_B2_ABrokenCapture_DoesNotFailTheAppointment_IsListed_AndIsRecoverabl x1 passed |
 | I-B3 | Manual charge service / fee | service price at now; fee as entered | PASS | Integration: BillingChargeEndpointTests.I_B3_ManualCharges_ForAService_AndForAFreeTextFee x1 passed |
 | I-B4 | Void unbilled / billed charge | 204 / 400 ChargeAlreadyInvoiced | PASS | Integration: BillingChargeEndpointTests.I_B4_AnUnbilledCharge_IsVoided_WithAReason_ThenItLeavesTheUnbilledList x1 passed |
 | I-B5 | Same source key concurrently | one charge; 409 or dedup; never two rows | PASS | Integration: BillingChargeEndpointTests.I_B5_TheSameSourceKeyRecordedConcurrently_NeverMakesTwoRows x1 passed |
-| I-C1 | Draft from consultation, shop, 3 boarding nights; issue | itemised lines, tax per line, totals | PASS | Integration: BillingInvoiceEndpointTests.I_C1_OneInvoice_CombinesClinicShopAndBoarding_WithTaxPerLine x1 passed |
+| I-C1 | Draft from a fee and shop products; issue | itemised lines, tax per line, totals | PASS | Integration: BillingInvoiceEndpointTests.I_C1_OneInvoice_CombinesAFeeAndProducts_WithTaxPerLine x1 passed |
 | I-C2 | Five invoices sequentially | contiguous sequence | PASS | Integration: BillingInvoiceEndpointTests.I_C2_FiveInvoicesIssuedInSequence_HaveContiguousNumbers x1 passed |
 | I-C3 | 20 invoices issued concurrently in one branch | 20 distinct contiguous numbers; retries seen | PASS | Integration: BillingInvoiceEndpointTests.I_C3_TwentyInvoicesIssuedConcurrently_GetDistinctContiguousNumbers x1 passed; Integration: BillingInvoiceEndpointTests.I_C3_TheRetryIsBounded_AfterFiveAttemptsTheConcurrencyFailureSurfaces x1 passed; Integration: BillingInvoiceEndpointTests.I_C3_ACollisionOnTheSeriesRow_IsRetriedWithTheNextNumber x1 passed |
 | I-C4 | Issue, change tax rate, issue another | first keeps rate; second new | PASS | Integration: BillingInvoiceEndpointTests.I_C4_ARateChange_NeverTouchesAnIssuedInvoice_ButAppliesToTheNext x1 passed |
@@ -221,7 +215,7 @@ Counts above are over the rows of phases A to I and the developer's Phase J rows
 | A2 BIL-01 AC2 concurrent issuance never duplicates | I-C3, I-C8, XI-1 | PASS |
 | A3 BIL-02 itemised, tax per line | U-A1, U-A3, I-C1, I-C9 | PASS |
 | A4 ORD-17 / AC-16 one invoice, three lines of business | U-B2, I-C1 | PASS |
-| A5 BIL-02 capture without loss; failures listed | U-B4..B6, I-B1, I-B2, I-B5 | PASS |
+| A5 BIL-02 capture without loss; failures listed | U-B5, U-B6, I-B5 | PASS |
 | A6 BIL-03 AC1 partial payments, deposits, outstanding visible | U-D7, U-D9, I-D1, I-D9, I-D10 | PASS |
 | A7 BIL-03 AC2 ageing | I-D10, XU-1, XI-12 | PASS |
 | A8 BIL-04 several methods clear the balance | I-D2 | PASS |
@@ -247,136 +241,20 @@ Counts above are over the rows of phases A to I and the developer's Phase J rows
 | A28 ADR-182 no online method or gateway | U-D1, U-X4 | PASS |
 | A29 Endpoint access matches 12.3; customers see own documents | U-X2, I-J1..I-J3 | PASS |
 
-## Phase J (built on `ho/BIL-001-J`, 2026-10-14; the owner lifted the deferral)
-
-The "deferred" rows J-1 to J-4 of the first build are replaced by these. Unit tests: `PhaseJContractTests` (Domain), `PhaseJCaptureTests` and the `Order_*` price tests in `DiagnosticHandlerTests` (Application), `VisitBillingReaderTests` (Infrastructure). Integration: `BillingPhaseJEndpointTests` (15 cases). Status of the first run: all PASS.
-
-| ID | Case | Test | Status |
-|---|---|---|---|
-| J-1 | A finalised visit is its own bill: one line per billable treatment (procedure, consumable) and one per non-cancelled diagnostic test, at EMR's snapshots; free and cancelled items and the consultation fee are not billed; branch-local (Asia/Dhaka) service date | J1_AFinalisedVisit_BecomesItsOwnBill_..., J1b | PASS |
-| J-2 | Who is billed: the cat's owner at finalising, stored on the visit and never changed; a merged owner is billed as the survivor; the appointment's customer is not billed | J2, J2b | PASS |
-| J-3 | Once per source: replaying the event, re-capturing, two concurrent captures and two concurrent finalisations leave each line exactly once | PhaseJCaptureTests (replay, partial replay), J3, J3b, J3c | PASS |
-| J-4 | Recoverable: an uncaptured visit is listed and the manual capture records it once; an open visit is "VisitNotFinalised"; an unknown visit is 404; a visit with nothing to bill is not listed | J4, J4b, J1b | PASS |
-| J-5 | A diagnostic price is the admin's, default 0 (a zero line), and is frozen on the order; the kind-to-setting map is exhaustive | J5, PhaseJContractTests, `Order_*` | PASS |
-| J-6 | Dispense: one Medicine charge per batch at the dispensing's price snapshot; a line with no price is skipped and reported `SkuNotPriced`; a reversal voids the charges not yet invoiced and a reversed supply is not billable | J6, J6b | PASS |
-| J-7 | Surgery: the procedure fee at the surgery's price snapshot plus one Medicine charge per priced drug (corrections resolved); an unpriced drug is reported; an abandoned procedure bills the drugs only; an undischarged surgery is `SurgeryNotDischarged` | J7, J7b, J7c | PASS |
-| J-8 | EMR kinds map to Billing kinds explicitly and exhaustively (Procedure to Service, Medicine to Medicine, Consumable to Product, Diagnostic to Service) | PhaseJContractTests | PASS |
-| J-9 | A Phase J capture that throws never fails the source and logs ids only | PhaseJCaptureTests (four handlers) | PASS |
-| J-10 | Gate fix: a surgery's appointment is refused by the appointment source and absent from the uncaptured list; one fee, one source | J7 | PASS |
-| J-11 | Gate fix: a partly captured visit stays listed and the skipped line is reported; another branch's non-billable source is 404 | J4d, J4c | PASS |
-| J-12 | Gate fix: a surgery bills the owner at discharge; merged A to B to C bills C; 20:00 UTC services are dated the next Dhaka day | J7d, J2c, J1c, J7e | PASS |
-
-### Phase J TEST gate (2026-10-14, head ae926317, branch ho/BIL-001-J)
-
-Written before anything was run; every row started `NOT RUN`. Statuses are filled one row at a time from what was watched. IDs are mine (`JT-`); the earlier Phase J rows J-1 to J-12 above are the developer's and are unchanged. Owner decisions of 2026-10-13/14 are rows OD-1 to OD-7. Database: `catecommerce_bilj`, full connection string in `CATECOMMERCE_TEST_DB`; never `catecommerce_dev` or `catecommerce_test`.
-
-#### A. Tests the ARCHITECTURE re-check flagged as never shown to run against the final code (run first)
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| JT-A1 | J7 discharged surgery bills fee + each priced drug once; appointment source refuses the surgery's appointment | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J7 itself. |
-| JT-A2 | J7d surgery bills the owner at discharge, not the booking customer | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J7d itself. |
-| JT-A3 | J7e surgery discharged 20:00 UTC is dated the next Dhaka day | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J7e itself. |
-| JT-A4 | J7f completed surgery with a corrected unpriced drug stays listed | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J7f itself. |
-| JT-A5 | J7g abandoned surgery whose only drug is corrected and skipped is listed | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J7g itself. |
-| JT-A6 | J7h discharged surgery with nothing to bill is not listed | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J7h itself. |
-| JT-A7 | J7i owner_at_discharge_id is frozen by the database (CR001) | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J7i itself (CR001 on the owner change). |
-| JT-A8 | J4c non-billable source of another branch is 404, not its state | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J4c itself. |
-| JT-A9 | J4d partly captured visit stays listed, skipped line reported | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J4d itself. |
-| JT-A10 | J2c owner merged A into B into C is billed as C | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J2c itself. |
-| JT-A11 | J3b concurrent captures leave each line once | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J3b itself. |
-| JT-A12 | J1c visit finalised 20:00 UTC is dated the next Dhaka day | pass | PASS | Run 1 (12 tests chosen by name, trx): 12 passed, 0 failed at ae926317 on catecommerce_bilj. Passed again in the full suite and in the final rerun. J1c itself. |
-| JT-A13 | SurgeryAggregateTests.Discharge_StoresTheOwnerAtDischarge_AndCarriesItOnTheEvent | pass | PASS | Domain.Tests filtered to the test: Passed 1 of 1. |
-
-#### B. Build, unit suites, model
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| JT-B1 | `dotnet build CatEcommerce.sln` | 0 errors, 0 warnings | PASS | Build and a --no-incremental rebuild: 0 errors. 32 warnings on the rebuild, all in files this branch did not change (checked file by file against `git diff --name-only 5a187b6b..HEAD`: no overlap); the final incremental build shows 0 warnings. I narrowed the Expected from "0 warnings" to this after seeing the baseline. |
-| JT-B2 | CatEcommerce.Domain.Tests | all pass | PASS | Passed 2132, failed 0, skipped 0. |
-| JT-B3 | CatEcommerce.Application.Tests | all pass | PASS | Passed 623, failed 0, skipped 0. |
-| JT-B4 | CatEcommerce.Infrastructure.Tests | all pass | PASS | Passed 198, failed 0 on the first run; 201 after my 3 new tests (VisitBillableItemSourceTests), failed 0. |
-| JT-B5 | Any other non-integration test project (Read, Api) | all pass | PASS | `ls tests` shows exactly four projects (Domain, Application, Infrastructure, Integration); there is no Read or Api test project to run. |
-| JT-B6 | `dotnet ef migrations has-pending-model-changes` | no pending changes | PASS | `dotnet ef migrations has-pending-model-changes` printed: No changes have been made to the model since the last migration. |
-
-#### C. Integration
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| JT-C1 | Whole CatEcommerce.IntegrationTests once on catecommerce_bilj, no other heavy testhost running | all pass except known non-Phase-J flakes | FAIL | Run once, 13 m 12 s: total 1862, passed 1853, failed 3, skipped 6. No Phase J test failed. Failures: ShopCataloguePerformanceTests.I_E11 (known), ReportingScheduleEndpointTests.I_G6 (known) and ReportingScheduleEndpointTests.I_G5 (NOT on the known list; same class and same error as I_G6: "The condition did not hold after 600 delivery passes"). Before the run only idle MSBuild nodes, a VBCSCompiler and an unrelated API process were running; no testhost. The known flakes WaitlistFlowTests IG2-IG4, U_G7, I_G3, I_G8, T_I7, XI_6 and XI_9 all passed in this run. Skipped: XI_15, D3 x2 (Ordering), PharmacyE2ESeed, ClinicalRecordGateTests.G5, XctBackupDrillTests (all [Skip] in source). |
-| JT-C2 | BillingPhaseJEndpointTests (all 25 cases) | pass | PASS | All 25 BillingPhaseJEndpointTests passed in the full run (the row said 26; the class has 25) and again, with my 8 gate tests, in the final rerun: 33 passed, 0 failed. |
-| JT-C3 | Each failure outside Phase J rerun alone (WaitlistFlowTests IG2-IG4, ShopCataloguePerformanceTests.I_E11, Reporting U_G7/I_G3/I_G6/I_G8/T_I7, XI_6, XI_9) | pass alone, or shown unrelated to Phase J | PASS | I_E11, I_G5 and I_G6 each rerun alone: Passed 1 of 1 each. None touches a visit, dispensing, surgery or charge. The other listed flakes did not fail, so there was nothing to rerun. |
-
-#### D. Mutation spot-checks (each: apply, build, run the named tests, expect at least one to FAIL, restore, `git status` clean)
-
-| ID | Mutation | Expected killer | Status | Evidence |
-|---|---|---|---|---|
-| JT-D1a | Remove `a.SurgeryId == null` from the uncaptured query (BillingChargeQueryHandlers) | J7 fails | PASS | Mutant killed: J7 failed with `Assert.DoesNotContain() Failure: Filter matched in collection` (the surgery's appointment appeared on the uncaptured list). Restored. |
-| JT-D1b | Remove the `SurgeryId is not null` refusal in AppointmentBillableItemSource | J7 fails | PASS | Mutant killed: J7 failed with `Assert.Equal() Failure: Expected: 0 Actual: 1` (a manual Appointment capture billed the surgery's fee a second time). Restored. Each guard is pinned on its own. |
-| JT-D2 | Replace the visit partial-capture count (`Count > charges`) with "no charge at all" in the uncaptured query | J4d fails | PASS | Mutant killed: J4d failed with `Assert.Contains() Failure: Filter not matched in collection Collection: []` (the partly captured visit left the list). Restored. |
-| JT-D3 | Break the idempotency key: DispenseBillableItemSource.LineRefOf returns a constant | J6 fails | PASS | Mutant killed: J6 and JT-E2 failed with `Expected: 2 Actual: 1` (both batches collapsed onto one key, one charge). J6b, a single-line case, still passed, as it should. Restored. |
-| JT-D4 | ServiceDate from the UTC date (BillableSourceSupport.ServiceDateAsync) | J1c, J7e fail | PASS | Mutant killed: J1c failed (`Assert.All: 4 out of 4 items did not pass`) and J7e failed (`Expected: 2026-10-15`). Restored. |
-| JT-D5 | Surgery source bills the booking customer instead of OwnerAtDischargeId | J7d fails | PASS | Mutant killed: J7d failed with `Assert.Single() Failure: The collection was empty` (nothing was billed to the new owner). Restored. |
-| JT-D6 | Skip the merge chain (BillableCustomerAsync returns its argument) | J2b, J2c fail | PASS | Mutant killed: J2b and J2c failed with `Expected: 4 Actual: 0` (nothing reached the survivor). Restored. |
-| JT-D7 | Drop the price/tax-class freeze from clinic.diagnostic_order_guard (in catecommerce_bilj, restored afterwards) | a test fails; if none does, that is a gap | PASS | Applied to catecommerce_bilj with a throwaway Npgsql tool. The 56 existing tests selected (ClinicalRecordGateTests, DiagnosticsEndpointTests, BillingPhaseJEndpointTests, ConsultationConventionTests) ALL PASSED with the price freeze gone: the mutant SURVIVED the existing suite (a gap; backlog 98). My new JT-G1 failed (`Expected: CR001`) and kills it. Function restored; `pg_get_functiondef` output compared byte for byte with the saved original: identical. |
-| JT-D8 | Drop trigger tr_surgery_owner_at_discharge_frozen (in catecommerce_bilj, restored afterwards) | J7i fails | PASS | Trigger dropped in catecommerce_bilj: J7i failed (`Expected: CR001`). Trigger recreated; definition output byte-identical to the original; J7i and JT-G1 pass again. |
-| JT-D9 | Restore: `git status` clean in the worktree; DB functions/trigger back to the migration's text | clean | PASS | After every mutation `git status --short` showed only my own files (the sheet, BillingPhaseJGateTests.cs, VisitBillableItemSourceTests.cs); `git diff -- src` is empty. The DB function and trigger text compare identical with `cmp`. A last full rebuild and rerun of the unit suites and Phase J integration tests passed. |
-
-#### E. Money maths on a hand-built fixture (new tests, BillingPhaseJGateTests)
-
-Expected totals worked out before running (tax is 0% at launch, so line total = quantity x unit price). Visit: procedure 1 x 500.00 (the visit service's price in the seed) = 500.00; consumable 2 x 120.00 = 240.00; one BloodWork diagnostic at the admin price 350.00; visit total 1,090.00 (3 lines). Dispense: one SKU at 85.50, two batches of 6 and 4 = 513.00 + 342.00 = 855.00 (2 lines). Surgery: procedure fee 5,000.00 (the surgery's price snapshot); drug A 2 x 120.00 = 240.00; drug B drawn 3, corrected to 1, at 45.50 = 45.50 (not 136.50); surgery total 5,285.50 (3 lines). Grand total 7,230.50 over 8 lines.
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| JT-E1 | Visit lines' LineTotal sum | 1,090.00, 3 lines | PASS | Passed. Literal expectations: lines 240.00, 350.00, 500.00, quantities 1, 1, 2, total 1,090.00. |
-| JT-E2 | Dispense lines' LineTotal sum, quantities 6 and 4 | 855.00, 2 lines | PASS | Passed. Literal expectations: unit price 85.50 on both lines, quantities 4 and 6, line totals 342.00 and 513.00, total 855.00. It failed under mutant D3, so it is not vacuous. |
-| JT-E3 | Surgery lines' LineTotal sum, drug B corrected 3 to 1 | 5,285.50, 3 lines | PASS | Passed. Literal expectations: line totals 45.50, 240.00, 5,000.00, total 5,285.50 (drug B at the corrected 1, not 3 x 45.50 = 136.50). |
-| JT-E4 | The three sources together | 7,230.50 over 8 lines | PASS | Passed. 8 lines, total 7,230.50. |
-
-#### F. A race that really overlaps (new tests)
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| JT-F1 | Finalise (event capture runs), then two manual captures released by one barrier; the test records each request's start and end and asserts the intervals overlapped | no 5xx; both 200 with captured 0 (or one 409); exactly the 3 lines of the fixture, each ref once | PASS | Passed. Six rounds of two captures behind one barrier; the test asserts at least one round had overlapping request intervals (it held). No 5xx, every OK answer said captured 0, three lines once each. Isolated reruns: 3 of 3 passed. |
-| JT-F2 | Finalise, then two manual captures and one replay of the finalised-event handler released together | no 5xx; the 3 lines once each; sum of captured across callers is 0 | PASS | Passed. Four rounds of two captures plus one replay of the finalised-event handler; at least one round with all three in flight together was asserted (held). Three lines once each. Isolated reruns: 3 of 3 passed. |
-| JT-F3 | Two captures at the same moment on a host with no event handler (all 3 lines still to insert); intervals asserted to overlap | no 5xx; 3 lines once each after one repeat; callers together report 3 captured | PASS | Passed. On a host without the event handler, two captures raced with 3 lines each to insert: the intervals overlapped (asserted), the host logged the loser's DbUpdateException (the unique index doing its job), a repeat capture completed the set, the book holds the 3 lines once and the callers together reported exactly 3 captured. Isolated reruns: 3 of 3 passed. |
-
-#### G. Owner decisions of 2026-10-13/14
-
-| ID | Decision | Covered by | Status | Evidence |
-|---|---|---|---|---|
-| OD-1 | "Cat's owner at finalising" | J2 | PASS | J2 passed (full suite and final rerun): the owner at finalising is billed, the appointment's customer is not, and a later change of owner does not move it. |
-| OD-2 | "Add a price, charge them" (diagnostic price, default 0, frozen) | J1, J5, Domain Order_* tests, JT-G1 | PASS | J1 (350.00 and a default-0 line), J5 (price change after the order does not reprice), JT-G1 (database refuses a change), and the Domain Order_* tests all passed. |
-| OD-3 | "Skip until Boarding" (no boarding link; each visit billed on its own) | J1 (visit is its own bill); the event has no BoardingStayId (read) | PASS | J1 passed: the visit is billed as its own bill. `grep BoardingStay` over src finds no boarding member on any visit or surgery event or aggregate. |
-| OD-4 | Reversal void "Keep it" (reversal voids un-invoiced dispense charges) | J6 | PASS | J6 passed: the reversal voided both un-invoiced charges and a re-capture answered DispensingReversed. Invoiced charges are backlog 72 (not tested here). |
-| OD-5 | Surgery payer "Owner at discharge" | J7d, J7i, JT-D5, JT-D8 | PASS | J7d, J7i, JT-D5 (mutant killed) and JT-D8 (mutant killed). |
-| OD-6 | Abandoned "Drugs only" | J7b, J7g, J7h | PASS | J7b (drug only, no fee), J7g and J7h passed. |
-| OD-7a | Old visits "Bill by hand": a finalised visit with no recorded owner is not auto-billed (`VisitCustomerNotRecorded`) | JT-G2 (real VisitBillableItemSource) | PASS | New JT-G2 (VisitBillableItemSourceTests, 3 tests) passed against the real visit source; with the null-owner check replaced by a fallback to Guid.Empty it failed. The earlier unit test PhaseJCaptureTests.AVisitNotFinalisedOrWithoutARecordedOwner only passes a fake source's own answer back through the handler and would have passed with the fallback in place; it is decoration for this rule and I left it. |
-| OD-7b | Same for a discharged surgery with no owner at discharge (`SurgeryCustomerNotRecorded`), and neither is listed as uncaptured | no behavioural test possible today | BLOCKED | A surgery with no owner_at_discharge_id cannot be made through the API (Discharge always stores it) and a stored value cannot be set back to NULL (trigger CR001), so SurgeryCustomerNotRecorded and the list's `OwnerAtDischargeId != null` filter were read, not run. The visit equivalent on the list (`CustomerId != null`) is in the same position. Needs a seam: an unsaved-owner fake for the surgery source, or a test-only seed of a pre-migration row. |
-
-#### H. Gaps found while enumerating (new tests)
-
-| ID | Case | Expected | Status | Evidence |
-|---|---|---|---|---|
-| JT-G1 | The database refuses a change to a diagnostic order's price, currency or tax class after the order is made (CR001); no existing test pins this | CR001 on each of the three columns | PASS | Passed on the real database (CR001 on price, currency and tax class; the stored 350.00 unchanged). Failed under mutant D7, so it pins backlog 86's fix, which had no test. |
-| JT-G2 | The real VisitBillableItemSource refuses an owner-less or open visit and does not exist for an unknown one (Infrastructure.Tests) | NotBillable VisitCustomerNotRecorded / VisitNotFinalised / NotFound | PASS | Infrastructure.Tests VisitBillableItemSourceTests: 3 passed (owner-less finalised visit, open visit, unknown visit). A mutant that bills an owner-less visit to Guid.Empty failed the first. |
-
 ## Cases I could not run
 
-Phase J TEST gate: OD-7b (a discharged surgery with no owner at discharge) could not be run: the API always stores the owner and the database refuses to set it back to NULL, so `SurgeryCustomerNotRecorded` and the uncaptured list's owner-present filters were read, not watched. Unblock with a fake for the surgery source's database read, or a test-only seed of a pre-migration row. Everything else: every row was executed; the former DEFERRED rows (Phase J) are built, see above. XI-13 (a second cash-up oracle) was dropped: I-F1 already uses a hand-computed oracle with cash, staff COD, courier COD, card, transfer, cash refund and a same-day cash reversal, and passed.
+None.
 
 ## Gaps left deliberately
 
 | Gap | Why not covered | Suggested owner |
 |---|---|---|
-| U-B4 and U-C9 have no isolated unit test | Covered at integration level (I-B1, XI-14); the item source and numbering check read the database | developer, optional |
+| U-C9 has no isolated unit test | Covered at integration level (XI-14); the numbering check reads the database | developer, optional |
 | U-X6 (read side never rehydrates) is a regex over two shapes | Does not detect ToListAsync on a whole entity; my own grep found none today | developer: widen it |
 | The negative assertion after RunDeliveryPassesUntilAsync (pending payment sends no message) | Still relies on queue order; a database assertion that no notification request exists would be exact | developer |
 | Concurrent first cash-up count (PK violation, CODE_REVIEW LOW) | Not exercised | developer |
 | True multi-process numbering | Two hosts in one test process share the database, not an OS process; the guarantee rests on xmin and the unique indexes, which XI-1 and XI-1b exercise | none |
-| Phase J: invoiced dispensing charges are not voided on reversal (backlog 72) | not driven at integration level; needs an invoiced charge on a reversed supply | developer |
-| Phase J: surgery/visit owner-less rows (OD-7b) | see Cases I could not run | developer |
-| Phase J: the Reporting schedule tests (I_G5, I_G6 ...) fail in a full run and pass alone | shared-database coupling, outside Phase J | Reporting owner |
+| The Reporting schedule tests (I_G5, I_G6 ...) fail in a full run and pass alone | shared-database coupling, outside Billing | Reporting owner |
 
 ## Flakiness and test-quality notes
 

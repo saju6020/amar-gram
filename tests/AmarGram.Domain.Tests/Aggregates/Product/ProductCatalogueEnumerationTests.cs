@@ -8,7 +8,7 @@ using AmarGram.Shared.Common.Enums;
 namespace AmarGram.Domain.Tests.Aggregates.Product;
 
 /// <summary>HO-P2 §1.1 to §1.3 -- the general catalogue: food is a rule on each category, subcategories belong to
-/// exactly one category, certifications replace the pet-food health focus.</summary>
+/// exactly one category, and food products carry certifications.</summary>
 public sealed class ProductCatalogueEnumerationTests
 {
     private static ProductAggregate CreateProduct(ProductCategory category)

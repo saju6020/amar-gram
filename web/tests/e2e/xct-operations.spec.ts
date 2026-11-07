@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 import { test, expect, signInAsStaff } from './fixtures';
 import { MALFORMED_DRILL_JSON, VALID_DRILL_JSON, xctFixtureIds } from '../../mocks/handlers/operations';
@@ -68,9 +68,17 @@ test('E-C5 re-applying three ids shows the four counts', async ({ page }) => {
   await expect(page.getByText('Already erased')).toBeVisible();
 });
 
-async function setBackup(page: Page, scenario: string) {
+/**
+ * Changes the mocked backup scenario and waits until `expected` shows it. Invalidating once is not enough: a status
+ * request still in flight from page load has no cached data yet, so React Query joins it instead of cancelling it, and
+ * the old scenario's answer lands after the change. Invalidate again until the page reflects the new scenario.
+ */
+async function setBackup(page: Page, scenario: string, expected: Locator) {
   await page.evaluate((s) => (window as unknown as XctMockWindow).__xctMock.setBackupScenario(s), scenario);
-  await page.evaluate(() => (window as unknown as XctMockWindow).__invalidateQueries(['admin']));
+  await expect(async () => {
+    await page.evaluate(() => (window as unknown as XctMockWindow).__invalidateQueries(['admin']));
+    await expect(expected).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
 }
 
 test('E-D1 a stale backup and no restore test are both visible without scrolling, and the overdue banner shows on admin routes', async ({
@@ -78,15 +86,13 @@ test('E-D1 a stale backup and no restore test are both visible without scrolling
 }) => {
   await page.goto('/staff/admin/operations/backup');
   await expect(page.getByRole('heading', { name: 'Backup & restore' })).toBeVisible({ timeout: 20_000 });
-  await setBackup(page, 'neverTested');
   const overdue = page.getByRole('alert').filter({ hasText: 'Restore test overdue' });
-  await expect(overdue).toBeVisible({ timeout: 20_000 });
+  await setBackup(page, 'neverTested', overdue);
   await expect(overdue).toBeInViewport();
   await expect(page.getByText(/Backups are stale/)).toBeInViewport();
   await page.goto('/staff/admin/branches');
   await expect(page.getByRole('navigation', { name: 'Administration' })).toBeVisible({ timeout: 30_000 });
-  await setBackup(page, 'overdue');
-  await expect(page.getByText('The restore test is overdue.')).toBeVisible({ timeout: 20_000 });
+  await setBackup(page, 'overdue', page.getByText('The restore test is overdue.'));
   await page.getByRole('button', { name: 'Dismiss for now' }).click();
   await expect(page.getByText('The restore test is overdue.')).toHaveCount(0);
 });

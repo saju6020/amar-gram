@@ -62,7 +62,7 @@
         </form>
       </div>
       <div role="tablist" aria-label="Category" style="display: flex; gap: 6px; flex-wrap: wrap">
-        <sc-for list="{{cats}}" as="c" hint-placeholder-count="5">
+        <sc-for list="{{categories}}" as="c" hint-placeholder-count="5">
           <button type="button" role="tab" aria-selected="{{c.on}}" onClick="{{c.pick}}" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: 0; background: {{c.bg}}; color: {{c.ink}}; font: inherit; font-weight: 600; cursor: pointer">{{c.label}}</button>
         </sc-for>
       </div>
@@ -135,12 +135,12 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { cat: 0, qty: { 0: 1, 3: 2 }, tender: 0, cash: 1000, done: false }; }
+  constructor(props) { super(props); this.state = { category: 0, qty: { 0: 1, 3: 2 }, tender: 0, cash: 1000, done: false }; }
   renderVals() {
     const s = this.state;
     const fmt = (n) => '৳' + n.toLocaleString('en-IN');
     const all = [['Chinigura rice', '1 kg', 180, 'Rice', '#E3D3A8'], ['Kalijira rice', '1 kg', 190, 'Rice', '#E5D6AE'], ['Wild honey', '500 g', 650, 'Honey', '#F0CF7A'], ['Mustard oil', '1 L', 320, 'Oils', '#E8DD8C'], ['Pure ghee', '400 g', 750, 'Oils', '#E8DD8C'], ['Turmeric powder', '200 g', 140, 'Spices', '#E9B08A'], ['Red lentils', '1 kg', 150, 'Pulses', '#D9C9A0'], ['Khejur gur', '500 g', 280, 'Honey', '#CFA98A']];
-    const cats = ['All', 'Rice', 'Honey', 'Oils', 'Spices', 'Pulses'];
+    const categories = ['All', 'Rice', 'Honey', 'Oils', 'Spices', 'Pulses'];
     const change = (i, d) => () => { const q = { ...s.qty }; q[i] = Math.max(0, (q[i] || 0) + d); if (!q[i]) delete q[i]; this.setState({ qty: q }); };
     const ids = Object.keys(s.qty).map(Number);
     const total = ids.reduce((t, i) => t + all[i][2] * s.qty[i], 0);
@@ -149,8 +149,8 @@ class Component extends DCLogic {
     const cant = total === 0 || (s.tender === 0 && s.cash < total);
     return {
       open: !s.done, done: s.done,
-      cats: cats.map((label, i) => ({ label, on: s.cat === i, bg: s.cat === i ? '#2F5114' : '#FFFFFF', ink: s.cat === i ? '#F4F8E8' : '#2A1F12', pick: () => this.setState({ cat: i }) })),
-      products: all.map((p, i) => ({ p, i })).filter(({ p }) => s.cat === 0 || p[3] === cats[s.cat]).map(({ p, i }) => ({ name: p[0], size: p[1], price: fmt(p[2]), tint: p[4], add: change(i, 1) })),
+      categories: categories.map((label, i) => ({ label, on: s.category === i, bg: s.category === i ? '#2F5114' : '#FFFFFF', ink: s.category === i ? '#F4F8E8' : '#2A1F12', pick: () => this.setState({ category: i }) })),
+      products: all.map((p, i) => ({ p, i })).filter(({ p }) => s.category === 0 || p[3] === categories[s.category]).map(({ p, i }) => ({ name: p[0], size: p[1], price: fmt(p[2]), tint: p[4], add: change(i, 1) })),
       emptyTicket: ids.length === 0,
       lines: ids.map((i) => ({ name: all[i][0] + ' ' + all[i][1], unit: fmt(all[i][2]), qty: s.qty[i], total: fmt(all[i][2] * s.qty[i]), inc: change(i, 1), dec: change(i, -1) })),
       total: fmt(total),

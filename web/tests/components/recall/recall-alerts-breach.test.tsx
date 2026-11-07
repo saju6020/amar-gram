@@ -41,7 +41,7 @@ function alert(overrides: Partial<InventoryAlert>): InventoryAlert {
     status: 'Open',
     skuId: 'k',
     skuCode: 'FD-ADT-POUCH',
-    displayName: 'Adult wet food',
+    displayName: 'Sundarban honey',
     batchId: null,
     lotNumber: null,
     locationId: 'l',

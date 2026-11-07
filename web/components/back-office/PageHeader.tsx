@@ -14,6 +14,7 @@ export function PageHeader({
   eyebrow,
   description,
   actions,
+  actionsClassName,
   headingLevel = 1,
   headingRef,
 }: {
@@ -21,6 +22,8 @@ export function PageHeader({
   eyebrow?: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
+  /** Extra classes for the actions row, e.g. `max-sm:w-full` so a search field can fill the phone's width. */
+  actionsClassName?: string;
   headingLevel?: 1 | 2;
   headingRef?: Ref<HTMLHeadingElement>;
 }) {
@@ -41,7 +44,7 @@ export function PageHeader({
         </Heading>
         {description && <p className="mt-1 text-sm text-ink-muted">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className={cn('flex flex-wrap items-center gap-2', actionsClassName)}>{actions}</div>}
     </header>
   );
 }

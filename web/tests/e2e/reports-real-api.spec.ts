@@ -7,7 +7,7 @@ import { expectAxeClean, expectNoHorizontalScroll } from './reports-helpers';
 
 /**
  * HO-RPT-002 §16 — the E-cases re-run against the REAL API (HO-RPT-001 on master). Manual: needs
- * the API on :5114 on the throwaway database `catecommerce_rpt002e2e` (with
+ * the API on :5114 on the throwaway database `amargram_rpt002e2e` (with
  * `Cors__AllowedOrigins__0` = this app's origin), the web app on :3114 started with
  * `NEXT_PUBLIC_USE_MOCKS=false NEXT_PUBLIC_API_BASE_URL=http://localhost:5114`, and `REPORTS_SEED`
  * pointing at the JSON a throwaway seeder wrote (one branch; an administrator, two accountants, a

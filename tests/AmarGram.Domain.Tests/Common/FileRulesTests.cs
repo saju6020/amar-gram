@@ -76,7 +76,7 @@ public sealed class FileRulesTests
         "image/webp" => BuildRiffWebpHeader(),
         "video/mp4" => [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70],
         "application/zip" => [0x50, 0x4B, 0x03, 0x04],
-        "text/csv" => "name,age\nWhiskers,3\n"u8.ToArray(),
+        "text/csv" => "name,age\nAbdullah,3\n"u8.ToArray(),
         _ => throw new NotSupportedException(contentType)
     };
 
@@ -101,7 +101,7 @@ public sealed class FileRulesTests
     [Fact]
     public async Task ContainsDeniedCsvSignatureAsync_finds_an_hta_payload_after_360_bytes_of_benign_csv()
     {
-        var benignPrefix = string.Concat(Enumerable.Repeat("name,age\nWhiskers,3\n", 18)); // > 360 bytes
+        var benignPrefix = string.Concat(Enumerable.Repeat("name,age\nAbdullah,3\n", 18)); // > 360 bytes
         var content = System.Text.Encoding.ASCII.GetBytes(benignPrefix + "<HTA:APPLICATION/><script language=vbscript>msgbox 1</script>");
 
         var result = await FileRules.ContainsDeniedCsvSignatureAsync(new MemoryStream(content), CancellationToken.None);
@@ -112,7 +112,7 @@ public sealed class FileRulesTests
     [Fact]
     public async Task ContainsDeniedCsvSignatureAsync_is_false_for_ordinary_csv()
     {
-        var content = "name,age\nWhiskers,3\nMittens,5\n"u8.ToArray();
+        var content = "name,age\nAbdullah,3\nShamima,5\n"u8.ToArray();
 
         var result = await FileRules.ContainsDeniedCsvSignatureAsync(new MemoryStream(content), CancellationToken.None);
 

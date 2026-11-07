@@ -11,6 +11,12 @@ import ReportsLayout from '@/app/(staff)/staff/reports/layout';
 import { ReportViewer } from '@/components/reports/ReportViewer';
 import { renderWithClient } from '../reports/helpers';
 
+// These render whole screens (a form, a customers list with its profile) with MSW and real user-event typing: ~2 s
+// alone, but 5 s+ when the machine is loaded (HO-P4 ACCEPTANCE: the customer search case took 24.7 s under load).
+// A generous per-test limit keeps load from failing them; it does not slow a passing run.
+// Measured 2026-11-07 on an unloaded machine, this file alone: slowest test 1.0 s (the rest well under 1 s), so 30 s is about 15x headroom, not a normal duration.
+vi.setConfig({ testTimeout: 30_000 });
+
 const nav = vi.hoisted(() => ({
   search: '',
   pathname: '/staff/customers',

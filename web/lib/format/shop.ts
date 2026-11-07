@@ -43,7 +43,7 @@ export function formatShortInstant(instant: string): string {
   return format(date, 'd MMM yyyy');
 }
 
-// 2026-10-16: the AmarPet import brought more origins; every featured origin now has a drawn flag.
+// 2026-10-16: the catalogue import brought more origins; every featured origin now has a drawn flag.
 const FLAG_CODES = new Set([
   'at',
   'bd',

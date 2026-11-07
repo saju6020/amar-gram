@@ -118,7 +118,7 @@ describe('SupplierForm re-seeding (CODE: pristine or new record only)', () => {
   const supplier: SupplierDetail = {
     id: 's1',
     code: 'MERIDIAN',
-    name: 'Meridian Pet Supplies',
+    name: 'Meridian Organic Supplies',
     countryCode: 'BD',
     contactName: null,
     phone: null,

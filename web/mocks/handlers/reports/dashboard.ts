@@ -17,6 +17,11 @@ export function resetDashboardMock(): void {
   dashboardControl.refreshSeconds = 60;
 }
 
+function extraTiles(): DashboardTile[] {
+  if (typeof window === 'undefined') return [];
+  return (window as unknown as { __dashboardExtraTiles?: DashboardTile[] }).__dashboardExtraTiles ?? [];
+}
+
 const count = (
   key: string,
   label: string,
@@ -216,7 +221,9 @@ export const dashboardHandlers: HttpHandler[] = [
       timeZoneId: branch.timeZoneId,
       generatedOn: `2026-10-14T0${Math.min(9, 3 + dashboardControl.polls)}:42:00+00:00`,
       refreshSeconds: dashboardControl.refreshSeconds,
-      tiles: tilesFor(roles, dashboardControl.polls - 1),
+      // A Playwright spec cannot `page.route` a request the mock service worker answers, so it puts extra tiles
+      // on `window.__dashboardExtraTiles` (an init script) and they are appended to the seeded ones.
+      tiles: [...tilesFor(roles, dashboardControl.polls - 1), ...extraTiles()],
     };
     return HttpResponse.json(body, { headers: { 'Cache-Control': 'no-store' } });
   }),

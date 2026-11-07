@@ -51,7 +51,7 @@ async function storedCopies(page: Page): Promise<number> {
   return page.evaluate(
     () =>
       new Promise<number>((resolve) => {
-        const open = indexedDB.open('purrcare-offline');
+        const open = indexedDB.open('amargram-offline');
         open.onerror = () => resolve(0);
         open.onsuccess = () => {
           const db = open.result;
@@ -120,7 +120,7 @@ test('A15 the board refuses a copy saved by someone else', async ({ page }) => {
   await page.evaluate(
     () =>
       new Promise<void>((resolve, reject) => {
-        const open = indexedDB.open('purrcare-offline');
+        const open = indexedDB.open('amargram-offline');
         open.onerror = () => reject(open.error);
         open.onsuccess = () => {
           const tx = open.result.transaction('snapshot', 'readwrite');

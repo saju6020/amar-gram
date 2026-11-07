@@ -14,15 +14,15 @@ namespace AmarGram.IntegrationTests;
 /// </summary>
 public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : OrderingShopTestBase(factory)
 {
-    private sealed record Till(Shop Shop, HttpClient Cashier, OrderingSku Food, OrderingSku Toy);
+    private sealed record Till(Shop Shop, HttpClient Cashier, OrderingSku Food, OrderingSku Bag);
 
     private async Task<Till> TillAsync()
     {
         var shop = await SetUpShopAsync(fillCart: false);
         var food = await CreateSkuAsync(shop.Context, price: 850m, stock: 20m, food: true, name: "Basmati rice", barcode: NewBarcode());
-        var toy = await CreateSkuAsync(shop.Context, price: 120m, stock: 20m, taxClassId: shop.Context.ZeroTaxClassId, name: "Feather wand " + Guid.NewGuid().ToString("N")[..8], barcode: NewBarcode());
+        var bag = await CreateSkuAsync(shop.Context, price: 120m, stock: 20m, taxClassId: shop.Context.ZeroTaxClassId, name: "Jute shopping bag " + Guid.NewGuid().ToString("N")[..8], barcode: NewBarcode());
         var (cashier, _) = await StaffClientAsync(shop.Context, StaffRoles.Reception);
-        return new Till(shop, cashier, food, toy);
+        return new Till(shop, cashier, food, bag);
     }
 
     /// <summary>A valid GTIN-13 (the catalogue checks the check digit) that no other test uses.</summary>
@@ -34,11 +34,11 @@ public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : Order
     }
 
     /// <summary>ADR-216: every sale names the buyer (name and mobile, both required). With no mobile given, a fresh one is used -- a brand-new walk-in customer.</summary>
-    private static object Sale(Till till, object[] tenders, int food = 1, int toy = 1, string? mobile = null, string? name = "Counter Customer", string? code = null) => new
+    private static object Sale(Till till, object[] tenders, int food = 1, int bag = 1, string? mobile = null, string? name = "Counter Customer", string? code = null) => new
     {
         customerName = name,
         customerMobile = mobile ?? NewMobile(),
-        lines = new[] { new { skuId = till.Food.SkuId, quantity = food }, new { skuId = till.Toy.SkuId, quantity = toy } },
+        lines = new[] { new { skuId = till.Food.SkuId, quantity = food }, new { skuId = till.Bag.SkuId, quantity = bag } },
         discountCode = code,
         tenders,
     };
@@ -50,7 +50,7 @@ public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : Order
 
     private static object Card(decimal amount, string reference = "SLIP-1001") => new { method = "InStoreCard", amount, reference };
 
-    // 1 x food (850.00 + 15 % = 977.50) + 1 x toy (120.00 at 0 %) = 1097.50
+    // 1 x food (850.00 + 15 % = 977.50) + 1 x bag (120.00 at 0 %) = 1097.50
     private const decimal Total = 1097.50m;
 
     // ── I-H1 (US-ORD-16 AC1, AC2) ───────────────────────────────────────────────────────────────────
@@ -67,8 +67,8 @@ public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : Order
         Assert.Contains(batch.GetProperty("batchId").GetGuid(), till.Food.BatchIds);
 
         Assert.Equal(HttpStatusCode.NotFound, (await till.Cashier.GetAsync("/api/staff/pos/sku?barcode=0000000000000")).StatusCode);
-        var search = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await till.Cashier.GetAsync($"/api/staff/pos/skus?q={till.Toy.Name}")));
-        Assert.Contains(search.EnumerateArray(), s => s.GetProperty("skuId").GetGuid() == till.Toy.SkuId);
+        var search = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await till.Cashier.GetAsync($"/api/staff/pos/skus?q={till.Bag.Name}")));
+        Assert.Contains(search.EnumerateArray(), s => s.GetProperty("skuId").GetGuid() == till.Bag.SkuId);
 
         var quote = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await till.Cashier.PostAsJsonAsync("/api/staff/pos/quote", Sale(till, [])!, Json)));
         Assert.True(quote.GetProperty("canSell").GetBoolean());

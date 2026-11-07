@@ -125,13 +125,13 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { rep: 'cat', period: 1, hover: -1, schedule: false }; }
+  constructor(props) { super(props); this.state = { rep: 'category', period: 1, hover: -1, schedule: false }; }
   renderVals() {
     const s = this.state;
     const fmt = (n) => '৳' + n.toLocaleString('en-IN');
     const scale = [0.25, 1, 1.1][s.period];
     const reps = {
-      cat: { title: 'Revenue by category', sub: 'Net of returns and discounts', chart: 'Revenue by category (৳)', cols: ['Category', 'Revenue', 'Share'], money: true,
+      category: { title: 'Revenue by category', sub: 'Net of returns and discounts', chart: 'Revenue by category (৳)', cols: ['Category', 'Revenue', 'Share'], money: true,
         rows: [['Rice & grains', 412000], ['Honey & gur', 268000], ['Oils & ghee', 231000], ['Spices', 96000], ['Pulses', 88000], ['Fresh produce', 61000]] },
       top: { title: 'Top products', sub: 'By units sold', chart: 'Units sold', cols: ['Product', 'Units', 'Share'], money: false,
         rows: [['Chinigura rice 1 kg', 1840], ['Mustard oil 1 L', 1210], ['Red lentils 1 kg', 980], ['Wild honey 500 g', 640], ['Khejur gur 500 g', 520], ['Turmeric 200 g', 410]] },
@@ -143,7 +143,7 @@ class Component extends DCLogic {
     const total = rows.reduce((t, x) => t + x[1], 0);
     const max = Math.max(...rows.map((x) => x[1]));
     const val = (v) => r.money ? fmt(v) : v.toLocaleString('en-IN');
-    const groups = [['Sales', [['cat', 'Revenue by category'], ['top', 'Top products'], ['daily', 'Daily sales']]], ['Stock', [['expiry', 'Stock expiring soon'], ['val', 'Stock valuation']]], ['Customers', [['new', 'New & repeat customers']]], ['Money', [['cash', 'Cash-up history'], ['vat', 'VAT summary']]]];
+    const groups = [['Sales', [['category', 'Revenue by category'], ['top', 'Top products'], ['daily', 'Daily sales']]], ['Stock', [['expiry', 'Stock expiring soon'], ['val', 'Stock valuation']]], ['Customers', [['new', 'New & repeat customers']]], ['Money', [['cash', 'Cash-up history'], ['vat', 'VAT summary']]]];
     const h = s.hover;
     return {
       groups: groups.map(([label, items]) => ({ label, items: items.map(([key, l]) => { const on = key === s.rep; const has = !!reps[key]; return { label: l, current: on ? 'page' : 'false', bg: on ? '#2F5114' : 'transparent', ink: on ? '#F4F8E8' : has ? '#2A1F12' : '#8C7B61', weight: on ? '600' : '500', pick: () => { if (has) this.setState({ rep: key, hover: -1 }); } }; }) })),

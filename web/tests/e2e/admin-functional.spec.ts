@@ -99,17 +99,23 @@ test('E-B1: create a branch in Europe/London, set hours, add a holiday', async (
   // Calendar half (HO-ADM-002-FU1 E-B1): the detail view's Calendar tab skips the holiday.
   await page.getByRole('link', { name: 'Calendar' }).click();
   await page.goto(`/staff/admin/branches/${branchId}/calendar?month=2028-12`);
-  const calendarGrid = page.getByRole('grid');
   await expect(page.getByText(/Times in Europe\/London/)).toBeVisible();
-  await expect(
-    calendarGrid.getByRole('gridcell', { name: /Monday 25 December 2028/ }),
-  ).toHaveAccessibleName(/Closed — Public holiday: Christmas Day/);
-  await expect(
-    calendarGrid.getByRole('gridcell', { name: /Monday 18 December 2028/ }),
-  ).toHaveAccessibleName(/Open 08:00–17:00/);
-  await expect(
-    calendarGrid.getByRole('gridcell', { name: /Tuesday 26 December 2028/ }),
-  ).toHaveAccessibleName(/Closed \(regular weekly closure\)/);
+  // The page shows a grid from 768 px and a day list below it (HO-ADM-002-FU1 E-CAL6); at the
+  // 360 px project there is no gridcell to find, so read the same status sentence from the list.
+  const expectDay = async (long: string, short: string, text: RegExp) => {
+    if ((page.viewportSize()?.width ?? 1280) >= 768) {
+      await expect(
+        page.getByRole('grid').getByRole('gridcell', { name: new RegExp(long) }),
+      ).toHaveAccessibleName(text);
+    } else {
+      await expect(
+        page.getByRole('listitem').filter({ hasText: new RegExp(`^${short}`) }),
+      ).toContainText(text);
+    }
+  };
+  await expectDay('Monday 25 December 2028', 'Mon 25 Dec', /Closed — Public holiday: Christmas Day/);
+  await expectDay('Monday 18 December 2028', 'Mon 18 Dec', /Open 08:00–17:00/);
+  await expectDay('Tuesday 26 December 2028', 'Tue 26 Dec', /Closed \(regular weekly closure\)/);
 });
 
 /** The sidebar's outlet picker: in the aside from `sm` up, at the top of the nav sheet below it. */

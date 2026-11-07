@@ -53,7 +53,7 @@ public sealed class OrderingPlacementEndpointTests(OrderingApiFactory factory) :
         // the charges Billing invoiced are the order's lines and its delivery fee, and the invoice total is the order total
         var invoice = await WithDbAsync(db => db.Invoices.AsNoTracking().SingleAsync(i => i.Id == order.InvoiceId));
         Assert.Equal(order.Totals.GrandTotal, invoice.Total);
-        Assert.Equal(3, invoice.Lines.Count); // food, toy, delivery
+        Assert.Equal(3, invoice.Lines.Count); // food, bag, delivery
 
         // the confirmation message was committed with the order
         Assert.Equal(1, await NotificationCountAsync(shop.CustomerId, "order.confirmed"));

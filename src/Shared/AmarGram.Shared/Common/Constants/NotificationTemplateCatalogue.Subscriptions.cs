@@ -3,8 +3,8 @@ using AmarGram.Shared.Common.Enums;
 namespace AmarGram.Shared.Common.Constants;
 
 /// <summary>
-/// HO-SUB-001 §8.11 (ADR-245, ADR-246) -- the eight subscription templates appended to HO-NTF-001's catalogue (the ninth, <c>subscription.authorisation-lapsed</c>,
-/// went with the clinic, HO-P1). All <b>Transactional</b>: they concern an order the customer asked for. <c>created</c> and <c>cancelled</c> are <b>Urgent</b> (the
+/// HO-SUB-001 §8.11 (ADR-245, ADR-246) -- the eight subscription templates appended to HO-NTF-001's catalogue.
+/// All <b>Transactional</b>: they concern an order the customer asked for. <c>created</c> and <c>cancelled</c> are <b>Urgent</b> (the
 /// customer did it seconds ago); <c>changed</c> is in-app only. Every dynamic value is display text built by the producer
 /// (<see cref="SubscriptionMessages"/>); none carries a decision. Dates are pre-formatted local text (<c>Tue 20 Oct</c>), money <c>BDT 1,450.00</c>.
 /// Enqueued by command handlers or the subscription worker only (HO-NTF-001 ADR-057).

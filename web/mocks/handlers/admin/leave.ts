@@ -9,7 +9,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_admin_leave_mock_db__';
+const PERSIST_KEY = '__amargram_admin_leave_mock_db__';
 
 /** `mocks/handlers/admin/leave.ts` — HO-ADM-002 §12, HO-ADM-001 §8.4/§12.4. Self-service leave and
  *  the administrator decision queue. */

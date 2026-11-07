@@ -8,7 +8,7 @@ namespace AmarGram.Infrastructure.Tests.Subscriptions;
 /// <summary>
 /// HO-SUB-001 §12.1 and §15 U-X3 -- the baseline migration creates both Subscriptions tables in their own <c>subscription</c> schema with every index of the spec, and the status
 /// values in the filtered "one live subscription per customer and SKU" index are the enumeration's own <c>Value</c>s, written from the enumeration in configuration code, never
-/// typed as literals. Adapted: with the cat retired the live index is on <c>(customer_id, sku_id)</c>, so it needs no <c>NULLS NOT DISTINCT</c> (V1 no longer applies).
+/// typed as literals. The live index is on <c>(customer_id, sku_id)</c>, both required, so it needs no <c>NULLS NOT DISTINCT</c>.
 /// </summary>
 public sealed class SubscriptionMigrationTests
 {

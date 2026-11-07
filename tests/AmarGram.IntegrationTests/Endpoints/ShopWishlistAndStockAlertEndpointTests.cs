@@ -68,7 +68,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
     public async Task I_G1_Wishlist_ArchivedProductStaysAndReadsBackNotOnSale()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("WishArch"), "Old Toy");
+        var product = await CreateProductAsync(staff, NewBrand("WishArch"), "Old Bag");
         var (customer, _) = await RegisterAndSignInCustomerAsync();
         await customer.PutAsync($"/api/customers/me/wishlist/items/{product.SkuId}", null);
 
@@ -85,7 +85,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
     public async Task I_G1_Wishlist_UnknownSku_Is404_Anonymous_Is401_AndEachCustomerSeesOnlyTheirOwn()
     {
         var staff = await SignInAsShopManagerAsync();
-        var product = await CreateProductAsync(staff, NewBrand("WishOwn"), "Scratcher");
+        var product = await CreateProductAsync(staff, NewBrand("WishOwn"), "Dish Rack");
         var (first, _) = await RegisterAndSignInCustomerAsync();
         var (second, _) = await RegisterAndSignInCustomerAsync();
 
@@ -104,7 +104,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("WishRace");
         var products = new List<SeededProduct>();
-        for (var i = 0; i < 6; i++) products.Add(await CreateProductAsync(staff, brand, $"Race Toy {i}"));
+        for (var i = 0; i < 6; i++) products.Add(await CreateProductAsync(staff, brand, $"Race Bag {i}"));
         var (customer, _) = await RegisterAndSignInCustomerAsync();
 
         var responses = await Task.WhenAll(products.Select(p => customer.PutAsync($"/api/customers/me/wishlist/items/{p.SkuId}", null)));
@@ -378,7 +378,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var brand = NewBrand("Merge");
 
         var reviewed = await CreateProductAsync(staff, brand, "Reviewed Food", "RiceAndGrains");
-        var wished = await CreateProductAsync(staff, brand, "Wished Toy");
+        var wished = await CreateProductAsync(staff, brand, "Wished Bag");
         var alerted = await CreateProductAsync(staff, brand, "Alerted Item");
         await SetSkuOutOfStockAsync(alerted.SkuId);
 
@@ -480,7 +480,7 @@ public sealed class ShopWishlistAndStockAlertEndpointTests(ShopApiFactory factor
         var staff = await SignInAsShopManagerAsync();
         var brand = NewBrand("Anon");
         var reviewed = await CreateProductAsync(staff, brand, "Anon Reviewed Food", "RiceAndGrains");
-        var wished = await CreateProductAsync(staff, brand, "Anon Wished Toy");
+        var wished = await CreateProductAsync(staff, brand, "Anon Wished Bag");
         var alerted = await CreateProductAsync(staff, brand, "Anon Alerted Item");
         await SetSkuOutOfStockAsync(alerted.SkuId);
 

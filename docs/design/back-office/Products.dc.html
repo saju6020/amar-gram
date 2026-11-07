@@ -93,7 +93,7 @@
             <tr style="border-top: 1px solid #F0E9DA; background: {{r.rowBg}}">
               <td style="padding: 10px 12px"><input type="checkbox" aria-label="Select {{r.name}}" checked="{{r.sel}}" onChange="{{r.toggle}}" style="width: 20px; height: 20px; accent-color: #3F6A1E"></td>
               <td style="padding: 10px 12px"><a href="ProductEditor.dc.html" style="display: flex; align-items: center; gap: 10px; color: #2A1F12; text-decoration: none"><span aria-hidden="true" style="width: 40px; height: 40px; border-radius: 8px; background: {{r.tint}}; flex: none"></span><span><strong>{{r.name}}</strong><sc-if value="{{r.organic}}" hint-placeholder-val="{{ false }}"><span style="margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #E3EDC6; color: #2F5114; font-size: 11px; font-weight: 600">Organic</span></sc-if></span></a></td>
-              <td style="padding: 10px 12px">{{r.cat}}</td>
+              <td style="padding: 10px 12px">{{r.category}}</td>
               <td style="padding: 10px 12px">{{r.origin}}</td>
               <td style="padding: 10px 12px">{{r.skus}}</td>
               <td style="padding: 10px 12px">{{r.price}}</td>
@@ -133,7 +133,7 @@ class Component extends DCLogic {
       statuses: tabs.map((label, i) => ({ label, on: s.tab === i, bg: s.tab === i ? '#2F5114' : 'transparent', ink: s.tab === i ? '#F4F8E8' : '#2A1F12', pick: () => this.setState({ tab: i }) })),
       anySelected: selIds.length > 0, selectedText: selIds.length + ' selected',
       publish: bulk('Published'), hide: bulk('Hidden'), clearSel: () => this.setState({ sel: {} }),
-      rows: shown.map((i) => { const b = base[i]; const st = statusOf(i); const low = b[5] < 10; return { name: b[0], cat: b[1], origin: b[2], skus: b[3], price: b[4], stock: b[5] === 0 ? 'Out of stock' : low ? b[5] + ' · low' : String(b[5]), stockInk: b[5] === 0 ? '#8A2814' : low ? '#6E4700' : '#2A1F12', stockWeight: low ? '600' : '400', status: st, pillBg: pill[st][0], pillInk: pill[st][1], organic: b[7], tint: b[8], sel: !!s.sel[i], rowBg: s.sel[i] ? '#F4F8E8' : '#FFFFFF', toggle: () => this.setState({ sel: { ...s.sel, [i]: !s.sel[i] } }) }; }),
+      rows: shown.map((i) => { const b = base[i]; const st = statusOf(i); const low = b[5] < 10; return { name: b[0], category: b[1], origin: b[2], skus: b[3], price: b[4], stock: b[5] === 0 ? 'Out of stock' : low ? b[5] + ' · low' : String(b[5]), stockInk: b[5] === 0 ? '#8A2814' : low ? '#6E4700' : '#2A1F12', stockWeight: low ? '600' : '400', status: st, pillBg: pill[st][0], pillInk: pill[st][1], organic: b[7], tint: b[8], sel: !!s.sel[i], rowBg: s.sel[i] ? '#F4F8E8' : '#FFFFFF', toggle: () => this.setState({ sel: { ...s.sel, [i]: !s.sel[i] } }) }; }),
       count: 'Showing ' + shown.length + ' of ' + base.length + ' products'
     };
   }

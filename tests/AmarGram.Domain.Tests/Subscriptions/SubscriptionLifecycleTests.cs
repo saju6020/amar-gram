@@ -9,7 +9,7 @@ using static AmarGram.Domain.Tests.Subscriptions.SubscriptionTestSupport;
 
 namespace AmarGram.Domain.Tests.Subscriptions;
 
-/// <summary>HO-SUB-001 §15 B -- creating a subscription (US-SUB-01 AC1) and the status machine (Appendix C, §8.4). Adapted: no cat, no authorisation.</summary>
+/// <summary>HO-SUB-001 §15 B -- creating a subscription (US-SUB-01 AC1) and the status machine (Appendix C, §8.4).</summary>
 public sealed class SubscriptionLifecycleTests
 {
     private static string Code(Action act) => Assert.Throws<DomainRuleViolationException>(act).ErrorCode;

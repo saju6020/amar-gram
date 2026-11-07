@@ -13,7 +13,7 @@ import type {
 /**
  * `components/templates/TemplatePreviewPanel.tsx` — ⭐ HO-NTF-002 §11.3, US-NTF-02 AC1/AC2. Shows the
  * SERVER's preview of the unsaved contents for the active channel. A preview `400` is shown inline
- * here, verbatim — the message that names the variable (`{{catname}} is not a variable of this
+ * here, verbatim — the message that names the variable (`{{customername}} is not a variable of this
  * template…`) is the acceptance criterion — while the editor also puts it on the offending field;
  * the previous good preview stays visible and typing is never blocked (`keepPreviousData`).
  * `errorCode` is never rendered. Any other failure is a generic sentence, never the server's text.

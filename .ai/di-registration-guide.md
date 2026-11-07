@@ -68,8 +68,8 @@ an unbound queue with no error anywhere.
 ### Validator registration — the one that fails silently
 
 ```csharp
-services.AddScoped<IValidator<RegisterCatCommand>, RegisterCatCommandValidator>();   // ✅
-services.AddScoped<RegisterCatCommandValidator>();                                   // ❌ never runs
+services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();   // ✅
+services.AddScoped<CreateProductCommandValidator>();                                   // ❌ never runs
 ```
 
 The platform's `IValidationService` resolves `IValidator<TCommand>`. Registered as the concrete

@@ -76,8 +76,7 @@ public sealed class StoredFileAggregate : AggregateRoot
 
         // Gate-fix 2026-09-27 (ARCHITECTURE MEDIUM): defence in depth -- the upload pipeline
         // (§8.2 steps 2-3) already checked these against FileRules before this command was even
-        // dispatched, but the aggregate can check its own state, so it does (the same precedent
-        // CatAggregate.AddPhoto already sets for CatPhotoRules).
+        // dispatched, but the aggregate can check its own state, so it does.
         var rule = FileRules.Find(dto.Purpose);
         if (rule is null || !rule.AllowedContentTypes.Contains(dto.ContentType, StringComparer.OrdinalIgnoreCase))
             throw new DomainRuleViolationException(
