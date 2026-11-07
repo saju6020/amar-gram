@@ -47,11 +47,11 @@ Each of these has a specific counter-example in `host-web-api.md`:
 3. **Business rules in the handler instead of the aggregate.** If the rule can be checked from
    the aggregate's own state, it belongs in the aggregate. Handlers orchestrate; they do not
    decide. This is what the removed CommandService layer kept getting wrong.
-4. **Rehydrating an aggregate to display it.** Loading `CatAggregate` to render four columns.
+4. **Rehydrating an aggregate to display it.** Loading `ProductAggregate` to render four columns.
    Project from the read context instead.
 5. **Registering a validator as the concrete type** instead of `IValidator<TCommand>`. The
    platform resolves the interface, so the validator silently never runs.
-6. **Throwing for an expected outcome.** "Cat not found" is a `CommandResponse.Failure`, not an
+6. **Throwing for an expected outcome.** "Product not found" is a `CommandResponse.Failure`, not an
    exception. Exceptions are for the unexpected.
 
 ---

@@ -137,7 +137,7 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
         var version = await GetVersionAsync(adminClient, key);
         // The raw template must stay within its own 10,000-character limit (TemplateRules), so the
         // filler alone is deliberately kept under that -- it is the 2000-character (the maximum a
-        // request variable may carry) catName substitution that pushes the RENDERED body over the
+        // request variable may carry) variable substitution that pushes the RENDERED body over the
         // column's 10,000-character limit.
         var filler = new string('x', 8900);
         var longInvoiceNumber = new string('M', NotificationRequestRules.MaxVariableLength);
@@ -214,7 +214,7 @@ public sealed class NotificationOverflowEndpointTests(NotificationsApiFactory fa
             new SendOutcome(SendOutcomeKind.PermanentFailure, null, "rejected by carrier"));
 
         // Seeded with the DEFAULT (uncustomised) templates -- the automatic fallback to Email here
-        // succeeds normally (a 2000-character catName renders comfortably under 10,000 through the
+        // succeeds normally (a 2000-character variable renders comfortably under 10,000 through the
         // default, much shorter templates); only the SUBSEQUENT admin-initiated resend below
         // exercises the overflowing customised template, isolating C7's own re-render path from
         // C5's.

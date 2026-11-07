@@ -12,8 +12,8 @@ public sealed record DocumentPayment(string ReceiptNumber, string Method, decima
 /// <summary>
 /// The data of an invoice PDF (HO-BIL-001 §12.2 / NFR-LEG-3): the <b>seller and bill-to snapshots</b> taken at issue,
 /// every line with its frozen rate and its business line, the totals, the payments applied, the loyalty row and the
-/// bank details. <c>IssuedOn</c> is printed in the <b>branch</b> zone. It lives in Infrastructure -- like
-/// <c>CatMedicalHistoryDocument</c> -- because Read already references Infrastructure and the renderer must not
+/// bank details. <c>IssuedOn</c> is printed in the <b>branch</b> zone. It lives in Infrastructure
+/// because Read already references Infrastructure and the renderer must not
 /// reference Read.
 /// </summary>
 public sealed record InvoiceDocument(
@@ -24,7 +24,7 @@ public sealed record InvoiceDocument(
     decimal PaidTotal, decimal CreditedTotal, int? LoyaltyPoints, decimal? LoyaltyValue, IReadOnlyList<DocumentPayment> Payments,
     string? CorrectsInvoiceNumber, string? CorrectsCreditNoteNumber);
 
-/// <summary>Behind an interface so the Api never references QuestPDF (the <c>ICatMedicalHistoryPdfRenderer</c> precedent).</summary>
+/// <summary>Behind an interface so the Api never references QuestPDF.</summary>
 public interface IInvoicePdfRenderer
 {
     byte[] Render(InvoiceDocument document);

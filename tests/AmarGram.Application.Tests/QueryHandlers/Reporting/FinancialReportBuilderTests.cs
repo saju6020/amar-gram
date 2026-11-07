@@ -268,21 +268,21 @@ public sealed class FinancialReportBuilderTests
     public void ALineWithNoSku_IsDeliveryAndFees_WithNoOrigin_AProductGroupsByItsCategoryAndOrigin_AndTheLineIsTheSalesChannel()
     {
         var food = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.RiceAndGrains.Value, SubCategory = null, CountryOfOrigin = "FR" };
-        var litter = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.HouseholdAndCare.Value, CountryOfOrigin = null };
+        var detergent = new RvSkuRow { SkuId = Guid.NewGuid(), Category = ProductCategory.HouseholdAndCare.Value, CountryOfOrigin = null };
 
         var delivery = RevenueFacts.Dimensions(OrderChannel.Online.Value, null);
         var foodDims = RevenueFacts.Dimensions(OrderChannel.Online.Value, food);
-        var litterDims = RevenueFacts.Dimensions(OrderChannel.Counter.Value, litter);
+        var detergentDims = RevenueFacts.Dimensions(OrderChannel.Counter.Value, detergent);
         var manual = RevenueFacts.Dimensions(null, null);
 
         Assert.Equal("Delivery and fees", delivery.Category);
         Assert.Equal("Not applicable", delivery.Origin);
         Assert.Equal("RiceAndGrains", foodDims.Category);
         Assert.Equal("FR", foodDims.Origin);
-        Assert.Equal("Not applicable", litterDims.Origin);
+        Assert.Equal("Not applicable", detergentDims.Origin);
         Assert.Equal("RiceAndGrains", foodDims.ServiceGroup);
         Assert.Equal("Online", foodDims.Line);
-        Assert.Equal("Counter", litterDims.Line);
+        Assert.Equal("Counter", detergentDims.Line);
         Assert.Equal(RevenueFacts.OtherChannel, manual.Line);   // a line with no order behind it
         Assert.Equal("Delivery and fees", manual.Category);
     }

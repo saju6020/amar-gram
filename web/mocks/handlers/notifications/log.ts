@@ -13,7 +13,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_notifications_log_mock_db__';
+const PERSIST_KEY = '__amargram_notifications_log_mock_db__';
 
 /**
  * `mocks/handlers/notifications/log.ts` — HO-NTF-002 §12, HO-NTF-001 §12.4 (`AdminNotificationsController`).

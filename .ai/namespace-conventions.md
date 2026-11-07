@@ -77,9 +77,8 @@ shared by **one** host rather than three.
 
 For this project, derived from the SRS bounded contexts — see `.ai/bounded-contexts.md`:
 
-`Cat`, `Appointment`, `Visit`, `Surgery`, `Prescription`, `Vaccination`, `BoardingUnit`,
-`BoardingStay`, `CareTask`, `Incident`, `Product`, `Sku`, `Supplier`, `PurchaseOrder`,
-`Consignment`, `Batch`, `Stock`, `Order`, `Subscription`, `Invoice`, `Payment`, `Notification`.
+`Product`, `Sku`, `Supplier`, `PurchaseOrder`, `Consignment`, `Batch`, `Stock`, `Order`,
+`Subscription`, `Invoice`, `Payment`, `Notification`.
 
 ---
 

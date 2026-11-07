@@ -28,7 +28,7 @@ public sealed class OrderAggregateTests
         var lineList = new List<OrderLineDto>
         {
             new(Guid.NewGuid(), 1, Guid.NewGuid(), Guid.NewGuid(), "Food", "Food", null, ProductReturnClass.Food, false, 2, 850m, 1700m, 0m, 170m, Guid.NewGuid(), 15m, 229.50m, 1759.50m, []),
-            new(Guid.NewGuid(), 2, Guid.NewGuid(), Guid.NewGuid(), "Toy", "Toy", null, ProductReturnClass.Other, false, 1, 120m, 120m, 0m, 12m, Guid.NewGuid(), 0m, 0m, 108m, []),
+            new(Guid.NewGuid(), 2, Guid.NewGuid(), Guid.NewGuid(), "Bag", "Bag", null, ProductReturnClass.Other, false, 1, 120m, 120m, 0m, 12m, Guid.NewGuid(), 0m, 0m, 108m, []),
         };
         lines?.Invoke(lineList);
 
@@ -403,7 +403,7 @@ public sealed class OrderAggregateTests
         };
         order.RecordAllocations(split);
         Assert.Equal(2, food.Allocations.Count);
-        Assert.False(order.IsFullyAllocated); // the toy line has none yet
+        Assert.False(order.IsFullyAllocated); // the bag line has none yet
 
         var replacement = new AllocationDto(food.Id, food.SkuId, Guid.NewGuid(), "L3", Guid.NewGuid(), 2m, null);
         order.RecordAllocations([replacement]);

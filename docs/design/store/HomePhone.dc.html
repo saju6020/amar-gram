@@ -39,7 +39,7 @@
     </a>
 
     <nav aria-label="Categories" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px">
-      <sc-for list="{{cats}}" as="ct" hint-placeholder-count="5">
+      <sc-for list="{{categories}}" as="ct" hint-placeholder-count="5">
         <a href="Catalogue.dc.html" style="flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 72px; text-decoration: none; color: #2A1F12; font-size: 12px; font-weight: 600; text-align: center">
           <span style="width: 56px; height: 56px; border-radius: 50%; background: {{ct.tint}}; display: grid; place-items: center; font-family: Fraunces, Georgia, serif; font-size: 20px">{{ct.initial}}</span>{{ct.name}}
         </a>
@@ -97,7 +97,7 @@ class Component extends DCLogic {
     const count = Object.values(s.qty).reduce((a, b) => a + b, 0);
     return {
       count,
-      cats: [['Rice', '#E3D3A8'], ['Honey', '#F0CF7A'], ['Spices', '#E9B08A'], ['Oils', '#E8DD8C'], ['Fresh', '#CBD8AE'], ['Pulses', '#D9C9A0']].map(([name, tint]) => ({ name, tint, initial: name.charAt(0) })),
+      categories: [['Rice', '#E3D3A8'], ['Honey', '#F0CF7A'], ['Spices', '#E9B08A'], ['Oils', '#E8DD8C'], ['Fresh', '#CBD8AE'], ['Pulses', '#D9C9A0']].map(([name, tint]) => ({ name, tint, initial: name.charAt(0) })),
       products: items.map(([name, district, size, price, tint], i) => { const q = s.qty[i] || 0; return { name, district, size, tint, price: fmt(price), qty: q, none: q === 0, some: q > 0, inc: change(i, 1), dec: change(i, -1) }; }),
       tabs: [['Home', 'HomePhone.dc.html', true], ['Shop', 'Catalogue.dc.html', false], ['Basket', 'BasketPhone.dc.html', false], ['Account', 'Account.dc.html', false]].map(([label, href, on]) => ({ label, href, current: on ? 'page' : 'false', ink: on ? '#2F5114' : '#69553C', bar: on ? '#3F6A1E' : 'transparent' }))
     };

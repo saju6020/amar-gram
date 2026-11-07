@@ -8,7 +8,7 @@ namespace AmarGram.IntegrationTests.Endpoints;
 
 /// <summary>
 /// HO-SUB-001 section 16 B and C (US-SUB-01 AC1, US-SUB-02) -- subscribing and controlling a subscription over real HTTP. Real Orders, Shop and Inventory behind it; every test mints
-/// its own branch, SKU, stock, zone and customer (section 16.1). Adapted: no cat and no prescription diet (HO-P1) -- a product is subscribable when staff mark it so (BG-15).
+/// its own branch, SKU, stock, zone and customer (section 16.1). A product is subscribable when staff mark it so (BG-15).
 /// </summary>
 public sealed class SubscriptionsCustomerEndpointTests(OrderingApiFactory factory) : SubscriptionsIntegrationTestBase(factory)
 {
@@ -34,13 +34,13 @@ public sealed class SubscriptionsCustomerEndpointTests(OrderingApiFactory factor
     [Fact]
     public async Task I_B3_AProductStaffDoNotOffer_IsNotSubscribable_WithTheReason()
     {
-        var shop = await SetUpShopAsync(fillCart: false);   // the toy and the food are not flagged
+        var shop = await SetUpShopAsync(fillCart: false);   // the bag and the food are not flagged
 
-        var options = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await shop.Customer.GetAsync($"/api/customers/me/subscriptions/options?skuId={shop.Toy.SkuId}")));
+        var options = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await shop.Customer.GetAsync($"/api/customers/me/subscriptions/options?skuId={shop.Bag.SkuId}")));
         Assert.False(options.GetProperty("subscribable").GetBoolean());
         Assert.False(string.IsNullOrWhiteSpace(options.GetProperty("notSubscribableReason").GetString()));
 
-        var messages = await RefusedAsync(await TrySubscribeAsync(shop, sku: shop.Toy), BusinessViolationCodes.SkuNotSubscribable);
+        var messages = await RefusedAsync(await TrySubscribeAsync(shop, sku: shop.Bag), BusinessViolationCodes.SkuNotSubscribable);
         Assert.Contains(SubscriptionMessages.SkuNotSubscribableNotOffered, messages);
     }
 

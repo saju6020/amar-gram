@@ -17,7 +17,12 @@ test.describe('staff — invoices and payments', () => {
 
   test('E-A1: several charges combine into one numbered invoice', async ({ page }) => {
     await page.goto(`/staff/billing/invoices/new?customerId=${C}`);
-    await page.getByRole('button', { name: 'Select all in Shop' }).click();
+    // Not "Select all in Shop": since the clinic lines were retired every seeded charge is Shop, which
+    // includes the deliberately blocking ones (Special handling fee: tax class with no rate; Gift
+    // wrapping: already billed elsewhere when saved). Tick the issuable ones, from different sources.
+    await page.getByLabel(/Organic rice 5 kg/).check();
+    await page.getByLabel(/Mustard oil 1 L/).check();
+    await page.getByLabel(/Home delivery/).check();
     await expect(page.getByText(/Estimate at today.s tax rates/)).toBeVisible();
     const issue = page.getByRole('button', { name: 'Issue invoice' });
     await expect(issue).toBeEnabled();
@@ -29,6 +34,7 @@ test.describe('staff — invoices and payments', () => {
     await expect(lines).toContainText('Shop');
     await expect(lines).toContainText('Organic rice 5 kg');
     await expect(lines).toContainText('Mustard oil 1 L');
+    await expect(lines).toContainText('Home delivery');
   });
 
   test('E-A2: a draft issued elsewhere reads as already issued', async ({ page }) => {

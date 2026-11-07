@@ -32,7 +32,7 @@ function order(overrides: Partial<PoDetail> = {}): PoDetail {
     id: 'po1',
     number: 'PO-2026-000001',
     supplierId: 's1',
-    supplierName: 'Meridian Pet Supplies Ltd',
+    supplierName: 'Meridian Organic Supplies Ltd',
     branchId: 'b1',
     deliverToLocationId: 'l1',
     currencyCode: 'BDT',
@@ -384,7 +384,7 @@ function suggestion(over: Partial<ReorderSuggestion>): ReorderSuggestion {
   return {
     skuId: 'k1',
     skuCode: 'FD-ADT-POUCH',
-    displayName: 'Adult wet food',
+    displayName: 'Sundarban honey',
     stockUnit: 'pouches',
     locationId: 'l1',
     locationCode: 'WH1',
@@ -415,7 +415,7 @@ describe('U-B8 — ReorderSuggestions', () => {
             displayName: 'Organic rice',
             stockUnit: 'bags',
             preferredSupplierId: 's2',
-            preferredSupplierName: 'VetPharma',
+            preferredSupplierName: 'AgroNexus',
             suggestedQuantity: '25',
           }),
         ]}
@@ -425,7 +425,7 @@ describe('U-B8 — ReorderSuggestions', () => {
     expect(
       screen.getByText(/1\.5 pouches a day, 14 days lead time plus 14 days cover/i),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: /select adult wet food/i }));
+    await user.click(screen.getByRole('checkbox', { name: /select sundarban honey/i }));
     await user.click(screen.getByRole('checkbox', { name: /select organic rice/i }));
     const links = screen.getAllByRole('link', { name: /build the order for/i });
     expect(links).toHaveLength(2);

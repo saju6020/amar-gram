@@ -1,7 +1,7 @@
 /**
  * `lib/offline/db.ts` — HO-XCT-002 §8.3/§8.5, ADR-FE-141. The ONE sanctioned use of IndexedDB in
  * this app, hand-written and deliberately tiny (open, get, getAll, put, clear). No `idb`, no
- * `dexie`. One database, `purrcare-offline`, version 1, two object stores and nothing else:
+ * `dexie`. One database, `amargram-offline`, version 1, two object stores and nothing else:
  *
  *  - `snapshot`, key `branchId`: the offline snapshot record (`lib/offline/snapshot.ts`);
  *  - `device`, fixed key `settings`: the device opt-in flag (`lib/offline/device.ts`), no personal
@@ -12,7 +12,7 @@
  * quietly does nothing rather than falling back to `localStorage`.
  */
 
-export const OFFLINE_DB_NAME = 'purrcare-offline';
+export const OFFLINE_DB_NAME = 'amargram-offline';
 export const OFFLINE_DB_VERSION = 1;
 export const OFFLINE_STORES = ['snapshot', 'device'] as const;
 export type OfflineStoreName = (typeof OFFLINE_STORES)[number];

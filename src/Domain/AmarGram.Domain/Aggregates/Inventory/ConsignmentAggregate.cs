@@ -213,7 +213,7 @@ public sealed class ConsignmentAggregate : AggregateRoot
         for (var i = 0; i < dto.HsCodes.Count; i++)
         {
             if (!InventoryRules.IsValidHsCode(dto.HsCodes[i].Code))
-                throw InventoryViolation.Of(BusinessViolationCodes.InvalidHsCode, "An HS code is four digits followed by up to three groups of two (for example 2309.10).", $"HsCodes[{i}].Code");
+                throw InventoryViolation.Of(BusinessViolationCodes.InvalidHsCode, "An HS code is four digits followed by up to three groups of two (for example 1006.30).", $"HsCodes[{i}].Code");
             if (dto.HsCodes[i].Description is { Length: > 200 })
                 throw InventoryViolation.Of(BusinessViolationCodes.InvalidHsCode, "An HS code description cannot exceed 200 characters.", $"HsCodes[{i}].Description");
         }

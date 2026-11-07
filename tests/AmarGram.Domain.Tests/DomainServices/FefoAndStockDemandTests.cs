@@ -202,7 +202,7 @@ public sealed class FefoAndStockDemandTests
         var expired = Stock(Today.AddDays(-1));
         var good = Stock(Today.AddDays(60));
 
-        var withReason = PlanExplicit([expired, good], [(expired.BatchId, expired.LocationId, 2m)], reason: "The vet says it is fine, I am sure of it.");
+        var withReason = PlanExplicit([expired, good], [(expired.BatchId, expired.LocationId, 2m)], reason: "The supplier says it is fine, I am sure of it.");
 
         Assert.Equal(BusinessViolationCodes.BatchExpired, withReason.ViolationCode);
         Assert.Contains(expired.LotNumber, withReason.Message);

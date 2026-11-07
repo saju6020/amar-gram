@@ -9,13 +9,13 @@ namespace AmarGram.IntegrationTests;
 
 /// <summary>
 /// HO-ORD-001 §16.1 -- the shared "shop" the placement, payment, fulfilment, return and counter test classes start from: one branch with a billing
-/// profile (an invoice cannot be issued without one), a 15 % food and a 0 % toy stocked at that branch (and at the storefront, where the cart reads
+/// profile (an invoice cannot be issued without one), a 15 % food and a 0 % bag stocked at that branch (and at the storefront, where the cart reads
 /// availability), a delivery zone, and a signed-in customer with an address in it and every pending policy accepted. Real endpoints throughout.
 /// </summary>
 public abstract class OrderingShopTestBase(OrderingApiFactory factory) : OrderingIntegrationTestBase(factory)
 {
     protected sealed record Shop(
-        OrderingContext Context, string District, Guid ZoneId, HttpClient Customer, Guid CustomerId, Guid AddressId, OrderingSku Food, OrderingSku Toy);
+        OrderingContext Context, string District, Guid ZoneId, HttpClient Customer, Guid CustomerId, Guid AddressId, OrderingSku Food, OrderingSku Bag);
 
     protected async Task SetBillingProfileAsync(OrderingContext context) =>
         await ExpectAsync(HttpStatusCode.NoContent, await context.Admin.PutAsJsonAsync($"/api/admin/billing-profiles/{context.BranchId}", new
@@ -46,8 +46,8 @@ public abstract class OrderingShopTestBase(OrderingApiFactory factory) : Orderin
         }
     }
 
-    /// <summary>A branch with its billing profile, a food (850.00, 15 %) and a toy (120.00, 0 %) with <paramref name="stock"/> units each, a Standard-60.00 zone for
-    /// a fresh district, and a customer ready to check out. <paramref name="fillCart"/> adds 2 x food + 1 x toy (the worked cart of U-D1).</summary>
+    /// <summary>A branch with its billing profile, a food (850.00, 15 %) and a bag (120.00, 0 %) with <paramref name="stock"/> units each, a Standard-60.00 zone for
+    /// a fresh district, and a customer ready to check out. <paramref name="fillCart"/> adds 2 x food + 1 x bag (the worked cart of U-D1).</summary>
     protected async Task<Shop> SetUpShopAsync(
         bool cod = true, decimal? codMax = null, decimal? freeOver = null, bool fillCart = true, decimal stock = 50m, bool billingProfile = true, object[]? windows = null, int lead = 1)
     {
@@ -55,7 +55,7 @@ public abstract class OrderingShopTestBase(OrderingApiFactory factory) : Orderin
         if (billingProfile) await SetBillingProfileAsync(context);
 
         var food = await CreateSkuAsync(context, price: 850m, stock: stock, onStorefront: true, name: "Royal Basmati Rice 2 kg");
-        var toy = await CreateSkuAsync(context, price: 120m, stock: stock, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Feather wand");
+        var bag = await CreateSkuAsync(context, price: 120m, stock: stock, taxClassId: context.ZeroTaxClassId, onStorefront: true, name: "Jute shopping bag");
         var district = NewDistrict();
         var zoneId = await CreateZoneAsync(context, district, cod: cod, codMax: codMax, freeOver: freeOver, slotWindows: windows, leadTimeDays: lead);
 
@@ -66,10 +66,10 @@ public abstract class OrderingShopTestBase(OrderingApiFactory factory) : Orderin
         if (fillCart)
         {
             await ExpectAsync(HttpStatusCode.Created, await customer.PostAsJsonAsync("/api/cart/lines", new { skuId = food.SkuId, quantity = 2 }, Json));
-            await ExpectAsync(HttpStatusCode.Created, await customer.PostAsJsonAsync("/api/cart/lines", new { skuId = toy.SkuId, quantity = 1 }, Json));
+            await ExpectAsync(HttpStatusCode.Created, await customer.PostAsJsonAsync("/api/cart/lines", new { skuId = bag.SkuId, quantity = 1 }, Json));
         }
 
-        return new Shop(context, district, zoneId, customer, customerId, addressId, food, toy);
+        return new Shop(context, district, zoneId, customer, customerId, addressId, food, bag);
     }
 
     protected static string QuoteUrl(

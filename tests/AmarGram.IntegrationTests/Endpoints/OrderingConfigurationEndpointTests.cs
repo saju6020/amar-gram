@@ -271,7 +271,7 @@ public sealed class OrderingConfigurationEndpointTests(OrderingApiFactory factor
     {
         var context = await CreateContextAsync();
         var (manager, _) = await StaffClientAsync(context, StaffRoles.ShopManager);
-        var body = new { accountName = "Purr Care Ltd", accountNumber = "1234567890", bankName = "Sample Bank", branchName = "Gulshan", routingNumber = "012345678", isActive = true };
+        var body = new { accountName = "Amar Gram Ltd", accountNumber = "1234567890", bankName = "Sample Bank", branchName = "Gulshan", routingNumber = "012345678", isActive = true };
 
         Assert.Equal(HttpStatusCode.Forbidden, (await manager.PutAsJsonAsync("/api/admin/bank-transfer-account", body, Json)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await manager.GetAsync("/api/admin/bank-transfer-account")).StatusCode);

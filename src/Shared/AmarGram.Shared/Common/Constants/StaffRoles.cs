@@ -4,7 +4,6 @@ namespace AmarGram.Shared.Common.Constants;
 /// The code-defined catalogue of staff roles -- the staff columns of SRS Appendix D
 /// (HO-ACC-001 §10.2, ADR-036). Not administrator-editable (HO-ADM-001 ADR-044 confirms permissions
 /// stay code-defined). <c>Customer</c> is deliberately not a member -- it is not a staff role.
-/// <c>Groomer</c> appears in SRS §2.3 but has no Appendix D column, so it is not a role either.
 ///
 /// Owned by HO-ACC-001. Created here, ahead of Accounts' own build, because <see cref="ActionRoles"/>
 /// rows and role lists (HO-ADM-001's <c>RosterableRoles</c>, every area's own <c>ActionRoles.[Area]
@@ -13,7 +12,6 @@ namespace AmarGram.Shared.Common.Constants;
 /// lands it may extend this file directly (e.g. with <c>StaffRoleCatalogue</c>-adjacent helpers) --
 /// but the role ids and their order are the part every other area's compiled code already
 /// depends on, so they must not move or be renamed without an Amended row here.
-/// HO-P1 (2026-10-24): the Nurse, Vet and Caretaker roles are retired.
 /// </summary>
 public static class StaffRoles
 {

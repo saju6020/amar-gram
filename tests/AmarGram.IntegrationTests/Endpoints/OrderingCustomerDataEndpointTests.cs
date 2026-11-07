@@ -23,7 +23,7 @@ public sealed class OrderingCustomerDataEndpointTests(OrderingApiFactory factory
     {
         var shop = await SetUpShopAsync();
         var orderId = (await PlaceCodOrderAsync(shop)).GetProperty("orderId").GetGuid();
-        // the duplicate keeps shopping: the toy is in their cart again, and so is the food (a line the survivor also has)
+        // the duplicate keeps shopping: the bag is in their cart again, and so is the food (a line the survivor also has)
         var other = await CreateSkuAsync(shop.Context, price: 40m, stock: 20m, onStorefront: true);
         await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = other.SkuId, quantity = 2 }, Json));
         await ExpectAsync(HttpStatusCode.Created, await shop.Customer.PostAsJsonAsync("/api/cart/lines", new { skuId = shop.Food.SkuId, quantity = 1 }, Json));

@@ -9,7 +9,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_admin_content_mock_db__';
+const PERSIST_KEY = '__amargram_admin_content_mock_db__';
 
 /** `mocks/handlers/admin/content.ts` — HO-ADM-002 §12, HO-ADM-001 §8.8/§12.4. Content
  *  (pages/FAQs/banners) in every status, a policy with two versions, and a pending acceptance for

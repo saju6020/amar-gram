@@ -44,8 +44,8 @@ body{margin:0}
   </header>
 
   <nav aria-label="Categories" style="max-width: 1200px; margin: 0 auto; padding: 0 24px 16px; display: flex; flex-wrap: wrap; gap: 8px">
-    <sc-for list="{{categories}}" as="cat" hint-placeholder-count="8">
-      <a href="{{nav.catalogue}}" style="padding: 8px 16px; border-radius: 999px; border: 1.5px solid {{c.border}}; text-decoration: none; color: {{c.ink}}; font-size: 15px; font-weight: 500; background: {{c.surface}}">{{cat.name}}</a>
+    <sc-for list="{{categories}}" as="ctg" hint-placeholder-count="8">
+      <a href="{{nav.catalogue}}" style="padding: 8px 16px; border-radius: 999px; border: 1.5px solid {{c.border}}; text-decoration: none; color: {{c.ink}}; font-size: 15px; font-weight: 500; background: {{c.surface}}">{{ctg.name}}</a>
     </sc-for>
   </nav>
 
@@ -73,13 +73,13 @@ body{margin:0}
     </div>
   </section>
 
-  <section aria-labelledby="haat-cats" style="max-width: 1200px; margin: 64px auto 0; padding: 0 24px">
-    <h2 id="haat-cats" style="margin: 0 0 24px; font-family: Fraunces, Georgia, serif; font-size: 34px; font-weight: 700; letter-spacing: -0.02em">Shop the pantry</h2>
+  <section aria-labelledby="haat-categories" style="max-width: 1200px; margin: 64px auto 0; padding: 0 24px">
+    <h2 id="haat-categories" style="margin: 0 0 24px; font-family: Fraunces, Georgia, serif; font-size: 34px; font-weight: 700; letter-spacing: -0.02em">Shop the pantry</h2>
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px">
-      <sc-for list="{{categories}}" as="cat" hint-placeholder-count="8">
+      <sc-for list="{{categories}}" as="ctg" hint-placeholder-count="8">
         <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 8px; border-radius: 20px; text-decoration: none; color: {{c.ink}}; background: {{c.surface}}">
-          <span style="width: 72px; height: 72px; border-radius: 50%; background: {{cat.tint}}; display: grid; place-items: center; color: {{c.ink}}; font-family: Fraunces, Georgia, serif; font-size: 26px; font-weight: 700">{{cat.initial}}</span>
-          <span style="font-weight: 600; font-size: 15px; text-align: center">{{cat.name}}</span>
+          <span style="width: 72px; height: 72px; border-radius: 50%; background: {{ctg.tint}}; display: grid; place-items: center; color: {{c.ink}}; font-family: Fraunces, Georgia, serif; font-size: 26px; font-weight: 700">{{ctg.initial}}</span>
+          <span style="font-weight: 600; font-size: 15px; text-align: center">{{ctg.name}}</span>
         </a>
       </sc-for>
     </div>
@@ -179,7 +179,7 @@ class Component extends DCLogic {
   renderVals() {
     const key = 'mango';
     const c = HAAT_PALETTES[key];
-    const cats = [
+    const categoryTints = [
       ['Rice & grains', '#E3D3A8'], ['Honey', '#F0CF7A'], ['Spices', '#E9B08A'], ['Oils & ghee', '#E8DD8C'],
       ['Pulses', '#D9C9A0'], ['Dates & gur', '#CFA98A'], ['Tea', '#C9D3A8'], ['Fresh produce', '#CBD8AE']
     ];
@@ -192,7 +192,7 @@ class Component extends DCLogic {
     return {
       c, nav: HAAT_LINKS[key],
       cartCount: this.state.count,
-      categories: cats.map(([name, tint]) => ({ name, tint, initial: name.charAt(0) })),
+      categories: categoryTints.map(([name, tint]) => ({ name, tint, initial: name.charAt(0) })),
       products: items.map(([name, origin, size, price, tint], i) => {
         const on = !!this.state.added[i];
         return {

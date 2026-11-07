@@ -2,7 +2,7 @@ namespace AmarGram.Domain.Entities;
 
 /// <summary>
 /// HO-SHP-001 §8.3.2 -- owned by <c>ProductAggregate</c>. References an uploaded file by id only
-/// (HO-FIL-001; the same shape as <c>CatPhoto</c>) -- content type and size are
+/// (HO-FIL-001) -- content type and size are
 /// <c>StoredFileAggregate</c>'s own state, read at serve/validate time, not copied here where they
 /// could go stale. <c>SkuId</c> null means a product-level image; otherwise it must be one of this
 /// product's own SKUs (<c>InvalidImage</c>, checked by the aggregate). The whole set is replaced at

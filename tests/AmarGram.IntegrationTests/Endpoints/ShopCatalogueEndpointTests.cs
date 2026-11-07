@@ -14,10 +14,10 @@ public sealed class ShopCatalogueEndpointTests(ShopApiFactory factory) : ShopInt
     public async Task Search_MisspelledBrandAndProductName_StillFound()
     {
         var client = await SignInAsShopManagerAsync();
-        var brand = "Purrfecta" + Guid.NewGuid().ToString("N")[..8];
+        var brand = "Paddyfield" + Guid.NewGuid().ToString("N")[..8];
         await CreateActiveFoodProductAsync(client, brand, "Salmon Supreme " + Guid.NewGuid().ToString("N")[..6], "DE", ingredientList: "duck");
 
-        var byBrand = await AnonymousGetAsync($"/api/shop/products?q={Uri.EscapeDataString(brand.ToLowerInvariant().Replace("purrfecta", "purfecta"))}");
+        var byBrand = await AnonymousGetAsync($"/api/shop/products?q={Uri.EscapeDataString(brand.ToLowerInvariant().Replace("paddyfield", "padyfield"))}");
         var byBrandBody = await byBrand.Content.ReadFromJsonAsync<JsonElement>(Json);
         Assert.True(byBrandBody.GetProperty("totalCount").GetInt32() >= 1);
         Assert.Contains(byBrandBody.GetProperty("items").EnumerateArray(), i => i.GetProperty("brand").GetString() == brand);

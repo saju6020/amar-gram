@@ -14,12 +14,12 @@ public sealed class ProductAggregateTests
     private static readonly Guid TaxClassId = Guid.NewGuid();
 
     // Defaults to a non-food category so generic lifecycle tests are not food-gated (country of
-    // origin / life stage) -- food-specific rules have their own dedicated tests (Phase B).
-    private static ProductAggregate CreateStandardProduct(string slug = "royal-canin-adult", ProductCategory? category = null, ProductSubcategory? subcategory = null)
+    // origin, certifications) -- food-specific rules have their own dedicated tests (Phase B).
+    private static ProductAggregate CreateStandardProduct(string slug = "chashi-aromatic-rice", ProductCategory? category = null, ProductSubcategory? subcategory = null)
     {
         var product = new ProductAggregate(Guid.NewGuid());
         product.Create(new ProductCreateDto(
-            ProductKind.Standard, "Royal Canin Adult", "Royal Canin", category ?? ProductCategory.HouseholdAndCare, subcategory,
+            ProductKind.Standard, "Chashi Aromatic Rice", "Chashi", category ?? ProductCategory.HouseholdAndCare, subcategory,
             TaxClassId, slug, null, null, TestUserContext.Create(), Guid.NewGuid()));
         return product;
     }
@@ -30,9 +30,9 @@ public sealed class ProductAggregateTests
         var product = CreateStandardProduct();
 
         Assert.Equal(ProductStatus.Draft, product.Status);
-        Assert.Equal("Royal Canin Adult", product.Name);
-        Assert.Contains("royal canin adult", product.SearchText);
-        Assert.Contains("royal canin", product.SearchText);
+        Assert.Equal("Chashi Aromatic Rice", product.Name);
+        Assert.Contains("chashi aromatic rice", product.SearchText);
+        Assert.Contains("chashi", product.SearchText);
         Assert.Single(product.Events);
     }
 
@@ -61,10 +61,10 @@ public sealed class ProductAggregateTests
     public void AddSku_SecondSkuWithNoAxis_ThrowsVariantAttributesRequired()
     {
         var product = CreateStandardProduct();
-        product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG", null, "2 kg", null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG", null, "2 kg", null, null, null), TestUserContext.Create(), Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() =>
-            product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-4KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid()));
+            product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-4KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.Equal(BusinessViolationCodes.VariantAttributesRequired, ex.ErrorCode);
     }
@@ -73,10 +73,10 @@ public sealed class ProductAggregateTests
     public void AddSku_DuplicateVariantCaseInsensitive_Throws()
     {
         var product = CreateStandardProduct();
-        product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG-SAL", null, "2 kg", "Salmon", null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG-SAL", null, "2 kg", "Salmon", null, null), TestUserContext.Create(), Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() =>
-            product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG-SAL-2", null, "2 KG", "salmon", null, null), TestUserContext.Create(), Guid.NewGuid()));
+            product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG-SAL-2", null, "2 KG", "salmon", null, null), TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.Equal(BusinessViolationCodes.DuplicateVariant, ex.ErrorCode);
     }
@@ -207,11 +207,11 @@ public sealed class ProductAggregateTests
     public void Publish_UnpricedActiveSku_MessageNamesSkuCode()
     {
         var product = CreateStandardProduct();
-        product.AddSku(new SkuAddDto(Guid.NewGuid(), "RC-K-2KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
+        product.AddSku(new SkuAddDto(Guid.NewGuid(), "CH-R-2KG", null, null, null, null, null), TestUserContext.Create(), Guid.NewGuid());
         var facts = new PublicationFacts([], true, []);
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid()));
-        Assert.Contains("RC-K-2KG", ex.Message);
+        Assert.Contains("CH-R-2KG", ex.Message);
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public sealed class ProductAggregateTests
         Assert.Contains("salmon", product.SearchText);
 
         product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Adult", "Royal Canin", "", ProductCategory.RiceAndGrains, null, ["Grain Free"],
+            "Chashi Aromatic Rice", "Chashi", "", ProductCategory.RiceAndGrains, null, ["Grain Free"],
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid()));
 
         Assert.Contains("grain-free", product.SearchText);
@@ -274,14 +274,14 @@ public sealed class ProductAggregateTests
         var product = CreateStandardProduct();
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Adult", "Royal Canin", "", ProductCategory.RiceAndGrains, null,
+            "Chashi Aromatic Rice", "Chashi", "", ProductCategory.RiceAndGrains, null,
             Enumerable.Range(0, 21).Select(i => $"tag{i}").ToList(),
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid())));
 
         Assert.Equal(BusinessViolationCodes.TagLimitExceeded, ex.ErrorCode);
 
         product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Adult", "Royal Canin", "", ProductCategory.RiceAndGrains, null, ["Grain Free"],
+            "Chashi Aromatic Rice", "Chashi", "", ProductCategory.RiceAndGrains, null, ["Grain Free"],
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid()));
         Assert.Contains("grain-free", product.Tags);
     }
@@ -295,7 +295,7 @@ public sealed class ProductAggregateTests
         product.Publish(facts, DateTimeOffset.UtcNow, TestUserContext.Create(), Guid.NewGuid());
 
         var ex = Assert.Throws<DomainRuleViolationException>(() => product.UpdateDetails(new ProductDetailsUpdateDto(
-            "Royal Canin Adult", "Royal Canin", "", ProductCategory.RiceAndGrains, null, [],
+            "Chashi Aromatic Rice", "Chashi", "", ProductCategory.RiceAndGrains, null, [],
             TaxClassId, null, true, false, [], TestUserContext.Create(), Guid.NewGuid())));
 
         Assert.Equal(BusinessViolationCodes.CategoryLockedWhileActive, ex.ErrorCode);

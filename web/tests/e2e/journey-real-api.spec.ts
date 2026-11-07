@@ -14,7 +14,7 @@ import {
  * Skipped unless `JOURNEY_REAL_API=1`. Do not run it by hand: `npm run test:e2e:journey` (scripts/run-journey-e2e.mjs)
  * seeds a scratch database, starts the API on :5098 and the web app on :3098 from a private copy, runs this file with
  * --workers=1, and stops both. A journey registers a customer and places an order, so it must never touch a shared
- * database; playwright's global setup already refuses port 3000 and an API on catecommerce_dev.
+ * database; playwright's global setup already refuses port 3000 and an API on amargram_dev.
  *
  * Environment: JOURNEY_CUSTOMER_EMAIL / JOURNEY_CUSTOMER_PASSWORD (the seeded Ayesha Rahman, with her saved Dhaka
  * address), E2E_STAFF_ADMIN / E2E_STAFF_PASSWORD (e2e.admin), NEXT_PUBLIC_API_BASE_URL (the API), and optionally
@@ -151,7 +151,7 @@ async function signInCustomer(page: Page, email: string, password: string, next:
 test.describe('a new visitor', () => {
   let visitor: Page;
   let visitorContext: BrowserContext;
-  const email = `journey.${Date.now()}@purrcare.test`;
+  const email = `journey.${Date.now()}@amargram.test`;
   const password = 'Journey-Visitor-2026';
 
   test.beforeAll(async ({ browser }) => {

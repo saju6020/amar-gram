@@ -40,7 +40,7 @@ public sealed class NotificationRequestAggregateTests
     [InlineData("Mitu​")]
     public void Create_VariableWithDisallowedCharacter_Throws(string value)
     {
-        var ex = Assert.Throws<DomainRuleViolationException>(() => Create(new Dictionary<string, string> { ["catName"] = value }));
+        var ex = Assert.Throws<DomainRuleViolationException>(() => Create(new Dictionary<string, string> { ["productName"] = value }));
         Assert.Equal(BusinessViolationCodes.InvalidNotificationRequest, ex.ErrorCode);
     }
 

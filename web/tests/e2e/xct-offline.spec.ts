@@ -52,7 +52,7 @@ async function readStore(page: Page) {
     () =>
       new Promise<{ snapshots: Array<{ staffAccountId: string }>; device: Record<string, unknown> | null }>(
         (resolve) => {
-          const open = indexedDB.open('purrcare-offline');
+          const open = indexedDB.open('amargram-offline');
           open.onerror = () => resolve({ snapshots: [], device: null });
           open.onsuccess = () => {
             const db = open.result;
@@ -246,7 +246,7 @@ test('E-X3 storage audit: nothing of this feature in localStorage, and only the 
     };
   });
   expect(audit.ls).toEqual([]);
-  expect(audit.databases).toEqual(['purrcare-offline']);
+  expect(audit.databases).toEqual(['amargram-offline']);
   // pc_session is HttpOnly only on the real API; the MSW mock sets its cookie from the page, so that
   // half of E-X3 is asserted in xct-real-api.spec.ts.
 });

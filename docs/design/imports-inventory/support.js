@@ -12,16 +12,14 @@
  *
  * Screens whose renderVals() returns {} (the majority — see each area's README, "No live
  * interaction") render as static markup. A handful of files (TemplateEditor.dc.html,
- * TemplatePreviewStates.dc.html) show literal "{{catName}}"-style text on purpose — per
+ * TemplatePreviewStates.dc.html) show literal "{{productName}}"-style text on purpose — per
  * ADR-FE-023, the client never actually renders a template — so any {{expr}} whose identifier
  * isn't present in scope is left exactly as written rather than blanked out.
  *
  * Two layers are applied at render time on top of that, without touching the .dc.html source:
  *
- * 1. One staff shell. The four areas were designed with four different staff shells (Cat
- *    Profile's list screens: sidebar with the user bottom-left; its detail screens: no sidebar,
- *    user top-right; Administration: top bar over a flat sidebar; Accounts & Notifications: top
- *    bar only). Every staff screen is rebuilt into the same shape: a collapsible sidebar with one
+ * 1. One staff shell. The areas were designed with different staff shells (Administration: top
+ *    bar over a flat sidebar; Accounts & Notifications: top bar only). Every staff screen is rebuilt into the same shape: a collapsible sidebar with one
  *    shared navigation on the left, and a header with the breadcrumb on the left and the short
  *    "Name · Role" (plus the branch picker, where the screen has one) top-right. Customer-portal
  *    screens are a different app and are left as designed.
@@ -355,9 +353,6 @@
     { label: 'System', area: 'administration', file: 'MaintenanceSwitch.dc.html', icon: I.power, match: ['MaintenanceSwitch'] }
   ];
 
-  // Fallback identity for screens designed before sign-in existed.
-  var CAT_PROFILE_WHO = { name: 'A. Rahman', role: 'Manager', note: 'Fixed dev identity — no sign-in yet' };
-
   var BRAND_SVG = '<svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">' +
     '<rect width="32" height="32" rx="9" fill="#3F6A1E"/><g transform="translate(4.8 4.8) scale(0.7)" fill="#F4F8E8">' +
     '<path d="M16 28V15" stroke="#F4F8E8" stroke-width="2.4" stroke-linecap="round"/><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"/>' +
@@ -629,63 +624,6 @@
     return true;
   }
 
-  // Cat Profile list screens (Main, Vaccines): an <aside> (each with its own nav and a bottom
-  // identity block) beside a content column that already has a header.
-  function shellFromCatAside(root) {
-    var aside = root.querySelector('aside');
-    if (!aside) return false;
-    var row = aside.parentElement;
-    var column = aside.nextElementSibling;
-    if (!column) return false;
-
-    var active = activeNav();
-    row.replaceChild(buildAside(active), aside);
-    row.classList.add('dc-shell-row');
-
-    var header = column.querySelector(':scope > header');
-    if (!header) {
-      header = document.createElement('header');
-      column.insertBefore(header, column.firstChild);
-    }
-    // These screens put the page title (and its primary action) in the header bar itself. Every
-    // other staff screen has the breadcrumb there and the title just below — move it down to match.
-    if (header.firstElementChild && header.firstElementChild.tagName === 'H1') {
-      var titleRow = document.createElement('div');
-      titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 26px 0;';
-      while (header.firstElementChild) titleRow.appendChild(header.firstElementChild);
-      column.insertBefore(titleRow, header.nextSibling);
-    }
-    if (!header.querySelector('nav[aria-label="Breadcrumb"]')) {
-      header.insertBefore(buildBreadcrumb(active), header.firstChild);
-    }
-    normalizeHeader(header, CAT_PROFILE_WHO);
-    column.style.minWidth = '0';
-    return true;
-  }
-
-  // Cat Profile detail screens: no sidebar at all, just a breadcrumb header (sometimes with the
-  // identity top-right) over the content.
-  function shellFromCatBreadcrumb(root) {
-    var crumb = root.querySelector('header > nav[aria-label="Breadcrumb"]');
-    if (!crumb) return false;
-    var header = crumb.parentElement;
-    var column = header.parentElement;
-    if (!column || column.parentNode !== root) return false;
-
-    normalizeHeader(header, CAT_PROFILE_WHO);
-
-    var row = makeRow();
-    root.insertBefore(row, column);
-    row.appendChild(buildAside(activeNav()));
-    row.appendChild(column);
-    column.style.width = 'auto';
-    column.style.maxWidth = 'none';
-    column.style.height = 'auto';
-    column.style.flex = '1 1 auto';
-    column.style.minWidth = '0';
-    return true;
-  }
-
   // The sidebar is position:sticky at full viewport height. Any scrolling/clipping ancestor
   // (Administration's artboard is overflow:auto) would become its scroll container and pin it
   // there instead of to the page, so it would scroll away and stop short.
@@ -700,10 +638,9 @@
   }
 
   function applyStaffShell(root) {
-    // The aside/breadcrumb shapes are Cat Profile's own staff layouts; elsewhere an <aside> or a
-    // breadcrumb header is ordinary page content (a storefront filter panel, a portal crumb).
-    var catProfile = AREA === 'cat-profile';
-    if (shellFromTopnav(root) || (catProfile && (shellFromCatAside(root) || shellFromCatBreadcrumb(root)))) {
+    // Only the .topnav shape is rebuilt; elsewhere an <aside> or a breadcrumb header is ordinary
+    // page content (a storefront filter panel, a portal crumb).
+    if (shellFromTopnav(root)) {
       releaseStickyAncestors(root);
     }
   }

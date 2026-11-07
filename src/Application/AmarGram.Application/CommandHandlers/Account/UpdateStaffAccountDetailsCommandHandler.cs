@@ -1,9 +1,12 @@
 using AmarGram.Application.Commands.Account;
 using AmarGram.Domain.Aggregates.Account;
+using AmarGram.Domain.Aggregates.Audit;
+using AmarGram.Domain.DomainServices;
 using AmarGram.Domain.Exceptions;
 using AmarGram.Domain.Models;
 using AmarGram.Domain.ValueObjects;
 using AmarGram.Shared.Common.Constants;
+using AmarGram.Shared.Common.Enums;
 using Microsoft.Extensions.Logging;
 using Platform.Infrastructure.Core.Commands;
 using Platform.Infrastructure.Core.Domain;
@@ -19,7 +22,10 @@ namespace AmarGram.Application.CommandHandlers.Account;
 /// </summary>
 public sealed class UpdateStaffAccountDetailsCommandHandler(
     ILogger<UpdateStaffAccountDetailsCommandHandler> logger,
-    IAggregateRootRepository<StaffAccountAggregate> staffRepository)
+    IAggregateRootRepository<StaffAccountAggregate> staffRepository,
+    IAggregateRootRepository<AuditEntryAggregate> auditRepository,
+    IClientIpAccessor clientIpAccessor,
+    TimeProvider timeProvider)
     : ICommandHandlerAsync<UpdateStaffAccountDetailsCommand>
 {
     public async Task<CommandResponse> HandleAsync(UpdateStaffAccountDetailsCommand command)
@@ -55,6 +61,8 @@ public sealed class UpdateStaffAccountDetailsCommandHandler(
         if (email is not null && await staffRepository.ExistAsync(c => c.Id != staffId && c.EmailAddress!.Value == email.Value))
             return Violation(BusinessViolationCodes.EmailAddressAlreadyRegistered, "EmailAddress", "This email address is already registered to a staff account.");
 
+        var before = Describe(staff.FullName, staff.MobileNumber?.Value, staff.EmailAddress?.Value);
+
         try
         {
             staff.UpdateDetails(new StaffAccountDetailsUpdateDto(command.FullName.Trim(), mobile, email, command.UserContext, command.CorrelationId));
@@ -66,8 +74,29 @@ public sealed class UpdateStaffAccountDetailsCommandHandler(
 
         await staffRepository.UpdateAsync(staff, EventPublishOption.InMemoryPublishOnly);
 
+        var after = Describe(staff.FullName, staff.MobileNumber?.Value, staff.EmailAddress?.Value);
+        if (before != after) await RecordAuditAsync(command, before, after);
+
         return new CommandResponse { IsSuccess = true };
     }
+
+    // The event is PII-free (HO-ACC-001 section 11.5), so the named audit row, which carries the values before and after
+    // (HO-ACC-001 section 1), is written here, where both are known.
+    private async Task RecordAuditAsync(UpdateStaffAccountDetailsCommand command, string before, string after)
+    {
+        var entry = new AuditEntryAggregate(Guid.NewGuid());
+        entry.Record(new AuditEntryDto(
+            EntityType: "StaffAccount", EntityId: command.StaffAccountId, Action: "StaffAccountDetailsChanged",
+            Reason: "ChangedByAdministrator", ActorUserId: command.UserContext.UserId, OccurredOn: timeProvider.GetUtcNow(),
+            BeforeValue: before, AfterValue: after,
+            UserContext: command.UserContext, CorrelationId: command.CorrelationId,
+            Category: AuditCategory.DataChange, IpAddress: clientIpAccessor.GetClientIpAddress()));
+
+        await auditRepository.SaveAsync(entry, EventPublishOption.DoNotPublish);
+    }
+
+    private static string Describe(string fullName, string? mobile, string? email) =>
+        $"FullName={fullName}; MobileNumber={mobile ?? "-"}; EmailAddress={email ?? "-"}";
 
     private static CommandResponse Violation(string code, string property, string message)
     {

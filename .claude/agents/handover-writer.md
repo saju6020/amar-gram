@@ -30,7 +30,7 @@ proposed new ADR (recorded in §9), never an assumption you make quietly.
 
 ## When invoked
 
-1. Identify the story range (e.g. `US-CAT-01 … US-CAT-11`) and whether this is a backend, frontend,
+1. Identify the story range (e.g. `US-SHP-01 … US-SHP-11`) and whether this is a backend, frontend,
    or combined slice. If that is ambiguous, ask — the section content of §7-§12 depends on it.
 2. Read every required-reading document above, in full, for that slice.
 3. Assign the next handover ID by listing `docs/handover/` — the format is `HO-<CONTEXT>-<NNN>`.

@@ -22,7 +22,7 @@ namespace AmarGram.Api.Background;
 /// <b>One scope per command</b> (ADR-241, F23): the request query, Ordering's placement and the cycle record each run in their own scope, never nested, so one save never commits
 /// another's half-built entities. Recovery from a crash between placement and record is simply re-running the pass: the cycle's idempotency key returns the original order
 /// and <c>ix_subscription_cycle_per_date</c> keeps one cycle row. An exception while placing is an exception, not a refusal: it is logged with ids, nothing is recorded, and the
-/// next pass retries (§20.7). A pass that throws is logged and the next still runs (U-X4). Adapted: the prescription-authorisation pass went with the clinic (HO-P1).
+/// next pass retries (§20.7). A pass that throws is logged and the next still runs (U-X4).
 /// </summary>
 public sealed class SubscriptionWorkCycle(ILogger<SubscriptionWorkCycle> logger, IServiceScopeFactory scopeFactory)
 {

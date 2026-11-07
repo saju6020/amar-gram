@@ -584,9 +584,9 @@ records because they can be revisited independently.
 and now runs command handlers, query handlers and domain event handlers in-process. The layer
 structure (Api, Application, Domain, Read, Infrastructure, Shared) and the
 `Platform.Infrastructure.*` libraries are unchanged.
-**Reason:** The four business lines in `docs/SRS.md` share one cat profile and must stay
-consistent (vaccination-gated boarding BR-1, prescription-diet gating BR-2, batch recall tracing
-FR-IMP-11). One database and one transaction give that for free; three hosts made it a
+**Reason:** The sales channels in `docs/SRS.md` (online shop, counter, subscriptions) share one
+catalogue, one stock ledger and one customer record and must stay consistent (FEFO allocation BR-4,
+batch recall tracing FR-IMP-11). One database and one transaction give that for free; three hosts made it a
 distributed-consistency problem for a business running from a single premises. One deployable is
 also proportionate to the team size.
 **Consequences:** Read and write paths cannot scale independently. Accepted — it is visible long
@@ -604,7 +604,7 @@ with no CommandWorker, the Api composes the aggregate repository too.
 readability. `Platform.Infrastructure.Repository.MongoDb` is removed, but its
 **`IAggregateRootRepository<TAggregate>` contract is kept** and implemented over EF Core, so
 command handlers are unchanged.
-**Reason:** The domain is highly relational — orders to batches to cats to visits to invoices —
+**Reason:** The domain is highly relational — orders to batches to customers to invoices —
 and the SRS is full of invariants that need real transactions and real foreign keys within a
 module (stock ledger D-3, FEFO allocation BR-4, invoice immutability BR-11). The previous stack
 had no transaction API at all, which forced aggregate boundaries to be drawn around what Mongo
@@ -627,8 +627,8 @@ projection event handler. Query handlers read the same tables the write side com
 the `DbContext` with `AsNoTracking()`, projecting into a ViewModel with `Select`.
 **Reason:** The value of CQRS here is the modelling separation — an aggregate shaped to protect
 invariants, a ViewModel shaped for a screen. That is worth keeping. The projection pipeline was
-paying for eventual consistency the business never asked for: a receptionist who books an
-appointment expects to see it in the list immediately.
+paying for eventual consistency the business never asked for: a cashier who rings up a
+sale expects to see it in the list immediately.
 **Consequences:** No projection lag, no redelivery convergence problem, no read/write drift. A
 read issued after a write sees that write. `src/Read` now references `src/Infrastructure` for the
 `DbContext`; the rule that `Application` and `Read` never reference each other is unchanged.
@@ -682,7 +682,7 @@ the outbox, not in the handler.
 **Decision:** The `Application/CommandServices` layer is removed. A command handler injects
 `IAggregateRootRepository<TAggregate>` and loads, mutates and saves the aggregate itself.
 Existence and uniqueness checks are repository calls in the handler. Logic that genuinely spans
-aggregates — FEFO allocation, appointment slot availability — becomes a **Domain Service** in
+aggregates — FEFO allocation, stock demand — becomes a **Domain Service** in
 `Domain/DomainServices`, not an application-layer service.
 **Reason:** The CommandService layer added a file pair per feature to wrap a repository call, and
 it pulled aggregate loading out of the handler — which is where DDD expects it. Worse, it became
@@ -703,12 +703,12 @@ repository call must not be created.
 `DbUpdateConcurrencyException`, which the host maps to `409 Conflict` with a message telling the
 user to reload. Aggregates keep their own `Version` / `UpdateVersion()` for domain-level checks
 beneath it.
-**Reason:** Two staff editing the same cat, or two receptionists claiming the last appointment
-slot, must not silently last-write-wins. The previous architecture had no concurrency guard at
+**Reason:** Two staff editing the same product, or two cashiers selling the last unit of a batch,
+must not silently last-write-wins. The previous architecture had no concurrency guard at
 all. `xmin` costs no extra column and no application bookkeeping.
-**Consequences:** Clients must handle `409` and reload. Appointment and boarding-unit booking
-additionally need a transactional hold (SRS FR-CLN-3, FR-CLN-4), because optimistic concurrency
-alone does not prevent two people being offered the same slot — it only prevents both saving it.
+**Consequences:** Clients must handle `409` and reload. Stock reservation additionally needs a
+transactional hold, because optimistic concurrency alone does not prevent two people being offered
+the same last unit — it only prevents both saving it.
 
 ---
 
@@ -930,7 +930,7 @@ the correct fix, and it is available because the package is ours.
 (`SaveAsync`/`UpdateAsync`), not once per request behind a commit filter —
 `.ai/host-composition.md` §4 left this open "for the first slice"; this is that slice, and
 per-call is what was built. It is also what makes the audit write in
-`Application/DomainEventHandlers/Cat/` commit as its own unit of work, immediately after the
+the first area's `Application/DomainEventHandlers/` audit handlers commit as their own unit of work, immediately after the
 event that triggered it, rather than waiting on a request-scoped filter that does not exist here.
 
 Building and running this slice against a real PostgreSQL end to end (§17, §20.1) surfaced two
@@ -943,7 +943,7 @@ in this codebase loads the aggregate through this same repository's `GetByIdAsyn
 scoped `DbContext`, mutates it, then calls `UpdateAsync` — so the aggregate is already tracked.
 `DbSet<T>.Update(aggregate)` on an already-tracked root walks the whole reachable graph and marks
 every not-yet-tracked entity **Modified** rather than **Added** — including an owned-collection
-item just added in this request (e.g. `CatAggregate.AddPhoto`'s new `CatPhoto`). EF then emits an
+item just added in this request (e.g. a new item in an aggregate's owned collection). EF then emits an
 `UPDATE` for a child row that does not exist yet, "0 rows affected", and the `xmin` concurrency
 check (ADR-016) throws `DbUpdateConcurrencyException` on a perfectly ordinary first write — not a
 conflict at all. Fixed: `UpdateAsync` only calls `.Update()` when
@@ -961,7 +961,7 @@ this must already be there") and produces the same spurious `UPDATE`-of-a-nonexi
 as Correction 1 — independently of whether `.Update()` is called. Both were required together;
 fixing only one left the bug reproducing. Fixed: `builder.Property(x => x.Id).ValueGeneratedNever()`
 on every aggregate root **and every owned entity type** across all four configurations
-(`CatConfiguration`, `CatWeightRecordConfiguration`, `VaccineConfiguration`, `AuditEntryConfiguration`).
+(the first area's three aggregate configurations and `AuditEntryConfiguration`).
 
 A third, smaller gap in the same section: `AggregateRoot`/`Entity`'s `Tags` (`string[]`),
 `Language` (`string`) and `ServiceId` (`string`) are never set by any aggregate in this slice or by
@@ -983,7 +983,7 @@ end; this ADR is that verification, and the two corrections are what running it 
 - No migration change: both corrections are EF metadata, not schema (`ValueGeneratedNever()` does
   not touch a `uuid` column's DDL on PostgreSQL; `IsRequired(false)` changed the *generated*
   migration's column nullability before the first migration was ever applied — confirmed by
-  regenerating `AddCatProfile` clean, so no `ALTER COLUMN` was needed either).
+  regenerating that migration clean, so no `ALTER COLUMN` was needed either).
 - Any future aggregate configuration added to this solution must include
   `builder.Property(x => x.Id).ValueGeneratedNever()` for its root **and every owned entity**, and
   `Tags`/`Language`/`ServiceId` optional, or its first `SaveChangesAsync` will fail exactly this
@@ -1020,7 +1020,7 @@ the platform.
 - `.ai/enumeration-pattern.md`'s "Base Class" line is a documentation defect — flagged here rather
   than edited there, since `.ai/**` is forbidden scope for this handover except this file. A future
   documentation pass should correct it to say the base class is solution-owned, in `Shared`.
-- Every other bounded context that needs a rich enum (`AppointmentStatus`, `SurgeryStatus`, etc. —
+- Every other bounded context that needs a rich enum (`OrderStatus`, `BatchStatus`, etc. —
   `.ai/enumeration-pattern.md`'s "Existing Enumerations" table) can now derive from this same
   `AmarGram.Shared.Common.Enums.Enumeration`; there is exactly one base class in the solution,
   not one per context.
@@ -1029,48 +1029,7 @@ the platform.
 
 ---
 
-## ADR-023 — Weight History Is a Separate Aggregate; Current Weight Is Derived Read-Side
-**Date:** 2026-09-20 (HO-CAT-001)
-**Status:** Active
-
-### Decision
-
-`CatWeightRecordAggregate` is its own aggregate root (`clinic.cat_weight_record`, referencing
-`CatId` by id), not an owned collection on `CatAggregate`. `RecordCatWeightCommandHandler` loads
-`CatAggregate` **only to confirm it exists**, then creates and `SaveAsync`s a
-`CatWeightRecordAggregate` directly — the cat itself is not mutated and not saved.
-"Current weight" (`CatProfileViewModel.LatestWeightKg`) is resolved **read-side**, as the newest
-row in `cat_weight_record` for that cat, in `GetCatProfileQueryHandler`. It is never denormalised
-onto `CatAggregate`.
-
-### Reason
-
-`.ai/bounded-contexts.md` rule 3 states an aggregate must not load an unbounded collection, and
-names weight history as exactly that: a cat weighed at every visit for eighteen years would force
-every unrelated read of `CatAggregate` to drag the whole series. `.ai/persistence-ef-core.md` §4
-uses the same example to distinguish owned children (bounded — vaccinations, tens of rows over a
-cat's lifetime) from history that must stay outside the aggregate. This also keeps "one aggregate
-mutated per command" true for `RecordCatWeight`: it mutates only `CatWeightRecordAggregate`,
-never `CatAggregate`.
-
-The obvious alternative — cache `LatestWeightKg` on `CatAggregate` and update it on every
-`RecordCatWeight` — was rejected specifically because it is the change most likely to look like a
-harmless optimisation later and quietly reintroduce the coupling this ADR exists to prevent. It
-would also turn `RecordCatWeight` into a two-aggregate command, which `.ai/bounded-contexts.md`
-rule 1 forbids without a documented boundary exception.
-
-### Consequences
-
-- `GetCatProfileQueryHandler` and `GetCatMedicalHistoryQueryHandler` each issue a second query
-  against `cat_weight_record` to resolve current/most-recent weight — an accepted read-side cost
-  for keeping `CatAggregate` bounded. Both already query through the same `AmarGramDbContext`
-  in the same request, so this adds one indexed lookup, not a second round trip to a different
-  store.
-- `cat_weight_record (cat_id, recorded_on)` is indexed for exactly this access pattern
-  (`CatWeightRecordConfiguration`, HO-CAT-001 §12.1's index table).
-- U32 (HO-CAT-001 §15) is the regression guard: `RecordCatWeightCommandHandler` must save the
-  `CatWeightRecordAggregate` and must **not** save `CatAggregate`. A future change that starts
-  calling `catRepository.UpdateAsync` from that handler breaks this ADR and should fail that test.
+## ADR-023: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -1121,7 +1080,7 @@ an already-built value object or a boolean outcome.
 **Reason:** The project's layering (`Application` references only `Domain` and `Shared`) forces the
 ports into a namespace `Application` can reach, and `Domain.DomainServices` is the only such
 namespace. But that namespace is documented elsewhere for cross-aggregate domain logic (FEFO
-allocation, appointment slot availability), so a reviewer applying that definition literally would
+allocation, stock demand), so a reviewer applying that definition literally would
 "fix" this by moving the ports into `Infrastructure` — which does not compile from `Application`,
 per HO-ACC-001 §8.10's own note. Recording the decision here heads that off.
 
@@ -1245,7 +1204,7 @@ no session cookie is presented at all, `DevUser:Enabled` is `true`, and the envi
 `Development`; the host refuses to start with it enabled anywhere else.
 **Reason:** Every audit writer and every authorization check reads `UserContext`. Resolving it in
 exactly one place means they cannot disagree about who the caller is. Keeping the Development
-fallback lets HO-CAT-001/HO-CAT-002's already-shipped screens keep working in local development
+fallback lets the first already-shipped screens keep working in local development
 before browser-side staff sign-in exists.
 
 ---
@@ -1379,15 +1338,15 @@ prevents by construction.
 (`Status = Merged`, `MergedIntoCustomerId` set); the record is retained, never deleted; the survivor
 is loaded read-only and never modified. `CustomerMergedEvent` is the **binding integration
 contract** every present and future context that holds customer-owned data subscribes to,
-idempotently. `ReassignCatsOnCustomerMergedHandler` moves cats one at a time in a domain event
-handler, querying for cats still owned by the duplicate, so the operation is **not atomic** — a
-part-way failure leaves some cats moved and some not — and **re-sending the identical merge command
-is the documented recovery**, not a special-cased retry path.
+idempotently. Each context's merge handler moves its records one at a time in a domain event
+handler, querying for records still owned by the duplicate, so the operation is **not atomic** — a
+part-way failure leaves some records moved and some not — and **re-sending the identical merge
+command is the documented recovery**, not a special-cased retry path.
 **Reason:** N+1 separate commits inside what a user perceives as one action is a real, visible
 departure from the "one command, one transaction" default elsewhere in this solution, and the
 ARCHITECTURE gate must be able to judge it as a considered decision rather than discover it as an
 undocumented gap. This also settles, for every later handover that comes to hold customer data
-(orders, invoices, appointments — HO-ACC-001 §4.3), that subscribing to `CustomerMergedEvent`
+(orders, invoices, subscriptions — HO-ACC-001 §4.3), that subscribing to `CustomerMergedEvent`
 idempotently is the contract, not a bespoke per-context merge hook.
 
 ---
@@ -1399,7 +1358,7 @@ idempotently is the contract, not a bespoke per-context merge hook.
 transaction** as the change itself, by `AuditChangeCaptureInterceptor` (an EF Core
 `SaveChangesInterceptor`: before/after diff, secrets redacted fail-closed by property-name pattern,
 `Category = DataChange`). Authentication events and business events (sign-in, sign-out, merge,
-anonymisation, the three shipped Cat audit handlers) keep their existing event-handler writers, now
+anonymisation, the area audit handlers) keep their existing event-handler writers, now
 categorised `AuthenticationEvent`/`BusinessEvent`. Audit entries are immutable at **three
 independent layers**: the aggregate (`AuditEntryAggregate.Record` is one-shot, no
 `Correct`/`Amend`/`Redact`/`Void` method exists), `AuditEntryImmutabilityInterceptor` (throws before
@@ -1430,8 +1389,8 @@ registered again by someone else. Self-service deletion requires **step-up confi
 caller's current password**, which shares the same lockout as sign-in. **The personal-data export
 is `POST`** (it writes an access record — `RecordPersonalDataExport`, an `AuditEntryAggregate`
 change like any other) **and returns versioned JSON** (`schemaVersion: 1`).
-**Reason:** Clinical and financial records elsewhere in the solution hold the customer account id
-by reference (`CatAggregate.OwnerId` today; orders/invoices/appointments later); removing the row
+**Reason:** Order, subscription and financial records elsewhere in the solution hold the customer
+account id by reference (orders, invoices, subscriptions); removing the row
 outright would dangle every one of those references. The step-up confirmation, sharing sign-in's
 lockout rather than having its own, closes off using repeated deletion attempts as a way to probe a
 password without it costing the attacker anything extra.
@@ -1491,8 +1450,7 @@ evidence for it, and this ADR is where it now lives so no later handover has to 
 
 ### Decision
 
-Uploaded files — product images, clinical photos, lab results, consent forms, boarding belongings and
-diary media, generated report exports — are stored as objects in **Google Cloud Storage**, reached
+Uploaded files — product images, consignment documents, generated report exports — are stored as objects in **Google Cloud Storage**, reached
 through **one port, `IFileStore`**, implemented by `GcsFileStore` using the official .NET client
 **`Google.Cloud.Storage.V1`** (Apache-2.0).
 
@@ -1512,9 +1470,9 @@ Bucket configuration, all of it asserted at startup and by an infrastructure tes
 | Uniform bucket-level access | **On** | Per-object ACLs cannot be audited as a set |
 | Public access prevention | **Enforced** | No object is ever world-readable; NFR-SEC-5 |
 | Object versioning | **Off** | A retained old version would survive an erasure (XCT's erasure ledger) |
-| Soft-delete retention | **0 / disabled** | New buckets default to a 7-day soft-delete window; a deleted clinical photo must be gone when the retention worker says it is gone |
+| Soft-delete retention | **0 / disabled** | New buckets default to a 7-day soft-delete window; a deleted file must be gone when the retention worker says it is gone |
 | Encryption | Google-managed keys | CMEK is a later change behind the same port |
-| Lifecycle rules | Only on the `tmp/` prefix (abandoned uploads, 1 day) | Retention is enforced by the retention worker, not by the bucket, because incident-attached media is **held past** its normal retention |
+| Lifecycle rules | Only on the `tmp/` prefix (abandoned uploads, 1 day) | Retention is enforced by the retention worker, not by the bucket, because a held file is kept **past** its normal retention |
 | Credentials | Application Default Credentials — Workload Identity in GCP, no key file in the repository or the image | A service-account JSON key on disk is the thing that leaks |
 
 **Serving stays app-proxied.** Reads keep the existing signed-URL path
@@ -1522,7 +1480,7 @@ Bucket configuration, all of it asserted at startup and by an infrastructure tes
 than handing the browser a GCS V4 signed URL. GCS signed URLs would let bytes bypass the application,
 which is cheaper — and also bypasses the one place that sets those response headers, applies
 `Content-Disposition` rules per type, and can refuse a file whose record the caller may no longer
-read. Clinical media is not worth that trade at this size. Direct V4 signing is a later optimisation,
+read. Customer and business documents are not worth that trade at this size. Direct V4 signing is a later optimisation,
 per purpose, behind its own ADR; the port does not change when it happens.
 
 **Development and Testing keep `LocalFileStore`** (filesystem, outside the content root). No GCS
@@ -1530,24 +1488,23 @@ emulator, no cloud dependency, no credentials to run the test suite.
 
 ### Reason
 
-Five handovers — Shop (product images), Consultation (clinical photos, lab results, consent forms),
-Boarding (belongings, diary, incident media), Reporting (`bytea` export store) and Cross-cutting
-(backup coverage) — each needed file storage and none owned it. HO-EMR-001 §8.10 had already designed
-the right shape behind ports, so the shape is kept and only the adapter is decided. The owner chose
+Several handovers — Shop (product images), Inventory (consignment documents), Reporting (`bytea`
+export store) and Cross-cutting (backup coverage) — each needed file storage and none owned it. An
+earlier handover had already designed the right shape behind ports, so the shape is kept and only
+the adapter is decided. The owner chose
 GCP, and `Google.Cloud.Storage.V1` is Google's own supported client for it.
 
 Storing files in PostgreSQL (`bytea`) was the alternative, and is what HO-RPT-001 fell back to. It
-does not survive the sizes here — a 50 MB DICOM study and a boarding diary of photos would sit in the
-same rows the clinic reads all day, and would be copied into every backup and every restore test.
+does not survive the sizes here — large documents and sets of photos would sit in the same rows
+the shop reads all day, and would be copied into every backup and every restore test.
 
 ### Consequences
 
-- **HO-FIL-001 / HO-FIL-002 own this**, extracted from HO-EMR-001 §8.10 and moved ahead of Shop in the
-  delivery order. HO-EMR-001, HO-SHP-001, HO-BRD-001, HO-RPT-001 and HO-XCT-001 consume it; none of
-  them builds an upload path, and HO-EMR-001 ADR-125 is narrowed to its clinical purposes.
+- **HO-FIL-001 / HO-FIL-002 own this**, moved ahead of Shop in the delivery order. HO-SHP-001,
+  HO-IMP-001, HO-RPT-001 and HO-XCT-001 consume it; none of them builds an upload path.
 - **HO-RPT-001's `bytea` export store is withdrawn** in favour of the same port.
-- A GCS outage makes uploads and file reads fail. Records, appointments, dispensing and orders do not
-  depend on it, so the clinic keeps working; that is why file rows carry their metadata in PostgreSQL
+- A GCS outage makes uploads and file reads fail. Orders, stock and billing do not
+  depend on it, so the shop keeps working; that is why file rows carry their metadata in PostgreSQL
   and only the bytes live in the bucket.
 - Egress is paid on every file read while serving is app-proxied. Reads are behind 5-minute signed
   URLs on staff and owner pages, not a public catalogue CDN, so the volume is small. Product images
@@ -1566,9 +1523,9 @@ same rows the clinic reads all day, and would be copied into every backup and ev
 Every uploaded file is scanned by **ClamAV** (`clamd`, reached over TCP with the **`nClam`** client)
 **before** `IFileStore.PutAsync` is called. Infected content never reaches the bucket.
 
-`IMalwareScanner` keeps the contract HO-EMR-001 §8.10 defined — `Clean` / `Infected` / `Unavailable` —
+`IMalwareScanner` keeps the contract defined before this ADR — `Clean` / `Infected` / `Unavailable` —
 and gains one real adapter, `ClamAvScanner`. The existing behaviour is unchanged and now enforced
-everywhere, not only in the clinic:
+everywhere, for every upload purpose:
 
 | Result | Response |
 |---|---|
@@ -1589,18 +1546,18 @@ pipeline to move them out. Scanning in the request keeps a single trust boundary
 bucket unscanned.
 
 ClamAV is free, self-hosted, has no per-file cost and no data leaving the environment — which matters,
-because the files being scanned are clinical records.
+because the files being scanned are customer and business records.
 
 ### Consequences
 
-- Upload latency includes the scan. Sizes are capped per purpose (15 MB, 50 MB for DICOM), so this is
+- Upload latency includes the scan. Sizes are capped per purpose (15 MB, 50 MB for the largest), so this is
   hundreds of milliseconds, and it is on upload only, never on read.
 - `clamd` needs roughly 1–2 GB of memory for the signature database. That is a real deployment line
   item, not a free dependency.
-- **A scanner outage stops uploads.** That is the intended trade: HO-BRD-001's diary and HO-EMR-001's
-  clinical photos are refused with a clear message rather than stored unscanned.
+- **A scanner outage stops uploads.** That is the intended trade: product images and documents are
+  refused with a clear message rather than stored unscanned.
 - ClamAV catches known signatures, not a targeted attack. It is one layer; the type allow-list, the
-  magic-byte check, the size cap, `nosniff`, the sandbox CSP and `attachment`-only DICOM are the
+  magic-byte check, the size cap, `nosniff`, the sandbox CSP and `attachment`-only downloads are the
   others.
 
 ---
@@ -1657,7 +1614,7 @@ per-message price — and it is not an architectural one. The code does not need
 
 ### Context
 
-Only Cat Profiles (HO-CAT-001) is implemented. The next step runs up to 4 agents in parallel,
+Only the first functional area (HO-CAT-001) is implemented. The next step runs up to 4 agents in parallel,
 each in its own git worktree, implementing different functional areas from
 `docs/handover/HO-<AREA>-001.md`. Before this ADR, four files were shared, hand-edited touch
 points that every area would have had to modify:
@@ -1668,10 +1625,10 @@ points that every area would have had to modify:
   violation codes lived in the one static class.
 - `src/Api/AmarGram.Api/Program.cs` — every command handler, validator, query handler,
   domain event handler and infrastructure service for every area was hand-registered directly in
-  this file (lines ~98–126 for Cat alone).
+  this file (lines ~98–126 for the first area alone).
 - `Shared/Common/Constants/SettingDefinitions.cs` (HO-ADM-001 §10.2) — not yet built, but
-  specified as a single static registry that every area with a business setting (Booking,
-  Boarding, Inventory, Notifications, Security, Commerce, …) would need to append to.
+  specified as a single static registry that every area with a business setting (Inventory,
+  Notifications, Security, Commerce, …) would need to append to.
 
 Two agents editing the same file in parallel worktrees is a merge conflict on every area, even
 when their actual features touch nothing in common.
@@ -1682,14 +1639,14 @@ when their actual features touch nothing in common.
 types; keep exactly one call site per area in `Program.cs`, itself delegating to a
 one-file-per-area DI module.**
 
-1. **`AmarGramDbContext`** is now `partial`. Cat's `DbSet` properties moved out of the base
-   file into `AmarGramDbContext.Cat.cs`. The base file keeps only the constructor and
+1. **`AmarGramDbContext`** is now `partial`. The first area's `DbSet` properties moved out of
+   the base file into their own `AmarGramDbContext.[Area].cs`. The base file keeps only the constructor and
    `OnModelCreating`, which already discovers every `IEntityTypeConfiguration<T>` in the
    assembly via `ApplyConfigurationsFromAssembly` — unchanged, so a new area adds its own
    `AmarGramDbContext.[Area].cs` (DbSets) plus its own `IEntityTypeConfiguration` classes and
    needs **no** change to the base file or to `OnModelCreating`.
-2. **`BusinessViolationCodes`** is now `static partial`. Cat's codes moved to
-   `BusinessViolationCodes.Cat.cs`. A new area adds `BusinessViolationCodes.[Area].cs` with its
+2. **`BusinessViolationCodes`** is now `static partial`. The first area's codes moved to their
+   own `BusinessViolationCodes.[Area].cs`. A new area adds `BusinessViolationCodes.[Area].cs` with its
    own `const string` codes.
 3. **`SettingDefinitions`** (HO-ADM-001 §10.2) is created now as an empty `static partial` shell
    at `src/Shared/AmarGram.Shared/Common/Constants/SettingDefinitions.cs`, with no settings.
@@ -1703,12 +1660,10 @@ one-file-per-area DI module.**
    Read or Infrastructure — because the Api project is the only project that already references
    all four layers (Application, Read, Infrastructure, Shared) and is where every registration in
    the pre-existing `Program.cs` already lived; a module in a lower layer could not see the other
-   layers' types without adding project references those layers do not otherwise need. All 18
-   areas (ACC, CAT, ADM, NTF, APT, FIL, SHP, IMP, EMR, PHM, SRG, BIL, ORD, BRD, SUB, POR, RPT,
-   XCT — `docs/handover/README.md`'s delivery order) have a module file; 17 are empty stubs
-   returning `services` unchanged; `CatProfilesModule.cs` carries everything Cat Profiles already
-   had registered. `Program.cs` calls all 18 exactly once, in one fluent chain, and needs no
-   further edit when a stub area is implemented — only that area's own module file changes.
+   layers' types without adding project references those layers do not otherwise need. Every
+   area (ACC, ADM, NTF, FIL, SHP, IMP, BIL, ORD, SUB, POR, RPT, XCT — `docs/handover/README.md`'s
+   delivery order) has a module file. `Program.cs` calls each exactly once, in one fluent chain,
+   and needs no further edit when an area grows — only that area's own module file changes.
 5. **Only the integrator creates EF migrations.** An area PR adds `DbSet`s and
    `IEntityTypeConfiguration` classes; it does not run `dotnet ef migrations add`. The
    integrator, merging multiple areas' schema changes together, runs one migration per merge.
@@ -1753,7 +1708,7 @@ resolves the full DI graph with no missing registration.
   staying explicit.
 - **One `DbContext` per area** — contradicts ADR-011 (one database, one `DbContext`) and would
   reintroduce the multi-store consistency problem ADR-010 removed the three-host architecture to
-  avoid; `CatAggregate` alone is read by several areas (`.ai/bounded-contexts.md`), which a
+  avoid; `CustomerAccountAggregate` alone is read by several areas (`.ai/bounded-contexts.md`), which a
   per-area context cannot express without cross-context joins.
 - **Each area creates its own EF migration** — two areas' migrations generated independently
   against the same historical baseline are not composable without the integrator reconciling
@@ -2198,15 +2153,15 @@ policies) depend on Accounts for something neither area actually owns.
 **Status:** Active
 **Decision:** A new bounded context, `Administration`, namespace segment `Administration`, schema
 `admin`, owns branches, closures, rooms, staff branch assignment, rosters, roster exceptions, leave
-requests, the clinic service catalogue, prices, tax classes and rates, business settings, content,
+requests, the service catalogue, prices, tax classes and rates, business settings, content,
 policy documents/versions/their acceptances, and system status (§8.1's seventeen aggregate roots:
 `Branch`, `BranchClosure`, `Room`, `StaffBranchAssignment`, `StaffRoster`, `RosterException`,
-`LeaveRequest`, `ClinicService`, `ServicePrice`, `TaxClass`, `TaxRate`, `BusinessSettings`,
+`LeaveRequest`, the service root, `ServicePrice`, `TaxClass`, `TaxRate`, `BusinessSettings`,
 `ContentItem`, `PolicyDocument`, `PolicyVersion`, `PolicyAcceptance`, `SystemStatus` -- corrected
 2026-09-26, gate fix: this originally undercounted at fourteen).
 **Reason:** `.ai/bounded-contexts.md` did not name this context (OQ-1) even though every later area
-in the delivery order reads from it -- branches, rosters and settings are inputs appointment slot
-computation, boarding task assignment and every priced transaction all depend on. Recording it here
+in the delivery order reads from it -- branches, rosters and settings are inputs that staff
+scheduling, stock and every priced transaction all depend on. Recording it here
 is the authoritative answer OQ-1 asked for; `.ai/bounded-contexts.md` itself is corrected by the
 architect track, not this branch (§14 forbids editing it directly).
 
@@ -2219,21 +2174,16 @@ architect track, not this branch (§14 forbids editing it directly).
 **Decision:** Every controller action carries exactly one of `[RequireAction]`,
 `[RequireCustomerSession]` or `[PublicEndpoint]` -- enforced by `EndpointAccessConventionTests`
 (U-A1), which reflects over the whole Api assembly and fails the build on an undeclared action.
-`RequireActionAttribute` gains an `OwnerScope` (`None` | `Cat` | `CatCollection` -- `CatCollection`
-added 2026-09-26, gate fix: the explicit opt-in for the two genuinely id-less actions, register and
-list, so a missing or unparsable `catId` on an `OwnerScope.Cat` action fails closed instead of being
-read as "no id, so allow"): a customer caller on an action with `OwnerScope.Cat` in
-`CustomerActions.Cat` is checked against the resource's *current* owner via a dispatched query
-(`GetCatOwnerQuery`) -- match allows, anything else is a 404, never a 403 (a customer must not be
-able to tell "not yours" from "does not exist" apart). A customer calling an action outside their
+A customer caller reaching a customer-owned resource is checked against the resource's *current*
+owner -- match allows, anything else is a 404, never a 403 (a customer must not be able to tell
+"not yours" from "does not exist" apart). (An `OwnerScope` on `RequireActionAttribute` first did
+this; its only users were retired in HO-P1, and customer routes now resolve by id and caller.) A customer calling an action outside their
 scope, or a staff caller failing the existing `ActionRoles` check, both get 403 plus an audited
 denial -- the same path, not two different ones. An anonymous caller always gets 401, with no audit
 (there is no identity to attribute a denial to).
 **Reason:** US-ADM-02 AC1 is "every endpoint's access matches Appendix D, regardless of what the UI
 shows"; fail-closed-by-role alone (HO-ACC-001 ADR-036) does not catch an endpoint someone forgot to
-attribute at all -- only a convention test does. The Cat/Vaccine mapping onto Appendix D's two rows
-("own", "any") is an inference (OQ-4): `Cats.View`, `Cats.Register`, `Cats.EditProfile` are the
-customer's "own" actions (`CustomerActions.Cat`); every other Cat/Vaccine action is staff-only.
+attribute at all -- only a convention test does.
 
 ---
 
@@ -2245,7 +2195,7 @@ customer's "own" actions (`CustomerActions.Cat`); every other Cat/Vaccine action
 by the code-defined `ActionRoles` table. An administrator-editable permissions screen is not built.
 This amends HO-ACC-001 ADR-036's note that editing was deferred "to US-ADM-02" -- it is not built by
 this handover either.
-**Reason:** An editable matrix lets one mis-click lock the clinic out of its own records; no
+**Reason:** An editable matrix lets one mis-click lock the shop out of its own records; no
 acceptance criterion asks for it (OQ-2, owner default: no).
 
 ---
@@ -2288,12 +2238,12 @@ makes both true at once.
 **Status:** Active
 **Decision:** `StaffAvailability.Intervals` is a pure function over a pre-loaded roster, its
 exceptions, approved leave and the branch's open intervals (from `BranchCalendar`) -- no I/O, so
-Appointments and Boarding can generate slots, and this can be tested, without a database. A roster
+consumers can compute staff cover, and this can be tested, without a database. A roster
 holds a current weekly pattern and at most one scheduled next pattern with an effective date; a due
 next pattern is promoted to current lazily, by any command that loads the roster (`PromoteDuePattern`)
 and by this same read-side calculation -- never by a background job.
-**Reason:** `.ai/bounded-contexts.md` rule 4 names appointment/availability calculation as a domain
-service; a pure function is exactly what a slot-generation algorithm needs to be unit-tested without
+**Reason:** `.ai/bounded-contexts.md` rule 4 names cross-aggregate calculation as a domain
+service; a pure function is exactly what an availability algorithm needs to be unit-tested without
 a database. §20.8 forbids a background job for pattern promotion.
 
 ---
@@ -2304,11 +2254,11 @@ a database. §20.8 forbids a background job for pattern promotion.
 **Status:** Active
 **Decision:** Approving or cancelling leave raises `StaffLeaveApprovedEvent` /
 `LeaveCancelledEvent(WasApproved)` -- ids, dates and a boolean only, no note or reason. Approving
-leave does **not** look at appointments or boarding tasks; HO-APT-001 and HO-BRD-001 subscribe to
-these events to flag/reassign their own records when they land. Both events' consumers must be
+leave does **not** look at other contexts' records; a context that schedules staff subscribes to
+these events to flag/reassign its own records. Both events' consumers must be
 idempotent.
-**Reason:** US-ADM-03 AC2 ("flag affected appointments") is delivered in two halves across two
-handovers that do not exist together yet; the split has to be a deliberate, named contract, not an
+**Reason:** US-ADM-03 AC2 ("flag affected work") is delivered in two halves across two
+handovers; the split has to be a deliberate, named contract, not an
 implicit assumption.
 
 ---
@@ -2550,7 +2500,7 @@ that would still be waiting past the request's own `NotAfter` expires the notifi
 sending it late.
 **Reason:** FR-NTF-5 requires configured quiet hours; "held until the window opens" and "sent after
 the window already closed" are different failures with different consequences (an SMS at 3am vs. a
-reminder for an appointment that already happened) -- only a recorded decision distinguishes them.
+reminder for a delivery that already happened) -- only a recorded decision distinguishes them.
 
 ---
 
@@ -2592,10 +2542,10 @@ construct outside `Development`/`Testing` respectively. Outside those two enviro
 real provider chosen yet, the default is `UnconfiguredChannelSender`: every send is a permanent
 failure, and `NotificationWorker` logs a startup warning once per missing channel.
 
-**Amended 2026-09-27 (integrator decision, HO-CAT-001 merge).** `NotificationLinkBuilder`'s three
+**Amended 2026-09-27 (integrator decision, first-area merge).** `NotificationLinkBuilder`'s three
 links (password reset, care, unsubscribe) read the shared `PublicSiteOptions.WebBaseUrl` --
-originally a Notifications-only `Notifications:WebBaseUrl` setting, changed once Cat Profiles'
-cage-card QR code needed the same base URL. `PublicSiteStartupGuardHostedService` requires and
+originally a Notifications-only `Notifications:WebBaseUrl` setting, changed once a
+second area needed the same base URL. `PublicSiteStartupGuardHostedService` requires and
 validates that shared value in Production, so a deployment that forgets it fails to start loud,
 rather than silently sending dead links.
 **Reason:** The owner explicitly left the SMS/email provider choice open; a default that silently
@@ -2620,7 +2570,7 @@ placeholder expansion, or be mistaken for admin-authored structure. Email bodies
 `LimitedMarkup` (paragraphs, headings, bullets, bold, https/site-relative links only); every other
 channel is plain text. There is no templating library and no reflection-based property access
 anywhere in the pipeline.
-**Reason:** FR-NTF-2 needs data-defined wording; a cat's name or any other user-supplied value
+**Reason:** FR-NTF-2 needs data-defined wording; a customer's name or any other user-supplied value
 reaching the renderer is exactly the injection surface a templating engine would open, and "parse
 first, substitute second" closes it structurally rather than by escaping discipline alone.
 
@@ -2671,37 +2621,7 @@ than a Notification-owned flag keeps consent in the one place ADR-058 already re
 
 ---
 
-## ADR-065 — Care-Reminder Sweep: Hourly, Window-Based, Deduplicated by Owner
-
-**Date:** 2026-09-27 (HO-NTF-001)
-**Status:** Active
-**Decision:** A second timed producer in the same worker (`CareReminderSweep`, run hourly) finds
-every alive cat's next-due vaccination or deworming/combined treatment inside its configured
-lead-time window (`NextDueOn - leadDays <= today <= NextDueOn`; overdue items get no reminder,
-OQ-5) and requests one reminder per item, deduplicated by
-`"care:{kind}:{catId:N}:{refId:N}:{ownerId:N}:{dueOn:yyyyMMdd}"`. Validity is re-checked by a
-subject guard (`CatVaccinationDueGuard`/`CatDewormingDueGuard`) **at expansion and again
-immediately before every delivery attempt** (§8.7), rather than by subscribing to a
-`CatMarkedDeceasedEvent`/ownership-transfer event -- a cat that dies or changes hands between the
-sweep and expansion, or between expansion and a later delivery attempt, is simply
-suppressed/cancelled (`SubjectNoLongerApplies`), never sent.
-
-**Amended 2026-09-27 (TEST gate fix, I-F5/A6).** The key was first shipped without `{ownerId:N}`.
-After a cat's ownership transfer, the original owner's request is correctly suppressed by the
-guard, but the identical key (a transfer changes neither the vaccination/treatment record nor its
-`NextDueOn`) was then read as "already requested" for the NEW owner too -- silently and
-permanently, until the underlying record next changed, which can be up to a year away for an
-annual vaccine. Including the owner in the key means a transfer computes a genuinely different key,
-so the new owner's next sweep is never blocked by the original owner's now-suppressed request.
-**This does not close every gap:** a cat transferred A→B→A within the same due window computes
-the SAME key for the second A-request as the original (now-suppressed) A-request already
-consumed, so nothing is ever sent twice, but the original owner's reminder for that due date is
-silently missed rather than re-requested -- a known, tracked residual, not fixed by this
-amendment (`docs/backlog/NTF.md` #1).
-**Reason:** A guard re-checked at send time avoids an event handler that would have to touch every
-pending reminder for a cat whenever it dies or changes hands; the amendment records why the key
-needed the owner, not just the subject, once ownership itself turned out to be part of "is this
-still the right thing to send".
+## ADR-065: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2754,7 +2674,7 @@ SRS.
 **Decision:** SKUs are owned by `ProductAggregate` (≤ 100); a SKU id is stable, never reused and
 never deleted (discontinued instead); SKU code and barcode unique across all products; GTIN-length
 numeric barcodes check-digit validated.
-**Reason:** Other contexts (Inventory, Orders, Pharmacy) hold SKU ids for years; POS and receiving
+**Reason:** Other contexts (Inventory, Orders, Subscriptions) hold SKU ids for years; POS and receiving
 scan barcodes.
 
 ---
@@ -2771,14 +2691,13 @@ added it" unanswerable.
 
 ---
 
-## ADR-081 — Country of Origin and the Prescription Flag Live on the Product
+## ADR-081 — Country of Origin Lives on the Product
 
 **Date:** 2026-09-28 (HO-SHP-001)
 **Status:** Active
-**Decision:** Country of origin and the prescription flag live on the product, not the SKU — FR-SHP-4
-and FR-SHP-11 say "product"; SRS §5.1 and `.ai/flows/*` say SKU. Origins are data
+**Decision:** Country of origin lives on the product, not the SKU — FR-SHP-4 says "product"; SRS §5.1 and `.ai/flows/*` say SKU. Origins are data
 (`SourcingOriginAggregate`); an origin is listed when it has an active food product.
-**Reason:** The SRS disagrees with itself; the choice decides the filter, the gate and the
+**Reason:** The SRS disagrees with itself; the choice decides the filter and the
 revenue-by-origin report.
 
 ---
@@ -2810,15 +2729,7 @@ engine.
 
 ---
 
-## ADR-084 — Prescription Gating Reads Pharmacy Through `IDietAuthorisationGate`
-
-**Date:** 2026-09-28 (HO-SHP-001)
-**Status:** Active
-**Decision:** Prescription gating reads Pharmacy through `IDietAuthorisationGate`; the shipped stub
-denies everyone (fail-closed); `PrescriptionPurchaseGate` is pure; `CheckPrescriptionEligibilityQuery`
-is the one contract HO-ORD-001 calls at add-to-cart and checkout; authorised cats must be alive and
-still owned.
-**Reason:** BR-2 must hold before Pharmacy exists; two call sites must not drift.
+## ADR-084: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2827,8 +2738,7 @@ still owned.
 **Date:** 2026-09-28 (HO-SHP-001)
 **Status:** Active
 **Decision:** Bundles are products of kind `Bundle` with one priced SKU and component SKUs;
-availability is the minimum over components; components may not be bundles, prescription products
-or discontinued; deduction is exploded by Orders/Inventory through `GetBundleCompositionQuery`.
+availability is the minimum over components; components may not be bundles or discontinued; deduction is exploded by Orders/Inventory through `GetBundleCompositionQuery`.
 **Reason:** FR-SHP-13 "priced as a unit while deducting each component" spans three contexts.
 
 ---
@@ -2861,21 +2771,13 @@ hide it.
 
 **Date:** 2026-09-28 (HO-SHP-001)
 **Status:** Active
-**Decision:** Cross-sell and up-sell are curated by the shop manager; the life-stage block is
-computed; every block excludes out-of-stock items and prescription products the caller cannot buy.
+**Decision:** Cross-sell and up-sell are curated by the shop manager; every block excludes
+out-of-stock items.
 **Reason:** No order history exists to compute "frequently bought together" (OQ-7).
 
 ---
 
-## ADR-089 — Food Recommendation Is a Pure Policy
-
-**Date:** 2026-09-28 (HO-SHP-001)
-**Status:** Active
-**Decision:** Food recommendation is a pure policy over cat facts and candidates: allergen
-token-match exclusion, life stage from date of birth with configurable thresholds, reason codes, no
-prescription product without this cat's authorisation.
-**Reason:** Clinical-adjacent logic must be explainable and testable; thresholds await clinical
-sign-off (OQ-9).
+## ADR-089: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -2894,7 +2796,7 @@ scope.
 
 **Date:** 2026-09-28 (HO-SHP-001)
 **Status:** Active
-**Decision:** Images are storage key + metadata (HO-CAT-001's approach); public URL from
+**Decision:** Images are storage key + metadata (the first area's approach); public URL from
 `Media:PublicBaseUrl`, else null; alt text required.
 **Reason:** NFR-SEC-5 upload path is not provisioned; UI-6.
 **Amended 2026-09-23 (README C-5):** Product images now go through HO-FIL-001. This slice
@@ -2909,10 +2811,10 @@ served through HO-FIL-001's signed URLs like every other file.
 **Date:** 2026-09-28 (HO-SHP-001)
 **Status:** Active
 **Decision:** Contract queries (`GetSkuSaleFactsQuery`, `GetSkuCatalogueFactsQuery`,
-`FindSkuByBarcodeQuery`, `CheckPrescriptionEligibilityQuery`, `GetBundleCompositionQuery`) are the
+`FindSkuByBarcodeQuery`, `GetBundleCompositionQuery`) are the
 only way other contexts read catalogue facts in their command handlers; they return facts, never
-decisions other than the gate's.
-**Reason:** Keeps Orders, Inventory and Pharmacy off `product.*` tables in write paths.
+decisions.
+**Reason:** Keeps Orders, Inventory and Subscriptions off `product.*` tables in write paths.
 
 ---
 
@@ -2933,9 +2835,9 @@ search.
 **Date:** 2026-09-28 (HO-SHP-001)
 **Status:** Active
 **Decision:** `ListedOnStorefront` lets a product be an active, stockable SKU that is never shown
-or sold online — for clinic consumables and dispensed items that HO-EMR-001 / HO-PHM-001 deduct.
-**Reason:** The delivery order exists because clinical areas deduct batches of catalogue SKUs
-(README); without the flag those items would appear in the shop (OQ-5).
+or sold online — for counter-only goods and internal consumables.
+**Reason:** Some stocked SKUs are not for online sale; without the flag those items would appear in
+the shop (OQ-5).
 
 ---
 
@@ -2961,129 +2863,43 @@ and reviews to the survivor idempotently, closing duplicates on collision;
 stay, credited to "A verified buyer".
 **Reason:** HO-ACC-001 ADR-039 / ADR-041 bind every context holding a customer id.
 
-## ADR-067 — Clinic Bounded Context and the Two Pre-Booking States
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Clinic** bounded context, schema `clinic`, shared with HO-EMR-001. Appointment
-statuses are Appendix C's plus two **pre-booking** states, `Held` and `HoldExpired`/`HoldReleased`,
-which never appear as appointments.
-**Reason:** Not in `.ai/bounded-contexts.md` (OQ-1); the extra states look like a deviation from
-Appendix C.
+## ADR-067: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-068 — Double Booking Is Prevented by PostgreSQL Exclusion Constraints, Not an Application Lock
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Double booking is prevented by three PostgreSQL exclusion constraints** (performer,
-room, cat) over `tstzrange(starts_on, ends_on, '[)')` for occupying statuses, using `btree_gist`.
-`23P01` → `409 SlotNoLongerAvailable`. No application lock.
-**Reason:** FR-CLN-3 "prevented by a transactional hold"; a read-then-write check has a race; the
-constraint has none (F28).
+## ADR-068: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-069 — Slots Are Computed, Never Stored
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Slots are computed** by the pure `AppointmentSlotFinder` from HO-ADM-001's calendar
-and availability, service, rooms and bookings, on a branch-local grid; no slot table.
-**Reason:** `.ai/bounded-contexts.md` rule 4; a stored slot table must be regenerated on every
-roster, leave, closure or service change.
+## ADR-069: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-070 — Holds: One Per Customer, Released Lazily
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Holds** are `Held` appointments, 10 min, **one per customer**; stale holds are
-released lazily by the next write that overlaps them, in the same save — a recorded rule-1
-exception.
-**Reason:** Without one-per-customer a script can hold a morning; without lazy release a stale hold
-blocks a slot shown as free.
-
-**Amended 2026-09-28 (owner decision, ARCHITECTURE gate second pass).** A stale hold's expiry no
-longer commits "in the same save" as the caller's own claim. `SlotClaim.ExpireOverlappingStaleHoldsAsync`
-commits each lapsed hold's expiry first, in its own save, because EF Core does not order two
-`Modified` rows of one table by which was mutated first in C#, and Postgres checks an exclusion
-constraint per statement -- without this, the caller's own claim could still 23P01 against a hold
-whose expiry had not yet reached the database. Expiring a hold that has, in fact, lapsed is
-idempotent and harmless whatever the caller does next, so committing it early is safe even though
-it is no longer atomic with the caller's own write. Rule: no caller may have pending tracked
-changes on its `DbContext` before calling the helper -- a caller that mutated first would have half
-its own unit of work committed early by the helper's save.
-**Decision:** Owner, 2026-09-28.
+## ADR-070: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-071 — The Queue Is a Read; the Estimated Wait Is Recomputed, Never Stored
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **The queue is a read**, ordered by triage then due time; the estimated wait is
-computed on every read from durations and performers on shift, and labelled an estimate.
-**Reason:** A stored wait goes stale the moment an emergency arrives.
+## ADR-071: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-072 — Staff Bookings and Moves Skip the Hold
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Staff bookings and moves skip the hold** and are validated by the same slot rules,
-except the online-only rules (notice, horizon, opening hours, `IsBookableOnline`); the same
-constraints protect them.
-**Reason:** Reception on the phone should not wait on a countdown; an after-hours emergency needs a
-shift, not opening hours.
+## ADR-072: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-073 — No Deposit or Payment at Booking
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **No deposit, no payment** at booking; the appointment carries a `PriceSnapshot` for
-Billing.
-**Reason:** Owner instruction; the snapshot keeps HO-ADM-001 ADR-049's promise.
+## ADR-073: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-074 — Appointment Messages Ride the Booking; Reminders Use SendAfter/SubjectStamp
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Appointment messages** are enqueued in the command handler with the change;
-reminders use HO-NTF-001's new `SendAfter` and `SubjectStamp`, so a moved or cancelled
-appointment's reminders fail their guard. Confirmation, reschedule and cancellation notices are
-`Urgent`.
-**Reason:** FR-CLN-7 "immediately" against FR-NTF-5 quiet hours — the recipient is the one acting.
+## ADR-074: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-075 — Waitlist Offers: Worker Pass, Outside Quiet Hours, Oldest First
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Waitlist** offers are made by a worker pass outside quiet hours, oldest entry
-first; an offer is a hold with the claim window; one save for hold + entry + message — a recorded
-rule-1 exception.
-**Reason:** Offering from the cancel handler would couple cancellation to waitlist logic and could
-not respect quiet hours.
+## ADR-075: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-076 — Flagging, Not Cancelling
-
-**Date:** 2026-09-27 (HO-APT-001)
-**Status:** Active
-**Decision:** **Flagging, not cancelling**: leave, closure, death and ownership events flag
-affected future appointments; handlers are idempotent and never enqueue.
-**Reason:** ADR-048's contract; an automatic cancellation would message a customer about a decision
-nobody made.
+## ADR-076: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -3092,11 +2908,7 @@ nobody made.
 Dated, append-only notes on ADR-077…096 recorded while building Phases F–H. The detail and the
 reasons are in `docs/handover/HO-SHP-001.md` §1 "Amended" (rows dated 2026-10-04).
 
-- **ADR-084 (prescription gate).** The port Shop consumes is HO-PHM-001's `IDietAuthorisationGate`
-  (`CheckAsync` / `GetAuthorisedCatsAsync`, ADR-149), registered by `PharmacyModule`, not the
-  `GetValidAsync` draft in §8.9. Expiry, liveness and ownership are the gate's rules; Shop's pure
-  `PrescriptionPurchaseGate` keeps the guest rule and the outcome-to-reason mapping.
-  `CheckPrescriptionEligibilityQuery` has no `AsOf` — the gate evaluates "today" on every call.
+- **ADR-084.** Superseded — feature removed (HO-P1)
 - **ADR-082 (2026-10-04, integrator recommendation, confirmed by the owner 2026-10-04).** Production availability is FAIL-CLOSED per §4.3: `Shop:InterimAvailabilityFromPrice` (default false) gates the interim price-based approximation, which only the Testing environment enables.
 - **ADR-082 / ADR-085 (availability, bundles).** Availability for every storefront read, the
   stock-alert handlers and the worker is answered at one seam (`SkuSellability` behind
@@ -3107,180 +2919,79 @@ reasons are in `docs/handover/HO-SHP-001.md` §1 "Amended" (rows dated 2026-10-0
 - **ADR-090 (localisation).** Enabled locales reach command handlers through the Domain port
   `IContentLocaleSettings` (Application cannot reference Infrastructure's options). `?locale=`
   applies to every public read that shows a name.
-- **ADR-089 (food recommendation).** A product with no reason is not a recommendation; the allergy
-  count covers only products that would otherwise have been recommended.
+- **ADR-089.** Superseded — feature removed (HO-P1)
 
 ---
 
-## HO-EMR-001 — Consultation and Medical Records (ADR-117 … ADR-134)
-
-Recorded word-for-word from `docs/handover/HO-EMR-001.md` §9 (the handover owns ADR-117…136 and uses 117…134). Dated 2026-10-07 at build; the decisions were taken at handover (2026-09-22).
-
-## ADR-117 — Visit roots live in the Clinic context
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Visit roots** live in the `Clinic` context (schema `clinic`, HO-APT-001 ADR-067) under namespace segment **`Visit`** (a listed feature name). **One visit per appointment**, opened by an explicit command while the appointment is `CheckedIn` or `InConsultation`; the visit holds no customer id
-**Reason:** `.ai/bounded-contexts.md` lists `Visit` as its own context; HO-APT-001 put appointments in `Clinic`. Recording the split stops a third naming appearing
+## ADR-117: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-118 — A finalised visit is frozen at three layers
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **A finalised visit is frozen at three layers** — `EnsureOpen()` in the aggregate, no API path, PostgreSQL triggers on the visit and its child tables; addenda, result sets, attachments and stored files are append-only by trigger; no clinical row is ever deleted
-**Reason:** BR-11, D-5, C-3; the same database-authoritative standard as HO-ACC-001's audit triggers
-
-**Amended 2026-10-07 (HO-EMR-001 integrator post-merge; ARCHITECTURE gate deviation 3, SECURITY M1):** "stored files are append-only by trigger" is **not what was built**. `files.stored_file` belongs to HO-FIL-001 (README C-5, ADR-125's narrowing), which legitimately redacts rows and purges unreferenced files, so the table is **not** append-only. HO-EMR-001 instead installed a **delete guard**, `clinic.stored_file_referenced` (migration `AddDiagnostics`, replaced by `AddConsents`): a `BEFORE DELETE` row trigger that raises `SQLSTATE 'CR001'` when the file is referenced by `clinic.visit_photo`, `clinic.diagnostic_attachment` or `clinic.consent_record`. An unreferenced file stays deletable; a referenced file's **row** cannot be deleted. Everything else in this ADR stands as written (visit and child-table freezing, append-only addenda, result sets and attachments, no clinical row ever deleted). **Known gap, owner decision pending (`docs/backlog/EMR.md` row 1):** the guard protects the row, not the content. HO-FIL-001's `StoredFileEraser` deletes the stored object *before* the row delete that fires the trigger, and a `StoredFilePurgeSource` is registered for every `FilePurpose`, so a purge of an attached lab report, photo or signed consent form would destroy the object and then be refused on the row, leaving a clinical record pointing at nothing. Latent until HO-XCT-001 wires `IRetentionPurgeSource`; which area closes it is undecided.
-
-**Amended 2026-10-09 (integrator, migration `HardenClinicalAndBillingTriggers`; `docs/backlog/EMR.md` rows 4–5):** the freeze is stricter than the text above. A child row's `visit_id` **never changes** (`clinic.visit_child_frozen` refuses any change, open or finalised parent), and the soft-delete flag `IsMarkedToDelete` is **refused outright** on `clinic.visit`, `clinic.consent_record` and `clinic.diagnostic_order` — setting it would hide the record from every read, i.e. delete it. `clinic.diagnostic_order` also freezes `cat_id`, `visit_id` and `branch_id`. All raise `SQLSTATE 'CR001'`. No application path does any of these.
+## ADR-118: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-119 — Finalising is Vet-only
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Finalising is `Vet`-only** — `Visits.Finalise` maps to `Vet` alone (Administrator excluded, per Appendix D "Clinical notes: Admin R"), and `VisitAggregate.Finalise` re-checks the caller's roles
-**Reason:** BR-6, FR-CLN-24, AC-18; an "Administrator can do everything" assumption would violate the SRS
+## ADR-119: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-120 — Vital-sign ranges are two-tier and server-authoritative
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Vital-sign ranges are two-tier and server-authoritative**: outside *absolute* is refused; outside *plausible* is refused until the request confirms those signs, and the confirmation is stored
-**Reason:** US-CLN-11 AC2 "warned but may confirm"; a client-only warning is not evidence
+## ADR-120: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-121 — Vitals with a weight create the weight record in the same commit
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Vitals with a weight create the cat's weight record in the same commit**, sharing the vitals entry's id — a recorded rule-1 exception using the F23 companion commit
-**Reason:** Weight history must never disagree with the vitals that produced it; an event handler would fail after commit
+## ADR-121: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-122 — Auto-save is a per-author working copy
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Auto-save is a per-author working copy** (`ConsultationDraftAggregate`), excluded from audit capture, returned only to its author when newer than the saved note; the note on the visit changes only on explicit save
-**Reason:** US-CLN-12 AC2; auto-saving into the record would flood the audit trail with keystroke-level rows
+## ADR-122: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-123 — Coded diagnoses from an in-house catalogue
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Coded diagnoses** come from an in-house catalogue (`DiagnosisCodeAggregate`) with optional `ExternalSystem`/`ExternalCode` for a later mapping (VeNom or SNOMED, OQ-2); problem code and name are snapshotted; one system code `SYS-NAD` ("Routine visit — no abnormality detected") is seeded; finalising needs ≥ 1 problem and non-blank Assessment and Plan
-**Reason:** FR-CLN-13 "coded"; `.ai/flows/clinic-visit-flow.md` "cannot be finalised without at least one diagnosis" — the system code keeps well visits finalisable
+## ADR-123: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-124 — Diagnostics are their own root
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Diagnostics are their own root**; results are append-only result sets with superseding links; flags come from a pure classifier against the range stored on the value; results and files may arrive after finalisation
-**Reason:** Lab reports arrive days later; a correction must not overwrite what a vet acted on
+## ADR-124: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-125 — Stored-file facility (narrowed to HO-FIL-001)
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Stored-file facility** (`files` schema, `StoredFile` segment, shared with later areas): content-sniffed type validation, size per purpose, **fail-closed** malware scan port, local store outside the web root, HMAC-signed 5-minute URLs, hardened response headers. If HO-IMP-001 ships an equivalent first, this slice consumes it (§20.3)
-**Reason:** NFR-SEC-5 / US-XCT-07 applied for the first time a slice truly stores files; no scanner chosen yet
-
-**Narrowed 2026-09-23 (README C-5, HO-EMR-001 §1 Amended):** the stored-file facility, `files` schema and `StoredFile` namespace segment are owned by HO-FIL-001 (ADR-318 storage, ADR-319 ClamAV scanner); this handover consumes `IFileStore` / `IMalwareScanner` / `IFileUrlSigner` and keeps only its three clinical `FilePurpose` values and their `FileRules` rows. The §20.3 "if HO-IMP-001 ships an equivalent first" branch is superseded by that extraction.
+## ADR-125: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-126 — Treatments move stock in the same commit
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Treatments move stock through Inventory in the same commit** (rule-1 exception, companion commit); FEFO by default, override with reason; **expired is refused with no override**; shortfall recorded and published; mistakes reversed by a compensating entry; **controlled-drug SKUs are refused** until the register exists (HO-SRG/HO-PHM)
-**Reason:** BR-3, BR-4, FR-IMP-15, C-2; an after-commit handler could record a treatment whose stock never moved
+## ADR-126: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-127 — Charges are snapshotted on treatment lines
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Charges are snapshotted on treatment lines** (service or SKU price at recording, tax class); Billing receives `VisitFinalisedEvent` and reads `GetVisitChargeLinesQuery`; Clinic never writes `billing.*`
-**Reason:** HO-ADM-001 ADR-049's contract; `.ai/flows/clinic-visit-flow.md` cross-module rule
+## ADR-127: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-128 — Clinical history is composed from section providers
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Clinical history is composed from section providers**; unbuilt sections report `available: false` with their owner; server budget 600 ms / 300 ms p95 on a 10-year fixture
-**Reason:** Later areas add panels without editing this slice; NFR-PRF-4 must be measured, not assumed
+## ADR-128: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-129 — Every clinical-record read is logged before it runs
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Every clinical-record read is logged before it runs**, by a filter dispatching a command, new `AuditCategory.ClinicalRecordAccess`; a failed log fails the request
-**Reason:** NFR-SEC-8 "every access … shall be logged"; a query never writes, so logging cannot live in the query
+## ADR-129: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-130 — The discharge summary is derived, not stored
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **The discharge summary is derived, not stored**; finalised visits only; PDF via QuestPDF; the owner gets a link-only message
-**Reason:** A stored copy could disagree with the immutable record and its addenda
+## ADR-130: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-131 — Follow-up is an appointment link or a guarded reminder
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Follow-up** is a link to an appointment booked through HO-APT-001, or a reminder enqueued with `SendAfter`, subject `VisitFollowUp` and a stamp guard that also stands down once the cat has a booked appointment
-**Reason:** US-CLN-18; a reminder for a follow-up that changed or was already booked must never send
+## ADR-131: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-132 — Consent is its own root; signatures are stroke data
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Consent** is its own root, linked to cat, appointment and kind, recording the exact consent-form policy version; on-screen signatures are **stroke data rendered to SVG**, not uploaded images; `ConsentRules.IsValidFor` is Surgery's contract
-**Reason:** NFR-LEG-4, US-CLN-21; stroke data needs no scanner, so signing works where uploads are refused
+## ADR-132: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-133 — Amendment to HO-APT-001: completion and cancel guards
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Amendment to HO-APT-001**: `CompleteAppointment` is refused while the appointment's visit is `Open` (`VisitNotFinalised`); staff `Cancel` of a `CheckedIn` appointment is refused once a visit exists (`VisitInProgress`). Finalising does not complete the appointment
-**Reason:** HO-APT-001 §4.2 reserved this invariant for this slice; auto-completing from an event handler would fail after commit
+## ADR-133: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-134 — Note templates are one active template per service
-
-**Date:** 2026-09-22 (HO-EMR-001), recorded 2026-10-07
-**Status:** Active
-**Decision:** **Note templates** are one active template per service, versioned, delivered in the visit payload for the client to pre-fill; the applied id and version are recorded on the note
-**Reason:** US-CLN-20 "remains fully editable"; server-side copying would blur what the vet wrote
+## ADR-134: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -3342,8 +3053,8 @@ Recorded word-for-word from `docs/handover/HO-EMR-001.md` §9 (the handover owns
 
 **Date:** 2026-10-07 (HO-IMP-001)
 **Status:** Active
-**Decision:** **`IStockLedger` is the only way any context moves stock**; it enlists rows without saving (HO-NTF-001's outbox pattern) so the consumer's aggregate and the movement commit together — a recorded rule-1 exception for every stock-moving command; consumers must stamp reference, customer and cat
-**Reason:** "Inventory is the only module that allocates or deducts stock" (`.ai/flows/import-to-shelf-flow.md`); designing it now avoids building clinical deduction twice (README)
+**Decision:** **`IStockLedger` is the only way any context moves stock**; it enlists rows without saving (HO-NTF-001's outbox pattern) so the consumer's aggregate and the movement commit together — a recorded rule-1 exception for every stock-moving command; consumers must stamp reference and customer
+**Reason:** "Inventory is the only module that allocates or deducts stock" (`.ai/flows/import-to-shelf-flow.md`); designing it now avoids building counter and subscription deduction twice (README)
 
 ---
 
@@ -3351,7 +3062,7 @@ Recorded word-for-word from `docs/handover/HO-EMR-001.md` §9 (the handover owns
 
 **Date:** 2026-10-07 (HO-IMP-001)
 **Status:** Active
-**Decision:** **Recall** = one batch-row status change (atomic across locations, serialised against consumption by `FOR SHARE`); the **trace is a ledger read** with customers resolved through merges and cats through current ownership at read time — no `CustomerMergedEvent` handler rewrites immutable rows; notices go one per distinct customer with a dedup key and a subject guard. **Replaces** `.ai/flows/batch-recall-flow.md`'s per-module `IBatchConsumptionQuery`
+**Decision:** **Recall** = one batch-row status change (atomic across locations, serialised against consumption by `FOR SHARE`); the **trace is a ledger read** with customers resolved through merges at read time — no `CustomerMergedEvent` handler rewrites immutable rows; notices go one per distinct customer with a dedup key and a subject guard. **Replaces** `.ai/flows/batch-recall-flow.md`'s per-module `IBatchConsumptionQuery`
 **Reason:** Fan-out needs every future module to remember a contract; the stamp is enforced by the port at write time. The merge-contract deviation must be judged by ARCHITECTURE, not discovered
 
 ---
@@ -3415,7 +3126,7 @@ Recorded word-for-word from `docs/handover/HO-EMR-001.md` §9 (the handover owns
 **Date:** 2026-10-07 (HO-IMP-001)
 **Status:** Active
 **Decision:** **SKUs come from HO-SHP-001 through `ISkuDirectory`** and one adapter; quantities are `numeric(12,3)` in the SKU's stock unit, whole unless the SKU allows fractions
-**Reason:** Written in parallel with HO-SHP-001; clinical use needs fractions (ml), retail does not
+**Reason:** Written in parallel with HO-SHP-001; loose goods sold by weight or volume need fractions (kg, l), packed goods do not
 
 ---
 
@@ -3433,7 +3144,7 @@ Recorded word-for-word from `docs/handover/HO-EMR-001.md` §9 (the handover owns
 **Date:** 2026-10-07 (HO-IMP-001)
 **Status:** Active
 **Decision:** **Consignment documents are metadata + storage key**, never removed (superseded instead)
-**Reason:** HO-CAT-001's upload pattern; NFR-LEG-2 retention
+**Reason:** the first area's upload pattern; NFR-LEG-2 retention
 
 ---
 
@@ -3703,7 +3414,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 
 ## HO-POR-001 — Customer Portal (backend), ADR-257 … ADR-267
 
-> **Source note (2026-10-09).** HO-POR-001 says it "recorded" ADR-257 … ADR-267 "for the ARCHITECTURE gate to judge" (§1, §6), but the handover contains no §9 decision block, only §9.1 Open questions. The decisions below are therefore taken **sentence by sentence from the handover's own text** (the section is cited on each); nothing was added to them. ADR-257 … ADR-262, ADR-264, ADR-266 and ADR-267 are recorded now because Phases A, B (visits) and C are built (2026-10-09). **ADR-263 (re-order) is pending** until Phase D (HO-ORD-001, HO-SHP-001, HO-IMP-001) is built. **ADR-265 is withdrawn** (README C-6, handover §8.8).
+> **Source note (2026-10-09).** HO-POR-001 says it "recorded" ADR-257 … ADR-267 "for the ARCHITECTURE gate to judge" (§1, §6), but the handover contains no §9 decision block, only §9.1 Open questions. The decisions below are therefore taken **sentence by sentence from the handover's own text** (the section is cited on each); nothing was added to them. ADR-257 … ADR-262, ADR-264, ADR-266 and ADR-267 are recorded now because Phases A, B and C are built (2026-10-09). **ADR-263 (re-order) is pending** until Phase D (HO-ORD-001, HO-SHP-001, HO-IMP-001) is built. **ADR-265 is withdrawn** (README C-6, handover §8.8).
 
 ## ADR-257 — The Portal is a context that owns nothing
 
@@ -3736,8 +3447,8 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 
 **Date:** 2026-10-09 (HO-POR-001)
 **Status:** Active
-**Decision:** `PortalSectionComposer.RunAsync` is the **only** `try/catch` in the dashboard path (§8.4): `OperationCanceledException` is re-thrown; any other exception is logged at `Error` with the section name, the exception and the correlation id — **no customer data, no upstream payload** (I-X1) — and the section is `Unavailable` with `data = null`, "never an empty list". `Unavailable` carries no data: `null`, not `[]`, not `0`. `hasCats` is `null`/absent when the cats section is `Unavailable` (never a false "you have no cats"). Sections run in the fixed order of §8.2; "the order is not a priority, it is deterministic for tests".
-**Reason:** One broken module must not blank the dashboard, and an unavailable section must never pretend to be empty (§2). Implementation note (2026-10-09): `RunAsync` also takes the correlation id as a parameter, because the log line must carry it; and the cats reader catches per cat for the vaccination read, as §8.3 requires ("A failing Q4 for one cat → that cat's `vaccination = null`").
+**Decision:** `PortalSectionComposer.RunAsync` is the **only** `try/catch` in the dashboard path (§8.4): `OperationCanceledException` is re-thrown; any other exception is logged at `Error` with the section name, the exception and the correlation id — **no customer data, no upstream payload** (I-X1) — and the section is `Unavailable` with `data = null`, "never an empty list". `Unavailable` carries no data: `null`, not `[]`, not `0`. Sections run in the fixed order of §8.2; "the order is not a priority, it is deterministic for tests".
+**Reason:** One broken module must not blank the dashboard, and an unavailable section must never pretend to be empty (§2). Implementation note (2026-10-09): `RunAsync` also takes the correlation id as a parameter, because the log line must carry it.
 
 ---
 
@@ -3750,20 +3461,14 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 
 ---
 
-## ADR-262 — The clinical-content line
-
-**Date:** 2026-10-09 (HO-POR-001)
-**Status:** Active
-**Decision:** The dashboard carries **only what identifies a record** (§8.6): visits — `visitId`, `catId`, `catName`, `visitedOn`, `serviceName`, `vetName`, `hasDischargeSummary`, `followUpOn?`; prescriptions — `catId`, `catName`, `activeCount`, `earliestEndsOn?`; cats — name, `isHighRisk`, vaccination `overallStatus`, `earliestNextDueOn`, `bookingEligible`. Never diagnosis, SOAP text, treatments, medicines, lab values, notes, dose, route, frequency, instructions, allergies, conditions, medications or the handling note. "The owning module's detail page — which can log — shows the content."
-**Update 2026-10-10 (owner-delegated decision 2026-10-10, owner to review):** OQ-4 is closed -- an owner reading their own cat's visits or prescriptions is NOT logged. `followUpOn` (the follow-up due date only, `DateOnly?`) IS shown on the visits item: EMR added it additively to its list item; the follow-up kind, text and everything else clinical stay out.
-**Reason:** NFR-SEC-8 requires every access to clinical records to be logged; "A query cannot log (read-side rule 5), and a controller cannot dispatch a query and a command (cqrs rule 1)." Whether an owner's read of their own record counts as an access is OQ-4; this line is safe under either answer. See the dated amendment in HO-POR-001 §1 for `followUpOn`.
+## ADR-262: Superseded — feature removed (HO-P1)
 
 ---
 
 ## ADR-263 — Re-order mutates only Orders' cart through Orders' own eligibility
 
 **Date:** 2026-10-09 (HO-POR-001)
-**Status:** **Retired 2026-10-10 (owner-delegated decision 2026-10-10, owner to review)** -- the portal builds no re-order; the customer uses Orders' `POST /api/customers/me/orders/{id}/reorder`, so Orders' eligibility is used by construction and the portal mutates no cart. (Was: Pending -- recorded at Phase D, HO-ORD-001, HO-SHP-001, HO-IMP-001 not merged at 2026-10-09.) The portal "never re-implements stock or prescription gating" (§2 point 4, §8.7, §20.4).
+**Status:** **Retired 2026-10-10 (owner-delegated decision 2026-10-10, owner to review)** -- the portal builds no re-order; the customer uses Orders' `POST /api/customers/me/orders/{id}/reorder`, so Orders' eligibility is used by construction and the portal mutates no cart. (Was: Pending -- recorded at Phase D, HO-ORD-001, HO-SHP-001, HO-IMP-001 not merged at 2026-10-09.) The portal "never re-implements stock gating" (§2 point 4, §8.7, §20.4).
 **Update 2026-10-10:** ORD, SHP and IMP are on master, but Orders publishes no reusable cart-line eligibility (its checks live inside `ReorderCommandHandler`, C15, which already serves `POST /api/customers/me/orders/{id}/reorder`). Under §20.4 the portal re-order stays **unbuilt** until the owner chooses between reusing Orders' endpoint and asking Orders for a reusable eligibility service (see ADR-268).
 **Status note (2026-10-10):** the "stays unbuilt until the owner chooses" wording above is historical; the Retired status line governs. Re-order is retired, not pending (POR backlog 4/10).
 
@@ -3781,7 +3486,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 ## ADR-265 — Withdrawn
 
 **Date:** 2026-10-09 (HO-POR-001)
-**Status:** **Withdrawn** — "ADR-265 is withdrawn; the acceptance row for US-POR-03 is evidenced in HO-BRD-001, not here" (§8.8, README C-6). The stay diary is HO-BRD-001's `GET /api/customers/me/boarding/stays/{id}/diary`.
+**Status:** **Withdrawn** — "ADR-265 is withdrawn; the acceptance row for US-POR-03 is evidenced elsewhere" (§8.8, README C-6); that story was retired with HO-P1.
 
 ---
 
@@ -3798,7 +3503,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 
 **Date:** 2026-10-09 (HO-POR-001)
 **Status:** Active
-**Decision:** "Sections and per-cat status calls run **sequentially**. `Task.WhenAll` over upstream handlers is a defect" (F36, §8.3).
+**Decision:** "Sections and per-item status calls run **sequentially**. `Task.WhenAll` over upstream handlers is a defect" (F36, §8.3).
 **Reason:** The shared `AmarGramDbContext` is Scoped and not thread-safe; nested handlers resolved in the request scope share it.
 
 ---
@@ -3825,7 +3530,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 
 **Date:** 2026-10-09 (HO-ORD-001)
 **Status:** Active
-**Decision:** **Carts are server-side.** Guests get an opaque 32-byte token in an `HttpOnly; Secure; SameSite=Lax` cookie `pc_cart` (hash stored); one `Active` cart per customer; merge is an explicit, idempotent `POST …/cart/merge` that takes the larger quantity per `(SKU, cat)` key; carts reserve nothing
+**Decision:** **Carts are server-side.** Guests get an opaque 32-byte token in an `HttpOnly; Secure; SameSite=Lax` cookie `pc_cart` (hash stored); one `Active` cart per customer; merge is an explicit, idempotent `POST …/cart/merge` that takes the larger quantity per SKU; carts reserve nothing
 **Reason:** US-ORD-01 AC2 "switch device" needs a server cart; HO-ACC-002 forbids storing tokens or drafts in browser storage; a `GET` must not merge
 
 ---
@@ -3853,7 +3558,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 **Date:** 2026-10-09 (HO-ORD-001)
 **Status:** Active
 **Decision:** **HTTP idempotency** via `[Idempotent]` and `ops.idempotency_record` (scope, key, request hash, replayed response, 24 h), inserted in its own short transaction; `InProgress` → `409`; different body → `422`; failure frees the key. Plus the unique `(customer_id, idempotency_key)` on orders
-**Reason:** ADR-014 moved idempotency to the edge; FR-ORD-20; the filter is reusable by Billing and Boarding
+**Reason:** ADR-014 moved idempotency to the edge; FR-ORD-20; the filter is reusable by Billing
 
 ---
 
@@ -3990,7 +3695,7 @@ Folded in from `docs/gates/HO-BIL-001-ARCHITECTURE.md`, `-SECURITY.md`, `-REVIEW
 The link to the web is HO-ACC-001's own: if the person later registers online with the same mobile, Accounts answers `MobileNumberAlreadyRegistered` with the password-reset offer, which completes **the same account**. An integration test proves it (counter sale creates the walk-in; self-registration with that mobile gives the reset offer).
 There is no shared account, no reserved number (`01000000000` is an ordinary number again) and nothing that seeds or special-cases one. This closes SECURITY backlog MEDIUM 1 (ORD 15) and LOW 7 (ORD 21).
 **Reason:** a shared account was a squattable, takeover-prone placeholder that hid every anonymous invoice behind one record (SECURITY MEDIUM 1, LOW 7); the owner chose to identify the buyer. Accounts already has the lookup, the passwordless registration and the claim path, so nothing new is added to Accounts.
-**Consequence:** a cashier must take a name and a mobile for every sale (the POS request fields are `customerName` and `customerMobile`; `customerId` is gone from the sale, it stays on the quote). A prescription food in a counter sale is refused for a brand-new customer (a cat belongs to an existing customer). `PerCustomerLimit` / `FirstOrderOnly` discount rules now see the real customer (closes SECURITY backlog LOW 17 for found customers; a brand-new customer has no history, which is the truth).
+**Consequence:** a cashier must take a name and a mobile for every sale (the POS request fields are `customerName` and `customerMobile`; `customerId` is gone from the sale, it stays on the quote). `PerCustomerLimit` / `FirstOrderOnly` discount rules now see the real customer (closes SECURITY backlog LOW 17 for found customers; a brand-new customer has no history, which is the truth).
 
 ## ADR-179 -- Amended 2026-10-10 (lock rule; TEST gate F-1, backlog ORD 41)
 
@@ -4012,176 +3717,83 @@ There is no shared account, no reserved number (`01000000000` is an ordinary num
 
 ---
 
-## HO-PHM-001 — Pharmacy and Prescriptions (ADR-137 … ADR-154)
+---
+
+## ADR-137: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-137 — `Prescription` bounded context
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **`Prescription` bounded context**, namespace segment `Prescription` (already in `.ai/namespace-conventions.md`), schema `pharmacy`, owning the formulary, prescriptions, dispensing, the controlled-drug register and diet authorisations
-**Reason:** `.ai/bounded-contexts.md` lists only `PrescriptionAggregate` and `DietAuthorisation`; the widening must be deliberate (OQ-11)
+## ADR-138: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-138 — The formulary is practice data
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **The formulary is practice data**, administrator-maintained; prescriptions **snapshot** the medicine at issue; the controlled flag has its own command and audit action; a SKU links to at most one medicine
-**Reason:** FR-PHM-4; a formulary edit must never rewrite a past prescription
+## ADR-139: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-139 — Safety assessment is one pure domain service run twice
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Safety assessment is one pure domain service run twice** (query and command). Out-of-range dose, allergy conflict and `Major`/`Contraindicated` interactions require acknowledgement; allergy acknowledgement needs a reason; acknowledgement is **bound by a fingerprint** to the warnings seen; a stale fingerprint is `409`. A missing or stale weight for a per-kg medicine has **no** acknowledgement path
-**Reason:** US-PHM-02/03 must hold against direct API calls; an acknowledgement of yesterday's warnings is not consent to today's
+## ADR-140: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-140 — Allergy and interaction matching
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Allergy and interaction matching** by normalised term match over name, ingredients and classes, both directions for interactions; unresolved profile medications are listed, never ignored; the free-text limitation is stated on screen
-**Reason:** HO-CAT-001 stores allergens as free text; the gap must be visible, not discovered
+## ADR-141: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-141 — Dose conversion
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Dose conversion** to mg/kg only where units are provably convertible; `NotCheckable` is always reported; the expected range is returned in mg/kg **and** absolute mg
-**Reason:** A silent pass on an unconvertible dose is the dangerous failure
+## ADR-142: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-142 — Prescription lifecycle
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Prescription lifecycle** = Appendix C (`issued → dispensed → completed`, `expired`, `cancelled`) with repeats counted as supplies; `ValidUntil` is the last dispensable day for every supply; "active" is derived read-side and never stored; every read treats a passed `ValidUntil` as expired regardless of the sweep
-**Reason:** Appendix C has no repeat concept; the mapping must be fixed once
+## ADR-143: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-143 — Dispensing is its own root.
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Dispensing is its own root.** Dispense (and reversal) commit the dispensing record, the prescription's supply count, HO-IMP-001 ledger entries and controlled-drug register entries in **one** `SaveChangesAsync` — a recorded rule-1 exception, atomic by F23; FEFO suggested, deviation needs a reason; **expired stock has no override**; a supply is full, never partial
-**Reason:** Stock, authorisation budget and the register must never disagree
+## ADR-144: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-144 — Controlled-drug register
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Controlled-drug register**: append-only root with no mutator, an EF immutability interceptor and PostgreSQL triggers; corrections are new linked entries that also enlist an Inventory adjustment when the quantity changes; branch-scoped; **exposed as `IControlledDrugRegister` for Surgery, Treatment and Inventory**, which enlist in their own save
-**Reason:** C-2, D-5, FR-PHM-7; HO-SRG-001 depends on it
+## ADR-145: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-145 — Tamper evidence
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Tamper evidence** by a per-branch SHA-256 hash chain in a separate append-only seal table, written by a worker pass after a 30 s settle delay; a verification query reports the first break and stale unsealed entries
-**Reason:** C-2 says *tamper-evident*, not only append-only; triggers alone do not detect a superuser
+## ADR-146: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-146 — A witness authenticates with their own identifier and password in the same request
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **A witness authenticates with their own identifier and password in the same request**; must hold a witness role and differ from the actor; failures are generic, audited and count toward the witness account's lockout; the password never leaves the command
-**Reason:** BR-7 "second staff witness"; identifier + password is the only credential the product has (no OTP, no 2FA)
+## ADR-147: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-147 — Labels are frozen at dispensing
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Labels are frozen at dispensing** into a snapshot on the dispensing record; printing is the browser's; reprints print the same snapshot and are counted and audited
-**Reason:** A label must say what was handed over, forever
+## ADR-148: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-148 — Repeats
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Repeats** are owned requests on the prescription, dispensable without a visit inside `ValidUntil`; outside it, refused with the date and the next step; **renewal** is a vet act that issues a new, fully re-checked prescription and links the old one — a recorded rule-1 exception (two prescriptions, one save)
-**Reason:** FR-PHM-6 "new vet authorisation"; the link keeps the history readable
+## ADR-149: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-149 — Diet authorisations name the product
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Diet authorisations name the product** (the vet prescribes "Renal diet X", not the 2 kg bag) for one cat, with branch-local dates; the **gate takes a SKU** as `.ai/flows/prescription-diet-flow.md` says and resolves its product; validity is evaluated on every call so locking needs no job; the sweep only records expiry, raises the event and notifies
-**Reason:** The flow doc says "specific SKU"; this refines it and must say so
+## ADR-150: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-150 — Pharmacy messages
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Pharmacy messages**: five transactional templates; refill reminders are a timed producer with a deduplication key and a `PrescriptionRefillDue` guard; every other message is enqueued by the command that changed state
-**Reason:** HO-NTF-001 §4.2 reserved the refill contract for this slice
+## ADR-151: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-151 — Pharmacy never reads or writes another area's tables.
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Pharmacy never reads or writes another area's tables.** Visits are loaded read-only through the aggregate repository; Inventory, Catalogue and Accounts through their ports; the assumed contracts of §8.12 are recorded so their owners can confirm them
-**Reason:** The README delivery order builds IMP and SHP first precisely so this slice never grows its own stock code
+## ADR-152: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-152 — Customer merge
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Customer merge**: prescriptions, dispensings and diet authorisations are reassigned to the survivor; **register entries and seals are never rewritten** — reads resolve merged customer ids. Anonymisation leaves clinical records (labels included) intact under C-3
-**Reason:** An append-only register cannot be "fixed up" by a merge
+## ADR-153: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-153 — Authorization mapping
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Authorization mapping** from Appendix D: prescribe, renew, cancel, decline repeats, authorise diets and correct the register are **Vet only**; dispensing is Reception, Nurse, Vet, Administrator; reversal Vet, Administrator; the register is read by Nurse, Vet, Inventory, Administrator; the formulary is managed by Administrator (FR-PHM-4)
-**Reason:** Appendix D is indicative; the mapping is an inference to be confirmed (OQ-1, OQ-8)
-**Status note (2026-10-10, append-only):** Confirmed by the owner on 2026-10-10. The mapping stands as written: the controlled-drug witness must be a Vet or Nurse and not the dispenser (OQ-1); Reception may dispense (OQ-1); an Administrator may reverse a dispensing but cannot correct the register (OQ-8); remote renewal without an open visit is allowed (OQ-3). Closes docs/backlog/PHM.md row 33.
-
----
-
-## ADR-154 — Dispensing snapshots a price per line
-
-**Date:** 2026-10-09 (HO-PHM-001)
-**Status:** Active
-**Decision:** **Dispensing snapshots a price per line** for Billing; an unpriced SKU does not block care — the line's snapshot is null and the response says so
-**Reason:** ADR-049's contract; blocking a medicine over a missing price is the wrong failure (OQ-6)
+## ADR-154: Superseded — feature removed (HO-P1)
 
 ## ADR-216 -- Amended 2026-10-10 (owner decisions D1, D2; HO-ORD-001-FU1; backlog ORD 43, 47)
 
 **Status:** Active (append-only amendment)
 **Amendment D1:** a mobile held by a **Merged** account is no longer refused. `AccountsCounterCustomerFinder` follows `MergedIntoCustomerId` (chains, at most 10 hops, loops refused) through Accounts' published `FindCustomersQuery` + `GetStaffCustomerQuery` to the surviving account, and the sale belongs to it. `400 AccountNotActive` (cashier-facing message) remains only when the surviving account is itself not Active (Anonymised) or none is recorded.
-**Amendment D2:** the buyer is found or registered **before every business check** (right after the branch and the mobile shape are validated), not after them. A walk-in account **intentionally outlives a refused sale** (stock, prescription, tenders, card-number text): the person's name and mobile were given to us, the cashier resubmits, and the retry reuses the account (ORD 47). A request that is not shape-valid (blank name, invalid mobile) stores nobody. The sentence "a refused sale leaves no account behind" in the original decision is withdrawn. A later online registration with that mobile still gets Accounts' `MobileNumberAlreadyRegistered` + reset offer, which completes the same account -- no duplicate.
+**Amendment D2:** the buyer is found or registered **before every business check** (right after the branch and the mobile shape are validated), not after them. A walk-in account **intentionally outlives a refused sale** (stock, tenders, card-number text): the person's name and mobile were given to us, the cashier resubmits, and the retry reuses the account (ORD 47). A request that is not shape-valid (blank name, invalid mobile) stores nobody. The sentence "a refused sale leaves no account behind" in the original decision is withdrawn. A later online registration with that mobile still gets Accounts' `MobileNumberAlreadyRegistered` + reset offer, which completes the same account -- no duplicate.
 
 ## ADR-216 -- Amended 2026-10-25 (owner approved; HO-P4 BG-8: the anonymous walk-in sale)
 
@@ -4211,136 +3823,47 @@ There is no shared account, no reserved number (`01000000000` is an ordinary num
 
 ---
 
-## ADR-268 — Orders and prescriptions readers: Orders' `canReorder` rule wins; no tracking number; prescriptions are counts and dates
+## ADR-268 — Orders reader: Orders' `canReorder` rule wins; no tracking number
 
 **Date:** 2026-10-10 (HO-POR-001)
 **Status:** Active
-**Decision:** (1) `OrdersSectionReader` reads Orders' `GetCustomerOrdersQuery` only. `canReorder` is true for `Cancelled`, `Delivered`, `Returned`, `Refunded` -- the same statuses Orders' order-detail `canReorder` uses -- because OQ-2 said Orders' own rule wins over its "every status except `pending_payment`" default; the set is named once, in the reader, and is removed if Orders adds the flag to its list item. (2) The order item carries no `trackingNumber`: Orders' list item lacks it and its detail query also holds bank-transfer instructions (not pulled per order into every dashboard read). (3) `PrescriptionsSectionReader` reads Pharmacy's `GetCustomerPrescriptionsQuery { Scope = "active" }` and outputs `catId`, `catName`, `activeCount`, `earliestEndsOn` only (ADR-262). (4) Re-order is not built (ADR-263, §20.4).
-**Reason:** One reader is the only place that knows an upstream shape (ADR-259); a dashboard that offers an action its owning page withholds is a defect; the clinical-content line (ADR-262) is enforced by the output type having no property that could hold a medicine or a dose.
+**Decision:** (1) `OrdersSectionReader` reads Orders' `GetCustomerOrdersQuery` only. `canReorder` is true for `Cancelled`, `Delivered`, `Returned`, `Refunded` -- the same statuses Orders' order-detail `canReorder` uses -- because OQ-2 said Orders' own rule wins over its "every status except `pending_payment`" default; the set is named once, in the reader, and is removed if Orders adds the flag to its list item. (2) The order item carries no `trackingNumber`: Orders' list item lacks it and its detail query also holds bank-transfer instructions (not pulled per order into every dashboard read). (4) Re-order is not built (ADR-263, §20.4).
+**Reason:** One reader is the only place that knows an upstream shape (ADR-259); a dashboard that offers an action its owning page withholds is a defect.
 **Update 2026-10-10 (owner-delegated decision 2026-10-10, owner to review):** items (1) and (2) are superseded: Orders added `trackingNumber` and `canReorder` (its own `CustomerOrderRules.CanReorder`) to its list item; the reader passes both through and the portal's four-status set is deleted. Item (4) is superseded: re-order is retired (ADR-263), not blocked.
 
-## ADR-157 — `Surgery` context in schema `clinic`
+## ADR-157: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** Namespace segment `Surgery` (not `Clinic`), schema `clinic` shared with Appointments and Consultation. Statuses are Appendix C's: `Scheduled -> PreOp -> InTheatre -> Recovery -> Discharged`, plus `Cancelled`. An abandoned procedure is `Outcome = Abandoned`, not a separate state.
-**Reason:** HO-APT-001 put appointments under a `Clinic` segment (ADR-067); `.ai/bounded-contexts.md` lists Surgery as its own context.
-**Build note:** the shared enumeration for the follow-up kind is `SurgeryFollowUpKind` because HO-EMR-001 already owns `FollowUpKind`.
+## ADR-158: Superseded — feature removed (HO-P1)
 
-## ADR-158 — A surgery's time is an appointment row
+## ADR-159: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** The surgeon is the appointment's performer and the theatre its room. The surgery and its appointment are created and changed in ONE save (`BookForSurgery`, `MoveForSurgery`, `CancelForSurgery`, `CompleteSurgerySlot`): a recorded rule-1 exception for this pair only. Every other appointment transition refuses an appointment that has a `SurgeryId` (`AppointmentManagedBySurgery`); HO-APT-001's staff and customer endpoints cannot change a surgery behind its back.
-**Reason:** reuses HO-APT-001's race-free exclusion constraints (ADR-068) instead of building a second mechanism, and puts surgeries on the calendar.
+## ADR-160: Superseded — feature removed (HO-P1)
 
-## ADR-159 — Staff occupancy table `clinic.appointment_staff_time`
+## ADR-161: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** One row per occupying staff member of an occupying appointment (the performer, and the assistant of a surgery), kept by `AppointmentAggregate.SyncStaffTime()` (called from every status/time/performer/assistant change; U-A8 checks every method). Exclusion constraint `ex_appointment_staff_time` (`staff_account_id WITH =`, `tstzrange(starts_on, ends_on, '[)') WITH &&`, `WHERE occupies`). The migration backfills existing appointments (`BackfillSql`, I-A3).
-**Reason:** an exclusion constraint compares one column against itself; assistant against performer needs both in one column. On an appointment route a hit means the performer is busy; on a surgery route it is `StaffBusy`.
+## ADR-162: Superseded — feature removed (HO-P1)
 
-## ADR-160 — Pre-op checklist
+## ADR-163: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** Five fixed owned items are created at booking. Weight and consent complete from the cat context weight event and EMR consent events; fasting is completed by a nurse or vet; blood work may be waived by a vet with a reason; consent is never waivable. Start needs every item `Done` or `Waived`. A cat's weight older than the configured window reopens the item on reschedule.
-**Reason:** AC-3 "checklist enforced"; weight and consent facts live in other contexts and copying them by hand drifts.
+## ADR-164: Superseded — feature removed (HO-P1)
 
-## ADR-161 — Consent is re-read at start; the override is vet-only and permanent
+## ADR-165: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** Start re-reads consent through `ISurgeryConsentReader` (EMR's published `ConsentRules.IsValidFor`) for the kinds `Surgery` and `Anaesthesia` against the surgery's appointment; the checklist flag is not trusted. `start-with-consent-override` is vet-only, needs a 10 to 1000 character reason, is stored on the aggregate and audited as a `BusinessEvent` (`SurgeryConsentOverridden`).
-**Reason:** BR-5. A flag can be stale; the override must be attributable for good.
-**Open point (owner):** this build assumes consent of BOTH kinds (Surgery and Anaesthesia) is required (backlog SRG).
+## ADR-166: Superseded — feature removed (HO-P1)
 
-## ADR-162 — Anaesthesia log is an append-only root
+## ADR-167: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** One row per entry (`AnaesthesiaLogEntryAggregate`); a correction is a new linked entry (`CorrectsEntryId`), never an edit. No `PUT`, `PATCH` or `DELETE` route exists (I-D5). A `BEFORE UPDATE OR DELETE` trigger and a `BEFORE TRUNCATE` trigger refuse changes with SQLSTATE `P0001` and a message starting `immutable:`; the Api filter maps that to `409 RecordIsImmutable`.
-**Reason:** concurrent theatre logging without `409`s; D-5-grade immutability for a clinical record.
+## ADR-168: Superseded — feature removed (HO-P1)
 
-## ADR-163 — Drug entry, stock issue and register entry commit in one save
+## ADR-169: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** The handler enlists HO-IMP-001's `IStockLedger.DeductAsync` and HO-PHM-001's `IControlledDrugRegister.Enlist` without saving; the single repository save commits the log entry, the ledger rows and the register entries together (F23). An expired batch is refused with no override; an out-of-FEFO batch needs a reason; a stock shortfall is recorded on the entry (`StockShortfall`), not refused.
-**Reason:** FR-SRG-8 needs all or none. Refusing to document a drug already given would falsify the clinical record.
-**Gap (backlog SRG):** the ledger accepts whole units only in v1 (HO-IMP-001 OQ-19), so fractional vial draws are refused.
+## ADR-170: Superseded — feature removed (HO-P1)
 
-## ADR-164 — Witness
+## ADR-171: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** A witness is a second staff member who types their OWN identifier and password into the request (`IStaffWitnessVerifier`, HO-PHM-001's rule); witness differs from the administering vet and from the caller. The PHM witness rate-limit policy is reused.
-**Reason:** BR-7 with identifier and password only (no OTP).
+## ADR-172: Superseded — feature removed (HO-P1)
 
-## ADR-165 — Surgical report is its own root
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** `SurgicalReportAggregate` with `Id = SurgeryId`. Draft is editable (`ExpectedVersion`); finalisation is vet-only and names every missing field (`ReportIncomplete`); after finalisation a `BEFORE UPDATE OR DELETE` trigger on the report and on its addenda refuses changes. An addendum inserts a row and never touches the report row (the version and `xmin` stay put).
-**Reason:** FR-SRG-5, BR-11, D-5.
-
-## ADR-166 — Neuter status is set by a Cat-context handler
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** `SterilisationCompletedEvent` (ids and the branch-local date only) is handled by `SetNeuterStatusOnSterilisationHandler` in the Cat context. It is idempotent, never fails the request, and writes a `NeuterStatusNotApplied` audit row when the cat is deceased or the cat's own rule refuses the date. `ApplySterilisationOutcomeCommand` is the repair path (`CatIsDeceased` is refused plainly). The surgery never writes `clinic.cat`.
-**Reason:** FR-SRG-6 without crossing the aggregate boundary.
-
-## ADR-167 — Per-service protocols with shipped defaults
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** `SurgeryProtocolAggregate` (one per surgical service): fasting text and hours, post-op text, follow-up rules (kind, day offset, window). Defaults ship in `SurgeryProtocolDefaults` (the SRS examples). The text is snapshotted into the surgery (fasting at booking, post-op at discharge).
-**Reason:** a later edit must not rewrite what an owner was given.
-
-## ADR-168 — Recovery status is a sub-state of Recovery; the board is polled
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** `Recovering`, `Stable`, `ReadyForDischarge` with history. `GET /api/staff/surgeries/recovery-board` is polled every 30 s and costs at most two SQL commands (I-F2). Discharge requires `ReadyForDischarge`, except for a deceased cat.
-**Reason:** FR-SRG-10 "near real time" meets UI-5 without a push channel.
-
-## ADR-169 — Surgery messages
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** Six templates, all Transactional. Booked, rescheduled, cancelled and post-op are `Urgent`; the pre-op reminder and the follow-up reminder are `Normal` and timed (`SendAfter`/`NotAfter`/`SubjectStamp`) with the guards `SurgeryPreOp` (the `ScheduleStamp`) and `SurgeryFollowUp` (the follow-up still `Pending`, the cat alive, the owner unchanged). Messages are enqueued by the command handler through `INotificationOutbox` in the same save, never from an event handler.
-**Reason:** FR-NTF-3; the recipient is acting at that moment.
-
-## ADR-170 — No deposit and no payment on a surgery
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** The surgery holds a `PriceSnapshot` (amount, basis `Standard` or `Campaign`, campaign id, eligibility note). `GetSurgeryChargeableItemsQuery` exposes it with the effective drug entries to HO-BIL-001.
-**Reason:** the SRS asks for none; v1 has no gateway; consistent with ADR-073.
-
-## ADR-171 — Campaign price lists
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** `SurgeryCampaignAggregate`: unique code, branch-local inclusive dates, branches (none = all), one fixed price per sterilisation service, optional `MaxCases`. Staff apply it at booking with a mandatory eligibility note; each refusal is `CampaignNotApplicable` with its own reason. Prices lock once a non-cancelled surgery is booked under it (`CampaignPriceLocked`). `GET .../{id}/cases` lists the active branch's cases with the standard price in force when each was booked.
-**Reason:** FR-SRG-11 "distinct price list with its own reporting".
-**Known limit (backlog SRG):** the cap is judged by a count at booking, so two simultaneous bookings for the last place can both pass.
-
-## ADR-172 — Theatre services are scheduled only as surgeries
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** HO-APT-001's booking paths refuse services whose `RequiredRoomKind == Theatre` (`ServiceNotBookable`, G6).
-**Reason:** otherwise a spay could be booked as an ordinary appointment with no assistant, checklist or consent gate.
-
-## ADR-173 — Surgery permissions
-
-**Date:** 2026-10-11 (HO-SRG-001)
-**Status:** Active
-**Decision:** Inferred from Appendix D. View: Reception, Nurse, Vet, Administrator. Schedule: Reception, Vet, Administrator. Admit: Reception, Nurse, Vet. Checklist and start: Nurse, Vet. Risk assessment, consent override, drug logging, ending the procedure and the report: Vet only. Vitals: Nurse, Vet. Recovery and discharge: Nurse, Vet. Protocols: Vet, Administrator. Campaigns: Administrator. The Administrator has no clinical write.
-**Reason:** the mapping is a judgement and must be visible (OQ-6: nurses log vitals and milestones, not drugs).
+## ADR-173: Superseded — feature removed (HO-P1)
 
 ---
 
@@ -4363,14 +3886,14 @@ Recorded on `ho/XCT-001-build` (2026-10-12). The full reasoning is in `docs/hand
 **Decision:** `amargram_migrator` owns the schemas and migrates; `amargram_app` has DML only (no `TRUNCATE`, no DDL, no ownership); `amargram_backup_reporter` has `INSERT` on `ops.backup_run` only. Outside Development/Testing the host refuses to start if the current role is a superuser or owns a solution table (`DatabaseRoleGuard`). `deploy/database/roles.sql`.
 
 ## ADR-301 -- Retention Periods Are Settings; the End of a Statutory Period Deletes Nothing
-**Decision:** the nine settings of section 10.2 (Administrator-only, audited). The end of a clinical, financial, regulatory or audit period produces a *review-eligible* count only; held personal data inside those records is anonymised when its hold ends. A wrong default cannot destroy anything.
+**Decision:** the nine settings of section 10.2 (Administrator-only, audited). The end of a financial, regulatory or audit period produces a *review-eligible* count only; held personal data inside those records is anonymised when its hold ends. A wrong default cannot destroy anything.
 
 ## ADR-302 -- The Erasure Ledger
 **Decision:** `CustomerAccountAnonymisedEvent` opens an `ErasureRequestAggregate` (id = customer id) with one scope per registered `IPersonalDataEraser`; the retention worker executes due scopes (Pending, Failing past its back-off, Held past its date). Erasers save their own context's aggregates and the ledger records the outcome: a **recorded rule-1 exception**, safe because erasers are idempotent.
 
 ## ADR-303 -- `RetentionWorker`
 **Decision:** one `BackgroundService`; erasure pass every 15 minutes; daily passes at `retention.sweepHour` in the main branch's time zone; a run is a `RetentionRunAggregate` with one pass result per pass and one `BusinessEvent` summary (excluded from change capture). Bounded batches, one command per unit, an error in a unit never stops the pass. Off in Testing; tests call `RetentionWorkCycle`.
-**Amendment (2026-10-12):** a purge source with no retention rule here is **not scheduled** (the `stored-file:<purpose>` sources HO-FIL-001 registers include clinical purposes); only `boarding-media` has a rule (D-10).
+**Amendment (2026-10-12):** a purge source with no retention rule here is **not scheduled** (the `stored-file:<purpose>` sources HO-FIL-001 registers include purposes with no rule yet).
 
 ## ADR-304 -- Purge Is Hard Delete of `Purgeable` Classes Only
 **Decision:** by `RetentionPurger` methods with fixed tables (sessions, reset tokens, web-vital batches, backup-run log) or by registered `IRetentionPurgeSource`s. Each batch writes one `BusinessEvent` row with the pass, cutoff and count; rows are not audited individually.
@@ -4427,14 +3950,14 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 **ADR-299 amendments (2026-10-12).**
 - *The six tables above* carry no blanket retention trigger (they are `AggregateOnly`); the EF guard allows their delete only through a tracked, non-deleted owner.
 - *`files.stored_file` change-tracked delete.* `HardDeleteGuardInterceptor.ChangeTrackedPurgeAllowList` allows a change-tracked delete of this one `Purgeable` root, against the rule that a Purgeable root is deleted by `ExecuteDelete` in `RetentionPurger` only. Reason: HO-FIL-001 section 8.7 / ADR-318 and README C-5 make File Storage the purge source for that table, and `IStoredFileEraser` must delete the stored object FIRST and the row SECOND, honouring `LegalHold`, in one place shared by the delete command and `StoredFilePurgeSource`. It is limited to that table; every other Purgeable root still throws.
-- *`DedicatedlyGuardedTables`.* `audit.audit_entry` (HO-ACC-001 F33) and the two controlled-drug register tables `pharmacy.cd_register_entry` / `cd_register_seal` (HO-PHM-001 ADR-144) are `Forbidden` and carry their own complete append-only DELETE and TRUNCATE triggers, so `AddRetentionGuards` does not attach a second pair. I-A3 accepts the area's triggers for these three tables.
+- *`DedicatedlyGuardedTables`.* `audit.audit_entry` (HO-ACC-001 F33) is `Forbidden` and carries its own complete append-only DELETE and TRUNCATE triggers, so `AddRetentionGuards` does not attach a second pair. I-A3 accepts the area's triggers for this table.
 - *The `AddRetentionGuards` table list is frozen inside that migration* (`AddRetentionGuards.TablesAtMigration`, 113 tables), not in a shared class, so a later edit of any list cannot change what a historical migration did. `ClassificationEnforcementAgreementTests.TheFrozenMigrationList_HasNotBeenEdited` pins its count and hash. Later tables attach their triggers in their own migrations with `RetentionGuardSql.AttachTo`.
 - *Interceptor order.* `HardDeleteGuardInterceptor` is registered third, after `AuditEntryImmutabilityInterceptor` and `ControlledDrugRegisterImmutabilityInterceptor`, which were moved from after change capture to before it. The intent (the guard runs before change capture, so a refused delete is never audited as if it happened) holds.
 
 **ADR-301 amendment (2026-10-12).** Q3 reports the end-of-period action of `Regulatory` as `ReviewOnly` (not `Redact`): only held personal data inside a regulatory record (an acceptance IP) is blanked when its hold ends.
 
 **ADR-302 amendments (2026-10-12).**
-- The ledger-opening event handler dispatches C1 in a **new scope**, not the same one (the anonymisation has already committed, ADR-021; precedent: Billing's `CaptureChargesOnAppointmentCompletedHandler`). C1 itself, when its insert loses a race to a concurrent opener, "treats it as exists, reloads and retries once" in a fresh scope.
+- The ledger-opening event handler dispatches C1 in a **new scope**, not the same one (the anonymisation has already committed, ADR-021; precedent: an earlier Billing capture handler). C1 itself, when its insert loses a race to a concurrent opener, "treats it as exists, reloads and retries once" in a fresh scope.
 - *Identity check on a staff-taken erasure (C3) is a fixed list of codes* (`ErasureIdentityCheck`: `RegisteredMobileCallback`, `RegisteredEmailReply`, `InPersonPhotoId`, `WrittenRequestSigned`), and C3 has **no free-text field**: the audit row (immutable, and so never erasable) holds the channel and the code only, so a member of staff cannot type the identifiers whose erasure the row records. (SECURITY gate medium.)
 
 **ADR-314 amendments (2026-10-12) -- no re-exposure through a restore.** (1) The erasure journal is exported **every 10 minutes** (was daily), so the gap matches the RPO. (2) The runbook's first restore step is to export the journal from the CURRENT database, if readable, before `--delta` overwrites it. (3) After a restore the application is started with its background workers OFF (`deploy/backup/restore-mode.env`), the reapply runs through the API, and only then are the workers turned on; the former "reconcile before the application is started" wording is removed because the reapply is an API call. (4) The rendered `pgbackrest.conf` is created `0600` (`render-config.sh`) and S3 credentials reach `curl` on stdin, not on its command line. (5) `DatabaseRoleGuard` tests `pg_has_role(..., 'MEMBER')`, so a login role that is a member of the owning role without inheriting it is also refused.
@@ -4468,14 +3991,14 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 
 **Date:** 2026-10-13 (HO-RPT-001)
 **Status:** Active
-**Decision:** `ReportCatalogue` (Shared) defines every report from per-area `*Definitions` fields discovered by reflection (ADR-341). One generic `RunReportQueryHandler` applies the branch scope, the filter validator, restricted-column removal, sort, paging and the export caps; one `IReportSource` per key (U-A2 enforces 1:1); one CSV writer, one PDF renderer. Twenty-one definitions are delivered (R1-R20 and R27). R21 and the subscription part of R22 (HO-SUB-001), the cross-line part of R22 (needs the boarding line), R23 (HO-ORD-001 has no cart reminders) and R24-R26 (HO-BRD-001) are not delivered yet.
+**Decision:** `ReportCatalogue` (Shared) defines every report from per-area `*Definitions` fields discovered by reflection (ADR-341). One generic `RunReportQueryHandler` applies the branch scope, the filter validator, restricted-column removal, sort, paging and the export caps; one `IReportSource` per key (U-A2 enforces 1:1); one CSV writer, one PDF renderer. Twenty-one definitions are delivered (R1-R20 and R27). R21 and the subscription part of R22 (HO-SUB-001) and R23 (HO-ORD-001 has no cart reminders) are not delivered yet; R24-R26 and the cross-line part of R22 belonged to a retired area and are withdrawn.
 **Reason:** FR-RPT-1 "every report" is then structural.
 
 ## ADR-281 — Report access
 
 **Date:** 2026-10-13 (HO-RPT-001)
 **Status:** Active
-**Decision:** One action per report category (`Reports.ClinicOperations/Clinical/Boarding/Stock/Sales/Financial/Growth.View`), a `Reports.Any` marker on every report route, `Reports.Schedule` and `Dashboard.View`. The report's own category action is enforced in the handler with `ReportAccessPolicy`, answering the same `403 ActionNotPermitted` body as the filter and writing the same denial audit. The Vet also gets clinic operations (OQ-7). Cost and margin columns need `Reports.Financial.View` and are removed, not blanked. Branch scope: the active branch; assigned branches only; `all` for Administrator and Accountant. The Sales category (R10, R11, R27) is held by ShopManager and Administrator only, so the Accountant cannot open R10 on screen or receive it on a schedule (as specified; recorded in backlog RPT).
+**Decision:** One action per report category (`Reports.Stock/Sales/Financial/Growth.View`), a `Reports.Any` marker on every report route, `Reports.Schedule` and `Dashboard.View`. The report's own category action is enforced in the handler with `ReportAccessPolicy`, answering the same `403 ActionNotPermitted` body as the filter and writing the same denial audit. Cost and margin columns need `Reports.Financial.View` and are removed, not blanked. Branch scope: the active branch; assigned branches only; `all` for Administrator and Accountant. The Sales category (R10, R11, R27) is held by ShopManager and Administrator only, so the Accountant cannot open R10 on screen or receive it on a schedule (as specified; recorded in backlog RPT).
 **Reason:** NFR-SEC-2; "nothing I am not permitted to see" also applies inside a report.
 
 ## ADR-282 — Report time
@@ -4483,13 +4006,13 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 **Date:** 2026-10-13 (HO-RPT-001)
 **Status:** Active
 **Decision:** `from`/`to` are inclusive branch-local dates in the report branch's zone; `all` uses the main branch's zone and says so in a note. Relative periods and schedule times come from pure domain services (`ReportPeriodResolver`, `ReportScheduleCalculator`). A local day is converted to instants with the zone's rules: a skipped local time moves to the first valid instant, a repeated one takes the first occurrence.
-**Reason:** ADR-045; a report that shifts a day at midnight UTC is wrong for a clinic six hours ahead.
+**Reason:** ADR-045; a report that shifts a day at midnight UTC is wrong for a shop six hours ahead.
 
 ## ADR-283 — Revenue
 
 **Date:** 2026-10-13 (HO-RPT-001)
 **Status:** Active
-**Decision:** Revenue is recognised on invoice issue, net of line and allocated discounts, excluding tax, with credit notes negative on their own issue date; never summed across currencies. The business line comes from HO-BIL-001's own `business_line` and `item_kind` on each invoice line through `BusinessLineRules` (an unknown value is `Other`, never dropped). The handover assumed an `InvoiceLineKind` enumeration; none exists. Visit, dispense and surgery revenue is not on invoices until HO-BIL-001 Phase J, and the R9 and R12 notes say so.
+**Decision:** Revenue is recognised on invoice issue, net of line and allocated discounts, excluding tax, with credit notes negative on their own issue date; never summed across currencies. The business line comes from HO-BIL-001's own `business_line` and `item_kind` on each invoice line through `BusinessLineRules` (an unknown value is `Other`, never dropped). The handover assumed an `InvoiceLineKind` enumeration; none exists.
 **Reason:** one definition shared by every revenue report, or R9 and R10 will not reconcile.
 
 ## ADR-284 — Cost and margin
@@ -4510,7 +4033,7 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 
 **Date:** 2026-10-13 (HO-RPT-001)
 **Status:** Active
-**Decision:** `DashboardTiles` names 18 tiles with the roles they serve; each is gated by an existing action and is not computed when the gate fails. Today at the active branch, live, uncached. The three `boarding.*` tiles have no source (HO-BRD-001 is not merged): they are absent, not zero.
+**Decision:** `DashboardTiles` names 18 tiles with the roles they serve; each is gated by an existing action and is not computed when the gate fails. Today at the active branch, live, uncached.
 **Reason:** a client-side role map drifts and leaks.
 
 ## ADR-287 — Schedules
@@ -4548,12 +4071,7 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 **Decision:** An *active* customer in a period has at least one issued invoice in it; *new* = the first issued invoice ever falls in the period; *returning* = had one before. Acquisition source = `RegistrationChannel`. HO-BIL-001 keeps issued invoices on the customer id they were issued to, so `rv_customer_activity` resolves a merged customer to the survivor itself. Anonymised customers count but are never named beyond the stored placeholder.
 **Reason:** SRS 8.3 names the reports but not their definitions.
 
-## ADR-292 — Vaccination due list branch attribution
-
-**Date:** 2026-10-13 (HO-RPT-001)
-**Status:** Active
-**Decision:** Cats are not branch-scoped, so a cat belongs to the branch of its most recent appointment (`rv_cat_last_branch`). Cats never seen are "Unattributed", included for `all` or with `includeUnattributed=true`.
-**Reason:** US-RPT-01 AC1 needs a branch filter on a list whose subject has no branch.
+## ADR-292: Superseded — feature removed (HO-P1)
 
 ## ADR-277 … ADR-292 — revisions (HO-RPT-001 gate fix round)
 
@@ -4562,78 +4080,51 @@ Owner decisions of 2026-10-12 (integrator-authorised): "Reclassify them properly
 **Revisions:**
 - **ADR-277 / ADR-289 (corrected, not widened).** A command changes one aggregate. Reporting writes a stored file only as a **producer** of HO-FIL-001's published port and command, in its own step (`IFileStore.PutAsync`, then `RegisterStoredFileCommand`, the two steps the upload endpoint takes), and sends C5 with the resulting `FileId`. C5 changes only the run (and enlists the notification requests). A file whose run was not kept is deleted in a further `DeleteStoredFileCommand` step. The earlier text that had C5 store and register the file itself is withdrawn.
 - **ADR-278.** R7 reads views (`rv_stock_position`, `rv_reorder_policy`, `rv_on_order`), not Inventory tables; HO-IMP-001's pure `StockUsability` and `ReorderSuggestionCalculator` are still called. `rv_customer_activity` is at version 2.
-- **ADR-281.** `Reports.Sales.View` is held by ShopManager, **Accountant** and Administrator (owner, 2026-10-13). A Clinical-category report (R3) writes a clinical-access row on every view, export and scheduled recipient (NFR-SEC-8, fail closed).
+- **ADR-281.** `Reports.Sales.View` is held by ShopManager, **Accountant** and Administrator (owner, 2026-10-13).
 - **ADR-288.** At send time `ScheduledReportGuard` re-checks the recipient's branch rights as well as roles: a cross-branch role for an all-branches schedule, a current assignment for a branch schedule; the same rule (`ReportAccessPolicy.CanReceive`) applies when the schedule is saved.
 - **ADR-290.** A per-account concurrency limit sits in front of the host-wide limit for reports and run-now, and covers the dashboard; run-now is 5 per 10 minutes per account (owner, 2026-10-13).
 - **ADR-291.** A merged customer is followed through the whole merge chain to the final survivor.
 
 ---
 
-## ADR-344 — A finalised visit stores the customer to bill (narrows ADR-117)
-
-**Date:** 2026-10-14 (HO-BIL-001 Phase J, owner decision 1)
-**Status:** Active
-**Decision:** `VisitAggregate.Finalise` stores `CustomerId` = **the cat's owner at the moment of finalising** (read by the handler from the cat, passed in the finalisation DTO; a visit whose cat has no owner is refused `CatNotFound`), and `VisitFinalisedEvent` carries it. It is set once, never changes, and is the customer Billing invoices. A visit finalised before this column existed has none (`customer_id` is nullable) and is **not billable** (`VisitCustomerNotRecorded`): Billing does not fall back to the appointment's customer, which is a different fact. If the stored customer has since been merged into another (ADR-039), Billing bills the survivor by following `merged_into_customer_id`; the clinical record itself is not rewritten.
-**Narrows ADR-117** ("the visit holds no customer id"): an *open* visit still holds none, and every owner-facing read keeps resolving the cat's **current** owner. The one stored id exists for billing and nothing else.
-**Reason:** the owner chose "cat's owner at finalising" over the appointment's customer and the current owner; a bill must name the customer it was raised for even if the cat later changes hands.
+## ADR-344: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-345 — A diagnostic test has an admin-set price, frozen on the order
-
-**Date:** 2026-10-14 (HO-BIL-001 Phase J, owner decision 2)
-**Status:** Active
-**Decision:** Each `DiagnosticKind` has a price in the settings registry (`clinical.diagnosticPrice{BloodWork|Urinalysis|FelvFivTest|Imaging|Other}`, Decimal, default `0.00`, group Clinical, edited through the existing administration settings endpoint). Ordering a diagnostic reads the kind's price once and stores it on the order (`unit_price_amount`, `unit_price_currency_code`) with a tax class (the visit's own service's class, also frozen), as a treatment line does (ADR-127). The visit's bill carries **one line per non-cancelled order**; a zero price is a zero line. An order made before this decision has no price recorded and is **not billed** — nothing is invented. A test is one *order*, not one analyte.
-**Reason:** the owner chose "add a price, charge them". Freezing on the order keeps a later price change from repricing a visit already ordered (HO-ADM-001 ADR-049).
+## ADR-345: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-346 — Phase J: how Billing reads the three sources
-
-**Date:** 2026-10-14 (HO-BIL-001 Phase J)
-**Status:** Active
-**Decision:** (1) **EMR** exposes `IVisitBillingReader` (Domain port, `Infrastructure/Consultation/VisitBillingReader`) returning typed values (`Money`, `decimal`, `VisitBillableLineKind`); Billing reads a visit only through it, never through the Read-layer display query `GetVisitChargeLinesQuery` and never from `clinic.*` tables (supersedes the `GetVisitChargeLinesQuery` hand-off in ADR-127 for Billing). EMR's kinds map to Billing's in one explicit, exhaustively tested table, `VisitBillableLineKindMap`: Procedure→Service, Medicine→Medicine, Consumable→Product, Diagnostic→Service. (2) **Pharmacy and Surgery** publish no typed billing port; as the appointment source does, Billing reads the dispensing's and the surgery's own rows with untracked projections. (3) The real events are captured, not §8.13's assumed ones: `VisitFinalisedEvent`, `PrescriptionDispensedEvent` (source = `DispensingId`), and `SurgeryDischargedEvent` (there is no `SurgeryCompletedEvent`). (4) A reversed dispensing voids its charges that are not yet invoiced; an invoiced one is left to a credit note. (5) Boarding: every visit has its own bill; no stay link exists and none is stubbed (owner decision 3, deferred to HO-BRD-001).
-**Reason:** the owner's architecture call on backlog EMR 43; HO-BIL-001 §20.2 (the real contracts differ from the assumed ones, so the fix is an Amended row, not an adapter that guesses).
+## ADR-346: Superseded — feature removed (HO-P1)
 
 ---
 
-## ADR-344 … ADR-346 — revisions (HO-BIL-001 Phase J gate fix round)
+## ADR-344 … ADR-346 — revisions: Superseded — feature removed (HO-P1)
 
-**Date:** 2026-10-14 (HO-BIL-001 Phase J)
-**Status:** Active; appended, nothing above is edited.
-**Revisions:**
-- **ADR-346 (corrected).** A surgery's appointment is **Completed** by the surgery (`CompleteSurgerySlot`) although it raises no `AppointmentCompletedEvent`. The appointment source therefore refuses an appointment with a `SurgeryId` (`AppointmentManagedBySurgery`) and the uncaptured list leaves it out: the surgery source owns the surgery fee, one fee one source.
-- **ADR-346 (1) narrowed.** "Never reads `clinic.*`" is true of the **capture** path. The Read-layer uncaptured list counts the same tables with the same rules, as a cross-context list query (`.ai/bounded-contexts.md`). It lists a source while it has fewer recorded charges than billable lines.
-- **ADR-346 (4) ratified by the owner** ("Keep it"): a reversed dispensing voids its not-yet-invoiced charges.
-- **ADR-344 extended to surgery (owner, "Owner at discharge").** `SurgeryAggregate.OwnerAtDischargeId` is stored by `Discharge` and carried on `SurgeryDischargedEvent`; Billing bills that customer (merged-survivor chain followed). Records made before these columns existed are billed by hand; there is no back-fill.
-- **ADR-345.** The database guard `clinic.diagnostic_order_guard()` now also freezes the price, currency and tax class.
-- **Abandoned surgery (owner, "Drugs only").** The procedure fee is charged only for a procedure that ended `Completed`.
-
-## HO-BRD-001 -- Boarding (ADR-350 ... ADR-369)
+## Retired area block (ADR-350 ... ADR-369)
 
 The handover reserved ADR-217 ... ADR-236, which other areas had already taken on master; the block was renumbered **ADR-350 = old 217 ... ADR-369 = old 236** (checked free on master and on every open `ho/*` branch; the highest id used anywhere was 347). Each entry states the decision **as built**; where the build departs from the handover the departure is named.
 
-- **ADR-350 (old 217).** One `Boarding` bounded context, schema `boarding`. Tasks, observations, incidents, media, isolation entries, waitlist entries and daycare visits are separate roots, not stay children.
-- **ADR-351 (old 218).** Stay states are Appendix C's. A lapse is `Cancelled/ReservationLapsed`; an `Enquiry` holds no unit. One transition table (`StayTransitionRules`) serves the aggregate and `allowedTransitions[]`.
-- **ADR-352 (old 219).** Occupancy by GiST exclusion constraints (`ex_unit_maintenance`, `ex_stay_allocation_unit`, `ex_stay_cat`) over `is_active` rows the aggregate maintains; a 23P01 or a 40P01 deadlock on a `[BoardingClaimEndpoint]` is a 409. Past stays stay active so the turnaround after a departure is still enforced. **Correction 2026-10-15 (ACCEPTANCE gate):** an in-process application lock briefly added for these claims was removed again; section 4.4 forbids an application lock for occupancy. A claim that loses the exclusion constraint (23P01, 40P01) or `ix_daycare_slot` is retried in a fresh DI scope with the next free unit or slot (bounded, 4 attempts), then answered 409. The constraints stay the control and I-C12 proves them.
-- **ADR-353 (old 220).** Availability is computed by the pure `BoardingAvailabilityFinder`, never in SQL; deterministic unit selection; alternatives by shifting the range.
-- **ADR-354 (old 221).** Pricing: effective-dated rate cards, **per branch** (a card names a branch-owned tax class). The pure calculator emits month/week/night units with the discount **per unit**; consecutive nights are ONE `Night` unit with a quantity (the stay keeps at most 40 units). Card and settings are snapshotted at reserve and reused for extension and early check-out.
-- **ADR-355 (old 222).** Vaccination gate: `VaccinationStatusRule` extracted from HO-CAT-001; a cat passes when not Overdue as of departure; evaluated at enquiry, reserve, confirm, check-in and extend; Administrator override per cat per stay with a reason and an audit row.
-- **ADR-356 (old 223).** Deposit without a gateway: staff record the money in Billing as a payment **earmarked** `{BoardingStay, stayId}`; Boarding confirms only from Billing's accepted payments (`IBoardingDepositLedger`); a payment awaiting a second approver suspends the lapse. There is no `BoardingStayDeposit` reference.
-- **ADR-357 (old 224).** Care tasks are their own root, generated idempotently per stay, cat, local date and source key (`ix_care_task_generation`) for today and tomorrow by the worker; a profile change voids pending tasks; assignment to rostered caretakers; overdue is derived.
-- **ADR-358 (old 225).** Observations are their own root; "not eating" is derived from the last two, never stored.
-- **ADR-359 (old 226).** Incidents: medium is a Normal template, high an Urgent one; acknowledgement by the owner or staff; an unacknowledged high incident is escalated by the worker to a phone-call follow-up kept on the incident.
-- **ADR-360 (old 227).** Isolation: a flagged cat puts the stay in an isolation unit (relocated in the same command); isolation units are never offered online.
-- **ADR-361 (old 228).** Media are **HO-FIL-001 stored files** (purpose `BoardingMedia`, attach window) referenced by id; retention is HO-XCT-001's `retention.boardingMediaMonths` through the registered `boarding-media` purge source, which erases the file and keeps the row as `Purged`; incident media are never purged.
-- **ADR-362 (old 229).** Referral and spending limit: Boarding owns the referral, the per-cat limit, commitments (from `BoardingVetChargeRecordedEvent`, idempotent by charge id) and approvals. `VetVisitAuthorised = false` means zero headroom. The contract events carry **no description** (U-X1 forbids text in events).
-- **ADR-363 (old 230).** Charges under the **push model** of merged Billing: one charge per rate unit, recorded through `IBillableChargeRecorder` in Boarding's own handlers at check-in, key `r{revision}.{kind}.{from}-{to}`, group `BoardingStay`. An extension or early check-out re-derives by `BoardingChargePlanner`: identical charges kept, uninvoiced ones voided, new ones recorded, an invoiced charge that no longer applies becomes `CreditDue`. Cycle (30 nights) and final invoices are issued by the worker through `IssueInvoiceFromChargesCommand` with a billing-group selector.
-- **ADR-364 (old 231).** `BoardingWorker`: one `BackgroundService`, one command per item through `IInMemoryDispatcher`, never throws, off in `Testing`; passes: confirm, tasks, escalate, invoices, daily updates, waitlist notices and closing, lapse, expire.
-- **ADR-365 (old 232).** Cross-context writes by Boarding command handlers are limited to Billing's published seams (`IBillableChargeRecorder`, `IssueInvoiceFromChargesCommand`); everything else reaches other contexts through read ports and event handlers that never enqueue messages.
-- **ADR-366 (old 233).** Roles: "boarding manager" is `Administrator` (+ `Reception` for booking changes); check-in/out also `Caretaker` (a recorded deviation from Appendix D).
-- **ADR-367 (old 234).** Daycare is a separate aggregate that never allocates a unit; capacity is `boarding.daycareDailyCapacity` visits per branch per day, raced by the unique slot row `ix_daycare_slot`; charged as source `DaycareVisit` at check-out.
-- **ADR-368 (old 235).** The waitlist notifies, never holds: the oldest waiting entry with a free unit, once; a unit is not announced twice. Quiet hours are the notification service's (a Normal message is deferred), not a worker check.
-- **ADR-369 (old 236).** Signatures are bounded vector data or a typed confirmation, never files.
-- **Owner-authorised addition (2026-10-14).** Early check-out "Show before": `GET /api/staff/boarding/stays/{id}/check-out-preview` runs `EarlyCheckout.Compute` and `BoardingChargePlanner.Plan` -- the same code as the check-out handler -- and changes nothing; pinned by I-G2b.
+- **ADR-350 (old 217).** Superseded — feature removed (HO-P1)
+- **ADR-351 (old 218).** Superseded — feature removed (HO-P1)
+- **ADR-352 (old 219).** Superseded — feature removed (HO-P1)
+- **ADR-353 (old 220).** Superseded — feature removed (HO-P1)
+- **ADR-354 (old 221).** Superseded — feature removed (HO-P1)
+- **ADR-355 (old 222).** Superseded — feature removed (HO-P1)
+- **ADR-356 (old 223).** Superseded — feature removed (HO-P1)
+- **ADR-357 (old 224).** Superseded — feature removed (HO-P1)
+- **ADR-358 (old 225).** Superseded — feature removed (HO-P1)
+- **ADR-359 (old 226).** Superseded — feature removed (HO-P1)
+- **ADR-360 (old 227).** Superseded — feature removed (HO-P1)
+- **ADR-361 (old 228).** Superseded — feature removed (HO-P1)
+- **ADR-362 (old 229).** Superseded — feature removed (HO-P1)
+- **ADR-363 (old 230).** Superseded — feature removed (HO-P1)
+- **ADR-364 (old 231).** Superseded — feature removed (HO-P1)
+- **ADR-365 (old 232).** Superseded — feature removed (HO-P1)
+- **ADR-366 (old 233).** Superseded — feature removed (HO-P1)
+- **ADR-367 (old 234).** Superseded — feature removed (HO-P1)
+- **ADR-368 (old 235).** Superseded — feature removed (HO-P1)
+- **ADR-369 (old 236).** Superseded — feature removed (HO-P1)
 
 ---
 
@@ -4660,7 +4151,7 @@ thumbnails) for product images.
 2. **Direct serving.** For the purposes in `FileStorage:DirectServePurposes` (default `["ProductImage"]`),
    `StoredFileSigningBatcher` returns a Cloud Storage **V4 signed URL** to the object instead of the app-served HMAC URL.
    - The URL forces `response-content-type` (the verified type) and `response-content-disposition`.
-   - Every other purpose (clinical, consent, boarding, reports, cat photos) stays app-proxied exactly as in ADR-318.
+   - Every other purpose (documents, reports) stays app-proxied exactly as in ADR-318.
    - **Access is unchanged.** Which files a caller may see is still decided by the endpoint that asks for the URL; the
      batcher already did no access check of its own. Product images are public catalogue content (ADR-318: `Public`
      purpose, no personal data).
@@ -4701,7 +4192,7 @@ thumbnails) for product images.
 ## ADR-237 … ADR-249 — Subscriptions (HO-SUB-001), as built for the organic shop
 
 **Date:** 2026-10-25 (HO-P4 BG-15, HO-P3 G2)
-**Status:** Active. These are the numbers `docs/handover/HO-SUB-001.md` §9 reserved; the decisions are recorded here once, adapted for HO-P1 (no clinic, cat or prescription diet) and HO-P2 (a general catalogue).
+**Status:** Active. These are the numbers `docs/handover/HO-SUB-001.md` §9 reserved; the decisions are recorded here once, adapted for HO-P1 (the retired services) and HO-P2 (a general catalogue).
 **Decisions:**
 - **ADR-237.** Subscriptions are part of the **Order** context (feature segment `Subscription`) with their own schema `subscription` (two roots, no foreign keys; ids only to orders, SKUs, addresses and branches). Merging into Orders' schema later is a rename.
 - **ADR-238.** **No auto-charge**: a cycle raises an ordinary order paid by COD, bank transfer or at pickup. No token, card, mandate or gateway field exists in any column, DTO, event, view model or setting; `SubscriptionPaymentMethod` has no online value. Pinned by reflection tests.
@@ -4710,10 +4201,10 @@ thumbnails) for product images.
 - **ADR-241.** **Generation is orchestrated by the worker, one scope per command**: request query, `PlaceSubscriptionOrderCommand`, `RecordSubscriptionCycleCommand`. Orders is never dispatched from inside a Subscriptions handler (F23). Crash recovery is re-running the pass: the order idempotency key (`SubscriptionKeys.OrderIdempotencyGuid`) returns the original order and `ix_subscription_cycle_per_date` keeps one cycle row.
 - **ADR-242.** **Price at generation**: no price is stored; Orders prices each cycle. The subscriber discount (`subscription.discountPercent`, default 0) is a labelled order discount and is snapshotted on the cycle. System-placed orders carry no price-change acknowledgement; the pre-charge notice carries the estimate.
 - **ADR-243.** **Order outcomes are mirrored, not owned**: idempotent handlers of Orders' events update the cycle's state, never enqueue and never touch the subscription. The unpaid streak is **derived** (`UnpaidCycleRule`); suspension is a worker-nominated command that re-checks the rule and, after a reinstatement, counts only cycles processed since.
-- **ADR-244.** *(Retired with the clinic, HO-P1.)* The prescription-authorisation checks, pass and vet message are not built.
+- **ADR-244.** Superseded — feature removed (HO-P1)
 - **ADR-245.** **Pre-charge notice**: a timed producer in the worker (`RequestNotificationCommand`, key `sub:notice:{id}:{date}`), notice date = cycle - max(noticeDays, cutoffDays + 1), `NotAfter` = the cut-off, guarded by `SubscriptionCycleDue`, not sent when the person chose the date inside the notice window.
 - **ADR-246.** **Payment reminder** for a held bank-transfer subscription order: enqueued with the cycle record, `SendAfter = expiry - paymentReminderHours`, `NotAfter = expiry`, guarded by the mirrored `AwaitingPayment`. Orders owns the expiry.
-- **ADR-247.** **Lifecycle**: customer merged -> reassign to the survivor (a duplicate the survivor already has is cancelled `CustomerMerged`, then moves too); account anonymised -> cancel and clear the note. Handlers are idempotent and never enqueue. (Cat death and transfer went with the clinic.)
+- **ADR-247.** **Lifecycle**: customer merged -> reassign to the survivor (a duplicate the survivor already has is cancelled `CustomerMerged`, then moves too); account anonymised -> cancel and clear the note. Handlers are idempotent and never enqueue.
 - **ADR-248.** **Authorization**: `Subscriptions.View` (Reception, Inventory, ShopManager, Accountant, Administrator), `Subscriptions.Manage` (ShopManager, Administrator), `Subscriptions.Export` (ShopManager, Accountant, Administrator), **inferred** from "Orders & fulfilment"; customer routes resolve by id and caller (another customer's is `404`); an `UnpaidCycles` suspension is lifted by staff only.
 - **ADR-249.** `SubscriptionWorker`: one `BackgroundService` in the single host, a scope per unit of work, never throws out of `ExecuteAsync`, disabled in `Testing`; passes in fixed order **unpaid, notices, generation** (generation last, so a subscription suspended in pass 1 is never raised an order), each bounded by `WorkerBatchSize`.
 **Reason:** one place for the numbers the handover reserved; the adaptations are the ones HO-P1 and HO-P2 forced, and ADR-239's UTC rule was found by the first integration run of the notice pass.

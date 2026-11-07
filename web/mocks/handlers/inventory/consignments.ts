@@ -153,7 +153,7 @@ function validateDetails(body: ConsignmentDetailsInput, branch: string) {
         propertyName: `HsCodes[${index}].Code`,
         errorCode: 'InvalidHsCode',
         errorMessage:
-          'An HS code is four digits followed by up to three groups of two (for example 2309.10).',
+          'An HS code is four digits followed by up to three groups of two (for example 1006.30).',
       });
     }
   });

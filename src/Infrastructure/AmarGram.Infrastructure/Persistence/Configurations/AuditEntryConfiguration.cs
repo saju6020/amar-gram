@@ -20,7 +20,7 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
     {
         builder.ToTable("audit_entry", "audit");
         builder.HasKey(x => x.Id);
-        // See CatConfiguration for why every Id needs ValueGeneratedNever().
+        // Ids are minted by the domain, never by the database (ADR-021), so EF must not generate them.
         builder.Property(x => x.Id).ValueGeneratedNever();
 
         builder.Property(x => x.EntityType).HasMaxLength(100).IsRequired();
@@ -32,8 +32,7 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
         // Integrator-authorised migration (the foundation handover §1 Amended, 2026-09-26; SECURITY gate MEDIUM):
         // widened from character varying(2000) to text. AuditChangeCaptureInterceptor snapshots the
         // whole aggregate root row on every write, and the validators alone allow ~3,450
-        // characters of root text (name, breed, colour, handling note, deceased note, dietary and
-        // behavioural notes) -- comfortably over the old 2000-char cap, which failed the write with a
+        // characters of root text (names, descriptions and free-text notes) -- comfortably over the old 2000-char cap, which failed the write with a
         // 500 once the snapshot exceeded it. Unbounded text is deliberate: this is a system-computed
         // snapshot, not user input, so there is no length invariant to enforce (see
         // AuditEntryAggregate.Record, which validates EntityType/Action/Reason but never
@@ -60,7 +59,7 @@ public sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntr
         builder.HasIndex(x => new { x.Action, x.OccurredOn }).HasDatabaseName("ix_audit_entry_action_occurred");
         builder.HasIndex(x => x.OccurredOn).HasDatabaseName("ix_audit_entry_occurred");
 
-        // See CatConfiguration for why Tags/Language/ServiceId must be optional.
+        // Tags/Language/ServiceId come from the platform base entity and are optional (as in AggregateConfigurationExtensions).
         builder.Property(x => x.Tags).IsRequired(false);
         builder.Property(x => x.Language).IsRequired(false);
         builder.Property(x => x.ServiceId).IsRequired(false);

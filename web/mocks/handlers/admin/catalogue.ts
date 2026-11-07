@@ -9,7 +9,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_admin_catalogue_mock_db__';
+const PERSIST_KEY = '__amargram_admin_catalogue_mock_db__';
 
 /** `mocks/handlers/admin/catalogue.ts` — HO-ADM-002 §12, HO-ADM-001 §8.6/§12.4. Tax classes with
  *  effective-dated rates. */
