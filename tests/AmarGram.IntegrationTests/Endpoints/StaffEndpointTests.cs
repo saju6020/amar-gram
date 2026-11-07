@@ -182,6 +182,8 @@ public sealed class StaffEndpointTests(AccountsApiFactory factory) : AccountsInt
             e => e.EntityId == memberId && e.Action == "StaffAccountDetailsChanged");
         Assert.Equal(administratorId, audit.ActorUserId);
         Assert.Equal(AmarGram.Shared.Common.Enums.AuditCategory.DataChange, audit.Category);
+        Assert.Equal("ChangedByAdministrator", audit.Reason);
+        Assert.Equal("StaffAccount", audit.EntityType);
         // The mobile number is stored normalised (+880...), so the unchanged part is compared between before and after.
         var mobilePart = audit.BeforeValue!.Split("; ")[1];
         Assert.StartsWith("MobileNumber=+880", mobilePart);
