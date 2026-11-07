@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { subscriptionOrderSeeds } from '../../../mocks/handlers/subscriptions/fixtures';
 import { apiFetch, ApiError, ApiForbiddenError, ApiNotFoundError, ApiValidationError } from '@/lib/api/client';
 import { getSalesSeries } from '@/lib/api/dashboard';
 import {
@@ -203,7 +204,7 @@ describe('status-counts - StaffOrdersController.cs:139-158, StaffOrderQueryHandl
     }
     // A name matches whatever its case, as EnumerationParsing does; `Subscription` is a channel the filter accepts.
     // HO-P6 S0 seeds Subscription-channel orders, so the lower-case name counts them (it counted none before).
-    expect((await getStaffOrderStatusCounts({ channel: 'subscription' })).total).toBeGreaterThan(0);
+    expect((await getStaffOrderStatusCounts({ channel: 'subscription' })).total).toBe(subscriptionOrderSeeds().length);
   });
 });
 

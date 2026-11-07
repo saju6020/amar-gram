@@ -27,6 +27,10 @@ describe('subscription dates (ADR-FE-112)', () => {
     expect(formatCycleDate(undefined)).toBe('—');
     expect(formatCycleDate('soon')).toBe('soon');
     expect(formatCycleDate('2026-13-40')).toBe('2026-13-40');
+    // A day the month does not have is left as text, not rolled into the next month.
+    expect(formatCycleDate('2026-02-31')).toBe('2026-02-31');
+    expect(formatCycleDate('2026-04-31')).toBe('2026-04-31');
+    expect(formatCycleDate('2028-02-29')).toBe('Tue 29 Feb');
   });
 
   it('names the commerce zone on an instant and converts into it', () => {

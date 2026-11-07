@@ -1,3 +1,4 @@
+import { formatCycleDate } from '@/lib/subscriptions/dates';
 import { zonedTimeToUtcIso } from '../admin/fixtures';
 
 /**
@@ -117,16 +118,7 @@ export function localDateOf(instant: Date, zone: string = COMMERCE_ZONE): string
 
 /** `SubscriptionMessages.Day`: `ddd d MMM`, e.g. `Tue 20 Oct`. */
 export function day(dateText: string): string {
-  const [y, m, d] = parts(dateText);
-  const at = new Date(Date.UTC(y, m - 1, d));
-  const text = new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'UTC',
-  }).formatToParts(at);
-  const pick = (type: Intl.DateTimeFormatPartTypes) => text.find((p) => p.type === type)?.value ?? '';
-  return `${pick('weekday')} ${pick('day')} ${pick('month')}`;
+  return formatCycleDate(dateText);
 }
 
 // ---- Domain/ValueObjects/SubscriptionClock.cs -------------------------------------------------------------

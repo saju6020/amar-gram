@@ -23,7 +23,8 @@ import {
  * household items whose `isSubscribable` is true there.
  */
 
-const id = (prefix: string, n: number) => `${prefix}0000000-0000-0000-0000-${String(n).padStart(12, '0')}`;
+/** A GUID: the prefix fills the 8-character first group (a 2-character prefix must not make it 9). */
+const id = (prefix: string, n: number) => `${prefix.padEnd(8, '0')}-0000-0000-0000-${String(n).padStart(12, '0')}`;
 
 // ---- ids ----------------------------------------------------------------------------------------------------
 

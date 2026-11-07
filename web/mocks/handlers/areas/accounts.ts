@@ -221,7 +221,7 @@ type StoredAddress = StoredCustomer['addresses'][number];
 function seedSamAddresses(): StoredAddress[] {
   return [
     {
-      id: '5a0000000-0000-0000-0000-000000000001',
+      id: '5a000000-0000-0000-0000-000000000001',
       label: 'Home',
       line1: 'House 7, Road 3, Dhanmondi',
       line2: null,
@@ -232,7 +232,7 @@ function seedSamAddresses(): StoredAddress[] {
       isDefault: true,
     },
     {
-      id: '5a0000000-0000-0000-0000-000000000002',
+      id: '5a000000-0000-0000-0000-000000000002',
       label: 'Office',
       line1: 'Level 4, 21 Kemal Ataturk Avenue, Banani',
       line2: null,
@@ -248,10 +248,10 @@ function seedSamAddresses(): StoredAddress[] {
 /** HO-P6 S0: address books of customers the subscriptions seeds name but this mock holds no account for (staff views
  *  only; they never sign in). Read through `findCustomerAddress` only, never listed or editable. */
 const seedOnlyAddressBooks: ReadonlyArray<{ customerId: string; addressId: string; label: string; line1: string }> = [
-  { customerId: 'c0000000-0000-0000-0000-0000000000a2', addressId: '5a0000000-0000-0000-0000-000000000011', label: 'Home', line1: 'House 12, Road 9, Mohammadpur' },
-  { customerId: 'c0000000-0000-0000-0000-0000000000a4', addressId: '5a0000000-0000-0000-0000-000000000013', label: 'Home', line1: 'Flat 3B, 45 Mirpur Road' },
-  { customerId: 'c0000000-0000-0000-0000-0000000000a5', addressId: '5a0000000-0000-0000-0000-000000000014', label: 'Home', line1: 'House 88, Sector 7, Uttara' },
-  { customerId: 'c0000000-0000-0000-0000-0000000000a6', addressId: '5a0000000-0000-0000-0000-000000000015', label: 'Home', line1: 'House 5, Lane 2, Gulshan' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a2', addressId: '5a000000-0000-0000-0000-000000000011', label: 'Home', line1: 'House 12, Road 9, Mohammadpur' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a4', addressId: '5a000000-0000-0000-0000-000000000013', label: 'Home', line1: 'Flat 3B, 45 Mirpur Road' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a5', addressId: '5a000000-0000-0000-0000-000000000014', label: 'Home', line1: 'House 88, Sector 7, Uttara' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a6', addressId: '5a000000-0000-0000-0000-000000000015', label: 'Home', line1: 'House 5, Lane 2, Gulshan' },
 ];
 
 /**
@@ -563,7 +563,7 @@ interface StaffSessionRecord {
 const canPersist =
   typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
 // HO-P5: bumped when customers gained tags and notes and staff accounts gained a lockout, so an older tab's saved state is not read.
-const PERSIST_KEY = '__amargram_accounts_mock_db_p6__';
+const PERSIST_KEY = '__amargram_accounts_mock_db_p7__';
 
 function persistMockState(): void {
   if (!canPersist) return;

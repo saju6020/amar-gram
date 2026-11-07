@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { db as orderingDb, resetOrderingMockData } from '@/mocks/handlers/ordering/store';
 import { orderingIds } from '@/mocks/handlers/ordering/fixtures';
 import { db as shopDb, resetShopMockData } from '@/mocks/handlers/shop/store';
-import { SUBSCRIBABLE_SKU_IDS, seedDates, subscriptionFixtureIds as ids } from '@/mocks/handlers/subscriptions/fixtures';
+import { isGuid } from '@/lib/validation/guid';
+import { SUBSCRIBABLE_SKU_IDS, seedDates, subscriptionOrderSeeds, subscriptionFixtureIds as ids } from '@/mocks/handlers/subscriptions/fixtures';
 import {
   customerDetailOf,
   customerSummaryOf,
@@ -230,6 +231,20 @@ describe('controls', () => {
     expect(customerDetailOf(get(ids.mine.paused)).cycles).toHaveLength(12);
     controls.reset();
     expect(optionsOf(ids.customerId, ids.skus.oats2kg)!.discountPercent).toBe('10.00');
+  });
+});
+
+describe('seeds: every id is a GUID (isGuid decides a route id)', () => {
+  it('subscriptions, cycles, addresses and orders', () => {
+    const all = [
+      ...db.subscriptions.map((s) => s.id),
+      ...db.cycles.map((c) => c.id),
+      ...Object.values(ids.addresses),
+      ...Object.values(ids.skus),
+      ...subscriptionOrderSeeds().map((o) => o.orderId),
+    ];
+    expect(all.length).toBeGreaterThan(40);
+    for (const value of all) expect(isGuid(value), value).toBe(true);
   });
 });
 

@@ -1,10 +1,10 @@
 import {
-  administrationFixtureIds,
   clearPersisted,
   loadPersisted,
   savePersisted,
   zonedTimeToUtcIso,
 } from '../admin/fixtures';
+import { getBranchSnapshot } from '../admin/branches';
 import { findCustomerAddress } from '../areas/accounts';
 import { findSku } from '../shop/store';
 import {
@@ -51,7 +51,7 @@ import {
 
 /**
  * `mocks/handlers/subscriptions/store.ts` — HO-P6 S0, ADR-FE-193. The subscriptions mock's database (kept in
- * `sessionStorage` under `__amargram_subscriptions_mock_db__v1`, like the other mock stores) and the view
+ * `sessionStorage` under `__amargram_subscriptions_mock_db__v2`, like the other mock stores) and the view
  * builders that shape it into the server's view models. The builders produce exactly the shapes of
  * `src/Read/AmarGram.Read/ViewModels/SubscriptionViewModels.cs`, including the flattened detail objects of
  * `SubscriptionHttp.Flatten`. The handlers (slices S1, S2, S3) validate a request as the server does and
@@ -62,7 +62,8 @@ import {
  * mock's (`findCustomerAddress`), read, never copied (HO-P6 Amended (b)).
  */
 
-const PERSIST_KEY = '__amargram_subscriptions_mock_db__v1';
+// v2: the seeded ids became real GUIDs (HO-P6 S0 CODE_REVIEW).
+const PERSIST_KEY = '__amargram_subscriptions_mock_db__v2';
 const CURRENCY = 'BDT';
 const DISCOUNT_SEED = '10.00';
 
@@ -120,12 +121,6 @@ interface Db {
   subscriptions: DbSubscription[];
   cycles: DbCycle[];
 }
-
-/** Branches the pickup terms can name (Administration's `GET /api/branches` ids). */
-export const BRANCH_DIRECTORY: ReadonlyArray<{ id: string; name: string }> = [
-  { id: administrationFixtureIds.mainBranchId, name: 'Dhanmondi outlet' },
-  { id: administrationFixtureIds.londonBranchId, name: 'London outlet' },
-];
 
 // ---- seed -------------------------------------------------------------------------------------------------
 
@@ -322,7 +317,8 @@ export const isSubscribableSku = (skuId: string): boolean =>
 
 export function termsViewOf(customerId: string, t: ScheduleTerms) {
   const address = t.deliveryAddressId ? findAddress(customerId, t.deliveryAddressId) : undefined;
-  const branch = t.pickupBranchId ? BRANCH_DIRECTORY.find((b) => b.id === t.pickupBranchId) : undefined;
+  // The Administration mock's branches are the one source (SubscriptionViews.cs:109-114 reads the Branches table).
+  const branch = t.pickupBranchId ? getBranchSnapshot(t.pickupBranchId) : undefined;
   return {
     quantity: t.quantity,
     intervalWeeks: t.intervalWeeks,

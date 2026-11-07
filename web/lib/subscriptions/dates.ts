@@ -20,6 +20,8 @@ function dateParts(dateText: string): { year: number; month: number; day: number
   const month = Number(match[2]);
   const day = Number(match[3]);
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  // 2026-02-31 would roll over to 3 March: only a real calendar day is laid out.
+  if (new Date(Date.UTC(year, month - 1, day)).getUTCDate() !== day) return null;
   return { year, month, day };
 }
 

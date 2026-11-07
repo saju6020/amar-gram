@@ -66,6 +66,15 @@ describe('the clock', () => {
     expect(clock.isLocked('2026-10-19')).toBe(false);
   });
 
+  it('takes today from the commerce zone, not UTC, and flips the cut-off at local midnight', () => {
+    // 19:00Z on the 16th is already 01:00 on the 17th in Dhaka.
+    expect(createClock(new Date('2026-10-16T19:00:00Z'), 2).today).toBe('2026-10-17');
+    expect(createClock(new Date('2026-10-16T17:59:00Z'), 2).today).toBe('2026-10-16');
+    // The cut-off of Tue 20 Oct is 2026-10-17T18:00:00Z.
+    expect(createClock(new Date('2026-10-17T17:59:59Z'), 2).isLocked('2026-10-20')).toBe(false);
+    expect(createClock(new Date('2026-10-17T18:00:00Z'), 2).isLocked('2026-10-20')).toBe(true);
+  });
+
   it('the notice date is cycleOn - max(noticeDays, cutoffDays + 1)', () => {
     expect(noticeDateFor('2026-10-20', 3, 2)).toBe('2026-10-17');
     expect(noticeDateFor('2026-10-20', 1, 2)).toBe('2026-10-17');

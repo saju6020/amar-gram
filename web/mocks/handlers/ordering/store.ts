@@ -13,8 +13,10 @@ import { orderingIds as ids } from './fixtures';
  * mock's, so Add to cart on a real product page reaches a real cart line.
  */
 
-// HO-P6 S0: bumped again (v3) for the subscription-channel orders. HO-P5 S0: bumped (v2) so a stale sessionStorage copy without riders, picked ticks or the new seeds is not loaded.
-const PERSIST_KEY = '__amargram_ordering_mock_db__v3';
+// HO-P6 S0: v4 (the subscription-order ids became real GUIDs), v3 for the subscription-channel orders. Unlike the subscriptions
+// mock this store does not reseed daily, so after midnight a persisted tab keeps orders placed relative to the day it was seeded
+// (`placedDaysAgo` off by one against fresh cycle dates); accepted, mocks only. HO-P5 S0: bumped (v2) so a stale sessionStorage copy without riders, picked ticks or the new seeds is not loaded.
+const PERSIST_KEY = '__amargram_ordering_mock_db__v4';
 
 /** Seed ids HO-P5 adds (kept here: `ordering/fixtures.ts` is not S0's file). */
 export const riderIds = {

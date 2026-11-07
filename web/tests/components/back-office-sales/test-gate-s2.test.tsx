@@ -8,6 +8,7 @@ import { DashboardSalesChart } from '@/components/dashboard/DashboardSalesChart'
 import { ApiError } from '@/lib/api/client';
 import { listStaffOrders } from '@/lib/api/staff-orders';
 import { ACTIVE_BRANCH_KEY } from '@/lib/hooks/useActiveBranch';
+import { subscriptionOrderSeeds } from '../../../mocks/handlers/subscriptions/fixtures';
 import { resetOrderingMockData } from '../../../mocks/handlers/ordering/store';
 import { renderWithClient } from '../reports/helpers';
 import { PosScreen } from '@/components/pos/PosScreen';
@@ -43,7 +44,7 @@ describe('U47i - GET …/orders refuses what status-counts refuses (StaffOrdersC
     expect(page.items.length).toBeGreaterThan(0);
     // HO-P6 S0 seeds Subscription-channel orders, so the lower-case name lists them (it listed none before).
     const subscription = await listStaffOrders({ channel: 'subscription' } as never);
-    expect(subscription.totalCount).toBeGreaterThan(0);
+    expect(subscription.totalCount).toBe(subscriptionOrderSeeds().length);
     expect(subscription.items.every((o) => o.channel === 'Subscription')).toBe(true);
   });
 });
