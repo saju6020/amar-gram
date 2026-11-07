@@ -30,7 +30,7 @@ public sealed class RecordCertificateCommand : Command
     public required Guid CertificationId { get; init; }
     public required Guid BatchId { get; init; }
     public required DateOnly IssuedOn { get; init; }
-    public required Guid AdministeredByVetId { get; init; }
+    public required Guid InspectedByStaffId { get; init; }
     public string? Notes { get; init; }
 }
 ```

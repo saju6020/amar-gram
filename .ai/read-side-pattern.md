@@ -84,7 +84,7 @@ ViewModel any more — the query handler builds it.
 
 ## 4. Rules
 
-1. **Project, never rehydrate.** Loading a `CatAggregate` to render four columns pulls its whole
+1. **Project, never rehydrate.** Loading a `ProductAggregate` to render four columns pulls its whole
    object graph and its invariant machinery to produce four fields.
 2. **`Select` before `ToListAsync`.** Projection happens in the database, not in memory.
 3. **`AsNoTracking()` on every read.** A tracked read in a request that also writes can produce

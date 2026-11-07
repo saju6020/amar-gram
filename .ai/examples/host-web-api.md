@@ -54,7 +54,7 @@ public sealed class CertificateController(IInMemoryDispatcher dispatcher) : Cont
             CertificationId           = request.CertificationId,
             BatchId             = request.BatchId,
             IssuedOn      = request.IssuedOn,
-            AdministeredByVetId = request.AdministeredByVetId,
+            InspectedByStaffId  = request.InspectedByStaffId,
             Notes               = request.Notes,
             CorrelationId       = HttpContext.TraceIdentifier,
             UserContext         = HttpContext.GetUserContext()
@@ -104,7 +104,7 @@ public sealed class RecordCertificateCommand : Command
     public required Guid CertificationId { get; init; }
     public required Guid BatchId { get; init; }
     public required DateOnly IssuedOn { get; init; }
-    public required Guid AdministeredByVetId { get; init; }
+    public required Guid InspectedByStaffId { get; init; }
     public string? Notes { get; init; }
 }
 

@@ -943,7 +943,7 @@ in this codebase loads the aggregate through this same repository's `GetByIdAsyn
 scoped `DbContext`, mutates it, then calls `UpdateAsync` — so the aggregate is already tracked.
 `DbSet<T>.Update(aggregate)` on an already-tracked root walks the whole reachable graph and marks
 every not-yet-tracked entity **Modified** rather than **Added** — including an owned-collection
-item just added in this request (e.g. `CatAggregate.AddPhoto`'s new `CatPhoto`). EF then emits an
+item just added in this request (e.g. a new item in an aggregate's owned collection). EF then emits an
 `UPDATE` for a child row that does not exist yet, "0 rows affected", and the `xmin` concurrency
 check (ADR-016) throws `DbUpdateConcurrencyException` on a perfectly ordinary first write — not a
 conflict at all. Fixed: `UpdateAsync` only calls `.Update()` when
@@ -983,7 +983,7 @@ end; this ADR is that verification, and the two corrections are what running it 
 - No migration change: both corrections are EF metadata, not schema (`ValueGeneratedNever()` does
   not touch a `uuid` column's DDL on PostgreSQL; `IsRequired(false)` changed the *generated*
   migration's column nullability before the first migration was ever applied — confirmed by
-  regenerating `AddCatProfile` clean, so no `ALTER COLUMN` was needed either).
+  regenerating that migration clean, so no `ALTER COLUMN` was needed either).
 - Any future aggregate configuration added to this solution must include
   `builder.Property(x => x.Id).ValueGeneratedNever()` for its root **and every owned entity**, and
   `Tags`/`Language`/`ServiceId` optional, or its first `SaveChangesAsync` will fail exactly this
@@ -1708,7 +1708,7 @@ resolves the full DI graph with no missing registration.
   staying explicit.
 - **One `DbContext` per area** — contradicts ADR-011 (one database, one `DbContext`) and would
   reintroduce the multi-store consistency problem ADR-010 removed the three-host architecture to
-  avoid; `CatAggregate` alone is read by several areas (`.ai/bounded-contexts.md`), which a
+  avoid; `CustomerAccountAggregate` alone is read by several areas (`.ai/bounded-contexts.md`), which a
   per-area context cannot express without cross-context joins.
 - **Each area creates its own EF migration** — two areas' migrations generated independently
   against the same historical baseline are not composable without the integrator reconciling

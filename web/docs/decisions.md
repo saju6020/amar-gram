@@ -210,7 +210,7 @@ mounted for a given URL.
 
 **Amendment (third-pass gate fix round, 2026-09-27) — a page's OWN query, not only the session
 query.** ARCHITECTURE gate third pass, HIGH: staying mounted is not enough on its own if a page's
-own query (`useStaffAccount(id)`, `useCat(id)` under `CatProfileDataShell`) independently 401s on
+own query (e.g. `useStaffAccount(id)`) independently 401s on
 the SAME focus event that triggers the lock — TanStack keeps its stale `data` but sets
 `isError: true`, and a page branching on `isError` alone still swaps the mounted form out for
 `ErrorState`. `StaffLockProvider` (`IdleLockContext.tsx`) was given a second responsibility: while
@@ -569,7 +569,7 @@ group their rows into **Current / Scheduled / Past** by comparing `effectiveFrom
 against now, with **no edit or delete control anywhere** on any row (U-C1). The only action is
 "Schedule a new …" (`ScheduleChangeDialog`) or "Publish new version", each of which disables a past
 effective date/time client-side (U-C2) and states in its own confirm what stays unaffected
-("Bookings and invoices made before {date} keep their price.").
+("Orders and invoices made before {date} keep their price.").
 
 **Why.** Mirrors HO-ADM-001 ADR-049's append-only price/rate model and ADR-052's append-only policy
 versions — offering an edit the server will refuse is worse than not offering one at all (NFR-USA-4
@@ -1518,7 +1518,7 @@ Numbering: `ADR-FE-139…148` are the block HO-XCT-002 §9 names for itself and 
 
 ### ADR-FE-173
 
-**Decision.** **The owner-approved "Hearth" look (2026-10-16) is a customer-only layer built on the existing `data-theme="customer"` tokens.** `globals.css` adds `--accent-tint`, `--radius-card` (20px), `--radius-band` (32px) and `--radius-pill` inside `[data-theme='customer']` only, with Tailwind aliases (`bg-accent-tint`, `rounded-card`, `rounded-band`, `rounded-pill`); they are undefined on staff layouts, so staff screens are unchanged. Shared pieces live in `components/hearth/` (`HearthLogo`, `HearthBand`, `LineArtCat`, `IconTile`, `PillSteps`, `OrderTracker`, `ProductPackArt`, `FreeDeliveryProgress`, `fields.ts` pill input classes). `Button` gains `pill`/`pillSecondary` variants and `pillMd` (44px) / `pillLg` (54px) sizes; the staff variants and sizes keep their look (the radius and text size moved from the base class into the sizes). `ShopHeader`, `SearchBox`, `CartBadge`, `LanguageSwitcher` and `PortalHeader` take the Hearth header. Warm `#e8894a` is a fill only, `warm-ink` is the warm text colour, and no emoji or paw prints are used
+**Decision.** **The owner-approved "Hearth" look (2026-10-16) is a customer-only layer built on the existing `data-theme="customer"` tokens.** `globals.css` adds `--accent-tint`, `--radius-card` (20px), `--radius-band` (32px) and `--radius-pill` inside `[data-theme='customer']` only, with Tailwind aliases (`bg-accent-tint`, `rounded-card`, `rounded-band`, `rounded-pill`); they are undefined on staff layouts, so staff screens are unchanged. Shared pieces live in `components/hearth/` (`HearthLogo`, `HearthBand`, `LineArtBasket`, `IconTile`, `PillSteps`, `OrderTracker`, `ProductPackArt`, `FreeDeliveryProgress`, `fields.ts` pill input classes). `Button` gains `pill`/`pillSecondary` variants and `pillMd` (44px) / `pillLg` (54px) sizes; the staff variants and sizes keep their look (the radius and text size moved from the base class into the sizes). `ShopHeader`, `SearchBox`, `CartBadge`, `LanguageSwitcher` and `PortalHeader` take the Hearth header. Warm `#e8894a` is a fill only, `warm-ink` is the warm text colour, and no emoji or paw prints are used
 
 **Why.** One look for every customer screen without forking components, and no risk to staff screens. Owner decisions of 2026-10-16 in `docs/design/shop/README.md` and `docs/design/orders/README.md`
 
