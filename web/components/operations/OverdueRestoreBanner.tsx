@@ -21,7 +21,7 @@ export function OverdueRestoreBanner() {
   const session = useStaffSession();
   const onAdminRoute = pathname.startsWith('/staff/admin');
   // The backup pages already show the overdue state in full (RestoreTestDueCard); a banner linking to the page you are on only pushes it down.
-  const onBackupRoute = pathname.startsWith(BACKUP_HREF);
+  const onBackupRoute = pathname === BACKUP_HREF || pathname.startsWith(`${BACKUP_HREF}/`);
   const isAdministrator = (session.data?.roleIds ?? []).includes('Administrator');
   const { overdue, dismissed, dismiss } = useOverdueRestoreBanner(onAdminRoute && isAdministrator);
 

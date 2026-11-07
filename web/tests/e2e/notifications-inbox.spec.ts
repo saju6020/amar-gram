@@ -16,11 +16,12 @@ test.beforeEach(async ({ page }) => {
 
 /**
  * Checks the unread-count link. From `sm` up it is the envelope button in the header; on a phone the
- * header has no envelope (`max-sm:hidden`), so the same link, with the same accessible name, is the
+ * header has no envelope (`max-sm:hidden`), so the same link (named "Messages, N unread") is the
  * "Messages" row in the account menu: open it, check, and close it again so it does not cover the page.
  */
 async function expectUnreadLink(page: Page, count: number) {
-  const link = page.getByRole('link', { name: `Inbox, ${count} unread messages` });
+  const phone = (page.viewportSize()?.width ?? 1280) < 640;
+  const link = page.getByRole('link', { name: phone ? `Messages, ${count} unread` : `Inbox, ${count} unread messages` });
   if ((page.viewportSize()?.width ?? 1280) >= 640) {
     await expect(link).toBeVisible();
     return;

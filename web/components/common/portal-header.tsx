@@ -7,7 +7,7 @@ import { ChevronDown, Lock, LogOut, Mail, Package, Receipt, Store, User } from '
 import { useCustomerProfile } from '@/lib/hooks/useAccount';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import { useUnreadCount } from '@/lib/hooks/useInbox';
-import { BADGE_CAP, inboxAccessibleName } from '@/components/inbox/InboxBadge';
+import { BADGE_CAP } from '@/components/inbox/InboxBadge';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { HearthLogo } from '@/components/hearth/HearthLogo';
 import { SearchForm } from '@/components/shop/SearchBox';
@@ -25,6 +25,11 @@ import { cn } from '@/lib/utils';
  * HO-ACC-002 §11.5/§8.4: the name comes from the session query `CustomerSessionGuard` already
  * resolves (shared cache, no extra request). While it resolves the header shows no name yet.
  */
+/** The phone row's name starts with its visible label (WCAG 2.5.3): "Messages, 3 unread". */
+function messagesRowName(count: number): string {
+  return `Messages, ${count > BADGE_CAP ? `more than ${BADGE_CAP}` : count} unread`;
+}
+
 export function PortalHeader({ sessionActions }: { sessionActions?: React.ReactNode }) {
   const { data: session } = useCustomerSession();
   const pathname = usePathname();
@@ -187,7 +192,7 @@ function AccountMenu({ fullName }: { fullName: string }) {
             <Link
               href="/portal/inbox"
               className={row}
-              aria-label={unread > 0 ? inboxAccessibleName(unread) : undefined}
+              aria-label={unread > 0 ? messagesRowName(unread) : undefined}
             >
               <Mail size={18} aria-hidden="true" className="text-ink-muted" />
               Messages

@@ -123,7 +123,7 @@ describe('customer header - the unread count on a phone', () => {
     const user = userEvent.setup();
     renderWithClient(<PortalHeader />);
     await user.click(screen.getByRole('button', { name: 'Account menu for Ayesha Rahman' }));
-    const row = await screen.findByRole('link', { name: 'Inbox, 3 unread messages' });
+    const row = await screen.findByRole('link', { name: 'Messages, 3 unread' });
     expect(row).toHaveAttribute('href', '/portal/inbox');
     expect(row).toHaveTextContent('Messages');
     expect(row).toHaveTextContent('3');

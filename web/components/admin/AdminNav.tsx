@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UnderlineTabs } from '@/components/back-office/UnderlineTabs';
@@ -34,8 +35,22 @@ function isWithin(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/** Centres the current chip in the scrolling row (below sm). Scrolls the row itself, never `scrollIntoView()`:
+ *  Chrome treats that as a request to scroll every ancestor too, which moves the page and where Tab starts
+ *  (same reason as the staff menu's scroll-to-current, `staff-shell.tsx`). */
+function scrollCurrentChipIntoRow(row: HTMLElement | null) {
+  const current = row?.querySelector<HTMLElement>('[aria-current="page"]');
+  if (!row || !current || row.scrollWidth <= row.clientWidth) return;
+  const chip = current.parentElement ?? current;
+  row.scrollLeft = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
+}
+
 export function AdminNav({ roleIds, rosterHref }: { roleIds: string[]; rosterHref?: string }) {
   const pathname = usePathname();
+  const rowRef = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    scrollCurrentChipIntoRow(rowRef.current);
+  }, [pathname]);
   const can = (roles: readonly string[]) => roles.some((role) => roleIds.includes(role));
   const visibleItems = adminNavItems.filter((item) => can(item.roles));
   const moreItems = visibleItems.filter((item) => !PRIMARY_HREFS.has(item.href));
@@ -75,7 +90,7 @@ export function AdminNav({ roleIds, rosterHref }: { roleIds: string[]; rosterHre
           </summary>
           <nav aria-label="More administration pages" className="mt-1">
             {/* One scrolling row below sm: an open list of 15 wrapped chips is ~700 px tall at 360 px and pushes the page's own content (the Backup page's two warnings, HO-XCT-002 E-D1) below the fold. */}
-            <ul className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+            <ul ref={rowRef} className="relative flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
               {moreItems.map((item) => {
                 const isActive = isWithin(pathname, item.href);
                 return (
@@ -84,7 +99,7 @@ export function AdminNav({ roleIds, rosterHref }: { roleIds: string[]; rosterHre
                       href={item.href}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-semibold no-underline',
+                        'inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold no-underline',
                         isActive
                           ? 'border-leaf-ink bg-leaf-ink text-leaf-soft'
                           : 'border-border bg-surface text-ink-muted hover:bg-surface-sunken hover:text-ink',
