@@ -8,7 +8,7 @@ import { createControls } from '../../../mocks/handlers/subscriptions/control';
 import { subscriptionFixtureIds } from '../../../mocks/handlers/subscriptions/fixtures';
 import { cyclesOf, findSubscription } from '../../../mocks/handlers/subscriptions/store';
 import { accountsFixtureIds } from '../../../mocks/handlers/areas/accounts';
-import { actAs, freshStore, recordRequests, renderScreen } from './helpers';
+import { actAs, freshStore, recordRequests, renderScreen, renderScreenWithInstantRetry } from './helpers';
 
 vi.mock('next/navigation', () => import('../common/nav-mock'));
 // Dialog flows type, submit and re-read; give them room when the machine is busy (a parallel Playwright run shares it).
@@ -134,11 +134,11 @@ describe('U30 staff detail', () => {
       }),
     );
     const user = userEvent.setup();
-    open(ACTIVE);
+    renderScreenWithInstantRetry(<StaffSubscriptionDetailScreen subscriptionId={ACTIVE} />);
     const history = await screen.findByRole('region', { name: 'Order history' });
 
     await user.click(within(history).getByRole('button', { name: 'Show more' }));
-    expect(await within(history).findByText("We couldn’t load more orders.", {}, { timeout: 6000 })).toBeInTheDocument();
+    expect(await within(history).findByText("We couldn’t load more orders.")).toBeInTheDocument();
     expect(within(history).queryByText(/entries shown/)).not.toBeInTheDocument();
     expect(within(history).queryByRole('button', { name: 'Show more' })).not.toBeInTheDocument();
     await user.click(within(history).getByRole('button', { name: 'Try again' }));
@@ -146,7 +146,7 @@ describe('U30 staff detail', () => {
     expect(within(history).queryByText("We couldn’t load more orders.")).not.toBeInTheDocument();
 
     await user.click(within(history).getByRole('button', { name: 'Show more' }));
-    expect(await within(history).findByText("We couldn’t load more orders.", {}, { timeout: 6000 })).toBeInTheDocument();
+    expect(await within(history).findByText("We couldn’t load more orders.")).toBeInTheDocument();
     expect(within(history).getAllByRole('row')).toHaveLength(101); // page 2 stays
     expect(within(history).queryByText(/entries shown/)).not.toBeInTheDocument();
     await user.click(within(history).getByRole('button', { name: 'Try again' }));

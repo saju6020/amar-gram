@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render } from '@testing-library/react';
 import { renderWithClient } from '../reports/helpers';
 import { setMockSubscriptionRoles } from '../../../mocks/handlers/subscriptions/staff';
 import { resetSubscriptionsMockData } from '../../../mocks/handlers/subscriptions/store';
@@ -33,6 +35,12 @@ export function freshStore() {
 
 export function renderScreen(ui: ReactElement) {
   return renderWithClient(ui);
+}
+
+/** Like `renderScreen`, but a query's own retry (the hooks retry once) waits 0 ms, so an error test needs no real delay. */
+export function renderScreenWithInstantRetry(ui: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, retryDelay: 0 } } });
+  return { client, ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>) };
 }
 
 /** The request URLs the server saw for a path suffix, in order. */
