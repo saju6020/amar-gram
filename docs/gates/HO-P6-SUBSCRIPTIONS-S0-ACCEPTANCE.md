@@ -97,3 +97,65 @@ TO REACH PASS (doc-only; no code or test re-run needed, unless catalogue-p5 is c
 SCOPE CHECK
 - files in allowed scope: 37/40, counting the Amended-authorised files as in scope
 - files outside allowed scope: web/tests/components/back-office-sales/mock-refusals.test.ts, web/tests/components/back-office-sales/test-gate-s2.test.tsx, web/tests/components/catalogue/catalogue-p5.test.tsx; plus the §16 in-place edit within docs/handover/HO-P6-SUBSCRIPTIONS.md
+
+---
+
+## Run 2
+
+GATE: ACCEPTANCE
+HANDOVER: HO-P6-SUBSCRIPTIONS (slice S0)
+COMMITS: 86db19d..639bdf9 (fixes in 639bdf9)
+DATE: 2026-11-07
+STATUS: PASS
+
+RUN 1 FINDINGS, RE-VERIFIED
+- [HIGH] Three run-only Vitest edits without an Amended row: FIXED.
+  - Amended (f)(ii) (docs/handover/HO-P6-SUBSCRIPTIONS.md:106) authorises all three and gives each old → new pair, worded "integrator decision, under the owner's 2026-10-31 delegation".
+  - catalogue-p5.test.tsx:203-221 restores a real stale-copy check. The test plants an empty catalogue under `__amargram_shop_mock_db__v2`, asserts it is ignored (products > 0, districts present), and asserts the write goes to v3.
+  - That key is not vacuous: it is the shop store's PERSIST_KEY on branch chore/remove-pet-legacy (store.ts:25 there). If the v3 bump were lost in that merge, the test would fail.
+  - The other two edits are unchanged and equal in strength (run 1).
+- [MEDIUM] §16 E1 edited in place: FIXED.
+  - Line 587 again reads "Pass. The seeds change nothing visible until S1–S3 build the screens", verbatim.
+  - `git diff 86db19d 639bdf9 -- docs/handover/HO-P6-SUBSCRIPTIONS.md` has no removed line. It adds only the "| Amended |" rows (b)-(f).
+  - (f)(i) withdraws (e)'s last sentence by appending, not by editing (e).
+- [MEDIUM] Missing slice report: FIXED.
+  - docs/gates/HO-P6-SUBSCRIPTIONS-S0-SLICE-REPORT.md now exists. It covers files touched, all seven old → new pairs, OQ defaults, the port and refusals, the §10.3 fallback sentences (19 rows plus three non-code sentences), the differences from the handover, and verification.
+  - It was written after the TEST gate, not before as §17.3 says. The content is complete, so this is noted only.
+- [LOW] TC sheet: FIXED.
+  - The header names both runs.
+  - The summary counts 34 rows, which matches 29 + 5.
+  - The E1 coverage row reads PASS (run 2), with the reason given.
+
+CRITERIA (unchanged from run 1 except A19)
+- A1 MET. Same evidence as run 1.
+- A2 MET. Same evidence as run 1.
+- A17 MET (S0 part).
+- A18 MET (S0 part). S0 has no MSW refusal, and the slice report §4 states the rules are ported, not wired.
+- A19 MET. Every file outside S0's §13 block now has an Amended row:
+  - accounts.ts: (b), (c), (d)
+  - shop/store.ts: (b)
+  - the three Vitest files: (f)
+  - the two e2e specs and ordering-helpers.ts: (e)
+  - the handover: §1 rows only
+- A20 MET (per-slice part).
+- Re-run by me at 639bdf9: `npx vitest run tests/components/catalogue/catalogue-p5.test.tsx tests/components/back-office-sales/mock-refusals.test.ts tests/components/back-office-sales/test-gate-s2.test.tsx tests/unit/subscriptions tests/unit/orders/status-vocabulary.test.ts tests/guards/no-card-ui.test.ts --maxWorkers=2` → 13 files, 201 tests passed.
+- 639bdf9 changed only docs and catalogue-p5.test.tsx, so the full-suite, tsc and lint results from the TEST gate still stand.
+
+NEW FINDINGS (none blocks a criterion)
+- [LOW] docs/gates/HO-P6-SUBSCRIPTIONS-S0-SLICE-REPORT.md §3 — inaccurate. It says S0 builds only OQ-17 and that "the other OQ defaults belong to S1 to S3 and are not built here". S0 built three more:
+  - OQ-4: "Next delivery on {date}", web/lib/subscriptions/copy.ts:32
+  - OQ-5: the six cancellation-reason texts, web/lib/subscriptions/labels.ts:67-73
+  - OQ-3's form wording: the estimate note without a total, copy.ts:74-78
+
+  The defaults themselves are correct and covered by Amended (a), so no decision is missing; only the report's list is. S1 should not read §3 as "OQ-4/OQ-5 still to build": those strings are S0's and import-only.
+  Fix: correct §3 (the slice report is S0's own document, not append-only) before S1 starts.
+- [LOW] Slice report §4 cites the ported server rules mostly by file. Line ranges appear only for AllowedActions (:26-34), the codes (:11-28) and the views. §17.3 asks for file:line per refusal. S0 wires no refusal, so this has no effect now. S1 and S2 must cite lines for the handler refusals they add.
+
+FOR THE OWNER (carried from run 1)
+- OQ-20: wording in USER_STORIES and the SRS
+- the docs/handover/README.md ADR table, after the merge
+- BG-S1 to BG-S9
+
+SCOPE CHECK
+- files in allowed scope: 41/41 changed files (86db19d..639bdf9 plus this record), counting files authorised by Amended rows
+- files outside allowed scope: none
