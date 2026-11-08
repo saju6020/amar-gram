@@ -25,3 +25,30 @@ CHECKS (no action)
 SCOPE CHECK
 - files in allowed scope: 25/25 (web components, hook, api type, mocks, tests, docs/gates, docs/test-cases; the handover edit is the Amended (l) row only; overview-dashboard.test.tsx authorised by Amended (l)(1); StaffOrderQueue `min-h-11` by (l)(3); `subscriptionsCount` by (l)(5))
 - files outside allowed scope: none
+
+---
+
+## Run 2
+
+GATE: CODE_REVIEW
+HANDOVER: HO-P6-SUBSCRIPTIONS (slice S3)
+COMMITS: a15c85c..bec6a91 (fix bec6a91; Amended (m) a13da25)
+DATE: 2026-11-09
+STATUS: PASS
+
+Verified:
+- A: copy.ts diff is additions only (13 lines appended at the end; no existing export changed or reordered). The four hoisted strings are byte-identical to the originals (SUBSCRIBABLE_HELP, 'No current subscriptions.', the counts template, the two dashboard texts). `countsLine` was renamed `customerSubscriptionCounts`; no other importer of the old name or of the panel-local constants remains.
+- B: T9 mock now checks the GUID before the role; new test covers 404 for Cashier on a non-GUID and 403 for a real id. Nothing weakened.
+- C: citation :53 / :157 matches the `[RequireAction(Actions.Subscriptions.View)]` lines on due-tomorrow and the customer GET.
+- D: `tab` is derived from `selected` against the current `tabs`; the new test rerenders without the panel and asserts Orders selected and its panel shown.
+- E/F: fixed sleeps replaced by response / query-state waits; assertions retained. No waitForTimeout left in E13.
+- Targeted Vitest (--maxWorkers=2): 30 files, 455 tests, 0 failed.
+- Scope: only S3 files and the TC doc / handover amendment changed.
+
+FINDINGS
+- [LOW] web/tests/components/back-office-subscriptions/customer-tab.test.tsx:~113-123 — `server.events.removeAllListeners()` is called at the end of the test body, not in a `finally`/afterEach, and removes every listener on the shared server; a failure before it leaves the listener attached for later tests in the file. Move to `afterEach`.
+- [LOW] web/components/back-office-overview/DashboardAttention.tsx:9 — the new `@/lib/subscriptions/copy` import is placed between two `@/lib/hooks/*` imports; cosmetic ordering only.
+
+SCOPE CHECK
+- files in allowed scope: 12/12
+- files outside allowed scope: none
