@@ -28,10 +28,15 @@ const schema = z.object({
   districtOfOrigin: z.string().max(60, 'Keep the district to 60 characters or fewer.'),
   taxClassId: z.string().min(1, 'Choose a tax class.'),
   listedOnStorefront: z.boolean(),
+  isSubscribable: z.boolean(),
   isExpiryTracked: z.boolean(),
   certifications: z.array(z.string()),
   slug: z.string().trim().min(1, 'Enter the web address.'),
 });
+/** HO-P6 OQ-18; the consequence is `ProductAggregate.Subscription.cs:4-7`. Staff-facing, so it stays with the form. */
+const SUBSCRIBABLE_HELP =
+  'Customers can start a repeat delivery of any pack size. Turning it off does not cancel existing subscriptions: their next order is not placed and they are suspended.';
+
 export type DetailsFormValues = z.infer<typeof schema>;
 const KNOWN = [
   'name',
@@ -43,6 +48,7 @@ const KNOWN = [
   'districtOfOrigin',
   'taxClassId',
   'listedOnStorefront',
+  'isSubscribable',
   'isExpiryTracked',
   'certifications',
   'slug',
@@ -112,6 +118,7 @@ export function ProductDetailsForm({
       districtOfOrigin: product.districtOfOrigin ?? '',
       taxClassId: product.taxClassId,
       listedOnStorefront: product.listedOnStorefront,
+      isSubscribable: product.isSubscribable === true,
       isExpiryTracked: isFood ? true : product.isExpiryTracked,
       certifications: product.certifications ?? [],
       slug: product.slug,
@@ -223,6 +230,21 @@ export function ProductDetailsForm({
           />
           Listed in shop
         </label>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="pd-subscribable" className="flex min-h-11 items-center gap-2 text-sm text-ink">
+            <input
+              id="pd-subscribable"
+              type="checkbox"
+              className="h-5 w-5 accent-leaf"
+              aria-describedby="pd-subscribable-help"
+              {...register('isSubscribable')}
+            />
+            Can be subscribed to
+          </label>
+          <p id="pd-subscribable-help" className="text-xs text-ink-muted">
+            {SUBSCRIBABLE_HELP}
+          </p>
+        </div>
         <label className="flex items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"

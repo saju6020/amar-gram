@@ -214,6 +214,10 @@ export interface StaffProductDetail {
   districtOfOrigin?: string | null;
   isExpiryTracked: boolean;
   listedOnStorefront: boolean;
+  /** HO-P6 S3 -- `Read/ViewModels/StaffProductDetailViewModel.cs:63`; always sent. Whether customers can start a subscription to it.
+   *  Typed optional only so the run-only fixtures that build a whole detail by hand still compile (as `districtOfOrigin`
+   *  above); the editor reads an absent value as `false`. */
+  isSubscribable?: boolean;
   skus: StaffSku[];
   publishChecklist: PublishChecklistItem[];
   bundleComponents?: StaffBundleComponent[] | null;
@@ -259,9 +263,11 @@ export interface UpdateProductDetailsRequest {
   taxClassId: string;
   countryOfOriginCode?: string | null;
   /** HO-P5 BG-12 -- `Api/Contracts/Product/StaffProductRequests.cs:26-27`; at most 60 characters, no control
-   *  characters. `null` or omitted clears it. `isSubscribable` is deliberately NOT here (§4.1): the server
-   *  leaves it unchanged when it is omitted (`StaffProductRequests.cs:32-33`). */
+   *  characters. `null` or omitted clears it. */
   districtOfOrigin?: string | null;
+  /** HO-P6 S3 -- `Api/Contracts/Product/StaffProductRequests.cs:32-33`. Omitted leaves the stored flag unchanged
+   *  (`UpdateProductDetailsCommandHandler.cs:62`); the product editor always sends the boolean it shows. */
+  isSubscribable?: boolean;
   listedOnStorefront: boolean;
   isExpiryTracked: boolean;
   certifications: string[];

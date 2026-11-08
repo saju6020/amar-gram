@@ -54,6 +54,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ produ
               countryOfOriginCode: values.countryOfOriginCode || null,
               districtOfOrigin: values.districtOfOrigin.trim() || null,
               listedOnStorefront: values.listedOnStorefront,
+              isSubscribable: values.isSubscribable,
               isExpiryTracked: values.isExpiryTracked,
               certifications: values.certifications,
             }),

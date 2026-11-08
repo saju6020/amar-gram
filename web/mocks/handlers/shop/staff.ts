@@ -99,6 +99,19 @@ function conflict(p: MockProduct, expected: number) {
   );
 }
 
+/** What ASP.NET's `[ApiController]` answers when `isSubscribable` is not a boolean (an object-shaped `errors`). */
+function subscribableBindingError() {
+  return HttpResponse.json(
+    {
+      type: 'https://tools.ietf.org/html/rfc9110#section-15.5.1',
+      title: 'One or more validation errors occurred.',
+      status: 400,
+      errors: { isSubscribable: ['The value provided for isSubscribable is not valid.'] },
+    },
+    { status: 400 },
+  );
+}
+
 /** Runs a product write: 404 / 409 / mutation / version bump / persist. */
 async function write(
   productId: string,
@@ -272,6 +285,7 @@ function staffDetail(p: MockProduct) {
     districtOfOrigin: p.district ?? null, // StaffProductDetailViewModel.cs:52
     isExpiryTracked: p.isExpiryTracked,
     listedOnStorefront: p.listed,
+    isSubscribable: p.isSubscribable === true, // StaffProductDetailViewModel.cs:63; always sent
     skus: p.skus.map((s) => ({
       skuId: s.skuId,
       code: s.code,
@@ -549,8 +563,12 @@ export const staffHandlers: HttpHandler[] = [
     return p ? HttpResponse.json(staffDetail(p)) : notFound();
   }),
 
-  http.put('*/api/staff/shop/products/:productId', ({ params, request }) =>
-    write(String(params.productId), request, (p, b) => {
+  http.put('*/api/staff/shop/products/:productId', async ({ params, request }) => {
+    // Model binding runs before the version check and the command: a non-boolean `isSubscribable` is a 400 first.
+    const sent = ((await request.clone().json().catch(() => ({}))) ?? {}) as Record<string, unknown>;
+    if (sent.isSubscribable !== undefined && sent.isSubscribable !== null && typeof sent.isSubscribable !== 'boolean')
+      return subscribableBindingError();
+    return write(String(params.productId), request, (p, b) => {
       if (!String(b.name ?? '').trim())
         return badRequest('Name', 'InvalidProductName', 'Enter a product name.');
       const districtRefusal = districtProblems(b.districtOfOrigin);
@@ -578,8 +596,11 @@ export const staffHandlers: HttpHandler[] = [
           'The category can’t change while the product is active.',
         );
       }
-    }),
-  ),
+      // `bool? IsSubscribable` (StaffProductRequests.cs:32-33): omitted or null leaves it, a boolean sets it
+      // (UpdateProductDetailsCommandHandler.cs:62). A non-boolean was refused above, before the command.
+      if (typeof b.isSubscribable === 'boolean') p.isSubscribable = b.isSubscribable;
+    });
+  }),
 
   http.put('*/api/staff/shop/products/:productId/slug', ({ params, request }) =>
     write(String(params.productId), request, (p, b) => {

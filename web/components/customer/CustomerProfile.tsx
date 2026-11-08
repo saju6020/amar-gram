@@ -7,9 +7,14 @@ import { UnderlineTabs } from '@/components/back-office/UnderlineTabs';
 import type { StaffCustomer } from '@/lib/api/staff-customers';
 import { CustomerDetail } from './CustomerDetail';
 
-type ProfileTab = 'orders' | 'billing' | 'notes';
+type ProfileTab = 'orders' | 'subscriptions' | 'billing' | 'notes';
 
-const TAB_LABEL: Record<ProfileTab, string> = { orders: 'Orders', billing: 'Billing', notes: 'Notes' };
+const TAB_LABEL: Record<ProfileTab, string> = {
+  orders: 'Orders',
+  subscriptions: 'Subscriptions',
+  billing: 'Billing',
+  notes: 'Notes',
+};
 
 /**
  * `components/customer/CustomerProfile.tsx` — HO-P4 §11.2.9, US-ACC-10/11, US-BIL-03. The one
@@ -18,7 +23,9 @@ const TAB_LABEL: Record<ProfileTab, string> = { orders: 'Orders', billing: 'Bill
  * Notes tabs, the erase panel (Administrators) and the duplicates link. Like every `components/customer`
  * file it imports no hooks: the page loads the data and the panels and passes them in. HO-P5 BG-19 adds
  * the figures (customer since, orders, lifetime spend), the area, the tags, the Notes tab and the staff-started
- * password reset. Not built: the Subscriptions tab (BG-15, deferred).
+ * password reset. HO-P6 S3 (§11.4.3) adds the Subscriptions tab after Orders, offered only when the host passes
+ * `subscriptionsPanel` (it does so only when the subscription read succeeded, ADR-FE-197). The "Subscriber" list
+ * filter is not built (BG-S2).
  */
 export function CustomerProfile({
   customer,
@@ -30,6 +37,8 @@ export function CustomerProfile({
   ordersPanel,
   billingPanel,
   notesPanel,
+  subscriptionsPanel,
+  subscriptionsCount,
   erasePanel,
 }: {
   customer: StaffCustomer;
@@ -45,11 +54,26 @@ export function CustomerProfile({
   billingPanel: ReactNode;
   /** The Notes tab's content; with none, the tab is not offered. */
   notesPanel?: ReactNode;
+  /** The Subscriptions tab's content (HO-P6 S3); with none, the tab is not offered. */
+  subscriptionsPanel?: ReactNode;
+  /** The number of live subscriptions, written in the tab's label: "Subscriptions (2)". */
+  subscriptionsCount?: number;
   erasePanel?: ReactNode;
 }) {
   const [tab, setTab] = useState<ProfileTab>('orders');
   const tabs = [
     { key: 'orders', label: TAB_LABEL.orders },
+    ...(subscriptionsPanel
+      ? [
+          {
+            key: 'subscriptions',
+            label:
+              subscriptionsCount === undefined
+                ? TAB_LABEL.subscriptions
+                : `${TAB_LABEL.subscriptions} (${subscriptionsCount})`,
+          },
+        ]
+      : []),
     { key: 'billing', label: TAB_LABEL.billing },
     ...(notesPanel ? [{ key: 'notes', label: `${TAB_LABEL.notes} (${customer.noteCount})` }] : []),
   ];
@@ -94,7 +118,13 @@ export function CustomerProfile({
           tabIndex={0}
           className="min-w-0 overflow-x-auto"
         >
-          {tab === 'orders' ? ordersPanel : tab === 'billing' ? billingPanel : notesPanel}
+          {tab === 'orders'
+            ? ordersPanel
+            : tab === 'subscriptions'
+              ? subscriptionsPanel
+              : tab === 'billing'
+                ? billingPanel
+                : notesPanel}
         </div>
       </div>
 

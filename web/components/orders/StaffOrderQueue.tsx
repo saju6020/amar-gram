@@ -59,7 +59,7 @@ const WIDE_QUERY = '(min-width: 1024px)';
 
 /**
  * HO-P5 BG-3 (11.3.7): under "Delivery", the area ({district, else zone}) and, when the order has a slot, "{date} · {window}".
- * A pickup or counter order shows nothing extra. A subscription order (display only, OQ-11) names its channel.
+ * A pickup or counter order shows nothing extra. A subscription order names its channel (HO-P6 S3: the Channel filter can select it).
  */
 function fulfilmentDetail(o: StaffOrderRow): string[] {
   const lines: string[] = [];
@@ -283,9 +283,10 @@ export function StaffOrderQueue() {
               ))}
             </SelectField>
             <SelectField id="oq-channel" label="Channel" value={values.channel} onChange={(e) => set('channel', e.target.value)}>
-              <option value="">Online and counter</option>
+              <option value="">Any channel</option>
               <option value="Online">Online</option>
               <option value="Counter">Counter</option>
+              <option value="Subscription">Subscription</option>
             </SelectField>
             <TextField id="oq-from" label="Placed from" type="date" value={values.from} onChange={(e) => set('from', e.target.value)} />
             <TextField id="oq-to" label="Placed to" type="date" value={values.to} onChange={(e) => set('to', e.target.value)} />
