@@ -193,6 +193,9 @@ test.describe('a new visitor', () => {
     // The brand filter lists the seeded brands, and only those.
     const brandGroup = visitor.getByRole('group', { name: 'Producer' }).first();
     await expect(brandGroup).toBeVisible();
+    // Only Category starts open (owner, 2026-10-17); open the Producer group before reading its options.
+    const brandToggle = brandGroup.getByRole('button', { name: 'Producer', exact: true });
+    if ((await brandToggle.getAttribute('aria-expanded')) === 'false') await brandToggle.click();
     const showAll = brandGroup.getByRole('button', { name: /Show all \d+ producers/ });
     if (await showAll.isVisible().catch(() => false)) await showAll.click();
     for (const brand of SEEDED_BRANDS) {
@@ -201,6 +204,11 @@ test.describe('a new visitor', () => {
       ).toBeVisible();
     }
     await expect(brandGroup.getByRole('checkbox')).toHaveCount(SEEDED_BRANDS.length);
+
+    // The catalogue is 84 cards over several pages (newest first), so Kalijira Rice is not on the first one: narrow to
+    // its category the way a shopper would, then open it.
+    await visitor.getByRole('radio', { name: /^Rice & grains/ }).check();
+    await expect(visitor).toHaveURL(/category=/);
 
     // Open a product and add it to the cart: the count appears in the header.
     await visitor
@@ -312,6 +320,8 @@ test.describe('the seeded customer', () => {
     // Add one ৳850 item through the product page.
     await page.goto('/shop/products/pure-mustard-oil');
     await expect(page.getByRole('heading', { level: 1, name: /Pure Mustard Oil/ })).toBeVisible();
+    // A click before React has attached its listener is lost (the server-rendered button does nothing yet).
+    await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'Add to basket' }).click();
     await expect(page.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
     await page.goto('/cart');
@@ -360,9 +370,11 @@ test.describe('the seeded customer', () => {
     expect(toNumber(await rowValue(/^Total$/))).toBe(subtotal + 60);
 
     await page.getByRole('button', { name: 'Place order' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
-    // The order number is in the hero's sentence: "Order ORD-... is placed."
-    const placed = page.getByText(/Order ORD-[\w-]+ is placed\./);
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Thank you! Your order is in.' }),
+    ).toBeVisible();
+    // The order number is in the confirmation's sentence: "Order ORD-... arrives <slot> at <address>."
+    const placed = page.getByText(/Order ORD-[\w-]+ arrives/);
     await expect(placed).toBeVisible();
     orderNumber = ((await placed.innerText()).match(/ORD-[\w-]+/) ?? [''])[0];
     expect(orderNumber).not.toBe('');

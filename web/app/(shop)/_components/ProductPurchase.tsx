@@ -13,6 +13,7 @@ import { ApiUnauthorizedError, ApiValidationError } from '@/lib/api/client';
 import { describeApiError, SHOP_CODE_MESSAGES } from '@/lib/api/errors';
 import type { ProductDetail } from '@/lib/api/shop-catalogue';
 import type { StockAlertDeliverability } from '@/lib/api/shop-customer';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import {
   useCancelStockAlert,
@@ -75,8 +76,11 @@ export function ProductPurchase({
 
   const sku = defaultSku(detail.skus, skuId);
   const session = useCustomerSession();
-  const signedIn = !!session.data;
-  const sessionKnown = !session.isPending;
+  // The session can already be cached when the page hydrates (the header loads it first): read it from the next
+  // render on, so the first client render matches the server HTML.
+  const hydrated = useHydrated();
+  const signedIn = hydrated && !!session.data;
+  const sessionKnown = hydrated && !session.isPending;
   const wishlist = useWishlist(signedIn);
   const alerts = useStockAlerts(signedIn);
   const setWishlist = useSetWishlistItem();

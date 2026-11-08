@@ -91,7 +91,11 @@ function CardWishlistButton({
 }) {
   const router = useRouter();
   const session = useCustomerSession();
-  const signedIn = !!session.data;
+  // The session can already be cached when the page hydrates (the header loads it first); read it from the next
+  // render on, so the first client render matches the server HTML (same fix as useBasketLine, above).
+  const hydrated = useHydrated();
+  const sessionPending = !hydrated || session.isPending;
+  const signedIn = hydrated && !!session.data;
   const wishlist = useWishlist(signedIn);
   const setWishlist = useSetWishlistItem();
   const loadSkus = useProductSkus();
@@ -102,7 +106,7 @@ function CardWishlistButton({
     .map((entry) => entry.skuId);
   const saved = savedSkuIds.length > 0;
 
-  if (!session.isPending && !signedIn) {
+  if (!sessionPending && !signedIn) {
     return (
       <Link
         href={`/sign-in?next=${encodeURIComponent(href)}`}
@@ -141,7 +145,7 @@ function CardWishlistButton({
       type="button"
       aria-pressed={saved}
       aria-label={label}
-      aria-disabled={busy || session.isPending || undefined}
+      aria-disabled={busy || sessionPending || undefined}
       onClick={() => void toggle()}
       className={ROUND_BUTTON}
     >

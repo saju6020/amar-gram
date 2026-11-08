@@ -103,6 +103,52 @@ silently drops the cookie if it fails.
 | `NEXT_PUBLIC_USE_MOCKS`     | dev only                  | `true` starts MSW in the browser and, for server rendering, in `instrumentation.ts`. Both only run under `next dev`; a production build ignores it.                                                                                                                                                                                                                 |
 | `NEXT_PUBLIC_CURRENCY_CODE` | browser                   | Optional, default `BDT`. Only the staff price form's fallback when the API has shown no price for the product yet (`lib/shop/currency.ts`); otherwise the currency comes from the API.                                                                                                                                                                              |
 
+### Real-API end-to-end runs
+
+The specs `*-real-api*.spec.ts` (`real-api-verification`, `portal`, `xct`, `journey`, `reports`, `billing`, `inventory`)
+run the browser against a live API instead of MSW. They are skipped unless their own switch is set, and they must never
+touch `amargram_dev` (your running app) or `amargram_test` (integration tests): `tests/e2e/global-setup.ts` refuses port
+3000 and any API that reports `amargram_dev`. Use a scratch database such as `amargram_realapi`.
+
+**Environment first.** `web/.env.local` (copy of `.env.local.example`) sets `NEXT_PUBLIC_USE_MOCKS=true`, which `next dev`
+reads. A real-API run needs `NEXT_PUBLIC_USE_MOCKS=false` and `NEXT_PUBLIC_API_BASE_URL` pointing at the scratch API, set in
+the shell of the `next dev` you start (shell variables win over `.env.local`). A missing or wrong value does not fail loudly:
+the page talks to MSW or to the wrong origin and the specs fail with misleading 404s or empty pages.
+
+```bash
+# 1. a scratch database, migrated and seeded (creates it if missing, never drops one; builds the API, a few minutes)
+export PGPASSWORD=...  SEED_STAFF_PASSWORD=...  SEED_CUSTOMER_PASSWORD=...     # passwords of at least 10 characters
+node web/scripts/seed-dev-db.mjs --db amargram_realapi --port 5099
+
+# 2. the API on that database (CORS, captcha TEST1, rate limits and the dev sender are set for you)
+node web/scripts/start-seeded-api.mjs --db amargram_realapi --port 5127 --web-port 3127 --skip-build &
+
+# 3. the extra fixtures billing, reports and inventory need, and the seed files two of them read
+node web/scripts/seed-e2e-real-api.mjs --api http://localhost:5127 --out /tmp/real-api-seed
+
+# 4. the web app, on its own port
+cd web
+PORT=3127 E2E_KEEP_ROUTES=1 NEXT_PUBLIC_USE_MOCKS=false NEXT_PUBLIC_API_BASE_URL=http://localhost:5127 npx next dev -p 3127 &
+
+# 5. the specs (--workers=1: the files are serial and share one database; 4 workers exhaust memory)
+export PORT=3127 E2E_KEEP_ROUTES=1 NEXT_PUBLIC_USE_MOCKS=false NEXT_PUBLIC_API_BASE_URL=http://localhost:5127
+export E2E_REAL_API=1 JOURNEY_REAL_API=1 E2E_REAL_INVENTORY=1 BIL_REAL_API=1
+export E2E_API_BASE_URL=http://localhost:5127 E2E_API_URL=http://localhost:5127 API_BASE=http://localhost:5127
+export E2E_STAFF_ADMIN=e2e.admin@amargram.test E2E_STAFF_IDENTIFIER=e2e.admin@amargram.test E2E_STAFF_PASSWORD=$SEED_STAFF_PASSWORD
+export E2E_STAFF2_IDENTIFIER=e2e.approver@amargram.test E2E_STAFF2_PASSWORD=$SEED_STAFF_PASSWORD
+export E2E_STAFF_APPROVER=e2e.approver@amargram.test E2E_STAFF_STOCK_VIEWER=e2e.reception@amargram.test
+export JOURNEY_CUSTOMER_EMAIL=customer@amargram.test JOURNEY_CUSTOMER_PASSWORD=$SEED_CUSTOMER_PASSWORD
+export BIL_SEED=/tmp/real-api-seed/bil-seed.json REPORTS_SEED=/tmp/real-api-seed/rpt-seed.json
+npx playwright test real-api-verification portal-real-api xct-real-api journey-real-api reports-real-api \
+  billing-real-api inventory-real-api --project=chromium --project=real-api --workers=1 --reporter=list
+```
+
+Notes. `real-api-verification` runs only in the `real-api` project (added when `E2E_REAL_API=1`); the others run in
+`chromium`. `npm run test:e2e:journey -- --db amargram_journey` does steps 1, 2 and 4 plus the journey spec by itself on a
+private copy of the sources. Two `xct-real-api` cases (offline reload through the service worker) are skipped unless you
+also build for production (`NEXT_PUBLIC_API_BASE_URL=... NEXT_PUBLIC_USE_MOCKS=false next build`, `next start -p <port>`,
+`XCT_PROD_BUILD=1`). The seed script is idempotent, so a second run against the same database changes nothing.
+
 ## Folder layout
 
 ```

@@ -18,8 +18,13 @@ public static class QuestPdfFonts
     private static readonly object FontRegistrationLock = new();
     private static bool _bengaliFontRegistered;
 
+    /// <summary>Every QuestPDF renderer calls this before it builds a document. It also sets the community licence, which
+    /// QuestPDF requires before the first render: it used to be set only by the report renderer's constructor, so a customer
+    /// invoice PDF failed with a 500 on an API process that had not yet exported a report.</summary>
     public static void EnsureRegistered()
     {
+        QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
         if (_bengaliFontRegistered) return;
 
         lock (FontRegistrationLock)
