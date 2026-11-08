@@ -27,3 +27,35 @@ NOTES (no action)
 SCOPE CHECK
 - files in allowed scope: 60/60 changed in f55ea58..c1dc7a2 (web components/hooks/routes/mocks/tests, docs); AddressForm under Amended (j)
 - files outside allowed scope: none (no src/, config, dependency or lockfile change)
+
+---
+
+## Run 2
+
+GATE: CODE_REVIEW
+HANDOVER: HO-P6-SUBSCRIPTIONS (slice S1, customer subscription screens)
+COMMITS: b4cdd23 ffd4f13 (branch feat/p6-s1-customer, HEAD 47e4390; c09ba07 and 47e4390 are merges of feat/phase2-catalogue-theme, incoming content not reviewed)
+DATE: 2026-11-08
+STATUS: PASS
+
+FINDINGS
+- [LOW] web/components/subscriptions/SkipLinkHandler.tsx:23-45 and SubscriptionDetail.tsx:133 — the run 1 `fresh={!query.isFetching}` gate has no test. The existing skip-link tests (actions.test.tsx:152-180) all start from a cold cache, so they pass with or without the gate. Fix: seed the query cache with an older detail whose `skippableCycleOn` differs, open `?skip=<new date>`, and assert the dialog opens (not "can no longer be skipped") once the re-read lands.
+- [LOW] web/components/subscriptions/{SubscriptionCard,SubscribeOffer,SubscribeForm,SubscribeFormBody,NextDeliveryCard,CycleHistory}.tsx — the `encodeURIComponent` hardening (ARCH/SEC LOW) has no test; reverting it breaks nothing. Fix: one assertion on an id with a reserved character in the card href.
+- [LOW] web/components/subscriptions/TermsFields.tsx:78-94 — `swapNote` is set when a chosen method is swapped but is never cleared, so if the customer then picks another method the status line still says "X isn't available ... so we chose Y". Fix: clear it in the `onChange` of the payment radios, or when `draft.paymentMethod` no longer equals the swapped-to method.
+
+NOTES (no action)
+- Run 1 MEDIUM, history dead end (CycleHistory.tsx:56-80): fixed. `!query.data` renders "Try again" (`refetch`) when not fetching, "Loading more…" otherwise; the `Show more` button stays hidden until the page loads. Test (list-and-detail.test.tsx "a failed page 2, then a failed page 3") fails page 2 then page 3 with 500, retries each alone and checks the loaded rows stay. It would fail without the fix.
+- Run 1 MEDIUM, `?page=` past the end (MySubscriptionsList.tsx:64-72): fixed. `items.length === 0 && totalCount > 0` shows "That page is past the end of your list." with a "Go to the first page" button; `params.set({ page: undefined })` keeps `?tab`. Tests cover `?page=9` (no "No subscriptions yet", button returns to page 1) and `?tab=cancelled&page=2`.
+- Run 1 LOW, payment swap announcement: fixed with a `role="status"` line, announced only for a swap of a chosen method (not the first preselect); test asserts the sentence. Only residual is the clearing issue above.
+- Run 1 LOW, U25 timing: fixed. `c3Answered()` is registered before render and awaited before the absence assertion, in both the empty and the 500 halves.
+- Run 1 LOW, slow tests: fixed. `retryDelay: 0` in the test client, `settle()` with fake timers replaces the real sleeps, and the 4000 ms timeouts are gone. Targeted run below is 39 s for 20 files.
+- Run 1 LOW, tab in the URL: fixed (`?tab=cancelled`, test reloads and keeps it). Run 1 LOW, aria-controls: fixed (omitted on the unselected tab, test asserts it). Run 1 LOW, skip link: fixed in code (see the missing test above).
+- Mock check order (ARCH): `ownedChange` is now GUID, session, then bind and validate, then the lookup; C4, C5 and C7 follow the same order. Two tests in customer-mock-refusals.test.ts cover a bad body on another customer's id (400, not 404) and a non-GUID id before the session check (404). The cancel mock reads reason and note before the lookup and uses `reason!` only after `refuse()` has returned null for a missing reason; correct.
+- Copy hoist (Amended (k)), wording-identical: every moved string was compared old against new. Only literals-to-constants and `&rsquo;` to U+2019 (the same character) change. `copy.ts` hunk 1 only widens imports (a necessary edit, as (k) states); the rest is appended and no existing export is changed or reordered. `nextDeliveryLine`, `warningLine`, `placeText` and `termsSummaryText` bodies are the same as the deleted `subscriptionText.ts`. `endedOnText(...)` plus "." and `NO_DELIVERY_SCHEDULED` plus "." keep the detail's punctuation.
+- `pendingChangeLines`: the customer voice is the old `pendingLines` and the staff voice is S2's old private `pendingLines`, string for string. The status-change date test flipped from `=== 'Pause'` to `=== 'Cancel'`; `SubscriptionPendingStatusChange` is `'Pause' | 'Cancel'` (api/subscriptions.ts:92), so it is equivalent. S2's DetailPanels.tsx change is the swap to the shared builder plus imports only; its visible text is unchanged. `pending-lines.test.ts` pins both voices (exact strings), but the pre-existing S2 staff-detail tests also still pass.
+- Cat/pet/vet/clinic/PurrCare: no match in added lines of b4cdd23 or ffd4f13. (A "clinic" comment appears in the first-parent diff, but it is in merged-in catalogue content.)
+- Verification run here (web/): `npx tsc --noEmit` clean; eslint on components/subscriptions, components/staff-subscriptions, lib/subscriptions and mocks/handlers/subscriptions clean; `npx vitest run tests/components/subscriptions tests/components/staff-subscriptions tests/unit/subscriptions tests/components/portal/dashboard.test.tsx --maxWorkers=2`: 20 files, 377 tests pass. No Playwright or dev server.
+
+SCOPE CHECK
+- files in allowed scope: all changed by b4cdd23 and ffd4f13 (web/components/subscriptions, lib/subscriptions/copy.ts and mocks/handlers/subscriptions/customer.ts under the S1 block and (k); tests; docs)
+- files outside allowed scope: none; components/staff-subscriptions/DetailPanels.tsx is edited under Amended (k), which names it
