@@ -111,16 +111,20 @@ describe('Customer profile -- Subscriptions tab (U36)', () => {
   it('a 403 on the subscription read leaves out the tab, with no banner', async () => {
     setMockTouchpointRoles(['Cashier']);
     let settled = 0;
-    server.events.on('response:mocked', ({ request }) => {
+    const onMocked = ({ request }: { request: Request }) => {
       if (request.url.endsWith('/subscriptions') && request.url.includes('/customers/')) settled += 1;
-    });
-    open(ids.customerId);
-    const tabs = await screen.findByRole('tablist', { name: 'Customer details' });
-    await waitFor(() => expect(settled).toBeGreaterThan(0)); // the refused read has been answered
-    await waitFor(() => expect(within(tabs).getAllByRole('tab').length).toBeGreaterThan(0));
-    expect(within(tabs).queryByRole('tab', { name: /Subscriptions/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    server.events.removeAllListeners();
+    };
+    server.events.on('response:mocked', onMocked);
+    try {
+      open(ids.customerId);
+      const tabs = await screen.findByRole('tablist', { name: 'Customer details' });
+      await waitFor(() => expect(settled).toBeGreaterThan(0)); // the refused read has been answered
+      await waitFor(() => expect(within(tabs).getAllByRole('tab').length).toBeGreaterThan(0));
+      expect(within(tabs).queryByRole('tab', { name: /Subscriptions/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    } finally {
+      server.events.removeListener('response:mocked', onMocked);
+    }
   });
 
   it('a failed read (500) leaves out the tab too', async () => {
