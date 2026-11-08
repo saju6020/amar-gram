@@ -2,7 +2,7 @@ GATE: ACCEPTANCE
 HANDOVER: HO-P6-SUBSCRIPTIONS (slice S1, customer subscription screens)
 COMMITS: ba0a2a1 43c997a 5655e75 06d94c9 549747e 8a45479 c1dc7a2 fa2369b 56bfa0e 9c03c6a b4cdd23 ffd4f13 eba262e 7739506 87e7949 (first-parent range f55ea58..87e7949, branch feat/p6-s1-customer). 3492513, c09ba07 and 47e4390 merge feat/phase2-catalogue-theme in (S0, S2, real-API e2e) and are not S1's work. S1's net change is `git diff e62d66b..87e7949`; e62d66b is the merged base head. That diff has 66 files.
 DATE: 2026-11-09
-STATUS: FAIL
+STATUS: PASS (run 2 at eb74a82; run 1 below was FAIL)
 
 The verdict rests on one scope item (A19, below). Every behavioural criterion is evidenced. The fix is mechanical.
 
@@ -196,3 +196,52 @@ FOR THE OWNER
 SCOPE CHECK
 - files in allowed scope: 65/66 changed files (e62d66b..87e7949), counting the Amended-authorised ones, plus this record and the 54 screenshots
 - files outside allowed scope: web/tests/unit/subscriptions/pending-lines.test.ts
+
+---
+
+## Run 2
+
+GATE: ACCEPTANCE
+HANDOVER: HO-P6-SUBSCRIPTIONS (slice S1, customer subscription screens)
+COMMITS: eb74a82 (on top of 92ca03a, the run-1 record). The run-1 range is unchanged.
+DATE: 2026-11-09
+STATUS: PASS
+
+WHAT CHANGED (eb74a82, read in full with `git diff -M eb74a82~1 eb74a82`)
+- `web/tests/unit/subscriptions/pending-lines.test.ts` was renamed to `web/tests/components/subscriptions/pending-lines.test.ts`.
+  - Git reports the rename at 100% similarity, so the content is unchanged. The imports are `@/` aliases only.
+- docs/gates/HO-P6-SUBSCRIPTIONS-S1-SLICE-REPORT.md changed in two lines:
+  - §1 now says `copy.ts` was edited (additions only, under Amended (k)).
+  - §11 gives the new test path.
+- Nothing else was touched: no product code, no other test, and no handover change.
+
+CRITERIA
+- A19 MET (was NOT MET).
+  - `git diff --name-only e62d66b..eb74a82`, filtered against S1's §13 block, leaves exactly four files. All four are authorised by Amended rows, as listed in run 1's SCOPE:
+    - `docs/handover/HO-P6-SUBSCRIPTIONS.md` (the (j) and (k) rows, append-only)
+    - `web/components/account/AddressForm.tsx` (j)
+    - `web/components/staff-subscriptions/DetailPanels.tsx` (k)
+    - `web/lib/subscriptions/copy.ts` (k)
+  - `tests/unit/subscriptions/` no longer has a file from S1.
+  - The test now sits in S1's own `tests/components/subscriptions/**`.
+- Every other criterion stands as in run 1: A3-A11 met, A14 met for the mock part with the real API pending (E18), A17/A18/A20 met for S1's part, and A21 not breached. eb74a82 touches no code those criteria rest on.
+
+MY RUNS AT eb74a82
+- `npx vitest run tests/components/subscriptions/pending-lines.test.ts tests/unit/subscriptions --maxWorkers=2`: 9 files and 133 tests passed. This matches the integrator's figure.
+- The moved file on its own, verbose: 5 of 5 pendingChangeLines cases passed under its new path. The default include globs pick it up.
+- No new screenshots: no rendered code changed. Run 1's 54 PNGs stand.
+
+FINDINGS
+- The run-1 MEDIUM is resolved: the file is moved into S1's block.
+- Run 1's process LOW about slice report §1 is resolved.
+- Still open, for the owner and not blocking: the visual LOWs (the history order-cell alignment and the "Deliver to me" label echo), and the TEST sheet T8 wording nit.
+
+FOR THE OWNER
+- Unchanged from run 1: real-API proof (E18/T11, A14 and the contract test) is still owed at integration. The other run-1 items also still stand: the mock always treats the customer as Sam, the 24 px close X, and the `totalCount` alias.
+
+SCOPE CHECK
+- files in allowed scope: 66/66 changed files (e62d66b..eb74a82), counting the four Amended-authorised ones, plus the gate records and screenshots
+- files outside allowed scope: none
+
+UNDECLARED DEVIATIONS
+- none
