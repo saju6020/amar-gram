@@ -88,3 +88,20 @@ Re-run: 62 files, 1006 tests, 0 failed; E13/E14 24 passed on both projects.
 | ID | Case | Status | Note |
 |---|---|---|---|
 | O1 | `overview-dashboard.test.tsx` "DashboardAttention — U13 > is absent when all three sources are refused" | PASS | §20.1 resolved by Amended (l): a third `due-tomorrow` 403 added and the case renamed. Re-run: 61 files, 1004 tests, 0 failed; E13/E14 24 passed on both projects. |
+
+## TEST gate cases (T1-T12, added by the TEST gate before execution)
+
+| ID | Case | Expected | Status | Evidence |
+|---|---|---|---|---|
+| T1 | `tsc --noEmit` in web/ | exit 0 | PASS | tsc --noEmit exit 0 |
+| T2 | `npm run lint` in web/ | exit 0 | PASS | npm run lint exit 0 (--max-warnings 0) |
+| T3 | Optional `isSubscribable` still compiles at run-only `tests/components/staff-shop/staff-shop.test.tsx:47` (ARCHITECTURE item) | covered by T1, file in tsc program, and the file passes in T4 | PASS | tsc exit 0 with staff-shop.test.tsx in the program; staff-shop.test.tsx 26 tests passed in T4 |
+| T4 | Full Vitest suite, `--maxWorkers=2`, incl. `two-step-save.test.tsx` green (ARCHITECTURE item) | no failed file | PASS | 271 files: 270 passed, 1 skipped; 2710 tests passed, 62 skipped, 0 failed; two-step-save 5 passed; no FAIL line in the scratch output |
+| T5 | S3 specs subscriptions-backoffice and -360, chromium + mobile-360 (E13, E14) | 24 pass | PASS | 24 passed on chromium and mobile-360 (59s), workers 2 |
+| T6 | E15 run-only set, both projects | no failure | PASS | 118 passed (5.1m), both projects, workers 2; no 0xC0000142/heap/0ms storm |
+| T7 | S1/S2 regression: subscriptions-customer*, subscriptions-staff* (shared copy.ts, S2 pill import) | no failure | PASS | 136 passed, 14 skipped (the real-API specs, no E2E_REAL_API); 0 failed |
+| T8 | Section 20.3: the Subscriptions (n) tab moves no Tab count in staff-customers / customers-admin-* | covered by T6 | PASS | staff-customers and customers-admin-* within the 118 of T6 all passed; no Tab count moved |
+| T9 | Real-API specs (subscriptions-*-real-api) | NOT RUN (real API), no backend | NOT RUN (real API) | subscriptions-customer-real-api and -staff-real-api were skipped by their own gate (14 skipped in T7); no backend started |
+| T10 | Source guards: no colour literal, no date/money arithmetic in S3 files (U6, U40a re-run in T4; independent grep) | 0 hits | PASS | grep over S3 components, hook, touchpoints mock: 0 colour literals; 0 new Date/Date.now/date-fns/addDays/Number( in components/back-office-subscriptions and the hook; U6 and no-literals green in T4 |
+| T11 | ARCHITECTURE LOW 1 (non-GUID 404 before role check) regression: U39g green in T4 | pass | PASS | U39g in mock-refusals.test.ts passed in T4 |
+| T12 | ARCHITECTURE item: real API non-boolean `isSubscribable` 400 text | confirm | BLOCKED | needs a running real API to read the System.Text.Json message; unblock with the integrator real-API run (E18) |
