@@ -282,7 +282,7 @@ export function StaffOrderQueue() {
                 <option key={p} value={p}>{paymentMethodLabel(p)}</option>
               ))}
             </SelectField>
-            <SelectField id="oq-channel" label="Channel" value={values.channel} onChange={(e) => set('channel', e.target.value)}>
+            <SelectField id="oq-channel" label="Channel" className="min-h-11" value={values.channel} onChange={(e) => set('channel', e.target.value)}>
               <option value="">Any channel</option>
               <option value="Online">Online</option>
               <option value="Counter">Counter</option>

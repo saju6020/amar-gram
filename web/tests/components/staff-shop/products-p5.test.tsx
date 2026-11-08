@@ -240,7 +240,7 @@ async function renderPage(element: React.ReactElement) {
 }
 
 describe('U30 — district in the details save (BG-12)', () => {
-  it('saves the district in the same PUT as everything else, with expectedVersion, and never sends isSubscribable', async () => {
+  it('saves the district in the same PUT as everything else, with expectedVersion, and sends exactly the shown isSubscribable value (HO-P6 S3)', async () => {
     const user = userEvent.setup();
     let body: Record<string, unknown> | null = null;
     server.use(
@@ -259,7 +259,10 @@ describe('U30 — district in the details save (BG-12)', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(body).not.toBeNull());
     expect(body).toMatchObject({ districtOfOrigin: 'Sylhet', expectedVersion: expect.any(Number) });
-    expect(body).not.toHaveProperty('isSubscribable');
+    // Superseded (HO-P6 S3, U35): was `not.toHaveProperty('isSubscribable')`. The seeded product is subscribable, the
+    // checkbox shows that, and the same PUT sends exactly that boolean (never undefined, never a default).
+    expect(screen.getByRole('checkbox', { name: 'Can be subscribed to' })).toBeChecked();
+    expect(body).toHaveProperty('isSubscribable', true);
   });
 
   it('clearing the field sends null; the server refusal lands under the field', async () => {

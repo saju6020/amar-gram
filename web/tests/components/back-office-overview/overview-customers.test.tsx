@@ -46,6 +46,26 @@ beforeEach(() => {
   resetReportsMockData();
 });
 
+// One live subscription as T9 sends it (SubscriptionViewModels.cs:24-42), just enough for the tab's row.
+const SUMMARY_VIEW = {
+  id: '5b000000-0000-0000-0000-000000000001',
+  version: 1,
+  status: 'Active',
+  suspensionReason: null,
+  product: { skuId: 's1', productName: 'Mustard oil', variantLabel: '1 L', imageUrl: null, isAvailable: true },
+  terms: {
+    quantity: 2,
+    intervalWeeks: 4,
+    fulfilment: 'Delivery',
+    deliveryAddress: null,
+    deliveryAddressMissing: false,
+    pickupBranch: null,
+    paymentMethod: 'BankTransfer',
+  },
+  nextDeliveryOn: '2026-11-20',
+  commerceTimeZoneId: 'Asia/Dhaka',
+};
+
 // HO-P5 §15 U37 / U38: supersedes HO-P4 U16 (the exact mobile/email lookup on this screen) and U17 ("no Notes tab"). The POS
 // customer panel still uses `findCustomers`; this screen browses.
 describe('Customers screen — U37 browse, U38 profile summary', () => {
@@ -151,8 +171,18 @@ describe('Customers screen — U37 browse, U38 profile summary', () => {
     expect(nav.replace).toHaveBeenLastCalledWith(expect.stringContaining('customer=c1'), expect.anything());
   });
 
-  it('the profile shows the server summary, tags and the Orders, Billing and Notes tabs (no Subscriptions)', async () => {
+  it('the profile shows the server summary, tags and the Orders, Subscriptions, Billing and Notes tabs (HO-P6 S3 U36)', async () => {
     mockBrowse();
+    // The customer's live subscriptions (T9); the tab exists only because this read succeeds (ADR-FE-197).
+    server.use(
+      http.get('*/api/staff/customers/:customerId/subscriptions', () =>
+        HttpResponse.json({
+          live: [{ ...SUMMARY_VIEW }],
+          cancelledCount: 1,
+          suspendedCount: 0,
+        }),
+      ),
+    );
     nav.search = 'customer=c1';
     renderWithClient(<StaffCustomersPage />);
     expect(await screen.findByRole('heading', { level: 2, name: 'Nusrat Jahan' })).toBeInTheDocument();
@@ -171,8 +201,16 @@ describe('Customers screen — U37 browse, U38 profile summary', () => {
     expect(within(tags).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Regular', 'Wholesale']);
 
     const tabs = screen.getByRole('tablist', { name: 'Customer details' });
-    expect(within(tabs).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Orders', 'Billing', 'Notes (2)']);
-    expect(screen.queryByRole('tab', { name: /Subscriptions/ })).not.toBeInTheDocument();
+    // Superseded (HO-P6 S3): was ['Orders', 'Billing', 'Notes (2)'] and `queryByRole('tab', { name: /Subscriptions/ })` absent.
+    // The Subscriptions tab now sits after Orders, labelled with the server's live list; "no Subscriber" below still holds.
+    await waitFor(() =>
+      expect(within(tabs).getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+        'Orders',
+        'Subscriptions (1)',
+        'Billing',
+        'Notes (2)',
+      ]),
+    );
     expect(screen.queryByText(/Subscriber/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'New order' })).toHaveAttribute('href', '/staff/pos?customerId=c1');
     expect(screen.getByRole('link', { name: 'Review duplicates' })).toHaveAttribute(
