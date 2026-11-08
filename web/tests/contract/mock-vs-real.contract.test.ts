@@ -16,6 +16,9 @@ import { server } from '../../mocks/server';
  *   E2E_STAFF_ADMIN / E2E_STAFF_PASSWORD                    (the seeded e2e.admin)
  * The API must be on a scratch database (the check places one cash-on-delivery order for the seeded customer when she
  * has none, so the order shapes can be compared); it refuses amargram_dev / amargram_test.
+ * HO-P6 (§12): for the subscription reads it also makes a product subscribable when none of the first few is (staff
+ * `GET` the detail, `PUT` it back with `isSubscribable: true`), and starts one subscription for the seeded customer
+ * when she has none (Delivery, her first address, the first available method from `payment-methods`).
  */
 
 const REAL = (process.env.CONTRACT_API_BASE_URL ?? '').replace(/\/+$/, '');
@@ -161,12 +164,18 @@ interface Ctx {
   draftId: string | null;
   today: string;
   weekAhead: string;
+  // HO-P6 (§12, §17.1 step 4): ids for the subscription reads, set by `ensureSubscription` before the LATE phase.
+  subSkuId: string | null;
+  subscriptionId: string | null;
+  subCustomerId: string | null;
 }
 interface Endpoint {
   id: string;
   who: Who;
   paths: (ctx: Ctx) => string[];
 }
+
+const SUBS = '/api/customers/me/subscriptions';
 
 const e = (
   id: string,
@@ -218,11 +227,8 @@ const ENDPOINTS: Endpoint[] = [
     c.orderId ? [`/api/customers/me/orders/${c.orderId}`] : [],
   ),
   e('GET /api/customers/me/wishlist', 'customer'),
-  e('GET /api/customers/me/shop/products/{slug}/purchasability', 'customer', (c) =>
-    c.slugs
-      .slice(0, 2)
-      .map((s) => `/api/customers/me/shop/products/${encodeURIComponent(s)}/purchasability`),
-  ),
+  // `GET /api/customers/me/shop/products/{slug}/purchasability` was retired with CustomerShopController (HO-P1,
+  // 380e387): neither the API nor the mocks serve it, so it is no longer listed (HO-P6 integration).
   e('GET /api/portal/dashboard', 'customer'),
   // staff
   e('GET /api/staff/session', 'staff'),
@@ -309,6 +315,47 @@ const ENDPOINTS: Endpoint[] = [
       ? [`/api/admin/branches/${c.branchId}/roster-cells?from=${c.today}&to=${c.weekAhead}`]
       : [],
   ),
+  // ---- HO-P6 subscriptions (§12; integration step). All read in the LATE phase, after `ensureSubscription`. ----
+  // C1, C2: a subscribable SKU; C2 with the customer's delivery address.
+  e('GET /api/customers/me/subscriptions/options', 'customer', (c) =>
+    c.subSkuId ? [`${SUBS}/options?skuId=${c.subSkuId}`] : [],
+  ),
+  e('GET /api/customers/me/subscriptions/payment-methods', 'customer', (c) =>
+    c.subSkuId && c.addressId
+      ? [`${SUBS}/payment-methods?skuId=${c.subSkuId}&quantity=1&deliveryAddressId=${c.addressId}`]
+      : [],
+  ),
+  // C3, C4, C5
+  e('GET /api/customers/me/subscriptions', 'customer', () => [
+    `${SUBS}?status=live`,
+    `${SUBS}?status=cancelled`,
+  ]),
+  e('GET /api/customers/me/subscriptions/{id}', 'customer', (c) =>
+    c.subscriptionId ? [`${SUBS}/${c.subscriptionId}`] : [],
+  ),
+  e('GET /api/customers/me/subscriptions/{id}/cycles', 'customer', (c) =>
+    c.subscriptionId ? [`${SUBS}/${c.subscriptionId}/cycles?pageNumber=1&pageSize=20`] : [],
+  ),
+  // T1, T2, T3, T5, T6, T9
+  e('GET /api/staff/subscriptions', 'staff', () => [
+    '/api/staff/subscriptions?pageNumber=1&pageSize=20',
+    '/api/staff/subscriptions?status=Active&sort=-nextDeliveryOn&pageNumber=1&pageSize=20',
+  ]),
+  e('GET /api/staff/subscriptions/unpaid', 'staff', () => [
+    '/api/staff/subscriptions/unpaid?pageNumber=1&pageSize=20',
+  ]),
+  e('GET /api/staff/subscriptions/due-tomorrow', 'staff'),
+  e('GET /api/staff/subscriptions/{id}', 'staff', (c) =>
+    c.subscriptionId ? [`/api/staff/subscriptions/${c.subscriptionId}`] : [],
+  ),
+  e('GET /api/staff/subscriptions/{id}/cycles', 'staff', (c) =>
+    c.subscriptionId
+      ? [`/api/staff/subscriptions/${c.subscriptionId}/cycles?pageNumber=1&pageSize=20`]
+      : [],
+  ),
+  e('GET /api/staff/customers/{id}/subscriptions', 'staff', (c) =>
+    c.subCustomerId ? [`/api/staff/customers/${c.subCustomerId}/subscriptions`] : [],
+  ),
 ];
 
 interface Collected {
@@ -331,7 +378,117 @@ const rowsOf = (body: unknown): unknown[] => {
   return b?.items ?? b?.results ?? b?.orders ?? b?.addresses ?? [];
 };
 
-const LATE = /orders|\/api\/cart|checkout\/quote|portal\/dashboard|policy-acceptances/;
+const LATE =
+  /orders|\/api\/cart|checkout\/quote|portal\/dashboard|policy-acceptances|subscriptions/;
+
+interface ProductForPut {
+  version?: number;
+  name?: string;
+  brand?: string;
+  description?: string | null;
+  category?: string;
+  subcategory?: string | null;
+  tags?: string[];
+  taxClassId?: string;
+  countryOfOriginCode?: string | null;
+  districtOfOrigin?: string | null;
+  listedOnStorefront?: boolean;
+  isExpiryTracked?: boolean;
+  certifications?: string[];
+  isSubscribable?: boolean;
+  skus?: unknown[];
+}
+
+/** HO-P6 (§12): a SKU the customer can subscribe to (C1 says `subscribable`). The first pass only reads; when none of
+ *  the first five products has one, the second pass `PUT`s each product back with `isSubscribable: true` until one
+ *  does (the real side runs only on a scratch database, checked before `collect` is called for it). */
+async function subscribableSkuId(who: Record<Who, Client>): Promise<string | null> {
+  const list = await who.staff.get('/api/staff/shop/products');
+  const productIds = rowsOf(list.json)
+    .map((row) => idOf(row, 'productId', 'id'))
+    .filter((id): id is string => !!id)
+    .slice(0, 5);
+  for (const flip of [false, true]) {
+    for (const productId of productIds) {
+      const path = `/api/staff/shop/products/${productId}`;
+      const detail = (await who.staff.get(path)).json as ProductForPut | undefined;
+      if (!detail) continue;
+      if (detail.isSubscribable !== true) {
+        if (!flip) continue;
+        await who.staff.request('PUT', path, {
+          expectedVersion: detail.version,
+          name: detail.name,
+          brand: detail.brand,
+          description: detail.description,
+          category: detail.category,
+          subcategory: detail.subcategory,
+          tags: detail.tags ?? [],
+          taxClassId: detail.taxClassId,
+          countryOfOriginCode: detail.countryOfOriginCode,
+          districtOfOrigin: detail.districtOfOrigin ?? null,
+          listedOnStorefront: detail.listedOnStorefront,
+          isExpiryTracked: detail.isExpiryTracked,
+          certifications: detail.certifications ?? [],
+          isSubscribable: true,
+        });
+      }
+      for (const sku of detail.skus ?? []) {
+        const skuId = idOf(sku, 'skuId', 'id');
+        if (!skuId) continue;
+        const options = await who.customer.get(`${SUBS}/options?skuId=${skuId}`);
+        if ((options.json as { subscribable?: boolean } | undefined)?.subscribable === true)
+          return skuId;
+      }
+    }
+  }
+  return null;
+}
+
+/** HO-P6 (§12): one live subscription for the signed-in customer (the mock's Sam has seeded ones), a subscribable SKU,
+ *  and that customer's id as staff see it (for T9). */
+async function ensureSubscription(
+  who: Record<Who, Client>,
+  addressId: string,
+): Promise<Pick<Ctx, 'subSkuId' | 'subscriptionId' | 'subCustomerId'>> {
+  type Live = { id?: string; product?: { skuId?: string } };
+  const firstLive = async () =>
+    rowsOf((await who.customer.get(`${SUBS}?status=live`)).json)[0] as Live | undefined;
+  let live = await firstLive();
+  let skuId = live?.product?.skuId ?? null;
+  if (!live) {
+    skuId = await subscribableSkuId(who);
+    if (skuId && addressId) {
+      const methods = await who.customer.get(
+        `${SUBS}/payment-methods?skuId=${skuId}&quantity=1&deliveryAddressId=${addressId}`,
+      );
+      const options = (Array.isArray(methods.json) ? methods.json : []) as Array<{
+        method?: string;
+        isAvailable?: boolean;
+      }>;
+      const method = options.find((m) => m.isAvailable === true)?.method;
+      if (method)
+        await who.customer.request('POST', SUBS, {
+          skuId,
+          quantity: 1,
+          intervalWeeks: 4,
+          fulfilment: 'Delivery',
+          deliveryAddressId: addressId,
+          paymentMethod: method,
+        });
+      live = await firstLive();
+    }
+  }
+  const subscriptionId = idOf(live, 'id');
+  const staffDetail = subscriptionId
+    ? await who.staff.get(`/api/staff/subscriptions/${subscriptionId}`)
+    : null;
+  const subCustomerId = idOf(
+    (staffDetail?.json as { customer?: unknown } | undefined)?.customer,
+    'id',
+    'customerId',
+  );
+  return { subSkuId: live?.product?.skuId ?? skuId, subscriptionId, subCustomerId };
+}
 
 /** The mock starts nearly empty for the signed-in customer (no address, no banner/FAQ, nothing pending), which would
  *  leave those shapes uncompared. Give it the same kind of data the seeded real database has, through its own
@@ -445,6 +602,9 @@ async function collect(
     draftId: idOf(rowsOf(drafts.json)[0], 'draftId', 'id'),
     today: day(0),
     weekAhead: day(6),
+    subSkuId: null,
+    subscriptionId: null,
+    subCustomerId: null,
   };
 
   const side: Side = {};
@@ -519,6 +679,7 @@ async function collect(
     await ensureCartLine(); // placing emptied the cart: put a line back so cart and quote have content
   }
   ctx.orderId = idOf(rowsOf(orders.json)[0], 'orderId', 'id');
+  Object.assign(ctx, await ensureSubscription(who, addressId));
   await run(LATE);
   return side;
 }
