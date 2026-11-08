@@ -10,11 +10,11 @@ Written: 2026-11-07 by the implementer, after the in-batch runs of handover §17
 
 | | Count |
 |---|---|
-| Total | 43 |
-| PASS | 39 |
+| Total | 55 (43 builder rows + T1-T12 added by the TEST gate) |
+| PASS | 52 |
 | FAIL | 0 |
 | BLOCKED | 0 (R1 resolved by Amended (j)) |
-| NOT RUN | 3 (X1b the full Vitest suite, E8 the run-only chunks, E18 the real API; all the TEST gate's or the integrator's) |
+| NOT RUN | 2 (E18 and T11, the real API; the integrator's) |
 | NOTE | 1 (R2, an accepted mock deviation) |
 
 ## Environment
@@ -49,7 +49,7 @@ No real API, database or broker was used (the machine's 5005, 3127 and 3129 belo
 | U26 | `customer-mock-refusals.test.ts`: one case per §11.2.10 refusal, with the status, code, property and body shape (both 400 shapes, the bodiless 404 for someone else's, 409) | pass | PASS | 20 tests |
 | U40 | `no-literals.test.ts` (new) plus `tests/components/shop/no-hex-literals.test.ts` and `tests/components/back-office/no-colour-literals.test.ts`: no colour literal in any touched file; no card input names; `source-guard.test.ts` (U6) passes over the new folders | pass | PASS | inside X1 |
 | X1 | Vitest in-batch set at `--maxWorkers=2`: `tests/components/subscriptions`, `tests/components/portal`, `tests/components/product`, the two literal tests, `tests/unit/subscriptions`, `tests/guards` | green | PASS | 29 files / 596 tests passed |
-| X1b | Full Vitest suite | green | NOT RUN | TEST gate (§17.1) |
+| X1b | Full Vitest suite | green | PASS | TEST gate: see T3 (2661 passed in the clean run) |
 | X2 | `npx tsc --noEmit` | clean | PASS | exit 0 |
 | X3 | `npm run lint` | clean | PASS | exit 0 |
 
@@ -72,7 +72,7 @@ No real API, database or broker was used (the machine's 5005, 3127 and 3129 belo
 | E5 | `subscriptions-customer-360.spec.ts`: the offer, the Subscribe form (delivery, inline address form, pickup, already subscribed, not found), My subscriptions (both tabs, empty state), the detail in six states and not found, each of the six dialogs, the overview card: no sideways scroll and no control under 44 px | pass | PASS | 6 tests, both projects; **except** the AddressForm dialog's height, see R1 |
 | E6 | `subscriptions-customer-a11y.spec.ts`: axe zero serious/critical on every screen and dialog of E5 at 1280 and at 360, including the error summary on the form and the cancel dialog's reason error | pass | PASS | 12 tests, both projects |
 | E7 | `portal-dashboard.spec.ts` E-A2 superseded (orders and balances still on one screen, and the "Next delivery" card with its Manage link); every other case unchanged | pass | PASS | the whole file, 12 tests per project |
-| E8 | Run-only: `shop-*`, `home`, `portal-*` (except E7), `account-area`, `accounts-*`, `ordering-customer*`, `ordering-a11y-responsive` | pass | NOT RUN | TEST gate, one slice at a time (§17.1). As a sanity check only, `shop-product`, `portal-a11y-responsive`, `account-area` and `ordering-customer` were run once on both projects at `--workers=2`: 82 passed, 0 failed (the new menu link and the offer on the product page changed none of them) |
+| E8 | Run-only: `shop-*`, `home`, `portal-*` (except E7), `account-area`, `accounts-*`, `ordering-customer*`, `ordering-a11y-responsive` | pass | PASS | TEST gate: see T5-T8 (526 passed, 4 skipped, 0 failed at workers=1). Builder note: As a sanity check only, `shop-product`, `portal-a11y-responsive`, `account-area` and `ordering-customer` were run once on both projects at `--workers=2`: 82 passed, 0 failed (the new menu link and the offer on the product page changed none of them) |
 | E18 | `subscriptions-customer-real-api.spec.ts` against the real API | pass or skipped | NOT RUN | needs `E2E_REAL_API=1`, `NEXT_PUBLIC_USE_MOCKS=false` and a scratch API; the spec was shown to skip without them |
 
 ## Open rows
@@ -85,3 +85,20 @@ No real API, database or broker was used (the machine's 5005, 3127 and 3129 belo
 ## Re-run after the CODE_REVIEW/SECURITY/ARCHITECTURE fixes
 
 New cases: history page-2 and page-3 failure and recovery; `?page=9` and Cancelled-tab past-the-end; `?tab=cancelled` survives a reload; `aria-controls` only on the selected tab; payment-swap status line; mock validates the body before ownership and answers a non-GUID id 404 before the session check. Results: Vitest 27 files / 386 tests PASS; Playwright chromium + mobile-360 84 PASS, 4 skipped (real API), 0 FAIL; tsc and lint clean.
+
+## TEST gate cases (T1-T12, added by the TEST gate at head 7739506, written NOT RUN before execution)
+
+| ID | Case | Expected | Status | Evidence |
+|---|---|---|---|---|
+| T1 | `npx tsc --noEmit` at head 7739506 | exit 0 | PASS | exit 0 |
+| T2 | `npm run lint` | exit 0 | PASS | exit 0 (--max-warnings 0) |
+| T3 | Full Vitest `--maxWorkers=2` (closes X1b) | all green | PASS | Run 2: 263 files passed, 1 skipped; 2661 tests passed, 62 skipped. Run 1 (earlier, same head) showed 1 failed / 262 files, 1 failed test / 2660 passed; the failing name was not captured (output was piped through tail). Not reproduced in run 2; recorded as an unidentified load flake, see gate record |
+| T4 | S1 specs `subscriptions-customer`, `-360`, `-a11y`, chromium + mobile-360 | all pass, real-API skipped | PASS | chromium + mobile-360, warm server: subscriptions-customer*, subscriptions-staff* 136 passed, 14 skipped (real API), 0 failed (second run); first run 135 passed, 1 failed (T9, cold route) |
+| T5 | Run-only: product page/BuyBox (`shop-product`, `shop-a11y-responsive`) | pass | PASS | shop-product and shop-a11y-responsive in the 526-pass run-only run (workers=1, warm server) |
+| T6 | Run-only: portal nav/sidebar/dashboard (`portal-dashboard`, `portal-a11y-responsive`, `account-area`, `shop-portal`) | pass | PASS | portal-dashboard (incl. E-A4, E-A5), portal-a11y-responsive, account-area, shop-portal in the same run; E-A4 had failed chromium-only at workers=2 under load (twice) and passes at workers=1 |
+| T7 | Run-only: checkout address dialog via AddressForm (`accounts-a11y-responsive`, `ordering-customer`, `ordering-a11y-responsive`) | pass | PASS | accounts-a11y-responsive, ordering-customer, ordering-a11y-responsive in the same run |
+| T8 | Run-only: remaining E8 set (`shop-catalogue`, `shop-home`, `shop-shell`, `home`, `accounts-auth`, `ordering-customer-orders`) | pass | PASS | shop-catalogue, shop-home, shop-shell, home, accounts-auth in the same run (526 passed, 4 skipped viewport-conditional, 0 failed) |
+| T9 | Amended (k): staff S2 spec still passes after `pendingChangeLines` replaced S2's private builder (`subscriptions-staff`, `-360`, `-a11y`) | pass | PASS | subscriptions-staff x2 projects green on a warm server (second run). Cold server: `an order number in the history opens the staff order page` failed on the first chromium execution only (URL stayed on the detail page, 5 s expect), passed 7 of 7 repeats after; history link code untouched by S1 |
+| T10 | Colour-literal / card-input grep over `components/subscriptions`, `app/**/subscriptions`, `lib/subscriptions` (U40) | 0 hits | PASS | grep for hex/rgb/hsl and card-input names over components/subscriptions, components/staff-subscriptions, lib/subscriptions, app: 0 hits |
+| T11 | `subscriptions-customer-real-api` | NOT RUN (real API) unless E2E_REAL_API=1 | NOT RUN (real API) | needs E2E_REAL_API=1 and a backend; reported as skipped |
+| T12 | `git status` clean after run; no leftover server on 3128 | clean | PASS | git status showed only the sheet modified; no listener on 3128; no tracked screenshot rewritten |
