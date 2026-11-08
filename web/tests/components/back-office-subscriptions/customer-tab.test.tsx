@@ -110,13 +110,17 @@ describe('Customer profile -- Subscriptions tab (U36)', () => {
 
   it('a 403 on the subscription read leaves out the tab, with no banner', async () => {
     setMockTouchpointRoles(['Cashier']);
+    let settled = 0;
+    server.events.on('response:mocked', ({ request }) => {
+      if (request.url.endsWith('/subscriptions') && request.url.includes('/customers/')) settled += 1;
+    });
     open(ids.customerId);
     const tabs = await screen.findByRole('tablist', { name: 'Customer details' });
+    await waitFor(() => expect(settled).toBeGreaterThan(0)); // the refused read has been answered
     await waitFor(() => expect(within(tabs).getAllByRole('tab').length).toBeGreaterThan(0));
-    // Give the (refused) read time to settle before asserting an absence.
-    await new Promise((resolve) => setTimeout(resolve, 150));
     expect(within(tabs).queryByRole('tab', { name: /Subscriptions/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    server.events.removeAllListeners();
   });
 
   it('a failed read (500) leaves out the tab too', async () => {
@@ -127,10 +131,12 @@ describe('Customer profile -- Subscriptions tab (U36)', () => {
         return new HttpResponse(null, { status: 500 });
       }),
     );
-    open(ids.customerId);
+    const { client } = open(ids.customerId);
     const tabs = await screen.findByRole('tablist', { name: 'Customer details' });
     await waitFor(() => expect(asked).toBeGreaterThan(0));
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    // The hook retries once; wait until the query has settled in error, then assert.
+    await waitFor(() => expect(client.isFetching({ queryKey: ['staff', 'subscriptions'] })).toBe(0), { timeout: 5000 });
+    await waitFor(() => expect(client.getQueryCache().find({ queryKey: ['staff', 'subscriptions', 'customer', ids.customerId] })?.state.status).toBe('error'), { timeout: 5000 });
     expect(within(tabs).queryByRole('tab', { name: /Subscriptions/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });

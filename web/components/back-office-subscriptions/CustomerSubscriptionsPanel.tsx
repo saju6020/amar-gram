@@ -3,21 +3,16 @@ import { Repeat } from 'lucide-react';
 import type { SubscriptionView } from '@/lib/api/subscriptions';
 import type { CustomerSubscriptionSummary } from '@/lib/api/staff-subscriptions';
 import {
+  NO_CURRENT_SUBSCRIPTIONS,
   NO_DELIVERY_CANCELLED,
   NO_DELIVERY_PAUSED,
   NO_DELIVERY_SCHEDULED,
   NO_DELIVERY_SUSPENDED,
+  customerSubscriptionCounts,
   nextDeliveryLabel,
 } from '@/lib/subscriptions/copy';
 import { quantityAndIntervalLabel, subscriptionPaymentMethodLabel } from '@/lib/subscriptions/labels';
 import { SubscriptionStatusPill } from '@/components/staff-subscriptions/SubscriptionStatusPill';
-
-/** The empty state of the tab. */
-export const NO_CURRENT_SUBSCRIPTIONS = 'No current subscriptions.';
-
-/** "1 suspended · 2 cancelled" as text (the server's two counts, shown as sent). */
-export const countsLine = (suspendedCount: number, cancelledCount: number): string =>
-  `${suspendedCount} suspended · ${cancelledCount} cancelled`;
 
 /** The next delivery as a date sentence, or why there is none (the status is the server's, not a date comparison). */
 function nextDeliveryText(view: SubscriptionView): string {
@@ -74,7 +69,7 @@ export function CustomerSubscriptionsPanel({ summary }: { summary: CustomerSubsc
           ))}
         </ul>
       )}
-      <p className="m-0 text-sm text-ink-muted">{countsLine(summary.suspendedCount, summary.cancelledCount)}</p>
+      <p className="m-0 text-sm text-ink-muted">{customerSubscriptionCounts(summary.suspendedCount, summary.cancelledCount)}</p>
     </section>
   );
 }

@@ -6,6 +6,7 @@ import { Panel } from '@/components/back-office/Panel';
 import { ApiForbiddenError } from '@/lib/api/client';
 import type { AlertKind } from '@/lib/api/inventory-alerts';
 import { useApprovals } from '@/lib/hooks/billing/useBillingQueries';
+import { DASHBOARD_DUE_TOMORROW_TEXT, DASHBOARD_SUSPENDED_TEXT } from '@/lib/subscriptions/copy';
 import { useAlertSummary } from '@/lib/hooks/useInventory';
 import { useSubscriptionsDueTomorrow } from '@/lib/hooks/useSubscriptionSummaries';
 
@@ -85,7 +86,7 @@ export function DashboardAttention() {
           <AttentionRow
             tone="neutral"
             icon={<Repeat size={ICON_SIZE} />}
-            text="Subscription orders due tomorrow"
+            text={DASHBOARD_DUE_TOMORROW_TEXT}
             count={dueCount}
             href="/staff/subscriptions?status=Active"
           />
@@ -94,7 +95,7 @@ export function DashboardAttention() {
           <AttentionRow
             tone="warning"
             icon={<Repeat size={ICON_SIZE} />}
-            text="Subscriptions suspended"
+            text={DASHBOARD_SUSPENDED_TEXT}
             count={suspendedCount}
             href="/staff/subscriptions?status=Suspended"
           />

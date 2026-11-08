@@ -96,3 +96,18 @@ Earlier runs in the batch failed for reasons in the specs, not the app (fixed): 
 - Wider run (`back-office-subscriptions`, `staff-shop`, `back-office-overview`, `back-office-sales`, `orders`, `dashboard`, `customer`, `subscriptions`, `staff-subscriptions`, `tests/unit/subscriptions`, `tests/guards`, the shared `no-hex-literals` and `no-colour-literals`): 61 files, 1004 tests, all passed (re-run after Amended (l)). E13/E14 re-run on both projects: 24 passed.
 - `tsc --noEmit` and `npm run lint` (`--max-warnings 0`): clean.
 - The full suite and `npm run build` belong to the TEST gate and integration; the build was not run here (mocks need `next dev`).
+
+## 9. Fixes after the ARCHITECTURE, SECURITY and CODE_REVIEW gates (Amended (m))
+
+Base a13da25. Items 5 of section 7 (staff wording kept local) is superseded by (m)(1).
+
+| Fix | Change | Files |
+|---|---|---|
+| (m)(1) copy hoist | Additions only to `lib/subscriptions/copy.ts`: `SUBSCRIBABLE_HELP`, `NO_CURRENT_SUBSCRIPTIONS`, `customerSubscriptionCounts`, `DASHBOARD_DUE_TOMORROW_TEXT`, `DASHBOARD_SUSPENDED_TEXT`. The three components import them; wording unchanged | `lib/subscriptions/copy.ts` (under (m)), `components/staff-shop/ProductDetailsForm.tsx`, `components/back-office-subscriptions/CustomerSubscriptionsPanel.tsx`, `components/back-office-overview/DashboardAttention.tsx` |
+| (m)(2) / ARCH LOW 1 | T9 mock checks `isGuid` before the role: a non-GUID id is 404 for every role | `mocks/handlers/subscriptions/touchpoints.ts`, test in `mock-refusals.test.ts` |
+| CR LOW 1 | Citation corrected to `StaffSubscriptionsController.cs:53` and `:157` | `touchpoints.ts` |
+| CR LOW 4 | `CustomerProfile` derives the effective tab: a selected Subscriptions tab whose panel is gone falls back to Orders | `components/customer/CustomerProfile.tsx`, new `profile-tab-fallback.test.tsx` |
+| CR LOW 5 | The 403 and 500 tab tests wait for the request to be answered / the query to settle in error, not a 150 ms sleep | `customer-tab.test.tsx` |
+| CR LOW 7 | The E13 negative offer assertion waits for the C1 response (`waitForResponse`) and two animation frames, not 1.5 s | `tests/e2e/subscriptions-backoffice.spec.ts` |
+
+CR LOWs 2, 3, 6, 8 and ARCH LOWs 2, 4 are left as recorded. Re-run: `tsc` and lint clean; the 61-file set (now 62 with the new test) 1006 tests, 0 failed; E13/E14 24 passed on both projects.

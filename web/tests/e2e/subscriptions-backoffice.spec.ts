@@ -59,9 +59,12 @@ test.describe('product editor (BG-15)', () => {
     await page.getByRole('checkbox', SUBSCRIBABLE).uncheck();
     await saveDetails(page);
     await signInEstablished(page);
+    // The offer reads C1 after render: wait for that answer, then for the page to paint it, before asserting the absence.
+    const options = page.waitForResponse((r) => r.url().includes('/subscriptions/options'));
     await page.goto(`/shop/products/${NEEM.slug}`);
     await expect(page.getByRole('button', { name: /Add to (cart|basket)/ })).toBeVisible();
-    await page.waitForTimeout(1500); // the offer reads after render; give it the time it would need
+    expect((await options).status()).toBe(200);
+    await page.evaluate(() => new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))));
     await expect(page.getByTestId('subscribe-offer')).toHaveCount(0);
   });
 });

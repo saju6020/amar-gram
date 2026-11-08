@@ -60,7 +60,7 @@ export function CustomerProfile({
   subscriptionsCount?: number;
   erasePanel?: ReactNode;
 }) {
-  const [tab, setTab] = useState<ProfileTab>('orders');
+  const [selected, setTab] = useState<ProfileTab>('orders');
   const tabs = [
     { key: 'orders', label: TAB_LABEL.orders },
     ...(subscriptionsPanel
@@ -77,6 +77,9 @@ export function CustomerProfile({
     { key: 'billing', label: TAB_LABEL.billing },
     ...(notesPanel ? [{ key: 'notes', label: `${TAB_LABEL.notes} (${customer.noteCount})` }] : []),
   ];
+
+  // A tab whose panel has gone away (the subscription read failed on a refetch) falls back to Orders.
+  const tab: ProfileTab = tabs.some((t) => t.key === selected) ? selected : 'orders';
 
   return (
     <div className="flex flex-col gap-5">

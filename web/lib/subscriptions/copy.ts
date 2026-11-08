@@ -330,3 +330,16 @@ export const cancelTitle = (productName: string): string => `Cancel ${productNam
 export const resumeTitle = (productName: string): string => `Resume ${productName}?`;
 export const changeTitle = (productName: string): string => `Change ${productName}`;
 export const WITHDRAW_TITLE = 'Withdraw scheduled changes?';
+
+// ---- back-office touch points (HO-P6 S3, Amended (m)) ----------------------------------------------------
+
+/** The product editor's help under "Can be subscribed to" (OQ-18; consequence `ProductAggregate.Subscription.cs:4-7`). */
+export const SUBSCRIBABLE_HELP =
+  'Customers can start a repeat delivery of any pack size. Turning it off does not cancel existing subscriptions: their next order is not placed and they are suspended.';
+/** The customer profile's Subscriptions tab: the empty text and the counts line. */
+export const NO_CURRENT_SUBSCRIPTIONS = 'No current subscriptions.';
+export const customerSubscriptionCounts = (suspendedCount: number, cancelledCount: number): string =>
+  `${suspendedCount} suspended · ${cancelledCount} cancelled`;
+/** The dashboard's two subscription rows. */
+export const DASHBOARD_DUE_TOMORROW_TEXT = 'Subscription orders due tomorrow';
+export const DASHBOARD_SUSPENDED_TEXT = 'Subscriptions suspended';

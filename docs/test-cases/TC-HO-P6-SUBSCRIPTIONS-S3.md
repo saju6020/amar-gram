@@ -11,8 +11,8 @@ Written: 2026-11-09 (by the implementer, with the build; the TEST gate re-runs e
 
 | | Count |
 |---|---|
-| Rows | 39 |
-| PASS | 39 |
+| Rows | 41 |
+| PASS | 41 |
 | FAIL / BLOCKED | 0 |
 
 ## Environment
@@ -71,6 +71,17 @@ Vitest 5.0.1 at `--maxWorkers=2`. Playwright against `next dev` on PORT=3130 (st
 | E15 | Run-only: `shop-staff`, `catalogue-stock-*`, `staff-customers`, `customers-admin-*`, `dashboard-home`, `ordering-staff`, `sales-gate-s2`, `packed-customer-after-staff` | pass | PASS | 118 cases, both projects, no failure and no baseline case appeared |
 
 One run (workers 2, both projects, one `next dev`): 142 passed, 0 failed, 0 skipped (24 new, 118 run-only).
+
+## Added after the gates (Amended (m))
+
+| ID | Case | Expected | Status | Evidence |
+|---|---|---|---|---|
+| U39g | A non-GUID customer id is 404 for a role outside View; a real id with that role is still 403 | pass | PASS | `mock-refusals.test.ts` |
+| U36f | A selected Subscriptions tab whose panel disappears shows Orders as selected and its panel | pass | PASS | `profile-tab-fallback.test.tsx` |
+| U36c/d | The 403 and 500 cases wait for the request to settle (no fixed sleep) | pass | PASS | `customer-tab.test.tsx` |
+| E13a | The "offer is gone" assertion waits for the C1 response | pass | PASS | `subscriptions-backoffice.spec.ts` |
+
+Re-run: 62 files, 1006 tests, 0 failed; E13/E14 24 passed on both projects.
 
 ## Resolved item
 

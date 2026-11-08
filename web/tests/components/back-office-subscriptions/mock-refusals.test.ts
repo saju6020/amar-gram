@@ -88,6 +88,13 @@ describe('U39 T3 and T9 bodies', () => {
     expect(summary).toEqual({ live: [], cancelledCount: 0, suspendedCount: 0 });
   });
 
+  it('a non-GUID customer id is 404 for every role, even one outside View (the route constraint comes first)', async () => {
+    setMockTouchpointRoles(['Cashier']);
+    expect(await failure(() => getCustomerSubscriptionSummary('not-a-guid'))).toBeInstanceOf(ApiNotFoundError);
+    // A real GUID with the same role is still the 403.
+    expect(await failure(() => getCustomerSubscriptionSummary(ids.customerId))).toBeInstanceOf(ApiForbiddenError);
+  });
+
   it('a customer id that is not a GUID matches no route: 404', async () => {
     const error = await failure(() => getCustomerSubscriptionSummary('not-a-guid'));
     expect(error).toBeInstanceOf(ApiNotFoundError);

@@ -16,6 +16,7 @@ import {
 import type { CategoryNode } from '@/lib/api/shop-catalogue';
 import type { TaxClass } from '@/lib/api/admin-catalogue';
 import type { StaffProductDetail } from '@/lib/api/staff-shop';
+import { SUBSCRIBABLE_HELP } from '@/lib/subscriptions/copy';
 import { Field, SectionFrame, inputClass } from './SectionFrame';
 
 const schema = z.object({
@@ -33,10 +34,6 @@ const schema = z.object({
   certifications: z.array(z.string()),
   slug: z.string().trim().min(1, 'Enter the web address.'),
 });
-/** HO-P6 OQ-18; the consequence is `ProductAggregate.Subscription.cs:4-7`. Staff-facing, so it stays with the form. */
-const SUBSCRIBABLE_HELP =
-  'Customers can start a repeat delivery of any pack size. Turning it off does not cancel existing subscriptions: their next order is not placed and they are suspended.';
-
 export type DetailsFormValues = z.infer<typeof schema>;
 const KNOWN = [
   'name',

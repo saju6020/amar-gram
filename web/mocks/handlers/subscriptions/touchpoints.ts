@@ -19,7 +19,7 @@ export function setMockTouchpointRoles(roles: string[] | null): void {
   roleOverride = roles;
 }
 
-/** The server's `403` from `[RequireAction(Actions.Subscriptions.View)]` (StaffSubscriptionsController.cs:52, 152). */
+/** The server's `403` from `[RequireAction(Actions.Subscriptions.View)]` (StaffSubscriptionsController.cs:53, :157). */
 function cannotView(request: Request): boolean {
   const roles = roleOverride ?? getStaffRoleIdsForRequest(request);
   return roles !== null && !roles.some((role) => MOCK_VIEW_ROLES.includes(role));
@@ -40,9 +40,10 @@ export const touchpointSubscriptionsHandlers: HttpHandler[] = [
 
   // T9 -- one customer's subscriptions (:150-165). The `{customerId:guid}` segment: anything else is no route, a 404.
   http.get('*/api/staff/customers/:customerId/subscriptions', ({ request, params }) => {
-    if (cannotView(request)) return forbidden(); // :157
+    // The route constraint `{customerId:guid}` is matched before any filter runs: a non-GUID id is 404 for every role.
     const customerId = String(params.customerId);
     if (!isGuid(customerId)) return new HttpResponse(null, { status: 404 });
+    if (cannotView(request)) return forbidden(); // :157
     // An unknown customer simply has none (200): the query reads the subscriptions table, not the customer.
     return HttpResponse.json(customerSummaryOf(customerId), { headers: { 'Cache-Control': 'no-store' } });
   }),
