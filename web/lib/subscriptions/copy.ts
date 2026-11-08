@@ -1,5 +1,19 @@
-import { formatCommerceInstant, formatCycleDate, formatPercentText, isZeroPercent } from './dates';
-import { pendingStatusChangeText, subscriptionPaymentMethodLabel } from './labels';
+import {
+  formatCommerceInstant,
+  formatCommerceInstantLong,
+  formatCycleDate,
+  formatPercentText,
+  isZeroPercent,
+} from './dates';
+import type { SubscriptionPending, SubscriptionTerms, SubscriptionView } from '../api/subscriptions';
+import {
+  pendingStatusChangeText,
+  quantityAndIntervalLabel,
+  subscriptionActionLabel,
+  subscriptionFulfilmentLabel,
+  subscriptionPaymentMethodLabel,
+  suspensionReasonCustomerText,
+} from './labels';
 
 /**
  * `lib/subscriptions/copy.ts` — HO-P6 S0, §8.6. One module so every subscription screen says the same thing.
@@ -167,3 +181,152 @@ export const staffCancelDescription = (customerName: string): string =>
 export const STAFF_CANCELLED_MESSAGE = 'Subscription cancelled.';
 export const staffCancelScheduledMessage = (appliesFromCycleOn: string | null | undefined): string =>
   `Cancellation scheduled. ${pendingStatusChangeText('Cancel', appliesFromCycleOn)}.`;
+
+// ---- customer screens (HO-P6 S1, Amended (k)) -------------------------------------------------------------
+// The customer's sentences that used to be written inline in `components/subscriptions/**`. Every date is the server's.
+
+export const SUBSCRIBE_PAGE_INTRO =
+  'A repeat delivery of this product. Change, skip, pause or cancel whenever you like.';
+export const OFFER_HELP = 'Get this on repeat. Skip, pause or cancel any time.';
+export const SUBSCRIBE_NOT_OFFERED_TITLE = "This product can't be subscribed to right now.";
+
+export const FULFILMENT_DELIVERY_HINT = 'We bring each order to your door.';
+export const FULFILMENT_PICKUP_HINT = 'Pick each order up when it is ready.';
+export const ADDRESSES_FAILED_TEXT = 'We couldn’t load your addresses just now. You can add one below.';
+export const NO_SAVED_ADDRESS_TEXT = 'You haven’t saved an address yet.';
+export const OUTLETS_LOADING_TEXT = 'Loading outlets…';
+export const NO_OUTLET_TEXT = 'No outlet is open for collection right now.';
+export const PAYMENT_HEADING = 'How you’ll pay for each order';
+export const PAY_CHOOSE_ADDRESS = 'Choose a delivery address to see how you can pay.';
+export const PAY_CHOOSE_OUTLET = 'Choose an outlet to see how you can pay.';
+export const PAY_CHECKING = 'Checking how you can pay…';
+export const PAY_CHECK_FAILED = 'We couldn’t check how you can pay just now. Please try again.';
+export const CHOOSE_OUTLET_ERROR = 'Choose an outlet to collect from.';
+export const CHOOSE_PAYMENT_ERROR = "Choose how you'll pay for each order.";
+export const SUBSCRIBE_FAILED_TITLE = 'We couldn’t start your subscription';
+export const paymentSwapNote = (fromLabel: string, toLabel: string): string =>
+  `${fromLabel} isn't available for this order, so we chose ${toLabel}.`;
+
+export const NO_CANCELLED_TITLE = 'No cancelled subscriptions.';
+export const NO_CANCELLED_TEXT = 'Subscriptions you cancel are kept here.';
+export const LIST_PAST_END_TEXT = 'That page is past the end of your list.';
+export const SUSPENDED_SEE_WHY = 'Suspended: see why';
+export const NO_DELIVERY_SCHEDULED = 'No delivery is scheduled';
+export const endedOnText = (instantText: string): string => `Ended on ${instantText}`;
+export const waitingForTransfer = (payBy: string): string => `Waiting for your transfer: pay by ${payBy}`;
+export const changesScheduledFrom = (date: string | null | undefined): string =>
+  date ? `Changes scheduled from ${formatCycleDate(date)}` : 'Changes are scheduled';
+
+export const CHOOSE_ANOTHER_ADDRESS = 'Choose another address';
+export const NO_CYCLES_TEXT = 'No orders yet. Your first one is placed on the delivery date.';
+export const MORE_CYCLES_FAILED = 'We couldn’t load more deliveries just now.';
+export const MORE_CYCLES_LOADING = 'Loading more…';
+export const OPTIONS_LOADING = 'Loading your options…';
+export const OPTIONS_FAILED = 'We couldn’t load your options just now. Close this and try again.';
+
+export const CHANGE_TERMS_DESCRIPTION = 'Your changes apply from the delivery named when you save.';
+export const SKIP_DESCRIPTION = "We won't place an order for this delivery. Your other deliveries stay as they are.";
+export const RESUME_DESCRIPTION =
+  'Orders start again. Choose the date of the first delivery, or leave it empty for the earliest we can do.';
+export const RESUME_DATE_FALLBACK_HELP = 'Leave it empty to start with the earliest delivery.';
+export const CANCEL_UNLOCKED = 'Your subscription ends now and no more orders are placed.';
+export const CANCEL_REASON_REQUIRED = 'Choose a reason so we know how to improve.';
+export const CANCEL_NOTE_LABEL = 'Anything else you’d like to tell us? (optional)';
+export const WITHDRAW_DESCRIPTION =
+  'These changes will not happen, and your subscription carries on as it is now:';
+
+/** Where an order goes: the address's label and street, or the outlet's name. */
+export function placeText(terms: SubscriptionTerms): string {
+  if (terms.fulfilment === 'Pickup') {
+    return terms.pickupBranch ? `Collect from ${terms.pickupBranch.name}` : 'Collect from an outlet';
+  }
+  if (terms.deliveryAddress) {
+    const { label, line1, city } = terms.deliveryAddress;
+    return `Deliver to ${label}: ${[line1, city].filter(Boolean).join(', ')}`;
+  }
+  return 'Delivery address needed';
+}
+
+/** "2 × every 4 weeks, Deliver to Home: House 12, Dhaka, Cash on delivery". */
+export function termsSummaryText(terms: SubscriptionTerms): string {
+  return [
+    quantityAndIntervalLabel(terms.quantity, terms.intervalWeeks),
+    placeText(terms),
+    subscriptionPaymentMethodLabel(terms.paymentMethod),
+  ].join(', ');
+}
+
+/**
+ * The one builder of the scheduled-change lines, for both voices (the customer's detail and withdraw dialog, the staff schedule
+ * panel). Each line names the date the server gives (`pending.appliesFromCycleOn`; a pause names `nextDeliveryOn`):
+ *   customer: "New terms from the delivery on Tue 20 Oct: …", "The delivery on Tue 20 Oct is skipped";
+ *   staff:    "From Tue 20 Oct: …", "Scheduled: Skip the delivery on Tue 20 Oct".
+ * A pause or an end is `pendingStatusChangeText` in both. Nothing is computed (ADR-FE-110).
+ */
+export function pendingChangeLines(
+  view: { pending: SubscriptionPending | null; nextDeliveryOn: string | null },
+  voice: 'customer' | 'staff',
+): string[] {
+  const pending = view.pending;
+  if (!pending) return [];
+  const from = formatCycleDate(pending.appliesFromCycleOn);
+  const lines: string[] = [];
+  if (pending.terms) {
+    const t = pending.terms;
+    lines.push(
+      voice === 'customer'
+        ? `New terms from the delivery on ${from}: ${termsSummaryText(t)}`
+        : `From ${from}: ${quantityAndIntervalLabel(t.quantity, t.intervalWeeks)}, ${subscriptionFulfilmentLabel(t.fulfilment).toLowerCase()}, ${subscriptionPaymentMethodLabel(t.paymentMethod).toLowerCase()}`,
+    );
+  }
+  if (pending.skip) {
+    lines.push(
+      voice === 'customer'
+        ? `The delivery on ${from} is skipped`
+        : `Scheduled: ${subscriptionActionLabel('Skip', pending.appliesFromCycleOn)}`,
+    );
+  }
+  if (pending.statusChange) {
+    lines.push(
+      pendingStatusChangeText(
+        pending.statusChange,
+        pending.statusChange === 'Cancel' ? pending.appliesFromCycleOn : view.nextDeliveryOn,
+      ),
+    );
+  }
+  return lines;
+}
+
+/** The line on a card (and the detail's header) that says when the next delivery is, or why there is none. */
+export function nextDeliveryLine(view: SubscriptionView): string {
+  if (view.status === 'Active' && view.nextDeliveryOn) return nextDeliveryLabel(view.nextDeliveryOn);
+  if (view.status === 'Paused') return PAUSED_NO_DELIVERIES_TEXT;
+  if (view.status === 'Suspended') return SUSPENDED_SEE_WHY;
+  if (view.status === 'Cancelled') {
+    return endedOnText(formatCommerceInstantLong(view.cancelledOn, view.commerceTimeZoneId));
+  }
+  return NO_DELIVERY_SCHEDULED;
+}
+
+/**
+ * The one warning on a card, in the order of §11.2.4: suspension; a removed address; a transfer still to pay; scheduled
+ * changes; a product that cannot be bought. `null` when none applies.
+ */
+export function warningLine(view: SubscriptionView): string | null {
+  if (view.status === 'Suspended') return suspensionReasonCustomerText(view.suspensionReason);
+  if (view.terms.deliveryAddressMissing) return DELIVERY_ADDRESS_MISSING_TEXT;
+  const last = view.lastCycle;
+  if (last?.orderState === 'AwaitingPayment' && last.paymentExpiresOn) {
+    return waitingForTransfer(formatCommerceInstant(last.paymentExpiresOn, view.commerceTimeZoneId));
+  }
+  if (view.pending) return changesScheduledFrom(view.pending.appliesFromCycleOn);
+  if (!view.product.isAvailable) return PRODUCT_UNAVAILABLE_TEXT;
+  return null;
+}
+
+/** The customer dialogs' headings, each naming the product (UI-3). */
+export const pauseTitle = (productName: string): string => `Pause ${productName}?`;
+export const cancelTitle = (productName: string): string => `Cancel ${productName}?`;
+export const resumeTitle = (productName: string): string => `Resume ${productName}?`;
+export const changeTitle = (productName: string): string => `Change ${productName}`;
+export const WITHDRAW_TITLE = 'Withdraw scheduled changes?';

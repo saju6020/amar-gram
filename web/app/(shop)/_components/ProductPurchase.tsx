@@ -8,6 +8,7 @@ import { VariantSelector } from '@/components/product/VariantSelector';
 import { PurchaseRow } from '@/components/product/PurchaseRow';
 import { StockAlertButton } from '@/components/wishlist/StockAlertButton';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import { SubscribeOffer } from '@/components/subscriptions/SubscribeOffer';
 import { ApiUnauthorizedError, ApiValidationError } from '@/lib/api/client';
 import { describeApiError, SHOP_CODE_MESSAGES } from '@/lib/api/errors';
 import type { ProductDetail } from '@/lib/api/shop-catalogue';
@@ -158,6 +159,9 @@ export function ProductPurchase({
                 trailing={wishlistButton}
               />
             )
+          }
+          subscribe={
+            signedIn && sku.price ? <SubscribeOffer key={sku.skuId} skuId={sku.skuId} /> : null
           }
           wishlist={actions ? wishlistButton : null}
           stockAlert={

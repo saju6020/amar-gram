@@ -96,6 +96,7 @@ describe('account sidebar', () => {
     ).toEqual([
       'Overview',
       'My orders',
+      'Subscriptions',
       'Wishlist',
       'My reviews',
       'Billing',
@@ -103,7 +104,13 @@ describe('account sidebar', () => {
     ]);
     for (const heading of ['Shopping', 'Account'])
       expect(within(nav).queryByText(heading)).not.toBeInTheDocument();
-    expect(within(nav).queryByRole('link', { name: /subscriptions/i })).not.toBeInTheDocument();
+    // HO-P6 S1 (U24): supersedes "no Subscriptions link" - the link exists, goes to the list, and sits right after My orders.
+    const links = within(nav).getAllByRole('link');
+    const subscriptions = within(nav).getByRole('link', { name: 'Subscriptions' });
+    expect(subscriptions).toHaveAttribute('href', '/portal/subscriptions');
+    expect(links.indexOf(subscriptions)).toBe(
+      links.indexOf(within(nav).getByRole('link', { name: /^My orders/ })) + 1,
+    );
     expect(within(nav).getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
   });
 

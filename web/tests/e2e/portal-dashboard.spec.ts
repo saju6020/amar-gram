@@ -6,8 +6,8 @@ import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 /**
  * HO-POR-002 §16 — the portal home and Orders' re-order, against MSW. The mock answers with the
  * dashboard named by the `pc_mock_portal` cookie (the handlers run inside the page, so a module
- * variable would not survive a navigation). Subscriptions have no tile (owner skipped SUB,
- * 2026-10-10).
+ * variable would not survive a navigation). Subscriptions have no tile in the dashboard payload; HO-P6 adds the
+ * "Next delivery" card from its own endpoint (E-A2).
  */
 test.describe.configure({ timeout: 60_000 });
 
@@ -26,14 +26,18 @@ test.describe('Portal home — US-POR-01', () => {
     await expect(tile(page, 'orders').getByText(/haven’t placed an order/)).toBeVisible();
   });
 
-  test('E-A2: a full customer sees orders and balances on one screen and no subscriptions tile', async ({
+  test('E-A2: a full customer sees orders and balances on one screen, and the Next delivery card with its Manage link', async ({
     page,
   }) => {
     await open(page);
     for (const heading of ['Recent orders', 'Balances']) {
       await expect(page.getByRole('heading', { level: 2, name: heading })).toBeVisible();
     }
-    await expect(page.getByRole('heading', { name: /subscription/i })).toHaveCount(0);
+    // HO-P6 S1 (E7): supersedes "no subscriptions heading" - the card for the soonest live subscription is present, with Manage.
+    const next = page.getByTestId('next-delivery');
+    await expect(next.getByRole('heading', { level: 2, name: 'Next delivery' })).toBeVisible();
+    await expect(next.getByText(/^Next delivery on /)).toBeVisible();
+    await expect(next.getByRole('link', { name: 'Manage' })).toHaveAttribute('href', /\/portal\/subscriptions\/[0-9a-f-]{36}$/);
     await expect(tile(page, 'balances').getByTestId('outstanding-BDT')).toContainText('3,250');
     await expect(tile(page, 'balances').getByTestId('outstanding-USD')).toContainText('40.00');
     await expect(tile(page, 'orders')).toContainText('Tracking DHK-88213-BD');

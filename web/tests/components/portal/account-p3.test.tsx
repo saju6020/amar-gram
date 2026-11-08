@@ -155,7 +155,7 @@ describe('U32 — sign-in page (SignIn.dc.html)', () => {
 });
 
 describe('U33 — account menu', () => {
-  it('on /portal/orders/123: My orders is current, labels follow the design, no Subscriptions, Sign out present', async () => {
+  it('on /portal/orders/123: My orders is current, labels follow the design, Subscriptions follows My orders, Sign out present', async () => {
     setUrl('/portal/orders/123');
     renderWithClient(<AccountSidebar />);
     const nav = screen.getByRole('navigation', { name: 'Main' });
@@ -167,7 +167,10 @@ describe('U33 — account menu', () => {
     expect(within(nav).getByRole('link', { name: 'Profile & addresses' })).toBeInTheDocument();
     for (const kept of ['Wishlist', 'My reviews', 'Billing'])
       expect(within(nav).getByRole('link', { name: kept })).toBeInTheDocument();
-    expect(within(nav).queryByText(/subscriptions/i)).not.toBeInTheDocument();
+    // HO-P6 S1 (U24): supersedes "no Subscriptions" - the link exists with its href, and is not the current page here.
+    const subscriptions = within(nav).getByRole('link', { name: 'Subscriptions' });
+    expect(subscriptions).toHaveAttribute('href', '/portal/subscriptions');
+    expect(subscriptions).not.toHaveAttribute('aria-current');
     expect(within(nav).getByRole('button', { name: 'Sign out' })).toHaveClass('text-danger-ink');
   });
 

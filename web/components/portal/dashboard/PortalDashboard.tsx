@@ -2,6 +2,7 @@
 
 import { ErrorState } from '@/components/common/ErrorState';
 import { GreetingHeader } from '@/components/hearth/GreetingHeader';
+import { NextDeliveryCard } from '@/components/subscriptions/NextDeliveryCard';
 import { usePortalDashboard } from '@/lib/hooks/usePortalDashboard';
 import type { PortalDashboard as PortalDashboardData } from '@/lib/api/portal';
 import { PORTAL_BILLING, PORTAL_ORDERS } from '@/lib/routing/portal-links';
@@ -16,8 +17,9 @@ import { OrdersTile } from './OrdersTile';
 /**
  * `components/portal/dashboard/PortalDashboard.tsx` — HO-POR-002 §2, US-POR-01, restyled to
  * docs/design/store/Account.dc.html (HO-P3 S4). One dashboard request, then: the greeting, the live order card (the
- * newest open order), the default address, Buy again (interim, gap G7), and the orders and balances tiles. There is
- * NO subscriptions tile or "next staples box" (gap G2), not even a placeholder. Each tile goes through
+ * newest open order), the default address, the next subscription delivery, Buy again (interim, gap G7), and the orders
+ * and balances tiles. The "Next delivery" card (HO-P6, OQ-8) is a single subscription read from its own endpoint (C3), not
+ * from the dashboard payload, and is absent when there is none; there is no multi-item "staples box" (BG-S7). Each tile goes through
  * `DashboardSection`, so an absent key, an `Unavailable` section and a `Ready` one can never be confused.
  */
 function greetingFor(data: PortalDashboardData): string {
@@ -59,6 +61,7 @@ export function PortalDashboard() {
 
       <div className="grid items-stretch gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
         <DefaultAddressCard />
+        <NextDeliveryCard />
       </div>
 
       {deliveredOrder && <BuyAgain order={deliveredOrder} />}
