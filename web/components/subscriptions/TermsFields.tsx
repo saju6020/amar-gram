@@ -84,6 +84,14 @@ export function TermsFields({
 
   const methodList = methods.data;
   const [swapNote, setSwapNote] = useState('');
+  const [swappedTo, setSwappedTo] = useState<SubscriptionPaymentMethod | null>(null);
+  // The note describes the method we chose; once the customer picks another, it no longer applies.
+  useEffect(() => {
+    if (swappedTo && draft.paymentMethod !== swappedTo) {
+      setSwapNote('');
+      setSwappedTo(null);
+    }
+  }, [swappedTo, draft.paymentMethod]);
   useEffect(() => {
     if (!preselect || !methodList) return;
     // Nothing chosen yet, or the chosen method is not offered for this address and quantity: take the first one that is.
@@ -100,6 +108,7 @@ export function TermsFields({
             subscriptionPaymentMethodLabel(first.method),
           ),
         );
+        setSwappedTo(first.method);
       }
     } else if (draft.paymentMethod && chosen) onChange({ paymentMethod: null });
   }, [preselect, draft.paymentMethod, methodList, onChange]);

@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
+import { SubscriptionCard } from '@/components/subscriptions/SubscriptionCard';
 import { MySubscriptionsList } from '@/components/subscriptions/MySubscriptionsList';
 import { SubscriptionDetail } from '@/components/subscriptions/SubscriptionDetail';
 import { warningLine } from '@/lib/subscriptions/copy';
@@ -426,5 +427,13 @@ describe('history "Show more" failing (CR fixes)', () => {
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull());
     expect(rows()).toBeGreaterThan(afterTwo);
+  });
+});
+
+describe('hrefs built from ids', () => {
+  it('encode a reserved character in the id, so it cannot change the path or add a query', () => {
+    const view = subscriptionViewOf(findSubscription(ids.mine.activeUnlocked)!);
+    render(<SubscriptionCard subscription={{ ...view, id: 'a/b?c#d' }} />);
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/portal/subscriptions/a%2Fb%3Fc%23d');
   });
 });

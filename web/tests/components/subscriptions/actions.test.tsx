@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
@@ -8,6 +9,7 @@ import { formatCycleDate } from '@/lib/subscriptions/dates';
 import { seedDates } from '@/mocks/handlers/subscriptions/fixtures';
 import { customerDetailOf, findSubscription } from '@/mocks/handlers/subscriptions/store';
 import { currentUrl, setUrl } from '../common/nav-mock';
+import { subscriptionKeys } from '@/lib/subscriptions/keys';
 import { ids, recordRequests, renderWithClient, resetSubscriptions, serveAddresses, signIn, signOut } from './helpers';
 
 vi.mock('next/navigation', () => import('../common/nav-mock'));
@@ -164,6 +166,24 @@ describe('the reminder\'s skip link (U20, ADR-FE-111)', () => {
     await user.click(screen.getByRole('button', { name: `Skip the delivery on ${formatCycleDate(dates.unlockedNextDeliveryOn)} instead` }));
     expect(await screen.findByRole('dialog', { name: `Skip the delivery on ${formatCycleDate(dates.unlockedNextDeliveryOn)}?` })).toBeVisible();
     expect(currentUrl()).toBe(`/portal/subscriptions/${ids.mine.activeUnlocked}`);
+  });
+
+  it('a cached detail that does not list the date does not decide: the dialog opens once the re-read lists it', async () => {
+    const id = ids.mine.activeUnlocked;
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, retryDelay: 0, staleTime: 0 } } });
+    // What an earlier visit left behind: a detail whose skippable delivery is another one.
+    client.setQueryData(subscriptionKeys.detail(id), {
+      ...customerDetailOf(findSubscription(id)!),
+      skippableCycleOn: dates.today,
+    });
+    setUrl(`/portal/subscriptions/${id}?skip=${dates.unlockedNextDeliveryOn}`);
+    render(
+      <QueryClientProvider client={client}>
+        <SubscriptionDetail id={id} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByRole('dialog', { name: `Skip the delivery on ${formatCycleDate(dates.unlockedNextDeliveryOn)}?` })).toBeVisible();
+    expect(screen.queryByText('That delivery can no longer be skipped.')).toBeNull();
   });
 
   it('with skippableCycleOn null the explanation has no offer; a malformed value is ignored and removed', async () => {

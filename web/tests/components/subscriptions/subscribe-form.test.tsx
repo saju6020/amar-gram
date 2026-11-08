@@ -150,6 +150,26 @@ describe('payment methods (U11)', () => {
     expect(await screen.findByText("Cash on delivery isn't available for this order, so we chose Bank transfer.")).toBeVisible();
     requests.stop();
   });
+
+  it('the swap note goes away once the customer chooses a method themselves', async () => {
+    const user = userEvent.setup();
+    renderWithClient(<SubscribeForm skuId={ids.skus.masala750} />);
+    await screen.findByRole('button', { name: 'Start subscription' });
+    await screen.findByRole('radio', { name: /^Cash on delivery/ });
+    const quantity = screen.getByLabelText('Quantity per delivery');
+    await user.clear(quantity);
+    await user.type(quantity, '2');
+    const note = "Cash on delivery isn't available for this order, so we chose Bank transfer.";
+    expect(await screen.findByText(note)).toBeVisible();
+
+    // Back to one pack: cash on delivery is offered again, and the customer picks it.
+    await user.clear(quantity);
+    await user.type(quantity, '1');
+    await waitFor(() => expect(screen.getByRole('radio', { name: /^Cash on delivery/ })).toBeEnabled());
+    await user.click(screen.getByRole('radio', { name: /^Cash on delivery/ }));
+    expect(screen.getByRole('radio', { name: /^Cash on delivery/ })).toBeChecked();
+    expect(screen.queryByText(note)).toBeNull();
+  });
 });
 
 describe('no browser estimate (U12)', () => {
