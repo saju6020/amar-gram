@@ -10,7 +10,7 @@ import {
   nextDeliveryLabel,
 } from '@/lib/subscriptions/copy';
 import { quantityAndIntervalLabel, subscriptionPaymentMethodLabel } from '@/lib/subscriptions/labels';
-import { SubscriptionStatusBadge } from './SubscriptionStatusBadge';
+import { SubscriptionStatusPill } from '@/components/staff-subscriptions/SubscriptionStatusPill';
 
 /** The empty state of the tab. */
 export const NO_CURRENT_SUBSCRIPTIONS = 'No current subscriptions.';
@@ -60,7 +60,7 @@ export function CustomerSubscriptionsPanel({ summary }: { summary: CustomerSubsc
                       ? `${view.product.productName} · ${view.product.variantLabel}`
                       : view.product.productName}
                   </span>
-                  <SubscriptionStatusBadge status={view.status} />
+                  <SubscriptionStatusPill status={view.status} />
                 </span>
                 <span className="text-ink-muted">
                   {quantityAndIntervalLabel(view.terms.quantity, view.terms.intervalWeeks)}

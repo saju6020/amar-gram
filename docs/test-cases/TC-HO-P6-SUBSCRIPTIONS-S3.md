@@ -11,9 +11,9 @@ Written: 2026-11-09 (by the implementer, with the build; the TEST gate re-runs e
 
 | | Count |
 |---|---|
-| Rows | 39 (38 plus the open item) |
-| PASS | 38 |
-| FAIL / BLOCKED (§20.1: an unowned test file the handover's own rule breaks, section "Open item" below) | 1 |
+| Rows | 39 |
+| PASS | 39 |
+| FAIL / BLOCKED | 0 |
 
 ## Environment
 
@@ -72,8 +72,8 @@ Vitest 5.0.1 at `--maxWorkers=2`. Playwright against `next dev` on PORT=3130 (st
 
 One run (workers 2, both projects, one `next dev`): 142 passed, 0 failed, 0 skipped (24 new, 118 run-only).
 
-## Open item
+## Resolved item
 
 | ID | Case | Status | Note |
 |---|---|---|---|
-| O1 | `tests/components/back-office-overview/overview-dashboard.test.tsx` "DashboardAttention — U13 > is absent when both areas are refused" | FAIL (reported, not edited) | The file is outside S3's block (§13). U37 says the panel is absent only when all three sources are refused, so a test that refuses two and leaves the third to the default mock now sees the subscription rows. The test's intent is kept by adding a third refusal (`http.get('*/api/staff/subscriptions/due-tomorrow', forbidden)`); the same three-way case is proved in `dashboard-rows.test.tsx` (U37f). §20.1: needs an integrator-authorised edit of that file. |
+| O1 | `overview-dashboard.test.tsx` "DashboardAttention — U13 > is absent when all three sources are refused" | PASS | §20.1 resolved by Amended (l): a third `due-tomorrow` 403 added and the case renamed. Re-run: 61 files, 1004 tests, 0 failed; E13/E14 24 passed on both projects. |

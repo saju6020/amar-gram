@@ -127,10 +127,11 @@ describe('DashboardAttention — U13', () => {
     expect(row).toHaveTextContent('2');
   });
 
-  it('is absent when both areas are refused', async () => {
+  it('is absent when all three sources are refused', async () => {
     server.use(
       http.get('*/api/staff/inventory/alerts/summary', forbidden),
       http.get('*/api/staff/billing/approvals', forbidden),
+      http.get('*/api/staff/subscriptions/due-tomorrow', forbidden),
     );
     renderWithClient(<DashboardAttention />);
     await waitFor(() =>

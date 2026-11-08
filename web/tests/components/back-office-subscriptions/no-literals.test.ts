@@ -35,7 +35,7 @@ const read = (file: string) => stripComments(readFileSync(path.join(ROOT, file),
 
 describe('no colour literals in the S3 files (U40)', () => {
   it('scans the new components', () => {
-    expect(DIRS.flatMap(sourceFiles).length).toBeGreaterThanOrEqual(2);
+    expect(DIRS.flatMap(sourceFiles).length).toBeGreaterThanOrEqual(1);
   });
 
   for (const file of [...DIRS.flatMap(sourceFiles), ...FILES]) {

@@ -14,9 +14,10 @@ Every file is inside S3's §13 block. Nothing else was edited.
 - `components/back-office-overview/CustomerProfileView.tsx`: mounts the panel when T9 succeeded.
 - `components/back-office-overview/DashboardAttention.tsx`: two rows from T3 and the third source in the absence rule.
 - `components/orders/StaffOrderQueue.tsx`: Channel select options and doc comment (and `className="min-h-11"` on that select, see section 7, item 3).
-- `components/back-office-subscriptions/{CustomerSubscriptionsPanel,SubscriptionStatusBadge}.tsx` (new).
+- `components/back-office-subscriptions/CustomerSubscriptionsPanel.tsx` (new; it imports S2's `SubscriptionStatusPill`, import only).
 - `mocks/handlers/subscriptions/touchpoints.ts` (was S0's empty stub): T3, T9, `setMockTouchpointRoles` test seam.
 - `mocks/handlers/shop/staff.ts`: `isSubscribable` on the detail and the details `PUT`.
+- Added under Amended (l): `tests/components/back-office-overview/overview-dashboard.test.tsx` (outside the §13 block, one case: a third `due-tomorrow` 403 added and the case renamed "is absent when all three sources are refused").
 - Tests: `tests/components/back-office-subscriptions/{product-editor.test.tsx,customer-tab.test.tsx,dashboard-rows.test.tsx,orders-channel.test.tsx,mock-refusals.test.ts,no-literals.test.ts}` (new); `tests/components/staff-shop/products-p5.test.tsx` and `tests/components/back-office-overview/overview-customers.test.tsx` (the named supersessions); `tests/e2e/subscriptions-backoffice.spec.ts`, `tests/e2e/subscriptions-backoffice-360.spec.ts` (new; axe included).
 - Docs: `docs/test-cases/TC-HO-P6-SUBSCRIPTIONS-S3.md`, this report.
 
@@ -77,10 +78,10 @@ Earlier runs in the batch failed for reasons in the specs, not the app (fixed): 
 
 ## 7. Where the code differs from the document, and things for the owner or integrator
 
-1. **§20.1: one existing test breaks on the handover's own rule, and it is outside S3's block.** `tests/components/back-office-overview/overview-dashboard.test.tsx` "DashboardAttention — U13 > is absent when both areas are refused" refuses the inventory and billing reads and leaves T3 to the default mock, which now answers (the seeded due-tomorrow count is 1 or more), so the panel is present. U37's rule ("absent only when all three sources are refused") makes that expected. Not edited. Fix for the integrator: add `http.get('*/api/staff/subscriptions/due-tomorrow', forbidden)` to that test's `server.use`. The three-way case is proved in `dashboard-rows.test.tsx`. This is the only red test in the folders run (1004 passed, 1 failed).
+1. **§20.1 resolved by Amended (l).** `overview-dashboard.test.tsx` "is absent when both areas are refused" now adds `http.get('*/api/staff/subscriptions/due-tomorrow', forbidden)` and is renamed "is absent when all three sources are refused"; nothing else in that file changed.
 2. **`StaffProductDetail.isSubscribable` is typed optional** (`isSubscribable?: boolean`), not required as §11.4.1 writes it. The run-only `tests/components/staff-shop/staff-shop.test.tsx:47` builds a whole `StaffProductDetail` by hand and no longer compiles with a required field (§14 forbids editing it). The server always sends it; the editor reads an absent value as `false`. Same pattern as `districtOfOrigin?`.
 3. **The orders Channel select carries `className="min-h-11"`.** §13 limits `StaffOrderQueue.tsx` to the option and the comment, but E14 requires 44 px for "the orders More filters with the channel select" and the shared `SelectField` renders 36 px. I raised only the Channel select (one attribute). The other More-filters selects and the two date inputs are 36 to 38 px and are the orders screen's own, so E14's 44 px check on that screen covers the Channel field only. A visual call for the owner.
-4. **`SubscriptionStatusBadge` duplicates S2's `SubscriptionStatusPill` look** instead of importing it, because §10.1 says S1, S2 and S3 depend on nothing from each other at build time. If the integrator prefers one pill, the swap is one import.
+4. **Status pill.** Amended (l): S2 is merged into this base, so the panel imports `components/staff-subscriptions/SubscriptionStatusPill` (import only; props and look fit) and my duplicate `SubscriptionStatusBadge` is deleted.
 5. **Staff-facing wording stays local** (no Amended row authorises more in `lib/subscriptions/copy.ts`): the OQ-18 help text (`ProductDetailsForm.tsx`), "No current subscriptions." and the counts line (`CustomerSubscriptionsPanel.tsx`), the dashboard row texts (`DashboardAttention.tsx`). The next-delivery wording reuses `nextDeliveryLabel`, `NO_DELIVERY_PAUSED`, `NO_DELIVERY_SUSPENDED`, `NO_DELIVERY_CANCELLED` and `NO_DELIVERY_SCHEDULED` from S0's copy.
 6. **`CustomerProfile` gained a second optional prop, `subscriptionsCount`**, next to the specified `subscriptionsPanel`, so the hook-free component can write "Subscriptions (n)" without reading the panel. Both are inside the file's allowed change.
 7. **Tab order:** Orders, Subscriptions, Billing, Notes ("after Orders" in §11.4.3; the design shows Orders, Subscriptions, Notes).
@@ -92,6 +93,6 @@ Earlier runs in the batch failed for reasons in the specs, not the app (fixed): 
 ## 8. Vitest totals (`--maxWorkers=2`)
 
 - `tests/components/back-office-subscriptions`: 6 files, 48 tests, all pass (product-editor 5, customer-tab 4, dashboard-rows 9, orders-channel 3, mock-refusals 16, no-literals 11).
-- Wider run (`back-office-subscriptions`, `staff-shop`, `back-office-overview`, `back-office-sales`, `orders`, `dashboard`, `customer`, `subscriptions`, `staff-subscriptions`, `tests/unit/subscriptions`, `tests/guards`, the shared `no-hex-literals` and `no-colour-literals`): 61 files, 1005 tests, 1004 passed, 1 failed (item 1 above).
+- Wider run (`back-office-subscriptions`, `staff-shop`, `back-office-overview`, `back-office-sales`, `orders`, `dashboard`, `customer`, `subscriptions`, `staff-subscriptions`, `tests/unit/subscriptions`, `tests/guards`, the shared `no-hex-literals` and `no-colour-literals`): 61 files, 1004 tests, all passed (re-run after Amended (l)). E13/E14 re-run on both projects: 24 passed.
 - `tsc --noEmit` and `npm run lint` (`--max-warnings 0`): clean.
 - The full suite and `npm run build` belong to the TEST gate and integration; the build was not run here (mocks need `next dev`).
