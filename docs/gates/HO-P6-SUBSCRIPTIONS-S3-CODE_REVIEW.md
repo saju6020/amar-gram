@@ -1,0 +1,54 @@
+GATE: CODE_REVIEW
+HANDOVER: HO-P6-SUBSCRIPTIONS (slice S3, back-office subscription touch points)
+COMMITS: 16a07b3..52404ee (branch feat/p6-s3-backoffice; code 5339543, tests 34f6ea4, then the report/TC-sheet commit through 52404ee)
+DATE: 2026-11-09
+STATUS: PASS
+
+FINDINGS
+- [LOW] web/mocks/handlers/subscriptions/touchpoints.ts:23 (`cannotView` comment) — cites `StaffSubscriptionsController.cs:52, 152` for the `[RequireAction]` lines, while the file header, the `:53`/`:157` comments beside the handlers and mock-refusals.test.ts cite `:53` and `:157`, which are correct (the attributes are on lines 53 and 157). The rule is "mock refusals cite server file:line"; one citation is off. Fix: `:53, 157`.
+- [LOW] web/mocks/handlers/shop/staff.ts:~601 — the real details `PUT` calls `UpdateDetails` and then `SetSubscribable` (UpdateProductDetailsCommandHandler.cs:60-62), each of which does `UpdateVersion()` when it changes something, so a save that flips the flag moves the version by 2; the mock's `write()` bumps once. Nothing in S3 depends on the number (the editor refetches), so not blocking; note it for the integration run against the real API, or bump again when the flag changed.
+- [LOW] web/components/back-office-overview/DashboardAttention.tsx:~85 — the "Subscription orders due tomorrow" count (Active with next delivery tomorrow, SubscriptionStaffQueryHandlers.cs:~210) links to `/staff/subscriptions?status=Active`, which lists every Active subscription, so "4" opens a longer list. This is exactly what §11.4.4 specifies and the row says nothing misleading, so it is recorded, not a defect. A `dueOn` filter on the staff list would be a backend follow-up.
+- [LOW] web/components/customer/CustomerProfile.tsx:~70 — `tab` state can hold `'subscriptions'` after the panel prop later disappears (e.g. a refetch on window focus resolves `null` because the role changed). The tab bar then shows no selected tab over an empty tabpanel. Rare; fix by deriving the effective tab (`tabs.some(t => t.key === tab) ? tab : 'orders'`).
+- [LOW] web/tests/components/back-office-subscriptions/customer-tab.test.tsx (403 and 500 cases) — the absence assertions use a fixed 150 ms sleep. The 500 case would also pass during React Query's one retry delay, so it proves "no tab while the read is failing", not "no tab after it has settled". Acceptable (the component derives the tab from `data`, which stays undefined on error); to tighten, build the client with `retry: false` or wait for the query's error state.
+- [LOW] web/tests/components/back-office-subscriptions/no-literals.test.ts (44 px block) — the regexes `/<Link[\s\S]*?min-h-11/` and `id="oq-channel"[^>]*className="min-h-11"` are source-text matches: the first can be satisfied by a later element, the second breaks on any attribute reorder. The behavioural `toHaveClass('min-h-11')` assertions in customer-tab/dashboard-rows/product-editor and E14 carry the real check, so this is only brittle, not weak.
+- [LOW] web/tests/e2e/subscriptions-backoffice.spec.ts:64 — `waitForTimeout(1500)` before asserting the offer is absent. A negative assertion needs some wait; prefer waiting for the options response, or poll. Not blocking.
+- [LOW] E14 for the orders screen covers 44 px for the Channel select only (the other More-filters selects and date inputs stay 36-38 px). Authorised by Amended (l)(3) with a follow-up for the global 44 px pass; recorded so ACCEPTANCE does not read E14 as covering the whole filter bar.
+
+CHECKS (no action)
+- Supersessions are real, not weakened. U35 / products-p5.test.tsx U30: `not.toHaveProperty('isSubscribable')` became `toBeChecked()` on the checkbox plus `toHaveProperty('isSubscribable', true)`; district and `expectedVersion` assertions untouched. U36 / overview-customers.test.tsx: the tab list is now an exact-equality list `['Orders','Subscriptions (1)','Billing','Notes (2)']` (order and label with the server's count), "no Subscriber" kept. overview-dashboard.test.tsx: one third refusal added to the "absent" case (Amended (l)(1)); nothing else changed.
+- U35-U39 assert behaviour: exact request bodies (true and an explicit false, one PUT, `expectedVersion`), exact accessible description text, exact row order across all five sources, hrefs, counts from the server body, 403 per role (seven roles against the web `SUBSCRIPTION_VIEW_ROLES`, pinned equal to the mock's), non-boolean flag 400 before the version check, C1 following the flag, channel request params on both list and status-counts. E13 (4 cases) and E14 (4 screens x 2 widths, axe) have no skips, no `.only`, no fixme; E13a verifies the customer-side effect both ways.
+- Mock vs server, sampled against src/: T3 body and `no-store` (StaffSubscriptionsController.cs:51-58; handler counts Active with `NextDeliveryOn == tomorrow`, live != Cancelled, Suspended; mock `dueTomorrowOf` identical); T9 route `{customerId:guid}` (:153), unknown customer 200 with none, live ordered by null-last `NextDeliveryOn` then Id, `suspendedCount` over live (mock identical); View roles Reception/Inventory/ShopManager/Accountant/Administrator (ActionRoles.Subscriptions.cs:12-14); `bool? IsSubscribable` omitted/null leaves it (StaffProductRequests.cs:33, handler :62); detail always sends it (StaffProductDetailViewModel.cs:63); orders blank channel is no filter (StaffOrderQueryHandlers.cs:25), so "Any channel" is the right label and the old "Online and counter" was the misleading one.
+- Hooks: 403 resolves to `null` and is not retried, other errors surface; `useCustomerSubscriptionSummary` is called before `CustomerProfileView`'s early returns (hook order safe). `components/customer/CustomerProfile.tsx` stays hook-free (panel and count arrive as props); `CustomerSubscriptionsPanel` is hook-free and imports only S2's `SubscriptionStatusPill`. Encoded ids in links.
+- Project rules: no colour literals (U40 plus the shared guards), no `new Date(`/date-fns/storage in the touched components (dates through `nextDeliveryLabel`), no cat/pet/vet/clinic/PurrCare wording in the diff, 44 px: checkbox label, panel rows and the Channel select all `min-h-11`; AttentionRow already 44 px. Panel uses cards at all widths (no sideways scroll). No `src/` change, no scope leak beyond Amended (l).
+- `npx vitest run tests/components/back-office-subscriptions tests/components/staff-shop/products-p5.test.tsx tests/components/back-office-overview --maxWorkers=2`: 10 files, 90 tests pass. Playwright, next dev, tsc, lint and the full suite not run (per instructions).
+
+SCOPE CHECK
+- files in allowed scope: 25/25 (web components, hook, api type, mocks, tests, docs/gates, docs/test-cases; the handover edit is the Amended (l) row only; overview-dashboard.test.tsx authorised by Amended (l)(1); StaffOrderQueue `min-h-11` by (l)(3); `subscriptionsCount` by (l)(5))
+- files outside allowed scope: none
+
+---
+
+## Run 2
+
+GATE: CODE_REVIEW
+HANDOVER: HO-P6-SUBSCRIPTIONS (slice S3)
+COMMITS: a15c85c..bec6a91 (fix bec6a91; Amended (m) a13da25)
+DATE: 2026-11-09
+STATUS: PASS
+
+Verified:
+- A: copy.ts diff is additions only (13 lines appended at the end; no existing export changed or reordered). The four hoisted strings are byte-identical to the originals (SUBSCRIBABLE_HELP, 'No current subscriptions.', the counts template, the two dashboard texts). `countsLine` was renamed `customerSubscriptionCounts`; no other importer of the old name or of the panel-local constants remains.
+- B: T9 mock now checks the GUID before the role; new test covers 404 for Cashier on a non-GUID and 403 for a real id. Nothing weakened.
+- C: citation :53 / :157 matches the `[RequireAction(Actions.Subscriptions.View)]` lines on due-tomorrow and the customer GET.
+- D: `tab` is derived from `selected` against the current `tabs`; the new test rerenders without the panel and asserts Orders selected and its panel shown.
+- E/F: fixed sleeps replaced by response / query-state waits; assertions retained. No waitForTimeout left in E13.
+- Targeted Vitest (--maxWorkers=2): 30 files, 455 tests, 0 failed.
+- Scope: only S3 files and the TC doc / handover amendment changed.
+
+FINDINGS
+- [LOW] web/tests/components/back-office-subscriptions/customer-tab.test.tsx:~113-123 — `server.events.removeAllListeners()` is called at the end of the test body, not in a `finally`/afterEach, and removes every listener on the shared server; a failure before it leaves the listener attached for later tests in the file. Move to `afterEach`.
+- [LOW] web/components/back-office-overview/DashboardAttention.tsx:9 — the new `@/lib/subscriptions/copy` import is placed between two `@/lib/hooks/*` imports; cosmetic ordering only.
+
+SCOPE CHECK
+- files in allowed scope: 12/12
+- files outside allowed scope: none
