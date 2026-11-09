@@ -96,7 +96,7 @@ reached.
 | ADR-FE-079 … ADR-FE-088 | `HO-BIL-002` (079–086 used) |
 | ADR-FE-089 … ADR-FE-098 | `HO-ORD-002` (all used) |
 | ADR-FE-099 … ADR-FE-108 | A retired area (the numbers stay spent, never reused) |
-| ADR-FE-109 … ADR-FE-118 | `HO-SUB-002` (109–114 used) |
+| ADR-FE-109 … ADR-FE-118 | `HO-SUB-002` reserved them; **109–114 recorded by HO-P6** (`HO-SUB-002` was never built; the decisions are in `web/docs/decisions.md`) |
 | ADR-FE-119 … ADR-FE-128 | `HO-POR-002` (119–126 used) |
 | ADR-FE-129 … ADR-FE-138 | `HO-RPT-002` (129–138 used) |
 | ADR-FE-139 … ADR-FE-148 | `HO-XCT-002` (139–148 used) |
@@ -106,11 +106,12 @@ reached.
 | ADR-FE-174 … ADR-FE-180 | `HO-P3-STORE-FRONT` (174–179 used; 180 lent to HO-P4) |
 | ADR-FE-180 … ADR-FE-184 | `HO-P4-BACK-OFFICE` (180–184 used) |
 | ADR-FE-185 … ADR-FE-192 | `HO-P5-WIRING` (all used) |
+| ADR-FE-193 … ADR-FE-202 | `HO-P6-SUBSCRIPTIONS` (193–197 used; recorded in `web/docs/decisions.md`) |
 
 A range is that handover's to spend. Unused numbers inside a range stay with it for later
 amendments; they are not handed to the next area. **ADR-317 … ADR-320** and **ADR-342** are
 cross-cutting decisions recorded in `.ai/decisions/adr.md` rather than in any one handover, because
-more than one area is bound by each. The next new area starts at **ADR-347** (ADR-344 to ADR-346 are HO-BIL-001 Phase J) / **ADR-FE-193** (ADR-FE-173 is Hearth, 174–179 HO-P3, 180–184 HO-P4, 185–192 HO-P5; ADR-FE-164 was used by a retired area's follow-up; 170–172 are reserved by HO-ADM-002-FU1).
+more than one area is bound by each. The next new area starts at **ADR-347** (ADR-344 to ADR-346 are HO-BIL-001 Phase J) / **ADR-FE-203** (ADR-FE-173 is Hearth, 174–179 HO-P3, 180–184 HO-P4, 185–192 HO-P5, 193–202 HO-P6 (193–197 used); ADR-FE-164 was used by a retired area's follow-up; 170–172 are reserved by HO-ADM-002-FU1).
 
 ## Open conflicts between written handovers
 
