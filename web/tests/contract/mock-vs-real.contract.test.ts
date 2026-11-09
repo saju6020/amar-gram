@@ -117,7 +117,26 @@ interface Diff {
   unverified: string[];
 }
 
+/** Paths the server types as a dictionary (`IReadOnlyDictionary<string, T>`): the keys are data, not fields, so only
+ *  the values' shape is compared, and a side with no entries leaves it unverified (as an empty array does).
+ *  `OpenAlertSummaryViewModel.ByKind` (Read/ViewModels/AlertsAndReportsViewModels.cs:17) lists only the kinds with an
+ *  open alert; a scratch database with none sends `{}` (HO-P6 integration part 2). */
+const DICTIONARY_PATHS = new Set(['$.open.byKind']);
+
+function valuesOf(shape: Shape): Shape | undefined {
+  let out: Shape | undefined;
+  for (const v of shape.props?.values() ?? []) out = out ? merge(out, v) : v;
+  return out;
+}
+
 function compare(mock: Shape, real: Shape, path: string, diff: Diff) {
+  if (DICTIONARY_PATHS.has(path) && mock.props && real.props) {
+    const mv = valuesOf(mock);
+    const rv = valuesOf(real);
+    if (mv && rv) compare(mv, rv, `${path}{}`, diff);
+    else if (mv || rv) diff.unverified.push(`${path}{} (${mv ? 'real' : 'mock'} dictionary was empty)`);
+    return;
+  }
   const mt = [...mock.types].filter((t) => t !== 'null');
   const rt = [...real.types].filter((t) => t !== 'null');
   if (mt.length === 0 || rt.length === 0) {
