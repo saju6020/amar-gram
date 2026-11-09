@@ -59,7 +59,7 @@ for (const viewport of VIEWPORTS) {
       await openReportsAs(page, 'Administrator', `/staff/shop/products/${NEEM.productId}`);
       const box = page.getByRole('checkbox', { name: 'Can be subscribed to' });
       await expect(box).toBeVisible();
-      await expect(box).toHaveAccessibleDescription(/Turning it off does not cancel existing subscriptions/);
+      await expect(box).toHaveAccessibleDescription(/Turning it off stops new subscriptions; existing subscriptions carry on as normal/);
       await checkScreen(page, box.locator('xpath=ancestor::label[1]'), viewport.width);
     });
 

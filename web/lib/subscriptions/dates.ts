@@ -25,6 +25,11 @@ function dateParts(dateText: string): { year: number; month: number; day: number
   return { year, month, day };
 }
 
+/** True when the text is a real `yyyy-MM-dd` calendar day (2026-02-31 is not). */
+export function isCalendarDate(dateText: string): boolean {
+  return dateParts(dateText) !== null;
+}
+
 function layout(
   dateText: string,
   options: Intl.DateTimeFormatOptions,

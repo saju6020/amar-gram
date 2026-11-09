@@ -14,6 +14,7 @@ import {
 import type { StaffSubscriptionFilters, StaffSubscriptionRow } from '@/lib/api/staff-subscriptions';
 import { useCanExportSubscriptions, useStaffSubscriptions } from '@/lib/hooks/useStaffSubscriptions';
 import { useUrlFilterState } from '@/lib/hooks/useUrlFilterState';
+import { isCalendarDate } from '@/lib/subscriptions/dates';
 import { subscriptionPaymentMethodLabel } from '@/lib/subscriptions/labels';
 import { ExportCsvButton } from './ExportCsvButton';
 import {
@@ -73,9 +74,11 @@ export function StaffSubscriptionsList() {
         !status || status === 'Suspended' ? known(values.suspensionReason, SUBSCRIPTION_SUSPENSION_REASONS) : undefined,
       paymentMethod: known(values.paymentMethod, SUBSCRIPTION_PAYMENT_METHODS),
       q: values.q.trim() || undefined,
+      // A hand-edited date that is not a real day is dropped, not sent (the server would answer 400).
+      nextDeliveryOn: isCalendarDate(values.nextDeliveryOn) ? values.nextDeliveryOn : undefined,
       sort: values.sort || undefined,
     };
-  }, [values.status, values.suspensionReason, values.paymentMethod, values.q, values.sort],
+  }, [values.status, values.suspensionReason, values.paymentMethod, values.q, values.nextDeliveryOn, values.sort],
   );
   const page = Math.max(1, Math.trunc(Number(values.page)) || 1);
   const query = useStaffSubscriptions({ ...filters, pageNumber: page, pageSize: PAGE_SIZE });

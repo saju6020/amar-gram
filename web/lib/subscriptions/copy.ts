@@ -333,9 +333,9 @@ export const WITHDRAW_TITLE = 'Withdraw scheduled changes?';
 
 // ---- back-office touch points (HO-P6 S3, Amended (m)) ----------------------------------------------------
 
-/** The product editor's help under "Can be subscribed to" (OQ-18; consequence `ProductAggregate.Subscription.cs:4-7`). */
+/** The product editor's help under "Can be subscribed to" (OQ-18; owner decision 2026-11-09: turning it off only stops new subscriptions). */
 export const SUBSCRIBABLE_HELP =
-  'Customers can start a repeat delivery of any pack size. Turning it off does not cancel existing subscriptions: their next order is not placed and they are suspended.';
+  'Customers can start a repeat delivery of any pack size. Turning it off stops new subscriptions; existing subscriptions carry on as normal.';
 /** The customer profile's Subscriptions tab: the empty text and the counts line. */
 export const NO_CURRENT_SUBSCRIPTIONS = 'No current subscriptions.';
 export const customerSubscriptionCounts = (suspendedCount: number, cancelledCount: number): string =>

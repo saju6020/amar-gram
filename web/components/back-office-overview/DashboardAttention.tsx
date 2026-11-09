@@ -46,6 +46,11 @@ export function DashboardAttention() {
   const approvalCount = approvals.data?.length ?? 0;
   const dueCount = subscriptions.data?.count ?? 0;
   const suspendedCount = subscriptions.data?.suspendedCount ?? 0;
+  // The list is narrowed to the day the count is about (T3's own `dueOn`), so the row opens exactly the counted subscriptions.
+  const dueOn = subscriptions.data?.dueOn;
+  const dueHref = dueOn
+    ? `/staff/subscriptions?status=Active&nextDeliveryOn=${encodeURIComponent(dueOn)}`
+    : '/staff/subscriptions?status=Active';
   const failed =
     (alerts.isError && !alertsRefused) ||
     (approvals.isError && !approvalsRefused) ||
@@ -88,7 +93,7 @@ export function DashboardAttention() {
             icon={<Repeat size={ICON_SIZE} />}
             text={DASHBOARD_DUE_TOMORROW_TEXT}
             count={dueCount}
-            href="/staff/subscriptions?status=Active"
+            href={dueHref}
           />
         )}
         {suspendedCount > 0 && (

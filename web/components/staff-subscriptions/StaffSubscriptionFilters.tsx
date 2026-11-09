@@ -2,19 +2,21 @@
 
 import { SearchField } from '@/components/back-office/SearchField';
 import { SelectField } from '@/components/billing/Fields';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   SUBSCRIPTION_PAYMENT_METHODS,
   SUBSCRIPTION_STATUSES,
   SUBSCRIPTION_SUSPENSION_REASONS,
 } from '@/lib/api/subscriptions';
+import { formatCycleDate, isCalendarDate } from '@/lib/subscriptions/dates';
 import {
   subscriptionPaymentMethodLabel,
   subscriptionStatusLabel,
   suspensionReasonLabel,
 } from '@/lib/subscriptions/labels';
 
-export const STAFF_FILTER_FIELDS = ['status', 'suspensionReason', 'paymentMethod', 'q', 'sort', 'page'] as const;
+export const STAFF_FILTER_FIELDS = ['status', 'suspensionReason', 'paymentMethod', 'q', 'nextDeliveryOn', 'sort', 'page'] as const;
 export type StaffFilterField = (typeof STAFF_FILTER_FIELDS)[number];
 export type StaffFilterValues = Record<StaffFilterField, string>;
 
@@ -45,7 +47,7 @@ export function StaffSubscriptionFilters({
   onClear: () => void;
 }) {
   const reasonEnabled = values.status === '' || values.status === 'Suspended';
-  const hasFilter = Boolean(values.status || values.suspensionReason || values.paymentMethod || values.q || values.sort);
+  const hasFilter = Boolean(values.status || values.suspensionReason || values.paymentMethod || values.q || values.nextDeliveryOn || values.sort);
   return (
     <form
       role="search"
@@ -119,6 +121,19 @@ export function StaffSubscriptionFilters({
           ))}
         </SelectField>
       </div>
+      {isCalendarDate(values.nextDeliveryOn) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            className="min-h-11"
+            aria-label={`Remove filter: Next delivery ${formatCycleDate(values.nextDeliveryOn)}`}
+            onClick={() => onChange('nextDeliveryOn', '')}
+          >
+            Next delivery: {formatCycleDate(values.nextDeliveryOn)}
+            <X size={16} aria-hidden="true" />
+          </Button>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-ink-muted">
           Filters are kept in the address, so the view can be shared or reloaded.

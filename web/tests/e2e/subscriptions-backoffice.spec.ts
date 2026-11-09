@@ -39,7 +39,7 @@ test.describe('product editor (BG-15)', () => {
     await openReportsAs(page, 'Administrator', `/staff/shop/products/${NEEM.productId}`);
     const box = page.getByRole('checkbox', SUBSCRIBABLE);
     await expect(box).not.toBeChecked();
-    await expect(page.getByText('Turning it off does not cancel existing subscriptions', { exact: false })).toBeVisible();
+    await expect(page.getByText('Turning it off stops new subscriptions', { exact: false })).toBeVisible();
 
     await box.check();
     await saveDetails(page);
@@ -108,16 +108,19 @@ test.describe('dashboard (BG-15, OQ-12)', () => {
     const served = await page.evaluate(async () => {
       const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
       const response = await fetch(`${base}/api/staff/subscriptions/due-tomorrow`, { credentials: 'include' });
-      return (await response.json()) as { count: number; suspendedCount: number };
+      return (await response.json()) as { count: number; suspendedCount: number; dueOn: string };
     });
     expect(served.count).toBeGreaterThanOrEqual(1);
     await expect(row).toContainText(String(served.count));
     await expect(panel.getByRole('link', { name: /Subscriptions suspended/ })).toContainText(String(served.suspendedCount));
 
     await row.click();
-    await expect(page).toHaveURL(/\/staff\/subscriptions\?status=Active$/);
+    await expect(page).toHaveURL(`/staff/subscriptions?status=Active&nextDeliveryOn=${served.dueOn}`);
     await expect(page.getByRole('heading', { level: 1, name: 'Subscriptions' })).toBeVisible();
     await expect(page.getByLabel('Status')).toHaveValue('Active');
+    // The list holds exactly the counted subscriptions, and the day shows as a removable filter.
+    await expect(page.getByRole('button', { name: /Remove filter: Next delivery/ })).toBeVisible();
+    await expect(page.getByText(`${served.count} total`)).toBeVisible();
   });
 });
 

@@ -30,11 +30,11 @@ beforeEach(() => {
  * `403` dropping both without a banner; the panel is absent only when all three sources are refused.
  */
 describe('Dashboard attention -- subscription rows (U37)', () => {
-  it('shows "Subscription orders due tomorrow" with the server count, linked to the Active list', async () => {
+  it('shows "Subscription orders due tomorrow" with the server count, linked to the Active list for the due day', async () => {
     server.use(noAlerts(), noApprovals(), dueTomorrow(4, 0));
     renderWithClient(<DashboardAttention />);
     const row = await screen.findByRole('link', { name: /Subscription orders due tomorrow/ });
-    expect(row).toHaveAttribute('href', '/staff/subscriptions?status=Active');
+    expect(row).toHaveAttribute('href', '/staff/subscriptions?status=Active&nextDeliveryOn=2026-11-10');
     expect(row).toHaveTextContent('4');
     expect(row).toHaveClass('min-h-11');
     expect(screen.queryByRole('link', { name: /Subscriptions suspended/ })).not.toBeInTheDocument();

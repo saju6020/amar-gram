@@ -41,7 +41,7 @@ describe('Product editor -- Can be subscribed to (U35)', () => {
     const box = await screen.findByRole('checkbox', CHECKBOX, { timeout: 4000 });
     expect(box).not.toBeChecked();
     expect(box).toHaveAccessibleDescription(
-      'Customers can start a repeat delivery of any pack size. Turning it off does not cancel existing subscriptions: their next order is not placed and they are suspended.',
+      'Customers can start a repeat delivery of any pack size. Turning it off stops new subscriptions; existing subscriptions carry on as normal.',
     );
     // jsdom has no layout: the clickable label carries the 44 px height.
     expect(box.closest('label')).toHaveClass('min-h-11');
