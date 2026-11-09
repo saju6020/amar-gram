@@ -4,7 +4,7 @@ import type { TaxClass } from '@/lib/api/admin-catalogue';
 
 /** `components/admin/TaxClassTable.tsx` — HO-ADM-002 §11.3, US-ADM-04. No `/new` route (§8.1's
  *  route map lists only `tax-classes/page.tsx` and `tax-classes/[taxClassId]/page.tsx`) — the
- *  create form is inline above this table on the list page, same pattern as `RoomForm`/`RoomList`. */
+ *  create form is inline above this table on the list page. */
 export interface TaxClassTableProps {
   taxClasses: TaxClass[] | undefined;
   isLoading: boolean;

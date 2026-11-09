@@ -3,9 +3,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, LogOut, Mail, Package, Receipt, Store, User } from 'lucide-react';
+import { ChevronDown, Lock, LogOut, Mail, Package, Receipt, Store, User } from 'lucide-react';
 import { useCustomerProfile } from '@/lib/hooks/useAccount';
 import { useCustomerSession } from '@/lib/hooks/useSession';
+import { useUnreadCount } from '@/lib/hooks/useInbox';
+import { BADGE_CAP } from '@/components/inbox/InboxBadge';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { HearthLogo } from '@/components/hearth/HearthLogo';
 import { SearchForm } from '@/components/shop/SearchBox';
@@ -14,29 +16,59 @@ import { ACCOUNT_LANDING } from '@/components/portal/account-nav';
 import { cn } from '@/lib/utils';
 
 /**
- * The customer header (HO-CAT-002 §8.3), as the owner approved it on 2026-10-17
- * (https://claude.ai/artifact/K3WKkwpv67BqLJJdSr3bUh): logo, product search, round cart and
+ * The customer header (the scaffold handover §8.3), restyled for HO-P3 (§8.3): logo, product search, round cart and
  * messages buttons with orange counts (passed in as `sessionActions`), and the customer's initials
- * and first name with an arrow that opens a short menu ending in Sign out. The account's pages are
+ * and first name with an arrow that opens a short menu ending in Sign out. On `/checkout` it is the
+ * focused "Secure checkout" header instead. The account's pages are
  * in the left menu (`components/portal/AccountSidebar.tsx`).
  *
  * HO-ACC-002 §11.5/§8.4: the name comes from the session query `CustomerSessionGuard` already
  * resolves (shared cache, no extra request). While it resolves the header shows no name yet.
  */
+/** The phone row's name starts with its visible label (WCAG 2.5.3): "Messages, 3 unread". */
+function messagesRowName(count: number): string {
+  return `Messages, ${count > BADGE_CAP ? `more than ${BADGE_CAP}` : count} unread`;
+}
+
 export function PortalHeader({ sessionActions }: { sessionActions?: React.ReactNode }) {
   const { data: session } = useCustomerSession();
+  const pathname = usePathname();
+
+  // HO-P3 §8.3 / ADR-FE-176: checkout gets a focused header - the logo and "Secure checkout", nothing
+  // that leads away (no search, basket or inbox badges, or account menu).
+  if (pathname === '/checkout' || pathname.startsWith('/checkout/')) {
+    return (
+      <header className="border-b-[1.5px] border-border bg-surface">
+        <div className="mx-auto flex w-full max-w-[1224px] items-center justify-between gap-3 px-4 py-3 md:px-8 md:py-4">
+          <HearthLogo variant="portal" href="/" className="text-xl sm:text-2xl" tagClassName="hidden sm:inline-block" />
+          <p className="m-0 inline-flex flex-none items-center gap-2 text-sm font-semibold text-leaf-ink">
+            <Lock size={16} aria-hidden="true" />
+            Secure checkout
+          </p>
+        </div>
+      </header>
+    );
+  }
 
   return (
-    <header className="border-b border-border bg-surface">
+    <header className="border-b-[1.5px] border-border bg-surface">
       <div className="flex w-full items-center gap-3 px-3.5 py-3 md:gap-4 md:px-[22px] md:py-3.5">
-        <HearthLogo variant="portal" href="/" />
+        {/* At 360 px the full logo, basket, inbox and account button overflow; the logo shrinks and drops its tag below sm. */}
+        <HearthLogo variant="portal" href="/" className="text-xl sm:text-2xl" tagClassName="hidden sm:inline-block" />
         <div className="hidden min-w-0 flex-1 md:flex">
           <SearchForm />
         </div>
         <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-3">
+          <Link
+            href="/shop"
+            className="hidden min-h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-ink no-underline hover:bg-surface-sunken sm:inline-flex"
+          >
+            <Store size={18} aria-hidden="true" />
+            Shop
+          </Link>
           {session ? (
             <>
-              {/* HO-NTF-002 §11.1 / HO-ORD-002 §3.3 — the cart and inbox buttons, only once signed in. */}
+              {/* HO-NTF-002 §11.1 / HO-ORD-002 §3.3 - the basket and inbox buttons, only once signed in. */}
               {sessionActions}
               <AccountMenu fullName={session.fullName} />
             </>
@@ -67,6 +99,8 @@ function AccountMenu({ fullName }: { fullName: string }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
   const profile = useCustomerProfile();
+  // The phone has no envelope button in the header (it is `max-sm:hidden`), so the unread count lives on this row.
+  const unread = useUnreadCount().data?.count ?? 0;
   const firstName = fullName.trim().split(/\s+/)[0] ?? fullName;
 
   useEffect(() => {
@@ -105,15 +139,15 @@ function AccountMenu({ fullName }: { fullName: string }) {
         aria-label={`Account menu for ${fullName}`}
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          'inline-flex min-h-11 items-center gap-1 rounded-full border bg-surface p-[3px] pr-2 text-[15px] font-semibold text-ink sm:gap-2.5 sm:pr-3.5',
+          'inline-flex min-h-11 items-center gap-1 rounded-full border-[1.5px] bg-surface p-[3px] pr-2 text-[15px] font-semibold text-ink sm:gap-2.5 sm:pr-3.5',
           open
-            ? 'border-accent shadow-[0_0_0_3px_var(--accent-tint)]'
+            ? 'border-leaf ring-[3px] ring-leaf-soft'
             : 'border-border hover:border-border-strong',
         )}
       >
         <span
           aria-hidden="true"
-          className="grid size-9 place-items-center rounded-full bg-accent text-[13px] font-bold text-white sm:size-10 sm:text-[15px]"
+          className="grid size-9 place-items-center rounded-full bg-leaf-soft text-[13px] font-bold text-leaf-ink sm:size-10 sm:text-[15px]"
         >
           {initialsOf(fullName)}
         </span>
@@ -129,12 +163,12 @@ function AccountMenu({ fullName }: { fullName: string }) {
       <div
         id={panelId}
         hidden={!open}
-        className="absolute right-0 top-[calc(100%+10px)] z-30 w-[270px] rounded-card border border-border bg-surface p-2 shadow-[0_18px_40px_rgba(31,29,26,0.16)]"
+        className="absolute right-0 top-[calc(100%+10px)] z-30 w-[270px] rounded-3xl border-[1.5px] border-border bg-surface p-2 shadow-modal"
       >
         <div className="mb-1 flex items-center gap-3 border-b border-border px-2.5 pb-3.5 pt-2.5">
           <span
             aria-hidden="true"
-            className="grid size-10 flex-none place-items-center rounded-full bg-accent text-[15px] font-bold text-white"
+            className="grid size-10 flex-none place-items-center rounded-full bg-leaf-soft text-[15px] font-bold text-leaf-ink"
           >
             {initialsOf(fullName)}
           </span>
@@ -155,15 +189,28 @@ function AccountMenu({ fullName }: { fullName: string }) {
             </Link>
           </li>
           <li className="sm:hidden">
-            <Link href="/portal/inbox" className={row}>
+            <Link
+              href="/portal/inbox"
+              className={row}
+              aria-label={unread > 0 ? messagesRowName(unread) : undefined}
+            >
               <Mail size={18} aria-hidden="true" className="text-ink-muted" />
               Messages
+              {unread > 0 && (
+                <span
+                  aria-hidden="true"
+                  data-testid="inbox-unread-count"
+                  className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-warm-ink px-1.5 text-[11px] font-bold leading-5 text-white"
+                >
+                  {unread > BADGE_CAP ? `${BADGE_CAP}+` : unread}
+                </span>
+              )}
             </Link>
           </li>
           <li>
             <Link href="/portal/account/profile" className={row}>
               <User size={18} aria-hidden="true" className="text-ink-muted" />
-              Profile &amp; security
+              Profile &amp; addresses
             </Link>
           </li>
           <li>
@@ -172,7 +219,7 @@ function AccountMenu({ fullName }: { fullName: string }) {
               Billing
             </Link>
           </li>
-          <li>
+          <li className="sm:hidden">
             <Link href="/shop" className={row}>
               <Store size={18} aria-hidden="true" className="text-ink-muted" />
               Shop

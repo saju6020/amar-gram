@@ -77,8 +77,7 @@ export function UnsubscribePanel({
     <AuthCard title="Stop marketing messages?">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-ink-muted">
-          You&rsquo;ll still receive important messages about your account, your cats and your
-          orders.
+          You&rsquo;ll still receive important messages about your account and your orders.
         </p>
         {view.error && (
           <p role="alert" className="text-sm font-semibold text-danger-ink">

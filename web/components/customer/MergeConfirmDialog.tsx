@@ -17,10 +17,6 @@ import type { StaffCustomer } from '@/lib/api/staff-customers';
  * "component size", first pass) purely to keep that file under HO-ACC-002 §11's ~150-line
  * guideline once its own hooks moved out to the page — this dialog's content and behaviour are
  * unchanged, still driven entirely by props from `MergeReview`.
- *
- * CR MEDIUM 2 (first-pass gate fix round, item 13) — lists cats by name, not just a count: a fresh
- * `GET /api/staff/customers/{id}` (Q-H1) now carries the actual list (`StaffCustomer.cats`), so
- * staff confirming a merge can see exactly which cats are about to move, not only how many.
  */
 export interface MergeConfirmDialogProps {
   open: boolean;
@@ -54,15 +50,11 @@ export function MergeConfirmDialog({
           </DialogDescription>
         </DialogHeader>
         <ul className="flex flex-col gap-1 text-sm text-ink">
-          {others.map((o) =>
-            o.cats.length === 0 ? (
-              <li key={o.id}>No cats will move from {o.fullName}.</li>
-            ) : (
-              <li key={o.id}>
-                {o.cats.map((cat) => cat.name).join(', ')} will move from {o.fullName}.
-              </li>
-            ),
-          )}
+          {others.map((o) => (
+            <li key={o.id}>
+              {o.fullName} will be marked as merged into {survivor?.fullName}.
+            </li>
+          ))}
         </ul>
         <NotYetRecordedNotice />
         <DialogFooter>

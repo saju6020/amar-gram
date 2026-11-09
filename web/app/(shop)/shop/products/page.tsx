@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { categoryLabel, subcategoryLabel } from '@/lib/shop/labels';
 import { parseCatalogueParams } from '@/lib/shop/catalogueParams';
 import { CatalogueView } from '../../_components/CatalogueView';
@@ -18,8 +19,7 @@ export async function generateMetadata({
       : 'Organic food and everyday goods | Amar Gram';
   return {
     title,
-    description:
-      'Browse organic food and everyday goods. Filter by country of origin and brand.',
+    description: 'Browse organic food and everyday goods. Filter by country of origin and brand.',
     alternates: { canonical: '/shop/products' },
   };
 }
@@ -31,7 +31,7 @@ export async function generateMetadata({
  */
 export default async function CataloguePage({ searchParams }: { searchParams: SearchParams }) {
   const params = parseCatalogueParams(await searchParams);
-  // The title follows what is shown (2026-10-16): "Cat food · Wet", or a single chosen brand.
+  // The title follows what is shown (2026-10-16): "Food · Wet", or a single chosen brand.
   const heading = params.q
     ? `Results for “${params.q}”`
     : params.category
@@ -41,12 +41,33 @@ export default async function CataloguePage({ searchParams }: { searchParams: Se
       : params.brand.length === 1
         ? params.brand[0]!
         : 'All products';
+  const crumbLink = 'text-accent-ink underline-offset-2 hover:underline';
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="m-0 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold leading-tight tracking-[-0.025em] text-ink">
-        {heading}
-      </h1>
-      <CatalogueView params={params} basePath="/shop/products" />
+    <div className="flex flex-col gap-4">
+      <nav aria-label="Breadcrumb" className="flex flex-wrap gap-2 text-sm text-ink-muted">
+        <Link href="/shop" className={crumbLink}>
+          Home
+        </Link>
+        <span aria-hidden="true">/</span>
+        {params.category && params.subcategory ? (
+          <>
+            <Link
+              href={`/shop/products?category=${encodeURIComponent(params.category)}`}
+              className={crumbLink}
+            >
+              {categoryLabel(params.category)}
+            </Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{subcategoryLabel(params.subcategory)}</span>
+          </>
+        ) : params.category ? (
+          <span aria-current="page">{categoryLabel(params.category)}</span>
+        ) : (
+          <span aria-current="page">All products</span>
+        )}
+      </nav>
+      {/* The heading band (h1 and the result count) is drawn by CatalogueView, which owns the count. */}
+      <CatalogueView params={params} basePath="/shop/products" bandTitle={heading} />
     </div>
   );
 }

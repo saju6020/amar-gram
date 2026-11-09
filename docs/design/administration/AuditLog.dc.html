@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -34,14 +34,14 @@ tr.expanded td{background:var(--accent-soft)}
 .diffbox{padding:12px 20px}
 .difftable{width:100%;font-size:12px;border-collapse:collapse}
 .difftable td{border:none;padding:4px 10px}
-.old{color:#8f1d1d;text-decoration:line-through}
+.old{color:#8A2814;text-decoration:line-through}
 .new{color:var(--accent-ink);font-weight:600}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div class="shell">
-    <div class="sidebar"><a>Branches</a><a>Services &amp; pricing</a><a>Rosters &amp; leave</a><a>Settings</a><a>Content</a><a>Policies</a><a class="active" aria-current="page">Audit log</a><a>System</a></div>
+    <div class="sidebar"><a>Branches</a><a>Pricing &amp; tax</a><a>Rosters &amp; leave</a><a>Settings</a><a>Content</a><a>Policies</a><a class="active" aria-current="page">Audit log</a><a>System</a></div>
     <div class="main">
       <h1 class="h1">Audit log</h1>
       <div class="toolbar">
@@ -56,15 +56,15 @@ tr.expanded td{background:var(--accent-soft)}
       <table>
         <thead><tr><th>Time (Uttara)</th><th>Actor</th><th>Action</th><th>Category</th><th>Entity</th><th>IP</th></tr></thead>
         <tbody>
-          <tr class="expanded"><td>23 Sep 09:14</td><td>Rezwan Ahmed</td><td>Update</td><td>Staff accounts</td><td>Dr. Imran Kabir</td><td>103.4.x.x</td></tr>
+          <tr class="expanded"><td>23 Sep 09:14</td><td>Rezwan Ahmed</td><td>Update</td><td>Staff accounts</td><td>Imran Kabir</td><td>103.4.x.x</td></tr>
           <tr class="diffrow"><td colspan="6"><div class="diffbox">
             <table class="difftable">
-              <tr><td style="width:120px;color:var(--ink-muted)">roleIds</td><td class="old">["Vet"]</td><td class="new">["Vet","Administrator"]</td></tr>
+              <tr><td style="width:120px;color:var(--ink-muted)">roleIds</td><td class="old">["Manager"]</td><td class="new">["Manager","Administrator"]</td></tr>
               <tr><td style="color:var(--ink-muted)">reason</td><td colspan="2">Covering while Rezwan is on leave next month</td></tr>
             </table>
           </div></td></tr>
           <tr><td>22 Sep 16:02</td><td>Shormi Akter</td><td>Create</td><td>Customers</td><td>Kamrul Hasan</td><td>103.4.x.x</td></tr>
-          <tr><td>22 Sep 11:40</td><td>Dr. Nusrat Jahan</td><td>Update</td><td>Clinical record</td><td>Mittens — visit</td><td>103.4.x.x</td></tr>
+          <tr><td>22 Sep 11:40</td><td>Nusrat Jahan</td><td>Update</td><td>Products</td><td>Khejur gur 500 g</td><td>103.4.x.x</td></tr>
         </tbody>
       </table>
       <p style="font-size:12px;color:var(--ink-muted);margin-top:10px">A range over 366 days is refused before submit. "Too many entries to export" appears on export only, never on the page itself.</p>

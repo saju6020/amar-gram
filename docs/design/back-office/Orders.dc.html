@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — Orders and fulfilment</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}</style>
+</helmet>
+<div style="min-height: 100vh; background: #F7F4EC; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45; display: flex; flex-wrap: wrap; align-items: stretch">
+  <nav aria-label="Staff" style="width: 260px; min-height: 100vh; align-self: stretch; flex: none; box-sizing: border-box; background: #2F5114; color: #F4F8E8; font-family: 'Work Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; display: flex; flex-direction: column; gap: 14px; padding: 20px 14px">
+  <a href="Dashboard.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #F4F8E8; padding: 0 6px">
+    <span style="width: 38px; height: 38px; border-radius: 50% 50% 50% 7px; background: #F4F8E8; display: grid; place-items: center; color: #2F5114">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+    </span>
+    <span style="display: flex; flex-direction: column; line-height: 1.1"><span style="font-family: Fraunces, Georgia, serif; font-size: 20px; font-weight: 700">Amar <span style="color: #F7D87A">Gram</span></span><span style="font-size: 12px; color: #C9DBAE; letter-spacing: 0.1em; text-transform: uppercase">Back office</span></span>
+  </a>
+  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #C9DBAE; padding: 0 6px">Outlet
+    <select style="min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid #4F7A2C; background: #3F6A1E; color: #F4F8E8; font: inherit; font-size: 14px"><option>Dhanmondi outlet</option><option>Chattogram warehouse</option><option>All outlets</option></select>
+  </label>
+  <div style="display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto">
+    <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Overview</span>
+<a href="Dashboard.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Dashboard</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Sales</span>
+<a href="Orders.dc.html" aria-current="page" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: #F4F8E8; color: #2F5114; font-weight: 600"><span>Orders</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">12</span></a>
+<a href="CounterSale.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Counter sale</span></a>
+<a href="Customers.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Customers</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Catalogue &amp; stock</span>
+<a href="Products.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Products</span></a>
+<a href="Inventory.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Inventory &amp; batches</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">3</span></a>
+<a href="Receiving.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Goods receiving</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Money</span>
+<a href="Billing.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Billing &amp; cash-up</span><span style="min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #EDA73A; color: #2A1F12; font-size: 12px; font-weight: 700; display: grid; place-items: center">2</span></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #A9C48A; padding: 0 10px 4px">Insight &amp; admin</span>
+<a href="Reports.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Reports</span></a>
+<a href="Administration.dc.html" style="min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 10px; border-radius: 10px; text-decoration: none; background: transparent; color: #F4F8E8; font-weight: 500"><span>Administration</span></a>
+</div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 6px 0; border-top: 1px solid #4F7A2C">
+    <span style="width: 36px; height: 36px; border-radius: 50%; background: #EDA73A; color: #2A1F12; display: grid; place-items: center; font-weight: 700">FA</span>
+    <span style="flex: 1; display: flex; flex-direction: column; line-height: 1.25"><strong style="font-size: 14px">[Staff name]</strong><span style="font-size: 12px; color: #C9DBAE">Administrator</span></span>
+    <a href="StaffSignIn.dc.html" style="font-size: 13px; color: #F7D87A">Sign out</a>
+  </div>
+</nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 24px 28px 48px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 32px; font-weight: 700">Orders</h1>
+      <form style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 10px; padding: 0 12px; min-height: 44px; flex: 0 1 340px">
+        <label for="so-q" class="sr">Search orders</label>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#69553C" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+        <input id="so-q" type="search" placeholder="Order no., customer or mobile" style="flex: 1; min-width: 0; border: 0; font: inherit; background: transparent; min-height: 40px">
+      </form>
+    </div>
+
+    <div role="tablist" aria-label="Order status" style="display: flex; flex-wrap: wrap; gap: 6px">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+        <button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="min-height: 40px; padding: 0 14px; border-radius: 999px; border: {{t.border}}; background: {{t.bg}}; color: {{t.ink}}; font: inherit; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px">{{t.label}} <span style="padding: 0 7px; border-radius: 999px; background: {{t.countBg}}; font-size: 12px">{{t.count}}</span></button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+      <section aria-label="Order list" style="flex: 3 1 480px; min-width: 0; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; min-width: 560px">
+          <thead><tr style="text-align: left; color: #69553C; font-size: 13px"><th style="padding: 12px; font-weight: 600">Order</th><th style="padding: 12px; font-weight: 600">Customer</th><th style="padding: 12px; font-weight: 600">Delivery</th><th style="padding: 12px; font-weight: 600">Status</th><th style="padding: 12px; font-weight: 600; text-align: right">Total</th></tr></thead>
+          <tbody>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+              <tr style="border-top: 1px solid #F0E9DA; background: {{r.rowBg}}">
+                <td style="padding: 12px"><button type="button" onClick="{{r.pick}}" aria-pressed="{{r.on}}" style="border: 0; background: transparent; padding: 0; font: inherit; font-weight: 700; color: #2A1F12; cursor: pointer; min-height: 32px; text-decoration: underline">{{r.no}}</button><br><span style="font-size: 12px; color: #69553C">{{r.age}}</span></td>
+                <td style="padding: 12px">{{r.customer}}<br><span style="font-size: 12px; color: #69553C">{{r.area}}</span></td>
+                <td style="padding: 12px">{{r.slot}}</td>
+                <td style="padding: 12px"><span style="padding: 3px 10px; border-radius: 999px; background: {{r.bg}}; color: {{r.ink}}; font-weight: 600; font-size: 13px; white-space: nowrap">{{r.status}}</span></td>
+                <td style="padding: 12px; text-align: right">{{r.total}}<br><span style="font-size: 12px; color: #69553C">{{r.pay}}</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </section>
+
+      <aside aria-label="Selected order" style="flex: 2 1 340px; min-width: 0; background: #FFFFFF; border: 1px solid #E5DCC8; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+          <h2 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 700">Order {{sel.no}}</h2>
+          <span style="padding: 3px 10px; border-radius: 999px; background: {{sel.bg}}; color: {{sel.ink}}; font-weight: 600; font-size: 13px">{{sel.status}}</span>
+        </div>
+        <div style="font-size: 14px; color: #53432D; display: flex; flex-direction: column; gap: 2px">
+          <strong style="color: #2A1F12">{{sel.customer}} · 01XXXXXXXXX</strong>
+          <span>[House, road], {{sel.area}}</span>
+          <span>Deliver {{sel.slot}} · {{sel.pay}}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 13px; font-weight: 600; color: #69553C">Pick list (first-expiry batch suggested)</span>
+          <sc-for list="{{picks}}" as="p" hint-placeholder-count="3">
+            <label style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #F7F4EC; min-height: 44px">
+              <input type="checkbox" checked="{{p.done}}" onChange="{{p.toggle}}" style="width: 20px; height: 20px; accent-color: #3F6A1E">
+              <span style="flex: 1; line-height: 1.3"><strong style="font-size: 14px">{{p.qty}} × {{p.name}}</strong><br><span style="font-size: 12px; color: #69553C">Batch {{p.batch}} · expires {{p.exp}} · shelf {{p.shelf}}</span></span>
+            </label>
+          </sc-for>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-top: 1px solid #F0E9DA; padding-top: 10px"><span>Total</span><strong style="font-family: Fraunces, Georgia, serif; font-size: 22px">{{sel.total}}</strong></div>
+        <sc-if value="{{hasNext}}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{advance}}" disabled="{{advanceDisabled}}" style="min-height: 48px; border-radius: 10px; border: 0; background: {{advanceBg}}; color: #FFFAF0; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">{{nextLabel}}</button>
+        </sc-if>
+        <sc-if value="{{needsRider}}" hint-placeholder-val="{{ false }}">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 14px">Rider
+            <select style="min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1px solid #E5DCC8; font: inherit; font-weight: 400"><option>[Rider 1] · 3 drops</option><option>[Rider 2] · 1 drop</option><option>Courier: [COURIER]</option></select>
+          </label>
+        </sc-if>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <a href="#" style="min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; border: 1px solid #2A1F12; color: #2A1F12; text-decoration: none; font-weight: 600; font-size: 14px">Print packing slip</a>
+          <a href="#" style="min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 10px; color: #8A2814; font-weight: 600; font-size: 14px">Cancel order</a>
+        </div>
+        <ol style="list-style: none; margin: 0; padding: 12px 0 0; border-top: 1px solid #F0E9DA; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #69553C">
+          <sc-for list="{{history}}" as="h" hint-placeholder-count="2"><li>{{h}}</li></sc-for>
+        </ol>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 0, sel: 0, stage: { 0: 0, 1: 0, 2: 1, 3: 2, 4: -1 }, picked: {} }; }
+  renderVals() {
+    const s = this.state;
+    const fmt = (n) => '৳' + n.toLocaleString('en-IN');
+    const stages = ['To pack', 'Packed', 'Out for delivery', 'Delivered'];
+    const pills = { 'To pack': ['#FCEBC7', '#6E4700'], 'Packed': ['#E3EDC6', '#2F5114'], 'Out for delivery': ['#E3EDC6', '#2F5114'], 'Delivered': ['#F0E9DA', '#53432D'], 'Awaiting payment': ['#FBE3DA', '#8A2814'] };
+    const orders = [
+      ['[1043]', '[Customer B]', 'Dhanmondi', 'Today 4–8pm', 870, 'Cash on delivery', '2h 10m ago'],
+      ['[1045]', '[Customer C]', 'Mohammadpur', 'Today 4–8pm', 1530, 'Cash on delivery', '1h 40m ago'],
+      ['[1041]', '[Customer E]', 'Lalmatia', 'Today 4–8pm', 640, 'Cash on delivery', '3h ago'],
+      ['[1042]', '[Customer A]', 'Dhanmondi', 'Today 4–8pm', 1330, 'Cash on delivery', '5h ago'],
+      ['[1046]', '[Customer D]', 'Gulshan', 'Tomorrow 10–1', 2140, 'Bank transfer', '20m ago']
+    ];
+    const statusOf = (i) => s.stage[i] === -1 ? 'Awaiting payment' : stages[s.stage[i]];
+    const tabDefs = [['To pack', (st) => st === 'To pack'], ['Packed', (st) => st === 'Packed'], ['Out for delivery', (st) => st === 'Out for delivery'], ['Awaiting payment', (st) => st === 'Awaiting payment'], ['All', () => true]];
+    const shown = orders.map((o, i) => i).filter((i) => tabDefs[s.tab][1](statusOf(i)));
+    const sel = s.sel;
+    const st = statusOf(sel);
+    const picksDef = [['Chinigura aromatic rice 1 kg', 2, 'B-0921', '12 Mar', 'A3'], ['Sundarbans wild honey 500 g', 1, 'B-0877', '30 Jan', 'C1'], ['Mustard oil 1 L', 1, 'B-0903', '18 Feb', 'B2']];
+    const allPicked = picksDef.every((p, k) => s.picked[sel + '-' + k]);
+    const stg = s.stage[sel];
+    const nextLabels = { '-1': 'Waiting for transfer approval (Billing)', 0: allPicked ? 'Mark packed' : 'Tick every item to pack', 1: 'Hand to rider', 2: 'Mark delivered & cash collected' };
+    return {
+      tabs: tabDefs.map(([label, fn], i) => { const on = s.tab === i; return { label, count: orders.filter((o, k) => fn(statusOf(k))).length, on, border: on ? '1px solid #2F5114' : '1px solid #E5DCC8', bg: on ? '#2F5114' : '#FFFFFF', ink: on ? '#F4F8E8' : '#2A1F12', countBg: on ? '#557A1F' : '#F0E9DA', pick: () => this.setState({ tab: i }) }; }),
+      rows: shown.map((i) => { const [no, customer, area, slot, total, pay, age] = orders[i]; const sti = statusOf(i); return { no, customer, area, slot, total: fmt(total), pay, age, status: sti, bg: pills[sti][0], ink: pills[sti][1], on: sel === i, rowBg: sel === i ? '#F4F8E8' : '#FFFFFF', pick: () => this.setState({ sel: i }) }; }),
+      sel: { no: orders[sel][0], customer: orders[sel][1], area: orders[sel][2], slot: orders[sel][3], total: fmt(orders[sel][4]), pay: orders[sel][5], status: st, bg: pills[st][0], ink: pills[st][1] },
+      picks: picksDef.map(([name, qty, batch, exp, shelf], k) => ({ name, qty, batch, exp, shelf, done: !!s.picked[sel + '-' + k] || stg >= 1, toggle: () => this.setState({ picked: { ...s.picked, [sel + '-' + k]: !s.picked[sel + '-' + k] } }) })),
+      hasNext: stg < 3, needsRider: stg === 1,
+      nextLabel: nextLabels[String(stg)],
+      advanceDisabled: stg === -1 || (stg === 0 && !allPicked),
+      advanceBg: stg === -1 || (stg === 0 && !allPicked) ? '#B8A98C' : '#B4531A',
+      advance: () => this.setState({ stage: { ...s.stage, [sel]: Math.min(3, stg + 1) } }),
+      history: ['Placed online · ' + orders[sel][6], stg >= 1 ? 'Packed by [Staff name]' : 'Not packed yet', stg >= 2 ? 'Handed to [Rider 1]' : '']
+    };
+  }
+}
+</script>
+</body>
+</html>

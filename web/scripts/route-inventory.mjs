@@ -20,7 +20,7 @@ const SAMPLE_UUID = '00000000-0000-0000-0000-000000000001';
 // Known sample values, from the MSW fixtures. Anything else gets SAMPLE_UUID: the page then shows
 // its own not-found or empty state, which is still a page the sweeps must cover.
 const SAMPLE_PARAMS = {
-  slug: 'royal-canin-indoor-adult',
+  slug: 'organic-rolled-oats',
   token: 'sample-token',
   page: 'terms',
   key: 'terms',

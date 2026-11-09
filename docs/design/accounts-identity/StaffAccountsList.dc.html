@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-pill:999px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border);background:#fff}
@@ -34,7 +34,7 @@ tr:hover td{background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div style="padding:28px 32px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h1 class="h1">Staff accounts</h1>
@@ -42,16 +42,16 @@ tr:hover td{background:var(--surface-sunken)}
     </div>
     <div class="toolbar">
       <input type="search" placeholder="Search by name or identifier" style="width:260px" aria-label="Search staff accounts">
-      <select aria-label="Filter by role"><option>All roles</option><option>Vet</option><option>Nurse</option><option>Reception</option><option>Administrator</option></select>
+      <select aria-label="Filter by role"><option>All roles</option><option>Manager</option><option>Cashier</option><option>Packer</option><option>Stock keeper</option><option>Rider</option><option>Administrator</option></select>
     </div>
     <table>
       <thead><tr><th>Name</th><th>Identifier</th><th>Roles</th><th>Password set</th><th></th></tr></thead>
       <tbody>
-        <tr><td>Rezwan Ahmed</td><td>reception@purrcare.example</td><td><span class="rolechip">Administrator</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
-        <tr><td>Dr. Nusrat Jahan</td><td>01711 222333</td><td><span class="rolechip">Vet</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
-        <tr><td>Tanvir Islam</td><td>tanvir@purrcare.example</td><td><span class="rolechip">Nurse</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
-        <tr><td>Shormi Akter</td><td>01822 445566</td><td><span class="rolechip">Reception</span></td><td class="pill-no">No — invited</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
-        <tr><td>Dr. Imran Kabir</td><td>imran@purrcare.example</td><td><span class="rolechip">Vet</span><span class="rolechip">Administrator</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
+        <tr><td>Rezwan Ahmed</td><td>admin@amargram.example</td><td><span class="rolechip">Administrator</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
+        <tr><td>Nusrat Jahan</td><td>01711 222333</td><td><span class="rolechip">Manager</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
+        <tr><td>Tanvir Islam</td><td>tanvir@amargram.example</td><td><span class="rolechip">Packer</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
+        <tr><td>Shormi Akter</td><td>01822 445566</td><td><span class="rolechip">Cashier</span></td><td class="pill-no">No — invited</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
+        <tr><td>Imran Kabir</td><td>imran@amargram.example</td><td><span class="rolechip">Manager</span><span class="rolechip">Administrator</span></td><td class="pill-yes">Yes</td><td><a href="StaffAccountDetail.dc.html" style="color:var(--accent-ink);font-weight:600;font-size:13px">View</a></td></tr>
       </tbody>
     </table>
     <div class="pager">

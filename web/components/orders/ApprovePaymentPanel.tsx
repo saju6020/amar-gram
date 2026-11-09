@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Amount } from '@/components/billing/Amount';
-import { Section } from '@/components/billing/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
 import { Button } from '@/components/ui/button';
 import { describeOrderingError } from '@/lib/api/errors';
 import type { StaffOrderDetail } from '@/lib/api/staff-orders';
@@ -42,10 +42,9 @@ export function ApprovePaymentPanel({ order }: { order: StaffOrderDetail }) {
   }
 
   return (
-    <Section
-      title="Payment waiting for approval"
-      description="A second staff member must approve this transfer before the order is confirmed."
-    >
+    <Panel title="Payment waiting for approval">
+      <div className="flex flex-col gap-3">
+      <p className="text-sm text-ink-muted">A second staff member must approve this transfer before the order is confirmed.</p>
       <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
         <dt className="text-ink-muted">Amount</dt>
         <dd className="m-0 font-semibold">
@@ -82,6 +81,7 @@ export function ApprovePaymentPanel({ order }: { order: StaffOrderDetail }) {
         reasonLabel="Why is it rejected?"
         onSubmit={(note) => reject.mutateAsync(note)}
       />
-    </Section>
+      </div>
+    </Panel>
   );
 }

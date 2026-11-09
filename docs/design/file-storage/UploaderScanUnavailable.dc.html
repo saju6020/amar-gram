@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -50,13 +50,13 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Tanvir Islam · Nurse</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Tanvir Islam · Content editor</div></div>
   <div class="main">
-    <h1 class="h1">Luna — boarding diary, 23 Sep 2026</h1>
-    <p class="sub">Stay BRD-0192, Uttara · host page is illustrative (HO-BRD-002). The scanner is down: this is a service state, not the nurse's mistake (C4, A4).</p>
+    <h1 class="h1">Sundarbans wild honey — harvest story, 23 Sep 2026</h1>
+    <p class="sub">Origin page, Satkhira · host page is illustrative (HO-SHP-002). The scanner is down: this is a service state, not the editor's mistake (C4, A4).</p>
     <div class="grid">
       <div class="card">
-        <div class="field"><label for="d-note">Today's note</label><textarea id="d-note">Ate all breakfast, played with the feather wand for 10 minutes, napped in the sun spot.</textarea></div>
+        <div class="field"><label for="d-note">Harvest note</label><textarea id="d-note">Hives smoked at dawn near Shyamnagar, six combs cut, honey filtered by hand before noon. No heating.</textarea></div>
         <h2>Photos and video</h2>
         <button type="button" class="drop"><span class="dt">Choose files or drop them here</span><span class="dh">· JPEG, PNG, WebP or MP4 · up to 50 MB each</span></button>
         <div class="svc" role="status">
@@ -67,18 +67,18 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
         <ul class="queue" aria-label="Files">
           <li class="frow">
             <div class="ftype" aria-hidden="true">JPG</div>
-            <div class="fbody"><div class="fname">luna-sunspot.jpg</div><div class="fmeta">4.1 MB · <span class="st-q"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Queued — waiting for the scanner</span></div></div>
-            <button type="button" class="btn-sm" aria-label="Retry luna-sunspot.jpg">Retry</button>
-            <button type="button" class="btn-sm" aria-label="Remove luna-sunspot.jpg from the queue">Remove</button>
+            <div class="fbody"><div class="fname">honey-combs-dawn.jpg</div><div class="fmeta">4.1 MB · <span class="st-q"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Queued — waiting for the scanner</span></div></div>
+            <button type="button" class="btn-sm" aria-label="Retry honey-combs-dawn.jpg">Retry</button>
+            <button type="button" class="btn-sm" aria-label="Remove honey-combs-dawn.jpg from the queue">Remove</button>
           </li>
           <li class="frow">
             <div class="ftype" aria-hidden="true">MP4</div>
-            <div class="fbody"><div class="fname">luna-feather-wand.mp4</div><div class="fmeta">31.7 MB · <span class="st-q"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Queued — waiting for the scanner</span></div></div>
-            <button type="button" class="btn-sm" aria-label="Retry luna-feather-wand.mp4">Retry</button>
-            <button type="button" class="btn-sm" aria-label="Remove luna-feather-wand.mp4 from the queue">Remove</button>
+            <div class="fbody"><div class="fname">honey-smoking-hives.mp4</div><div class="fmeta">31.7 MB · <span class="st-q"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Queued — waiting for the scanner</span></div></div>
+            <button type="button" class="btn-sm" aria-label="Retry honey-smoking-hives.mp4">Retry</button>
+            <button type="button" class="btn-sm" aria-label="Remove honey-smoking-hives.mp4 from the queue">Remove</button>
           </li>
         </ul>
-        <p style="font-size:12.5px;color:var(--ink-muted);margin:12px 0 0">The note can still be saved on its own; the photos join the diary once they upload.</p>
+        <p style="font-size:12.5px;color:var(--ink-muted);margin:12px 0 0">The note can still be saved on its own; the photos join the story once they upload.</p>
       </div>
       <aside class="anno" aria-label="Design notes">
         <h3>Live region (polite)</h3>

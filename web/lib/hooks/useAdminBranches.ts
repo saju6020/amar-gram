@@ -9,9 +9,6 @@ import {
   getBranchClosures,
   createBranchClosure,
   cancelBranchClosure,
-  getBranchRooms,
-  createRoom,
-  updateRoom,
   getBranchCalendar,
   getStaffBranchAssignment,
   assignStaffBranches,
@@ -19,8 +16,6 @@ import {
   type UpdateBranchDetailsRequest,
   type OpeningInterval,
   type CreateBranchClosureRequest,
-  type CreateRoomRequest,
-  type UpdateRoomRequest,
   type AssignStaffBranchesRequest,
 } from '@/lib/api/admin-branches';
 import { ApiForbiddenError } from '@/lib/api/client';
@@ -116,36 +111,6 @@ export function useCancelBranchClosure(branchId: string) {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'closures'] });
       // HO-ADM-002-FU1 §12.1 — a new or cancelled closure changes the calendar too.
       void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'calendar'] });
-    },
-  });
-}
-
-export function useBranchRooms(branchId: string) {
-  return useQuery({
-    queryKey: ['admin', 'branches', branchId, 'rooms'],
-    queryFn: () => getBranchRooms(branchId),
-    enabled: !!branchId,
-    retry: noRetryOn403,
-  });
-}
-
-export function useCreateRoom(branchId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (request: CreateRoomRequest) => createRoom(branchId, request),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'rooms'] });
-    },
-  });
-}
-
-export function useUpdateRoom(branchId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ roomId, request }: { roomId: string; request: UpdateRoomRequest }) =>
-      updateRoom(branchId, roomId, request),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'branches', branchId, 'rooms'] });
     },
   });
 }

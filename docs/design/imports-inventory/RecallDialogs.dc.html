@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 :root{--overlay:rgba(28,26,23,.4);--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
@@ -66,7 +66,7 @@ tbody tr:last-child td{border-bottom:none}
 tfoot td{background:var(--surface-sunken);font-weight:700}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.dim td{color:var(--ink-faint)}
-tr.unusable td{background:#fdfbf8}
+tr.unusable td{background:#FFFAF0}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px}
 .grid2{display:flex;gap:18px;align-items:flex-start}
 .grid2 > *{flex:1;min-width:0}
@@ -103,43 +103,43 @@ tr.unusable td{background:#fdfbf8}
 </style>
 </helmet>
 <div style="width:1280px;height:1000px;background:var(--surface-page);overflow:auto;position:relative">
-<div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+<div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
 <div class="main">
   <nav class="secnav" aria-label="Inventory"><a href="StockOverview.dc.html">Stock</a><a href="GoodsReceipt.dc.html">Receipts</a><a href="TransferForm.dc.html">Transfers</a><a href="AdjustmentForm.dc.html">Adjustments</a><a href="ApprovalQueue.dc.html">Approvals</a><a href="CountSheet.dc.html">Counts</a><a href="Ledger.dc.html">Ledger</a><a href="Alerts.dc.html">Alerts <span class="count">7 open</span></a><a href="NearExpiryReport.dc.html">Reports</a><a href="RecallList.dc.html" class="active" aria-current="page">Recalls</a><a href="StorageBreach.dc.html">Storage</a><a href="StockSettings.dc.html">Locations &amp; settings</a></nav>
-  <h1 class="h1">Recall · lot AMX-5521</h1>
+  <h1 class="h1">Recall · lot MDJ-5521</h1>
   <div class="ghost"></div><div class="ghost"></div><div class="ghost"></div>
 </div>
 <div class="scrim">
   <div class="dialog" role="dialog" aria-labelledby="n1">
     <p class="statelabel">"Notify everyone…"</p>
     <h2 id="n1">Message affected customers?</h2>
-    <div class="confirm" style="margin-top:0"><strong>5 customers will be messaged</strong> about lot AMX-5521 with the advice text, by their preferred channel. This can't be unsent.</div>
+    <div class="confirm" style="margin-top:0"><strong>5 customers will be messaged</strong> about lot MDJ-5521 with the advice text, by their preferred channel. This can't be unsent.</div>
     <div class="dactions"><button class="btn btn-sec" type="button">Cancel</button><button class="btn btn-danger" type="button">Message 5 customers</button></div>
   </div>
   <div class="dialog" role="status" aria-labelledby="n2">
     <p class="statelabel">Result · first run</p>
     <h2 id="n2">4 messaged, 0 previously, 1 left — run again</h2>
     <p class="res">The server messages customers in batches and stopped with 1 left. Running Notify again sends only to those not yet messaged — nobody gets it twice.</p>
-    <p class="small muted" style="margin:0">Every message is logged. <a class="link" href="../notifications/NotificationLog.dc.html">Open the notification log for AMX-5521</a></p>
+    <p class="small muted" style="margin:0">Every message is logged. <a class="link" href="../notifications/NotificationLog.dc.html">Open the notification log for MDJ-5521</a></p>
   </div>
   <div class="dialog" role="status" aria-labelledby="n3">
     <p class="statelabel">Result · second run</p>
     <h2 id="n3">1 messaged, 4 previously, 0 left</h2>
     <p class="res">Everyone the trace can identify has now been messaged. Notify stays available if the trace grows.</p>
-    <p class="small muted" style="margin:0">Every message is logged. <a class="link" href="../notifications/NotificationLog.dc.html">Open the notification log for AMX-5521</a></p>
+    <p class="small muted" style="margin:0">Every message is logged. <a class="link" href="../notifications/NotificationLog.dc.html">Open the notification log for MDJ-5521</a></p>
   </div>
   <div class="dialog" role="dialog" aria-labelledby="w1">
     <p class="statelabel">"Withdraw…"</p>
-    <h2 id="w1">Withdraw the recall of AMX-5521?</h2>
-    <div class="field"><label for="w-r">Reason <span class="req" aria-hidden="true">*</span></label><textarea id="w-r">Manufacturer retracted notice MN-2026-118.</textarea></div>
+    <h2 id="w1">Withdraw the recall of MDJ-5521?</h2>
+    <div class="field"><label for="w-r">Reason <span class="req" aria-hidden="true">*</span></label><textarea id="w-r">Supplier retracted notice MN-2026-118.</textarea></div>
     <div class="confirm" style="margin-top:0">The batch goes back to quarantine, not on sale. Messages not yet sent will not be sent.</div>
     <div class="dactions"><button class="btn btn-sec" type="button">Keep recall active</button><button class="btn" type="button">Withdraw recall</button></div>
   </div>
   <div class="dialog" role="dialog" aria-labelledby="c1">
     <p class="statelabel">"Close recall…" · refused by the server</p>
-    <h2 id="c1">Close the recall of AMX-5521?</h2>
+    <h2 id="c1">Close the recall of MDJ-5521?</h2>
     <div class="field"><label for="c-n">Closing note</label><textarea id="c-n">All customers contacted; replacements issued.</textarea></div>
-    <div class="banner banner-danger" role="alert" style="margin-bottom:12px"><i aria-hidden="true">✕</i><span>Write off or return the remaining 1,120 ml first.</span></div>
+    <div class="banner banner-danger" role="alert" style="margin-bottom:12px"><i aria-hidden="true">✕</i><span>Write off or return the remaining 1,120 packs first.</span></div>
     <div class="dactions"><button class="btn btn-sec" type="button">Cancel</button><a class="btn" style="text-decoration:none" href="AdjustmentForm.dc.html">Write off stock</a></div>
   </div>
 </div>

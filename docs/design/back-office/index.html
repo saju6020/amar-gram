@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Back office — screens</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Work+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="./index.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">&larr; All areas</a>
+  <div class="eyebrow">Amar Gram · staff overview</div>
+  <h1>Back office</h1>
+  <p class="lede">Twelve interactive staff screens that show the whole back office at a glance, each with the deep banana-leaf sidebar. The detailed per-area screens (orders, billing, inventory, reporting, administration and more) are in their own areas and use the shared staff shell.</p>
+
+  <div class="row-group">
+    <h2>Daily work</h2>
+    <a class="screen-row" href="StaffSignIn.dc.html"><span class="screen-name">Staff sign in<span class="screen-file">StaffSignIn.dc.html</span></span><span class="screen-desc">Staff mobile or email + password, separate from customer accounts; the lock-out message</span></a>
+    <a class="screen-row" href="Dashboard.dc.html"><span class="screen-name">⭐ Dashboard<span class="screen-file">Dashboard.dc.html</span></span><span class="screen-desc">Today&rsquo;s sales, orders, to-pack and cash-on-delivery tiles; 14-day sales bars with hover and a table view; orders in progress; needs-attention alerts; latest orders</span></a>
+    <a class="screen-row" href="Orders.dc.html"><span class="screen-name">⭐ Orders &amp; fulfilment<span class="screen-file">Orders.dc.html</span></span><span class="screen-desc">Status tabs with counts, order table, pick list with the first-expiry batch and shelf, To pack &rarr; Packed &rarr; Rider &rarr; Delivered, waiting-for-transfer state</span></a>
+    <a class="screen-row" href="CounterSale.dc.html"><span class="screen-name">Counter sale (POS)<span class="screen-file">CounterSale.dc.html</span></span><span class="screen-desc">Scan or tap products, ticket with steppers, cash with quick amounts and change, or card on the terminal; Complete sale &rarr; receipt</span></a>
+  </div>
+
+  <div class="row-group">
+    <h2>Catalogue &amp; stock</h2>
+    <a class="screen-row" href="Products.dc.html"><span class="screen-name">Products<span class="screen-file">Products.dc.html</span></span><span class="screen-desc">Search, category and status filters, organic badge, low and out-of-stock in words, bulk publish / hide</span></a>
+    <a class="screen-row" href="ProductEditor.dc.html"><span class="screen-name">Product editor<span class="screen-file">ProductEditor.dc.html</span></span><span class="screen-desc">Tabs: details, pack sizes &amp; prices (add a size), origin &amp; organic certificate, photos with alt text, Bangla text; status and organise panels</span></a>
+    <a class="screen-row" href="Inventory.dc.html"><span class="screen-name">Inventory &amp; batches<span class="screen-file">Inventory.dc.html</span></span><span class="screen-desc">Alerts, on hand / reserved / available, expandable batches with expiry, the adjust-stock form where theft needs a manager</span></a>
+    <a class="screen-row" href="Receiving.dc.html"><span class="screen-name">Goods receiving<span class="screen-file">Receiving.dc.html</span></span><span class="screen-desc">Supplier and documents, scan to add, rejected quantities with a reason, batch and required expiry, landed cost, Post to stock</span></a>
+  </div>
+
+  <div class="row-group">
+    <h2>Customers, money, insight &amp; admin</h2>
+    <a class="screen-row" href="Customers.dc.html"><span class="screen-name">Customers<span class="screen-file">Customers.dc.html</span></span><span class="screen-desc">Filtered list, profile with spend and dues, orders / subscriptions / notes tabs, add note, merge duplicates</span></a>
+    <a class="screen-row" href="Billing.dc.html"><span class="screen-name">⭐ Billing &amp; cash-up<span class="screen-file">Billing.dc.html</span></span><span class="screen-desc">Bank transfers approved by a second person (maker-checker), end-of-day cash count with over / short, invoices and credit notes</span></a>
+    <a class="screen-row" href="Reports.dc.html"><span class="screen-name">Reports<span class="screen-file">Reports.dc.html</span></span><span class="screen-desc">Report list, period and outlet filters, totals, single-series bar chart with hover, data table, export, email schedule</span></a>
+    <a class="screen-row" href="Administration.dc.html"><span class="screen-name">Administration<span class="screen-file">Administration.dc.html</span></span><span class="screen-desc">Outlets, staff &amp; roles, weekly roster you can click to change shifts, delivery / payment / shop settings, message templates</span></a>
+  </div>
+
+  <p class="note">Rendered locally by <code>support.js</code> in this folder. Every screen in this area is interactive: press buttons, steppers, tabs and filters. Photos are labelled placeholders; prices and figures are sample data; facts still to come are in [BRACKETS]. Theme: ripe mango &amp; banana leaf (papaya buttons, mango highlights, banana-leaf green bands).</p>
+</div>
+</body>
+</html>

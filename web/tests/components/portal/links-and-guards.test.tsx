@@ -10,9 +10,6 @@ import { PORTAL_DASHBOARD_QUERY_KEY } from '@/lib/hooks/usePortalDashboard';
 import {
   DEFAULT_CUSTOMER_LANDING,
   PORTAL_HOME,
-  bookVaccinationHref,
-  portalCatHref,
-  portalCatVisitsHref,
   portalInvoiceHref,
   portalOrderHref,
 } from '@/lib/routing/portal-links';
@@ -29,11 +26,8 @@ describe('portal-links (ADR-FE-121)', () => {
   it('U-L1: builders return the documented paths and the landing constant is /portal', () => {
     expect(DEFAULT_CUSTOMER_LANDING).toBe('/portal/orders'); // owner, 2026-10-17
     expect(PORTAL_HOME).toBe('/portal');
-    expect(portalCatHref('x')).toBe('/portal/cats/x');
-    expect(portalCatVisitsHref('x')).toBe('/portal/cats/x/visits');
     expect(portalInvoiceHref('i')).toBe('/portal/billing/invoices/i');
     expect(portalOrderHref('o')).toBe('/portal/orders/o');
-    expect(bookVaccinationHref('c 1')).toBe('/book?catId=c+1&category=Vaccination');
   });
 
   it('the portal nav registers Home -> /portal for the portal audience', () => {
@@ -51,7 +45,7 @@ describe('portal-links (ADR-FE-121)', () => {
         if (statSync(full).isDirectory()) walk(full);
         else if (/\.tsx?$/.test(entry) && !full.endsWith('CustomerSessionGuard.tsx')) {
           const source = readFileSync(full, 'utf8');
-          if (/href=["'{]*[`'"]\/(portal|book|cart|shop)/.test(source)) offenders.push(entry);
+          if (/href=["'{]*[`'"]\/(portal|cart|shop)/.test(source)) offenders.push(entry);
         }
       }
     };
@@ -62,7 +56,7 @@ describe('portal-links (ADR-FE-121)', () => {
 });
 
 describe('source guards', () => {
-  it('U-X4: nothing under app/, components/ or lib/ imports @/mocks (HO-CAT-002 §5.1)', () => {
+  it('U-X4: nothing under app/, components/ or lib/ imports @/mocks (section 5.1)', () => {
     const web = path.resolve(import.meta.dirname, '../../..');
     const offenders: string[] = [];
     const walk = (dir: string) => {
@@ -77,7 +71,7 @@ describe('source guards', () => {
         }
       }
     };
-    // `app/providers.tsx` is the one dynamic-import seam HO-CAT-002 owns; the portal files are ours.
+    // `app/providers.tsx` is the one dynamic-import seam the shell owns; the portal files are ours.
     for (const dir of ['components/portal', 'lib/api', 'lib/hooks', 'lib/routing']) {
       walk(path.join(web, dir));
     }

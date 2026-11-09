@@ -8,14 +8,27 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { dashboardControl, resetReportsMockData } from '@/mocks/handlers/reports';
 import { useDashboard } from '@/lib/hooks/useReports';
 import type { Dashboard, DashboardTile } from '@/lib/api/dashboard';
-import { renderWithClient } from '../reports/helpers';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { asAdministrator, renderWithClient } from '../reports/helpers';
+
+/**
+ * The page's "Needs attention" and "Latest orders" panels use branch-scoped queries, whose hook seeds
+ * the active branch (the staff shell does this in the app, before any page mounts). Seeding it
+ * up front keeps the dashboard's query key still, so the poll counts below are the page's own.
+ */
+function renderWithActiveBranch(ui: React.ReactElement) {
+  asAdministrator();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  client.setQueryData(['staff', 'active-branch'], 'b0000000-0000-0000-0000-00000000a001');
+  return { client, ...render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>) };
+}
 
 const money = (amount: string) => ({ amount, currencyCode: 'BDT' });
 
 function payload(tiles: DashboardTile[], over: Partial<Dashboard> = {}): Dashboard {
   return {
     branchId: 'b1',
-    branchName: 'Main clinic',
+    branchName: 'Main outlet',
     localDate: '2026-10-14',
     timeZoneId: 'Asia/Dhaka',
     generatedOn: '2026-10-14T03:42:00+00:00',
@@ -25,15 +38,15 @@ function payload(tiles: DashboardTile[], over: Partial<Dashboard> = {}): Dashboa
   };
 }
 
-const appointments: DashboardTile = {
-  key: 'clinic.appointments-today',
-  title: 'Appointments today',
+const ordersToday: DashboardTile = {
+  key: 'orders.today',
+  title: 'Orders today',
   figures: [
-    { key: 'total', label: 'Booked', value: 11, type: 'Integer' },
-    { key: 'remaining', label: 'Remaining', value: 6, type: 'Integer' },
+    { key: 'placed', label: 'Placed today', value: 11, type: 'Integer' },
+    { key: 'toPack', label: 'To pack', value: 6, type: 'Integer' },
   ],
   drillDown: {
-    reportKey: 'clinic-daily-schedule',
+    reportKey: 'order-fulfilment',
     from: '2026-10-14',
     to: '2026-10-14',
     parameters: {},
@@ -42,14 +55,14 @@ const appointments: DashboardTile = {
 
 describe('DashboardView — U-A series', () => {
   it('U-A1: renders exactly the tiles sent, in the server order', () => {
-    const tiles = ['c', 'a', 'b'].map((k) => ({ ...appointments, key: k, title: `Tile ${k}` }));
+    const tiles = ['c', 'a', 'b'].map((k) => ({ ...ordersToday, key: k, title: `Tile ${k}` }));
     render(<DashboardView dashboard={payload(tiles)} updatedAt={1} />);
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
     expect(headings).toEqual(['Tile c', 'Tile a', 'Tile b']);
   });
 
-  it('U-A2: a clinic-only payload has no money, stock or sales tile and no placeholder', () => {
-    render(<DashboardView dashboard={payload([appointments])} updatedAt={1} />);
+  it('U-A2: an orders-only payload has no money, stock or sales tile and no placeholder', () => {
+    render(<DashboardView dashboard={payload([ordersToday])} updatedAt={1} />);
     expect(
       screen.queryByText(/revenue|payments|stock|receivables|cash-up/i),
     ).not.toBeInTheDocument();
@@ -60,7 +73,7 @@ describe('DashboardView — U-A series', () => {
   it('U-A3: a null figure is a dash with Not recorded, never 0', () => {
     const tile: DashboardTile = {
       key: 'x',
-      title: 'Consultations',
+      title: 'Order age',
       figures: [{ key: 'oldestAge', label: 'Oldest', value: null, type: 'Integer', unit: 'h' }],
       drillDown: null,
     };
@@ -72,12 +85,15 @@ describe('DashboardView — U-A series', () => {
   });
 
   it('U-A4: no link without a drillDown, a link with one', () => {
-    const without = { ...appointments, key: 'n', title: 'No link', drillDown: null };
-    render(<DashboardView dashboard={payload([without, appointments])} updatedAt={1} />);
-    expect(screen.getAllByRole('link')).toHaveLength(1);
+    const without = { ...ordersToday, key: 'n', title: 'No link', drillDown: null };
+    render(<DashboardView dashboard={payload([without, ordersToday])} updatedAt={1} />);
+    // Same strength as before, scoped to the tile links: the header now also carries the two
+    // shortcut actions ("New counter sale", "Receive goods"), which are not tile links.
+    expect(screen.getAllByRole('link', { name: /View report/ })).toHaveLength(1);
+    expect(screen.getAllByRole('link')).toHaveLength(3);
     expect(screen.getByRole('link', { name: /View report/ })).toHaveAttribute(
       'href',
-      '/staff/reports/clinic-daily-schedule?from=2026-10-14&to=2026-10-14',
+      '/staff/reports/order-fulfilment?from=2026-10-14&to=2026-10-14',
     );
   });
 
@@ -92,17 +108,32 @@ describe('DashboardView — U-A series', () => {
       <DashboardView
         dashboard={payload([tile], {
           localDate: '2026-10-13',
-          branchName: 'London clinic',
+          branchName: 'London outlet',
           timeZoneId: 'Europe/London',
         })}
         updatedAt={1}
       />,
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Today — 13 Oct 2026 · London clinic',
+      'Today — 13 Oct 2026 · London outlet',
     );
     expect(screen.getByText(/9,800\.00/)).toBeInTheDocument();
     expect(screen.getByText(/Updated 04:42 \(Europe\/London\)/)).toBeInTheDocument();
+  });
+
+  it('a large amount may break only after a thousands separator, and reads as one figure', () => {
+    const tile: DashboardTile = {
+      key: 'r',
+      title: 'Receivables',
+      figures: [{ key: 'due', label: 'Due', value: money('1234567.00'), type: 'Money' }],
+      drillDown: null,
+    };
+    render(<DashboardView dashboard={payload([tile])} updatedAt={1} />);
+    const figure = screen.getByText(/567\.00/);
+    const breaks = figure.querySelectorAll('wbr');
+    expect(breaks.length).toBeGreaterThan(0);
+    breaks.forEach((wbr) => expect(wbr.previousSibling?.textContent).toMatch(/,$/));
+    expect(figure.textContent).not.toMatch(/\s/);
   });
 
   it('shows a tile variance as the server amount only: no word, no sign logic', () => {
@@ -127,7 +158,7 @@ describe('DashboardView — U-A series', () => {
 
   it('U-A5: a real refetch of /staff updates the figures, keeps the dialog open and focus where it was, and announces politely', async () => {
     resetReportsMockData();
-    const { client } = renderWithClient(
+    const { client } = renderWithActiveBranch(
       <>
         <StaffHomePage />
         <ConfirmDialog
@@ -139,14 +170,14 @@ describe('DashboardView — U-A series', () => {
         />
       </>,
     );
-    // First poll: Booked = 11.
+    // First poll: Placed today = 11.
     await waitFor(() => expect(screen.getByText('11')).toBeInTheDocument());
     const cancel = screen.getByRole('button', { name: 'Cancel' });
     cancel.focus();
     expect(document.activeElement).toBe(cancel);
     expect(screen.queryByText('Dashboard updated')).not.toBeInTheDocument();
 
-    // The poll fires: the mock's second answer has Booked = 12.
+    // The poll fires: the mock's second answer has Placed today = 12.
     await act(async () => {
       await client.invalidateQueries({ queryKey: ['dashboard'] });
     });

@@ -1,6 +1,6 @@
 'use client';
 
-import { AuthCard } from '@/components/auth/AuthCard';
+import { StaffAuthFrame } from '@/components/back-office-overview/StaffAuthFrame';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
 import { useRequestStaffPasswordReset } from '@/lib/hooks/useStaffAuthMutations';
 
@@ -12,13 +12,13 @@ export default function StaffForgotPasswordPage() {
   const mutation = useRequestStaffPasswordReset();
 
   return (
-    <AuthCard title="Set or reset password">
+    <StaffAuthFrame title="Set or reset password">
       <ForgotPasswordForm
         audience="staff"
         onRequestReset={(identifier) => mutation.mutateAsync(identifier)}
         isPending={mutation.isPending}
         error={mutation.error}
       />
-    </AuthCard>
+    </StaffAuthFrame>
   );
 }

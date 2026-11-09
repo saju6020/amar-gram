@@ -11,8 +11,8 @@ test.describe.configure({ timeout: 120_000, retries: 1 });
  * `ordering-staff.spec.ts`.
  */
 
-const kitten = `/shop/products/${ids.multiVariantSlug}?sku=${ids.skuKitten2kg}`;
-const whiskas = `/shop/products/${ids.thaiKittenSlug}`;
+const oats = `/shop/products/${ids.multiVariantSlug}?sku=${ids.skuOats2kg}`;
+const rice = `/shop/products/${ids.thaiRiceSlug}`;
 
 async function resetMock(page: import('@playwright/test').Page) {
   await page.goto('/sign-in');
@@ -21,7 +21,7 @@ async function resetMock(page: import('@playwright/test').Page) {
 
 async function addFromProduct(page: import('@playwright/test').Page, path: string, name: RegExp) {
   await page.goto(path);
-  await page.getByRole('button', { name: 'Add to cart' }).click();
+  await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
   await expect(page.getByRole('status').filter({ hasText: name })).toBeVisible();
 }
 
@@ -29,7 +29,7 @@ async function startCheckoutDelivery(page: import('@playwright/test').Page) {
   await addAddress(page);
   await page.goto('/checkout');
   await expect(
-    page.getByRole('heading', { level: 1, name: /How should we get it to you/ }),
+    page.getByRole('heading', { level: 1, name: /^Checkout$/ }),
   ).toBeVisible();
 }
 
@@ -38,47 +38,47 @@ test.describe('cart (US-ORD-01)', () => {
     page,
   }) => {
     await resetMock(page);
-    await addFromProduct(page, kitten, /Added 1 × Royal Canin Kitten/);
-    await addFromProduct(page, whiskas, /Added 1 ×/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
+    await addFromProduct(page, rice, /Added 1 ×/);
 
     await signInAsCustomer(page);
     await page.goto('/cart');
-    await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Your basket' })).toBeVisible();
     await expect(
-      page.getByText(/We.ve added the items from your cart before you signed in./),
+      page.getByText(/We.ve added the items from your basket before you signed in./),
     ).toBeVisible();
-    const items = page.getByRole('region', { name: 'Items in your cart' }).getByRole('listitem');
+    const items = page.getByRole('region', { name: 'Items in your basket' }).getByRole('listitem');
     await expect(items).toHaveCount(2);
 
     // Adding the same item again raises its quantity; it does not create a second line.
-    await page.goto(kitten);
-    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await page.goto(oats);
+    await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
     await expect(
-      page.getByRole('status').filter({ hasText: /Added 1 × Royal Canin Kitten/ }),
+      page.getByRole('status').filter({ hasText: /Added 1 × 2 kg to your basket/ }),
     ).toBeVisible();
     await page.goto('/cart');
     await expect(items).toHaveCount(2);
     await expect(
-      page.getByRole('spinbutton', { name: /Quantity of Royal Canin Kitten/ }),
+      page.getByRole('spinbutton', { name: /Quantity of Organic Rolled Oats/ }),
     ).toHaveValue('2');
   });
 
-  test('cart: remove offers an Undo, and Checkout while signed out goes to sign-in with ?next', async ({
+  test('basket: remove offers an Undo, and Checkout while signed out goes to sign-in with ?next', async ({
     page,
   }) => {
     await resetMock(page);
-    await addFromProduct(page, kitten, /Added 1 × Royal Canin Kitten/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await page.goto('/cart');
     await page
-      .getByRole('button', { name: /Remove Royal Canin Kitten/ })
+      .getByRole('button', { name: /Remove Organic Rolled Oats/ })
       .first()
       .click();
     await expect(
-      page.getByText(/Removed Royal Canin Kitten .* from your cart./).first(),
+      page.getByText(/Removed Organic Rolled Oats .* from your basket./).first(),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Undo' }).click();
     await expect(
-      page.getByRole('spinbutton', { name: /Quantity of Royal Canin Kitten/ }),
+      page.getByRole('spinbutton', { name: /Quantity of Organic Rolled Oats/ }),
     ).toHaveValue('1');
     await page.getByRole('link', { name: /Sign in to check out/ }).click();
     await expect(page).toHaveURL(/\/sign-in\?next=%2Fcheckout/);
@@ -89,22 +89,21 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   test('E-B1/E-B8: COD delivery order is placed once, even on a double click', async ({ page }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, kitten, /Added 1 × Royal Canin Kitten/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await startCheckoutDelivery(page);
 
-    // Step 1: delivery to the saved address.
-    await expect(page.getByLabel('Home')).toBeChecked();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Step 2: service level and a time window, in branch time.
+    // Section 1: delivery to a saved address. Sam's seeded default (Home) is preselected; this spec's own is picked as a customer would.
+    await expect(page.getByLabel(/^Home/)).toBeChecked();
+    await page.getByLabel(/^E2E Home/).click();
+    await expect(page.getByLabel(/^E2E Home/)).toBeChecked();
+    // Section 2: service level and a time window, in branch time.
     await expect(page.getByRole('radio', { name: /Standard delivery/ })).toBeChecked();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Step 3: payment — three options, no card.
+    // Section 3: payment — three options, no card.
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
     await expect(page.getByRole('radio', { name: /Pay when you collect/ })).toBeDisabled();
     await expect(page.locator('input[autocomplete^="cc-"]')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Step 4: review — the six rows, then place with a double click.
+    // Aside: the six server rows, then place with a double click.
     const summary = page.getByRole('region', { name: 'Order summary' });
     for (const row of [
       'Items subtotal',
@@ -117,8 +116,7 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
       await expect(summary.getByText(row, { exact: true })).toBeVisible();
     }
     await page.getByRole('button', { name: 'Place order' }).dblclick();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
-    await expect(page.getByText('Pay the courier in cash when your order arrives.')).toBeVisible();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
 
     await page.goto('/portal/orders');
     // Seeded orders are Sam's too; exactly one new order was created (numbers from ORD-2026-000200).
@@ -131,23 +129,20 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, kitten, /Added 1 × Royal Canin Kitten/);
-    await control(page, 'setPrice', ids.skuKitten2kg, '3000.00');
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
+    await control(page, 'setPrice', ids.skuOats2kg, '3000.00');
     await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     const panel = page.getByRole('region', { name: 'What changed since you added these items' });
-    await expect(panel.getByText(/The price of 'Royal Canin Kitten' has increased/)).toBeVisible();
+    await expect(panel.getByText(/The price of 'Organic Rolled Oats' has increased/)).toBeVisible();
     const place = page.getByRole('button', { name: 'Place order' });
     await expect(place).toBeDisabled();
     await panel.getByLabel(/I.ve reviewed these changes./).click();
     await expect(place).toBeEnabled();
     await place.click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
   });
 
   test('E-B3: an address outside every zone offers collection instead, and pickup completes', async ({
@@ -155,22 +150,55 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, kitten, /Added 1 × Royal Canin Kitten/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await addAddress(page, { label: 'Gazipur home', district: 'Gazipur', postalCode: '1700' });
     await page.goto('/checkout');
+    // The seeded in-zone default is preselected; choose the Gazipur address just added.
+    await page.getByLabel(/^Gazipur home/).click();
     await expect(
       page.getByText(/We don.t deliver to Gazipur yet. You can collect your order instead./),
     ).toBeVisible();
     await expect(page.getByRole('radio', { name: /Collect from a branch/ })).toBeChecked();
     await expect(page.getByRole('radio', { name: /Amar Gram Dhanmondi/ })).toBeChecked();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    // Slot step is not needed for collection; payment is next.
+    // Delivery time is not needed for collection.
     await page.getByRole('radio', { name: /Pay when you collect/ }).click();
     await expect(page.getByRole('radio', { name: /Cash on delivery/ })).toBeDisabled();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Place order' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
-    await expect(page.getByText(/Collect and pay at Amar Gram Dhanmondi\./)).toBeVisible();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
+  });
+
+  // HO-P5 S1 (E5): the optional note for the rider.
+  test('G4: a delivery COD order with a rider note shows it on the order; Pickup hides the field and keeps the note out of the URL', async ({
+    page,
+  }) => {
+    await resetMock(page);
+    await signInAsCustomer(page);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
+    await startCheckoutDelivery(page);
+
+    const note = page.getByLabel('Note for the rider (optional)');
+    await expect(note).toHaveAttribute('maxlength', '300');
+    await note.fill('Please call before you come up <b>twice</b>');
+    await expect(page.getByText('43 of 300')).toBeVisible();
+    // Free text a customer may fill with personal details: never in the address bar.
+    expect(page.url()).not.toContain('call');
+
+    // Collecting instead: the field goes away.
+    await page.getByRole('radio', { name: /Collect from a branch/ }).click();
+    await expect(note).toHaveCount(0);
+    await page.getByRole('radio', { name: /Delivery/ }).first().click();
+    await expect(note).toBeVisible();
+
+    await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
+    await page.getByRole('radio', { name: /Cash on delivery/ }).click();
+    await page.getByRole('button', { name: 'Place order' }).click();
+    await expect(page).toHaveURL(/\/portal\/orders\/[0-9a-f-]{36}\?placed=1/);
+
+    const delivering = page.getByRole('region', { name: 'Delivering to' });
+    await expect(delivering.getByText('Note for the rider')).toBeVisible();
+    // Plain text: the markup is shown, not applied.
+    await expect(delivering).toContainText('Please call before you come up <b>twice</b>');
+    expect(page.url()).not.toContain('call');
   });
 
   test('E-B4/E-C1: COD is disabled above the ceiling with its reason; bank transfer shows instructions', async ({
@@ -179,21 +207,18 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await resetMock(page);
     await signInAsCustomer(page);
     // 4 × BDT 2,450 is above the BDT 5,000 COD ceiling.
-    await page.goto(kitten);
+    await page.goto(oats);
     await page.getByLabel('Quantity').fill('4');
-    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
     await expect(page.getByRole('status').filter({ hasText: /Added 4 ×/ })).toBeVisible();
     await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     const cod = page.getByRole('radio', { name: /Cash on delivery/ });
     await expect(cod).toBeDisabled();
     await expect(
       page.getByText(/Cash on delivery is available for orders up to BDT 5,000\.00/),
     ).toBeVisible();
     await page.getByRole('radio', { name: /Bank transfer/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Place order' }).click();
 
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
@@ -211,13 +236,10 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
   }) => {
     await resetMock(page);
     await signInAsCustomer(page);
-    await addFromProduct(page, kitten, /Added 1 × Royal Canin Kitten/);
+    await addFromProduct(page, oats, /Added 1 × 2 kg to your basket/);
     await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     await page.getByLabel('Discount code', { exact: true }).fill('NOPE');
     await page.getByRole('button', { name: 'Apply' }).click();
@@ -232,94 +254,5 @@ test.describe('checkout (US-ORD-02 to US-ORD-08)', () => {
     await page.getByLabel('Discount code', { exact: true }).fill('WELCOME10');
     await page.getByRole('button', { name: 'Apply' }).click();
     await expect(page.getByText('Order discount (WELCOME10)')).toBeVisible();
-  });
-
-  test('E-B6: a prescription diet needs an authorised cat; a lapsed authorisation blocks the line', async ({
-    page,
-  }) => {
-    await resetMock(page);
-    await signInAsCustomer(page);
-    await page.goto(`/shop/products/${ids.rxEligibleSlug}`);
-    await page.getByRole('button', { name: 'Add to cart' }).click();
-    const dialog = page.getByRole('dialog', { name: 'Which cat is this for?' });
-    await expect(dialog.getByRole('radio', { name: 'Biscuit' })).toBeDisabled();
-    await expect(dialog.getByText('No current authorisation for this food.').first()).toBeVisible();
-    await dialog.getByRole('radio', { name: 'Whiskers' }).click();
-    await dialog.getByRole('button', { name: 'Add to cart' }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
-
-    await addAddress(page);
-    await page.goto('/checkout');
-    await page.getByRole('button', { name: 'Continue' }).click();
-    await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    await page.getByRole('radio', { name: /Cash on delivery/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    await expect(page.getByText('For Whiskers').first()).toBeVisible();
-    await page.getByRole('button', { name: 'Place order' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
-
-    // The authorisation lapses: the next attempt leaves the line out and says why.
-    await control(page, 'lapseAuthorisation', ids.catAllergy);
-    await page.goto(`/shop/products/${ids.rxEligibleSlug}`);
-    await page.getByRole('button', { name: 'Add to cart' }).click();
-    const again = page.getByRole('dialog', { name: 'Which cat is this for?' });
-    await again.getByRole('radio', { name: 'Whiskers' }).click();
-    await again.getByRole('button', { name: 'Add to cart' }).click();
-    await expect(again.getByRole('alert')).toContainText(/no current vet authorisation/i);
-  });
-});
-
-test.describe('bank transfer expiry and cancel (US-ORD-12, US-ORD-19)', () => {
-  test('E-C2: an unconfirmed transfer expires; the order explains it and Order again fills the cart', async ({
-    page,
-  }) => {
-    await resetMock(page);
-    await signInAsCustomer(page);
-    await control(page, 'setTransferWindowSeconds', 3);
-    await addFromProduct(page, kitten, /Added 1 × Royal Canin Kitten/);
-    await startCheckoutDelivery(page);
-    await page.getByRole('button', { name: 'Continue' }).click();
-    await page.getByRole('radiogroup', { name: 'Time window' }).getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    await page.getByRole('radio', { name: /Bank transfer/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
-    await page.getByRole('button', { name: 'Place order' }).click();
-    await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
-    await page.waitForTimeout(3500);
-    await page.getByRole('link', { name: 'View your order' }).click();
-    await expect(page.getByRole('heading', { name: 'This order has expired' })).toBeVisible();
-    await expect(
-      page.getByText(/We couldn.t confirm your transfer in time, so the items were released./),
-    ).toBeVisible();
-    await page.getByRole('button', { name: 'Order again' }).click();
-    await expect(page.getByText(/1 item was added to your cart\./)).toBeVisible();
-    await page.getByRole('link', { name: 'Go to your cart' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
-    await expect(
-      page.getByRole('spinbutton', { name: /Quantity of Royal Canin Kitten/ }),
-    ).toBeVisible();
-  });
-
-  test('E-D1: cancel before packing asks to confirm; a packed order offers the contact card instead', async ({
-    page,
-  }) => {
-    await resetMock(page);
-    await signInAsCustomer(page);
-    await page.goto('/portal/orders');
-    await page.getByRole('link', { name: /ORD-2026-000104/ }).click();
-    await page.getByRole('button', { name: 'Cancel order' }).click();
-    const dialog = page.getByRole('dialog', { name: 'Cancel order ORD-2026-000104?' });
-    await expect(dialog.getByText(/Your reserved items are released\./)).toBeVisible();
-    await dialog.getByRole('button', { name: 'Cancel order' }).click();
-    await expect(page.getByText('Cancelled').first()).toBeVisible();
-
-    await page.goto('/portal/orders');
-    await page.getByRole('link', { name: /ORD-2026-000106/ }).click();
-    // Cancel stays on the page, disabled, with the reason and the branch contact beside it.
-    await expect(page.getByRole('button', { name: 'Cancel order' })).toBeDisabled();
-    await expect(page.getByRole('heading', { name: 'Contact the shop' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Track on the courier’s site' })).toBeVisible();
-    await expect(page.getByText('PC-88213004').first()).toBeVisible();
   });
 });

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { ReviewsSection } from '@/components/reviews/ReviewsSection';
 import type { PagedResult } from '@/lib/api/types';
 import type { ProductReview, RatingSummary } from '@/lib/api/shop-catalogue';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import { useProductReviews } from '@/lib/hooks/useShopCatalogue';
 import { useReviewEligibility } from '@/lib/hooks/useShopCustomer';
@@ -24,7 +25,10 @@ export function ProductReviews({
 }) {
   const [page, setPage] = React.useState(1);
   const session = useCustomerSession();
-  const signedIn = !!session.data;
+  // The session can already be cached when the page hydrates (the header loads it first): read it from the next
+  // render on, so the first client render matches the server HTML.
+  const hydrated = useHydrated();
+  const signedIn = hydrated && !!session.data;
   const reviews = useProductReviews(slug, page);
   const eligibility = useReviewEligibility(slug, signedIn);
   const signInHref = `/sign-in?next=${encodeURIComponent(productHref(slug, { lang: lang || undefined }))}`;

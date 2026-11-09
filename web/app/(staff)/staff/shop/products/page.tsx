@@ -10,19 +10,18 @@ import {
 } from '@/components/staff-shop/StaffProductTable';
 import { ApiForbiddenError } from '@/lib/api/client';
 import { staffProductsExportUrl, type StaffProductListParams } from '@/lib/api/staff-shop';
-import { useStaffProducts } from '@/lib/hooks/useStaffShop';
+import { useBulkProductStatus, useCanManageProducts, useStaffProducts } from '@/lib/hooks/useStaffShop';
 import { useUrlFilterState } from '@/lib/hooks/useUrlFilterState';
 
-const FIELDS = ['status', 'category', 'brand', 'kind', 'listed', 'barcode', 'sort'] as const;
+const FIELDS = ['q', 'status', 'category', 'brand', 'kind', 'listed', 'barcode', 'sort'] as const;
 const PAGE_SIZE = 25;
 
 function ProductListContent() {
-  const { values, setValue, flush } = useUrlFilterState(FIELDS, {}, ['brand', 'barcode']);
+  const { values, setValue, flush } = useUrlFilterState(FIELDS, {}, ['q', 'brand', 'barcode']);
   const searchParams = useSearchParams();
-  const q = searchParams.get('q') ?? '';
   const pageNumber = Math.max(1, Number(searchParams.get('page')) || 1);
   const params: StaffProductListParams = {
-    q,
+    q: values.q,
     status: values.status,
     category: values.category,
     brand: values.brand,
@@ -34,6 +33,8 @@ function ProductListContent() {
     pageSize: PAGE_SIZE,
   };
   const products = useStaffProducts(params);
+  const bulk = useBulkProductStatus();
+  const canManage = useCanManageProducts();
   if (products.error instanceof ApiForbiddenError) return <PermissionDeniedState />;
 
   return (
@@ -48,6 +49,9 @@ function ProductListContent() {
       onFilter={(name: StaffProductFilterName, value) => setValue(name, value)}
       onFlush={(name) => flush(name)}
       exportHref={staffProductsExportUrl(params)}
+      onBulkStatus={
+        canManage ? (action, productIds) => bulk.mutateAsync({ action, productIds }) : undefined
+      }
     />
   );
 }

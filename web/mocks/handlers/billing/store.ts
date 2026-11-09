@@ -1,9 +1,9 @@
 import type { Money } from '@/lib/format/money';
-import { addDaysIso } from '@/lib/format/appointment';
-import { todayInZone } from '@/lib/format/time';
+import { addDaysIso, todayInZone } from '@/lib/format/time';
 import { looksLikeCardNumber } from '@/lib/validation/cardNumberGuard';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import { billingIds as ids } from './fixtures';
+import { SUBSCRIPTION_DISCOUNT_LABEL, isSubscriptionOrderId } from '../subscriptions/discountLabel';
 
 /**
  * `mocks/handlers/billing/store.ts` — HO-BIL-002 §12. One in-memory (sessionStorage-persisted, like
@@ -13,7 +13,8 @@ import { billingIds as ids } from './fixtures';
  * real UI never computes any of this (ADR-FE-080, HO-BIL-002 §20.2).
  */
 
-const PERSIST_KEY = '__purrcare_billing_mock_db__';
+// HO-P5: bumped when the cash-up gained per-source counts and a staff-collected cash source.
+const PERSIST_KEY = '__amargram_billing_mock_db_p5__';
 export const ZONE = 'Asia/Dhaka';
 export const CURRENCY = 'BDT';
 export const APPROVAL_THRESHOLD_CENTS = 5_000_000; // BDT 50,000.00
@@ -65,7 +66,7 @@ export interface DbCharge {
   id: string;
   customerId: string;
   branchId: string;
-  businessLine: 'Clinic' | 'Shop' | 'Boarding';
+  businessLine: 'Shop';
   itemKind: string;
   sourceKind: string;
   sourceId: string;
@@ -87,7 +88,7 @@ export interface DbCharge {
 export interface DbLine {
   lineId: string;
   chargeId: string | null;
-  businessLine: 'Clinic' | 'Shop' | 'Boarding';
+  businessLine: 'Shop';
   itemKind: string;
   sourceKind: string;
   sourceId: string;
@@ -234,6 +235,20 @@ export interface DbCashUp {
   countedOn: string | null;
   closedByName: string | null;
   closedOn: string | null;
+  /** HO-P5 BG-20 -- the per-source count (`CashUpAggregate.SourceCounts`); empty for a day counted by total only. */
+  sourceCounts?: Array<{ key: string; label: string; cents: Cents }>;
+  /** Frozen at close (`CashUpAggregate.ExpectedSources`). */
+  expectedSources?: Array<{ key: string; label: string; cents: Cents }>;
+}
+
+/** HO-P5 BG-20 -- cash a staff member collected on delivery that day. It is its own cash source (the collector holds it until it
+ *  is banked) and counts in the expected cash (CashUpCalculator.cs, CashUpRows.cs:48-51). */
+export interface DbStaffCash {
+  id: string;
+  date: string;
+  staffAccountId: string;
+  staffName: string;
+  cents: Cents;
 }
 
 export interface DbStatementLine {
@@ -320,6 +335,7 @@ export interface Db {
   refunds: DbRefund[];
   cashUps: DbCashUp[];
   carriedIn: Array<{ date: string; id: string; kind: string; label: string; cents: Cents }>;
+  staffCash: DbStaffCash[];
   statements: DbStatement[];
   matches: DbMatch[];
   profiles: DbProfile[];
@@ -335,7 +351,7 @@ export interface Db {
     occurredOn: string;
   }>;
   loyaltyEnabled: boolean;
-  /** Completed appointments with no charge yet (`GET …/uncaptured-sources`). `skipReason` is a mock trigger: capture answers it as skipped. */
+  /** Completed orders with no charge yet (`GET …/uncaptured-sources`). `skipReason` is a mock trigger: capture answers it as skipped. */
   capturable: Array<{
     sourceKind: string;
     sourceId: string;
@@ -439,8 +455,8 @@ function line(
   return {
     lineId: uid('11111111'),
     chargeId: null,
-    businessLine: 'Clinic',
-    itemKind: 'Service',
+    businessLine: 'Shop',
+    itemKind: 'Product',
     sourceKind: 'Manual',
     sourceId: uid('22222222'),
     qtyMilli: 1000,
@@ -457,9 +473,9 @@ function charge(partial: Partial<DbCharge> & Pick<DbCharge, 'id' | 'description'
   return {
     customerId: ids.customerId,
     branchId: ids.mainBranchId,
-    businessLine: 'Clinic',
-    itemKind: 'Service',
-    sourceKind: 'Appointment',
+    businessLine: 'Shop',
+    itemKind: 'Product',
+    sourceKind: 'Order',
     sourceId: uid('33333333'),
     qtyMilli: 1000,
     discountCents: 0,
@@ -552,11 +568,11 @@ function seed(): Db {
   });
 
   const charges: DbCharge[] = [
-    charge({ id: ids.chargeConsultId, description: 'Consultation — Momo', unitCents: 80_000 }),
-    charge({ id: ids.chargeVaccineId, description: 'Vaccination (FVRCP) — Momo', unitCents: 120_000 }),
+    charge({ id: ids.chargeRiceId, description: 'Organic rice 5 kg', unitCents: 80_000 }),
+    charge({ id: ids.chargeOilId, description: 'Mustard oil 1 L', unitCents: 120_000 }),
     charge({
       id: ids.chargeFoodId,
-      description: 'Royal Canin Kitten 2 kg',
+      description: 'Raw honey 500 g',
       unitCents: 145_000,
       qtyMilli: 2000,
       businessLine: 'Shop',
@@ -564,15 +580,14 @@ function seed(): Db {
       sourceKind: 'Order',
     }),
     charge({
-      id: ids.chargeBoardingId,
-      description: 'Boarding — 3 nights, Momo',
+      id: ids.chargeDeliveryId,
+      description: 'Home delivery — 3 trips',
       unitCents: 90_000,
       qtyMilli: 3000,
-      businessLine: 'Boarding',
       itemKind: 'Service',
-      sourceKind: 'BoardingStay',
+      sourceKind: 'Manual',
     }),
-    charge({ id: ids.chargeRacyId, description: 'Nail trim', unitCents: 15_000, racy: true }),
+    charge({ id: ids.chargeRacyId, description: 'Gift wrapping', unitCents: 15_000, racy: true }),
     charge({
       id: ids.chargeNoRateId,
       description: 'Special handling fee',
@@ -581,7 +596,7 @@ function seed(): Db {
       itemKind: 'Fee',
       sourceKind: 'Manual',
     }),
-    charge({ id: ids.chargeDentalId, description: 'Dental check — Momo', unitCents: 60_000 }),
+    charge({ id: ids.chargeGheeId, description: 'Organic ghee 1 kg', unitCents: 60_000 }),
   ];
 
   const draft: DbInvoice = {
@@ -597,8 +612,8 @@ function seed(): Db {
     lines: [
       line(
         {
-          chargeId: ids.chargeDentalId,
-          description: 'Dental check — Momo',
+          chargeId: ids.chargeGheeId,
+          description: 'Organic ghee 1 kg',
           unitCents: 60_000,
           taxRatePercent: null,
         },
@@ -615,14 +630,14 @@ function seed(): Db {
     issueKey: null,
   };
 
-  const i1 = issued(ids.issuedInvoiceId, 101, [line({ description: 'Consultation — Momo', unitCents: 80_000 }, 1)]);
+  const i1 = issued(ids.issuedInvoiceId, 101, [line({ description: 'Organic rice 5 kg', unitCents: 80_000 }, 1)]);
   const i2 = issued(
     ids.partPaidInvoiceId,
     102,
     [
       line(
         {
-          description: 'Royal Canin Kitten 2 kg',
+          description: 'Raw honey 500 g',
           unitCents: 145_000,
           qtyMilli: 2000,
           businessLine: 'Shop',
@@ -637,26 +652,26 @@ function seed(): Db {
   const i3 = issued(
     ids.paidInvoiceId,
     103,
-    [line({ description: 'Vaccination (FVRCP) — Momo', unitCents: 100_000 }, 1)],
+    [line({ description: 'Mustard oil 1 L', unitCents: 100_000 }, 1)],
     { paidCents: 115_000, status: 'Paid', issueDate: addDaysIso(day, -10) },
   );
   const i4 = issued(
     ids.creditedInvoiceId,
     104,
-    [line({ description: 'Grooming — Momo', unitCents: 50_000 }, 1)],
+    [line({ description: 'Gift hamper — large', unitCents: 50_000 }, 1)],
     { creditedCents: 57_500, status: 'Credited', issueDate: addDaysIso(day, -8), correctedByInvoiceId: ids.correctedInvoiceId },
   );
   const i5 = issued(
     ids.correctedInvoiceId,
     105,
-    [line({ description: 'Grooming (corrected) — Momo', unitCents: 45_000 }, 1)],
+    [line({ description: 'Gift hamper — medium (corrected)', unitCents: 45_000 }, 1)],
     { issueDate: addDaysIso(day, -7), correctsInvoiceId: ids.creditedInvoiceId, correctsCreditNoteId: ids.creditNoteId },
   );
   const otherLines = (sd: number, due: number, seq: number, id?: string): DbInvoice =>
     issued(
       id ?? uid('d2000000'),
       seq,
-      [line({ description: `Treatment ${seq}`, unitCents: 100_000 }, 1)],
+      [line({ description: `Grocery order ${seq}`, unitCents: 100_000 }, 1)],
       { customerId: ids.otherCustomerId, issueDate: addDaysIso(day, sd), dueOn: addDaysIso(day, due) },
     );
   const others = [
@@ -671,14 +686,14 @@ function seed(): Db {
     id: ids.creditNoteId,
     number: `CN-MAIN-${FY_COMPACT}-000101`,
     kind: 'Correction',
-    reason: 'Wrong service billed — grooming was not performed.',
+    reason: 'Wrong item billed — the large hamper was not delivered.',
     invoiceId: ids.creditedInvoiceId,
     customerId: ids.customerId,
     branchId: ids.mainBranchId,
     lines: [
       {
         invoiceLineId: i4.lines[0]!.lineId,
-        description: 'Grooming — Momo',
+        description: 'Gift hamper — large',
         quantity: '1.000',
         requestedCents: null,
         netCents: 50_000,
@@ -729,9 +744,9 @@ function seed(): Db {
       receivedOn: addDaysIso(day, -2),
       businessDate: addDaysIso(day, -2),
       earmark: {
-        kind: 'BoardingStay',
+        kind: 'Order',
         sourceId: uid('55555555'),
-        label: 'Boarding deposit — Momo',
+        label: 'Order deposit — PC-001250',
         isReleased: false,
         releasedOn: null,
         releaseReason: null,
@@ -754,6 +769,8 @@ function seed(): Db {
       method: 'CashInStore',
       status: 'PendingApproval',
       amountCents: 5_500_000,
+      // Yesterday's: only another staff member can decide it (HO-P4 Amended (i)), so it must not block today's close.
+      receivedOn: addDaysIso(day, -1),
       requested: [],
       businessDate: null,
       acceptedOn: null,
@@ -883,6 +900,11 @@ function seed(): Db {
     carriedIn: [
       { date: day, id: 'ca110000-0000-0000-0000-000000000001', kind: 'CodRemittance', label: 'COD remittance — Pathao Courier', cents: 50_000 },
     ],
+    // One staff collector two days ago, so that day's cash-up has a second source beside the till (HO-P5 BG-20). Not today: the
+    // seeded figures of today's cash-up (expected cash 2,950.00) are a contract other specs count against (HO-BIL-002 U-D1).
+    staffCash: [
+      { id: 'ca220000-0000-0000-0000-000000000001', date: addDaysIso(day, -2), staffAccountId: ids.otherStaffId, staffName: ids.otherStaffName, cents: 120_000 },
+    ],
     statements: [statement],
     matches,
     profiles: [
@@ -892,8 +914,8 @@ function seed(): Db {
         taxRegistrationNumber: 'BIN 004512345-0101',
         addressLines: ['House 12, Road 5, Dhanmondi', 'Dhaka 1209'],
         phone: '+88 02 5511 0000',
-        email: 'accounts@purrcare.test',
-        invoiceFooter: 'Thank you for trusting us with your cat. Goods sold are not returnable once opened.',
+        email: 'accounts@amargram.test',
+        invoiceFooter: 'Thank you for shopping with Amar Gram. Goods sold are not returnable once opened.',
         bankAccounts: [
           { bankName: 'City Bank', accountName: 'Amar Gram Ltd', accountNumber: '1234-567890-01', branchName: 'Dhanmondi', routingNumber: '225261719' },
           { bankName: 'BRAC Bank', accountName: 'Amar Gram Ltd', accountNumber: '2001-554433-02', branchName: 'Gulshan', routingNumber: null },
@@ -931,19 +953,19 @@ function seed(): Db {
     loyaltyEnabled: true,
     capturable: [
       {
-        sourceKind: 'Appointment',
+        sourceKind: 'Order',
         sourceId: 'a7000000-0000-0000-0000-000000000001',
         customerId: ids.customerId,
         completedOn: new Date().toISOString(),
-        label: 'Consultation — Momo (Sam Rahman)',
+        label: 'Order PC-001260 (Sam Rahman)',
       },
       {
-        sourceKind: 'Appointment',
+        sourceKind: 'Order',
         sourceId: 'a7000000-0000-0000-0000-000000000002',
         customerId: ids.otherCustomerId,
         completedOn: new Date().toISOString(),
-        label: 'Nail trim — Biscuit (Rahima Akter)',
-        skipReason: 'The service has no price set, so no charge could be created.',
+        label: 'Order PC-001261 (Rahima Akter)',
+        skipReason: 'The order has an item with no price set, so no charge could be created.',
       },
     ],
     seq: { invoice: 106, creditNote: 102, receipt: 130 },
@@ -1017,7 +1039,6 @@ export function lineView(l: DbLine, invoice: DbInvoice) {
     itemKind: l.itemKind,
     sourceKind: l.sourceKind,
     sourceId: l.sourceId,
-    catId: null,
     description: l.description,
     quantity: qtyText(l.qtyMilli),
     unitPrice: money(l.unitCents),
@@ -1030,7 +1051,23 @@ export function lineView(l: DbLine, invoice: DbInvoice) {
     taxAmount: money(a.taxCents),
     grossAmount: money(a.grossCents),
     sortOrder: l.sortOrder,
+    discountLabel: lineDiscountLabelOf(l),
   };
+}
+
+/** InvoiceQueryHandlers.cs:88-116: a discounted line that came from a subscription order carries the subscription label. */
+export function lineDiscountLabelOf(l: Pick<DbLine, 'sourceKind' | 'sourceId' | 'discountCents'>): string | null {
+  return l.discountCents > 0 && l.sourceKind === 'Order' && isSubscriptionOrderId(l.sourceId)
+    ? SUBSCRIPTION_DISCOUNT_LABEL
+    : null;
+}
+
+/** The totals label: set only when every discounted line carries the same label (SubscriptionDiscountLabels.TotalsLabel). */
+export function totalsDiscountLabelOf(lines: Array<Pick<DbLine, 'sourceKind' | 'sourceId' | 'discountCents'>>): string | null {
+  const discounted = lines.filter((l) => l.discountCents > 0);
+  if (discounted.length === 0) return null;
+  const labels = new Set(discounted.map(lineDiscountLabelOf));
+  return labels.size === 1 ? [...labels][0]! : null;
 }
 
 export function allowedActionsOf(invoice: DbInvoice): string[] {
@@ -1097,6 +1134,7 @@ export function invoiceDetail(invoice: DbInvoice) {
       discount: money(totals.discount),
       tax: money(totals.tax),
       total: money(totals.total),
+      discountLabel: totalsDiscountLabelOf(invoice.lines),
     },
     isEstimate: !frozen,
     paid: money(invoice.paidCents),
@@ -1143,7 +1181,6 @@ export function chargeView(c: DbCharge) {
     customerId: c.customerId,
     customerName: customerName(c.customerId),
     branchId: c.branchId,
-    catId: null,
     businessLine: c.businessLine,
     itemKind: c.itemKind,
     sourceKind: c.sourceKind,
@@ -1259,7 +1296,7 @@ export function receiptView(p: DbPayment) {
   return {
     receiptNumber: receiptText(p.receiptSeq),
     seller: sellerOf(p.branchId),
-    branchName: p.branchId === ids.londonBranchId ? 'London branch' : 'Main clinic',
+    branchName: p.branchId === ids.londonBranchId ? 'London branch' : 'Main outlet',
     customerName: customerName(p.customerId),
     method: p.method,
     reference: p.reference,
@@ -1536,6 +1573,24 @@ export function cashUpFor(date: string, branchId: string) {
       label: c.label,
     });
   }
+  // Staff-collected cash on delivery counts in the cash and is a source of its own (HO-P5 BG-20).
+  const staffCash = db.staffCash.filter((c) => c.date === date);
+  for (const c of staffCash) {
+    lines.push({
+      id: c.id,
+      kind: 'Payment',
+      method: 'CashOnDelivery',
+      collector: 'Staff',
+      refundMethod: null,
+      amount: money(c.cents),
+      countsInCash: true,
+      carriedIn: false,
+      label: `Cash on delivery · ${c.staffName}`,
+      sourceKey: staffSourceKey(c.staffAccountId),
+    });
+    cash += c.cents;
+    cashCount += 1;
+  }
   const expectedCash = cash - cashReversals - cashRefunds + carriedTotal;
   const record = db.cashUps.find((c) => c.date === date);
   const counted = record?.countedCents ?? null;
@@ -1569,7 +1624,62 @@ export function cashUpFor(date: string, branchId: string) {
     closedBy: record?.status === 'Closed' ? ids.otherStaffId : null,
     closedByName: record?.closedByName ?? null,
     closedOn: record?.closedOn ?? null,
+    sources: cashUpSources(date, expectedCash, record),
   };
+}
+
+export const TILL_KEY = 'till';
+
+export function staffSourceKey(staffAccountId: string): string {
+  return `staff:${staffAccountId}`;
+}
+
+/**
+ * The expected cash per source, in integer minor units: the staff collectors' cash, and the till as the rest, so the sources sum to
+ * the expected cash (`CashUpCalculator.CalculateSources`, CashUpCalculator.cs:83-112). The till is always listed, first.
+ */
+export function expectedSourcesOf(date: string, expectedCash: Cents): Array<{ key: string; label: string; cents: Cents }> {
+  const byStaff = new Map<string, { label: string; cents: Cents }>();
+  for (const c of db.staffCash.filter((x) => x.date === date)) {
+    const key = staffSourceKey(c.staffAccountId);
+    byStaff.set(key, { label: c.staffName, cents: (byStaff.get(key)?.cents ?? 0) + c.cents });
+  }
+  let staffTotal = 0;
+  for (const v of byStaff.values()) staffTotal += v.cents;
+  const staff = [...byStaff.entries()]
+    .map(([key, v]) => ({ key, label: v.label, cents: v.cents }))
+    .sort((x, y) => x.label.localeCompare(y.label));
+  return [{ key: TILL_KEY, label: 'Till', cents: expectedCash - staffTotal }, ...staff];
+}
+
+/** `CashUpSources.Reconcile` (CashUpSources.cs:21-40): the union of expected and counted keys, the till first. A source left out of
+ *  the count reads as counted nothing only once the day is closed and something was counted; while open it stays null. */
+function cashUpSources(date: string, expectedCash: Cents, record: DbCashUp | undefined) {
+  const closed = record?.status === 'Closed';
+  const expected = closed && record?.expectedSources && record.expectedSources.length > 0 ? record.expectedSources : expectedSourcesOf(date, expectedCash);
+  const counted = record?.sourceCounts ?? [];
+  const keys = [...new Set([...expected.map((e) => e.key), ...counted.map((c) => c.key)])];
+  return keys
+    .map((key) => {
+      const exp = expected.find((e) => e.key === key);
+      const cnt = counted.find((c) => c.key === key);
+      const expectedCents = exp?.cents ?? 0;
+      const countedCents = cnt ? cnt.cents : counted.length > 0 && closed ? 0 : null;
+      return {
+        key,
+        label: exp?.label ?? cnt?.label ?? key,
+        expectedCents,
+        countedCents,
+      };
+    })
+    .sort((x, y) => Number(y.key === TILL_KEY) - Number(x.key === TILL_KEY) || x.label.localeCompare(y.label))
+    .map((r) => ({
+      key: r.key,
+      label: r.label,
+      expected: money(r.expectedCents),
+      counted: r.countedCents === null ? null : money(r.countedCents),
+      variance: r.countedCents === null ? null : money(r.countedCents - r.expectedCents),
+    }));
 }
 
 /** The mock's expected cash, for its own variance checks (never sent to the client). */

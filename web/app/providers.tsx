@@ -4,9 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { apiFetch } from '@/lib/api/client';
+import { mockWorkerReady } from '@/lib/dev/mock-worker';
 import { registerQueryClient } from '@/lib/branch';
 
-// The single QueryClient for the app (HO-CAT-002 §8.4 — server data lives in TanStack Query,
+// The single QueryClient for the app (the scaffold handover §8.4 — server data lives in TanStack Query,
 // never copied into useState). No global store of our own is created here or anywhere else.
 //
 // ARCH gate HIGH fix (HO-ADM-002-ARCHITECTURE, owner decision 2026-09-28) — `lib/branch.ts`'s
@@ -26,7 +27,7 @@ import { registerQueryClient } from '@/lib/branch';
 // written to it. An effect body runs only against the already-settled `queryClient` value, so this
 // registers exactly the instance passed to `QueryClientProvider` below.
 //
-// Also starts browser-side MSW (HO-CAT-002 §5.1) in development, only when
+// Also starts browser-side MSW (the scaffold handover §5.1) in development, only when
 // NEXT_PUBLIC_USE_MOCKS=true (web/.env.local.example) — see web/README.md. Dynamically imported
 // so `msw/browser` is never bundled into a production build. `worker.start()` is async and this
 // effect fires after first paint, so a request made in the same tick as mount can race the
@@ -109,13 +110,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       ).__apiFetch = apiFetch;
     }
 
-    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
-      void import('@/mocks/browser').then(({ worker }) =>
-        worker.start({ onUnhandledRequest: 'bypass' }).then(() => {
-          (window as unknown as { __mswReady?: boolean }).__mswReady = true;
-        }),
-      );
-    }
+    // Starts (or joins) the mocked-mode worker; `apiFetch` awaits the same promise (lib/dev/mock-worker.ts).
+    void mockWorkerReady();
     // `queryClient` in the deps array below is stable (its own `useState` initialiser only ever
     // runs once), so listing it does not make this effect ever re-run; it is here only because it
     // is now genuinely referenced in the body (the new `__invalidateQueries` hook), which the

@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--focus-ring:#15605a;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--focus-ring:#B4531A;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--border);background:#fff}
@@ -37,7 +37,7 @@ legend{font-size:13px;font-weight:600;padding:0 4px}
 </style>
 </helmet>
 <div style="width:1280px;height:1000px;background:var(--surface-page);overflow:auto">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div style="padding:28px 32px">
     <h1 class="h1">Add staff account</h1>
     <div class="grid">
@@ -48,9 +48,9 @@ legend{font-size:13px;font-weight:600;padding:0 4px}
 
         <fieldset>
           <legend>Roles</legend>
-          <div class="rolerow"><input type="checkbox" id="r1"><label for="r1">Vet</label></div>
-          <div class="rolerow"><input type="checkbox" id="r2"><label for="r2">Nurse</label></div>
-          <div class="rolerow"><input type="checkbox" id="r3" checked><label for="r3">Reception</label></div>
+          <div class="rolerow"><input type="checkbox" id="r1"><label for="r1">Manager</label></div>
+          <div class="rolerow"><input type="checkbox" id="r2"><label for="r2">Stock keeper</label></div>
+          <div class="rolerow"><input type="checkbox" id="r3" checked><label for="r3">Cashier</label></div>
           <div class="rolerow"><input type="checkbox" id="r4"><label for="r4">Accountant</label></div>
           <div class="rolerow"><input type="checkbox" id="r5"><label for="r5">Administrator</label></div>
         </fieldset>
@@ -60,12 +60,12 @@ legend{font-size:13px;font-weight:600;padding:0 4px}
       <div class="card">
         <div class="eyebrow">Capability preview — indicative, from SRS Appendix D</div>
         <table class="matrix">
-          <thead><tr><th>Area</th><th>Reception</th></tr></thead>
+          <thead><tr><th>Area</th><th>Cashier</th></tr></thead>
           <tbody>
-            <tr><td>Book &amp; check in appointments</td><td class="yes">✓</td></tr>
+            <tr><td>Look up and update customer orders</td><td class="yes">✓</td></tr>
             <tr><td>Register walk-in customers</td><td class="yes">✓</td></tr>
             <tr><td>Take payments at the till</td><td class="yes">✓</td></tr>
-            <tr><td>Clinical notes &amp; prescriptions</td><td class="no">—</td></tr>
+            <tr><td>Stock counts &amp; price changes</td><td class="no">—</td></tr>
             <tr><td>Change staff roles</td><td class="no">—</td></tr>
             <tr><td>View financial reports</td><td class="no">—</td></tr>
           </tbody>

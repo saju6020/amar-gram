@@ -3,7 +3,10 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
+import { cardClass } from '@/components/hearth/card';
+import { pillInputClass } from '@/components/hearth/fields';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { PasswordField } from '@/components/auth/PasswordField';
 import { RetryNotice } from '@/components/auth/RetryNotice';
 import { UnsavedChangesGuard } from './UnsavedChangesGuard';
@@ -87,9 +90,13 @@ export function ProfileForm({ profile, onSave, isPending, rateLimitError }: Prof
       method="post"
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex max-w-lg flex-col gap-5"
+      aria-labelledby="pf-me"
+      className={cn(cardClass, 'flex flex-col gap-5 sm:p-6')}
     >
       <UnsavedChangesGuard when={isDirty && !isSubmitSuccessful} />
+      <h2 id="pf-me" className="m-0 text-xl font-semibold text-ink">
+        Your details
+      </h2>
 
       {errors.root && (
         <p role="alert" aria-live="polite" className="text-sm font-semibold text-danger-ink">
@@ -116,7 +123,7 @@ export function ProfileForm({ profile, onSave, isPending, rateLimitError }: Prof
           autoComplete="name"
           aria-invalid={!!errors.fullName}
           aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-          className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className={pillInputClass}
           {...register('fullName')}
         />
         {errors.fullName && (
@@ -137,7 +144,7 @@ export function ProfileForm({ profile, onSave, isPending, rateLimitError }: Prof
             autoComplete="email"
             aria-invalid={!!errors.emailAddress}
             aria-describedby={errors.emailAddress ? 'emailAddress-error' : undefined}
-            className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className={pillInputClass}
             {...register('emailAddress')}
           />
         ) : (
@@ -147,10 +154,10 @@ export function ProfileForm({ profile, onSave, isPending, rateLimitError }: Prof
               readOnly
               value={profile.emailAddress ?? ''}
               aria-describedby="emailAddress-explanation"
-              className="rounded-[var(--radius-sm)] border border-border bg-surface-sunken px-3 py-2 text-sm text-ink-muted"
+              className={cn(pillInputClass, 'border-border bg-surface-sunken text-ink-muted')}
             />
             <p id="emailAddress-explanation" className="text-xs text-ink-muted">
-              Your email is how you sign in. Contact the clinic to change it.
+              Your email is how you sign in. Contact us to change it.
             </p>
           </>
         )}
@@ -181,16 +188,23 @@ export function ProfileForm({ profile, onSave, isPending, rateLimitError }: Prof
           readOnly
           value={profile.mobileNumber ?? 'None on file'}
           aria-describedby="mobile-explanation"
-          className="rounded-[var(--radius-sm)] border border-border bg-surface-sunken px-3 py-2 text-sm text-ink-muted"
+          className={cn(pillInputClass, 'border-border bg-surface-sunken text-ink-muted')}
         />
         <p id="mobile-explanation" className="text-xs text-ink-muted">
-          Your mobile number is how you sign in. Contact the clinic to change it.
+          Your mobile number is how you sign in. Contact us to change it.
         </p>
       </div>
 
       <AdditionalPhoneNumbersField control={control} register={register} errors={errors} />
 
-      <Button type="submit" disabled={isPending} aria-busy={isPending} className="w-fit">
+      <Button
+        type="submit"
+        variant="pill"
+        size="pillMd"
+        disabled={isPending}
+        aria-busy={isPending}
+        className="w-fit"
+      >
         {isPending ? 'Saving…' : 'Save'}
       </Button>
     </form>

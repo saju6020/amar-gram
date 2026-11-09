@@ -1,17 +1,15 @@
 import * as React from 'react';
 import { Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LineArtBasket } from '@/components/hearth/LineArtBasket';
 
 /**
- * The warm-customer-layer line-art cat, copied verbatim from `docs/design/portal/
- * DashboardNewCustomer.dc.html`'s `.empty-cat` (also used by `CatalogueNoResults.dc.html` and
- * `MySubscriptionsEmpty.dc.html` — at least three portal-facing areas beyond Cat Profiles, so it
- * lives here rather than being re-copied per area). Sits in a `--warm-soft` disc — only ever
- * meaningful inside `[data-theme="customer"]` (app/(portal)/layout.tsx); never pass this as
- * `EmptyState`'s icon on a staff screen (HO-CAT-002 §8.5's `--warm` contrast note, and the
- * task's "staff empty states stay neutral" rule).
+ * The warm-customer-layer illustration: the Hearth harvest basket (`LineArtBasket`, Amar Gram Phase 2) in a
+ * `--warm-soft` disc. Shared by several customer-facing areas, so it lives here. Only ever meaningful inside
+ * `[data-theme="customer"]`; never pass this as `EmptyState`'s icon on a staff screen (`--warm` contrast, and
+ * the "staff empty states stay neutral" rule).
  */
-export function EmptyCatIllustration({ className }: { className?: string }) {
+export function EmptyWarmIllustration({ className }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
@@ -20,27 +18,12 @@ export function EmptyCatIllustration({ className }: { className?: string }) {
         className,
       )}
     >
-      <svg
-        width="38"
-        height="38"
-        viewBox="0 0 64 64"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M19 23 17 9l10 7M45 23l2-14-10 7" />
-        <path d="M18 26c0-7 6-11 14-11s14 4 14 11-6 11-14 11-14-4-14-11Z" />
-        <path d="M26 25v1.5M38 25v1.5M30 30.5l2 1.5 2-1.5" />
-        <path d="M22 36c-4 6-5 13-3 21h26c2-8 1-15-3-21" />
-        <path d="M45 55c6 0 9-4 7.5-9" />
-      </svg>
+      <LineArtBasket width={36} height={40} />
     </span>
   );
 }
 
-/** The default neutral icon for a staff (or icon-less) empty state — never the warm cat art. */
+/** The default neutral icon for a staff (or icon-less) empty state — never the warm art. */
 function NeutralIllustration({ className }: { className?: string }) {
   return (
     <span
@@ -56,7 +39,7 @@ function NeutralIllustration({ className }: { className?: string }) {
 }
 
 /**
- * `components/common/EmptyState.tsx` — HO-CAT-002 §11.7, Definition of Done: "`EmptyState` says
+ * `components/common/EmptyState.tsx` — the scaffold handover §11.7, Definition of Done: "`EmptyState` says
  * what to do next, not 'No data'." Every prop that isn't the title is deliberately there to force
  * that: `description` for the plain-language "why", `action` for the next step.
  *
@@ -68,7 +51,7 @@ export interface EmptyStateProps {
   title: string;
   description?: React.ReactNode;
   action?: React.ReactNode;
-  /** Pass `<EmptyCatIllustration />` on a portal screen with nothing to show yet; pass `null` to
+  /** Pass `<EmptyWarmIllustration />` on a portal screen with nothing to show yet; pass `null` to
    *  render no icon at all. Defaults to a neutral icon — staff empty states stay neutral. */
   icon?: React.ReactNode | null;
   className?: string;

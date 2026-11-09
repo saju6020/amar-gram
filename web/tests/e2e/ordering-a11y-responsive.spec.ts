@@ -123,21 +123,21 @@ for (const [audience, routes] of [['staff', STAFF], ['customer', CUSTOMER]] as c
 }
 
 /**
- * Routes that need a state to be set up first (E-X1 / E-X2, A30): the checkout review with the "what changed" panel,
+ * Routes that need a state to be set up first (E-X1 / E-X2, A30): the single-page checkout with the "what changed" panel,
  * the bank-transfer page of a placed order (with its countdown) and the POS with an item in the basket.
  */
-const KITTEN = `/shop/products/${shopIds.multiVariantSlug}?sku=${shopIds.skuKitten2kg}`;
-const REVIEW = `/checkout?step=review&fulfilment=Pickup&pickupBranchId=${ids.mainBranchId}&paymentMethod=BankTransfer`;
+const OATS = `/shop/products/${shopIds.multiVariantSlug}?sku=${shopIds.skuOats2kg}`;
+const REVIEW = `/checkout?fulfilment=Pickup&pickupBranchId=${ids.mainBranchId}&paymentMethod=BankTransfer`;
 
 test.describe('flows that need set-up', () => {
-  test('/checkout?step=review with a price change: the changes panel is on screen at every width', async ({ page }) => {
+  test('/checkout with a price change: the changes panel is on screen at every width', async ({ page }) => {
     await page.goto('/sign-in');
     await control(page, 'reset');
     await signInAsCustomer(page);
-    await page.goto(KITTEN);
-    await page.getByRole('button', { name: 'Add to cart' }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Royal Canin Kitten/ })).toBeVisible();
-    await control(page, 'setPrice', shopIds.skuKitten2kg, '3000.00');
+    await page.goto(OATS);
+    await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
+    await expect(page.getByRole('status').filter({ hasText: /Added 1 × 2 kg to your basket/ })).toBeVisible();
+    await control(page, 'setPrice', shopIds.skuOats2kg, '3000.00');
     await auditViewports(page, REVIEW, async () => {
       await expect(page.getByRole('region', { name: 'What changed since you added these items' })).toBeVisible();
       await expect(page.getByRole('button', { name: 'Place order' })).toBeVisible();
@@ -148,16 +148,18 @@ test.describe('flows that need set-up', () => {
     await page.goto('/sign-in');
     await control(page, 'reset');
     await signInAsCustomer(page);
-    await page.goto(KITTEN);
-    await page.getByRole('button', { name: 'Add to cart' }).click();
-    await expect(page.getByRole('status').filter({ hasText: /Added 1 × Royal Canin Kitten/ })).toBeVisible();
+    await page.goto(OATS);
+    await page.getByRole('button', { name: /Add to (cart|basket)/ }).click();
+    await expect(page.getByRole('status').filter({ hasText: /Added 1 × 2 kg to your basket/ })).toBeVisible();
     await page.goto(REVIEW);
     await page.getByRole('button', { name: 'Place order' }).click();
     await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
-    await expect(page.getByRole('status').filter({ hasText: /your order .* is placed/i })).toBeVisible();
+    // S4 / D-3: the order page's confirmation block.
+    await expect(page.getByRole('heading', { name: 'Thank you! Your order is in.' })).toBeVisible();
     const complete = new URL(page.url()).pathname;
     expect(complete).toMatch(/^\/portal\/orders\/[0-9a-f-]{36}$/);
-    await auditViewports(page, complete, async () => {
+    expect(new URL(page.url()).search).toBe('?placed=1');
+    await auditViewports(page, `${complete}?placed=1`, async () => {
       await expect(page.getByRole('heading', { name: 'Pay by bank transfer' })).toBeVisible();
       await expect(page.getByRole('timer')).toBeVisible();
     });

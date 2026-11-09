@@ -7,12 +7,14 @@ involved, the aggregates, the invariants that must hold, and the cross-module ru
 |---|---|---|
 | `order-fulfilment-flow.md` | §4.9 | Cart, FEFO allocation, dispatch, returns |
 | `import-to-shelf-flow.md` | §4.8 | Consignments, batches, expiry lifecycle, landed cost |
+| `back-office-gaps-flow.md` | HO-P4 | BG-9/10/13/14/16/17/18: staff list extras, bulk publish/hide, compare-at price, organic certificate, reorder level, arriving consignments, receipt drafts |
+| `subscriptions-flow.md` | FR-SUB-1..6 | Recurring orders: schedule and cut-off, worker passes, unpaid streak, staff reinstatement |
 
 ## Retired flows
 
-The clinic, surgery, vaccination, boarding, prescription-diet and batch-recall flows were removed on
-2026-10-23 when the platform pivoted from a cat clinic to the Amar Gram general e-commerce shop. A
-generic product-recall flow may be written in Pass 2.
+Flows for services outside the shop, and the batch-recall flow, were removed on 2026-10-23 when the
+platform became the Amar Gram organic and general e-commerce shop. A generic product-recall flow
+may be written in Pass 2.
 
 ## Archived
 

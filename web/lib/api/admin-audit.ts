@@ -62,7 +62,7 @@ export async function searchAuditEntries(
   return apiFetch<PagedResult<AuditEntry>>(`/api/admin/audit-entries?${query.toString()}`);
 }
 
-/** A navigable download URL, not a `fetch` call (HO-CAT-002 §8.2 rule 2's own exception for a
+/** A navigable download URL, not a `fetch` call (the client-fetch rule's own exception for a
  *  binary/browser-navigated download — see `client.ts`'s `getApiUrl` doc comment). The caller
  *  navigates the browser to this (`window.location.href = ...` or an `<a href>`), so the session
  *  cookie rides along the same way it would for any other same-site navigation, and a `413` is

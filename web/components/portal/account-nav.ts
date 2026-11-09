@@ -1,20 +1,9 @@
 /**
- * The customer account sidebar (owner picked option A "Account sidebar", 2026-10-17; the approved
- * design https://claude.ai/artifact/K3WKkwpv67BqLJJdSr3bUh): Overview, then three groups. The same
- * list drives the desktop sidebar and the phone's row of pills.
+ * The customer account menu (docs/design/store/Account.dc.html, HO-P3 S4): Overview, My orders, Wishlist, My reviews,
+ * Billing, Profile & addresses (D-6 keeps the working features the design does not show), and Subscriptions after My
+ * orders (HO-P6, ADR-FE-109). The same list drives the desktop sidebar and the phone's row of pills.
  */
-export type AccountIcon =
-  | 'home'
-  | 'cat'
-  | 'calendar'
-  | 'pill'
-  | 'scissors'
-  | 'bed'
-  | 'package'
-  | 'heart'
-  | 'star'
-  | 'receipt'
-  | 'user';
+export type AccountIcon = 'home' | 'package' | 'repeat' | 'heart' | 'star' | 'receipt' | 'user';
 
 export interface AccountLink {
   label: string;
@@ -24,7 +13,7 @@ export interface AccountLink {
 
 export interface AccountGroup {
   key: string;
-  /** null = no heading (Overview, at the top). */
+  /** null = no heading (the design's menu is one flat list). */
   label: string | null;
   links: AccountLink[];
 }
@@ -35,48 +24,24 @@ export const ACCOUNT_LANDING = '/portal/orders';
 
 export const ACCOUNT_GROUPS: readonly AccountGroup[] = [
   {
-    key: 'overview',
+    key: 'menu',
     label: null,
-    links: [{ label: 'Overview', href: ACCOUNT_HOME, icon: 'home' }],
-  },
-  {
-    key: 'care',
-    label: 'My cats & care',
     links: [
-      { label: 'My cats', href: '/portal/cats', icon: 'cat' },
-      { label: 'Appointments', href: '/portal/appointments', icon: 'calendar' },
-      { label: 'Prescriptions', href: '/portal/prescriptions', icon: 'pill' },
-      { label: 'Surgeries', href: '/portal/surgeries', icon: 'scissors' },
-      { label: 'Boarding', href: '/portal/boarding', icon: 'bed' },
-    ],
-  },
-  {
-    key: 'shopping',
-    label: 'Shopping',
-    links: [
-      { label: 'Orders', href: '/portal/orders', icon: 'package' },
+      { label: 'Overview', href: ACCOUNT_HOME, icon: 'home' },
+      { label: 'My orders', href: '/portal/orders', icon: 'package' },
+      { label: 'Subscriptions', href: '/portal/subscriptions', icon: 'repeat' },
       { label: 'Wishlist', href: '/portal/wishlist', icon: 'heart' },
       { label: 'My reviews', href: '/portal/reviews', icon: 'star' },
-    ],
-  },
-  {
-    key: 'account',
-    label: 'Account',
-    links: [
       { label: 'Billing', href: '/portal/billing', icon: 'receipt' },
-      { label: 'Profile & security', href: '/portal/account/profile', icon: 'user' },
+      { label: 'Profile & addresses', href: '/portal/account/profile', icon: 'user' },
     ],
   },
 ];
 
-/** The phone's row of pills starts with the landing page, Orders (the approved design). */
+/** The phone's row of pills starts with the landing page, My orders (the approved design). */
 export const PHONE_PILL_ORDER: readonly string[] = [
   '/portal/orders',
-  '/portal/cats',
-  '/portal/appointments',
-  '/portal/prescriptions',
-  '/portal/surgeries',
-  '/portal/boarding',
+  '/portal/subscriptions',
   '/portal/wishlist',
   '/portal/reviews',
   '/portal/billing',
@@ -86,7 +51,7 @@ export const PHONE_PILL_ORDER: readonly string[] = [
 
 /**
  * The link for the current page: the longest matching prefix wins; Overview only matches /portal
- * itself; any /portal/account/* page is Profile & security.
+ * itself; any /portal/account/* page is Profile & addresses.
  */
 export function activeAccountHref(pathname: string): string | null {
   if (pathname === ACCOUNT_HOME) return ACCOUNT_HOME;

@@ -29,10 +29,13 @@ import {
   todayLocal,
   uuid,
   APPROVAL_THRESHOLD_CENTS,
+  RIDER_CARRIER_NAME,
   type DbOrder,
+  type DbRider,
   type DbReturn,
 } from './store';
-import { orderLineView, totalsView } from './customer';
+import { totalsView } from './customer';
+import { getStaffRoleIdsForRequest } from '../areas/accounts';
 
 /**
  * `mocks/handlers/ordering/staff.ts` — HO-ORD-002 §12.1. The staff endpoints of HO-ORD-001 §12.4 as
@@ -84,9 +87,19 @@ function queueRow(o: DbOrder) {
     ageMinutes: Math.max(0, Math.round((Date.now() - Date.parse(o.placedOn)) / 60_000)),
     flags: flagsOf(o),
     branchTimeZoneId: ids.timeZoneId,
+    // HO-P5 BG-3 (Read/QueryHandlers/Order/StaffOrderQueryHandlers.cs:62,79-80): the order's own fulfilment
+    // fields; a pickup or counter order has none, so they are null.
+    deliveryZone: o.fulfilment.zoneName,
+    deliveryDistrict: o.fulfilment.district,
+    slotDate: o.fulfilment.slotDate,
+    slotWindowLabel: o.fulfilment.slotWindow,
   };
 }
 
+/**
+ * `allowedActions[]` from the same table the aggregate enforces (Domain/DomainServices/OrderTransitionRules.cs:46-66),
+ * narrowed by fulfilment as `AllowedActions` does (:99-113): Dispatch is a delivery's, MarkReadyForCollection a pickup's.
+ */
 function allowedActionsOf(o: DbOrder): string[] {
   switch (o.status) {
     case 'PendingPayment':
@@ -94,7 +107,19 @@ function allowedActionsOf(o: DbOrder): string[] {
     case 'Confirmed':
       return o.fulfilmentMethod === 'Counter' ? [] : ['StartPacking', 'Cancel'];
     case 'Packing':
-      return [o.fulfilmentMethod === 'Pickup' ? 'MarkReadyForCollection' : 'Dispatch', 'Cancel'];
+      // Counter orders never reach Packing; the table would give them MarkPacked and Cancel only.
+      return [
+        'MarkPacked',
+        ...(o.fulfilmentMethod === 'Delivery' ? ['Dispatch'] : []),
+        ...(o.fulfilmentMethod === 'Pickup' ? ['MarkReadyForCollection'] : []),
+        'Cancel',
+      ];
+    case 'Packed':
+      return [
+        ...(o.fulfilmentMethod === 'Delivery' ? ['Dispatch'] : []),
+        ...(o.fulfilmentMethod === 'Pickup' ? ['MarkReadyForCollection'] : []),
+        'Cancel',
+      ];
     case 'Dispatched':
       return ['RecordDelivery', 'RecordDeliveryFailure'];
     case 'Delivered':
@@ -117,21 +142,28 @@ function staffDetail(o: DbOrder) {
     fulfilmentMethod: o.fulfilmentMethod,
     paymentMethod: o.paymentMethod,
     branchTimeZoneId: ids.timeZoneId,
+    // HO-P5 BG-4: Read/ViewModels/StaffOrderViewModels.cs:38 (`PackedOn`, null until packed).
+    packedOn: o.packedOn ?? null,
     lines: o.lines.map((l) => ({
       lineId: l.lineId,
       lineNumber: l.lineNumber,
       skuId: l.skuId,
       productName: l.productName,
       variantLabel: l.variantLabel,
-      cat: orderLineView(l).cat,
       quantity: l.quantity,
       unitPrice: money(l.unitCents),
       lineTotal: money(l.totalCents),
       quantityReturned: l.quantityReturned,
       allocations: l.allocations,
+      // HO-P5 BG-4: the staff line view only (Read/ViewModels/StaffOrderViewModels.cs:17-19). The customer
+      // line view in customer.ts, which pos.ts also imports, never carries these.
+      picked: l.picked ?? false,
+      pickedOn: l.pickedOn ?? null,
+      pickedBy: l.pickedBy ?? null,
     })),
     totals: totalsView(o),
-    fulfilment: fulfilmentSummary(o),
+    // `riderNote` is always present on the server's fulfilment view (null when none): Read/ViewModels/OrderViewModels.cs:23.
+    fulfilment: { ...fulfilmentSummary(o), riderNote: o.fulfilment.riderNote ?? null },
     statusHistory: o.history,
     paymentDueBy: o.paymentDueBy,
     customerTransferReference: o.customerTransferReference,
@@ -147,8 +179,14 @@ function staffDetail(o: DbOrder) {
           recordedBy: o.cod.recordedBy,
         }
       : null,
+    // `courierId` is null and `riderId` / `riderName` are set for an in-house rider (StaffOrderViewModels.cs:27-30).
     shipment: o.shipment
-      ? { ...o.shipment, lastTrackingEventOn: o.shipment.lastTrackingStatus ? o.shipment.dispatchedOn : null }
+      ? {
+          ...o.shipment,
+          riderId: o.shipment.riderId ?? null,
+          riderName: o.shipment.riderName ?? null,
+          lastTrackingEventOn: o.shipment.lastTrackingStatus ? o.shipment.dispatchedOn : null,
+        }
       : null,
     collectBy: o.collectBy,
     invoiceId: o.invoiceNumber ? `1${o.id.slice(1)}` : null,
@@ -273,6 +311,147 @@ function csvCell(value: string | number): string {
   return /^[=+\-@]/.test(text) ? `'${text}` : /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
+// ---- the queue's filters, shared by the list and `status-counts` -----------------------------------------
+
+/** Pipeline order of every status: Read/QueryHandlers/Order/StaffOrderQueryHandlers.cs:89-93. */
+const PIPELINE_ORDER = ['PendingPayment', 'Confirmed', 'Packing', 'Packed', 'Dispatched', 'Delivered', 'Cancelled', 'Returned', 'Refunded'] as const;
+const FULFILMENT_NAMES = ['Delivery', 'Pickup', 'Counter'];
+const PAYMENT_NAMES = ['CashOnDelivery', 'BankTransfer', 'PayOnCollection', 'InStore'];
+/** `Subscription` is a real channel the filter accepts (Shared/Common/Enums/OrderChannel.cs:8); the UI offers no tab for it (OQ-11). */
+const CHANNEL_NAMES = ['Online', 'Counter', 'Subscription'];
+
+/** `EnumerationParsing.TryParse`: blank is no filter, a name matches case-insensitively (Shared/Common/Enums/EnumerationParsing.cs:20-30). */
+function enumName(value: string | null, names: readonly string[]): string | undefined | null {
+  if (value === null || value.trim() === '') return undefined;
+  return names.find((name) => name.toLowerCase() === value.toLowerCase()) ?? null;
+}
+
+const badFilter = (message: string) => HttpResponse.json({ error: message }, { status: 400 });
+
+/** The server's 400s for a malformed filter: Api/Controllers/StaffOrdersController.cs:123-127 (list) and :146-150 (status-counts). */
+function refuseQueueFilters(url: URL, withStatus: boolean): Response | null {
+  const get = (key: string) => url.searchParams.get(key);
+  if (withStatus && enumName(get('status'), PIPELINE_ORDER) === null) return badFilter('status is not an order status.');
+  if (enumName(get('fulfilment'), FULFILMENT_NAMES) === null) return badFilter('fulfilment is not a fulfilment method.');
+  if (enumName(get('paymentMethod'), PAYMENT_NAMES) === null) return badFilter('paymentMethod is not a payment method.');
+  if (enumName(get('channel'), CHANNEL_NAMES) === null) return badFilter('channel is not an order channel.');
+  if ((get('search') ?? '').length > 100) return badFilter('search is too long.');
+  return null;
+}
+
+/** The orders under the queue's filters. `withStatus` is false for `status-counts`, which ignores `status` (Read/QueryHandlers/Order/StaffOrderQueryHandlers.cs:96-98). */
+function filteredOrders(url: URL, withStatus: boolean): DbOrder[] {
+  const text = (key: string) => url.searchParams.get(key) || undefined;
+  const status = withStatus ? enumName(text('status') ?? null, PIPELINE_ORDER) : undefined;
+  const fulfilment = enumName(text('fulfilment') ?? null, FULFILMENT_NAMES);
+  const payment = enumName(text('paymentMethod') ?? null, PAYMENT_NAMES);
+  const channel = enumName(text('channel') ?? null, CHANNEL_NAMES);
+  const search = text('search')?.trim().toLowerCase();
+  const from = text('from');
+  const to = text('to');
+  return db.orders
+    .filter((o) => !status || o.status === status)
+    .filter((o) => !fulfilment || o.fulfilmentMethod === fulfilment)
+    .filter((o) => !payment || o.paymentMethod === payment)
+    .filter((o) => !channel || o.channel === channel)
+    .filter((o) => !from || Date.parse(o.placedOn) >= parseQueryInstant(from))
+    .filter((o) => !to || Date.parse(o.placedOn) <= parseQueryInstant(to))
+    .filter(
+      (o) =>
+        !search ||
+        o.orderNumber.toLowerCase().includes(search) ||
+        o.customerName.toLowerCase().includes(search) ||
+        (o.customerMobile ?? '').includes(search),
+    );
+}
+
+// ---- roles and riders (HO-P5 BG-5) --------------------------------------------------------------------
+
+/** Orders.Fulfil: Shared/Common/Constants/ActionRoles.Orders.cs:14. Riders.Manage: :26. */
+const FULFIL_ROLES = ['Reception', 'ShopManager', 'Administrator'];
+const RIDER_MANAGE_ROLES = ['ShopManager', 'Administrator'];
+/** Orders.Cancel: ActionRoles.Orders.cs:20. */
+const CANCEL_ROLES = ['Reception', 'ShopManager', 'Administrator'];
+
+/**
+ * True when the request carries a staff session whose roles hold none of `allowed` -- the server's `403` from
+ * `[RequireAction]`. A request with no staff session is "not modelled" and passes, like the other mocks.
+ */
+function lacksRole(request: Request, allowed: readonly string[]): boolean {
+  const roles = roleOverride ?? getStaffRoleIdsForRequest(request);
+  return roles !== null && !roles.some((role) => allowed.includes(role));
+}
+
+let roleOverride: string[] | null = null;
+
+/** Test seam, like `setMockReportRoles`: answer as these roles regardless of the session cookie. `null` clears it. */
+export function setMockOrderingRoles(roles: string[] | null): void {
+  roleOverride = roles;
+}
+
+/** Shared/Common/Constants/OrderRules.cs:38 (`MaxNameLength`), `MobileNumber.MaxLength`/`Create` and `NoControlCharacters`. */
+const RIDER_NAME_MAX = 100;
+const RIDER_MOBILE_VALIDATOR_MAX = 30;
+const DISALLOWED_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
+
+/**
+ * `MobileNumber.Create` (Domain/ValueObjects/MobileNumber.cs:21-48): strips spaces, `-` and parentheses, accepts
+ * `01XXXXXXXXX`, `+8801XXXXXXXXX` or `8801XXXXXXXXX` (optionally after `00`), and stores `+8801XXXXXXXXX`.
+ */
+export function normaliseMobile(raw: string): string | null {
+  const cleaned = raw.replace(/[\s\-()]/g, '');
+  if (cleaned === '') return null;
+  const hasPlus = cleaned.startsWith('+');
+  let digits = hasPlus ? cleaned.slice(1) : cleaned;
+  if (digits === '' || !/^\d+$/.test(digits)) return null;
+  if (!hasPlus && digits.startsWith('00')) digits = digits.slice(2);
+  let local: string;
+  if (digits.length === 13 && digits.startsWith('880')) local = `0${digits.slice(3)}`;
+  else if (digits.length === 11 && digits.startsWith('01')) local = digits;
+  else return null;
+  if (local.length !== 11 || !local.startsWith('01')) return null;
+  return `+880${local.slice(1)}`;
+}
+
+/** `RiderViewModel` (Read/ViewModels/RiderViewModels.cs:4): never the branch. A seeded raw number reads back normalised. */
+function riderView(r: DbRider) {
+  const mobile = r.mobileNumber ? (normaliseMobile(r.mobileNumber) ?? r.mobileNumber) : null;
+  return { id: r.id, name: r.name, mobileNumber: mobile, isActive: r.isActive };
+}
+
+interface RiderBody {
+  name?: string;
+  mobileNumber?: string | null;
+  isActive?: boolean;
+}
+
+/**
+ * `CreateRiderCommandValidator` / `UpdateRiderCommandValidator` (Application/CommandHandlers/Validators/RiderCommandValidators.cs:12-26),
+ * then the aggregate's `Apply` (Domain/Aggregates/Order/RiderAggregate.cs:48-56): the shape, and a mobile that is a real number.
+ */
+function refuseRiderBody(body: RiderBody): Response | null {
+  const name = body.name ?? '';
+  // FluentValidation's NotEmpty also rejects a whitespace-only name.
+  if (name.trim() === '') return violation('Name', 'NotEmptyValidator', "Enter the rider's name.");
+  if (name.length > RIDER_NAME_MAX) return violation('Name', 'MaximumLengthValidator', `Use up to ${RIDER_NAME_MAX} characters for the name.`);
+  if (DISALLOWED_CONTROL.test(name)) return violation('Name', 'PredicateValidator', 'must not contain control characters.');
+  const mobile = body.mobileNumber ?? '';
+  if (mobile.length > RIDER_MOBILE_VALIDATOR_MAX) return violation('MobileNumber', 'MaximumLengthValidator', 'Use up to 30 characters for the mobile number.');
+  if (DISALLOWED_CONTROL.test(mobile)) return violation('MobileNumber', 'PredicateValidator', 'must not contain control characters.');
+  return null;
+}
+
+/** The aggregate's `MobileNumber.Create` (RiderAggregate.cs:53): runs AFTER the 404 and the duplicate-name check. */
+function refuseRiderMobile(body: RiderBody): Response | null {
+  const mobile = body.mobileNumber ?? '';
+  if (mobile.trim() !== '' && normaliseMobile(mobile) === null) {
+    return violation('MobileNumber', 'InvalidMobileNumber', 'This does not look like a valid mobile number.');
+  }
+  return null;
+}
+
+const RIDER_NAME_TAKEN = 'A rider with this name already exists at this branch.';
+
 export const staffOrderingHandlers: HttpHandler[] = [
   // ---- queue and detail -----------------------------------------------------------------------------
   http.get(`${API}/orders/awaiting-payment`, () => {
@@ -358,28 +537,30 @@ export const staffOrderingHandlers: HttpHandler[] = [
     return noContent();
   }),
 
+  // HO-P5 BG-2: the order count in every status under the queue's filters bar `status`, every status listed,
+  // zeros included, in pipeline order. Api/Controllers/StaffOrdersController.cs:139-158;
+  // Read/QueryHandlers/Order/StaffOrderQueryHandlers.cs:87-105. `total` is the sum, worked out here because
+  // this handler IS the server (the browser never adds counts up).
+  http.get(`${API}/orders/status-counts`, ({ request }) => {
+    expireOverdueTransfers();
+    const url = new URL(request.url);
+    const refused = refuseQueueFilters(url, false);
+    if (refused) return refused;
+    const matching = filteredOrders(url, false);
+    const counts = PIPELINE_ORDER.map((status) => ({
+      status,
+      count: matching.filter((o) => o.status === status).length,
+    }));
+    return HttpResponse.json({ total: counts.reduce((sum, c) => sum + c.count, 0), counts });
+  }),
+
   http.get(`${API}/orders`, ({ request }) => {
     expireOverdueTransfers();
     const url = new URL(request.url);
-    const q = (key: string) => url.searchParams.get(key) || undefined;
-    const search = q('search')?.toLowerCase();
-    const from = q('from');
-    const to = q('to');
+    const refused = refuseQueueFilters(url, true);
+    if (refused) return refused;
     const { pageNumber, pageSize } = pageParams(url, 25);
-    const rows = db.orders
-      .filter((o) => !q('status') || o.status === q('status'))
-      .filter((o) => !q('fulfilment') || o.fulfilmentMethod === q('fulfilment'))
-      .filter((o) => !q('paymentMethod') || o.paymentMethod === q('paymentMethod'))
-      .filter((o) => !q('channel') || o.channel === q('channel'))
-      .filter((o) => !from || Date.parse(o.placedOn) >= parseQueryInstant(from))
-      .filter((o) => !to || Date.parse(o.placedOn) <= parseQueryInstant(to))
-      .filter(
-        (o) =>
-          !search ||
-          o.orderNumber.toLowerCase().includes(search) ||
-          o.customerName.toLowerCase().includes(search) ||
-          (o.customerMobile ?? '').includes(search),
-      )
+    const rows = filteredOrders(url, true)
       .sort((a, b) => b.placedOn.localeCompare(a.placedOn))
       .map(queueRow);
     return HttpResponse.json(paged(rows, pageNumber, pageSize));
@@ -398,6 +579,11 @@ export const staffOrderingHandlers: HttpHandler[] = [
         delete row.customerName;
         delete row.ageMinutes;
         delete row.flags;
+        // StaffCustomerOrderRowViewModel (StaffOrderViewModels.cs:68) carries no delivery area or slot (BG-3).
+        delete row.deliveryZone;
+        delete row.deliveryDistrict;
+        delete row.slotDate;
+        delete row.slotWindowLabel;
         return row;
       });
     return HttpResponse.json(paged(rows, pageNumber, pageSize));
@@ -424,7 +610,6 @@ export const staffOrderingHandlers: HttpHandler[] = [
         productName: l.productName,
         variantLabel: l.variantLabel,
         quantity: l.quantity,
-        catName: orderLineView(l).cat?.name ?? null,
         batchNumbers: l.allocations.map((a) => a.batchNumber),
       })),
       codAmountDue: order.paymentMethod === 'CashOnDelivery' ? money(order.grandTotalCents) : null,
@@ -527,11 +712,13 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   http.post(`${API}/orders/:orderId/cancel`, async ({ request, params }) => {
+    if (lacksRole(request, CANCEL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
     const { note } = (await request.json()) as { note?: string };
     if (!note?.trim()) return violation('Note', 'CancellationReasonRequired', 'Enter a reason for cancelling.');
-    if (!['PendingPayment', 'Confirmed', 'Packing'].includes(order.status)) {
+    // The table lets PendingPayment, Confirmed, Packing and (HO-P5 BG-4) Packed be cancelled: Domain/DomainServices/OrderTransitionRules.cs:50,59,64.
+    if (!['PendingPayment', 'Confirmed', 'Packing', 'Packed'].includes(order.status)) {
       return violation('OrderId', 'InvalidOrderTransition', `A ${order.status.toLowerCase()} order cannot be cancelled.`);
     }
     pushStatus(order, 'Cancelled', 0, staffId());
@@ -545,7 +732,8 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   // ---- fulfilment -------------------------------------------------------------------------------------
-  http.post(`${API}/orders/:orderId/packing`, ({ params }) => {
+  http.post(`${API}/orders/:orderId/packing`, ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
     if (order.status !== 'Confirmed') {
@@ -556,17 +744,89 @@ export const staffOrderingHandlers: HttpHandler[] = [
     return noContent();
   }),
 
-  http.post(`${API}/orders/:orderId/dispatch`, async ({ request, params }) => {
+  // HO-P5 BG-4: Packing -> Packed, optional. Api/Controllers/StaffOrdersController.cs:194-205; the handler
+  // (Application/CommandHandlers/Order/OrderFulfilmentCommandHandlers.cs:40-60) and OrderAggregate.MarkPacked
+  // (Domain/Aggregates/Order/OrderAggregate.cs:406-414): any status but Packing is InvalidOrderTransition naming
+  // the state, then every line must be allocated (the pick ticks never gate it). Orders.Fulfil.
+  http.post(`${API}/orders/:orderId/packed`, ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
-    const body = (await request.json()) as { courierId: string; trackingNumber?: string | null };
-    const courier = db.couriers.find((c) => c.id === body.courierId && c.isActive);
-    if (!courier) return violation('CourierId', 'CourierNotFound', 'Choose a courier.');
     if (order.status !== 'Packing') {
-      return violation('OrderId', 'InvalidOrderTransition', `A ${order.status.toLowerCase()} order cannot be dispatched.`);
+      return violation('OrderStatus', 'InvalidOrderTransition', `A ${order.status.toLowerCase()} order cannot be marked as packed.`);
     }
     if (order.lines.some((l) => l.allocations.length === 0)) {
-      return violation('OrderId', 'OrderNotFullyAllocated', "This order's items are not all allocated to stock yet.");
+      return violation('Lines', 'OrderNotFullyAllocated', 'This order has items that are not reserved from stock. Reallocate them first.');
+    }
+    pushStatus(order, 'Packed', 0, staffId());
+    order.packedOn = nowIso();
+    bump(order);
+    return noContent();
+  }),
+
+  // HO-P5 BG-4: tick or untick one line of the pick list; persisted, idempotent. Api/Controllers/StaffOrdersController.cs:207-221;
+  // OrderAggregate.SetLinePicked (Domain/Aggregates/Order/OrderAggregate.cs:421-433): allowed in Confirmed, Packing
+  // and Packed only (else 400 InvalidOrderTransition, checked BEFORE the line), an unknown line is 404 OrderLineNotFound,
+  // and a repeat changes nothing (the version moves only when the tick changed -- OrderLine.SetPicked, OrderLine.cs:87-95).
+  http.put(`${API}/orders/:orderId/lines/:lineId/picked`, async ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
+    const order = notFoundOrder(params.orderId);
+    if (!order) return notFound();
+    const body = (await request.json().catch(() => ({}))) as { picked?: boolean };
+    if (!['Confirmed', 'Packing', 'Packed'].includes(order.status)) {
+      return violation('Status', 'InvalidOrderTransition', 'Pick ticks can only be changed while the order is being prepared.');
+    }
+    const line = order.lines.find((l) => l.lineId === params.lineId);
+    if (!line) return violation('lineId', 'OrderLineNotFound', 'That order line was not found.', 404);
+    const picked = body.picked === true;
+    if ((line.picked ?? false) === picked) return noContent();
+    line.picked = picked;
+    line.pickedOn = picked ? nowIso() : null;
+    line.pickedBy = picked ? staffId() : null;
+    bump(order);
+    return noContent();
+  }),
+
+  // Dispatch: exactly one of courierId / riderId. The validator runs first
+  // (Application/CommandHandlers/Validators/OrderFulfilmentCommandValidators.cs:42-50: `DispatchTargetInvalid` on CourierId; a rider
+  // delivery has no tracking number), then the handler (OrderFulfilmentCommandHandlers.cs:105-145): unknown order 404, an
+  // unknown or inactive courier 404 CourierNotFound, a rider who is unknown, inactive or of another branch 404 RiderNotFound
+  // (Api/Ordering/OrderingResults.cs:15-21), then the aggregate (OrderAggregate.cs:436-447): only a delivery order, every line
+  // allocated, then the move from Packing or Packed.
+  http.post(`${API}/orders/:orderId/dispatch`, async ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
+    const body = (await request.json()) as { courierId?: string | null; riderId?: string | null; trackingNumber?: string | null };
+    const hasCourier = !!body.courierId && body.courierId !== '00000000-0000-0000-0000-000000000000';
+    const hasRider = !!body.riderId && body.riderId !== '00000000-0000-0000-0000-000000000000';
+    if (hasCourier === hasRider) {
+      return violation('CourierId', 'DispatchTargetInvalid', 'Choose either a courier or a rider to dispatch with, not both and not neither.');
+    }
+    if (body.riderId && (body.trackingNumber ?? '').trim() !== '') {
+      return violation('TrackingNumber', 'DispatchTargetInvalid', 'A rider delivery has no tracking number.');
+    }
+    if ((body.trackingNumber ?? '').length > 100) {
+      return violation('TrackingNumber', 'MaximumLengthValidator', 'Use up to 100 characters for the tracking number.');
+    }
+    const order = notFoundOrder(params.orderId);
+    if (!order) return notFound();
+    // The handler tests `is null` (OrderFulfilmentCommandHandlers.cs:108-109), so an empty-Guid courier beside a real rider passes the validator and is refused here.
+    if (body.courierId != null && body.riderId != null) {
+      return violation('CourierId', 'DispatchTargetInvalid', 'Choose either a courier or a rider to dispatch with, not both and not neither.');
+    }
+    const courier = hasCourier ? db.couriers.find((c) => c.id === body.courierId && c.isActive) : undefined;
+    const rider = hasRider ? db.riders.find((r) => r.id === body.riderId) : undefined;
+    if (hasCourier && !courier) return violation('CourierId', 'CourierNotFound', 'That courier is not available.', 404);
+    if (hasRider && !(rider && rider.isActive && rider.branchId === ids.mainBranchId)) {
+      return violation('RiderId', 'RiderNotFound', 'That rider is not available.', 404);
+    }
+    if (order.fulfilmentMethod !== 'Delivery') {
+      return violation('FulfilmentMethod', 'InvalidOrderTransition', 'A pickup order is marked ready for collection, not dispatched.');
+    }
+    if (order.lines.some((l) => l.allocations.length === 0)) {
+      return violation('Lines', 'OrderNotFullyAllocated', 'This order has items that are not reserved from stock. Reallocate them first.');
+    }
+    if (order.status !== 'Packing' && order.status !== 'Packed') {
+      return violation('OrderStatus', 'InvalidOrderTransition', `A ${order.status.toLowerCase()} order cannot be dispatched.`);
     }
     const recalled = order.lines.find((l) => l.allocations.some((a) => db.recalledBatches.includes(a.batchId)));
     if (recalled) {
@@ -577,25 +837,49 @@ export const staffOrderingHandlers: HttpHandler[] = [
         `Batch ${batch?.batchNumber ?? ''} of '${recalled.productName}' has been recalled and cannot be sent. Move that line to another batch first.`,
       );
     }
-    const tracking = body.trackingNumber?.trim() || null;
-    order.shipment = {
-      courierId: courier.id,
-      courierName: courier.name,
-      trackingNumber: tracking,
-      trackingUrl: tracking && courier.trackingUrlTemplate ? courier.trackingUrlTemplate.replace('{tracking}', tracking) : null,
-      dispatchedOn: nowIso(),
-      lastTrackingStatus: null,
-    };
+    if (rider) {
+      // Shipment.ForRider (Domain/ValueObjects/Shipment.cs:43-44): no courier, the customer-facing carrier name, no tracking.
+      order.shipment = {
+        courierId: null,
+        courierName: RIDER_CARRIER_NAME,
+        trackingNumber: null,
+        trackingUrl: null,
+        dispatchedOn: nowIso(),
+        lastTrackingStatus: null,
+        riderId: rider.id,
+        riderName: rider.name,
+      };
+    } else if (courier) {
+      const tracking = body.trackingNumber?.trim() || null;
+      order.shipment = {
+        courierId: courier.id,
+        courierName: courier.name,
+        trackingNumber: tracking,
+        trackingUrl: tracking && courier.trackingUrlTemplate ? courier.trackingUrlTemplate.replace('{tracking}', tracking) : null,
+        dispatchedOn: nowIso(),
+        lastTrackingStatus: null,
+        riderId: null,
+        riderName: null,
+      };
+    }
     pushStatus(order, 'Dispatched', 0, staffId());
     bump(order);
     return noContent();
   }),
 
-  http.post(`${API}/orders/:orderId/ready-for-collection`, ({ params }) => {
+  // A pickup order only, from Packing or (HO-P5 BG-4) Packed: OrderAggregate.cs:450-455 and OrderTransitionRules.cs:58,63.
+  http.post(`${API}/orders/:orderId/ready-for-collection`, ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
-    if (order.status !== 'Packing' || order.fulfilmentMethod !== 'Pickup') {
-      return violation('OrderId', 'InvalidOrderTransition', 'This order cannot be marked ready for collection.');
+    if (order.fulfilmentMethod !== 'Pickup') {
+      return violation('FulfilmentMethod', 'InvalidOrderTransition', 'Only a pickup order is marked ready for collection.');
+    }
+    if (order.lines.some((l) => l.allocations.length === 0)) {
+      return violation('Lines', 'OrderNotFullyAllocated', 'This order has items that are not reserved from stock. Reallocate them first.');
+    }
+    if (order.status !== 'Packing' && order.status !== 'Packed') {
+      return violation('OrderStatus', 'InvalidOrderTransition', `A ${order.status.toLowerCase()} order cannot be marked ready for collection.`);
     }
     order.collectBy = addDays(todayLocal(), 7);
     pushStatus(order, 'Dispatched', 0, staffId());
@@ -604,10 +888,15 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   http.put(`${API}/orders/:orderId/tracking`, async ({ request, params }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
     const order = notFoundOrder(params.orderId);
     if (!order) return notFound();
     const { trackingNumber } = (await request.json()) as { trackingNumber?: string };
     if (!order.shipment) return violation('OrderId', 'InvalidOrderTransition', 'This order has not been dispatched.');
+    // OrderAggregate.RecordTracking (Domain/Aggregates/Order/OrderAggregate.cs:465-471): a rider delivery has no tracking number.
+    if (order.shipment.riderId) {
+      return violation('Shipment', 'InvalidOrderTransition', 'An order delivered by an in-house rider has no tracking number.');
+    }
     if (!trackingNumber?.trim()) return violation('TrackingNumber', 'TrackingNumberRequired', 'Enter the tracking number.');
     const courier = db.couriers.find((c) => c.id === order.shipment!.courierId);
     order.shipment.trackingNumber = trackingNumber.trim();
@@ -785,6 +1074,67 @@ export const staffOrderingHandlers: HttpHandler[] = [
   }),
 
   http.get(`${API}/fulfilment/couriers`, () => HttpResponse.json(db.couriers.filter((c) => c.isActive))),
+
+  // ---- in-house riders (HO-P5 BG-5), Api/Controllers/StaffRidersController.cs -------------------------------
+  // The list is Orders.Fulfil (:24-31), name order, `activeOnly` optional (Read/QueryHandlers/Order/RiderQueryHandlers.cs:13-23).
+  // The response is `{ id, name, mobileNumber, isActive }` and never the branch.
+  http.get(`${API}/riders`, ({ request }) => {
+    if (lacksRole(request, FULFIL_ROLES)) return forbidden();
+    const activeOnly = new URL(request.url).searchParams.get('activeOnly')?.toLowerCase() === 'true';
+    return HttpResponse.json(
+      db.riders
+        .filter((r) => r.branchId === ids.mainBranchId && (!activeOnly || r.isActive))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(riderView),
+    );
+  }),
+
+  // Riders.Manage (:34-48). A name already taken at the branch is 400 RiderNameAlreadyExists on `Name`
+  // (Application/CommandHandlers/Order/RiderCommandHandlers.cs:13-34): the handler compares the trimmed name exactly
+  // (Postgres equality and the unique index `ix_rider_branch_name` are case-sensitive), so "rafiq hasan" is a different rider.
+  http.post(`${API}/riders`, async ({ request }) => {
+    if (lacksRole(request, RIDER_MANAGE_ROLES)) return forbidden();
+    const body = (await request.json()) as RiderBody;
+    const refused = refuseRiderBody(body);
+    if (refused) return refused;
+    const name = (body.name ?? '').trim();
+    if (db.riders.some((r) => r.branchId === ids.mainBranchId && r.name === name)) {
+      return violation('Name', 'RiderNameAlreadyExists', RIDER_NAME_TAKEN);
+    }
+    const badMobile = refuseRiderMobile(body);
+    if (badMobile) return badMobile;
+    const rider: DbRider = {
+      id: uuid(),
+      branchId: ids.mainBranchId,
+      name,
+      mobileNumber: body.mobileNumber?.trim() ? normaliseMobile(body.mobileNumber) : null,
+      isActive: body.isActive ?? true,
+    };
+    db.riders.push(rider);
+    persist();
+    return HttpResponse.json({ riderId: rider.id }, { status: 201 });
+  }),
+
+  // Update: a rider of another branch, or none, is 404 RiderNotFound (RiderCommandHandlers.cs:42-46); the name check excludes the rider itself.
+  http.put(`${API}/riders/:riderId`, async ({ request, params }) => {
+    if (lacksRole(request, RIDER_MANAGE_ROLES)) return forbidden();
+    const body = (await request.json()) as RiderBody;
+    const refused = refuseRiderBody(body);
+    if (refused) return refused;
+    const rider = db.riders.find((r) => r.id === params.riderId && r.branchId === ids.mainBranchId);
+    if (!rider) return violation('RiderId', 'RiderNotFound', 'Rider not found.', 404);
+    const name = (body.name ?? '').trim();
+    if (db.riders.some((r) => r.branchId === ids.mainBranchId && r.name === name && r.id !== rider.id)) {
+      return violation('Name', 'RiderNameAlreadyExists', RIDER_NAME_TAKEN);
+    }
+    const badMobile = refuseRiderMobile(body);
+    if (badMobile) return badMobile;
+    rider.name = name;
+    rider.mobileNumber = body.mobileNumber?.trim() ? normaliseMobile(body.mobileNumber) : null;
+    rider.isActive = body.isActive ?? true;
+    persist();
+    return noContent();
+  }),
 
   http.get(`${API}/fulfilment/manifest.csv`, ({ request }) => {
     const url = new URL(request.url);

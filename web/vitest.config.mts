@@ -16,10 +16,10 @@ export default defineConfig({
     exclude: ['node_modules', '.next', 'tests/e2e/**'],
     css: true,
     env: {
-      // lib/api/client.ts's resolveBaseUrl() throws when this is unset (HO-CAT-002 §11.2). Real
+      // lib/api/client.ts's resolveBaseUrl() throws when this is unset (the scaffold handover §11.2). Real
       // requests never leave the process — MSW's Node server (tests/setup.ts) intercepts every
       // one — so the value only has to be a well-formed URL, not a reachable one. Added by
-      // HO-CAT-002 (Cat Profiles), the first area whose tests exercise `apiFetch` for real
+      // the first area whose tests exercise `apiFetch` for real
       // rather than constructing an `ApiValidationError` directly.
       NEXT_PUBLIC_API_BASE_URL: 'https://localhost:7099',
     },

@@ -5,7 +5,6 @@ import { Amount } from '@/components/billing/Amount';
 import { ProductPackArt, type PackTone } from '@/components/hearth/ProductPackArt';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CatChip } from '@/components/orders/OrderLines';
 import { resolveFileUrl } from '@/lib/api/files';
 import type { CartLine } from '@/lib/api/cart';
 import { formatMoney } from '@/lib/format/money';
@@ -13,9 +12,9 @@ import { cn } from '@/lib/utils';
 import { QuantityStepper } from './QuantityStepper';
 
 /**
- * `components/cart/CartLineRow.tsx` — HO-ORD-002 §11.1, Hearth cart card (docs/design/orders/
- * Cart.dc.html `.icard`). One line: image (or a tinted pack tile), product and variant, the cat chip on
- * a prescription line, availability and price notes **as text** (never colour alone), the stepper and
+ * `components/cart/CartLineRow.tsx` — HO-ORD-002 §11.1, restyled for HO-P3 S3 (docs/design/store/
+ * BasketPhone.dc.html). One line: image (or a tinted pack tile), product and variant,
+ * availability and price notes **as text** (never colour alone), the stepper and
  * Remove. An unavailable line is dimmed, cannot be changed, and offers removal. Every number is the
  * server's (`availability`, `availableQuantity`, `priceChanged`, `lineSubtotal`).
  */
@@ -76,7 +75,6 @@ export function CartLineRow({
                 <Amount money={line.unitPrice} /> each
               </>
             )}
-            {line.requiresPrescription ? ' · prescription food' : ''}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {line.availability === 'InStock' && (
@@ -101,12 +99,6 @@ export function CartLineRow({
                 {`Price is now ${formatMoney(line.unitPrice)} (was ${formatMoney(line.priceWhenAdded)})`}
               </Badge>
             )}
-            {line.cat && <CatChip name={line.cat.name} appearance="hearth" />}
-            {line.prescriptionStatus === 'NotAuthorised' && (
-              <Badge variant="danger" className="whitespace-normal">
-                No current vet authorisation for this cat
-              </Badge>
-            )}
           </div>
         </div>
         {unavailable ? (
@@ -119,9 +111,9 @@ export function CartLineRow({
               size="pillMd"
               disabled={busy}
               onClick={onRemove}
-              aria-label={`Remove ${label} from cart`}
+              aria-label={`Remove from basket, ${label}`}
             >
-              Remove from cart
+              Remove from basket
             </Button>
           </div>
         ) : (
@@ -143,14 +135,14 @@ export function CartLineRow({
                 type="button"
                 disabled={busy}
                 onClick={onRemove}
-                aria-label={`Remove ${label} from your cart`}
+                aria-label={`Remove ${label} from your basket`}
                 className="inline-flex min-h-11 items-center rounded-pill px-3 text-sm font-semibold text-accent-ink hover:bg-accent-tint disabled:opacity-50"
               >
                 Remove
               </button>
             </div>
             {line.lineSubtotal && (
-              <p className="m-0 text-[17px] font-bold text-ink">
+              <p className="m-0 font-display text-lg font-semibold text-ink">
                 <Amount money={line.lineSubtotal} />
               </p>
             )}

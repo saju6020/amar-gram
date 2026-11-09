@@ -12,7 +12,7 @@ import { ApiError } from '@/lib/api/client';
  * `retry` only for a network-level failure (`ApiError` with `status === 0` — "the request never
  * reached a server", `client.ts`'s own marker), never for a genuine `5xx`: a session check is the
  * FIRST query almost every page fires, on every full navigation — including the one right after a
- * client-side sign-in push — so in development/test (HO-CAT-002's documented MSW-registration
+ * client-side sign-in push — so in development/test (the shell handover's documented MSW-registration
  * race, `app/providers.tsx`) it is exactly as exposed to losing that race as `useCaptcha()` is,
  * and unlike `useCaptcha()` there is no `ADR-FE-006`-style reason to refuse a retry here — a
  * repeated GET has no "used challenge" to protect. A real `5xx` still fails permanently (no

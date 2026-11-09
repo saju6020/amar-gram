@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px;line-height:1.45}
 .topnav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -53,11 +53,11 @@ td.r,th.r{text-align:right}
 caption{text-align:left;font-size:12px;color:var(--ink-muted);padding:0 0 6px}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid transparent;line-height:1.5}
 .chip i{font-style:normal;font-size:11px}
-.c-ok{background:var(--accent-soft);color:var(--accent-ink);border-color:rgba(21,96,90,.22)}
-.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#ecd7ae}
-.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#f0c9c4}
+.c-ok{background:var(--accent-soft);color:var(--accent-ink);border-color:rgba(180,83,26,.22)}
+.c-warn{background:var(--warning-bg);color:var(--warning-ink);border-color:#EFD49A}
+.c-bad{background:var(--danger-bg);color:var(--danger-ink);border-color:#F0C4B4}
 .c-neu{background:var(--surface-sunken);color:var(--ink-muted);border-color:var(--border)}
-.c-cat{background:#fff;color:var(--ink);border-color:var(--border-strong)}
+.c-tag{background:#fff;color:var(--ink);border-color:var(--border-strong)}
 .field{margin-bottom:14px}
 .field label,.flabel{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
 .field input,.field select,.field textarea,.inp{width:100%;font:inherit;font-size:14px;padding:8px 11px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:#fff;color:var(--ink)}
@@ -68,9 +68,9 @@ caption{text-align:left;font-size:12px;color:var(--ink-muted);padding:0 0 6px}
 .hint{font-size:12px;color:var(--ink-muted);margin-top:4px}
 .err{font-size:12.5px;color:var(--danger-ink);margin-top:5px;font-weight:600}
 .banner{border:1px solid var(--border);border-left:4px solid var(--accent);background:#fff;border-radius:var(--radius-sm);padding:11px 14px;font-size:13.5px}
-.b-warn{background:var(--warning-bg);border-color:#ecd7ae;border-left-color:var(--warning-ink);color:var(--warning-ink)}
-.b-bad{background:var(--danger-bg);border-color:#f0c9c4;border-left-color:var(--danger-ink);color:var(--danger-ink)}
-.b-info{background:var(--accent-soft);border-color:rgba(21,96,90,.25);border-left-color:var(--accent);color:var(--accent-ink)}
+.b-warn{background:var(--warning-bg);border-color:#EFD49A;border-left-color:var(--warning-ink);color:var(--warning-ink)}
+.b-bad{background:var(--danger-bg);border-color:#F0C4B4;border-left-color:var(--danger-ink);color:var(--danger-ink)}
+.b-info{background:var(--accent-soft);border-color:rgba(180,83,26,.25);border-left-color:var(--accent);color:var(--accent-ink)}
 .scrim{position:absolute;inset:0;background:rgba(28,26,23,.4);display:flex;align-items:center;justify-content:center;z-index:5;padding:20px}
 .dialog{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(20,18,10,.25);width:470px;padding:24px}
 .dialog h2{margin:0 0 6px;font-size:18px;font-family:var(--font-display);font-weight:600}
@@ -126,7 +126,7 @@ td a.link,.nw{white-space:nowrap}
 </style>
 </helmet>
 <div style="width:1280px;height:1080px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div class="main">
     <div class="titlerow"><h1 class="h1">Discount codes</h1><button class="btn">+ New code</button></div>
     <div class="cols" style="gap:22px">
@@ -134,9 +134,9 @@ td a.link,.nw{white-space:nowrap}
         <table>
           <thead><tr><th>Code</th><th>Discount</th><th>Valid (Asia/Dhaka)</th><th class="r">Used</th><th>Status</th></tr></thead>
           <tbody>
-            <tr><td class="b mono">PURR5</td><td>5% off order<div class="xs muted">min ৳8,000.00</div></td><td>1 Sep – 30 Sep 2026</td><td class="r">41 / 200</td><td><span class="chip c-ok"><i aria-hidden="true">✓</i>Active</span></td></tr>
+            <tr><td class="b mono">GRAM5</td><td>5% off order<div class="xs muted">min ৳8,000.00</div></td><td>1 Sep – 30 Sep 2026</td><td class="r">41 / 200</td><td><span class="chip c-ok"><i aria-hidden="true">✓</i>Active</span></td></tr>
             <tr><td class="b mono">WELCOME100</td><td>৳100.00 off<div class="xs muted">first order only</div></td><td>No end date</td><td class="r">318 / no limit</td><td><span class="chip c-ok"><i aria-hidden="true">✓</i>Active</span></td></tr>
-            <tr><td class="b mono">KITTENWEEK</td><td>10% off products</td><td>1 Oct – 7 Oct 2026</td><td class="r">0 / 500</td><td><span class="chip c-neu"><i aria-hidden="true">⏲</i>Scheduled</span></td></tr>
+            <tr><td class="b mono">HONEYWEEK</td><td>10% off products</td><td>1 Oct – 7 Oct 2026</td><td class="r">0 / 500</td><td><span class="chip c-neu"><i aria-hidden="true">⏲</i>Scheduled</span></td></tr>
             <tr><td class="b mono">EID2026</td><td>৳250.00 off</td><td>5 Jun – 12 Jun 2026</td><td class="r">500 / 500</td><td><span class="chip c-neu"><i aria-hidden="true">–</i>Ended</span></td></tr>
           </tbody>
         </table>
@@ -144,12 +144,12 @@ td a.link,.nw{white-space:nowrap}
       <div style="flex:1">
         <div class="card">
           <h2 class="h2">New code</h2>
-          <div class="field"><label for="dc">Code</label><input id="dc" class="mono invalid" value="PURR5" aria-describedby="dc-e"><div class="hint">Upper-cased as you type.</div><div id="dc-e" class="err">⚠ There's already a code called PURR5. Choose another.</div></div>
+          <div class="field"><label for="dc">Code</label><input id="dc" class="mono invalid" value="GRAM5" aria-describedby="dc-e"><div class="hint">Upper-cased as you type.</div><div id="dc-e" class="err">⚠ There's already a code called GRAM5. Choose another.</div></div>
           <div class="flabel">Kind</div>
           <div class="seg" role="radiogroup" aria-label="Kind" style="margin-bottom:12px"><span class="on" role="radio" aria-checked="true">Percentage</span><span role="radio" aria-checked="false">Fixed amount</span></div>
           <div class="cols" style="gap:12px"><div class="field"><label for="dv">Value (%)</label><input id="dv" value="10"></div><div class="field"><label for="dm">Minimum spend (৳)</label><input id="dm" value="0.00"></div></div>
           <div class="field"><label for="ds">Applies to</label><select id="ds"><option>Products</option><option>Whole order</option><option>Categories</option></select></div>
-          <div class="field"><label>Products</label><div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip c-cat">Royal Canin Kitten 2 kg ✕</span><span class="chip c-cat">Royal Canin Kitten 4 kg ✕</span><button class="btn btn-ghost btn-sm">+ Pick products</button></div></div>
+          <div class="field"><label>Products</label><div class="row" style="flex-wrap:wrap;gap:6px"><span class="chip c-tag">Pure cow ghee 400 g ✕</span><span class="chip c-tag">Pure cow ghee 1 kg ✕</span><button class="btn btn-ghost btn-sm">+ Pick products</button></div></div>
           <label class="chk"><span class="box"></span>First order only</label>
           <div class="cols" style="gap:12px"><div class="field"><label for="lo">Overall limit</label><input id="lo" value="500"></div><div class="field"><label for="lc">Per customer</label><input id="lc" value="1"></div></div>
           <div class="cols" style="gap:12px"><div class="field"><label for="vf">Valid from</label><input id="vf" value="1 Oct 2026, 00:00"></div><div class="field"><label for="vt">Valid until</label><input id="vt" value="7 Oct 2026, 23:59"></div></div>

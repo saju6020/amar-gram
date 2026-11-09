@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
-import { test, expect, signInAsStaff } from './fixtures';
+import { test, expect, signInAsStaff, secondStaff } from './fixtures';
 
 /**
  * HO-XCT-002 section 16 E-A cases, run against MSW. The offline cases that need a RELOAD while the
@@ -8,9 +8,14 @@ import { test, expect, signInAsStaff } from './fixtures';
  * never registered in mock mode (ADR-FE-140, section 5.2), so they run in `xct-real-api.spec.ts`
  * against a production build. Here the server is made unreachable through the mock's ping switch,
  * and the offline board is reached by following the banner's link (a client-side navigation): a
- * hard load of `/staff/offline` while the server answers goes to the front desk by design.
+ * hard load of `/staff/offline` while the server answers goes back to the staff home by design.
  */
 test.describe.configure({ timeout: 90_000 });
+
+/** Any ordinary staff page: the offline copy is kept from every page of the staff app. */
+const START = '/staff/orders';
+/** What the board shows when the copy holds no section (no offline section is defined today). */
+const BOARD_TEXT = 'Nothing from today was saved for offline use in this copy.';
 
 interface XctMockWindow {
   __xctMock: {
@@ -47,7 +52,7 @@ async function readStore(page: Page) {
     () =>
       new Promise<{ snapshots: Array<{ staffAccountId: string }>; device: Record<string, unknown> | null }>(
         (resolve) => {
-          const open = indexedDB.open('purrcare-offline');
+          const open = indexedDB.open('amargram-offline');
           open.onerror = () => resolve({ snapshots: [], device: null });
           open.onsuccess = () => {
             const db = open.result;
@@ -68,20 +73,20 @@ async function waitForStoredCopy(page: Page) {
 }
 
 /** The dev server compiles a route on first use and may reload the page when it does, which would reset
- *  the mock's "server down" switch. Visit the board once (it leaves for the front desk at once while the
+ *  the mock's "server down" switch. Visit the board once (it leaves for the staff home at once while the
  *  server answers) so that compile happens before any test relies on the switch. */
 let boardCompiled = false;
 async function compileBoardOnce(page: Page) {
   if (boardCompiled) return;
   await page.goto('/staff/offline');
-  await expect(page).toHaveURL(/\/staff\/(front-desk|sign-in)/, { timeout: 60_000 });
+  await expect(page).toHaveURL(/\/staff(\/sign-in)?$/, { timeout: 60_000 });
   boardCompiled = true;
 }
 
-/** Front desk -> server down -> banner -> the board, by the banner's own link. */
+/** A staff page -> server down -> banner -> the board, by the banner's own link. */
 async function openBoardFromBanner(page: Page) {
   await compileBoardOnce(page);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await waitForStoredCopy(page);
   await serverDown(page);
@@ -95,28 +100,24 @@ test.beforeEach(async ({ page }) => {
   await signInAsStaff(page);
 });
 
-test('E-A1/E-A2/E-A6 the banner appears, the board shows both lists read-only, and recovery is automatic', async ({
+test('E-A1/E-A2/E-A6 the banner appears, the board is read-only, and recovery is automatic', async ({
   page,
 }) => {
   await optIn(page);
   await openBoardFromBanner(page);
   await expect(page.getByText('Offline · read-only')).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('heading', { name: /Today.s appointments/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /boarding tasks/ })).toBeVisible();
-  await expect(page.getByText('Luna')).toBeVisible();
+  await expect(page.getByText(BOARD_TEXT)).toBeVisible();
   await expect(page.locator('main').getByRole('button')).toHaveCount(0); // read-only: no action button at all
-  await expect(page.getByText('High risk')).toBeVisible();
-  // Owner decision 2026-10-14: no phone number on the board, though the mock API still sends one.
   expect(await page.locator('main').innerText()).not.toMatch(/8801711|tel:/);
   await expect(page.locator('main a[href^="tel:"]')).toHaveCount(0);
 
   // E-A6: the connection returns and the board takes the person back by itself.
   await serverBack(page);
-  await expect(page).toHaveURL(/\/staff\/front-desk/, { timeout: 30_000 });
+  await expect(page).toHaveURL(/\/staff\/orders/, { timeout: 30_000 });
 });
 
 test('E-A3 a write is refused before any request while offline, and nothing is queued', async ({ page }) => {
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await serverDown(page);
   await expect(page.getByTestId('connectivity-banner')).toContainText(/You.re offline/, { timeout: 30_000 });
@@ -127,7 +128,7 @@ test('E-A3 a write is refused before any request while offline, and nothing is q
   const result = await page.evaluate(async () => {
     const w = window as unknown as { __apiFetch: (p: string, i?: object) => Promise<unknown> };
     try {
-      await w.__apiFetch('/api/staff/appointments/x/check-in', { method: 'POST', body: {} });
+      await w.__apiFetch('/api/staff/orders/x/cancel', { method: 'POST', body: {} });
       return 'sent';
     } catch (e) {
       return (e as Error).name;
@@ -146,51 +147,52 @@ test('E-A7 the board locks after the idle timeout, the lock is saved on the devi
   await optIn(page);
   await page.clock.install();
   await openBoardFromBanner(page);
-  await expect(page.getByText('Luna')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(BOARD_TEXT)).toBeVisible({ timeout: 30_000 });
   await page.clock.fastForward('31:00');
   await expect(page.getByText('Locked. Sign in again when the connection returns.')).toBeVisible();
   await page.keyboard.press('Space');
   await page.mouse.move(10, 10);
-  await expect(page.getByText('Luna')).toHaveCount(0);
+  await expect(page.getByText(BOARD_TEXT)).toHaveCount(0);
   // Persisted: a reload cannot lift it (the offline reload itself is in xct-real-api.spec.ts).
   await expect
     .poll(async () => (await readStore(page)).device?.lockedForStaffAccountId, { timeout: 15_000 })
     .toBe(accountsFixtureIds.adminStaffId);
 });
 
-test('SECURITY: a fresh load of the board while the server answers goes to the front desk and shows no data', async ({
+test('SECURITY: a fresh load of the board while the server answers goes to the staff home and shows no copy', async ({
   page,
 }) => {
   await optIn(page);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await waitForStoredCopy(page);
   await page.goto('/staff/offline');
-  await expect(page).toHaveURL(/\/staff\/front-desk/, { timeout: 30_000 });
-  await expect(page.getByText('Luna')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/staff$/, { timeout: 30_000 });
+  await expect(page.getByText('Offline · read-only')).toHaveCount(0);
 });
 
 test('E-A8 after sign-out the saved copy is gone, and the board does not show it', async ({ page }) => {
   await optIn(page);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await waitForStoredCopy(page);
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/staff\/sign-in/);
   await expect.poll(async () => (await readStore(page)).snapshots.length, { timeout: 15_000 }).toBe(0);
   await page.goto('/staff/offline');
-  await expect(page.getByText('Luna')).toHaveCount(0);
+  await expect(page.getByText('Offline · read-only')).toHaveCount(0);
 });
 
 test('E-A9 a different person signing in on the same device removes the first person\'s copy', async ({ page }) => {
   await optIn(page);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await waitForStoredCopy(page);
   expect((await readStore(page)).snapshots.map((s) => s.staffAccountId)).toEqual([accountsFixtureIds.adminStaffId]);
 
   // The first person leaves without signing out; the second signs in on the same browser profile.
-  await page.evaluate((id) => (window as unknown as XctMockWindow).__xctMock.setSnapshotStaff(id), accountsFixtureIds.nurseStaffId);
+  const second = secondStaff.staffId;
+  await page.evaluate((id) => (window as unknown as XctMockWindow).__xctMock.setSnapshotStaff(id), second);
   const status = await page.evaluate(
     async ({ identifier, password }) => {
       const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
@@ -202,14 +204,14 @@ test('E-A9 a different person signing in on the same device removes the first pe
       });
       return response.status;
     },
-    { identifier: accountsFixtureIds.nurseIdentifier, password: accountsFixtureIds.nursePassword },
+    { identifier: secondStaff.identifier, password: secondStaff.password },
   );
   expect(status).toBe(200);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await expect
     .poll(async () => (await readStore(page)).snapshots.map((s) => s.staffAccountId), { timeout: 30_000 })
-    .toEqual([accountsFixtureIds.nurseStaffId]);
+    .toEqual([second]);
 });
 
 test('E-A10 with the device opt-in off there is no snapshot request and the banner offers no board', async ({
@@ -219,7 +221,7 @@ test('E-A10 with the device opt-in off there is no snapshot request and the bann
   page.on('request', (r) => {
     if (r.url().includes('/api/staff/offline-snapshot')) snapshotCalls.push(r.url());
   });
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await page.waitForTimeout(2500);
   expect(snapshotCalls).toEqual([]);
@@ -233,7 +235,7 @@ test('E-X3 storage audit: nothing of this feature in localStorage, and only the 
   page,
 }) => {
   await optIn(page);
-  await page.goto('/staff/front-desk');
+  await page.goto(START);
   await shellReady(page);
   await waitForStoredCopy(page);
   const audit = await page.evaluate(async () => {
@@ -244,7 +246,7 @@ test('E-X3 storage audit: nothing of this feature in localStorage, and only the 
     };
   });
   expect(audit.ls).toEqual([]);
-  expect(audit.databases).toEqual(['purrcare-offline']);
+  expect(audit.databases).toEqual(['amargram-offline']);
   // pc_session is HttpOnly only on the real API; the MSW mock sets its cookie from the page, so that
   // half of E-X3 is asserted in xct-real-api.spec.ts.
 });

@@ -40,9 +40,9 @@ export function CustomerSessionGuard({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (unauthenticated) {
-      // HO-APT-002 §8.1 (Amended 2026-10-04): the query string rides along, so a reminder link to
-      // `/book?catId=…&category=…` comes back with its booking parameters after sign-in. The
-      // `?next=` open-redirect guard (`sanitizeNextPath`) still decides what is honoured.
+      // The query string rides along, so a link such as `/portal/orders?page=2` comes back with
+      // its parameters after sign-in. The `?next=` open-redirect guard (`sanitizeNextPath`) still
+      // decides what is honoured.
       const search = typeof window !== 'undefined' ? window.location.search : '';
       router.replace(`/sign-in?next=${encodeURIComponent(pathname + search)}`);
     }
@@ -53,7 +53,7 @@ export function CustomerSessionGuard({ children }: { children: React.ReactNode }
       // A customer session never idle-locks (US-ACC-08 is staff-only) — every session-error body
       // reaching this handler means "not signed in any more", full stop.
       queryClient.clear();
-      // Same as the first redirect above: the query string rides along (`/book?catId=…`).
+      // Same as the first redirect above: the query string rides along (`/portal/orders?page=2`).
       const next =
         typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/';
       router.replace(`/sign-in?next=${encodeURIComponent(next)}`);

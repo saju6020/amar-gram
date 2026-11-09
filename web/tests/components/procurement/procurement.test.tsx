@@ -32,7 +32,7 @@ function order(overrides: Partial<PoDetail> = {}): PoDetail {
     id: 'po1',
     number: 'PO-2026-000001',
     supplierId: 's1',
-    supplierName: 'Meridian Pet Supplies Ltd',
+    supplierName: 'Meridian Organic Supplies Ltd',
     branchId: 'b1',
     deliverToLocationId: 'l1',
     currencyCode: 'BDT',
@@ -47,8 +47,8 @@ function order(overrides: Partial<PoDetail> = {}): PoDetail {
       {
         lineId: 'pl1',
         skuId: 'k1',
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice',
         stockUnit: 'bags',
         orderedQuantity: '100',
         acceptedQuantity: '60',
@@ -254,7 +254,7 @@ const landed: LandedCost = {
   lines: [
     {
       batchId: 'b1',
-      skuCode: 'FD-KDC-2KG',
+      skuCode: 'FD-RCE-5KG',
       lotNumber: 'L2409E',
       quantity: '30',
       purchaseCostBase: money('13500.00'),
@@ -263,7 +263,7 @@ const landed: LandedCost = {
     },
     {
       batchId: 'b2',
-      skuCode: 'FD-KDC-2KG',
+      skuCode: 'FD-RCE-5KG',
       lotNumber: 'L2408B',
       quantity: '30',
       purchaseCostBase: money('13500.00'),
@@ -344,7 +344,7 @@ describe('U-B7 — InspectionPack', () => {
       customsDeclarationNumber: 'CD-2026-7781',
       expectedArrivalOn: '2026-09-30',
       clearedOn: '2026-10-01',
-      hsCodes: [{ code: '2309.10', description: 'Cat food' }],
+      hsCodes: [{ code: '1006.30', description: 'Rice' }],
       purchaseOrders: [
         {
           id: 'po1',
@@ -359,8 +359,8 @@ describe('U-B7 — InspectionPack', () => {
         {
           batchId: 'b1',
           skuId: 'k1',
-          skuCode: 'FD-KDC-2KG',
-          displayName: 'Kitten dry food',
+          skuCode: 'FD-RCE-5KG',
+          displayName: 'Organic rice',
           lotNumber: 'L2409E',
           expiresOn: '2027-01-30',
           receivedQuantity: '30',
@@ -384,7 +384,7 @@ function suggestion(over: Partial<ReorderSuggestion>): ReorderSuggestion {
   return {
     skuId: 'k1',
     skuCode: 'FD-ADT-POUCH',
-    displayName: 'Adult wet food',
+    displayName: 'Sundarban honey',
     stockUnit: 'pouches',
     locationId: 'l1',
     locationCode: 'WH1',
@@ -411,11 +411,11 @@ describe('U-B8 — ReorderSuggestions', () => {
           suggestion({}),
           suggestion({
             skuId: 'k2',
-            skuCode: 'FD-KDC-2KG',
-            displayName: 'Kitten food',
+            skuCode: 'FD-RCE-5KG',
+            displayName: 'Organic rice',
             stockUnit: 'bags',
             preferredSupplierId: 's2',
-            preferredSupplierName: 'VetPharma',
+            preferredSupplierName: 'AgroNexus',
             suggestedQuantity: '25',
           }),
         ]}
@@ -425,8 +425,8 @@ describe('U-B8 — ReorderSuggestions', () => {
     expect(
       screen.getByText(/1\.5 pouches a day, 14 days lead time plus 14 days cover/i),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('checkbox', { name: /select adult wet food/i }));
-    await user.click(screen.getByRole('checkbox', { name: /select kitten food/i }));
+    await user.click(screen.getByRole('checkbox', { name: /select sundarban honey/i }));
+    await user.click(screen.getByRole('checkbox', { name: /select organic rice/i }));
     const links = screen.getAllByRole('link', { name: /build the order for/i });
     expect(links).toHaveLength(2);
     expect(links[0]!.getAttribute('href')).toContain('lines=FD-ADT-POUCH%3A40');

@@ -1,53 +1,31 @@
 'use client';
 
-import Link from 'next/link';
-import { CalendarPlus } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
 import { ErrorState } from '@/components/common/ErrorState';
+import { GreetingHeader } from '@/components/hearth/GreetingHeader';
+import { NextDeliveryCard } from '@/components/subscriptions/NextDeliveryCard';
 import { usePortalDashboard } from '@/lib/hooks/usePortalDashboard';
 import type { PortalDashboard as PortalDashboardData } from '@/lib/api/portal';
-import {
-  BOOK_APPOINTMENT,
-  PORTAL_APPOINTMENTS,
-  PORTAL_BILLING,
-  PORTAL_CATS,
-  PORTAL_ORDERS,
-  PORTAL_PRESCRIPTIONS,
-} from '@/lib/routing/portal-links';
-import { AppointmentsTile } from './AppointmentsTile';
+import { PORTAL_BILLING, PORTAL_ORDERS } from '@/lib/routing/portal-links';
 import { BalancesTile } from './BalancesTile';
-import { CatsTile } from './CatsTile';
+import { BuyAgain, newestDeliveredOrder } from './BuyAgain';
 import { DashboardSection } from './DashboardSection';
 import { DashboardSkeleton } from './DashboardSkeleton';
+import { DefaultAddressCard } from './DefaultAddressCard';
+import { LiveOrderCard, newestOpenOrder } from './LiveOrderCard';
 import { OrdersTile } from './OrdersTile';
-import { PrescriptionsTile } from './PrescriptionsTile';
-import { VisitsTile } from './VisitsTile';
 
 /**
- * `components/portal/dashboard/PortalDashboard.tsx` — HO-POR-002 §2, US-POR-01. One request, six
- * tiles. There is NO stays tile and NO subscriptions tile (owner skipped BRD and SUB, 2026-10-10 —
- * not even a placeholder). Each tile goes through `DashboardSection`, so an absent key, an
- * `Unavailable` section and a `Ready` one can never be confused.
+ * `components/portal/dashboard/PortalDashboard.tsx` — HO-POR-002 §2, US-POR-01, restyled to
+ * docs/design/store/Account.dc.html (HO-P3 S4). One dashboard request, then: the greeting, the live order card (the
+ * newest open order), the default address, the next subscription delivery, Buy again (interim, gap G7), and the orders
+ * and balances tiles. The "Next delivery" card (HO-P6, OQ-8) is a single subscription read from its own endpoint (C3), not
+ * from the dashboard payload, and is absent when there is none; there is no multi-item "staples box" (BG-S7). Each tile goes through
+ * `DashboardSection`, so an absent key, an `Unavailable` section and a `Ready` one can never be confused.
  */
 function greetingFor(data: PortalDashboardData): string {
   const fullName = data.customer?.state === 'Ready' ? data.customer.data?.fullName : undefined;
   const first = fullName?.trim().split(/\s+/)[0];
   return first ? `Welcome back, ${first}` : 'Welcome back';
-}
-
-function nextStepFor(data: PortalDashboardData): string {
-  const cats = data.cats?.state === 'Ready' ? data.cats.data : null;
-  const needing =
-    cats?.items.filter(
-      (cat) =>
-        cat.vaccinationState === 'Ready' &&
-        (cat.vaccination?.overallStatus === 'DueSoon' ||
-          cat.vaccination?.overallStatus === 'Overdue'),
-    ).length ?? 0;
-  if (needing > 0) {
-    return `${needing} ${needing === 1 ? 'cat is' : 'cats are'} due or overdue for a vaccination.`;
-  }
-  return 'Everything we hold for you, on one page.';
 }
 
 export function PortalDashboard() {
@@ -69,46 +47,26 @@ export function PortalDashboard() {
   const data = query.data;
   const retry = () => void query.refetch();
   const retrying = query.isFetching;
+  const orderItems = data.orders?.state === 'Ready' ? (data.orders.data?.items ?? []) : [];
+  const openOrder = newestOpenOrder(orderItems);
+  const deliveredOrder = newestDeliveredOrder(orderItems);
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-[var(--radius-md)] bg-warm-soft px-6 py-5">
-        <div className="min-w-0 flex-[1_1_320px]">
-          <h1 className="font-display text-[26px] font-semibold text-ink">{greetingFor(data)}</h1>
-          <p className="mt-1 text-sm text-ink">{nextStepFor(data)}</p>
-        </div>
-        <Link href={BOOK_APPOINTMENT} className={buttonVariants({ variant: 'secondary' })}>
-          <CalendarPlus size={15} aria-hidden="true" />
-          Book an appointment
-        </Link>
+      <GreetingHeader title={greetingFor(data)}>
+        Everything we hold for you, on one page.
+      </GreetingHeader>
+
+      {openOrder && <LiveOrderCard order={openOrder} />}
+
+      <div className="grid items-stretch gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
+        <DefaultAddressCard />
+        <NextDeliveryCard />
       </div>
 
-      <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))]">
-        <DashboardSection
-          id="cats"
-          title="My cats"
-          section={data.cats}
-          link={{ href: PORTAL_CATS, label: 'All cats' }}
-          onRetry={retry}
-          retrying={retrying}
-          unavailableSubject="your cats"
-          className="col-span-full"
-        >
-          {(cats) => <CatsTile data={cats} />}
-        </DashboardSection>
+      {deliveredOrder && <BuyAgain order={deliveredOrder} />}
 
-        <DashboardSection
-          id="appointments"
-          title="Upcoming appointments"
-          section={data.appointments}
-          link={{ href: PORTAL_APPOINTMENTS, label: 'All appointments' }}
-          onRetry={retry}
-          retrying={retrying}
-          unavailableSubject="your appointments"
-        >
-          {(appointments) => <AppointmentsTile data={appointments} />}
-        </DashboardSection>
-
+      <div className="grid items-start gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))]">
         <DashboardSection
           id="orders"
           title="Recent orders"
@@ -132,29 +90,6 @@ export function PortalDashboard() {
           className="col-span-full"
         >
           {(balances) => <BalancesTile data={balances} />}
-        </DashboardSection>
-
-        <DashboardSection
-          id="visits"
-          title="Recent visits"
-          section={data.visits}
-          onRetry={retry}
-          retrying={retrying}
-          unavailableSubject="your visits"
-        >
-          {(visits) => <VisitsTile data={visits} />}
-        </DashboardSection>
-
-        <DashboardSection
-          id="prescriptions"
-          title="Prescriptions"
-          section={data.prescriptions}
-          link={{ href: PORTAL_PRESCRIPTIONS, label: 'All prescriptions' }}
-          onRetry={retry}
-          retrying={retrying}
-          unavailableSubject="your prescriptions"
-        >
-          {(prescriptions) => <PrescriptionsTile data={prescriptions} />}
         </DashboardSection>
       </div>
     </div>

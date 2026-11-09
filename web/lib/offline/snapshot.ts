@@ -32,29 +32,6 @@ export type WipeReason =
   | 'schema-mismatch'
   | 'not-permitted';
 
-/**
- * Owner decision 2026-10-14: customers' phone numbers are NOT kept on the device. The API still
- * sends `customerPhone` (HO-XCT-001 section 12.4, backlog row for the backend), so it is dropped here,
- * before anything is written to IndexedDB.
- */
-export function withoutCustomerPhones(body: OfflineSnapshotBody): OfflineSnapshotBody {
-  const appointments = body.sections.appointments;
-  if (!appointments) return body;
-  return {
-    ...body,
-    sections: {
-      ...body.sections,
-      appointments: {
-        items: appointments.items.map((item) => {
-          const { customerPhone, ...rest } = item as typeof item & { customerPhone?: unknown };
-          void customerPhone;
-          return rest;
-        }),
-      },
-    },
-  };
-}
-
 export function isSnapshotUsable(record: SnapshotRecord, now: number = Date.now()): boolean {
   return (
     record.schemaVersion === SNAPSHOT_SCHEMA_VERSION &&
@@ -63,25 +40,14 @@ export function isSnapshotUsable(record: SnapshotRecord, now: number = Date.now(
   );
 }
 
-/** A record written before phone numbers were dropped (owner decision 2026-10-14) is cleaned when it
- *  is read, in memory and, once, in the store. */
-function cleaned(record: SnapshotRecord | undefined): SnapshotRecord | undefined {
-  if (!record || !JSON.stringify(record.body).includes('customerPhone')) return record;
-  const clean = { ...record, body: withoutCustomerPhones(record.body) };
-  void dbUpdate<SnapshotRecord>('snapshot', record.branchId, (current) =>
-    current && JSON.stringify(current.body).includes('customerPhone') ? { ...current, body: clean.body } : undefined,
-  );
-  return clean;
-}
-
 export async function readSnapshot(branchId: string): Promise<SnapshotRecord | undefined> {
-  return cleaned(await dbGet<SnapshotRecord>('snapshot', branchId));
+  return dbGet<SnapshotRecord>('snapshot', branchId);
 }
 
 /** The most recently saved record across branches (the board shows "the last active branch"). */
 export async function readLatestSnapshot(): Promise<SnapshotRecord | undefined> {
   const all = await dbGetAll<SnapshotRecord>('snapshot');
-  return cleaned(all.sort((a, b) => Date.parse(b.fetchedAt) - Date.parse(a.fetchedAt))[0]);
+  return all.sort((a, b) => Date.parse(b.fetchedAt) - Date.parse(a.fetchedAt))[0];
 }
 
 /**
@@ -109,12 +75,11 @@ export async function writeSnapshot(
   etag: string | null,
   now: number = Date.now(),
 ): Promise<boolean> {
-  let body = incoming;
+  const body = incoming;
   const device = await readDeviceSettings();
   if (!device.offlineEnabled) return false;
   if (body.schemaVersion !== SNAPSHOT_SCHEMA_VERSION) return false;
 
-  body = withoutCustomerPhones(body);
   const existing = await dbGetAll<SnapshotRecord>('snapshot');
   if (existing.some((record) => record.staffAccountId !== body.staffAccountId)) {
     await wipeOfflineSnapshots('person-change');

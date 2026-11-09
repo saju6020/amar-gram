@@ -7,6 +7,7 @@ import { ProductHeading } from '@/components/product/ProductHeading';
 import { MaintenanceNotice } from '@/components/shop/MaintenanceNotice';
 import { ApiNotFoundError } from '@/lib/api/client';
 import {
+  getDeliveryPromiseServer,
   getOriginServer,
   getProductDetailServer,
   getProductReviewsServer,
@@ -57,18 +58,19 @@ export default async function ProductPage({ params, searchParams }: Props) {
     throw detail.error;
   }
   const product = detail.value;
-  const [origin, reviews] = await Promise.all([
+  const [origin, reviews, promise] = await Promise.all([
     product.countryOfOrigin ? settle(getOriginServer(product.countryOfOrigin.code)) : null,
     settle(getProductReviewsServer(slug)),
+    settle(getDeliveryPromiseServer()),
   ]);
   const initialSku = defaultSku(product.skus, one(query.sku));
   const nameLang = product.fieldLocales.name ?? product.locale;
 
   return (
     <article className="flex flex-col gap-10">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap gap-2 text-[13px] text-ink-muted">
-        <Link href="/shop/products" className="text-accent-ink">
-          Shop
+      <nav aria-label="Breadcrumb" className="flex flex-wrap gap-2 text-sm text-ink-muted">
+        <Link href="/shop" className="text-accent-ink">
+          Home
         </Link>
         <span aria-hidden="true">/</span>
         <Link
@@ -77,12 +79,15 @@ export default async function ProductPage({ params, searchParams }: Props) {
         >
           {categoryLabel(product.category)}
         </Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{product.name}</span>
       </nav>
 
       <ProductPurchase
         detail={product}
         initialSkuId={initialSku?.skuId ?? ''}
         lang={lang}
+        leadTimeDays={promise.ok ? promise.value.leadTimeDays : null}
         heading={
           <ProductHeading
             name={product.name}
@@ -90,7 +95,10 @@ export default async function ProductPage({ params, searchParams }: Props) {
             brand={product.brand}
             rating={product.rating}
             country={product.countryOfOrigin}
+            district={product.districtOfOrigin}
             lang={lang || undefined}
+            description={product.description}
+            descriptionLang={product.fieldLocales.description ?? product.locale}
           />
         }
       />
@@ -99,7 +107,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
         <BundleContents components={product.bundle.components} lang={lang || undefined} />
       )}
 
-      <ProductDetailsRow slug={slug} lang={lang}>
+      <ProductDetailsRow>
         <ProductDetailsTabs
           detail={product}
           originNotes={origin?.ok ? origin.value.sourcingNotes : null}

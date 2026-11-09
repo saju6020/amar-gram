@@ -84,13 +84,13 @@ describe('U-A2 — QuantityInput refuses what the item cannot hold', () => {
 
 describe('U-A3 — ScanField (keyboard-wedge, ADR-FE-042)', () => {
   it('a fast burst ending in Enter fires one lookup and announces the match', async () => {
-    const onScan = vi.fn().mockResolvedValue('Kitten dry food — FD-KDC-2KG');
+    const onScan = vi.fn().mockResolvedValue('Organic rice — FD-RCE-5KG');
     const user = userEvent.setup({ delay: 0 });
     render(<ScanField id="scan" onScan={onScan} />);
     await user.type(screen.getByLabelText(/scan a barcode/i), '4006381333931{Enter}');
     await waitFor(() => expect(onScan).toHaveBeenCalledWith('4006381333931'));
     expect(onScan).toHaveBeenCalledTimes(1);
-    expect(await screen.findByText(/added: kitten dry food — fd-kdc-2kg/i)).toBeInTheDocument();
+    expect(await screen.findByText(/added: organic rice — fd-rce-5kg/i)).toBeInTheDocument();
   });
 
   it('slow typing is not a scan', async () => {
@@ -112,7 +112,7 @@ describe('U-A3 — ScanField (keyboard-wedge, ADR-FE-042)', () => {
   });
 
   it('a second scan after a miss replaces the unknown barcode instead of being appended', async () => {
-    const onScan = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce('Kitten — FD-1');
+    const onScan = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce('Organic rice — FD-1');
     const user = userEvent.setup({ delay: 0 });
     render(<ScanField id="scan" onScan={onScan} />);
     const input = screen.getByLabelText(/scan a barcode/i) as HTMLInputElement;
@@ -149,10 +149,10 @@ describe('U-A4 — ExpiryBadge is text first', () => {
     expect(formatExpiry(null, false, null).text).toBe('No expiry date');
   });
 
-  it('the expired variant repeats that it cannot be sold, dispensed or fed', () => {
+  it('the expired variant repeats that it cannot be sold or used', () => {
     render(<ExpiryBadge expiresOn={stamp(-3)} isExpired daysToExpiry={-3} />);
     expect(screen.getByText(/expired 3 days ago/i)).toBeInTheDocument();
-    expect(screen.getByText(/cannot be sold, dispensed or fed/i)).toBeInTheDocument();
+    expect(screen.getByText(/cannot be sold or used/i)).toBeInTheDocument();
   });
 });
 
@@ -191,11 +191,11 @@ describe('U-A6 — LocationSelect disables what the server would refuse, with th
     },
     {
       id: 'd',
-      code: 'DISP',
-      name: 'Dispensary',
-      kind: 'ClinicDispensary',
+      code: 'QRN',
+      name: 'Holding area',
+      kind: 'Quarantine',
       isActive: true,
-      permittedMovements: ['Dispense', 'Receipt'],
+      permittedMovements: ['Return', 'Receipt'],
     },
     {
       id: 'x',
@@ -207,7 +207,7 @@ describe('U-A6 — LocationSelect disables what the server would refuse, with th
     },
   ];
 
-  it('for a sale, the dispensary option is disabled and says why', () => {
+  it('for a sale, the quarantine option is disabled and says why', () => {
     render(
       <LocationSelect
         id="loc"
@@ -218,9 +218,9 @@ describe('U-A6 — LocationSelect disables what the server would refuse, with th
         movement="Sale"
       />,
     );
-    const dispensary = screen.getByRole('option', { name: /dispensary/i });
-    expect(dispensary).toBeDisabled();
-    expect(dispensary).toHaveTextContent(/doesn't take sales/i);
+    const holding = screen.getByRole('option', { name: /holding area/i });
+    expect(holding).toBeDisabled();
+    expect(holding).toHaveTextContent(/doesn't take sales/i);
     expect(screen.getByRole('option', { name: /warehouse \(warehouse\)$/i })).toBeEnabled();
     expect(screen.getByRole('option', { name: /old shelf/i })).toBeDisabled();
   });

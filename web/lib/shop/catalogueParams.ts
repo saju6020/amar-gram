@@ -15,17 +15,19 @@ export const CATALOGUE_SORTS = [
 ] as const;
 export type CatalogueSort = (typeof CATALOGUE_SORTS)[number];
 
-export const MULTI_PARAMS = ['brand', 'origin', 'lifeStage', 'protein'] as const;
+export const MULTI_PARAMS = ['brand', 'origin', 'district', 'certification'] as const;
 export type MultiParam = (typeof MULTI_PARAMS)[number];
 
 export interface CatalogueParams {
   q: string;
   category: string;
   subcategory: string;
+  /** Producer names — the API's query param is still `brand` (HO-P2 §1.4). */
   brand: string[];
   origin: string[];
-  lifeStage: string[];
-  protein: string[];
+  /** HO-P5 G1: districts of origin, repeatable; the API's query param is also `district`. */
+  district: string[];
+  certification: string[];
   minPrice: string;
   maxPrice: string;
   inStock: boolean;
@@ -42,8 +44,8 @@ export const EMPTY_CATALOGUE_PARAMS: CatalogueParams = {
   subcategory: '',
   brand: [],
   origin: [],
-  lifeStage: [],
-  protein: [],
+  district: [],
+  certification: [],
   minPrice: '',
   maxPrice: '',
   inStock: false,
@@ -91,8 +93,8 @@ export function parseCatalogueParams(input: CatalogueParamsInput): CataloguePara
     subcategory: firstOf(input, 'subcategory'),
     brand: listOf(input, 'brand'),
     origin: listOf(input, 'origin'),
-    lifeStage: listOf(input, 'lifeStage'),
-    protein: listOf(input, 'protein'),
+    district: listOf(input, 'district'),
+    certification: listOf(input, 'certification'),
     minPrice: DECIMAL.test(minPrice) ? minPrice : '',
     maxPrice: DECIMAL.test(maxPrice) ? maxPrice : '',
     inStock: firstOf(input, 'availability') === 'inStock',
@@ -151,8 +153,8 @@ export function activeFilterCount(params: CatalogueParams): number {
   return (
     params.brand.length +
     params.origin.length +
-    params.lifeStage.length +
-    params.protein.length +
+    params.district.length +
+    params.certification.length +
     (params.category ? 1 : 0) +
     (params.subcategory ? 1 : 0) +
     (params.minPrice || params.maxPrice ? 1 : 0) +

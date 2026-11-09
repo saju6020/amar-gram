@@ -7,19 +7,19 @@ export interface HearthBandProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 /**
- * Warm-soft rounded band for heroes, greetings, announcements and empty states. Warmth stops at
- * medical and money: never wrap a PrescriptionGate, maintenance notice or error in one.
+ * Leaf-soft rounded band (the design's hero and heading bands) for heroes, greetings, announcements and empty states. Warmth stops at
+ * money: never wrap a maintenance notice or error in one.
  */
 export function HearthBand({ as: Tag = 'section', className, ...props }: HearthBandProps) {
-  return <Tag className={cn('rounded-band bg-warm-soft p-8 md:p-12', className)} {...props} />;
+  return <Tag className={cn('rounded-band bg-leaf-soft p-8 md:p-12', className)} {...props} />;
 }
 
-/** The 12px uppercase eyebrow used inside bands, in warm-ink. */
+/** The 12px uppercase eyebrow used inside bands, in leaf-ink. */
 export function HearthEyebrow({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
       className={cn(
-        'm-0 text-xs font-semibold uppercase tracking-[0.07em] text-warm-ink',
+        'm-0 text-xs font-semibold uppercase tracking-[0.07em] text-leaf-ink',
         className,
       )}
       {...props}

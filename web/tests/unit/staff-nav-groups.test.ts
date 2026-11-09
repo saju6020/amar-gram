@@ -13,19 +13,30 @@ const staffAreas: NavArea[] = navRegistry.map((area) => ({
 describe('groupStaffNav', () => {
   const groups = groupStaffNav(staffAreas);
 
-  it('puts Home first, with no heading, then the job groups in working order', () => {
-    expect(groups[0]).toMatchObject({ label: null, items: [{ href: '/staff', label: 'Home' }] });
+  it('puts the Dashboard first, then the design groups in working order', () => {
+    expect(groups[0]).toMatchObject({
+      label: 'Overview',
+      items: [{ href: '/staff', label: 'Dashboard' }],
+    });
     expect(groups.map((g) => g.label)).toEqual([
-      null,
-      'Front desk',
-      'Clinic',
-      'Pharmacy',
-      'Boarding',
-      'Shop & orders',
-      'Stock',
-      'Money & reports',
-      'Team & settings',
+      'Overview',
+      'Sales',
+      'Catalogue & stock',
+      'Money',
+      'Insight & admin',
     ]);
+  });
+
+  it('shows the design labels over the area files (ADR-FE-181)', () => {
+    const labelOf = (href: string) =>
+      groups.flatMap((g) => g.items).find((i) => i.href === href)?.label;
+    expect(labelOf('/staff/pos')).toBe('Counter sale');
+    expect(labelOf('/staff/notifications')).toBe('Messages');
+    expect(labelOf('/staff/inventory')).toBe('Inventory & batches');
+    expect(labelOf('/staff/inventory/receipts')).toBe('Goods receiving');
+    expect(labelOf('/staff/billing')).toBe('Billing & cash-up');
+    expect(labelOf('/staff/admin/branches')).toBe('Administration');
+    expect(labelOf('/staff/leave')).toBe('My leave');
   });
 
   it('keeps every staff link exactly once (none lost, none doubled)', () => {
@@ -50,15 +61,15 @@ describe('groupStaffNav', () => {
   });
 
   it('drops a group whose links the member of staff cannot see', () => {
-    const onlyFrontDesk = groupStaffNav([
+    const onlyCustomers = groupStaffNav([
       {
-        key: 'appointments',
-        label: 'Appointments',
+        key: 'accounts',
+        label: 'Accounts',
         audience: 'staff',
-        items: [{ label: 'Front desk', href: '/staff/front-desk' }],
+        items: [{ label: 'Register customer', href: '/staff/customers/new' }],
       },
     ]);
-    expect(onlyFrontDesk.map((g) => g.label)).toEqual(['Front desk']);
+    expect(onlyCustomers.map((g) => g.label)).toEqual(['Sales']);
   });
 });
 
@@ -68,17 +79,35 @@ describe('activeStaffHref', () => {
     ['/staff', '/staff'],
     ['/staff/orders', '/staff/orders'],
     ['/staff/orders/123', '/staff/orders'],
-    ['/staff/boarding', '/staff/boarding'],
-    ['/staff/boarding/tasks', '/staff/boarding/tasks'],
-    ['/staff/pharmacy/controlled-drugs/register', '/staff/pharmacy/controlled-drugs'],
     ['/staff/shop/products/abc', '/staff/shop/products'],
     ['/staff/procurement/purchase-orders', '/staff/procurement/suppliers'],
     ['/staff/admin/settings', '/staff/admin/branches'],
     ['/staff/admin/staff-accounts/42', '/staff/admin/staff-accounts'],
-    ['/staff/admin/boarding/units', '/staff/admin/boarding/units'],
+    ['/staff/inventory/receipts/new', '/staff/inventory/receipts'],
+    ['/staff/inventory/stock/abc', '/staff/inventory'],
+    ['/staff/customers', '/staff/customers'],
+    ['/staff/customers/new', '/staff/customers/new'],
     ['/staff/something-new', null],
   ];
   it.each(cases)('%s marks %s', (pathname, expected) => {
     expect(activeStaffHref(groups, pathname)).toBe(expected);
+  });
+});
+
+// HO-P6 S2 (U33): the Subscriptions link sits in Sales right after Customers, is current on its sub-routes, and moves no other link.
+describe('Subscriptions entry (HO-P6 S2)', () => {
+  it('is in Sales after Customers, current on /unpaid and a detail page, with no other group changed', () => {
+    const groups = groupStaffNav(staffAreas);
+    const sales = groups.find((g) => g.key === 'sales')!;
+    const hrefs = sales.items.map((i) => i.href);
+    expect(hrefs.indexOf('/staff/subscriptions')).toBe(hrefs.indexOf('/staff/customers') + 1);
+    expect(sales.items.find((i) => i.href === '/staff/subscriptions')).toMatchObject({ label: 'Subscriptions', icon: 'repeat' });
+    expect(activeStaffHref(groups, '/staff/subscriptions')).toBe('/staff/subscriptions');
+    expect(activeStaffHref(groups, '/staff/subscriptions/unpaid')).toBe('/staff/subscriptions');
+    expect(activeStaffHref(groups, '/staff/subscriptions/5b000000-0000-0000-0000-000000000011')).toBe('/staff/subscriptions');
+    for (const key of ['overview', 'stock', 'money', 'admin']) {
+      expect(groups.find((g) => g.key === key)!.items.map((i) => i.href)).not.toContain('/staff/subscriptions');
+    }
+    expect(groups.some((g) => g.key === 'more')).toBe(false);
   });
 });

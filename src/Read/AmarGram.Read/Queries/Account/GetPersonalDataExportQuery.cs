@@ -1,0 +1,10 @@
+using AmarGram.Read.ViewModels;
+using Platform.Infrastructure.Core.Queries;
+
+namespace AmarGram.Read.Queries.Account;
+
+/// <summary>Q-J1 -- POST /api/customers/me/personal-data-export.</summary>
+public sealed class GetPersonalDataExportQuery : Query<PersonalDataExportViewModel?>
+{
+    public required Guid CustomerId { get; init; }
+}

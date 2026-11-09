@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .dialog h2{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 10px}
 .dialog p{font-size:13.5px;line-height:1.5;margin:0 0 10px}
 .dactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
-.sk{background:linear-gradient(90deg,var(--surface-sunken),#ebe7dd);border-radius:4px;height:10px}
+.sk{background:linear-gradient(90deg,var(--surface-sunken),#EDE4D1);border-radius:4px;height:10px}
 .rcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px}
 .rcard h3{font-size:14px;margin:0 0 8px}
 .rcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;font-size:12.5px}
@@ -127,20 +127,20 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .recip label:last-child{border-bottom:none}
 .recip .roles{font-size:12px;color:var(--ink-muted)}
 .recip label.dis{background:var(--surface-sunken);color:var(--ink-muted)}
-.cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
-.cat-card b{font-size:14px;color:var(--accent-ink)}
-.cat-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
-.cat-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
+.rep-card b{font-size:14px;color:var(--accent-ink)}
+.rep-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
+.rep-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
 .rt td{white-space:normal}.rt td.nw{white-space:nowrap}.who2{font-size:11.5px;color:var(--ink-muted);display:block;margin-top:2px}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active outlet"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="padding:26px 32px">
     <div class="titlerow">
       <div>
         <h1 class="h1">Report schedules</h1>
-        <p class="sub">Reports emailed to staff on a schedule. Times are in each schedule's branch zone.</p>
+        <p class="sub">Reports emailed to staff on a schedule. Times are in each schedule's outlet zone.</p>
       </div>
       <div class="acts">
         <button class="btn" type="button"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> Export CSV</button>
@@ -149,26 +149,26 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
     </div>
     <form class="filters" aria-label="Schedule filters">
       <div class="f"><label for="st">Status</label><select id="st"><option>All statuses</option><option>Active</option><option>Paused</option><option>Cancelled</option></select></div>
-      <div class="f"><label for="rp">Report</label><select id="rp"><option>All reports</option><option>Revenue by business line</option><option>Near expiry</option><option>Vaccination due list</option><option>Daily cash-up</option></select></div>
+      <div class="f"><label for="rp">Report</label><select id="rp"><option>All reports</option><option>Revenue by channel</option><option>Near expiry</option><option>Low stock and reorder</option><option>Daily cash-up</option></select></div>
     </form>
 
     <table class="rt">
       <caption><b>5 schedules</b> · all statuses</caption>
       <thead><tr>
         <th scope="col" aria-sort="ascending"><button type="button" class="sortbtn on">Name <svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></th>
-        <th scope="col">Report</th><th scope="col">Branch</th><th scope="col">When</th><th scope="col">Format</th><th scope="col">Recipients</th><th scope="col">Status</th>
+        <th scope="col">Report</th><th scope="col">Outlet</th><th scope="col">When</th><th scope="col">Format</th><th scope="col">Recipients</th><th scope="col">Status</th>
         <th scope="col"><button type="button" class="sortbtn">Next run <svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button></th><th scope="col">Last run</th>
       </tr></thead>
       <tbody>
-        <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Daily revenue</a></th><td>Revenue by business line</td><td>All branches</td><td>Daily at 07:00 (Asia/Dhaka)</td><td>PDF</td><td>3 people<span class="who2">Rezwan Ahmed, Mahmud Hasan, Farzana Rahman</span></td><td><span class="badge b-active"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Active</span></td><td class="nw">Thu 24 Sep 07:00</td><td class="nw">Wed 23 Sep 07:00<span class="who2"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Generated</span></td></tr>
-        <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Monthly revenue pack</a></th><td>Revenue by business line</td><td>All branches</td><td>Monthly on the 1st at 07:00 (Asia/Dhaka)</td><td>PDF</td><td>2 people<span class="who2">Rezwan Ahmed, Mahmud Hasan</span></td><td><span class="badge b-active"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Active</span></td><td class="nw">Thu 1 Oct 07:00</td><td class="nw">Tue 1 Sep 07:00<span class="who2"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Generated</span></td></tr>
+        <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Daily revenue</a></th><td>Revenue by channel</td><td>All outlets</td><td>Daily at 07:00 (Asia/Dhaka)</td><td>PDF</td><td>3 people<span class="who2">Rezwan Ahmed, Mahmud Hasan, Farzana Rahman</span></td><td><span class="badge b-active"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Active</span></td><td class="nw">Thu 24 Sep 07:00</td><td class="nw">Wed 23 Sep 07:00<span class="who2"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Generated</span></td></tr>
+        <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Monthly revenue pack</a></th><td>Revenue by channel</td><td>All outlets</td><td>Monthly on the 1st at 07:00 (Asia/Dhaka)</td><td>PDF</td><td>2 people<span class="who2">Rezwan Ahmed, Mahmud Hasan</span></td><td><span class="badge b-active"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Active</span></td><td class="nw">Thu 1 Oct 07:00</td><td class="nw">Tue 1 Sep 07:00<span class="who2"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Generated</span></td></tr>
         <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Weekly expiry check</a></th><td>Near expiry</td><td>Uttara</td><td>Weekly on Monday at 08:00 (Asia/Dhaka)</td><td>CSV</td><td>2 people<span class="who2">Rezwan Ahmed, Jamal Uddin</span></td><td><span class="badge b-active"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Active</span></td><td class="nw">Mon 28 Sep 08:00</td><td class="nw">Mon 21 Sep 08:00<span class="who2" style="color:var(--danger-ink)"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Failed</span></td></tr>
-        <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Banani vaccinations due</a></th><td>Vaccination due list</td><td>Banani</td><td>Daily at 18:00 (Asia/Dhaka)</td><td>CSV</td><td>1 person<span class="who2">Rezwan Ahmed</span></td><td><span class="badge b-paused"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg> Paused</span></td><td class="nw">Not scheduled<span class="who2">Paused — resume to set the next run</span></td><td class="nw">Fri 18 Sep 18:00<span class="who2"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Generated</span></td></tr>
+        <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Banani low stock</a></th><td>Low stock and reorder</td><td>Banani</td><td>Daily at 18:00 (Asia/Dhaka)</td><td>CSV</td><td>1 person<span class="who2">Rezwan Ahmed</span></td><td><span class="badge b-paused"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/></svg> Paused</span></td><td class="nw">Not scheduled<span class="who2">Paused — resume to set the next run</span></td><td class="nw">Fri 18 Sep 18:00<span class="who2"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg> Generated</span></td></tr>
         <tr><th scope="row"><a class="link" href="ScheduleDetail.dc.html">Old cash-up digest</a></th><td>Daily cash-up</td><td>Uttara</td><td>Daily at 21:00 (Asia/Dhaka)</td><td>CSV</td><td>1 person<span class="who2">Mahmud Hasan</span></td><td><span class="badge b-cancelled"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg> Cancelled</span></td><td class="nw">None<span class="who2">Cancelled — past runs kept</span></td><td class="nw">Mon 14 Sep 21:00<span class="who2"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18M5 7v12h14V7M9 11h6"/></svg> Purged — file removed</span></td></tr>
       </tbody>
     </table>
     <div class="pager"><span>5 schedules · page 1 of 1</span></div>
-    <p class="annot"><b>Administrators only.</b> Every next-run time is worked out by the server, in the schedule's branch zone — the page never calculates one. A paused schedule has no next run and says so rather than showing a blank.</p>
+    <p class="annot"><b>Administrators only.</b> Every next-run time is worked out by the server, in the schedule's outlet zone — the page never calculates one. A paused schedule has no next run and says so rather than showing a blank.</p>
   </div>
 </div>
 </x-dc>

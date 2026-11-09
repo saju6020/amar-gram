@@ -17,7 +17,7 @@ describe('applyValidationErrors', () => {
           propertyName: 'Name',
           errorCode: 'Required',
           errorMessage: 'Enter a name.',
-          resourceName: 'Cat',
+          resourceName: 'Product',
         },
       ],
     });
@@ -39,7 +39,7 @@ describe('applyValidationErrors', () => {
           propertyName: 'SomeUnmappedProperty',
           errorCode: 'Unexpected',
           errorMessage: 'Something about this record is invalid.',
-          resourceName: 'Cat',
+          resourceName: 'Product',
         },
       ],
     });
@@ -59,9 +59,9 @@ describe('applyValidationErrors', () => {
       errors: [
         {
           propertyName: 'Name',
-          errorCode: 'MicrochipAlreadyRegistered',
-          errorMessage: 'That microchip number is already registered.',
-          resourceName: 'Cat',
+          errorCode: 'SkuCodeAlreadyInUse',
+          errorMessage: 'That SKU code is already in use.',
+          resourceName: 'Product',
         },
       ],
     });
@@ -69,7 +69,7 @@ describe('applyValidationErrors', () => {
     applyValidationErrors<Form>(error, setError, { fieldMap: { Name: 'name' } });
 
     const [, payload] = setError.mock.calls[0] as [string, { message: string }];
-    expect(payload.message).not.toContain('MicrochipAlreadyRegistered');
+    expect(payload.message).not.toContain('SkuCodeAlreadyInUse');
   });
 });
 

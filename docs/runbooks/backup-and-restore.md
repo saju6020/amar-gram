@@ -1,12 +1,12 @@
 # Backup and restore runbook
 
-HO-XCT-001 section 12.8 (US-XCT-05, NFR-AVL-3/4/5, ADR-311..314). Audience: whoever runs the PurrCare production database. Plain steps, no assumed knowledge of pgBackRest.
+HO-XCT-001 section 12.8 (US-XCT-05, NFR-AVL-3/4/5, ADR-311..314). Audience: whoever runs the Amar Gram production database. Plain steps, no assumed knowledge of pgBackRest.
 
 ## 1. What exists
 
 ```
                       +------------------------- production host -------------------------+
-   app (catecommerce_app) -->  PostgreSQL 17  --archive_command (every WAL segment, at most 60 s old)-->  pgBackRest
+   app (amargram_app) -->  PostgreSQL 17  --archive_command (every WAL segment, at most 60 s old)-->  pgBackRest
                                     |                                                         |
                           nightly full/diff (01:00)                          repo1 (local disk)      repo2 (off-site S3, encrypted)
                                     |                                                         |
@@ -57,7 +57,7 @@ Do not hurry steps 0 to 2.
    After an unclean stop remove the stale `postmaster.pid` first, **but only after that check shows no postgres process** (the process is dead; pgBackRest refuses to restore over a "running" cluster). A restore that "did nothing" because the file was still there looks exactly like a restored cluster in step 3, so do not skip the checks below.
    **After the restore, before step 3, check all of:** (a) the command exited **0** (`echo $?`) AND printed `Restore to '...' finished` (it prints nothing like that on failure; on failure the pgBackRest error is the last line); (b) the data directory was really rewritten: `grep recovery_target_time "$PGDATA/postgresql.auto.conf"` shows your target for a time restore, and `$PGDATA/recovery.signal` exists.
 3. **Start PostgreSQL** and wait for recovery to finish and promote. Check `SELECT pg_is_in_recovery()` is `false`. That alone is NOT proof of a restore (an un-restored cluster also answers `false`), so add a positive proof: (a) the timeline moved on: `SELECT timeline_id FROM pg_control_checkpoint();` is higher than before the incident (a point-in-time restore starts a new timeline), and (b) the newest data is at or before the target: for example `SELECT max("OccurredOn") FROM audit.audit_entry;` is **not after** the target time you gave. If either fails, stop and treat the restore as not done.
-4. **Start the application with its background workers OFF** (`deploy/backup/restore-mode.env`: the notification, retention, clinic, orders, inventory, pharmacy and shop workers). It runs as `catecommerce_app` (it refuses to start as an owner or superuser). With the workers off nothing is sent to, and no job acts on, a customer who was erased after the restore point and has not yet been re-erased. Keep the public site in maintenance mode (Administration -> System status) until step 6 if you do not want customers to sign in to restored, un-erased accounts meanwhile.
+4. **Start the application with its background workers OFF** (`deploy/backup/restore-mode.env`: the notification, retention, orders, inventory and shop workers). It runs as `amargram_app` (it refuses to start as an owner or superuser). With the workers off nothing is sent to, and no job acts on, a customer who was erased after the restore point and has not yet been re-erased. Keep the public site in maintenance mode (Administration -> System status) until step 6 if you do not want customers to sign in to restored, un-erased accounts meanwhile.
 5. **Reconcile erasures (mandatory, ADR-314)** through the API, as an administrator, following section 5. The API is the only path: this is why step 4 starts the application, with the workers off, and why "reconcile before the application is started" is not possible.
 6. **Restart the application WITHOUT `restore-mode.env`** so the workers run again (the erasure worker then clears the rest of each re-erased customer's data), and take a new full backup immediately (`backup.sh full`): the restore started a new timeline.
 
@@ -107,7 +107,7 @@ Uploaded files (photos, lab results) live in object storage and are **not covere
 `export-erasure-journal.sh` reads `ops.erasure_request`. The backup reporter role cannot (it is INSERT-only on `ops.backup_run`, by design). Create a dedicated role and keep its password in the secret store:
 
 ```
-CREATE ROLE catecommerce_journal_reader LOGIN PASSWORD :'journal_password';
-GRANT USAGE ON SCHEMA ops TO catecommerce_journal_reader;
-GRANT SELECT ON ops.erasure_request TO catecommerce_journal_reader;
+CREATE ROLE amargram_journal_reader LOGIN PASSWORD :'journal_password';
+GRANT USAGE ON SCHEMA ops TO amargram_journal_reader;
+GRANT SELECT ON ops.erasure_request TO amargram_journal_reader;
 ```

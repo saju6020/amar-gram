@@ -1,5 +1,6 @@
+import type { Locator, Page } from '@playwright/test';
 import { test, expect as baseExpect, signInAsStaff } from './fixtures';
-import { setMaintenance, withFilters } from './shop-helpers';
+import { isMobile, setMaintenance, withFilters } from './shop-helpers';
 
 // First visits compile routes in `next dev`: allow for that.
 const expect = baseExpect.configure({ timeout: 20_000 });
@@ -10,17 +11,44 @@ const expect = baseExpect.configure({ timeout: 20_000 });
  * because it ends on the product page.
  */
 
+/** Only Category is open on arrival (owner, 2026-10-17): open the group, then tick the option. */
+async function tickFilter(scope: Locator, group: string, option: RegExp) {
+  const toggle = scope.getByRole('button', { name: group, exact: true });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await scope.getByRole('checkbox', { name: option }).check();
+}
+
+/**
+ * HO-P3 S2: from 768 px the sort is a segmented radio group; on a phone it stays the native select
+ * ("Sort by"). Both are in the page and CSS shows one, so the spec drives whichever is visible.
+ */
+async function chooseSortPriceAsc(page: Page) {
+  if (isMobile(page)) {
+    await page.getByLabel('Sort by').selectOption('price_asc');
+  } else {
+    await page.getByRole('radiogroup', { name: 'Sort' }).getByText('Price: low to high').click();
+  }
+}
+
+async function expectSortPriceAsc(page: Page) {
+  if (isMobile(page)) {
+    await expect(page.getByLabel('Sort by')).toHaveValue('price_asc');
+  } else {
+    await expect(page.getByRole('radio', { name: 'Price: low to high' })).toBeChecked();
+  }
+}
+
 test.describe('catalogue state lives in the URL', () => {
   test('E-A2: filter, sort, go to page 2, reload, press Back', async ({ page }) => {
     await page.goto('/shop/products');
     await expect(page.getByRole('heading', { level: 1, name: 'All products' })).toBeVisible();
 
     await withFilters(page, async (scope) => {
-      await scope.getByRole('checkbox', { name: /In stock only/ }).check();
+      await tickFilter(scope, 'Availability', /In stock only/);
     });
     await expect(page).toHaveURL(/availability=inStock/);
 
-    await page.getByLabel('Sort by').selectOption('price_asc');
+    await chooseSortPriceAsc(page);
     await expect(page).toHaveURL(/sort=price_asc/);
     await expect(page).toHaveURL(/availability=inStock/);
 
@@ -39,7 +67,7 @@ test.describe('catalogue state lives in the URL', () => {
     await expect(page).toHaveURL(/availability=inStock/);
     await expect(page).toHaveURL(/sort=price_asc/);
     await expect(page).toHaveURL(/pageNumber=2/);
-    await expect(page.getByLabel('Sort by')).toHaveValue('price_asc');
+    await expectSortPriceAsc(page);
 
     // Back restores the previous state of the same filtered, sorted results. (Back immediately
     // after a hard reload bounces in the dev server even for plain links — a framework behaviour, see
@@ -69,10 +97,75 @@ test.describe('catalogue state lives in the URL', () => {
     await expect(status).toBeVisible();
     const before = await status.innerText();
     await withFilters(page, async (scope) => {
-      await scope.getByRole('checkbox', { name: /Thailand/ }).check();
+      await tickFilter(scope, 'Origin', /Thailand/);
     });
     await expect(status).not.toHaveText(before);
     await expect(status).toHaveAttribute('aria-live', 'polite');
+  });
+});
+
+test.describe('the design controls (HO-P3 S2)', () => {
+  test('S2: "Certified organic only" sets the filter, shows a chip and clears again', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products');
+    await withFilters(page, async (scope) => {
+      await scope.getByRole('checkbox', { name: 'Certified organic only' }).check();
+    });
+    await expect(page).toHaveURL(/certification=CertifiedOrganic/);
+    await page.getByRole('button', { name: 'Remove filter Certified organic' }).click();
+    await expect(page).not.toHaveURL(/certification=/);
+  });
+
+  // HO-P5 S1 (E2) supersedes "there is no District filter (G1)": the group exists, with server counts.
+  test('S2: the heading band carries the h1 and the count; the District filter is offered', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products');
+    const band = page
+      .locator('main header')
+      .filter({ has: page.getByRole('heading', { level: 1 }) });
+    await expect(band.getByRole('status')).toHaveText(/\d+ products?/);
+    await withFilters(page, async (scope) => {
+      await expect(scope.getByRole('button', { name: 'District', exact: true })).toBeVisible();
+    });
+  });
+});
+
+test.describe('district of origin and the Organic badge (HO-P5 S1, E2)', () => {
+  test('filtering by a district shows only cards with that district as their eyebrow', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products');
+    await withFilters(page, async (scope) => {
+      await tickFilter(scope, 'District', /Satkhira/);
+    });
+    await expect(page).toHaveURL(/district=Satkhira/);
+    await expect(page.getByRole('button', { name: 'Remove filter Satkhira' })).toBeVisible();
+    const cards = page.getByRole('article');
+    await expect(cards.first()).toBeVisible();
+    const count = await cards.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+    for (let i = 0; i < count; i += 1) {
+      await expect(cards.nth(i).getByText('Satkhira', { exact: true })).toBeVisible();
+    }
+    await page.getByRole('button', { name: 'Remove filter Satkhira' }).click();
+    await expect(page).not.toHaveURL(/district=/);
+  });
+
+  test('a certified-organic card shows the Organic pill; one that is not certified does not', async ({
+    page,
+  }) => {
+    await page.goto('/shop/products?district=Sirajganj');
+    const oil = page.getByRole('article').filter({ hasText: 'Pure Mustard Oil' });
+    await expect(oil.getByText('Sirajganj', { exact: true })).toBeVisible();
+    await expect(oil.getByText('Organic', { exact: true })).toBeVisible();
+    await expect(oil.getByText('Certified organic')).toBeAttached();
+
+    await page.goto('/shop/products?district=Satkhira');
+    const gur = page.getByRole('article').filter({ hasText: 'Date Palm Gur' });
+    await expect(gur).toBeVisible();
+    await expect(gur.getByText('Organic', { exact: true })).toHaveCount(0);
   });
 });
 
@@ -83,15 +176,15 @@ test.describe('search (US-SHP-06)', () => {
     await page.goto('/shop');
     await page
       .getByRole('search', { name: 'Products' })
-      .getByLabel('Search products')
-      .fill('royal canan');
+      .getByLabel('Search the shop')
+      .fill('greem valey');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
-    await expect(page).toHaveURL(/q=royal([+]|%20)canan/);
-    await expect(page.getByRole('heading', { level: 2, name: 'Royal Canin Kitten' })).toBeVisible();
+    await expect(page).toHaveURL(/q=greem([+]|%20)valey/);
+    await expect(page.getByRole('heading', { level: 2, name: 'Thai Jasmine Rice' })).toBeVisible();
 
     await page
       .getByRole('search', { name: 'Products' })
-      .getByLabel('Search products')
+      .getByLabel('Search the shop')
       .fill('zzqqxx');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByText(/No products match/)).toBeVisible();
@@ -102,22 +195,21 @@ test.describe('search (US-SHP-06)', () => {
   test('E-A3: a typo in a search offers a Did you mean link that keeps the filters', async ({
     page,
   }) => {
-    await page.goto('/shop/products?q=royl%20canan&availability=inStock');
+    await page.goto('/shop/products?q=gren%20vally&availability=inStock');
     await expect(page.getByText(/No products match/)).toBeVisible();
-    const suggestion = page.getByRole('link', { name: 'royal canin' });
+    const suggestion = page.getByRole('link', { name: 'green valley' });
     await expect(suggestion).toBeVisible();
     await suggestion.click();
     await expect(page).toHaveURL(/availability=inStock/);
-    await expect(page.getByRole('heading', { level: 2, name: 'Royal Canin Kitten' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Thai Jasmine Rice' })).toBeVisible();
   });
 
   test('E-A4: an ingredient and a tag find matching products', async ({ page }) => {
-    await page.goto('/shop/products?q=salmon');
-    await expect(
-      page.getByRole('heading', { level: 2, name: 'Whiskas Kitten Salmon' }),
-    ).toBeVisible();
-    await page.goto('/shop/products?q=grain-free');
-    await expect(page.getByRole('heading', { level: 2, name: 'Royal Canin Kitten' })).toBeVisible();
+    // "sap" is only in Date Palm Gur's ingredient list ("Date palm sap"); "sunflower" was the pre-HO-P2 fixture.
+    await page.goto('/shop/products?q=sap');
+    await expect(page.getByRole('heading', { level: 2, name: 'Date Palm Gur' })).toBeVisible();
+    await page.goto('/shop/products?q=long-grain');
+    await expect(page.getByRole('heading', { level: 2, name: 'Thai Jasmine Rice' })).toBeVisible();
   });
 });
 
@@ -158,7 +250,7 @@ test.describe('the shell without JavaScript (S4)', () => {
       await expect(page.getByRole('link', { name: 'Amar Gram Shop' })).toBeVisible();
       await expect(page.getByRole('navigation', { name: 'Shop categories' })).toBeVisible();
       await expect(page.getByRole('search', { name: 'Products' })).toBeVisible();
-      await expect(page.getByRole('searchbox', { name: 'Search products' })).toBeVisible();
+      await expect(page.getByRole('searchbox', { name: 'Search the shop' })).toBeVisible();
       await context.close();
     });
   }

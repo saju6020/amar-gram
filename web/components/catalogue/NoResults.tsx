@@ -1,6 +1,4 @@
 import Link from 'next/link';
-import { EmptyState } from '@/components/common/EmptyState';
-import { EmptyCatIllustration } from '@/components/common/EmptyState';
 import { buttonVariants } from '@/components/ui/button';
 import { HearthBand } from '@/components/hearth/HearthBand';
 import { LineArtBasket } from '@/components/hearth/LineArtBasket';
@@ -25,19 +23,13 @@ export interface NoResultsProps {
 export function NoResults({ q, suggestions, hrefForQuery, clearHref, lang }: NoResultsProps) {
   if (!q) {
     return (
-      <EmptyState
-        icon={<EmptyCatIllustration />}
-        title="Nothing matches these filters"
-        description="Try removing a filter or two."
-        action={
-          <Link
-            href={clearHref}
-            className={buttonVariants({ variant: 'pillSecondary', size: 'pillMd' })}
-          >
-            Clear filters
-          </Link>
-        }
-      />
+      <div className="flex flex-col items-center gap-2.5 rounded-card border-[1.5px] border-dashed border-border-strong px-6 py-12 text-center">
+        <strong className="font-display text-2xl text-ink">Nothing matches those filters</strong>
+        <span className="text-ink-muted">Try removing a filter or two, or clear them all.</span>
+        <Link href={clearHref} className={buttonVariants({ variant: 'pill', size: 'pillMd' })}>
+          Clear filters
+        </Link>
+      </div>
     );
   }
   const didYouMean = suggestions?.didYouMean ?? [];

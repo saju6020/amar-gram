@@ -2,21 +2,39 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { CustomerStatusBadge } from './CustomerStatusBadge';
 import { IncompleteCustomerNotice } from './IncompleteCustomerNotice';
+import { initialsOf } from './initials';
 import type { StaffCustomer } from '@/lib/api/staff-customers';
 
 /**
- * `components/customer/CustomerDetail.tsx` — US-ACC-10/11. HO-NTF-002 (a Messages link) and
- * HO-APT-002 (an `AppointmentSummaryPanel`) are Amended additions to THIS page owed by those
- * handovers' own builds (HO-ACC-002 §1) — not built here, and nothing below should need to change
- * for either to add its own section.
+ * `components/customer/CustomerDetail.tsx` — US-ACC-10/11, HO-P4 §11.2.9. The profile's identity
+ * block: initials avatar, the name in the display face, record status, and the contact facts. Other
+ * areas (Messages, Billing, Orders) add their own sections beside this one; `CustomerProfile`
+ * composes them. `headingLevel` is 1 on the customer's own page and 2 beside the search list.
  */
-export function CustomerDetail({ customer }: { customer: StaffCustomer }) {
+export function CustomerDetail({
+  customer,
+  headingLevel = 1,
+}: {
+  customer: StaffCustomer;
+  headingLevel?: 1 | 2;
+}) {
+  const Heading = headingLevel === 2 ? 'h2' : 'h1';
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <h1 className="font-display text-xl font-semibold text-ink">{customer.fullName}</h1>
-        <CustomerStatusBadge recordStatus={customer.recordStatus} />
-        {customer.status === 'Merged' && <Badge variant="neutral">Merged</Badge>}
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="grid size-12 flex-none place-items-center rounded-full bg-leaf-soft text-base font-bold text-leaf-ink"
+        >
+          {initialsOf(customer.fullName)}
+        </span>
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+          <Heading className="font-display text-2xl font-bold text-ink [overflow-wrap:anywhere]">
+            {customer.fullName}
+          </Heading>
+          <CustomerStatusBadge recordStatus={customer.recordStatus} />
+          {customer.status === 'Merged' && <Badge variant="neutral">Merged</Badge>}
+        </div>
       </div>
 
       {customer.status === 'Merged' && customer.mergedIntoCustomerId && (
@@ -32,17 +50,22 @@ export function CustomerDetail({ customer }: { customer: StaffCustomer }) {
         </p>
       )}
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+      <dl className="grid grid-cols-1 gap-x-4 gap-y-0.5 text-sm sm:grid-cols-[auto_1fr] sm:gap-y-2">
         <dt className="font-semibold text-ink">Mobile</dt>
-        <dd className="text-ink-muted">{customer.mobileNumber ?? '—'}</dd>
+        <dd className="m-0 mb-2 min-w-0 text-ink-muted [overflow-wrap:anywhere] sm:mb-0">{customer.mobileNumber ?? '—'}</dd>
         <dt className="font-semibold text-ink">Email</dt>
-        <dd className="text-ink-muted">{customer.emailAddress ?? '—'}</dd>
+        <dd className="m-0 mb-2 min-w-0 text-ink-muted [overflow-wrap:anywhere] sm:mb-0">{customer.emailAddress ?? '—'}</dd>
+        {/* HO-P5 BG-19: the district of the default delivery address; absent when they have none. */}
+        {customer.area && (
+          <>
+            <dt className="font-semibold text-ink">Area</dt>
+            <dd className="m-0 mb-2 min-w-0 text-ink-muted [overflow-wrap:anywhere] sm:mb-0">{customer.area}</dd>
+          </>
+        )}
         <dt className="font-semibold text-ink">Registration channel</dt>
-        <dd className="text-ink-muted">
+        <dd className="m-0 text-ink-muted">
           {customer.registrationChannel === 'Reception' ? 'Walk-in' : 'Self-service'}
         </dd>
-        <dt className="font-semibold text-ink">Cats</dt>
-        <dd className="text-ink-muted">{customer.catCount}</dd>
       </dl>
 
       {customer.recordStatus === 'Incomplete' && <IncompleteCustomerNotice />}

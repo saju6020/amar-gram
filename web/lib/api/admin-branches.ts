@@ -1,7 +1,7 @@
 import { apiFetch } from './client';
 
 /**
- * `lib/api/admin-branches.ts` — HO-ADM-002 §8.2. Branches, opening hours, closures, rooms, staff
+ * `lib/api/admin-branches.ts` — HO-ADM-002 §8.2. Branches, opening hours, closures, staff
  * branch assignment and the active-branch feed (HO-ADM-001 §12.4).
  */
 
@@ -35,6 +35,22 @@ export interface PublicBranch {
   weeklyHours: OpeningInterval[];
 }
 
+/** HO-P5 BG-21 -- what a branch is; descriptive only, no rule differs by type yet
+ *  (Shared/Enums/BranchType.cs:3-9). */
+export type BranchType = 'Outlet' | 'Warehouse';
+
+export const BRANCH_TYPES: BranchType[] = ['Outlet', 'Warehouse'];
+
+/** Branch-local today, closures applied; `summary` is "HH:mm-HH:mm" per interval joined by ", ", or "Closed"
+ *  (Read/ViewModels/AdministrationBranchViewModels.cs:25-26). */
+export interface BranchTodayHours {
+  date: string; // "yyyy-MM-dd"
+  isOpenToday: boolean;
+  summary: string;
+  intervals: OpeningInterval[];
+}
+
+/** The part of a branch every caller reads: enough to name it and pick it (the staff branch-assignment panel takes this). */
 export interface BranchSummary {
   id: string;
   code: string;
@@ -43,19 +59,31 @@ export interface BranchSummary {
   isActive: boolean;
 }
 
-export interface BranchDetail extends BranchSummary {
+/**
+ * `AdminBranchViewModel` (Read/ViewModels/AdministrationBranchViewModels.cs:10-21): the list and the single read send
+ * the same shape. HO-P5 BG-21 adds `type`, `todayHours`, `deliveryAreas` (names of the branch's active delivery zones, in
+ * priority order) and `activeStaffCount` (staff accounts assigned to the branch). Kept apart from `BranchSummary` so the
+ * screens that only need a branch's name do not have to carry the card figures.
+ */
+export interface AdminBranch extends BranchSummary {
   addressLine: string | null;
   phoneNumber: string | null;
   email: string | null;
   weeklyHours: OpeningInterval[];
+  type: BranchType;
+  todayHours: BranchTodayHours;
+  deliveryAreas: string[];
+  activeStaffCount: number;
 }
+
+export type BranchDetail = AdminBranch;
 
 export async function getPublicBranches(): Promise<PublicBranch[]> {
   return apiFetch<PublicBranch[]>('/api/branches');
 }
 
-export async function getAdminBranches(): Promise<BranchSummary[]> {
-  return apiFetch<BranchSummary[]>('/api/admin/branches');
+export async function getAdminBranches(): Promise<AdminBranch[]> {
+  return apiFetch<AdminBranch[]>('/api/admin/branches');
 }
 
 export async function getAdminBranch(branchId: string): Promise<BranchDetail> {
@@ -69,6 +97,8 @@ export interface CreateBranchRequest {
   addressLine?: string | null;
   phoneNumber?: string | null;
   email?: string | null;
+  /** "Outlet" or "Warehouse"; absent means Outlet (Api/Contracts/Administration/BranchRequests.cs:11-12). */
+  type?: BranchType;
 }
 
 export async function createBranch(request: CreateBranchRequest): Promise<{ branchId: string }> {
@@ -81,6 +111,8 @@ export interface UpdateBranchDetailsRequest {
   addressLine?: string | null;
   phoneNumber?: string | null;
   email?: string | null;
+  /** "Outlet" or "Warehouse"; absent leaves the type unchanged (BranchRequests.cs:22-23). */
+  type?: BranchType;
 }
 
 export async function updateBranchDetails(
@@ -160,53 +192,6 @@ export async function cancelBranchClosure(branchId: string, closureId: string): 
   await apiFetch<void>(
     `/api/admin/branches/${encodeURIComponent(branchId)}/closures/${encodeURIComponent(closureId)}`,
     { method: 'DELETE' },
-  );
-}
-
-export type RoomKind = 'Consultation' | 'Treatment' | 'Theatre' | 'Grooming';
-export const ROOM_KINDS: RoomKind[] = ['Consultation', 'Treatment', 'Theatre', 'Grooming'];
-
-export interface Room {
-  id: string;
-  branchId: string;
-  name: string;
-  kind: RoomKind;
-  isActive: boolean;
-}
-
-export async function getBranchRooms(branchId: string): Promise<Room[]> {
-  return apiFetch<Room[]>(`/api/admin/branches/${encodeURIComponent(branchId)}/rooms`);
-}
-
-export interface CreateRoomRequest {
-  name: string;
-  kind: RoomKind;
-}
-
-export async function createRoom(
-  branchId: string,
-  request: CreateRoomRequest,
-): Promise<{ roomId: string }> {
-  return apiFetch<{ roomId: string }>(`/api/admin/branches/${encodeURIComponent(branchId)}/rooms`, {
-    method: 'POST',
-    body: request,
-  });
-}
-
-export interface UpdateRoomRequest {
-  name: string;
-  kind: RoomKind;
-  isActive: boolean;
-}
-
-export async function updateRoom(
-  branchId: string,
-  roomId: string,
-  request: UpdateRoomRequest,
-): Promise<void> {
-  await apiFetch<void>(
-    `/api/admin/branches/${encodeURIComponent(branchId)}/rooms/${encodeURIComponent(roomId)}`,
-    { method: 'PUT', body: request },
   );
 }
 

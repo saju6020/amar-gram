@@ -22,9 +22,9 @@ export function usePortalDashboard() {
   });
 }
 
-/** Clinic phone numbers for the "how to pay" box (U-A4). Decoration only: a failure hides the
+/** Outlet phone numbers for the "how to pay" box (U-A4). Decoration only: a failure hides the
  *  contacts, it never fails the tile. */
-export function usePortalClinicContacts() {
+export function usePortalBranchContacts() {
   return useQuery({
     queryKey: ['public', 'branches'],
     queryFn: getPublicBranches,

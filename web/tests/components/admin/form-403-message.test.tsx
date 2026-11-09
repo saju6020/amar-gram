@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { RoomForm } from '@/components/branches/RoomForm';
+import { TaxClassForm } from '@/components/admin/TaxClassForm';
 import { ApiForbiddenError } from '@/lib/api/client';
 import { describeApiError, describeUnexpectedError } from '@/lib/api/errors';
 
@@ -15,13 +15,14 @@ const forbidden = (code = 'ActionNotPermitted') =>
   new ApiForbiddenError({ errors: [{ errorCode: code, errorMessage: 'Not permitted.' }] });
 
 describe('form 403 handling', () => {
-  it('RoomForm shows the permission message on a 403 submit, not the generic retry text', async () => {
+  it('TaxClassForm shows the permission message on a 403 submit, not the generic retry text', async () => {
     const onSave = vi.fn().mockRejectedValue(forbidden());
     const user = userEvent.setup();
-    render(<RoomForm isPending={false} onSave={onSave} />);
+    render(<TaxClassForm isPending={false} onSave={onSave} />);
 
-    await user.type(screen.getByLabelText(/name/i), 'Theatre 2');
-    await user.click(screen.getByRole('button', { name: /add room|save|create/i }));
+    await user.type(screen.getByLabelText(/^code/i), 'REDUCED');
+    await user.type(screen.getByLabelText(/^name/i), 'Reduced rate');
+    await user.click(screen.getByRole('button', { name: /create tax class/i }));
 
     expect(await screen.findByText(/you don.t have permission to do this/i)).toBeInTheDocument();
     expect(screen.queryByText(/something went wrong/i)).not.toBeInTheDocument();

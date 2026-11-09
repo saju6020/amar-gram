@@ -3,36 +3,27 @@
 import { Button } from '@/components/ui/button';
 import { Plus, X } from 'lucide-react';
 import { timeFieldLabel } from '@/lib/format/time';
-import type { Room } from '@/lib/api/admin-branches';
 
 export interface RosterSlot {
   starts: string;
   ends: string;
-  defaultRoomId: string | null;
 }
 
 /** `components/roster/RosterSlotDayRow.tsx` — one day of `RosterPatternEditor` (HO-ADM-002
- *  §11.4). Same 0–3-slots shape as `WeeklyHoursDayRow`, plus a default-room choice per slot. */
+ *  §11.4). Same 0–3-slots shape as `WeeklyHoursDayRow`. */
 export interface RosterSlotDayRowProps {
   day: string;
   timeZoneId: string;
   slots: RosterSlot[];
-  rooms: Room[];
   onChange: (slots: RosterSlot[]) => void;
 }
 
-export function RosterSlotDayRow({
-  day,
-  timeZoneId,
-  slots,
-  rooms,
-  onChange,
-}: RosterSlotDayRowProps) {
-  function update(index: number, field: keyof RosterSlot, value: string | null) {
+export function RosterSlotDayRow({ day, timeZoneId, slots, onChange }: RosterSlotDayRowProps) {
+  function update(index: number, field: keyof RosterSlot, value: string) {
     onChange(slots.map((slot, i) => (i === index ? { ...slot, [field]: value } : slot)));
   }
   function addSlot() {
-    onChange([...slots, { starts: '09:00', ends: '17:00', defaultRoomId: null }]);
+    onChange([...slots, { starts: '09:00', ends: '17:00' }]);
   }
   function removeSlot(index: number) {
     onChange(slots.filter((_, i) => i !== index));
@@ -73,27 +64,6 @@ export function RosterSlotDayRow({
               onChange={(e) => update(index, 'ends', e.target.value)}
               className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 py-1.5 text-sm text-ink"
             />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor={`${day}-room-${index}`}
-              className="text-xs font-semibold text-ink-muted"
-            >
-              Default room
-            </label>
-            <select
-              id={`${day}-room-${index}`}
-              value={slot.defaultRoomId ?? ''}
-              onChange={(e) => update(index, 'defaultRoomId', e.target.value || null)}
-              className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 py-1.5 text-sm text-ink"
-            >
-              <option value="">None</option>
-              {rooms.map((room) => (
-                <option key={room.id} value={room.id}>
-                  {room.name}
-                </option>
-              ))}
-            </select>
           </div>
           <Button
             type="button"

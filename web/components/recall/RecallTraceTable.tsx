@@ -47,8 +47,8 @@ function Customer({ customer }: { customer: RecallTraceCustomer | null }) {
 
 /**
  * `components/recall/RecallTraceTable.tsx` — HO-IMP-002 §11.7, US-IMP-11 AC2. Four tabs over the
- * trace: **Received** (when, what kind of use in plain words — bought, dispensed, fed during
- * boarding — quantity, reference, the customer with phone and email, the cat and its current owner),
+ * trace: **Received** (when, what kind of use in plain words, quantity, reference, the
+ * customer with phone and email),
  * **Returned**, **Unshipped — dispatch blocked** and **Unidentified counter sales**. Paged 50 at a
  * time (OQ-5). Contact details are shown because this screen is `Recalls.Manage` only; they live in
  * the query cache for this view and nowhere else (never logged, never put in storage). **Export CSV**
@@ -83,24 +83,6 @@ export function RecallTraceTable({
     { id: 'qty', header: 'Quantity', numeric: true, cell: (r) => formatQuantity(r.quantity, stockUnit) },
     { id: 'ref', header: 'Reference', cell: (r) => r.referenceLabel ?? '—' },
     { id: 'customer', header: 'Customer', cell: (r) => <Customer customer={r.customer} /> },
-    {
-      id: 'cat',
-      header: 'Cat and current owner',
-      cell: (r) =>
-        r.cat ? (
-          <span>
-            {r.cat.name}
-            {r.cat.currentOwner && <span className="block text-xs text-ink-muted">Owner now: {r.cat.currentOwner.name}</span>}
-          </span>
-        ) : r.householdCats.length > 0 ? (
-          <span>
-            Household cats — not specifically recorded
-            <span className="block text-xs text-ink-muted">{r.householdCats.join(', ')}</span>
-          </span>
-        ) : (
-          '—'
-        ),
-    },
   ];
 
   return (
@@ -163,7 +145,6 @@ export function RecallTraceTable({
                   { id: 'ref', header: 'Order', rowHeader: true, cell: (r) => referenceKindLabel(r.referenceKind) },
                   { id: 'qty', header: 'Quantity held', numeric: true, cell: (r) => formatQuantity(r.quantity, stockUnit) },
                   { id: 'customer', header: 'Customer', cell: (r) => <Customer customer={r.customer} /> },
-                  { id: 'cat', header: 'Cat', cell: (r) => r.cat?.name ?? '—' },
                 ]}
               />
             </div>

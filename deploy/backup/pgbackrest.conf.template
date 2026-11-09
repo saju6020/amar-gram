@@ -5,7 +5,7 @@ repo1-type=posix
 repo1-path=/var/lib/pgbackrest
 repo1-retention-full=5
 repo2-type=s3
-repo2-path=/purrcare
+repo2-path=/amargram
 repo2-s3-endpoint=${REPO2_S3_ENDPOINT}
 repo2-s3-bucket=${REPO2_S3_BUCKET}
 repo2-s3-region=${REPO2_S3_REGION}
@@ -24,6 +24,6 @@ spool-path=/var/spool/pgbackrest
 log-level-console=info
 log-path=/var/log/pgbackrest
 
-[purrcare]
+[amargram]
 pg1-path=${PGDATA}
 pg1-port=${PGPORT}

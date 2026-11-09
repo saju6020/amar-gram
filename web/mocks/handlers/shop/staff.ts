@@ -1,3 +1,4 @@
+import { isFoodCategory } from '@/lib/shop/labels';
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import {
   COUNTRY_NAMES,
@@ -7,6 +8,7 @@ import {
   type MockSku,
 } from './fixtures';
 import { db, findById, findSku, money, persist } from './store';
+import { uploadedFilePurpose } from '../files/uploadBehavior';
 
 /**
  * `mocks/handlers/shop/staff.ts` — HO-SHP-002 §12. The staff endpoints of HO-SHP-001 §12.4.
@@ -31,6 +33,52 @@ function shippingWeightRefusal(value: unknown): Response | null {
 
 const notFound = () => new HttpResponse(null, { status: 404 });
 
+/** UTC today as `yyyy-MM-dd` -- what the server compares a certificate's last valid day with (`FoodDetails.cs:58-59`). */
+const todayUtc = () => new Date().toISOString().slice(0, 10);
+
+/** Minor units to the wire amount by string handling only (no division, no float). */
+function centsText(cents: number): string {
+  const digits = String(Math.trunc(cents)).padStart(3, '0');
+  return `${digits.slice(0, -2)}.${digits.slice(-2)}`;
+}
+const compareAtOf = (cents: number | null | undefined) =>
+  cents == null ? null : money(centsText(cents));
+/** A price amount (`"2450.00"`) in minor units, for ordering only: the mock plays the server here. */
+const centsOf = (amount: string) => Number(amount.replace('.', ''));
+
+/** The signed, relative link the real signer produces (`HmacFileUrlSigner`); the client anchors it on the API origin. */
+const signedFileUrl = (fileId: string) =>
+  `/api/files/${fileId}/content?exp=${Math.floor(Date.now() / 1000) + 300}&disp=inline&sig=mock`;
+
+/** HO-P3 G1 / `ProductAggregate.cs:312-318`: trimmed, blank clears, > 60 or a control character is refused. */
+const DISTRICT_MAX = 60;
+const hasDisallowedControl = (text: string) => /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(text);
+function districtProblems(value: unknown) {
+  if (typeof value !== 'string') return null;
+  // The validator runs first (`UpdateProductDetailsCommandValidator.cs:15`): length of the raw text, then control characters.
+  if (value.length > DISTRICT_MAX)
+    return badRequest(
+      'DistrictOfOrigin',
+      'MaximumLengthValidator',
+      `The length of 'District Of Origin' must be ${DISTRICT_MAX} characters or fewer. You entered ${value.length} characters.`,
+    );
+  if (hasDisallowedControl(value))
+    return badRequest(
+      'DistrictOfOrigin',
+      'PredicateValidator',
+      'must not contain control characters.',
+    );
+  // Then the aggregate (tab, LF and CR are controls to `char.IsControl`).
+  const trimmed = value.trim();
+  if (trimmed.length > DISTRICT_MAX || /[\u0000-\u001F\u007F-\u009F]/.test(trimmed))
+    return badRequest(
+      'DistrictOfOrigin',
+      'InvalidDistrictOfOrigin',
+      `District of origin must be at most ${DISTRICT_MAX} characters of plain text.`,
+    );
+  return null;
+}
+
 const label = (s: MockSku) =>
   [s.code, s.sizeOrWeight, s.flavour, s.colour].filter(Boolean).join(' · ');
 
@@ -48,6 +96,33 @@ function conflict(p: MockProduct, expected: number) {
       isValid: false,
     },
     { status: 409 },
+  );
+}
+
+/**
+ * What ASP.NET's `[ApiController]` answers when `isSubscribable` is not a boolean: System.Text.Json fails on the
+ * `bool?` (StaffProductRequests.cs:32-33), so the whole body is unbound and both keys are reported. Copied from the real
+ * API on 2026-11-09 (HO-P6 integration part 2, S3 TEST T12) without its `traceId`. The byte position is where the
+ * reader stopped: the end of a string or number token, or one past the first byte of anything else.
+ */
+function subscribableBindingError(raw: string) {
+  const found = /"isSubscribable"\s*:\s*/.exec(raw);
+  const start = found ? found.index + found[0].length : 0;
+  const token = raw.slice(start).match(/^"(?:[^"\\]|\\.)*"|^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/)?.[0] ?? raw.charAt(start);
+  const position = new TextEncoder().encode(raw.slice(0, start) + token).length;
+  return HttpResponse.json(
+    {
+      type: 'https://tools.ietf.org/html/rfc9110#section-15.5.1',
+      title: 'One or more validation errors occurred.',
+      status: 400,
+      errors: {
+        request: ['The request field is required.'],
+        '$.isSubscribable': [
+          `The JSON value could not be converted to System.Nullable\`1[System.Boolean]. Path: $.isSubscribable | LineNumber: 0 | BytePositionInLine: ${position}.`,
+        ],
+      },
+    },
+    { status: 400, headers: { 'Content-Type': 'application/problem+json; charset=utf-8' } },
   );
 }
 
@@ -69,10 +144,14 @@ async function write(
   return noContent();
 }
 
+/** `FoodDetails.OrganicCertificateExpiredOn`: a recorded last valid day before UTC today. */
+const isCertificateExpired = (p: MockProduct) =>
+  !!p.organicCertificateExpiresOn && p.organicCertificateExpiresOn < todayUtc();
+
 export function checklistFor(p: MockProduct) {
   const active = p.skus.filter((s) => s.status === 'Active');
   const unpriced = active.filter((s) => !s.price).map((s) => s.code);
-  const isFood = p.category === 'CatFood' && p.kind === 'Standard';
+  const isFood = isFoodCategory(p.category) && p.kind === 'Standard';
   const items = [
     {
       item: 'ActiveSku',
@@ -104,12 +183,30 @@ export function checklistFor(p: MockProduct) {
       {
         item: 'FoodDetails',
         isBlocking: true,
-        isMet: !!p.lifeStage,
-        message: p.lifeStage
+        isMet: !!p.ingredientList,
+        message: p.ingredientList
           ? 'Food details are set.'
-          : 'Add the food details, including the life stage.',
+          : 'Add the food details, including the ingredient list.',
       },
     );
+  }
+  // `ProductPublicationRules.cs:48-61`: a CertifiedOrganic claim needs its certifier and number, and a recorded expiry in the past blocks.
+  if (isFood && p.certifications.includes('CertifiedOrganic')) {
+    const hasCertificate = !!(p.organicCertifier && p.organicCertificateNumber);
+    items.push({
+      item: 'OrganicCertificate',
+      isBlocking: true,
+      isMet: hasCertificate,
+      message: 'Add the organic certifier and certificate number before publishing a CertifiedOrganic product.',
+    });
+    const expired = isCertificateExpired(p);
+    items.push({
+      item: 'OrganicCertificateNotExpired',
+      isBlocking: true,
+      isMet: !expired,
+      message:
+        "The organic certificate has expired. Record the renewed certificate's expiry date (and file) before publishing.",
+    });
   }
   if (p.kind === 'Bundle') {
     const units = (p.bundle ?? []).reduce((sum, c) => sum + c.quantity, 0);
@@ -128,20 +225,14 @@ export function checklistFor(p: MockProduct) {
     message: 'Products without a photo convert poorly.',
   });
   if (isFood) {
-    const complete = !!(
-      p.manufacturer &&
-      p.ingredientList &&
-      p.analysis &&
-      p.feedingGuide &&
-      p.storageInstructions
-    );
+    const complete = !!(p.ingredientList && p.storageInstructions && p.shelfLife && p.netWeight);
     items.push({
       item: 'LabellingComplete',
       isBlocking: false,
       isMet: complete,
       message: complete
         ? 'Labelling is complete.'
-        : 'Add the manufacturer, ingredient list, analysis, feeding guide and storage instructions.',
+        : 'Add the ingredient list, storage instructions, shelf life and net weight.',
     });
   }
   return items;
@@ -161,22 +252,31 @@ const skuLabelFor = (p: MockProduct, s: MockSku) => {
 /** `null` when no food details were ever set — as the real read. */
 function staffFood(p: MockProduct) {
   const any =
-    p.manufacturer ||
-    p.lifeStage ||
-    p.protein ||
     p.ingredientList ||
-    p.analysis ||
-    p.feedingGuide ||
-    p.storageInstructions;
+    p.storageInstructions ||
+    p.shelfLife ||
+    p.netWeight ||
+    p.allergens ||
+    p.organicCertifier ||
+    p.organicCertificateNumber ||
+    p.organicCertificateExpiresOn ||
+    p.organicCertificateFileId;
   if (!any) return null;
   return {
-    manufacturer: p.manufacturer,
-    lifeStage: p.lifeStage,
-    proteinSource: p.protein,
     ingredientList: p.ingredientList,
-    guaranteedAnalysis: p.analysis,
-    feedingGuide: p.feedingGuide,
     storageInstructions: p.storageInstructions,
+    shelfLife: p.shelfLife,
+    netWeight: p.netWeight,
+    allergens: p.allergens,
+    organicCertifier: p.organicCertifier,
+    organicCertificateNumber: p.organicCertificateNumber,
+    // HO-P5 BG-14 -- `StaffProductDetailViewModel.cs:27-33`. Staff only: the public read never carries these.
+    organicCertificateExpiresOn: p.organicCertificateExpiresOn ?? null,
+    organicCertificateExpired: isCertificateExpired(p),
+    organicCertificateFileId: p.organicCertificateFileId ?? null,
+    organicCertificateUrl: p.organicCertificateFileId
+      ? signedFileUrl(p.organicCertificateFileId)
+      : null,
   };
 }
 
@@ -196,9 +296,10 @@ function staffDetail(p: MockProduct) {
     firstPublishedOn: p.firstPublishedOn,
     taxClassId: p.taxClassId,
     countryOfOriginCode: p.country,
-    prescriptionRequired: p.prescriptionRequired,
+    districtOfOrigin: p.district ?? null, // StaffProductDetailViewModel.cs:52
     isExpiryTracked: p.isExpiryTracked,
     listedOnStorefront: p.listed,
+    isSubscribable: p.isSubscribable === true, // StaffProductDetailViewModel.cs:63; always sent
     skus: p.skus.map((s) => ({
       skuId: s.skuId,
       code: s.code,
@@ -212,6 +313,9 @@ function staffDetail(p: MockProduct) {
       status: s.status,
       currentPrice: s.price ? money(s.price) : null,
       scheduledPrice: s.scheduledPrice ? money(s.scheduledPrice.amount) : null,
+      // HO-P5 BG-13 -- StaffProductDetailViewModel.cs:23-25
+      compareAtPrice: compareAtOf(s.compareAtCents),
+      scheduledCompareAtPrice: compareAtOf(s.scheduledCompareAtCents),
       // `null` = never reported (the unfinished draft); a real zero is `sellableQuantity: 0`.
       stock:
         s.code.startsWith('UNMET') || s.code.startsWith('DRAFT')
@@ -250,7 +354,7 @@ function staffDetail(p: MockProduct) {
     images: [...p.images]
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((i) => ({ ...i, url: null })),
-    healthFocus: p.healthFocus,
+    certifications: p.certifications,
   };
 }
 
@@ -287,11 +391,76 @@ function list(url: URL) {
       skuCount: p.skus.length,
       listedOnStorefront: p.listed,
       lastUpdatedOn: '2026-10-03T10:00:00Z',
+      ...listExtras(p),
     })),
     pageNumber,
     pageSize,
     totalCount: items.length,
   };
+}
+
+/**
+ * HO-P5 BG-9 -- the page's extras as `GetStaffProductsQueryHandler.cs:72-146` computes them: ACTIVE SKUs only; pack sizes
+ * are the labelled ones, cheapest first; the price range is the cheapest and dearest CURRENT price (equal for one, `null`
+ * when none is priced now); the stock is the sum over the SKUs Inventory reported (`null` for a bundle or when none was);
+ * the thumbnail is the product-level primary photo, else the first. The shop catalogue shares no SKU ids with the
+ * Inventory mock, so the stock follows the detail read's per-SKU figure (12 when in stock, 0 when not, none for the
+ * unfinished `UNMET` / `DRAFT` seeds). `availableStock` is a JSON number, as `decimal?` serialises.
+ */
+function listExtras(p: MockProduct) {
+  const active = p.skus.filter((s) => s.status === 'Active');
+  const byPrice = [...active].sort(
+    (a, b) =>
+      (a.price ? centsOf(a.price) : Number.MAX_SAFE_INTEGER) -
+        (b.price ? centsOf(b.price) : Number.MAX_SAFE_INTEGER) || a.code.localeCompare(b.code),
+  );
+  const packSizes = byPrice
+    .map((s) => s.sizeOrWeight)
+    .filter((x): x is string => !!x && x.trim() !== '');
+  const priced = byPrice.filter((s) => s.price);
+  const reported = p.kind === 'Bundle' ? [] : active.filter((s) => !/^(UNMET|DRAFT)/.test(s.code));
+  const image = [...p.images]
+    .filter((i) => !i.skuId)
+    .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.sortOrder - b.sortOrder)[0];
+  return {
+    countryOfOrigin: p.country ? { code: p.country, name: COUNTRY_NAMES[p.country] ?? p.country } : null,
+    packSizes,
+    priceRange:
+      priced.length > 0
+        ? { min: money(priced[0]!.price!), max: money(priced[priced.length - 1]!.price!) }
+        : null,
+    availableStock: reported.length > 0 ? reported.reduce((n, s) => n + (s.inStock ? 12 : 0), 0) : null,
+    primaryImage: image
+      ? { url: signedFileUrl(image.fileId), altText: image.altText, isPrimary: image.isPrimary, skuId: null }
+      : null,
+    isOrganic: p.certifications.includes('CertifiedOrganic'),
+  };
+}
+
+const BULK_MAX = 100; // ProductRules.cs:29
+
+/**
+ * `ProductAggregate.Publish` (`ProductAggregate.cs:163-181`): only a Draft or Archived product, and no blocking checklist item.
+ * An expired organic certificate has its own code so a screen can point at it.
+ */
+function publishRefusal(p: MockProduct): { code: string; message: string } | null {
+  if (p.status !== 'Draft' && p.status !== 'Archived')
+    return { code: 'InvalidProductTransition', message: `Cannot publish from ${p.status}.` };
+  const blocking = checklistFor(p).filter((c) => c.isBlocking && !c.isMet);
+  if (blocking.length === 0) return null;
+  return {
+    code: blocking.some((c) => c.item === 'OrganicCertificateNotExpired')
+      ? 'OrganicCertificateExpired'
+      : 'ProductNotPublishable',
+    message: `This product can't be published yet: ${blocking.map((c) => c.message).join('; ')}`,
+  };
+}
+
+/** `ProductAggregate.Unpublish` (`ProductAggregate.cs:191-194`). */
+function unpublishRefusal(p: MockProduct): { code: string; message: string } | null {
+  return p.status === 'Active'
+    ? null
+    : { code: 'InvalidProductTransition', message: `Cannot unpublish from ${p.status}.` };
 }
 
 const guard = (cell: string) =>
@@ -358,16 +527,15 @@ export const staffHandlers: HttpHandler[] = [
       status: 'Draft',
       listed: true,
       country: null,
-      lifeStage: null,
-      protein: null,
-      prescriptionRequired: false,
       tags: [],
       ingredientList: null,
-      manufacturer: null,
-      analysis: null,
-      feedingGuide: null,
       storageInstructions: null,
-      healthFocus: [],
+      shelfLife: null,
+      netWeight: null,
+      allergens: null,
+      organicCertifier: null,
+      organicCertificateNumber: null,
+      certifications: [],
       images: [],
       skus:
         body.kind === 'Bundle'
@@ -397,7 +565,7 @@ export const staffHandlers: HttpHandler[] = [
       related: [],
       translations: [],
       taxClassId: body.taxClassId,
-      isExpiryTracked: body.category === 'CatFood',
+      isExpiryTracked: isFoodCategory(body.category),
       firstPublishedOn: null,
     });
     persist();
@@ -409,11 +577,27 @@ export const staffHandlers: HttpHandler[] = [
     return p ? HttpResponse.json(staffDetail(p)) : notFound();
   }),
 
-  http.put('*/api/staff/shop/products/:productId', ({ params, request }) =>
-    write(String(params.productId), request, (p, b) => {
+  http.put('*/api/staff/shop/products/:productId', async ({ params, request }) => {
+    // Model binding runs before the version check and the command: a non-boolean `isSubscribable` is a 400 first.
+    const raw = await request.clone().text();
+    let sent: Record<string, unknown> = {};
+    try {
+      sent = (JSON.parse(raw) ?? {}) as Record<string, unknown>;
+    } catch {
+      /* not JSON: the write below reads it as an empty body, as before */
+    }
+    if (sent.isSubscribable !== undefined && sent.isSubscribable !== null && typeof sent.isSubscribable !== 'boolean')
+      return subscribableBindingError(raw);
+    return write(String(params.productId), request, (p, b) => {
       if (!String(b.name ?? '').trim())
         return badRequest('Name', 'InvalidProductName', 'Enter a product name.');
+      const districtRefusal = districtProblems(b.districtOfOrigin);
+      if (districtRefusal) return districtRefusal;
       Object.assign(p, {
+        district:
+          typeof b.districtOfOrigin === 'string' && b.districtOfOrigin.trim() !== ''
+            ? b.districtOfOrigin.trim()
+            : null,
         name: b.name,
         brand: b.brand,
         description: (b.description as string | null) ?? '',
@@ -421,9 +605,9 @@ export const staffHandlers: HttpHandler[] = [
         tags: (b.tags as string[]) ?? [],
         country: (b.countryOfOriginCode as string | null) ?? null,
         listed: b.listedOnStorefront !== false,
-        isExpiryTracked: p.category === 'CatFood' ? true : Boolean(b.isExpiryTracked),
+        isExpiryTracked: isFoodCategory(p.category) ? true : Boolean(b.isExpiryTracked),
         taxClassId: b.taxClassId,
-        healthFocus: (b.healthFocus as string[] | undefined) ?? [],
+        certifications: (b.certifications as string[] | undefined) ?? [],
       });
       if (b.category && b.category !== p.category && p.status === 'Active') {
         return badRequest(
@@ -432,8 +616,16 @@ export const staffHandlers: HttpHandler[] = [
           'The category can’t change while the product is active.',
         );
       }
-    }),
-  ),
+      // `bool? IsSubscribable` (StaffProductRequests.cs:32-33): omitted or null leaves it, a boolean sets it
+      // (UpdateProductDetailsCommandHandler.cs:62). A non-boolean was refused above, before the command.
+      // A change of the flag moves the version once more on top of `write`'s bump, as `SetSubscribable` does
+      // (ProductAggregate.Subscription.cs:14-20); the same value is idempotent. Seen on the real API: a flip goes +2.
+      if (typeof b.isSubscribable === 'boolean' && b.isSubscribable !== (p.isSubscribable === true)) {
+        p.isSubscribable = b.isSubscribable;
+        p.version += 1;
+      }
+    });
+  }),
 
   http.put('*/api/staff/shop/products/:productId/slug', ({ params, request }) =>
     write(String(params.productId), request, (p, b) => {
@@ -452,41 +644,38 @@ export const staffHandlers: HttpHandler[] = [
 
   http.put('*/api/staff/shop/products/:productId/food', ({ params, request }) =>
     write(String(params.productId), request, (p, b) => {
-      const analysis = b.guaranteedAnalysis as {
-        proteinPercent: number;
-        fatPercent: number;
-        fibrePercent: number;
-        moisturePercent: number;
-      } | null;
-      if (analysis && Object.values(analysis).some((v) => v < 0 || v > 100)) {
-        return badRequest(
-          'GuaranteedAnalysis',
-          'InvalidGuaranteedAnalysis',
-          'Each analysis value must be between 0 and 100 %.',
+      // BG-14: a NEW certificate file must be a fresh OrganicCertificate upload and not another product's
+      // (`SetFoodDetailsCommandHandler.cs:36-42`); the file the product already carries is re-submitted freely.
+      const fileId =
+        typeof b.organicCertificateFileId === 'string' &&
+        b.organicCertificateFileId !== '00000000-0000-0000-0000-000000000000'
+          ? b.organicCertificateFileId
+          : null;
+      if (fileId && fileId !== p.organicCertificateFileId) {
+        const inUse = db.products.some(
+          (x) => x.productId !== p.productId && x.organicCertificateFileId === fileId,
         );
+        if (uploadedFilePurpose(fileId) !== 'OrganicCertificate' || inUse)
+          return badRequest(
+            'OrganicCertificateFileId',
+            'InvalidCertificateFile',
+            'The uploaded certificate could not be attached. Upload it again and save immediately.',
+          );
       }
       Object.assign(p, {
-        manufacturer: b.manufacturer ?? null,
-        lifeStage: b.lifeStage ?? null,
-        protein: b.proteinSource ?? null,
+        organicCertificateExpiresOn:
+          typeof b.organicCertificateExpiresOn === 'string' && b.organicCertificateExpiresOn
+            ? b.organicCertificateExpiresOn
+            : null,
+        organicCertificateFileId: fileId,
         ingredientList: b.ingredientList ?? null,
-        analysis: analysis ?? null,
-        feedingGuide: b.feedingGuide ?? null,
         storageInstructions: b.storageInstructions ?? null,
+        shelfLife: b.shelfLife ?? null,
+        netWeight: b.netWeight ?? null,
+        allergens: b.allergens ?? null,
+        organicCertifier: b.organicCertifier ?? null,
+        organicCertificateNumber: b.organicCertificateNumber ?? null,
       });
-    }),
-  ),
-
-  http.put('*/api/staff/shop/products/:productId/prescription', ({ params, request }) =>
-    write(String(params.productId), request, (p, b) => {
-      if (p.category !== 'CatFood') {
-        return badRequest(
-          'PrescriptionRequired',
-          'PrescriptionOnlyForFood',
-          'Only food can require a prescription.',
-        );
-      }
-      p.prescriptionRequired = Boolean(b.prescriptionRequired);
     }),
   ),
 
@@ -529,12 +718,6 @@ export const staffHandlers: HttpHandler[] = [
             'components',
             'InvalidBundleComponent',
             `SKU ${found.sku.code} is a bundle and cannot be a component.`,
-          );
-        if (found.product.prescriptionRequired)
-          return badRequest(
-            'components',
-            'InvalidBundleComponent',
-            `SKU ${found.sku.code} is a prescription product and cannot be bundled.`,
           );
         if (found.sku.status !== 'Active')
           return badRequest(
@@ -589,7 +772,6 @@ export const staffHandlers: HttpHandler[] = [
         name: (b.name as string) || null,
         description: (b.description as string) || null,
         ingredientList: (b.ingredientList as string) || null,
-        feedingGuide: (b.feedingGuide as string) || null,
       };
       p.translations = p.translations.filter((t) => t.locale !== locale);
       if (Object.values(fields).some(Boolean)) p.translations.push({ locale, ...fields });
@@ -685,27 +867,106 @@ export const staffHandlers: HttpHandler[] = [
 
   http.post('*/api/staff/shop/products/:productId/publish', ({ params, request }) =>
     write(String(params.productId), request, (p) => {
-      const unmet = checklistFor(p).filter((c) => c.isBlocking && !c.isMet);
-      if (unmet.length > 0) {
-        return badRequest(
-          'ProductId',
-          'ProductNotPublishable',
-          `This product can't be published yet. ${unmet.map((u) => u.message).join(' ')}`,
-        );
-      }
+      const refusal = publishRefusal(p);
+      if (refusal) return badRequest('Status', refusal.code, refusal.message);
       p.status = 'Active';
       p.firstPublishedOn = p.firstPublishedOn ?? new Date().toISOString();
     }),
   ),
 
+  // HO-P5 BG-10 -- `StaffProductsController.cs:280-296`, `BulkChangeProductStatusCommandHandler.cs`.
+  http.post('*/api/staff/shop/products/bulk-status', async ({ request }) => {
+    const body = ((await request.json().catch(() => ({}))) ?? {}) as {
+      productIds?: unknown;
+      action?: unknown;
+    };
+    const ids = Array.isArray(body.productIds) ? (body.productIds as unknown[]).map(String) : [];
+    const nil = '00000000-0000-0000-0000-000000000000';
+    // `BulkChangeProductStatusCommandValidator` (PublishProductCommandValidator.cs:14-24): shape only, all reported together.
+    const problems: Array<{ propertyName: string; errorCode: string; errorMessage: string }> = [];
+    if (ids.length === 0)
+      problems.push({
+        propertyName: 'ProductIds',
+        errorCode: 'NotEmptyValidator',
+        errorMessage: "'Product Ids' must not be empty.",
+      });
+    if (ids.length > BULK_MAX)
+      problems.push({
+        propertyName: 'ProductIds.Count',
+        errorCode: 'LessThanOrEqualValidator',
+        errorMessage: `Choose at most ${BULK_MAX} products at a time.`,
+      });
+    ids.forEach((id, index) => {
+      if (id === nil)
+        problems.push({
+          propertyName: `ProductIds[${index}]`,
+          errorCode: 'NotEmptyValidator',
+          errorMessage: "'Product Ids' must not be empty.",
+        });
+    });
+    if (body.action !== 'Publish' && body.action !== 'Unpublish')
+      problems.push({
+        propertyName: 'Action',
+        errorCode: 'InvalidBulkAction',
+        errorMessage: 'Action must be Publish or Unpublish.',
+      });
+    if (problems.length > 0)
+      return HttpResponse.json(
+        {
+          errors: problems.map((x) => ({ ...x, resourceName: 'BulkChangeProductStatusCommand' })),
+          isValid: false,
+        },
+        { status: 400 },
+      );
+
+    const publish = body.action === 'Publish';
+    const items = [...new Set(ids)].map((productId) => {
+      const p = findById(productId);
+      if (!p)
+        return {
+          productId,
+          succeeded: false,
+          status: null,
+          errorCode: 'ProductNotFound',
+          propertyName: 'ProductIds',
+          message: `Product '${productId}' was not found.`,
+        };
+      const refusal = publish ? publishRefusal(p) : unpublishRefusal(p);
+      if (refusal)
+        return {
+          productId,
+          succeeded: false,
+          status: null,
+          errorCode: refusal.code,
+          propertyName: 'Status',
+          message: refusal.message,
+        };
+      p.status = publish ? 'Active' : 'Draft';
+      if (publish) p.firstPublishedOn = p.firstPublishedOn ?? new Date().toISOString();
+      p.version += 1;
+      return {
+        productId,
+        succeeded: true,
+        status: p.status,
+        errorCode: null,
+        propertyName: null,
+        message: null,
+      };
+    });
+    persist();
+    const succeededCount = items.filter((i) => i.succeeded).length;
+    return HttpResponse.json({
+      action: body.action,
+      succeededCount,
+      failedCount: items.length - succeededCount,
+      items,
+    });
+  }),
+
   http.post('*/api/staff/shop/products/:productId/unpublish', ({ params, request }) =>
     write(String(params.productId), request, (p) => {
-      if (p.status !== 'Active')
-        return badRequest(
-          'ProductId',
-          'InvalidProductTransition',
-          `A ${p.status} product can’t be unpublished.`,
-        );
+      const refusal = unpublishRefusal(p);
+      if (refusal) return badRequest('Status', refusal.code, refusal.message);
       p.status = 'Draft';
     }),
   ),
@@ -750,6 +1011,7 @@ export const staffHandlers: HttpHandler[] = [
       amount: number;
       currencyCode: string;
       effectiveFrom: string;
+      compareAtAmount?: number | null;
     };
     if (!(body.amount > 0))
       return badRequest(
@@ -767,9 +1029,49 @@ export const staffHandlers: HttpHandler[] = [
         'SkuPrice',
       );
     }
+    // BG-13: the optional "Was" amount has the price's shape rules (`ScheduleSkuPriceCommandValidator.cs:24-32`), then the
+    // aggregate's rule that it exceeds the price (`SkuPriceAggregate.cs:46-47`). The mock plays the server in comparing them.
+    let compareAtCents: number | null = null;
+    if (body.compareAtAmount !== undefined && body.compareAtAmount !== null) {
+      const value = Number(body.compareAtAmount);
+      if (!(value >= 0.01))
+        return badRequest(
+          'CompareAtAmount',
+          'GreaterThanOrEqualValidator',
+          "'Compare At Amount' must be greater than or equal to '0.01'.",
+          'SkuPrice',
+        );
+      if (value > 9_999_999_999.99)
+        return badRequest(
+          'CompareAtAmount',
+          'LessThanOrEqualValidator',
+          'CompareAtAmount cannot exceed 9999999999.99.',
+          'SkuPrice',
+        );
+      if (Math.round(value * 100) / 100 !== value)
+        return badRequest(
+          'CompareAtAmount',
+          'PredicateValidator',
+          'CompareAtAmount cannot have more than two decimal places.',
+          'SkuPrice',
+        );
+      compareAtCents = Math.round(value * 100);
+      if (compareAtCents <= Math.round(body.amount * 100))
+        return badRequest(
+          'CompareAtAmount',
+          'CompareAtMustExceedPrice',
+          'The compare-at price must be greater than the price.',
+          'SkuPrice',
+        );
+    }
     const amount = body.amount.toFixed(2);
-    if (new Date(body.effectiveFrom).getTime() <= Date.now() + 60_000) found.sku.price = amount;
-    else found.sku.scheduledPrice = { amount, effectiveFrom: body.effectiveFrom };
+    if (new Date(body.effectiveFrom).getTime() <= Date.now() + 60_000) {
+      found.sku.price = amount;
+      found.sku.compareAtCents = compareAtCents;
+    } else {
+      found.sku.scheduledPrice = { amount, effectiveFrom: body.effectiveFrom };
+      found.sku.scheduledCompareAtCents = compareAtCents;
+    }
     persist();
     return HttpResponse.json({ skuPriceId: crypto.randomUUID() }, { status: 201 });
   }),

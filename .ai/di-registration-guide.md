@@ -55,7 +55,7 @@ an unbound queue with no error anywhere.
 | Query handler | `AddScoped<IQueryHandlerAsync<XQuery, XViewModel?>, XQueryHandler>()` | Scoped |
 | Domain event handler | `AddScoped<IEventHandlerAsync<XEvent>, XEventHandler>()` | Scoped |
 | **Domain service** | `AddScoped<IXDomainService, XDomainService>()` | Scoped |
-| DbContext | `AddDbContext<CatEcommerceDbContext>(...)` | Scoped |
+| DbContext | `AddDbContext<AmarGramDbContext>(...)` | Scoped |
 | Aggregate repository | `AddScoped(typeof(IAggregateRootRepository<>), typeof(EfAggregateRootRepository<>))` | Scoped |
 | Aggregate / value object / entity | — | Never registered |
 | External client (SMS, courier) | `AddHttpClient<IX, X>()` | Typed client |
@@ -68,8 +68,8 @@ an unbound queue with no error anywhere.
 ### Validator registration — the one that fails silently
 
 ```csharp
-services.AddScoped<IValidator<RegisterCatCommand>, RegisterCatCommandValidator>();   // ✅
-services.AddScoped<RegisterCatCommandValidator>();                                   // ❌ never runs
+services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();   // ✅
+services.AddScoped<CreateProductCommandValidator>();                                   // ❌ never runs
 ```
 
 The platform's `IValidationService` resolves `IValidator<TCommand>`. Registered as the concrete

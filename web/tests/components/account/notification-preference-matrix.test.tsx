@@ -44,14 +44,14 @@ const preferences: NotificationPreferences = {
   cells: [
     {
       channel: 'SMS',
-      category: 'Appointments',
+      category: 'Orders',
       isGranted: true,
       isEditable: false,
       isAlwaysOn: true,
     },
     {
       channel: 'Email',
-      category: 'Appointments',
+      category: 'Orders',
       isGranted: true,
       isEditable: false,
       isAlwaysOn: true,

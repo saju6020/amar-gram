@@ -12,7 +12,7 @@ import { STAFF_SESSION_QUERY_KEY } from '@/lib/hooks/useSession';
 const replace = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace }),
-  usePathname: () => '/staff/cats',
+  usePathname: () => '/staff/orders',
 }));
 
 // ARCH gate HIGH (second pass) — `locked` now lives in `StaffLockProvider`, one level above
@@ -168,7 +168,7 @@ describe('IdleLock — US-ACC-08', () => {
 
     // ARCH gate HIGH 2 (first pass) — "any call" is exercised for real here, not simulated via
     // `lib/staffIdleLockBridge.ts` (removed): a plain, unrelated `apiFetch` call (standing in for
-    // a real staff-audience endpoint like `/api/cats` or `/api/vaccines`) reports the
+    // a real staff-audience endpoint like `/api/admin/settings`) reports the
     // idle-timeout, reaching `IdleLock` through the SAME `client.ts` session-error handler this
     // component registers on itself (its own comment) — never the activity heartbeat specifically,
     // which this test deliberately does NOT rely on triggering the lock.
@@ -199,7 +199,7 @@ describe('IdleLock — US-ACC-08', () => {
 
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
@@ -344,7 +344,7 @@ describe('IdleLock — US-ACC-08', () => {
     );
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
@@ -401,13 +401,13 @@ describe('IdleLock — US-ACC-08', () => {
       fullName: 'Ada Administrator',
       mobileNumber: '01700000001',
       emailAddress: null,
-      roleIds: ['Nurse'],
+      roleIds: ['Inventory'],
       hasPassword: true,
     };
 
     server.use(
       http.get('*/api/staff-roles', () =>
-        HttpResponse.json({ roleIds: ['Nurse', 'Administrator'], capabilities: [], cells: [] }),
+        HttpResponse.json({ roleIds: ['Inventory', 'Administrator'], capabilities: [], cells: [] }),
       ),
       http.post('*/api/staff/session/activity', () => HttpResponse.json(statusBody())),
       http.get('*/api/staff-accounts/staff-1', () => HttpResponse.json(account)),
@@ -490,7 +490,7 @@ describe('IdleLock — US-ACC-08', () => {
     );
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
@@ -535,9 +535,9 @@ describe('IdleLock — US-ACC-08', () => {
 
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'nurse@purrcare.test',
+      'stock@amargram.test',
     );
-    await user.type(within(dialog).getByLabelText(/^password/i), 'NursePass123!');
+    await user.type(within(dialog).getByLabelText(/^password/i), 'StockPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));
 
     expect(await screen.findByText(/signed in as a different person/i)).toBeInTheDocument();
@@ -757,7 +757,7 @@ describe('IdleLock — US-ACC-08', () => {
     // proof the mutation ran despite the frozen `false`.
     await user.type(
       within(dialog).getByLabelText(/mobile number or email/i),
-      'admin@purrcare.test',
+      'admin@amargram.test',
     );
     await user.type(within(dialog).getByLabelText(/^password/i), 'AdminPass123!');
     await user.click(within(dialog).getByRole('button', { name: /^sign in$/i }));

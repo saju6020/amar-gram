@@ -1,8 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import Link from 'next/link';
-import { buttonVariants } from '@/components/ui/button';
+import { ActionLink } from '@/components/back-office/ActionLink';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
 import { DataTable } from '@/components/common/DataTable';
 import { LoadingState } from '@/components/common/LoadingState';
@@ -28,9 +27,9 @@ function ReceiptsContent() {
         title="Goods receipts"
         description="Every delivery received at this branch. A posted receipt is permanent."
         actions={
-          <Link href="/staff/inventory/receipts/new" className={buttonVariants({ variant: 'primary' })}>
+          <ActionLink href="/staff/inventory/receipts/new" variant="primary">
             Receive goods
-          </Link>
+          </ActionLink>
         }
       />
       <FilterBar

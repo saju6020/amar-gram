@@ -29,7 +29,7 @@ export function describeBatchState(input: {
   if (input.status === 'Recalled') {
     return {
       label: 'Recalled — held',
-      why: 'Recalled: held everywhere and cannot be sold, dispensed or fed.',
+      why: 'Recalled: held everywhere and cannot be sold or used.',
       usable: false,
       tone: 'danger',
     };
@@ -45,7 +45,7 @@ export function describeBatchState(input: {
   if (input.isExpired) {
     return {
       label: 'Expired',
-      why: 'Expired — cannot be sold, dispensed or fed.',
+      why: 'Expired — cannot be sold or used.',
       usable: false,
       tone: 'danger',
     };

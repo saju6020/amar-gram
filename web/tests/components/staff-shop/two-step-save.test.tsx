@@ -1,13 +1,12 @@
 import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, screen, within } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { resetShopMockData, shopFixtureIds } from '@/mocks/handlers/shop';
 import ProductDetailsPage from '@/app/(staff)/staff/shop/products/[productId]/page';
 import ProductTranslationsPage from '@/app/(staff)/staff/shop/products/[productId]/translations/page';
-import ProductFoodPage from '@/app/(staff)/staff/shop/products/[productId]/food/page';
 import { renderWithClient } from '../product/test-utils';
 
 vi.mock('next/navigation', () => ({
@@ -45,51 +44,6 @@ describe('two-command saves keep the form when the second command is refused —
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(screen.getByLabelText(/Web address/)).toHaveValue(shopFixtureIds.multiVariantSlug);
     expect(document.body.textContent).not.toContain('SlugAlreadyInUse');
-  });
-
-  it('labelling then prescription flag: labelling saved, flag refused → ticked box and message stay', async () => {
-    const user = userEvent.setup();
-    server.use(
-      http.put('*/api/staff/shop/products/:productId/prescription', () =>
-        HttpResponse.json(
-          {
-            isValid: false,
-            errors: [
-              {
-                propertyName: 'PrescriptionRequired',
-                errorCode: 'PrescriptionProductInBundle',
-                errorMessage:
-                  'This food is in the kit "Starter kit"; remove it from the kit first.',
-                resourceName: 'Product',
-              },
-            ],
-          },
-          { status: 400 },
-        ),
-      ),
-    );
-    await renderPage(
-      <ProductFoodPage
-        params={Promise.resolve({ productId: shopFixtureIds.unmetChecklistProductId })}
-      />,
-    );
-    const box = await screen.findByRole(
-      'checkbox',
-      { name: /Prescription diet/ },
-      { timeout: 4000 },
-    );
-    await user.click(box);
-    const dialog = await screen.findByRole('dialog');
-    await user.click(within(dialog).getByRole('button', { name: 'Require authorisation' }));
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-
-    const alert = await screen.findByRole('alert', {}, { timeout: 4000 });
-    expect(alert).toHaveTextContent(
-      'Labelling saved; the prescription setting was not changed — This food is in the kit "Starter kit"; remove it from the kit first.',
-    );
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    expect(screen.getByRole('checkbox', { name: /Prescription diet/ })).toBeChecked();
-    expect(document.body.textContent).not.toContain('PrescriptionProductInBundle');
   });
 });
 

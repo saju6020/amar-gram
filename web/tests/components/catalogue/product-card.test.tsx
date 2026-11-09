@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetShopMockData, shopFixtureIds } from '@/mocks/handlers/shop';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { renderWithClient, signInForTest, signOutForTest } from '../product/test-utils';
 import { ProductCard } from '@/components/catalogue/ProductCard';
-import { NoResults } from '@/components/catalogue/NoResults';
-import { Pagination } from '@/components/catalogue/Pagination';
 import { makeItem } from './catalogue-fixtures';
 
 const push = vi.fn();
@@ -24,29 +22,30 @@ beforeEach(() => {
 });
 
 describe('ProductCard — HO-SHP-002 §11.2', () => {
-  it('U-A3: varying price, out of stock, prescription, rated, no image URL', () => {
+  it('U-A3: varying price, out of stock, rated, no image URL', () => {
     renderWithClient(
       <ProductCard
         item={makeItem({
           priceVaries: true,
           availability: 'OutOfStock',
-          prescriptionRequired: true,
           kind: 'Bundle',
         })}
       />,
     );
     const card = within(screen.getByRole('article'));
-    expect(card.getByText('From ৳650.00')).toBeInTheDocument();
+    // "From" is a small label beside the amount (owner review 2026-11-05); the line still reads "From ৳650.00".
+    expect(
+      card.getByText((_, element) => element?.tagName === 'P' && element.textContent === 'From ৳650.00'),
+    ).toBeInTheDocument();
     expect(card.getByText('Out of stock')).toBeInTheDocument();
-    expect(card.getByText('Vet authorisation needed')).toBeInTheDocument();
     expect(card.getByText('4.5 out of 5 (23 reviews)')).toBeInTheDocument();
     expect(card.getByText('Kit')).toBeInTheDocument();
     // No photo URL: the tinted pack drawing stands in, named by the API's alt text.
-    expect(card.getByRole('img', { name: 'Royal Canin Kitten bag' })).toBeInTheDocument();
-    expect(card.getByRole('heading', { level: 2 })).toHaveTextContent('Royal Canin Kitten');
-    expect(card.getByRole('link', { name: 'Royal Canin Kitten' })).toHaveAttribute(
+    expect(card.getByRole('img', { name: 'Organic Rolled Oats bag' })).toBeInTheDocument();
+    expect(card.getByRole('heading', { level: 2 })).toHaveTextContent('Organic Rolled Oats');
+    expect(card.getByRole('link', { name: 'Organic Rolled Oats' })).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten',
+      '/shop/products/organic-rolled-oats',
     );
   });
 
@@ -60,9 +59,9 @@ describe('ProductCard — HO-SHP-002 §11.2', () => {
 
   it('carries the content language on the product link', () => {
     renderWithClient(<ProductCard item={makeItem()} lang="bn" />);
-    expect(screen.getByRole('link', { name: 'Royal Canin Kitten' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Organic Rolled Oats' })).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten?lang=bn',
+      '/shop/products/organic-rolled-oats?lang=bn',
     );
   });
 });
@@ -71,18 +70,18 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
   const single = () =>
     makeItem({
       productId: 'p-2',
-      slug: shopFixtureIds.thaiKittenSlug,
-      name: 'Whiskas Kitten Salmon',
+      slug: shopFixtureIds.thaiRiceSlug,
+      name: 'Thai Jasmine Rice',
     });
 
   it('shows the 44px wishlist heart; a guest is sent to sign in and back to the product', async () => {
     renderWithClient(<ProductCard item={single()} />);
     const heart = await screen.findByRole('link', {
-      name: 'Save Whiskas Kitten Salmon to wishlist: sign in first',
+      name: 'Save Thai Jasmine Rice to wishlist: sign in first',
     });
     expect(heart).toHaveAttribute(
       'href',
-      `/sign-in?next=${encodeURIComponent(`/shop/products/${shopFixtureIds.thaiKittenSlug}`)}`,
+      `/sign-in?next=${encodeURIComponent(`/shop/products/${shopFixtureIds.thaiRiceSlug}`)}`,
     );
     expect(heart).toHaveClass('size-11');
   });
@@ -92,7 +91,7 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
     signInForTest();
     renderWithClient(<ProductCard item={single()} />);
     const heart = await screen.findByRole('button', {
-      name: 'Save Whiskas Kitten Salmon to wishlist',
+      name: 'Save Thai Jasmine Rice to wishlist',
     });
     expect(heart).toHaveAttribute('aria-pressed', 'false');
     await user.click(heart);
@@ -101,13 +100,15 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
     await waitFor(() => expect(heart).toHaveAttribute('aria-pressed', 'false'));
   });
 
-  it('Add puts a single-size product straight in the cart', async () => {
+  it('Add puts a single-size product straight in the basket', async () => {
     const user = userEvent.setup();
     renderWithClient(<ProductCard item={single()} />);
-    await user.click(screen.getByRole('button', { name: 'Add Whiskas Kitten Salmon to cart' }));
-    // No visible note (owner, 2026-10-18): only a screen-reader announcement, and no View cart link.
-    expect(await screen.findByText(/Added Whiskas Kitten Salmon to your cart/)).toHaveClass('sr-only');
-    expect(screen.queryByRole('link', { name: 'View cart' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add Thai Jasmine Rice to basket' }));
+    // No visible note (owner, 2026-10-18): only a screen-reader announcement, and no View basket link.
+    expect(await screen.findByText(/Added Thai Jasmine Rice to your basket/)).toHaveClass(
+      'sr-only',
+    );
+    expect(screen.queryByRole('link', { name: 'View basket' })).not.toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
   });
 
@@ -120,90 +121,17 @@ describe('ProductCard — wishlist heart and Add (owner decision 2026-10-16)', (
       />,
     );
     await user.click(
-      screen.getByRole('button', { name: 'Add Royal Canin Kitten: choose options' }),
+      screen.getByRole('button', { name: 'Add Organic Rolled Oats: choose options' }),
     );
-    expect(push).toHaveBeenCalledWith('/shop/products/royal-canin-kitten?lang=bn');
-  });
-
-  it('Add on a prescription diet goes to the product page, where the cat flow lives', async () => {
-    const user = userEvent.setup();
-    renderWithClient(
-      <ProductCard
-        item={makeItem({ slug: shopFixtureIds.rxEligibleSlug, prescriptionRequired: true })}
-      />,
-    );
-    await user.click(
-      screen.getByRole('button', { name: 'Add Royal Canin Kitten: choose options' }),
-    );
-    expect(push).toHaveBeenCalledWith(`/shop/products/${shopFixtureIds.rxEligibleSlug}`);
+    expect(push).toHaveBeenCalledWith('/shop/products/organic-rolled-oats?lang=bn');
   });
 
   it('an out-of-stock card offers Alert me (the stock alert) instead of Add', () => {
     renderWithClient(<ProductCard item={makeItem({ availability: 'OutOfStock' })} />);
     expect(screen.queryByRole('button', { name: /^Add / })).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'Tell me when Royal Canin Kitten is back' }),
-    ).toHaveAttribute('href', '/shop/products/royal-canin-kitten#stock-alert');
-  });
-});
-
-describe('NoResults — HO-SHP-002 §11.2, US-SHP-06 AC3', () => {
-  it('U-A4: Did you mean links rewrite q; the popular grid renders', () => {
-    renderWithClient(
-      <NoResults
-        q="royl canan"
-        suggestions={{
-          didYouMean: ['royal canin'],
-          popular: [makeItem({ productId: 'p-2', name: 'Popular Pick' })],
-        }}
-        hrefForQuery={(q) => `/shop/products?q=${encodeURIComponent(q)}&brand=Whiskas`}
-        clearHref="/shop/products?q=royl%20canan"
-      />,
-    );
-    expect(screen.getByText(/No products match/)).toHaveTextContent('“royl canan”');
-    expect(screen.getByRole('link', { name: 'royal canin' })).toHaveAttribute(
-      'href',
-      '/shop/products?q=royal%20canin&brand=Whiskas',
-    );
-    expect(screen.getByRole('heading', { name: 'Popular right now' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Popular Pick' })).toBeInTheDocument();
-  });
-
-  it('filters only (no q): says so and offers Clear filters', () => {
-    render(
-      <NoResults q="" suggestions={null} hrefForQuery={() => ''} clearHref="/shop/products" />,
-    );
-    expect(screen.getByText('Nothing matches these filters')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Clear filters' })).toHaveAttribute(
-      'href',
-      '/shop/products',
-    );
-  });
-});
-
-describe('Pagination — real links', () => {
-  it('marks the current page and links the rest', () => {
-    render(
-      <Pagination
-        pageNumber={2}
-        pageSize={24}
-        totalCount={100}
-        hrefFor={(p) => `/shop/products?pageNumber=${p}`}
-      />,
-    );
-    expect(screen.getByRole('link', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Page 3' })).toHaveAttribute(
-      'href',
-      '/shop/products?pageNumber=3',
-    );
-    expect(screen.getByRole('link', { name: 'Previous' })).toBeInTheDocument();
-  });
-
-  it('renders nothing for a single page', () => {
-    const { container } = render(
-      <Pagination pageNumber={1} pageSize={24} totalCount={5} hrefFor={() => '/x'} />,
-    );
-    expect(container).toBeEmptyDOMElement();
+      screen.getByRole('link', { name: 'Tell me when Organic Rolled Oats is back' }),
+    ).toHaveAttribute('href', '/shop/products/organic-rolled-oats#stock-alert');
   });
 });
 
@@ -229,7 +157,7 @@ describe('ProductCard — one card per size', () => {
     renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
     const card = within(screen.getByRole('article'));
     expect(card.getByText('1 kg')).toBeInTheDocument();
-    const link = card.getByRole('link', { name: /Royal Canin Kitten\s*·\s*1 kg/ });
+    const link = card.getByRole('link', { name: /Organic Rolled Oats\s*·\s*1 kg/ });
     expect(link.getAttribute('href')).toContain('sku=sku-1kg');
   });
 
@@ -246,28 +174,101 @@ describe('ProductCard — one card per size', () => {
       <ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg', priceVaries: false })} />,
     );
     await userEvent.click(
-      screen.getByRole('button', { name: /^Add Royal Canin Kitten · 1 kg to cart/ }),
+      screen.getByRole('button', { name: /^Add Organic Rolled Oats · 1 kg to basket/ }),
     );
     await waitFor(() => expect(posted).toEqual([{ skuId: 'sku-1kg', quantity: 1 }]));
     expect(push).not.toHaveBeenCalled();
   });
 
-  it('shows how many of this size are in the cart: a bubble on Add, "2 in cart" and an In cart tag', async () => {
+  it('U5: a size in the basket shows a stepper instead of Add; + updates the line, price stays fromPrice', async () => {
     serveCart([
       { skuId: 'sku-1kg', productId: 'p1', quantity: 2 },
       { skuId: 'sku-other', productId: 'p1', quantity: 5 },
     ]);
+    const puts: Array<{ url: string; body: unknown }> = [];
+    server.use(
+      http.put('*/api/cart/lines/:lineId', async ({ request, params }) => {
+        puts.push({ url: String(params.lineId), body: await request.json() });
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
     renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
-    expect(await screen.findByTestId('card-in-cart-count')).toHaveTextContent('2');
-    expect(screen.getByText('2 in cart')).toBeInTheDocument();
-    expect(screen.getByText('In cart')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /\(2 in cart\)/ })).toBeInTheDocument();
+    const more = await screen.findByRole('button', { name: 'One more Organic Rolled Oats · 1 kg' });
+    expect(
+      screen.getByRole('button', { name: 'One less Organic Rolled Oats · 1 kg' }),
+    ).toBeVisible();
+    expect(screen.getByTestId('stepper-value')).toHaveTextContent('2');
+    expect(screen.getByText('In basket')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Add / })).not.toBeInTheDocument();
+    expect(screen.getByText('৳650.00')).toBeInTheDocument();
+    await userEvent.click(more);
+    await waitFor(() => expect(puts).toEqual([{ url: 'l0', body: { quantity: 3 } }]));
   });
 
-  it('shows no count when this size is not in the cart', async () => {
+  it('U5: at 1, "one less" removes the line and announces it', async () => {
+    serveCart([{ skuId: 'sku-1kg', productId: 'p1', quantity: 1 }]);
+    const removed: string[] = [];
+    server.use(
+      http.delete('*/api/cart/lines/:lineId', ({ params }) => {
+        removed.push(String(params.lineId));
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'One less Organic Rolled Oats · 1 kg' }),
+    );
+    await waitFor(() => expect(removed).toEqual(['l0']));
+    expect(
+      await screen.findByText('Removed Organic Rolled Oats · 1 kg from your basket.'),
+    ).toHaveClass('sr-only');
+  });
+
+  it('shows no stepper or tag when this size is not in the basket', async () => {
     serveCart([{ skuId: 'sku-other', productId: 'p1', quantity: 5 }]);
     renderWithClient(<ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />);
-    await waitFor(() => expect(screen.queryByTestId('card-in-cart-count')).not.toBeInTheDocument());
-    expect(screen.queryByText(/in cart/)).not.toBeInTheDocument();
+    await screen.findByRole('button', { name: /^Add Organic Rolled Oats · 1 kg to basket/ });
+    expect(screen.queryByText('In basket')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('stepper-value')).not.toBeInTheDocument();
+  });
+
+  // HO-P5 S1 U6 supersedes HO-P3 U6 ("no Organic badge: catalogue items carry no certifications yet").
+  it('U6: the "Organic" pill shows only when the item is CertifiedOrganic, with the text "Certified organic"', () => {
+    serveCart([]);
+    const { unmount } = renderWithClient(
+      <ProductCard item={makeItem({ skuId: 'sku-1kg', sizeLabel: '1 kg' })} />,
+    );
+    // Without certifications, and with others but not organic: no pill and no hidden text.
+    expect(screen.queryByText(/organic$/i, { selector: 'span' })).not.toBeInTheDocument();
+    unmount();
+    const other = renderWithClient(
+      <ProductCard item={makeItem({ certifications: ['PesticideFree', 'Halal'] })} />,
+    );
+    expect(screen.queryByText('Organic')).not.toBeInTheDocument();
+    expect(screen.queryByText('Certified organic')).not.toBeInTheDocument();
+    other.unmount();
+
+    renderWithClient(
+      <ProductCard item={makeItem({ certifications: ['CertifiedOrganic', 'Halal'] })} />,
+    );
+    const card = within(screen.getByRole('article'));
+    expect(card.getByText('Organic')).toHaveClass('bg-leaf', 'text-leaf-soft');
+    // The card's accessible content says it in full, after the name; the link name is unchanged.
+    expect(card.getByText('Certified organic')).toHaveClass('sr-only');
+    expect(card.getByRole('link', { name: 'Organic Rolled Oats' })).toBeInTheDocument();
+  });
+
+  it('U5: the eyebrow is the district when present, otherwise the producer and country', () => {
+    serveCart([]);
+    const { unmount } = renderWithClient(
+      <ProductCard item={makeItem({ districtOfOrigin: 'Dinajpur' })} />,
+    );
+    const eyebrow = screen.getByText('Dinajpur');
+    expect(eyebrow.closest('p')).toHaveClass('uppercase');
+    // The district replaces the producer line (OQ-5); the text itself is as sent.
+    expect(screen.queryByText('Amar Gram Farms · Bangladesh')).not.toBeInTheDocument();
+    unmount();
+    renderWithClient(<ProductCard item={makeItem({ districtOfOrigin: null })} />);
+    expect(screen.getByText('Amar Gram Farms · Bangladesh')).toBeInTheDocument();
   });
 });

@@ -21,7 +21,7 @@ export function RetentionRunDetail({ run, zone }: { run: RetentionRun; zone: str
         {run.finishedOn ? ` · finished ${formatInZone(run.finishedOn, zone)}` : ''}
       </p>
       <p className="text-sm text-ink">
-        Clinical, financial, regulatory and audit records are never deleted by a run. They are only
+        Financial, regulatory and audit records are never deleted by a run. They are only
         counted for review.
       </p>
       {run.passes.length === 0 ? (

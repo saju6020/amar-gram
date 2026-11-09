@@ -13,7 +13,7 @@ function makeFile(name: string, type: string, sizeInBytes = 1024): File {
 }
 
 function Harness({
-  purpose = 'LabResult',
+  purpose = 'ReportExport',
   onChange = vi.fn(),
 }: {
   purpose?: FilePurpose;
@@ -22,8 +22,8 @@ function Harness({
   const [value, setValue] = useState<StoredFileViewModel | null>(null);
   return (
     <FileUploadField
-      id="lab-file"
-      label="Attach a lab file"
+      id="export-file"
+      label="Attach a file"
       purpose={purpose}
       value={value}
       onChange={(file) => {
@@ -37,7 +37,7 @@ function Harness({
 beforeEach(() => installFakeXhr());
 afterEach(() => restoreRealXhr());
 
-describe('FileUploadField — HO-EMR-002 §11.7, ADR-FE-055', () => {
+describe('FileUploadField — ADR-FE-055', () => {
   it('U-C4: a wrong type is refused before any request leaves the machine', async () => {
     const { container } = render(<Harness />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -60,7 +60,7 @@ describe('FileUploadField — HO-EMR-002 §11.7, ADR-FE-055', () => {
     const { container } = render(<Harness />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, {
-      target: { files: [makeFile('scan-unavailable-lab.pdf', 'application/pdf')] },
+      target: { files: [makeFile('scan-unavailable-export.pdf', 'application/pdf')] },
     });
     expect(await screen.findAllByText(/virus scanner is unavailable/i)).not.toHaveLength(0);
     expect(screen.queryByText('FileScanUnavailable')).toBeNull();
@@ -72,22 +72,22 @@ describe('FileUploadField — HO-EMR-002 §11.7, ADR-FE-055', () => {
     const { container } = render(<Harness onChange={onChange} />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, {
-      target: { files: [makeFile('lab-report.pdf', 'application/pdf', 2048)] },
+      target: { files: [makeFile('sales-report.pdf', 'application/pdf', 2048)] },
     });
-    await screen.findByRole('button', { name: /remove lab-report.pdf/i });
+    await screen.findByRole('button', { name: /remove sales-report.pdf/i });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ originalFileName: 'lab-report.pdf', fileId: expect.any(String) }),
+      expect.objectContaining({ originalFileName: 'sales-report.pdf', fileId: expect.any(String) }),
     );
-    expect(fakeXhrRequests()[0]!.url).toContain('/api/staff/files?purpose=LabResult');
-    await user.click(screen.getByRole('button', { name: /remove lab-report\.pdf/i }));
+    expect(fakeXhrRequests()[0]!.url).toContain('/api/staff/files?purpose=ReportExport');
+    await user.click(screen.getByRole('button', { name: /remove sales-report\.pdf/i }));
     expect(onChange).toHaveBeenLastCalledWith(null);
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Attach a lab file' })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: 'Attach a file' })).toBeInTheDocument(),
     );
   });
 
-  it('a clinical photo purpose refuses a PDF', async () => {
-    const { container } = render(<Harness purpose="ClinicalPhoto" />);
+  it('a product image purpose refuses a PDF', async () => {
+    const { container } = render(<Harness purpose="ProductImage" />);
     const input = container.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [makeFile('x.pdf', 'application/pdf')] } });
     expect(await screen.findAllByText(/x.pdf is a/i)).not.toHaveLength(0);

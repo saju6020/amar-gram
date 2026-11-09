@@ -20,6 +20,9 @@ import {
   notFoundResponse,
   paged,
   q,
+  dateOffset,
+  resolveBranch,
+  todayDate,
   violation,
   violations,
 } from './fixtures';
@@ -28,6 +31,21 @@ import { ACTOR_ID, db, docNumber, newId, persist } from './store';
 /** `mocks/handlers/inventory/consignments.ts` — `ProcurementConsignmentsController`. */
 
 type MConsignment = (typeof db.consignments)[number];
+
+/**
+ * HO-P5 BG-17 -- `ConsignmentReads.ArrivingWithin` (ConsignmentQueryHandlers.cs:53-62): expected from today through today + the
+ * window (inclusive), not cancelled, and no goods receipt against it yet. The list filter and the overview's count share it.
+ */
+export function isArrivingWithin(c: MConsignment, windowDays: number): boolean {
+  const last = dateOffset(Math.min(Math.max(windowDays, 1), 90));
+  return (
+    c.status !== 'Cancelled' &&
+    c.expectedArrivalOn !== null &&
+    c.expectedArrivalOn >= todayDate() &&
+    c.expectedArrivalOn <= last &&
+    !db.receipts.some((r) => r.consignmentId === c.id)
+  );
+}
 
 const NEXT: Partial<Record<ConsignmentStatus, ConsignmentStatus>> = {
   Planned: 'InTransit',
@@ -135,7 +153,7 @@ function validateDetails(body: ConsignmentDetailsInput, branch: string) {
         propertyName: `HsCodes[${index}].Code`,
         errorCode: 'InvalidHsCode',
         errorMessage:
-          'An HS code is four digits followed by up to three groups of two (for example 2309.10).',
+          'An HS code is four digits followed by up to three groups of two (for example 1006.30).',
       });
     }
   });
@@ -194,8 +212,21 @@ export const consignmentHandlers: HttpHandler[] = [
     const country = url.searchParams.get('originCountryCode');
     const from = url.searchParams.get('from');
     const to = url.searchParams.get('to');
+    // BG-18: the branch the receiving form is receiving into. BG-17: `arrivingWithinDays` is 1-90, else 400 `InvalidQuery`
+    // (`ProcurementConsignmentsController.cs:28-37`); the controller checks the branch first.
+    const branch = resolveBranch(request, url.searchParams.get('branchId'));
+    if (branch instanceof Response) return branch;
+    const arrivingParam = url.searchParams.get('arrivingWithinDays');
+    const arriving = arrivingParam === null ? null : Number(arrivingParam);
+    if (arriving !== null && !(Number.isInteger(arriving) && arriving >= 1 && arriving <= 90))
+      return violation(
+        'arrivingWithinDays',
+        'InvalidQuery',
+        'arrivingWithinDays must be between 1 and 90.',
+      );
     const rows = db.consignments
-      .filter((c) => c.branchId === branchOf(request))
+      .filter((c) => c.branchId === branch)
+      .filter((c) => arriving === null || isArrivingWithin(c, arriving))
       .filter((c) => !status || c.status === status)
       .filter((c) => !country || c.originCountryCode === country)
       .filter((c) => !from || (c.expectedArrivalOn ?? '') >= from)

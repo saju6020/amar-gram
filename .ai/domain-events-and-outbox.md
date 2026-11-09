@@ -11,7 +11,7 @@ Domain events keep the platform contracts they always had — `Event`,
 | Runs | In-process, in the same request | Out of band, retried |
 | Handler | `IEventHandlerAsync<TEvent>`, registered in `Program.cs` | The outbox dispatcher |
 | Purpose | Side effects inside this system | SMS, email, courier, any external call |
-| Example | Recompute a cat's vaccination status | Text the owner the next-due date |
+| Example | Recompute a product's certificate status | Email the shop manager the expiry date |
 
 ---
 
@@ -20,21 +20,21 @@ Domain events keep the platform contracts they always had — `Event`,
 Unchanged. The aggregate raises it as part of enforcing its own rules:
 
 ```csharp
-public void RecordVaccination(RecordVaccinationDto dto)
+public void RecordCertificate(RecordCertificateDto dto)
 {
-    if (_vaccinations.Any(v => v.VaccineId == dto.VaccineId
-                            && v.AdministeredOn == dto.AdministeredOn))
+    if (_certificates.Any(v => v.CertificationId == dto.CertificationId
+                            && v.IssuedOn == dto.IssuedOn))
         throw new InvalidOperationException(
-            "This vaccine has already been recorded for this cat on this date.");
+            "This certification has already been recorded for this product on this date.");
 
-    var vaccination = Vaccination.Create(dto);
-    _vaccinations.Add(vaccination);
+    var certificate = Certificate.Create(dto);
+    _certificates.Add(certificate);
 
-    AddDomainEvent(new VaccinationRecordedEvent
+    AddDomainEvent(new CertificateRecordedEvent
     {
-        CatId         = Id,
-        VaccineId     = dto.VaccineId,
-        NextDueOn     = vaccination.NextDueOn,
+        ProductId         = Id,
+        CertificationId     = dto.CertificationId,
+        ExpiresOn     = certificate.ExpiresOn,
         CorrelationId = dto.CorrelationId,
         UserContext   = dto.UserContext
     });
@@ -71,14 +71,14 @@ Unchanged contract, new registration site — `Program.cs` instead of EventWorke
 `EventConsumerAdapter`:
 
 ```csharp
-namespace CatEcommerce.Application.DomainEventHandlers.Vaccination;
+namespace AmarGram.Application.DomainEventHandlers.Certificate;
 
-public sealed class RecalculateVaccinationStatusHandler(
-    ILogger<RecalculateVaccinationStatusHandler> logger,
-    IAggregateRootRepository<CatAggregate> catRepository)
-    : IEventHandlerAsync<VaccinationRecordedEvent>
+public sealed class RecalculateCertificateStatusHandler(
+    ILogger<RecalculateCertificateStatusHandler> logger,
+    IAggregateRootRepository<ProductAggregate> productRepository)
+    : IEventHandlerAsync<CertificateRecordedEvent>
 {
-    public async Task HandleAsync(VaccinationRecordedEvent @event)
+    public async Task HandleAsync(CertificateRecordedEvent @event)
     {
         // side effect inside the same request
     }
@@ -86,14 +86,14 @@ public sealed class RecalculateVaccinationStatusHandler(
 ```
 
 ```csharp
-builder.Services.AddScoped<IEventHandlerAsync<VaccinationRecordedEvent>,
-                           RecalculateVaccinationStatusHandler>();
+builder.Services.AddScoped<IEventHandlerAsync<CertificateRecordedEvent>,
+                           RecalculateCertificateStatusHandler>();
 ```
 
 ### Rules
 
 - A domain event carries **what happened**, past tense, with the data a handler needs. Not a
-  command in disguise: `VaccinationRecorded`, never `UpdateVaccinationStatus`.
+  command in disguise: `CertificateRecorded`, never `UpdateCertificateStatus`.
 - Handlers live in `Application/DomainEventHandlers/[Feature]/`, **not** in the Read layer — they
   no longer build read models.
 - **They are not for projections.** There is nothing to project into; a query reads the same
@@ -115,11 +115,11 @@ the business change, and a background service delivers it afterwards.
 
 ```
 ┌─ transaction ──────────────────────────────────────────┐
-│  cat_vaccination row inserted                          │
-│  cat row updated (next due date)                       │
+│  product_certificate row inserted                      │
+│  product row updated (expiry date)                     │
 │  outbox_message row inserted:                          │
-│     type    = "SendVaccinationConfirmation"            │
-│     payload = { ownerId, catName, nextDueOn }          │
+│     type    = "SendCertificateConfirmation"            │
+│     payload = { productName, expiresOn }               │
 └─ commit ───────────────────────────────────────────────┘
                      │
                      ▼

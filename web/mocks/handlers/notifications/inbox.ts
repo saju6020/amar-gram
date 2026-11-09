@@ -10,7 +10,7 @@ import {
   notFound,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_notifications_inbox_mock_db__';
+const PERSIST_KEY = '__amargram_notifications_inbox_mock_db__';
 
 /** `mocks/handlers/notifications/inbox.ts` — HO-NTF-002 §12, HO-NTF-001 §12.4. An inbox with read,
  *  unread and linked items, one with an unsafe `linkPath`, and one whose body is markup (all of it
@@ -30,9 +30,9 @@ function seedInbox(): MockInboxItem[] {
   return [
     {
       id: notificationFixtureIds.inboxLinkedUnreadId,
-      title: 'Momo is due a vaccination',
-      body: "Momo's Feline Core vaccine is due on 12 Oct 2026.\nBook a visit from the cat page.",
-      linkPath: '/portal/cats/f0000000-0000-0000-0000-000000000001',
+      title: 'Order SO-2026-00042 is on its way',
+      body: 'Order SO-2026-00042 left the shop on 12 Oct 2026.\nTrack it from the order page.',
+      linkPath: '/portal/orders/c1000000-0000-0000-0000-000000000002',
       category: 'Transactional',
       createdOn: minutesAgo(20),
       readOn: null,
@@ -57,8 +57,8 @@ function seedInbox(): MockInboxItem[] {
     },
     {
       id: notificationFixtureIds.inboxReadId,
-      title: 'Momo is due a deworming treatment',
-      body: 'Momo is due a deworming treatment on 2 Oct 2026.',
+      title: 'Order SO-2026-00031 has been delivered',
+      body: 'Order SO-2026-00031 was delivered on 2 Oct 2026.',
       linkPath: null,
       category: 'Transactional',
       createdOn: hoursAgo(30),

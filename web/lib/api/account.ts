@@ -152,21 +152,12 @@ export async function changeNotificationPreferences(
 // Personal data export / deletion — C17/Q-J1/C18, US-ACC-13
 // -------------------------------------------------------------------------------------------
 
-export interface PersonalDataExportCat {
-  id: string;
-  name: string;
-  species: string;
-  breed: string | null;
-  sex: string;
-}
-
 export interface PersonalDataExport {
   schemaVersion: 1;
   exportedOn: string;
   profile: CustomerProfile;
   addresses: DeliveryAddress[];
   notificationPreferences: NotificationPreferenceCell[];
-  cats: PersonalDataExportCat[];
 }
 
 export async function exportPersonalData(): Promise<PersonalDataExport> {

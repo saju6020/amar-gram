@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -98,18 +98,18 @@ td .actions{flex-wrap:nowrap}
 </style>
 </helmet>
 <div style="width:1280px;height:960px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main">
-    <div class="titlerow"><div><h1 class="h1">Payments waiting for approval</h1><p class="sub">Uttara · payments above ৳50,000.00 don't count until a second person approves them. The person who recorded a payment can't approve it.</p></div></div>
+    <div class="titlerow"><div><h1 class="h1">Payments waiting for approval</h1><p class="sub">Dhanmondi outlet · payments above ৳50,000.00 don't count until a second person approves them. The person who recorded a payment can't approve it.</p></div></div>
     <table>
       <thead><tr><th>Receipt</th><th>Recorded (Asia/Dhaka)</th><th>Customer</th><th>Method</th><th>Reference</th><th class="num">Amount</th><th>Requested allocation</th><th></th></tr></thead>
       <tbody>
         <tr>
-          <td><a href="PaymentDetail.dc.html">R-000130</a></td><td>23 Sep, 11:20<br><span class="small muted">by Shormi Akter</span></td><td>Tanjila Hossain</td><td>Bank transfer</td><td>DBBL-TRF-55107</td><td class="num">৳60,000.00</td><td>INV-UTR-2627-000409 — ৳60,000.00</td>
+          <td><a href="PaymentDetail.dc.html">R-000130</a></td><td>23 Sep, 11:20<br><span class="small muted">by Shormi Akter</span></td><td>Tanjila Hossain</td><td>Bank transfer</td><td>DBBL-TRF-55107</td><td class="num">৳60,000.00</td><td>INV-DHN-2627-000409 — ৳60,000.00</td>
           <td><div class="actions"><button class="btn btn-sm" type="button">Approve</button><button class="btn btn-danger btn-sm" type="button">Reject</button></div></td>
         </tr>
         <tr>
-          <td><a href="PaymentDetail.dc.html">R-000131</a></td><td>23 Sep, 12:05<br><span class="small muted">by Rezwan Ahmed (you)</span></td><td>Mahmud Karim</td><td>Cash in store</td><td class="muted">None</td><td class="num">৳52,500.00</td><td>INV-UTR-2627-000414 — ৳52,500.00</td>
+          <td><a href="PaymentDetail.dc.html">R-000131</a></td><td>23 Sep, 12:05<br><span class="small muted">by Rezwan Ahmed (you)</span></td><td>Mahmud Karim</td><td>Cash in store</td><td class="muted">None</td><td class="num">৳52,500.00</td><td>INV-DHN-2627-000414 — ৳52,500.00</td>
           <td><div class="actions"><button class="btn btn-sm" type="button" disabled aria-describedby="own">Approve</button><button class="btn btn-danger btn-sm" type="button" disabled aria-describedby="own">Reject</button></div><div class="why" id="own">You recorded this payment. Another accountant or administrator must approve or reject it.</div></td>
         </tr>
       </tbody>
@@ -121,7 +121,7 @@ td .actions{flex-wrap:nowrap}
         <div class="inline" role="status">
           <div class="banner b-info" style="margin-bottom:10px"><span aria-hidden="true">✓</span><span><b>R-000130 approved.</b> It now counts as received on 23 Sep 2026.</span></div>
           <dl class="kv">
-            <dt>Applied</dt><dd>৳58,400.00 to INV-UTR-2627-000409 — its outstanding at approval</dd>
+            <dt>Applied</dt><dd>৳58,400.00 to INV-DHN-2627-000409 — its outstanding at approval</dd>
             <dt>Left unallocated</dt><dd>৳1,600.00 — kept as Tanjila Hossain's customer credit</dd>
             <dt>Approved by</dt><dd>Rezwan Ahmed, 23 Sep 2026, 14:02 (Asia/Dhaka)</dd>
           </dl>
@@ -130,7 +130,7 @@ td .actions{flex-wrap:nowrap}
       <div>
         <p class="statelabel">Reject — reason required</p>
         <div class="inline">
-          <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">Reject <b>R-000130, ৳60,000.00 bank transfer</b> from Tanjila Hossain? It will never count as received and INV-UTR-2627-000409 stays unpaid.</p>
+          <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">Reject <b>R-000130, ৳60,000.00 bank transfer</b> from Tanjila Hossain? It will never count as received and INV-DHN-2627-000409 stays unpaid.</p>
           <div class="field"><label for="rj">Reason <span class="req" aria-hidden="true">*</span></label><textarea id="rj" class="invalid" aria-invalid="true" aria-describedby="rj-e"></textarea><div class="err" id="rj-e"><span aria-hidden="true">⚠</span> Enter a reason — the recorder sees it on the payment.</div></div>
           <div class="dactions" style="margin-top:4px"><button class="btn btn-sec" type="button">Cancel</button><button class="btn btn-danger-solid" type="button">Reject payment</button></div>
         </div>

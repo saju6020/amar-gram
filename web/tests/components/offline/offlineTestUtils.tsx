@@ -52,7 +52,7 @@ export function renderWithClient(ui: ReactNode, client?: QueryClient) {
 }
 
 export function recordFor(
-  scenario: SnapshotScenario = 'both',
+  scenario: SnapshotScenario = 'current',
   overrides: Partial<SnapshotRecord> = {},
 ): SnapshotRecord {
   const body = buildSnapshot(scenario, xctFixtureIds.branchId, 1);

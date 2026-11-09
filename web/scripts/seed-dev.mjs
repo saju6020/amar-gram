@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Dev sample-data seeder for Amar Gram (docs/runbooks/dev-seed.md).
 //
-// Fills a database with one small, believable Dhaka clinic + shop by calling the REAL API, so every
+// Fills a database with a small, believable Dhaka organic and everyday goods shop by calling the REAL API, so every
 // domain rule (validation, publication checklist, stock movements, audit) applies exactly as it does
 // for a person clicking through the staff screens. It never talks to PostgreSQL itself.
 //
@@ -15,12 +15,12 @@
 //     suppressed as RenderFailed);
 //   - the API's stdout is redirected to the file passed as --api-log;
 //
-// Extra catalogue (2026-10-16): `--extra scripts/data/dry-food-catalogue.json --only-extra` adds only the products
-// in that file (plus their origins, prices and opening stock) to an already-seeded database, e.g. the dev API on
-// :5005. Food in the file carries life stage + protein only; manufacturer, ingredients and analysis stay empty.
-// `scripts/data/amarpet-cat-catalogue.json` (2026-10-16) is the whole AmarPet cat section: each product names its
-// own `category`/`subcategory` (non-food products have no food details and may have no origin).
-//   - an Administrator staff row for e2e.admin@purrcare.test exists. The API cannot create the very
+// Catalogue (HO-P2 section 1.5): `scripts/data/amargram-catalogue.json` holds about 40 organic and everyday Bangladeshi
+// products across all 11 categories, with sizes, prices in BDT, districts of origin, producers and certifications. Each
+// product names its own `category`/`subcategory`; non-food products have no food details. `--extra <file.json>
+// --only-extra` adds only the products in another file of the same shape (plus their origins, prices and opening stock)
+// to an already-seeded database, e.g. the dev API on :5005.
+//   - an Administrator staff row for e2e.admin@amargram.test exists. The API cannot create the very
 //     first staff account (every staff endpoint needs a signed-in Administrator), so seed-dev-db.mjs
 //     inserts that one row without a password; this script then sets its password through the normal
 //     reset flow.
@@ -29,6 +29,7 @@
 // Passwords come only from the environment and are never printed.
 
 import { readFileSync, existsSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 // ── arguments / environment ──────────────────────────────────────────────────────────────────────
 function parseArgs(argv) {
@@ -67,40 +68,40 @@ function fail(message) {
 
 // ── the sample world ─────────────────────────────────────────────────────────────────────────────
 const MAIN_BRANCH_ID = '00000000-0000-0000-0000-00000000ba1c'; // inserted by the AddAdministration migration
-const SHOP_FLOOR_LOCATION_ID = '00000000-0000-0000-0000-0000000051a1'; // "Shop floor" at Main clinic (migration)
+const SHOP_FLOOR_LOCATION_ID = '00000000-0000-0000-0000-0000000051a1'; // "Shop floor" at Main outlet (migration)
 
 const STAFF = [
   {
     key: 'admin',
-    email: 'e2e.admin@purrcare.test',
+    email: 'e2e.admin@amargram.test',
     fullName: 'Farhana Akter',
     mobile: '01711000001',
     roles: ['Administrator'],
   },
   {
-    key: 'nurse',
-    email: 'e2e.nurse@purrcare.test',
+    key: 'shopmanager',
+    email: 'e2e.shopmanager@amargram.test',
     fullName: 'Nusrat Jahan',
     mobile: '01711000002',
-    roles: ['Nurse'],
+    roles: ['ShopManager'],
   },
   {
     key: 'reception',
-    email: 'e2e.reception@purrcare.test',
+    email: 'e2e.reception@amargram.test',
     fullName: 'Tanvir Hossain',
     mobile: '01711000003',
     roles: ['Reception'],
   },
   {
     key: 'inventory',
-    email: 'e2e.inventory@purrcare.test',
+    email: 'e2e.inventory@amargram.test',
     fullName: 'Rafiq Islam',
     mobile: '01711000004',
     roles: ['Inventory'],
   },
   {
     key: 'approver',
-    email: 'e2e.approver@purrcare.test',
+    email: 'e2e.approver@amargram.test',
     fullName: 'Shirin Sultana',
     mobile: '01711000005',
     roles: ['Administrator'],
@@ -109,7 +110,7 @@ const STAFF = [
 
 const CUSTOMER = {
   fullName: 'Ayesha Rahman',
-  email: 'customer@purrcare.test',
+  email: 'customer@amargram.test',
   mobile: '01819123456',
   address: {
     label: 'Home',
@@ -120,22 +121,14 @@ const CUSTOMER = {
     postalCode: '1207',
     deliveryInstructions: 'Ring the bell twice; the guard is at the gate.',
   },
-  cat: {
-    name: 'Mishti',
-    sex: 'Female',
-    dateOfBirth: '2023-03-15',
-    dateOfBirthPrecision: 'Estimated',
-    breed: 'Domestic Shorthair',
-    colourAndMarkings: 'Calico, white chest',
-  },
 };
 
 const BRANCH = {
-  name: 'Main clinic',
+  name: 'Main outlet',
   timeZoneId: 'Asia/Dhaka',
   addressLine: 'House 34, Road 7, Dhanmondi, Dhaka 1209',
   phoneNumber: '+8801711000100',
-  email: 'hello@purrcare.test',
+  email: 'hello@amargram.test',
   // Saturday to Thursday, 09:00-20:00; closed on Friday.
   hours: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'].map((d) => ({
     dayOfWeek: d,
@@ -144,241 +137,41 @@ const BRANCH = {
   })),
 };
 
-const FOOD_LABEL = {
-  storageInstructions: 'Store in a cool, dry place. Reseal the bag after opening.',
-};
+// The catalogue (HO-P2 section 1.5). Prices in BDT. `brand` holds the producer; the district of origin is written
+// into the description and a tag, because the API keeps only the country (`origin`).
+const CATALOGUE_FILE = fileURLToPath(new URL('./data/amargram-catalogue.json', import.meta.url));
 
-// 12 products, 6 brands, every category. Prices in BDT.
-const PRODUCTS = [
-  {
-    slug: 'whiskas-adult-ocean-fish-dry',
-    name: 'Whiskas Adult Ocean Fish Dry Food',
-    brand: 'Whiskas',
-    category: 'CatFood',
-    subcategory: 'Dry',
-    description:
-      'Complete dry food for adult cats with ocean fish. Crunchy pockets help keep teeth clean.',
-    origin: 'TH',
-    food: {
-      manufacturer: 'Mars Petcare',
-      lifeStage: 'Adult',
-      proteinSource: 'Fish',
-      analysis: [30, 10, 4, 10],
-    },
-    expiry: true,
-    skus: [
-      { code: 'WHI-OF-480G', size: '480 g', grams: 500, price: 450 },
-      { code: 'WHI-OF-1K2', size: '1.2 kg', grams: 1250, price: 1050 },
-      { code: 'WHI-OF-3KG', size: '3 kg', grams: 3100, price: 2450 },
-    ],
-  },
-  {
-    slug: 'whiskas-kitten-tuna-pouch',
-    name: 'Whiskas Kitten Tuna in Jelly Pouch',
-    brand: 'Whiskas',
-    category: 'CatFood',
-    subcategory: 'Wet',
-    description: 'Wet food for kittens from 2 to 12 months, tender tuna pieces in jelly.',
-    origin: 'TH',
-    food: {
-      manufacturer: 'Mars Petcare',
-      lifeStage: 'Kitten',
-      proteinSource: 'Tuna',
-      analysis: [8, 3, 0.5, 84],
-    },
-    expiry: true,
-    skus: [
-      { code: 'WHI-KT-80G', size: '80 g', grams: 90, price: 150 },
-      { code: 'WHI-KT-12X80', size: '12 x 80 g', grams: 1050, price: 1650, pack: 12 },
-    ],
-  },
-  {
-    slug: 'royal-canin-kitten-dry',
-    name: 'Royal Canin Kitten Dry Food',
-    brand: 'Royal Canin',
-    category: 'CatFood',
-    subcategory: 'Kitten',
-    description:
-      'Tailored nutrition for kittens up to 12 months, supporting a healthy immune system.',
-    origin: 'FR',
-    food: {
-      manufacturer: 'Royal Canin SAS',
-      lifeStage: 'Kitten',
-      proteinSource: 'Chicken',
-      analysis: [34, 16, 2.8, 5.5],
-    },
-    expiry: true,
-    skus: [
-      { code: 'RC-KIT-400G', size: '400 g', grams: 450, price: 950 },
-      { code: 'RC-KIT-2KG', size: '2 kg', grams: 2100, price: 3900 },
-    ],
-  },
-  {
-    slug: 'royal-canin-indoor-27',
-    name: 'Royal Canin Indoor 27 Adult',
-    brand: 'Royal Canin',
-    category: 'CatFood',
-    subcategory: 'Adult',
-    description: 'For indoor adult cats aged 1 to 7 years. Helps reduce stool odour and hairballs.',
-    origin: 'FR',
-    food: {
-      manufacturer: 'Royal Canin SAS',
-      lifeStage: 'Adult',
-      proteinSource: 'Chicken',
-      analysis: [27, 13, 5.6, 5.5],
-    },
-    expiry: true,
-    healthFocus: ['Hairball'],
-    skus: [
-      { code: 'RC-IND-400G', size: '400 g', grams: 450, price: 900 },
-      { code: 'RC-IND-2KG', size: '2 kg', grams: 2100, price: 3600 },
-    ],
-  },
-  {
-    slug: 'me-o-adult-seafood-dry',
-    name: 'Me-O Adult Seafood Dry Food',
-    brand: 'Me-O',
-    category: 'CatFood',
-    subcategory: 'Dry',
-    description: 'Seafood recipe for adult cats with taurine for healthy eyes and a shiny coat.',
-    origin: 'TH',
-    food: {
-      manufacturer: 'Perfect Companion Group',
-      lifeStage: 'Adult',
-      proteinSource: 'Fish',
-      analysis: [30, 9, 4, 10],
-    },
-    expiry: true,
-    healthFocus: ['SkinAndCoat'],
-    skus: [
-      { code: 'MEO-SF-1K2', size: '1.2 kg', grams: 1250, price: 750 },
-      { code: 'MEO-SF-3KG', size: '3 kg', grams: 3100, price: 1750 },
-    ],
-  },
-  {
-    slug: 'me-o-creamy-treats-salmon',
-    name: 'Me-O Creamy Treats Salmon',
-    brand: 'Me-O',
-    category: 'CatFood',
-    subcategory: 'Treats',
-    description: 'Lickable creamy salmon treat. Feed from the stick or as a topper.',
-    origin: 'TH',
-    food: {
-      manufacturer: 'Perfect Companion Group',
-      lifeStage: 'AllLifeStages',
-      proteinSource: 'Salmon',
-      analysis: [7, 1, 0.5, 89],
-    },
-    expiry: true,
-    skus: [{ code: 'MEO-CT-4X15', size: '4 x 15 g', grams: 70, price: 180, pack: 4 }],
-  },
-  {
-    slug: 'purina-friskies-seafood-sensations',
-    name: 'Purina Friskies Seafood Sensations',
-    brand: 'Purina Friskies',
-    category: 'CatFood',
-    subcategory: 'Dry',
-    description: 'Crunchy bites with the flavours of salmon, tuna, shrimp and ocean fish.',
-    origin: 'MY',
-    food: {
-      manufacturer: 'Nestle Purina PetCare',
-      lifeStage: 'Adult',
-      proteinSource: 'Mixed',
-      analysis: [30, 11, 4, 12],
-    },
-    expiry: true,
-    skus: [
-      { code: 'FRI-SS-1KG', size: '1 kg', grams: 1050, price: 650 },
-      { code: 'FRI-SS-3KG', size: '3 kg', grams: 3100, price: 1850 },
-    ],
-  },
-  {
-    slug: 'catsan-hygiene-plus-litter',
-    name: 'Catsan Hygiene Plus Litter',
-    brand: 'Catsan',
-    category: 'Litter',
-    subcategory: 'Silica',
-    description: 'White hygiene granules that lock in moisture and odour. Does not clump.',
-    origin: 'DE',
-    expiry: false,
-    skus: [
-      { code: 'CAT-HP-5L', size: '5 L', grams: 2900, price: 850 },
-      { code: 'CAT-HP-10L', size: '10 L', grams: 5600, price: 1500 },
-    ],
-  },
-  {
-    slug: 'kit-cat-soya-clump-litter',
-    name: 'Kit Cat Soya Clump Litter',
-    brand: 'Kit Cat',
-    category: 'Litter',
-    subcategory: 'Tofu',
-    description: 'Plant-based tofu litter that clumps fast and can be flushed in small amounts.',
-    origin: 'SG',
-    expiry: false,
-    skus: [{ code: 'KC-SOY-7L', size: '7 L', grams: 2600, price: 1100 }],
-  },
-  {
-    slug: 'kit-cat-scoop-and-tray-set',
-    name: 'Kit Cat Litter Tray with Scoop',
-    brand: 'Kit Cat',
-    category: 'LitterPotsAndAccessories',
-    subcategory: 'Trays',
-    description: 'High-sided litter tray with a matching scoop. Easy to wash.',
-    origin: 'SG',
-    expiry: false,
-    skus: [{ code: 'KC-TRAY-GRY', size: '45 x 35 cm', colour: 'Grey', grams: 900, price: 1200 }],
-  },
-  {
-    slug: 'kit-cat-feather-wand-toy',
-    name: 'Kit Cat Feather Wand Toy',
-    brand: 'Kit Cat',
-    category: 'ToysAndFurniture',
-    subcategory: null,
-    description: 'Teaser wand with natural feathers and a bell for interactive play.',
-    origin: 'SG',
-    expiry: false,
-    skus: [{ code: 'KC-WAND-1', size: '45 cm', grams: 80, price: 250 }],
-  },
-  {
-    slug: 'royal-canin-hairball-care-gel',
-    name: 'Royal Canin Hairball Care Gel',
-    brand: 'Royal Canin',
-    category: 'HealthAndGrooming',
-    subcategory: null,
-    description: 'Malt-flavoured gel that helps hairballs pass naturally. For cats over 10 months.',
-    origin: 'FR',
-    expiry: true,
-    healthFocus: ['Hairball'],
-    skus: [{ code: 'RC-HB-50G', size: '50 g', grams: 80, price: 1250 }],
-  },
-];
+function specFromFile(p) {
+  const isFood = !!p.food;
+  return {
+    slug: p.slug,
+    name: p.name,
+    brand: p.brand,
+    category: p.category,
+    subcategory: p.subcategory ?? null,
+    description: p.district ? `${p.description} Origin: ${p.district} district.` : p.description,
+    origin: p.origin ?? null,
+    tags: [...(p.tags ?? []), ...(p.district ? [p.district.toLowerCase().replace(/[^a-z]+/g, '-')] : [])],
+    certifications: p.certifications ?? [],
+    food: p.food,
+    expiry: isFood && p.expiry !== false,
+    skus: p.skus,
+  };
+}
+
+const PRODUCTS = JSON.parse(readFileSync(CATALOGUE_FILE, 'utf8')).products.map(specFromFile);
 
 const EXTRA_PRODUCTS = args.extra
-  ? JSON.parse(readFileSync(String(args.extra), 'utf8')).products.map((p) => ({
-      slug: p.slug,
-      name: p.name,
-      brand: p.brand,
-      category: p.category ?? 'CatFood',
-      subcategory: p.subcategory === undefined ? 'Dry' : p.subcategory,
-      description: p.description,
-      origin: p.origin ?? null,
-      // No made-up label facts: only the life stage and main protein the listing states (food only).
-      food:
-        (p.category ?? 'CatFood') === 'CatFood'
-          ? { lifeStage: p.lifeStage, proteinSource: p.protein, labelUnknown: true }
-          : undefined,
-      expiry: (p.category ?? 'CatFood') === 'CatFood',
-      skus: p.skus,
-    }))
+  ? JSON.parse(readFileSync(String(args.extra), 'utf8')).products.map(specFromFile)
   : [];
 
 const SUPPLIER = {
-  code: 'PAWS-BD',
-  name: 'Paws Distribution Ltd',
+  code: 'GRAM-BD',
+  name: 'Gram Distribution Ltd',
   countryCode: 'BD',
   contactName: 'Kamal Uddin',
   phone: '+8801711000200',
-  email: 'orders@paws-distribution.test',
+  email: 'orders@gram-distribution.test',
   address: 'Plot 18, Tejgaon Industrial Area, Dhaka 1208',
   currencyCode: 'BDT',
   leadTimeDays: 3,
@@ -390,7 +183,7 @@ const SUPPLIER = {
 const BANNER = {
   slug: 'free-delivery-dhaka',
   title: 'Free delivery in Dhaka on orders over ৳2,000',
-  body: 'Order cat food, litter and care essentials today. Standard delivery anywhere in Dhaka is ৳60, and free on orders over ৳2,000.',
+  body: 'Order rice, honey, mustard oil and village goods today. Standard delivery anywhere in Dhaka is ৳60, and free on orders over ৳2,000.',
   placement: 'Shop',
   linkUrl: '/shop',
 };
@@ -407,18 +200,16 @@ const POLICIES = [
       '### What we collect',
       '- Your name, mobile number and email address when you create an account.',
       '- Delivery addresses you save for shop orders.',
-      "- Your cats' profiles, appointments, treatments and medical records.",
       '- Orders, invoices and payments you make with us.',
       '### How we use it',
-      '- To book appointments, treat your cats and keep their medical history.',
       '- To deliver your orders and send receipts, reminders and updates you asked for.',
       '- To meet our legal and accounting obligations in Bangladesh.',
       '### Sharing',
-      "We share your details only with couriers delivering your order and with laboratories or specialists involved in your cat's care. We never sell your data.",
+      "We share your details only with couriers delivering your order and with the payment and messaging services we use. We never sell your data.",
       '### Your choices',
       'You can update your details, change notification preferences, download your data or ask us to delete your account from your profile at any time.',
       '### Contact',
-      'Questions about this policy: hello@purrcare.test or +880 1711-000100.',
+      'Questions about this policy: hello@amargram.test or +880 1711-000100.',
     ]),
   },
   {
@@ -437,9 +228,7 @@ const POLICIES = [
       '- We deliver within Dhaka, usually the next working day.',
       '- Standard delivery is ৳60 and free on orders over ৳2,000.',
       '### Returns',
-      'Unopened products can be returned within 7 days. Opened food, litter and medicines cannot be returned unless they are faulty.',
-      '### Appointments',
-      'Please tell us at least 2 hours ahead if you need to cancel or move an appointment.',
+      'Unopened products can be returned within 7 days. Opened food and used household or care items cannot be returned unless they are faulty or recalled.',
     ]),
   },
 ];
@@ -464,13 +253,13 @@ const FAQS = [
   {
     slug: 'payment-methods',
     title: 'How can I pay?',
-    body: 'You can pay cash on delivery, cash or card at the clinic, or by bank transfer. Bank details are shown at checkout when you choose bank transfer.',
+    body: 'You can pay cash on delivery, cash or card in store, or by bank transfer. Bank details are shown at checkout when you choose bank transfer.',
     sortOrder: 2,
   },
   {
     slug: 'opening-hours',
-    title: 'When is the clinic open?',
-    body: 'Saturday to Thursday, 9:00 am to 8:00 pm. We are closed on Fridays. Call +880 1711-000100 to book or ask a question.',
+    title: 'When is the shop open?',
+    body: 'Saturday to Thursday, 9:00 am to 8:00 pm. We are closed on Fridays. Call +880 1711-000100 to ask a question.',
     sortOrder: 3,
   },
 ];
@@ -493,89 +282,12 @@ const BANK_TRANSFER = {
   routingNumber: '000000000',
 };
 
-const SERVICES = [
-  {
-    code: 'CONSULT-GEN',
-    name: 'General consultation',
-    description: 'A full check-up and consultation with one of our vets.',
-    category: 'Consultation',
-    durationMinutes: 20,
-    roles: ['Vet'],
-    roomKind: 'Consultation',
-    price: 800,
-    online: true,
-  },
-  {
-    code: 'VACC-CORE',
-    name: 'Vaccination',
-    description: 'Core vaccination with a short health check.',
-    category: 'Vaccination',
-    durationMinutes: 15,
-    roles: ['Vet', 'Nurse'],
-    roomKind: 'Consultation',
-    price: 1200,
-    online: true,
-  },
-  {
-    code: 'DENTAL-SCALE',
-    name: 'Dental scaling',
-    description: 'Scale and polish under general anaesthesia, with a pre-anaesthetic check.',
-    category: 'Dental',
-    durationMinutes: 60,
-    roles: ['Vet'],
-    roomKind: 'Theatre',
-    price: 3500,
-    online: false,
-  },
-];
-
-const ROOMS = [
-  { name: 'Consultation room 1', kind: 'Consultation' },
-  { name: 'Treatment room', kind: 'Treatment' },
-  { name: 'Theatre', kind: 'Theatre' },
-];
-
-const BOARDING_UNITS = [
-  {
-    code: 'STD-01',
-    name: 'Standard suite 1',
-    unitType: 'Standard',
-    capacityCats: 1,
-    block: 'A',
-    sortOrder: 1,
-  },
-  {
-    code: 'DLX-01',
-    name: 'Deluxe suite 1',
-    unitType: 'Deluxe',
-    capacityCats: 2,
-    block: 'A',
-    sortOrder: 2,
-  },
-];
-const BOARDING_RATES = [
-  {
-    unitType: 'Standard',
-    nightlyRate: '800.00',
-    weeklyRate: '5000.00',
-    monthlyRate: '18000.00',
-    additionalCatNightlyRate: null,
-  },
-  {
-    unitType: 'Deluxe',
-    nightlyRate: '1500.00',
-    weeklyRate: '9500.00',
-    monthlyRate: '34000.00',
-    additionalCatNightlyRate: '600.00',
-  },
-];
-
 const BILLING_PROFILE = {
   legalName: 'Amar Gram (sample)',
   taxRegistrationNumber: '000000000-0000',
   addressLines: ['House 34, Road 7, Dhanmondi', 'Dhaka 1209', 'Bangladesh'],
   phone: '+8801711000100',
-  email: 'billing@purrcare.test',
+  email: 'billing@amargram.test',
   invoiceFooter:
     'Thank you for shopping with Amar Gram. Sample data - not a real business.',
 };
@@ -835,7 +547,7 @@ async function seedBranch(staffIds) {
   }
 }
 
-// Tax rates, service prices and boarding rate cards cannot be effective in the past (the API refuses
+// Tax rates cannot be effective in the past (the API refuses
 // a backdated one), so they start a few seconds from now. SKU prices allow 60 s of backdating.
 const soon = () => new Date(Date.now() + 3000).toISOString();
 const justNow = () => new Date(Date.now() - 30_000).toISOString();
@@ -877,12 +589,7 @@ async function seedTax() {
 async function seedOrigins(list = PRODUCTS) {
   const wanted = [...new Set(list.map((p) => p.origin).filter(Boolean))];
   const notes = {
-    TH: 'Thailand: Whiskas and Me-O dry and wet food.',
-    FR: 'France: Royal Canin breed and health nutrition.',
-    MY: 'Malaysia: Purina Friskies.',
-    DE: 'Germany: Catsan hygiene litter.',
-    SG: 'Singapore: Kit Cat litter and accessories.',
-    CN: 'China: Haisenpet and Kitchen Flavor dry food.',
+    BD: 'Bangladesh: rice, honey, oils, spices, pulses, tea, fruit and village goods from farms and co-operatives across the country.',
   };
   const existing = items(await admin.get('/api/staff/shop/origins'));
   let order = 1;
@@ -937,36 +644,26 @@ async function seedCatalogue(standardTaxClassId, list = PRODUCTS) {
         description: spec.description,
         category: spec.category,
         subcategory: spec.subcategory ?? null,
-        tags: [],
+        tags: spec.tags ?? [],
         taxClassId: standardTaxClassId,
         countryOfOriginCode: spec.origin ?? null,
         listedOnStorefront: true,
         isExpiryTracked: !!spec.expiry,
-        healthFocus: spec.healthFocus ?? [],
+        certifications: spec.certifications ?? [],
       });
       product = await getProduct(id);
     }
 
-    if (spec.food && !product.food?.lifeStage) {
-      const known = !spec.food.labelUnknown;
-      const [protein, fat, fibre, moisture] = known ? spec.food.analysis : [];
+    if (spec.food && !product.food) {
       await admin.put(`/api/staff/shop/products/${id}/food`, {
         expectedVersion: product.version,
-        manufacturer: known ? spec.food.manufacturer : null,
-        lifeStage: spec.food.lifeStage,
-        proteinSource: spec.food.proteinSource,
-        ingredientList: known ? ingredientsFor(spec) : null,
-        guaranteedAnalysis: known
-          ? {
-              proteinPercent: protein,
-              fatPercent: fat,
-              fibrePercent: fibre,
-              moisturePercent: moisture,
-            }
-          : null,
-        feedingGuide:
-          'Follow the feeding table on the pack and adjust to keep your cat at a healthy weight. Always provide fresh water.',
-        storageInstructions: FOOD_LABEL.storageInstructions,
+        ingredientList: spec.food.ingredientList ?? null,
+        storageInstructions: spec.food.storageInstructions ?? null,
+        shelfLife: spec.food.shelfLife ?? null,
+        netWeight: spec.food.netWeight ?? null,
+        allergens: spec.food.allergens ?? null,
+        organicCertifier: spec.food.organicCertifier ?? null,
+        organicCertificateNumber: spec.food.organicCertificateNumber ?? null,
       });
       product = await getProduct(id);
     }
@@ -1037,7 +734,7 @@ async function onHandAt(skuId) {
 const STOCK_QUANTITY = 24;
 const LOT_PREFIX = 'SEED-2610';
 
-async function seedStock(supplierId, skus, reference = 'PAWS-DN-0001', lotPrefix = LOT_PREFIX) {
+async function seedStock(supplierId, skus, reference = 'GRAM-DN-0001', lotPrefix = LOT_PREFIX) {
   const missing = [];
   for (const sku of skus) {
     const matrix = await onHandAt(sku.skuId);
@@ -1046,7 +743,7 @@ async function seedStock(supplierId, skus, reference = 'PAWS-DN-0001', lotPrefix
     else missing.push(sku);
   }
   if (missing.length === 0) return;
-  // A large import (2026-10-16: the AmarPet cat section) is received in batches of 50 lines per order.
+  // A large import (the full catalogue is about 80 SKUs) is received in batches of 50 lines per order.
   for (let start = 0, n = 1; start < missing.length; start += 50, n++) {
     const batch = missing.slice(start, start + 50);
     await receiveOpeningStock(
@@ -1266,75 +963,6 @@ async function seedBillingProfile() {
   } else note('branch billing profile', false);
 }
 
-async function seedRoomsAndServices(standardTaxClassId) {
-  const rooms = items(await admin.get(`/api/admin/branches/${MAIN_BRANCH_ID}/rooms`));
-  for (const room of ROOMS) {
-    if (rooms.some((r) => ci(r.name, room.name))) {
-      note('rooms', false);
-      continue;
-    }
-    await admin.post(`/api/admin/branches/${MAIN_BRANCH_ID}/rooms`, room);
-    note('rooms', true);
-  }
-
-  const services = items(await admin.get('/api/admin/services'));
-  for (const spec of SERVICES) {
-    let service = services.find((s) => ci(s.code, spec.code));
-    let id = firstId(service, 'serviceId');
-    if (!service) {
-      const created = await admin.post('/api/admin/services', {
-        code: spec.code,
-        name: spec.name,
-        description: spec.description,
-        category: spec.category,
-        durationMinutes: spec.durationMinutes,
-        qualifiedRoleIds: spec.roles,
-        requiredRoomKind: spec.roomKind,
-        taxClassId: standardTaxClassId,
-        isBookableOnline: spec.online,
-      });
-      id = firstId(created, 'serviceId');
-      note('clinic services', true);
-    } else note('clinic services', false);
-    const prices = items(await admin.get(`/api/admin/services/${id}/prices`));
-    if (prices.length === 0) {
-      await admin.post(`/api/admin/services/${id}/prices`, {
-        amount: spec.price.toFixed(2),
-        currencyCode: 'BDT',
-        effectiveFrom: soon(),
-      });
-      note('service prices', true);
-    } else note('service prices', false);
-  }
-}
-
-async function seedBoarding(standardTaxClassId) {
-  const units = items(await admin.get('/api/staff/boarding/units'));
-  for (const unit of BOARDING_UNITS) {
-    if (units.some((u) => ci(u.code, unit.code))) {
-      note('boarding units', false);
-      continue;
-    }
-    await admin.post('/api/staff/boarding/units', unit);
-    note('boarding units', true);
-  }
-  for (const rate of BOARDING_RATES) {
-    const cards = items(
-      await admin.get(`/api/staff/boarding/rate-cards?unitType=${rate.unitType}`),
-    );
-    if (cards.length) {
-      note('boarding rate cards', false);
-      continue;
-    }
-    await admin.post('/api/staff/boarding/rate-cards', {
-      ...rate,
-      taxClassId: standardTaxClassId,
-      effectiveFrom: soon(),
-    });
-    note('boarding rate cards', true);
-  }
-}
-
 async function seedCustomer() {
   let session = await signIn('customer', CUSTOMER.email, CUSTOMER_PASSWORD);
   if (!session) {
@@ -1372,25 +1000,7 @@ async function seedCustomer() {
     note('customer addresses', true);
   } else note('customer addresses', false);
 
-  const cats = items(await session.get('/api/cats')); // a customer only ever sees their own cats
-  if (!cats.some((c) => ci(c.name, CUSTOMER.cat.name))) {
-    await session.post('/api/cats', { ownerId: customerId, species: 'Cat', ...CUSTOMER.cat });
-    note('cats', true);
-  } else note('cats', false);
   return { customerId, addressId: firstId(address, 'addressId') };
-}
-
-function ingredientsFor(spec) {
-  switch (spec.food.proteinSource) {
-    case 'Chicken':
-      return 'Dehydrated poultry protein, rice, maize, animal fats, vegetable protein isolate, beet pulp, fish oil, minerals, vitamins, taurine.';
-    case 'Tuna':
-      return 'Tuna (min. 4%), meat and animal derivatives, cereals, minerals, sugars, vitamins, taurine.';
-    case 'Salmon':
-      return 'Salmon (min. 25%), chicken, tapioca starch, fish oil, cellulose, vitamins, taurine.';
-    default:
-      return 'Cereals, fish and fish derivatives (min. 4% ocean fish), meat and animal derivatives, vegetable protein extracts, oils and fats, minerals, vitamins, taurine.';
-  }
 }
 
 // ── --verify: read-only checks through the API as the seeded people (the cart is emptied after) ──
@@ -1430,10 +1040,12 @@ async function verify() {
   );
   const listing = await anonymous.get('/api/shop/products?pageSize=48');
   const listed = items(listing);
+  // The listing shows one card per size (CatalogueSizeExpansion), so count distinct products.
+  const listedProducts = new Set(listed.map((p) => p.productId)).size;
   check(
     'all seeded products listed in the shop',
-    listed.length === PRODUCTS.length,
-    `${listed.length} listed, availability: ${[...new Set(listed.map((p) => p.availability))].join(', ')}`,
+    listedProducts === PRODUCTS.length,
+    `${listedProducts} products in ${listed.length} cards, availability: ${[...new Set(listed.map((p) => p.availability))].join(', ')}`,
   );
 
   const customer = await signIn('customer', CUSTOMER.email, CUSTOMER_PASSWORD);
@@ -1454,12 +1066,6 @@ async function verify() {
     !!address && address.district === 'Dhaka',
     address ? `${address.line1}, ${address.city} ${address.postalCode}` : 'missing',
   );
-  const cats = items(await customer.get('/api/cats'));
-  check(
-    'customer has Mishti',
-    cats.some((c) => c.name === CUSTOMER.cat.name),
-    cats.map((c) => c.name).join(', '),
-  );
 
   // Two products in the cart, then quotes below and above the free-delivery threshold.
   const pick = async (slug, code) => {
@@ -1467,8 +1073,8 @@ async function verify() {
     const sku = (detail.skus ?? []).find((s) => ci(s.code, code));
     return { skuId: sku?.skuId ?? sku?.id, price: money(sku?.price ?? sku?.currentPrice) };
   };
-  const a = await pick('whiskas-adult-ocean-fish-dry', 'WHI-OF-1K2');
-  const b = await pick('catsan-hygiene-plus-litter', 'CAT-HP-5L');
+  const a = await pick('kalijira-rice', 'KJ-2KG');
+  const b = await pick('pure-mustard-oil', 'MO-1L');
   await clearCart(customer);
   const lineA = await customer.post('/api/cart/lines', { skuId: a.skuId, quantity: 1 });
   await customer.post('/api/cart/lines', { skuId: b.skuId, quantity: 1 });
@@ -1504,9 +1110,10 @@ async function verify() {
     `subtotal ${q1.subtotal}, delivery ${q1.delivery}, tax ${q1.tax}, total ${q1.total}`,
   );
 
-  await customer.put(`/api/cart/lines/${lineA.lineId}`, { quantity: 2 });
+  // Three bags of rice take the cart over the free-delivery threshold (3 x 500 + 850).
+  await customer.put(`/api/cart/lines/${lineA.lineId}`, { quantity: 3 });
   const q2 = describe(await quote());
-  const expected2 = a.price * 2 + b.price;
+  const expected2 = a.price * 3 + b.price;
   check(
     `quote over ৳2,000: subtotal ${expected2}, delivery 0, total ${expected2}`,
     q2.subtotal === expected2 && q2.delivery === 0 && q2.total === expected2,
@@ -1541,7 +1148,7 @@ async function seedExtraOnly() {
   await seedOrigins(EXTRA_PRODUCTS);
   const skus = await seedCatalogue(standardTaxClassId, EXTRA_PRODUCTS);
   const supplierId = await seedSupplier();
-  await seedStock(supplierId, skus, 'PAWS-DN-EXTRA-0001', 'EXTRA-2610');
+  await seedStock(supplierId, skus, 'GRAM-DN-EXTRA-0001', 'EXTRA-2610');
   log('done. Summary (created / already there):');
   for (const [kind, c] of Object.entries(counts))
     console.log(`  ${kind.padEnd(32)} ${String(c.created).padStart(3)} / ${c.existing}`);
@@ -1561,8 +1168,6 @@ async function main() {
   await seedContent();
   await seedDelivery();
   await seedBillingProfile();
-  await seedRoomsAndServices(standardTaxClassId);
-  await seedBoarding(standardTaxClassId);
   await seedCustomer();
 
   log('done. Summary (created / already there):');

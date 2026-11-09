@@ -14,7 +14,6 @@ export type ConsignmentStatus = 'Planned' | 'InTransit' | 'AtCustoms' | 'Cleared
 export type ImportDocumentKind =
   | 'ImportPermit'
   | 'HealthCertificate'
-  | 'VeterinaryCertificate'
   | 'CustomsDeclaration'
   | 'BillOfLading'
   | 'CommercialInvoice'
@@ -162,6 +161,10 @@ export interface ConsignmentListParams {
   to?: string;
   pageNumber?: number;
   pageSize?: number;
+  /** HO-P5 BG-17 -- 1-90, else 400 `InvalidQuery` (`ProcurementConsignmentsController.cs:28-37`). */
+  arrivingWithinDays?: number;
+  /** HO-P5 BG-18 -- the branch the receiving form is receiving into (`ProcurementConsignmentsController.cs:28-31`). */
+  branchId?: string;
 }
 
 export async function getConsignments(

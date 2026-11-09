@@ -14,6 +14,7 @@ import {
   xctFixtureIds,
 } from './fixtures';
 import { restoreTestStore, xctMock, resetXctMock } from './state';
+import { erasedStaffCustomerSummary } from '../areas/accounts';
 
 export { xctFixtureIds, VALID_DRILL_JSON, MALFORMED_DRILL_JSON } from './fixtures';
 export { xctMock, resetXctMock } from './state';
@@ -183,10 +184,18 @@ export const operationsAreaHandlers: HttpHandler[] = [
       emailAddress: null,
       recordStatus: 'Complete',
       registrationChannel: 'SelfService',
-      catCount: 0,
-      cats: [],
       status: 'Anonymised',
       mergedIntoCustomerId: null,
+      // HO-P5 Amended (as): the BG-19 summary the server's view model always carries; without it the profile's
+      // "Customer since" tile threw on an undefined date after an erasure.
+      ...(erasedStaffCustomerSummary(id) ?? {
+        customerSince: '2026-01-01T00:00:00Z',
+        area: null,
+        orderCount: 0,
+        lifetimeSpend: { amount: '0.00', currencyCode: 'BDT' },
+        tags: [],
+        noteCount: 0,
+      }),
     });
   }),
 

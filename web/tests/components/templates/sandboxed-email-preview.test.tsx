@@ -10,7 +10,7 @@ import {
 const WEB_ROOT = path.resolve(import.meta.dirname, '../../..');
 
 const HOSTILE_HTML =
-  '<!doctype html><html><body><h1>&lt;b&gt;Mitu&lt;/b&gt;</h1>' +
+  '<!doctype html><html><body><h1>&lt;b&gt;Rina&lt;/b&gt;</h1>' +
   '<script>window.parent.__previewScriptRan = true; window.top.__previewScriptRan = true;</script>' +
   '</body></html>';
 

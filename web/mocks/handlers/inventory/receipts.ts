@@ -1,14 +1,20 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import type {
   GoodsReceiptDetail,
+  GoodsReceiptDraft,
+  GoodsReceiptDraftSummary,
   GoodsReceiptSummary,
   PostGoodsReceiptRequest,
+  SaveGoodsReceiptDraftRequest,
 } from '@/lib/api/inventory-receipts';
 import {
+  BRANCH_NAMES,
   MOCK_BASE_CURRENCY,
   ROLES,
   branchOf,
   guard,
+  resolveBranch,
+  violation,
   isAllowed,
   nowIso,
   omit,
@@ -20,7 +26,7 @@ import {
   violations,
   type Violation,
 } from './fixtures';
-import { ACTOR_ID, db, docNumber, newId, persist, type MBatch } from './store';
+import { ACTOR_ID, db, docNumber, newId, persist, type MBatch, type MDraft } from './store';
 import { locationOf, moveStock, skuOf } from './stock';
 
 /** `mocks/handlers/inventory/receipts.ts` — `StaffGoodsReceiptsController`. The validation mirrors
@@ -146,7 +152,7 @@ function validate(body: PostGoodsReceiptRequest, branchId: string): Violation[] 
       add(
         `${prefix}.ExpiresOn`,
         'ExpiryDateRequired',
-        'Food and medicine must be received with an expiry date.',
+        'Food and other perishables must be received with an expiry date.',
       );
     }
     if (takes && line.expiresOn && line.expiresOn < todayDate()) {
@@ -230,7 +236,265 @@ function validate(body: PostGoodsReceiptRequest, branchId: string): Violation[] 
   return problems;
 }
 
+// ---- HO-P5 BG-18: receipt drafts -----------------------------------------------------------------------------
+// `StaffGoodsReceiptDraftsController.cs:14-82`, `SaveGoodsReceiptDraftCommandHandler` (GoodsReceiptDraftCommandHandlers.cs:23-63),
+// `GoodsReceiptDraftAggregate.cs:52-130`. The draft is the CALLER'S workspace: ACTOR_ID here.
+
+const MAX_DRAFTS_PER_STAFF = 20; // InventoryRules.cs:33
+const MAX_DRAFT_NOTE = 500; // InventoryRules.cs:34
+const MAX_RECEIPT_LINES = 200; // InventoryRules.cs:10
+const MAX_LOT_LENGTH = 60; // InventoryRules.cs:42
+const NOTE_MAX = 500; // InventoryRules.cs:38
+
+const clean = (v: string | null | undefined) => (v && v.trim() !== '' ? v.trim() : null);
+const controlCharacter = (v: string | null | undefined) =>
+  !!v && /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(v);
+
+/** The `ValidationResponse` body (`BadRequest(response.ValidationResult)`), several errors allowed. */
+function draftViolations(
+  list: Array<{ propertyName: string; errorCode: string; errorMessage: string }>,
+): Response {
+  return violations(list);
+}
+
+/** `SaveGoodsReceiptDraftCommandValidator` + `GoodsReceiptDraftLineInputValidator` (GoodsReceiptAndBatchCommandValidators.cs:27-59). */
+function draftShapeProblems(body: SaveGoodsReceiptDraftRequest) {
+  const problems: Violation[] = [];
+  const tooLong = (property: string, label: string, max: number, length: number) =>
+    problems.push({
+      propertyName: property,
+      errorCode: 'MaximumLengthValidator',
+      errorMessage: `The length of '${label}' must be ${max} characters or fewer. You entered ${length} characters.`,
+    });
+  const controls = (property: string) =>
+    problems.push({
+      propertyName: property,
+      errorCode: 'PredicateValidator',
+      errorMessage: 'must not contain control characters.', // ValidationRuleExtensions.cs:31-32
+    });
+  if ((body.deliveryReference?.length ?? 0) > 60)
+    tooLong('DeliveryReference', 'Delivery Reference', 60, body.deliveryReference!.length);
+  if (controlCharacter(body.deliveryReference)) controls('DeliveryReference');
+  if ((body.note?.length ?? 0) > MAX_DRAFT_NOTE) tooLong('Note', 'Note', MAX_DRAFT_NOTE, body.note!.length);
+  if (controlCharacter(body.note)) controls('Note');
+  if (body.lines.length > MAX_RECEIPT_LINES)
+    problems.push({
+      propertyName: 'Lines',
+      errorCode: 'PredicateValidator',
+      errorMessage: `A goods receipt has at most ${MAX_RECEIPT_LINES} lines.`,
+    });
+  body.lines.forEach((line, i) => {
+    const prefix = `Lines[${i}]`;
+    if ((line.lotNumber?.length ?? 0) > MAX_LOT_LENGTH)
+      tooLong(`${prefix}.LotNumber`, 'Lot Number', MAX_LOT_LENGTH, line.lotNumber!.length);
+    if ((line.rejectionNote?.length ?? 0) > NOTE_MAX)
+      tooLong(`${prefix}.RejectionNote`, 'Rejection Note', NOTE_MAX, line.rejectionNote!.length);
+    if ((line.rejectionReason?.length ?? 0) > 40)
+      tooLong(`${prefix}.RejectionReason`, 'Rejection Reason', 40, line.rejectionReason!.length);
+  });
+  return problems;
+}
+
+/** `GoodsReceiptDraftAggregate.Validate` (the second line, after the validator): one violation, `InvalidGoodsReceiptDraft`. */
+function draftAggregateProblem(body: SaveGoodsReceiptDraftRequest): Violation | null {
+  const invalid = (propertyName: string, errorMessage: string): Violation => ({
+    propertyName,
+    errorCode: 'InvalidGoodsReceiptDraft',
+    errorMessage,
+  });
+  if (body.lines.length > MAX_RECEIPT_LINES)
+    return invalid('Lines', `A receipt has at most ${MAX_RECEIPT_LINES} lines.`);
+  if ((clean(body.deliveryReference)?.length ?? 0) > 60)
+    return invalid('DeliveryReference', 'The delivery reference is at most 60 characters.');
+  if ((clean(body.note)?.length ?? 0) > MAX_DRAFT_NOTE)
+    return invalid('Note', `The note is at most ${MAX_DRAFT_NOTE} characters.`);
+  for (let i = 0; i < body.lines.length; i += 1) {
+    const line = body.lines[i]!;
+    const prefix = `Lines[${i}]`;
+    if (!line.skuId || line.skuId === '00000000-0000-0000-0000-000000000000')
+      return invalid(`${prefix}.SkuId`, 'Every line needs an item.');
+    const accepted = parseFloat(String(line.quantityAccepted ?? '0'));
+    const rejected = parseFloat(String(line.quantityRejected ?? '0'));
+    if (accepted < 0 || rejected < 0 || accepted > 999_999_999 || rejected > 999_999_999)
+      return invalid(`${prefix}.QuantityAccepted`, 'Quantities cannot be negative.');
+    if (line.unitCostAmount !== null && line.unitCostAmount !== undefined) {
+      const cost = parseFloat(line.unitCostAmount);
+      if (cost < 0 || cost > 9_999_999_999)
+        return invalid(`${prefix}.UnitCostAmount`, 'The unit cost or exchange rate is out of range.');
+    }
+  }
+  return null;
+}
+
+const notFoundResponseForDraft = () => notFoundResponse();
+
+const draftOf = (id: string): MDraft | undefined => db.receiptDrafts.find((d) => d.draftId === id);
+/** Another member's draft answers exactly like an unknown one (`GoodsReceiptDraftCommandHandlers.cs:34-35`). */
+const ownDraft = (id: string): MDraft | undefined => {
+  const draft = draftOf(id);
+  return draft && draft.ownerId === ACTOR_ID ? draft : undefined;
+};
+
+function draftSummary(d: MDraft): GoodsReceiptDraftSummary {
+  const supplier = db.suppliers.find((s) => s.id === d.supplierId);
+  return {
+    draftId: d.draftId,
+    branchId: d.branchId,
+    branchName: BRANCH_NAMES[d.branchId] ?? null,
+    supplierId: d.supplierId,
+    supplierName: supplier?.name ?? null,
+    purchaseOrderId: d.purchaseOrderId,
+    consignmentId: d.consignmentId,
+    deliveryReference: d.deliveryReference,
+    lineCount: d.lines.length,
+    version: d.version,
+    updatedOn: d.updatedOn,
+  };
+}
+
+function draftView(d: MDraft): GoodsReceiptDraft {
+  return {
+    draftId: d.draftId,
+    branchId: d.branchId,
+    branchName: BRANCH_NAMES[d.branchId] ?? null,
+    supplierId: d.supplierId,
+    purchaseOrderId: d.purchaseOrderId,
+    consignmentId: d.consignmentId,
+    deliveryReference: d.deliveryReference,
+    receivedOn: d.receivedOn,
+    note: d.note,
+    version: d.version,
+    updatedOn: d.updatedOn,
+    lines: d.lines.map((line) => {
+      const sku = db.skus.find((s) => s.skuId === line.skuId);
+      return { ...line, skuCode: sku?.skuCode ?? null, displayName: sku?.displayName ?? null };
+    }),
+  };
+}
+
+/** Closes the caller's draft a receipt was posted from (`CloseDraftAsync`, GoodsReceiptCommandHandler.cs:101-120): the content is cleared. */
+function closeDraft(draftId: string | null | undefined, status: 'Posted' | 'Discarded'): void {
+  const draft = draftId ? ownDraft(draftId) : undefined;
+  if (!draft || draft.status !== 'Open') return;
+  draft.status = status;
+  draft.lines = [];
+  draft.supplierId = draft.purchaseOrderId = draft.consignmentId = null;
+  draft.deliveryReference = draft.note = draft.receivedOn = null;
+  draft.version += 1;
+}
+
+const draftHandlers: HttpHandler[] = [
+  http.get('*/api/staff/inventory/goods-receipt-drafts', ({ request }) => {
+    const denied = guard(request, ROLES.stockManage);
+    if (denied) return denied;
+    const branchId = new URL(request.url).searchParams.get('branchId');
+    const rows = db.receiptDrafts
+      .filter((d) => d.ownerId === ACTOR_ID && d.status === 'Open')
+      .filter((d) => !branchId || d.branchId === branchId)
+      .sort((a, b) => b.updatedOn.localeCompare(a.updatedOn))
+      .map(draftSummary);
+    return HttpResponse.json(rows);
+  }),
+
+  http.get('*/api/staff/inventory/goods-receipt-drafts/:id', ({ request, params }) => {
+    const denied = guard(request, ROLES.stockManage);
+    if (denied) return denied;
+    const draft = ownDraft(String(params.id));
+    return draft && draft.status === 'Open'
+      ? HttpResponse.json(draftView(draft))
+      : notFoundResponseForDraft();
+  }),
+
+  http.put('*/api/staff/inventory/goods-receipt-drafts/:id', async ({ request, params }) => {
+    const denied = guard(request, ROLES.stockManage);
+    if (denied) return denied;
+    const id = String(params.id);
+    const body = (await request.json()) as SaveGoodsReceiptDraftRequest;
+    body.lines ??= [];
+    // 1. The branch: an explicit one the caller is not assigned to is a 403 (`TryResolveBranch`).
+    const branch = resolveBranch(request, body.branchId);
+    if (branch instanceof Response) return branch;
+    // 2. The command validator: shape only, every problem together.
+    const shape = draftShapeProblems(body);
+    if (shape.length > 0) return draftViolations(shape);
+    // 3. The handler: another member's draft is a 404; a NEW one counts against the limit of 20.
+    const existing = draftOf(id);
+    if (existing && existing.ownerId !== ACTOR_ID) return notFoundResponseForDraft();
+    if (!existing) {
+      const open = db.receiptDrafts.filter((d) => d.ownerId === ACTOR_ID && d.status === 'Open').length;
+      if (open >= MAX_DRAFTS_PER_STAFF)
+        return violation(
+          'DraftId',
+          'GoodsReceiptDraftLimitReached',
+          `You already have ${MAX_DRAFTS_PER_STAFF} open drafts. Post or discard one first.`,
+        );
+    }
+    // 4. The aggregate: a closed draft can never be saved again (404); then the shape limits.
+    if (existing && existing.status !== 'Open') return notFoundResponseForDraft();
+    const problem = draftAggregateProblem(body);
+    if (problem) return violations([problem]);
+
+    const draft: MDraft = existing ?? {
+      draftId: id,
+      ownerId: ACTOR_ID,
+      branchId: branch,
+      supplierId: null,
+      purchaseOrderId: null,
+      consignmentId: null,
+      deliveryReference: null,
+      receivedOn: null,
+      note: null,
+      version: 0,
+      updatedOn: nowIso(),
+      status: 'Open',
+      lines: [],
+    };
+    draft.branchId = branch;
+    draft.supplierId = body.supplierId ?? null;
+    draft.purchaseOrderId = body.purchaseOrderId ?? null;
+    draft.consignmentId = body.consignmentId ?? null;
+    draft.deliveryReference = clean(body.deliveryReference);
+    draft.receivedOn = body.receivedOn ?? null;
+    draft.note = clean(body.note);
+    draft.lines = body.lines.map((line) => ({
+      skuId: line.skuId,
+      skuCode: null,
+      displayName: null,
+      purchaseOrderLineId: line.purchaseOrderLineId ?? null,
+      lotNumber: line.lotNumber ?? null,
+      manufacturedOn: line.manufacturedOn ?? null,
+      expiresOn: line.expiresOn ?? null,
+      quantityAccepted: q(parseFloat(String(line.quantityAccepted ?? '0')) || 0),
+      quantityRejected: q(parseFloat(String(line.quantityRejected ?? '0')) || 0),
+      rejectionReason: line.rejectionReason ?? null,
+      rejectionNote: line.rejectionNote ?? null,
+      locationId: line.locationId ?? null,
+      holdForInspection: !!line.holdForInspection,
+      unitCostAmount: line.unitCostAmount ?? null,
+      unitCostCurrency: line.unitCostCurrency ?? null,
+      exchangeRateToBase: line.exchangeRateToBase ?? null,
+    }));
+    draft.version += 1;
+    draft.updatedOn = nowIso();
+    if (!existing) db.receiptDrafts.push(draft);
+    persist();
+    return HttpResponse.json({ draftId: draft.draftId, version: draft.version, branchId: draft.branchId });
+  }),
+
+  http.delete('*/api/staff/inventory/goods-receipt-drafts/:id', ({ request, params }) => {
+    const denied = guard(request, ROLES.stockManage);
+    if (denied) return denied;
+    const draft = ownDraft(String(params.id));
+    if (!draft) return notFoundResponseForDraft();
+    // An already-closed draft is a success (`DiscardGoodsReceiptDraftCommandHandler`).
+    closeDraft(draft.draftId, 'Discarded');
+    persist();
+    return new HttpResponse(null, { status: 204 });
+  }),
+];
+
 export const receiptHandlers: HttpHandler[] = [
+  ...draftHandlers,
   http.get('*/api/staff/inventory/goods-receipts', ({ request }) => {
     const denied = guard(request, ROLES.stockView);
     if (denied) return denied;
@@ -265,7 +529,11 @@ export const receiptHandlers: HttpHandler[] = [
     const denied = guard(request, ROLES.stockManage);
     if (denied) return denied;
     const body = (await request.json()) as PostGoodsReceiptRequest;
-    const branchId = branchOf(request);
+    // BG-18: `branchId` names the branch to receive into; the caller must be assigned to it, and the order,
+    // consignment and every line location are checked against THIS branch (`StaffGoodsReceiptsController.cs:44`).
+    const branch = resolveBranch(request, body.branchId);
+    if (branch instanceof Response) return branch;
+    const branchId = branch;
     const problems = validate(body, branchId);
     if (problems.length > 0) return violations(problems);
 
@@ -389,7 +657,11 @@ export const receiptHandlers: HttpHandler[] = [
     });
     po?.receipts.push({ goodsReceiptId: receiptId, number, receivedOn });
     if (po) po.version += 1;
+    closeDraft(body.draftId, 'Posted');
     persist();
-    return HttpResponse.json({ goodsReceiptId: receiptId, number, batchIds }, { status: 201 });
+    return HttpResponse.json(
+      { goodsReceiptId: receiptId, branchId, number, batchIds },
+      { status: 201 },
+    );
   }),
 ];

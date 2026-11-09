@@ -2,7 +2,6 @@ import { apiFetch } from './client';
 import type { Money } from '../format/money';
 import { wireMoney } from '../money';
 import type { PagedResult } from './types';
-import type { CartCat } from './cart';
 import type { OrderTotals } from './checkout';
 import type {
   OrderFulfilment,
@@ -35,11 +34,21 @@ export interface StaffOrderRow {
   status: OrderStatus;
   fulfilmentMethod: OrderFulfilment;
   paymentMethod: OrderPaymentMethod;
-  channel: 'Online' | 'Counter';
+  /** `Subscription` is display only (HO-P5 OQ-11, §8.2): no filter, tab or subscription call. */
+  channel: 'Online' | 'Counter' | 'Subscription';
   grandTotal: Money;
   ageMinutes: number;
   flags: StaffOrderFlag[];
   branchTimeZoneId: string;
+  /**
+   * HO-P5 BG-3: the zone the order was priced in, the address district and the chosen slot
+   * (`slotDate` is `yyyy-MM-dd`). All null for a pickup or counter order, or one with no slot.
+   * // Read/ViewModels/StaffOrderViewModels.cs:12-13
+   */
+  deliveryZone: string | null;
+  deliveryDistrict: string | null;
+  slotDate: string | null;
+  slotWindowLabel: string | null;
 }
 
 export interface StaffOrderFilters {
@@ -69,12 +78,15 @@ export interface StaffOrderLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  cat: CartCat | null;
   quantity: number;
   unitPrice: Money;
   lineTotal: Money;
   quantityReturned: number;
   allocations: StaffAllocation[];
+  /** HO-P5 BG-4: the persisted pick-list tick. // Read/ViewModels/StaffOrderViewModels.cs:19 */
+  picked: boolean;
+  pickedOn: string | null;
+  pickedBy: string | null;
 }
 
 export interface StaffStatusChange {
@@ -101,8 +113,15 @@ export interface StaffCodCollection {
   recordedBy: string;
 }
 
+/**
+ * `courierId` is null and `riderId` / `riderName` are set when the order left with an in-house rider
+ * (`courierName` is then the customer-facing carrier name). HO-P5 BG-5.
+ * // Read/ViewModels/StaffOrderViewModels.cs:27-30
+ */
 export interface StaffShipment {
-  courierId: string;
+  courierId: string | null;
+  riderId: string | null;
+  riderName: string | null;
   courierName: string;
   trackingNumber: string | null;
   trackingUrl: string | null;
@@ -123,6 +142,8 @@ export type StaffOrderAction =
   | 'ConfirmPayment'
   | 'Cancel'
   | 'StartPacking'
+  /** HO-P5 BG-4: `Packing -> Packed`, "packed, waiting for the rider". Domain/DomainServices/OrderTransitionRules.cs:56 */
+  | 'MarkPacked'
   | 'Dispatch'
   | 'MarkReadyForCollection'
   | 'RecordDelivery'
@@ -134,12 +155,14 @@ export interface StaffOrderDetail {
   version: number;
   orderNumber: string;
   placedOn: string;
-  channel: 'Online' | 'Counter';
+  channel: 'Online' | 'Counter' | 'Subscription';
   customerId: string | null;
   status: OrderStatus;
   fulfilmentMethod: OrderFulfilment;
   paymentMethod: OrderPaymentMethod;
   branchTimeZoneId: string;
+  /** HO-P5 BG-4: when the order was marked packed; null before. // Read/ViewModels/StaffOrderViewModels.cs:38 */
+  packedOn: string | null;
   lines: StaffOrderLine[];
   totals: OrderTotals;
   fulfilment: OrderFulfilmentView;
@@ -177,8 +200,31 @@ export function listStaffOrders(filters: StaffOrderFilters): Promise<PagedResult
   return apiFetch(`/api/staff/orders${query({ ...filters })}`);
 }
 
-/** One row of `GET /api/staff/customers/{customerId}/orders` (`StaffCustomerOrderRowViewModel`): no customer name, age or flags. */
-export type StaffCustomerOrderRow = Omit<StaffOrderRow, 'customerName' | 'ageMinutes' | 'flags'>;
+/**
+ * One row of `GET /api/staff/customers/{customerId}/orders` (`StaffCustomerOrderRowViewModel`): no customer name,
+ * age, flags, or the BG-3 delivery area and slot (Read/ViewModels/StaffOrderViewModels.cs:68-70).
+ */
+export type StaffCustomerOrderRow = Omit<
+  StaffOrderRow,
+  'customerName' | 'ageMinutes' | 'flags' | 'deliveryZone' | 'deliveryDistrict' | 'slotDate' | 'slotWindowLabel'
+>;
+
+/** The queue's filters bar `status` (and paging): what `status-counts` accepts. Api/Controllers/StaffOrdersController.cs:142 */
+export type StaffOrderCountFilters = Omit<StaffOrderFilters, 'status' | 'pageNumber' | 'pageSize'>;
+
+/**
+ * HO-P5 BG-2: every order status with its count (zeros included, in pipeline order) under the queue's own
+ * filters bar `status`. `total` is the SERVER's sum; nothing here adds counts up.
+ * // Read/ViewModels/StaffOrderViewModels.cs:40-45
+ */
+export interface StaffOrderStatusCounts {
+  total: number;
+  counts: Array<{ status: OrderStatus; count: number }>;
+}
+
+export function getStaffOrderStatusCounts(filters: StaffOrderCountFilters): Promise<StaffOrderStatusCounts> {
+  return apiFetch(`/api/staff/orders/status-counts${query({ ...filters })}`);
+}
 
 /** HO-ORD-001-FU2: the customer's orders at the active branch, newest first. `404` = no such customer. */
 export function listStaffCustomerOrders(
@@ -258,11 +304,26 @@ export function startPacking(orderId: string): Promise<void> {
   return apiFetch(`${orderPath(orderId)}/packing`, { method: 'POST' });
 }
 
-export function dispatchOrder(
-  orderId: string,
-  input: { courierId: string; trackingNumber?: string },
-): Promise<void> {
-  return apiFetch(`${orderPath(orderId)}/dispatch`, { method: 'POST', body: input });
+/** HO-P5 BG-5: exactly one target. Api/Contracts/Order/OrderFulfilmentRequests.cs:3-10 (`400 DispatchTargetInvalid` for both or neither). */
+export type DispatchTarget = { courierId: string } | { riderId: string };
+
+/** `Packing -> Packed`, optional (HO-P5 BG-4). `204`. Api/Controllers/StaffOrdersController.cs:194-205 */
+export function markPacked(orderId: string): Promise<void> {
+  return apiFetch(`${orderPath(orderId)}/packed`, { method: 'POST' });
+}
+
+/** Tick or untick one pick-list line (HO-P5 BG-4); idempotent. `204`. Api/Controllers/StaffOrdersController.cs:207-221 */
+export function setLinePicked(orderId: string, lineId: string, picked: boolean): Promise<void> {
+  return apiFetch(`${orderPath(orderId)}/lines/${encodeURIComponent(lineId)}/picked`, {
+    method: 'PUT',
+    body: { picked },
+  });
+}
+
+/** A rider delivery has no tracking number, so `trackingNumber` travels only with a courier. */
+export function dispatchOrder(orderId: string, target: DispatchTarget, trackingNumber?: string): Promise<void> {
+  const body = 'courierId' in target ? { courierId: target.courierId, trackingNumber } : { riderId: target.riderId };
+  return apiFetch(`${orderPath(orderId)}/dispatch`, { method: 'POST', body });
 }
 
 export function markReadyForCollection(orderId: string): Promise<void> {
@@ -331,6 +392,42 @@ export function listDispatchCouriers(): Promise<Courier[]> {
   return apiFetch('/api/staff/fulfilment/couriers');
 }
 
+// ---- in-house riders (HO-P5 BG-5) --------------------------------------------------------------------
+
+/**
+ * One in-house rider of the active branch. The response never carries the branch. The mobile number is
+ * read behind `Orders.Fulfil` and written behind `Riders.Manage`.
+ * // Read/ViewModels/RiderViewModels.cs:4; Api/Controllers/StaffRidersController.cs:21-47
+ */
+export interface Rider {
+  id: string;
+  name: string;
+  mobileNumber: string | null;
+  isActive: boolean;
+}
+
+/** `POST` / `PUT /api/staff/riders[/{id}]`. Api/Contracts/Order/OrderFulfilmentRequests.cs:18-24 */
+export interface RiderInput {
+  name: string;
+  mobileNumber?: string | null;
+  isActive: boolean;
+}
+
+/** Roles that hold `Riders.Manage`, for presentation only (the server decides). Shared/Common/Constants/ActionRoles.Orders.cs:26 */
+export const RIDER_MANAGE_ROLES: readonly string[] = ['ShopManager', 'Administrator'];
+
+export function listRiders(activeOnly: boolean): Promise<Rider[]> {
+  return apiFetch(`/api/staff/riders${query({ activeOnly: activeOnly ? 'true' : undefined })}`);
+}
+
+export function createRider(input: RiderInput): Promise<{ riderId: string }> {
+  return apiFetch('/api/staff/riders', { method: 'POST', body: input });
+}
+
+export function updateRider(riderId: string, input: RiderInput): Promise<void> {
+  return apiFetch(`/api/staff/riders/${encodeURIComponent(riderId)}`, { method: 'PUT', body: input });
+}
+
 // ---- pick list, packing slip, manifest ---------------------------------------------------------------
 
 export interface PickListOrder {
@@ -371,7 +468,6 @@ export interface PackingSlipLine {
   productName: string;
   variantLabel: string;
   quantity: number;
-  catName: string | null;
   batchNumbers: string[];
 }
 

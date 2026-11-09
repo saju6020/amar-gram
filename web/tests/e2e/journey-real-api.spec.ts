@@ -14,7 +14,7 @@ import {
  * Skipped unless `JOURNEY_REAL_API=1`. Do not run it by hand: `npm run test:e2e:journey` (scripts/run-journey-e2e.mjs)
  * seeds a scratch database, starts the API on :5098 and the web app on :3098 from a private copy, runs this file with
  * --workers=1, and stops both. A journey registers a customer and places an order, so it must never touch a shared
- * database; playwright's global setup already refuses port 3000 and an API on catecommerce_dev.
+ * database; playwright's global setup already refuses port 3000 and an API on amargram_dev.
  *
  * Environment: JOURNEY_CUSTOMER_EMAIL / JOURNEY_CUSTOMER_PASSWORD (the seeded Ayesha Rahman, with her saved Dhaka
  * address), E2E_STAFF_ADMIN / E2E_STAFF_PASSWORD (e2e.admin), NEXT_PUBLIC_API_BASE_URL (the API), and optionally
@@ -40,7 +40,18 @@ const STAFF = {
   password: process.env.E2E_STAFF_PASSWORD ?? '',
 };
 const CAPTCHA_ANSWER = process.env.JOURNEY_CAPTCHA_ANSWER ?? 'TEST1';
-const SEEDED_BRANDS = ['Whiskas', 'Royal Canin', 'Me-O', 'Purina Friskies', 'Catsan', 'Kit Cat'];
+// The producers in scripts/data/amargram-catalogue.json (the API keeps the `brand` name; the shop says "Producer").
+const SEEDED_BRANDS = [
+  'Barind Farms',
+  'Haat Bazaar Co-op',
+  'Madhupur Gram Foods',
+  'Meghna Naturals',
+  'Padma Organics',
+  'Rupsha Dairy',
+  'Sonar Bangla Farms',
+  'Sundarbans Harvest',
+  'Teesta Valley',
+];
 
 test.skip(!ENABLED, 'Set JOURNEY_REAL_API=1 (use npm run test:e2e:journey).');
 test.describe.configure({ mode: 'serial', timeout: 180_000 });
@@ -140,7 +151,7 @@ async function signInCustomer(page: Page, email: string, password: string, next:
 test.describe('a new visitor', () => {
   let visitor: Page;
   let visitorContext: BrowserContext;
-  const email = `journey.${Date.now()}@purrcare.test`;
+  const email = `journey.${Date.now()}@amargram.test`;
   const password = 'Journey-Visitor-2026';
 
   test.beforeAll(async ({ browser }) => {
@@ -159,7 +170,7 @@ test.describe('a new visitor', () => {
     await expect(visitor.getByText('Free delivery in Dhaka on orders over ৳2,000')).toHaveCount(1);
 
     // The header carries the Cart link for a guest.
-    await expect(visitor.getByRole('banner').getByRole('link', { name: /^Cart/ })).toBeVisible();
+    await expect(visitor.getByRole('banner').getByRole('link', { name: /^Basket/ })).toBeVisible();
 
     // Following a link shows the top progress bar. Wait for hydration first: a click before React has attached the
     // listener is a plain full-page load (the browser shows its own loading indicator then).
@@ -180,9 +191,12 @@ test.describe('a new visitor', () => {
       .toBe(true);
 
     // The brand filter lists the seeded brands, and only those.
-    const brandGroup = visitor.getByRole('group', { name: 'Brand' }).first();
+    const brandGroup = visitor.getByRole('group', { name: 'Producer' }).first();
     await expect(brandGroup).toBeVisible();
-    const showAll = brandGroup.getByRole('button', { name: /Show all \d+ brands/ });
+    // Only Category starts open (owner, 2026-10-17); open the Producer group before reading its options.
+    const brandToggle = brandGroup.getByRole('button', { name: 'Producer', exact: true });
+    if ((await brandToggle.getAttribute('aria-expanded')) === 'false') await brandToggle.click();
+    const showAll = brandGroup.getByRole('button', { name: /Show all \d+ producers/ });
     if (await showAll.isVisible().catch(() => false)) await showAll.click();
     for (const brand of SEEDED_BRANDS) {
       await expect(
@@ -191,26 +205,29 @@ test.describe('a new visitor', () => {
     }
     await expect(brandGroup.getByRole('checkbox')).toHaveCount(SEEDED_BRANDS.length);
 
+    // The catalogue is 84 cards over several pages (newest first), so Kalijira Rice is not on the first one: narrow to
+    // its category the way a shopper would, then open it.
+    await visitor.getByRole('radio', { name: /^Rice & grains/ }).check();
+    await expect(visitor).toHaveURL(/category=/);
+
     // Open a product and add it to the cart: the count appears in the header.
     await visitor
       // Anchored: the card's guest wishlist heart is also a link whose name mentions the product.
-      .getByRole('link', { name: /^Whiskas Adult Ocean Fish/ })
+      .getByRole('link', { name: /^Kalijira Rice/ })
       .first()
       .click();
-    await expect(visitor).toHaveURL(/\/shop\/products\/whiskas-adult-ocean-fish-dry/);
-    await expect(
-      visitor.getByRole('heading', { level: 1, name: /Whiskas Adult Ocean Fish/ }),
-    ).toBeVisible();
-    await visitor.getByRole('button', { name: 'Add to cart' }).click();
+    await expect(visitor).toHaveURL(/\/shop\/products\/kalijira-rice/);
+    await expect(visitor.getByRole('heading', { level: 1, name: /Kalijira Rice/ })).toBeVisible();
+    await visitor.getByRole('button', { name: 'Add to basket' }).click();
     await expect(visitor.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
     await expect(visitor.getByTestId('cart-count').first()).toHaveText('1');
   });
 
   test('2. checkout as a new visitor: sign-in with ?next, create an account, sign in, land on checkout', async () => {
-    await visitor.getByRole('banner').getByRole('link', { name: /^Cart/ }).click();
-    await expect(visitor.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible();
+    await visitor.getByRole('banner').getByRole('link', { name: /^Basket/ }).click();
+    await expect(visitor.getByRole('heading', { level: 1, name: 'Your basket' })).toBeVisible();
     await expect(
-      visitor.getByRole('region', { name: 'Items in your cart' }).getByRole('listitem'),
+      visitor.getByRole('region', { name: 'Items in your basket' }).getByRole('listitem'),
     ).toHaveCount(1);
     // Signed out, the Checkout pill reads "Sign in to check out" and goes to sign-in first.
     await visitor.getByRole('link', { name: /Sign in to check out/ }).click();
@@ -242,9 +259,10 @@ test.describe('a new visitor', () => {
     // with the guest cart merged in.
     await expect(visitor).toHaveURL(/\/checkout/);
     await expect(
-      visitor.getByRole('heading', { level: 1, name: /How should we get it to you/ }),
+      visitor.getByRole('heading', { level: 1, name: /^Checkout$/ }),
     ).toBeVisible();
-    await expect(visitor.getByRole('list', { name: 'Checkout steps' })).toBeVisible();
+    // D-2: one page with three numbered sections, no stepper.
+    await expect(visitor.getByRole('region', { name: /Deliver to/ })).toBeVisible();
   });
 
   test('3. policy popup: Privacy Policy, "Read the full text" opens the real text, Accept closes it', async () => {
@@ -300,39 +318,35 @@ test.describe('the seeded customer', () => {
     }
 
     // Add one ৳850 item through the product page.
-    await page.goto('/shop/products/catsan-hygiene-plus-litter');
-    await expect(
-      page.getByRole('heading', { level: 1, name: /Catsan Hygiene Plus Litter/ }),
-    ).toBeVisible();
-    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await page.goto('/shop/products/pure-mustard-oil');
+    await expect(page.getByRole('heading', { level: 1, name: /Pure Mustard Oil/ })).toBeVisible();
+    // A click before React has attached its listener is lost (the server-rendered button does nothing yet).
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: 'Add to basket' }).click();
     await expect(page.getByRole('status').filter({ hasText: /Added 1 ×/ })).toBeVisible();
     await page.goto('/cart');
     await expect(
-      page.getByRole('region', { name: 'Items in your cart' }).getByRole('listitem'),
+      page.getByRole('region', { name: 'Items in your basket' }).getByRole('listitem'),
     ).toHaveCount(1);
     await page.getByRole('link', { name: 'Checkout' }).click();
     await expect(
-      page.getByRole('heading', { level: 1, name: /How should we get it to you/ }),
+      page.getByRole('heading', { level: 1, name: /^Checkout$/ }),
     ).toBeVisible();
-    await expect(page.getByRole('list', { name: 'Checkout steps' })).toBeVisible();
     await acceptPoliciesIfAsked(page);
 
     // Delivery -> the saved Dhaka address.
     await expect(page.getByLabel(/Home/)).toBeChecked();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Standard delivery, and a delivery window if asked.
     await expect(page.getByRole('radio', { name: /Standard delivery/ })).toBeChecked();
     const windows = page.getByRole('radiogroup', { name: 'Time window' });
     if (await windows.isVisible().catch(() => false))
       await windows.getByRole('radio').first().click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
     // Cash on delivery.
     await page.getByRole('radio', { name: /Cash on delivery/ }).click();
-    await page.getByRole('button', { name: 'Continue' }).click();
 
-    // Review: every line priced, the six summary rows, delivery ৳60 below ৳2,000, tax ৳0.00.
+    // The aside: every line priced, the six summary rows, delivery ৳60 below ৳2,000, tax ৳0.00.
     const lines = page.getByRole('list', { name: 'Items in this order' }).getByRole('listitem');
     await expect(lines).toHaveCount(1);
     for (const line of await lines.all()) await expect(line).toContainText(/৳\s?[\d,]+\.\d{2}/);
@@ -356,9 +370,11 @@ test.describe('the seeded customer', () => {
     expect(toNumber(await rowValue(/^Total$/))).toBe(subtotal + 60);
 
     await page.getByRole('button', { name: 'Place order' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: /^Thank you/ })).toBeVisible();
-    // The order number is in the hero's sentence: "Order ORD-... is placed."
-    const placed = page.getByText(/Order ORD-[\w-]+ is placed\./);
+    await expect(
+      page.getByRole('heading', { level: 2, name: 'Thank you! Your order is in.' }),
+    ).toBeVisible();
+    // The order number is in the confirmation's sentence: "Order ORD-... arrives <slot> at <address>."
+    const placed = page.getByText(/Order ORD-[\w-]+ arrives/);
     await expect(placed).toBeVisible();
     orderNumber = ((await placed.innerText()).match(/ORD-[\w-]+/) ?? [''])[0];
     expect(orderNumber).not.toBe('');
@@ -428,9 +444,9 @@ test.describe('staff', () => {
     await expect(page.getByText(/respects your privacy/).first()).toBeVisible();
   });
 
-  test('5f. branches load with Main clinic', async () => {
+  test('5f. branches load with the seeded main branch', async () => {
     await page.goto('/staff/admin/branches');
-    await expect(page.getByText('Main clinic').first()).toBeVisible();
+    await expect(page.getByText(/^Main /).first()).toBeVisible();
     await expectNoErrorState(page);
   });
 });

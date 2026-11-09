@@ -44,10 +44,15 @@ export async function getAlerts(params: {
 
 export interface AlertSummary {
   open: { total: number; byKind: Partial<Record<AlertKind, number>> };
+  /** HO-P5 BG-17 -- consignments of the branch expected within `withinDays` days that are not cancelled and
+   *  have no receipt yet (`Read/ViewModels/AlertsAndReportsViewModels.cs:20-24`). Absent -> the row is left out. */
+  consignmentsArriving?: { withinDays: number; count: number } | null;
 }
 
-export async function getAlertSummary(): Promise<AlertSummary> {
-  return apiFetch('/api/staff/inventory/alerts/summary');
+/** `arrivalWindowDays` is 1-90 (default 7); anything else is a 400 `InvalidQuery`
+ *  (`StaffAlertsAndReorderController.cs:41-42`, `InventoryRules.cs:30`). */
+export async function getAlertSummary(arrivalWindowDays?: number): Promise<AlertSummary> {
+  return apiFetch(`/api/staff/inventory/alerts/summary${buildQuery({ arrivalWindowDays })}`);
 }
 
 export async function acknowledgeAlert(id: string, note: string | null): Promise<void> {

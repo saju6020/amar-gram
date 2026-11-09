@@ -8,11 +8,11 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Hearth "Welcome home" sign-in (owner-approved 2026-10-16, option 1 of the sign-in preview). Only this page changes;
    the shop home and every other screen stay as they are. Customer layer tokens + Hearth shape tokens. */
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-tint:#e6f0ee;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--focus-ring:#15605a;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-tint:#E3EDC6;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--focus-ring:#B4531A;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}a:hover{color:var(--accent)}
@@ -28,21 +28,21 @@ a{color:var(--accent-ink)}a:hover{color:var(--accent)}
 <div style="width:1280px;height:860px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);background:var(--surface-page)">
   <section aria-label="Why sign in" style="background:var(--warm-soft);padding:48px 64px;display:flex;flex-direction:column;gap:32px;position:relative;overflow:hidden">
     <a href="../shop/ShopHome.dc.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--accent-ink)">
-      <span style="width:44px;height:44px;border-radius:var(--radius-pill);background:#fff;color:var(--warm-ink);display:grid;place-items:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3l2.2 4.2M17 3l-2.2 4.2"/><path d="M5 13a7 6 0 0 0 14 0c0-3.3-3.1-6-7-6s-7 2.7-7 6z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/></svg></span>
-      <span style="font-family:var(--font-display);font-size:26px;font-weight:600">PurrCare</span>
+      <span style="width:44px;height:44px;border-radius:var(--radius-pill);background:#fff;color:var(--warm-ink);display:grid;place-items:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l8-8"/></svg></span>
+      <span style="font-family:var(--font-display);font-size:26px;font-weight:600">Amar Gram</span>
     </a>
     <div style="display:flex;flex-direction:column;gap:16px;max-width:460px;margin-top:24px">
-      <span style="font:600 12px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--warm-ink)">Clinic · Boarding · Shop</span>
+      <span style="font:600 12px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--warm-ink)">Organic · Village-sourced · Shop</span>
       <p style="margin:0;font-family:var(--font-display);font-size:56px;line-height:1.02;font-weight:600">Welcome <em style="font-weight:400;color:var(--warm-ink)">home</em>.</p>
-      <p style="margin:0;font-size:17px;line-height:1.6;color:var(--ink-muted)">One account for your cats' visits, vaccinations, boarding stays and shop orders.</p>
+      <p style="margin:0;font-size:17px;line-height:1.6;color:var(--ink-muted)">One account for your orders, subscriptions and saved addresses.</p>
     </div>
     <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;max-width:400px;position:relative;z-index:1">
       <li style="display:flex;gap:14px;align-items:center;background:#fff;border-radius:18px;padding:14px 16px"><span style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--warm-soft);color:var(--warm-ink);display:grid;place-items:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/></svg></span><span style="font-size:15px;font-weight:600">Track shop orders to your door</span></li>
-      <li style="display:flex;gap:14px;align-items:center;background:#fff;border-radius:18px;padding:14px 16px"><span style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v3M17 3v3M4 8h16v12H4z"/></svg></span><span style="font-size:15px;font-weight:600">Book a clinic visit in a few taps</span></li>
-      <li style="display:flex;gap:14px;align-items:center;background:#fff;border-radius:18px;padding:14px 16px"><span style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><span style="font-size:15px;font-weight:600">Every vaccination and visit in one place</span></li>
+      <li style="display:flex;gap:14px;align-items:center;background:#fff;border-radius:18px;padding:14px 16px"><span style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v3M17 3v3M4 8h16v12H4z"/></svg></span><span style="font-size:15px;font-weight:600">Set up a monthly subscription in a few taps</span></li>
+      <li style="display:flex;gap:14px;align-items:center;background:#fff;border-radius:18px;padding:14px 16px"><span style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><span style="font-size:15px;font-weight:600">Every order and receipt in one place</span></li>
     </ul>
     <div aria-hidden="true" style="position:absolute;right:-40px;bottom:-40px;width:340px;height:340px;border-radius:var(--radius-pill);background:#fff;display:grid;place-items:center;color:var(--warm-ink)">
-      <svg width="200" height="220" viewBox="0 0 120 132" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M34 30 L40 6 L54 24"/><path d="M86 30 L80 6 L66 24"/><path d="M30 44c0-14 13-22 30-22s30 8 30 22-13 24-30 24-30-10-30-24z"/><path d="M48 42h.01M72 42h.01"/><path d="M56 52l4 3 4-3"/><path d="M40 64c-10 10-14 26-12 44 1 12 10 18 32 18s31-6 32-18c2-18-2-34-12-44"/><path d="M92 108c10 0 16-6 14-14"/></svg>
+      <svg width="200" height="220" viewBox="0 0 120 132" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M60 70V30"/><path d="M60 46c-14 0-24-8-24-22 14 0 24 8 24 22z"/><path d="M60 38c12 0 20-7 20-18-12 0-20 7-20 18z"/><path d="M22 72h76l-8 44a8 8 0 0 1-8 6H38a8 8 0 0 1-8-6z"/><path d="M34 88h52M38 104h44"/></svg>
     </div>
   </section>
 
@@ -65,7 +65,7 @@ a{color:var(--accent-ink)}a:hover{color:var(--accent)}
         <span style="position:relative;display:flex"><input id="si-pass" class="input" type="password" autocomplete="current-password" value="" style="padding-right:64px"><button type="button" aria-label="Show password" style="position:absolute;right:6px;top:6px;width:44px;height:36px;border:0;border-radius:var(--radius-pill);background:var(--surface-sunken);color:var(--ink);display:grid;place-items:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
       </div>
       <button type="button" class="btn-primary">Sign in</button>
-      <div style="display:flex;align-items:center;gap:12px;color:var(--ink-muted);font-size:13px"><span style="flex:1;height:1px;background:var(--border)"></span>New to PurrCare?<span style="flex:1;height:1px;background:var(--border)"></span></div>
+      <div style="display:flex;align-items:center;gap:12px;color:var(--ink-muted);font-size:13px"><span style="flex:1;height:1px;background:var(--border)"></span>New to Amar Gram?<span style="flex:1;height:1px;background:var(--border)"></span></div>
       <a href="Register.dc.html" class="btn-secondary">Create an account</a>
     </form>
   </main>

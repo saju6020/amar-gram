@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { PageHeader } from '@/components/back-office/PageHeader';
 import { MergeReview } from '@/components/customer/MergeReview';
 import { ErrorState } from '@/components/common/ErrorState';
 import { useStaffCustomersByIds } from '@/lib/hooks/useStaffCustomers';
@@ -11,8 +12,11 @@ import type { StaffCustomer } from '@/lib/api/staff-customers';
 // US-ACC-11.
 export default function MergeReviewPage() {
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="font-display text-xl font-semibold text-ink">Review merge</h1>
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title="Review merge"
+        description="Choose the record to keep. The other is merged into it."
+      />
       <Suspense fallback={null}>
         <MergeReviewPageContent />
       </Suspense>

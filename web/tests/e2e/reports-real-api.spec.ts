@@ -7,12 +7,11 @@ import { expectAxeClean, expectNoHorizontalScroll } from './reports-helpers';
 
 /**
  * HO-RPT-002 §16 — the E-cases re-run against the REAL API (HO-RPT-001 on master). Manual: needs
- * the API on :5114 on the throwaway database `catecommerce_rpt002e2e` (with
- * `Cors__AllowedOrigins__0` = this app's origin), the web app on :3114 started with
- * `NEXT_PUBLIC_USE_MOCKS=false NEXT_PUBLIC_API_BASE_URL=http://localhost:5114`, and `REPORTS_SEED`
- * pointing at the JSON a throwaway seeder wrote (one branch; an administrator, two accountants, a
- * shop manager, a reception and a nurse account, each with a mobile + password; the accountants
- * have an email address). Skipped otherwise. Serial: the cases share one branch and one schedule.
+ * the API on a scratch database (never amargram_dev), the web app started with `NEXT_PUBLIC_USE_MOCKS=false
+ * NEXT_PUBLIC_API_BASE_URL=<that API>`, and `REPORTS_SEED` pointing at the `rpt-seed.json` that
+ * `node scripts/seed-e2e-real-api.mjs` writes (an administrator, two accountants "Aisha Accountant" and "Mahmud
+ * Accountant", a shop manager and a reception account; sign-in takes an email as well as a mobile). The full recipe is
+ * in web/README.md ("Real-API end-to-end runs"). Skipped otherwise. Serial: the cases share one branch and one schedule.
  */
 const SEED_PATH = process.env.REPORTS_SEED;
 const enabled = process.env.NEXT_PUBLIC_USE_MOCKS === 'false' && !!SEED_PATH;
@@ -58,10 +57,8 @@ async function open(page: Page, person: string, path: string): Promise<void> {
   await slow(page.locator('#main-content')).toBeVisible({ timeout: 60_000 });
 }
 
-test('E-A1/E-A2 real: reception lands on a dashboard; an accountant sees money; a nurse has no Reports', async ({
-  page,
-}) => {
-  await open(page, 'Reception', '/');
+test('E-A1/E-A2 real: staff land on a dashboard; an accountant sees money', async ({ page }) => {
+  await open(page, 'Administrator', '/');
   await slow(page).toHaveURL(/\/staff$/);
   await slow(page.getByRole('heading', { level: 1, name: /^Today — / })).toBeVisible();
   await slow(page.getByText(/Updated \d\d:\d\d/)).toBeVisible();
@@ -70,9 +67,6 @@ test('E-A1/E-A2 real: reception lands on a dashboard; an accountant sees money; 
   await open(page, 'Accountant', '/staff');
   await slow(page.getByRole('heading', { level: 2, name: 'Payments today' })).toBeVisible();
   await slow(page.getByRole('heading', { level: 2, name: 'Receivables' })).toBeVisible();
-
-  await open(page, 'Nurse', '/staff/reports');
-  await slow(page.getByText(/have permission/i)).toBeVisible();
 });
 
 test('E-A4 real: the dashboard refreshes by itself past the interval (the dialog case is U-A5)', async ({
@@ -91,15 +85,15 @@ test('E-B real: the catalogue, a report, a range limit, and CSV + PDF downloads'
   page,
 }) => {
   await open(page, 'Administrator', '/staff/reports');
-  await slow(page.getByRole('heading', { level: 2, name: 'Clinic operations' })).toBeVisible();
-  const link = page.getByRole('link', { name: /Daily clinic schedule/ });
+  await slow(page.getByRole('heading', { level: 2, name: 'Financial' })).toBeVisible();
+  const link = page.getByRole('link', { name: /Payment reconciliation/ });
   await link.click();
-  await slow(page.getByRole('heading', { level: 1, name: 'Daily clinic schedule' })).toBeVisible();
+  await slow(page.getByRole('heading', { level: 1, name: 'Payment reconciliation' })).toBeVisible();
   await slow(page.getByLabel(/^From/)).toHaveValue(/^\d{4}-\d\d-\d\d$/);
   const body = page
     .getByRole('table')
     .or(page.getByRole('list', { name: / · / }))
-    .or(page.getByText(/^No results for Daily clinic schedule/));
+    .or(page.getByText(/^No results for Payment reconciliation/));
   await slow(body.first()).toBeVisible({ timeout: 30_000 });
 
   await page.getByLabel(/^From/).fill('2020-01-01');
@@ -132,7 +126,7 @@ test('E-C real: stock, revenue and growth reports open; margin is for the accoun
   }
   await open(page, 'Accountant', '/staff/reports/revenue-by-business-line');
   await slow(
-    page.getByRole('heading', { level: 1, name: 'Revenue by business line' }),
+    page.getByRole('heading', { level: 1, name: 'Revenue by sales channel' }),
   ).toBeVisible();
   await slow(page.getByText(/Margin/).first()).toBeVisible({ timeout: 30_000 });
   await open(page, 'ShopManager', '/staff/reports/revenue-by-business-line');

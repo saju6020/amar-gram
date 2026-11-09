@@ -1,3 +1,4 @@
+import { isFoodCategory } from '@/lib/shop/labels';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import {
   COUNTRY_NAMES,
@@ -20,7 +21,8 @@ import {
  * state, always seeded fresh.
  */
 
-const PERSIST_KEY = '__purrcare_shop_mock_db__';
+// HO-P6 S0 (v3): bumped for isSubscribable. HO-P5 Amended (b): bumped so a browser's stale copy does not hide the new district, certificate and "Was" price seeds.
+const PERSIST_KEY = '__amargram_shop_mock_db__v3';
 
 export interface MockAlert {
   stockAlertId: string;
@@ -43,7 +45,7 @@ interface Shape {
 
 function seedWishlist(): MockWishlistEntry[] {
   return [
-    { skuId: shopFixtureIds.skuKitten400, addedOn: '2026-10-01T10:00:00Z' },
+    { skuId: shopFixtureIds.skuOats400, addedOn: '2026-10-01T10:00:00Z' },
     { skuId: 'b0000000-0000-0000-0000-000000009001', addedOn: '2026-09-15T10:00:00Z' },
   ];
 }
@@ -52,7 +54,7 @@ function seedAlerts(): MockAlert[] {
   return [
     {
       stockAlertId: 'e0000000-0000-0000-0000-000000000001',
-      skuId: shopFixtureIds.skuKitten4kg,
+      skuId: shopFixtureIds.skuOats4kg,
       status: 'Pending',
       requestedOn: '2026-10-02T10:00:00Z',
       notifiedOn: null,
@@ -98,6 +100,18 @@ export function resetShopMockData(): void {
 // ---- view builders ---------------------------------------------------------------------------
 
 export const money = (amount: string) => ({ amount, currencyCode: 'BDT' });
+
+/**
+ * Minor units (`280000`) to the wire amount (`"2800.00"`) by string handling only: no division, no float
+ * (HO-P5 S0 carry-forward: the "Was" price is formatted, never computed).
+ */
+function centsText(cents: number): string {
+  const digits = String(Math.trunc(cents)).padStart(3, '0');
+  return `${digits.slice(0, -2)}.${digits.slice(-2)}`;
+}
+
+const compareAtOf = (sku: MockSku) =>
+  sku.compareAtCents == null ? null : money(centsText(sku.compareAtCents));
 
 export const isOnStorefront = (p: MockProduct) => p.status === 'Active' && p.listed;
 
@@ -161,34 +175,36 @@ export function catalogueItem(p: MockProduct) {
     countryOfOrigin: p.country
       ? { code: p.country, name: COUNTRY_NAMES[p.country] ?? p.country }
       : null,
-    lifeStage: p.lifeStage,
-    prescriptionRequired: p.prescriptionRequired,
     fromPrice: from ? money(from) : null,
     priceVaries: varies,
     availability: productAvailability(p),
     rating: { average: p.ratingAverage, count: p.ratingCount },
     primaryImage: imageFor(p, true),
+    // HO-P5 G1/G8/BG-13: Read/ViewModels/CatalogueItem.cs:28-32. The public builder never sends the staff-only
+    // certificate expiry and file, or the scheduled "Was" price. The mock's cards are per product, so the
+    // "Was" price (a single-size card's field on the server) is sent only when the product has one active size.
+    districtOfOrigin: p.district ?? null,
+    certifications: p.certifications,
+    compareAtPrice: activeSkus(p).length === 1 ? compareAtOf(activeSkus(p)[0]!) : null,
   };
 }
 
 export function detailView(p: MockProduct, locale: string | undefined) {
   const translation = locale ? p.translations.find((t) => t.locale === locale) : undefined;
-  const pick = (
-    field: 'name' | 'description' | 'ingredientList' | 'feedingGuide',
-    base: string | null,
-  ) => {
+  const pick = (field: 'name' | 'description' | 'ingredientList', base: string | null) => {
     const translated = translation?.[field] ?? null;
     return { value: translated ?? base, locale: translated ? locale! : 'en' };
   };
   const name = pick('name', p.name);
   const description = pick('description', p.description);
   const ingredientList = pick('ingredientList', p.ingredientList);
-  const feedingGuide = pick('feedingGuide', p.feedingGuide);
-  const isFood = p.category === 'CatFood';
+  const isFood = isFoodCategory(p.category);
   return {
     productId: p.productId,
     slug: p.slug,
     name: name.value!,
+    // HO-P5 G1: Read/ViewModels/ProductDetailViewModel.cs:21 (no village).
+    districtOfOrigin: p.district ?? null,
     brand: p.brand,
     description: description.value ?? '',
     category: p.category,
@@ -198,19 +214,19 @@ export function detailView(p: MockProduct, locale: string | undefined) {
     countryOfOrigin: p.country
       ? { code: p.country, name: COUNTRY_NAMES[p.country] ?? p.country }
       : null,
-    prescriptionRequired: p.prescriptionRequired,
     food:
       isFood && p.kind === 'Standard'
         ? {
-            manufacturer: p.manufacturer,
-            lifeStage: p.lifeStage,
-            proteinSource: p.protein,
             ingredientList: ingredientList.value,
-            guaranteedAnalysis: p.analysis,
-            feedingGuide: feedingGuide.value,
             storageInstructions: p.storageInstructions,
+            shelfLife: p.shelfLife,
+            netWeight: p.netWeight,
+            allergens: p.allergens,
+            organicCertifier: p.organicCertifier,
+            organicCertificateNumber: p.organicCertificateNumber,
           }
         : null,
+    certifications: p.certifications,
     images: [imageFor(p, true), { ...imageFor(p, false), altText: `${p.name} — back of pack` }],
     skus: activeSkus(p).map((s) => ({
       skuId: s.skuId,
@@ -221,10 +237,12 @@ export function detailView(p: MockProduct, locale: string | undefined) {
       colour: s.colour,
       packQuantity: s.packQuantity,
       price: s.price ? money(s.price) : null,
+      // HO-P5 BG-13: Read/ViewModels/ProductDetailViewModel.cs:12-13.
+      compareAtPrice: compareAtOf(s),
       availability: skuAvailability(p, s),
       expiryNotice: s.expiresOn && s.inStock ? { expiresOn: s.expiresOn } : null,
       images:
-        s.code === 'RC-K-4KG'
+        s.code === 'OAT-4KG'
           ? [{ ...imageFor(p, true, s.skuId), altText: `${p.name} 4 kg bag` }]
           : [],
     })),
@@ -235,7 +253,6 @@ export function detailView(p: MockProduct, locale: string | undefined) {
       name: name.locale,
       description: description.locale,
       ingredientList: ingredientList.locale,
-      feedingGuide: feedingGuide.locale,
     },
     bundle:
       p.kind === 'Bundle' && p.bundle

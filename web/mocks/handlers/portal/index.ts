@@ -5,7 +5,7 @@ import { dashboardFor, portalIds, reorderResults, type PortalScenario } from './
  * `mocks/handlers/portal/index.ts` — HO-POR-002 §12. The portal dashboard and Orders' re-order, as
  * the merged backend sends them (HO-POR-001 `PortalController`; HO-ORD-001 C15
  * `CustomerOrdersController.Reorder`). `mocks/handlers/areas/portal.ts` stays the empty stub
- * HO-CAT-002 scaffolded (HO-ADM-002's precedent); `mocks/handlers/index.ts` adds this array.
+ * an earlier handover scaffolded (HO-ADM-002's precedent); `mocks/handlers/index.ts` adds this array.
  *
  * Scenario: which dashboard the mock answers with. In the browser a Playwright test sets the
  * `pc_mock_portal` cookie (the handlers run in the page, so a module variable would die on every
@@ -99,9 +99,11 @@ export const portalAreaHandlers: HttpHandler[] = [
 ];
 
 /**
- * Re-order scenario answers for the portal's own Vitest suite ONLY (`tests/components/portal/reorder.test.tsx`
- * calls `server.use(...portalReorderFixtureHandlers)`). Not registered in `mocks/handlers/index.ts`: the app's mock
- * re-order is HO-ORD-002's (`mocks/handlers/ordering/customer.ts`) -- POR backlog 31, deduped at merge 2026-10-13.
+ * Re-order scenario answers for the portal's fixture orders. The portal's Vitest suite puts them first
+ * (`tests/components/portal/reorder.test.tsx` calls `server.use(...portalReorderFixtureHandlers)`). In the app they
+ * are only a fallback: HO-ORD-002's handler (`mocks/handlers/ordering/customer.ts`) answers its own orders and returns
+ * nothing for any other id, so the dashboard's fixture orders reach this one (HO-P3 TEST gate E13/E14; before, the
+ * 2026-10-13 dedupe left them answered 404).
  */
 export const portalReorderFixtureHandlers: HttpHandler[] = [
   http.post('*/api/customers/me/orders/:orderId/reorder', ({ params, request }) => {
@@ -143,5 +145,8 @@ export const portalReorderFixtureHandlers: HttpHandler[] = [
       : new HttpResponse(null, { status: answer.status });
   }),
 ];
+
+// After the ordering mock in `mocks/handlers/index.ts`, so it only sees ids that mock does not own.
+portalAreaHandlers.push(...portalReorderFixtureHandlers);
 
 export { portalIds, reorderResults } from './fixtures';

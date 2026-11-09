@@ -9,13 +9,7 @@ import type { Money } from '../format/money';
  * renders it and does nothing else with it.
  */
 
-export interface CartCat {
-  id: string;
-  name: string;
-}
-
 export type CartLineAvailability = 'InStock' | 'Limited' | 'Unavailable';
-export type CartPrescriptionStatus = 'Authorised' | 'NotAuthorised' | 'CatRequired';
 
 export interface CartLine {
   lineId: string;
@@ -25,14 +19,11 @@ export interface CartLine {
   variantLabel: string;
   imagePath: string | null;
   quantity: number;
-  cat: CartCat | null;
   unitPrice: Money | null;
   priceWhenAdded: Money;
   priceChanged: boolean;
   availability: CartLineAvailability;
   availableQuantity: number | null;
-  requiresPrescription: boolean;
-  prescriptionStatus: CartPrescriptionStatus | null;
   lineSubtotal: Money | null;
 }
 
@@ -52,17 +43,13 @@ export function getCart(): Promise<Cart> {
 export interface AddCartLineRequest {
   skuId: string;
   quantity: number;
-  catId?: string;
 }
 
 export function addCartLine(request: AddCartLineRequest): Promise<{ lineId: string; cartId: string }> {
   return apiFetch('/api/cart/lines', { method: 'POST', body: request });
 }
 
-export function updateCartLine(
-  lineId: string,
-  change: { quantity?: number; catId?: string },
-): Promise<void> {
+export function updateCartLine(lineId: string, change: { quantity: number }): Promise<void> {
   return apiFetch(`/api/cart/lines/${encodeURIComponent(lineId)}`, { method: 'PUT', body: change });
 }
 

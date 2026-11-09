@@ -1,9 +1,8 @@
 # Accounts & Identity — UX
 
-The clickable design for backlog §1 *Accounts and Identity*, built against
-[`HO-ACC-002`](../../handover/HO-ACC-002.md), the frontend handover. Second area designed after
-[Cat Profiles](../cat-profile/README.md) — the first to draw on the formalised
-[PurrCare design system](#the-design-system) rather than inventing its own palette.
+The clickable design for Amar Gram *Accounts and Identity*, built against
+[`HO-ACC-002`](../../handover/HO-ACC-002.md), the frontend handover. It draws on the formalised
+[Amar Gram design system](#the-design-system) rather than inventing its own palette.
 
 ## Where to review it
 
@@ -26,12 +25,12 @@ runtime, which is not in this repo. Read them as source; view them on the canvas
 
 ## The screens
 
-Five rows, twenty artboards — more than Cat Profiles' fourteen, because this area's staff-admin
-surface (accounts, roles, duplicates, merge) is genuinely larger than one cat's record.
+Five rows, twenty artboards — this area's staff-admin surface (accounts, roles, duplicates, merge)
+is genuinely large.
 
 | Row | File | Screen | Shows |
 |---|---|---|---|
-| Register & sign in | `Register.dc.html` | Registration | US-ACC-01: mobile/email both-optional line, password requirements before typing, the CAPTCHA with its reception alternative |
+| Register & sign in | `Register.dc.html` | Registration | US-ACC-01: mobile/email both-optional line, password requirements before typing, the CAPTCHA with its register-at-an-outlet alternative |
 | | `RegisterSuccess.dc.html` | Success | "Your account is ready" — no mention of verification, codes, or checking email |
 | | `SignIn.dc.html` | Customer sign-in | US-ACC-04: the one non-disclosing error, identical for every failure |
 | | `ForgotPassword.dc.html` | Forgot password | US-ACC-05: the client-owned confirmation, rendered the same whether or not an account matches |
@@ -48,28 +47,28 @@ surface (accounts, roles, duplicates, merge) is genuinely larger than one cat's 
 | | `StaffAccountDetail.dc.html` | Staff account detail | Removing a role confirms and names the consequence (signed out) |
 | Staff — customers & duplicates | `WalkIn.dc.html` | Walk-in registration | US-ACC-10: the existing-customer notice on a duplicate mobile number |
 | | `CustomerDetail.dc.html` | Customer detail | The *Incomplete* badge (icon + word) and the online-setup-unavailable note |
-| | `Duplicates.dc.html` | Duplicates report | US-ACC-11: each group's cats, deceased included, the not-yet-recorded notice |
-| | `MergeReview.dc.html` | Merge review | ⭐ nothing pre-selected, every cat that will move named, "This cannot be undone" |
+| | `Duplicates.dc.html` | Duplicates report | US-ACC-11: each group's saved addresses, archived ones included, the not-yet-recorded notice |
+| | `MergeReview.dc.html` | Merge review | ⭐ nothing pre-selected, every address that will move named, "This cannot be undone" |
 | 360px floor check | `RegisterMobile360.dc.html` | Register at 360px | UI-1 — the busiest form in the area, no horizontal scroll |
 
 ## The design system
 
-Built from the [PurrCare design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN) —
-formalised from Cat Profiles' palette in this same session. This canvas hand-transcribes its
+Built from the [Amar Gram design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN) —
+formalised in an earlier session and re-themed for Amar Gram. This canvas hand-transcribes its
 token values rather than installing it live on the canvas (a deliberate scope cut, see below); the
 values below are that system's tokens, verbatim:
 
 | Token | Value | Use |
 |---|---|---|
-| Display | **Newsreader** 600 | Page and dialog titles |
-| Body | **Public Sans** 400/600/700 | Everything else |
-| `surface-page` | `#FAF9F6` | Page background |
+| Display | **Fraunces** 600 | Page and dialog titles |
+| Body | **Work Sans** 400/600/700 | Everything else |
+| `surface-page` | `#F7F4EC` | Page background |
 | `surface` | `#FFFFFF` | Cards |
-| `ink` / `ink-muted` | `#1C1A17` / `#5C574F` | Text |
-| `border` | `#E5E1D8` | Card and row rules — this system separates with rules, not shadows |
-| `accent` | `#15605A` | Primary actions, links, Current |
-| `warning-bg`/`warning-ink` | `#FBF0DC` / `#6E4700` | Due-soon |
-| `danger-bg`/`danger-ink` | `#FBE9E7` / `#8F1D1D` | Overdue, high-risk, destructive |
+| `ink` / `ink-muted` | `#2A1F12` / `#69553C` | Text |
+| `border` | `#E5DCC8` | Card and row rules — this system separates with rules, not shadows |
+| `accent` | `#B4531A` | Primary actions, links, Current |
+| `warning-bg`/`warning-ink` | `#FCEBC7` / `#6E4700` | Due-soon |
+| `danger-bg`/`danger-ink` | `#FBE3DA` / `#8A2814` | Overdue, destructive |
 
 Every text/background pair clears 4.5:1.
 
@@ -95,7 +94,7 @@ Every text/background pair clears 4.5:1.
 
 ## Known gaps, deliberately visible
 
-- **No live interaction.** Unlike some of Cat Profiles' artboards, none of these are wired up —
+- **No live interaction.** None of these are wired up —
   every state shown is a separate artboard, not a working toggle. The screen count already covers
   most of what a click would reveal; wiring it up is a fair follow-up, not done here.
 - **The design system isn't installed on the canvas.** Token values are hand-transcribed instead
@@ -103,14 +102,12 @@ Every text/background pair clears 4.5:1.
   see "The design system" above.
 - **The capability matrix preview is illustrative**, not the real `GET /api/staff-roles` data —
   HO-ACC-002 §11.10 requires the real API response; no backend exists yet to call.
-- **No design exists yet for what Cat Profiles' navigation gains** once accounts ships (a "Later"
-  item becoming real) — that's Cat Profiles' own canvas to update, not this one's.
 
 ## Customer sign-in: Hearth "Welcome home" (owner-approved 2026-10-16)
 
 `SignIn.dc.html` now follows option 1 of the sign-in preview: a split screen with a warm-soft welcome panel on the left
-(PurrCare logo, "Welcome *home*.", three reasons to sign in, the line-art cat on a white disc) and the form on the right
-(pill inputs, password show/hide, 54px teal "Sign in" pill, "Forgot your password?", "New to PurrCare?" divider and a
+(Amar Gram logo, "Welcome *home*.", three reasons to sign in, a line-art sprout in a basket on a white disc) and the form on the right
+(pill inputs, password show/hide, 54px teal "Sign in" pill, "Forgot your password?", "New to Amar Gram?" divider and a
 "Create an account" pill). It is the page shown when a guest clicks **Sign in** or reaches **Checkout** signed out
 (`?next=` keeps the destination); the shop home and every other screen are unchanged. The US-ACC-04 rule stands: one
 non-disclosing error, identical for every failure, copy unchanged. On a phone the welcome panel becomes a rounded band
@@ -125,6 +122,6 @@ frame as `SignIn` (warm-soft welcome panel + form; a rounded band on a phone):
   When neither mobile nor email is given, the shared message shows once under both fields and is linked to each.
 - Account ready — "You're *in*."; tick disc, "Your account is ready", the "Sign in →" pill (keeps `?next=`).
 - Forgot password — "It happens to *everyone*." with the three steps; "Back to sign in" above the heading; new line:
-  "Can't get to your phone or email? Ask at the clinic reception and we'll help you in person."
+  "Can't get to your phone or email? Ask at any Amar Gram outlet and we'll help you in person."
 - Check your messages — "Almost *there*."; the one non-disclosing message, unchanged, plus a "Nothing arrived?" box.
 Staff forgot-password, reset-password and staff sign-in keep the neutral staff look.

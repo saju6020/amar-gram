@@ -1,8 +1,7 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
-import { badRequest, shopFixtureIds, type MockProduct } from './fixtures';
-import { hasCustomerSession, storefrontProducts } from './catalogue';
+import { badRequest, shopFixtureIds } from './fixtures';
+import { hasCustomerSession } from './catalogue';
 import {
-  catalogueItem,
   db,
   findById,
   findBySlug,
@@ -24,117 +23,7 @@ const unauthorised = () => HttpResponse.json({ error: 'session_invalid' }, { sta
 const notFound = () => new HttpResponse(null, { status: 404 });
 const noContent = () => new HttpResponse(null, { status: 204 });
 
-const CATS: Record<
-  string,
-  { name: string; lifeStage: string | null; estimated: boolean; allergen: string | null }
-> = {
-  [shopFixtureIds.catAllergy]: {
-    name: 'Whiskers',
-    lifeStage: 'Adult',
-    estimated: false,
-    allergen: 'Chicken',
-  },
-  [shopFixtureIds.catEstimatedDob]: {
-    name: 'Biscuit',
-    lifeStage: 'Adult',
-    estimated: true,
-    allergen: null,
-  },
-  [shopFixtureIds.catNoDob]: { name: 'Mittens', lifeStage: null, estimated: false, allergen: null },
-};
-
-const containsWord = (text: string | null, word: string) =>
-  !!text && new RegExp(`\\b${word}s?\\b`, 'i').test(text);
-
-function purchasability(p: MockProduct) {
-  return {
-    skus: p.skus
-      .filter((s) => s.status === 'Active')
-      .map((s) => {
-        const inStock = skuAvailability(p, s) === 'InStock';
-        if (p.prescriptionRequired && p.slug === shopFixtureIds.rxNoAuthSlug) {
-          return {
-            skuId: s.skuId,
-            purchasable: false,
-            purchaseBlockReason: 'PrescriptionAuthorisationRequired',
-            eligibleCats: [],
-          };
-        }
-        const eligibleCats = p.prescriptionRequired
-          ? [
-              { catId: shopFixtureIds.catAllergy, name: 'Whiskers', validTo: '2026-12-12' },
-              { catId: shopFixtureIds.catNoDob, name: 'Mittens', validTo: '2027-01-05' },
-            ]
-          : [];
-        return {
-          skuId: s.skuId,
-          purchasable: inStock,
-          purchaseBlockReason: inStock ? null : 'OutOfStock',
-          eligibleCats,
-        };
-      }),
-  };
-}
-
-function foodSuggestions(catId: string) {
-  const cat = CATS[catId];
-  if (!cat) return null;
-  const candidates = storefrontProducts().filter(
-    (p) =>
-      p.category === 'CatFood' &&
-      p.kind === 'Standard' &&
-      !p.prescriptionRequired &&
-      (!cat.lifeStage || p.lifeStage === cat.lifeStage || p.lifeStage === 'AllLifeStages'),
-  );
-  const excluded = cat.allergen
-    ? candidates.filter((p) => containsWord(p.ingredientList, cat.allergen!))
-    : [];
-  const kept = candidates.filter((p) => !excluded.includes(p)).slice(0, 6);
-  const reasonSets: Array<Array<{ code: string; values: Record<string, string> }>> = [
-    [
-      {
-        code: 'LifeStageMatch',
-        values: { lifeStage: cat.lifeStage ?? 'Adult', about: cat.estimated ? 'true' : 'false' },
-      },
-      { code: 'Sterilised', values: {} },
-    ],
-    [
-      {
-        code: 'LifeStageMatch',
-        values: { lifeStage: cat.lifeStage ?? 'Adult', about: cat.estimated ? 'true' : 'false' },
-      },
-      { code: 'WeightManagement', values: { weightKg: '6.80' } },
-    ],
-    [
-      {
-        code: 'LifeStageMatch',
-        values: { lifeStage: cat.lifeStage ?? 'Adult', about: cat.estimated ? 'true' : 'false' },
-      },
-      { code: 'ConditionMatch', values: { focus: 'Urinary' } },
-    ],
-  ];
-  return {
-    cat: { catId, name: cat.name, lifeStage: cat.lifeStage, lifeStageIsEstimated: cat.estimated },
-    items: kept.map((p, i) => ({
-      item: catalogueItem(p),
-      reasons: cat.lifeStage ? reasonSets[i % reasonSets.length]! : [],
-    })),
-    excludedForAllergy: excluded.length
-      ? [{ allergen: cat.allergen!, count: excluded.length }]
-      : [],
-    hints: cat.lifeStage ? [] : ['AddDateOfBirth'],
-  };
-}
-
 export const customerHandlers: HttpHandler[] = [
-  http.get('*/api/customers/me/shop/products/:slug/purchasability', ({ params, request }) => {
-    if (!hasCustomerSession(request)) return unauthorised();
-    const product = findBySlug(String(params.slug));
-    return product && isOnStorefront(product)
-      ? HttpResponse.json(purchasability(product))
-      : notFound();
-  }),
-
   http.get('*/api/customers/me/shop/products/:slug/review-eligibility', ({ params, request }) => {
     if (!hasCustomerSession(request)) return unauthorised();
     const slug = String(params.slug);
@@ -400,11 +289,5 @@ export const customerHandlers: HttpHandler[] = [
     db.alerts = db.alerts.filter((a) => a !== alert);
     persist();
     return noContent();
-  }),
-
-  http.get('*/api/customers/me/cats/:catId/food-recommendations', ({ params, request }) => {
-    if (!hasCustomerSession(request)) return unauthorised();
-    const result = foodSuggestions(String(params.catId));
-    return result ? HttpResponse.json(result) : notFound();
   }),
 ];

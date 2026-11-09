@@ -11,7 +11,7 @@ import {
   type ConfirmPasswordResetRequest,
 } from '@/lib/api/auth';
 
-/** Customer-facing auth mutations (HO-CAT-002 §8.2 rule 3 — only lib/hooks/ calls useMutation). */
+/** Customer-facing auth mutations (the shell handover §8.2 rule 3 — only lib/hooks/ calls useMutation). */
 
 export function useRegisterCustomer() {
   return useMutation({

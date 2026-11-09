@@ -1,4 +1,7 @@
+import type { ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
+import { ActionLink } from '@/components/back-office/ActionLink';
+import { PageHeader } from '@/components/back-office/PageHeader';
 import { EmptyState } from '@/components/common/EmptyState';
 import type { Dashboard } from '@/lib/api/dashboard';
 import { formatReportDate } from '@/lib/format/report';
@@ -7,37 +10,53 @@ import { DashboardTile } from './DashboardTile';
 import { RefreshAnnouncer } from './RefreshAnnouncer';
 
 /**
- * `components/dashboard/DashboardView.tsx` — ⭐ HO-RPT-002 §11.2, US-RPT-05. Header ("Today — date ·
- * branch", the zone, "Updated HH:mm") and the tiles the server sent, IN THE SERVER'S ORDER. Nothing
- * is added, reordered or filled in: a tile the caller may not see is not in the payload and has no
- * placeholder (ADR-FE-137). The date is the payload's `localDate` (the branch's day), never the
- * browser's today (U-A7).
+ * `components/dashboard/DashboardView.tsx` — ⭐ HO-RPT-002 §11.2, HO-P4 §11.2.2, US-RPT-05. Header
+ * ("Today — date · branch", the zone, "Updated HH:mm") and the tiles the server sent, IN THE
+ * SERVER'S ORDER. Nothing is added, reordered or filled in: a tile the caller may not see is not in
+ * the payload and has no placeholder (ADR-FE-137). The date is the payload's `localDate` (the
+ * branch's day), never the browser's today (U-A7).
+ *
+ * `h1` keeps the pinned "Today — {date} · {branch}" text (OQ-3); the greeting is the eyebrow. The two
+ * header actions are shortcuts (presentation only: the server decides who may use them). `panels`
+ * is the page's slot for the "Needs attention" and "Latest orders" panels, which load themselves.
  */
 export function DashboardView({
   dashboard,
   updatedAt,
   refreshFailed = false,
+  greetingName = null,
+  panels,
 }: {
   dashboard: Dashboard;
   updatedAt: number;
   /** The last background refresh failed; the tiles below are from the last good one. */
   refreshFailed?: boolean;
+  /** The signed-in person's first name for the eyebrow; dropped when there is none. */
+  greetingName?: string | null;
+  panels?: ReactNode;
 }) {
   const { timeZoneId } = dashboard;
   return (
     <div className="flex flex-col gap-5">
-      <header className="flex flex-wrap items-end justify-between gap-2">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold text-ink">
-            Today — {formatReportDate(dashboard.localDate)} · {dashboard.branchName}
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">Times are in {timeZoneId}.</p>
-        </div>
-        <p className="inline-flex items-center gap-1.5 text-sm text-ink-muted">
-          <RefreshCw size={14} aria-hidden="true" />
-          Updated {timeOnlyInZone(dashboard.generatedOn, timeZoneId)} ({timeZoneId})
-        </p>
-      </header>
+      <PageHeader
+        eyebrow={greetingName ? `Good morning, ${greetingName}` : 'Good morning'}
+        title={`Today — ${formatReportDate(dashboard.localDate)} · ${dashboard.branchName}`}
+        description={`Times are in ${timeZoneId}.`}
+        actions={
+          <>
+            <ActionLink href="/staff/pos" variant="outline">
+              New counter sale
+            </ActionLink>
+            <ActionLink href="/staff/inventory/receipts/new" variant="primary">
+              Receive goods
+            </ActionLink>
+          </>
+        }
+      />
+      <p className="-mt-2 inline-flex items-center gap-1.5 text-sm text-ink-muted">
+        <RefreshCw size={14} aria-hidden="true" />
+        Updated {timeOnlyInZone(dashboard.generatedOn, timeZoneId)} ({timeZoneId})
+      </p>
 
       <RefreshAnnouncer updatedAt={updatedAt} />
       {refreshFailed && (
@@ -59,6 +78,8 @@ export function DashboardView({
           ))}
         </div>
       )}
+
+      {panels}
     </div>
   );
 }

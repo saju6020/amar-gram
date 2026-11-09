@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { useMyBranches, useActiveBranchId, useSetActiveBranch } from '@/lib/hooks/useActiveBranch';
 import { useAdminBranches } from '@/lib/hooks/useAdminBranches';
 
@@ -15,8 +16,15 @@ import { useAdminBranches } from '@/lib/hooks/useAdminBranches';
  * ADM-002-FU2: the row is `w-full max-w-md` with `min-w-0` on the select, so a long branch name
  * is truncated inside the select instead of widening the page (UI-1, no sideways scroll at 360px).
  * The label never shrinks; the full name stays in each option's text and in the select's `title`.
+ *
+ * HO-P4 §8.2, ADR-FE-182: `variant="sidebar"` is the banana-leaf, stacked "Outlet" select the staff
+ * shell renders in its sidebar (and in the phone sheet). It is the same component with the same
+ * hooks, so the active-branch seed effect still runs wherever it is mounted; it carries a generated
+ * id because the aside and the sheet can both be in the document at once. `variant="page"` (the
+ * default) is unchanged.
  */
-export function ActiveBranchPicker() {
+export function ActiveBranchPicker({ variant = 'page' }: { variant?: 'page' | 'sidebar' } = {}) {
+  const sidebarId = useId();
   const { data: myBranches } = useMyBranches();
   const { data: allBranches } = useAdminBranches();
   const activeBranchId = useActiveBranchId();
@@ -27,6 +35,29 @@ export function ActiveBranchPicker() {
 
   const selectedId = activeBranchId ?? myBranches?.primaryBranchId ?? '';
   const nameFor = (id: string) => allBranches?.find((b) => b.id === id)?.name ?? id;
+
+  if (variant === 'sidebar') {
+    return (
+      <div className="flex min-w-0 flex-col gap-1 px-1.5">
+        <label htmlFor={sidebarId} className="text-xs text-leaf-soft">
+          Outlet
+        </label>
+        <select
+          id={sidebarId}
+          value={selectedId}
+          title={nameFor(selectedId)}
+          onChange={(event) => setActiveBranch(event.target.value)}
+          className="min-h-10 min-w-0 truncate rounded-[var(--radius-md)] border border-leaf bg-leaf px-2.5 text-sm text-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf-soft"
+        >
+          {branchIds.map((id) => (
+            <option key={id} value={id}>
+              {nameFor(id)}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-4 flex w-full min-w-0 max-w-md items-center gap-2 text-sm">

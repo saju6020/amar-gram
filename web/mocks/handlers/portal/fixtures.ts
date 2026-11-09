@@ -1,22 +1,13 @@
-import type { PortalBalances, PortalCatItem, PortalDashboard } from '@/lib/api/portal';
+import type { PortalBalances, PortalDashboard } from '@/lib/api/portal';
 import type { ReorderResult } from '@/lib/api/my-orders';
 
 /**
  * `mocks/handlers/portal/fixtures.ts` — HO-POR-002 §12. Dashboard bodies shaped exactly like
  * `PortalDashboardViewModel` on master (HO-POR-001, merged): camelCase, `yyyy-MM-dd` dates, money as
- * `{ amount: "…", currencyCode }`, `Unavailable` sections with `data: null`, and NO `stays` /
+ * `{ amount: "…", currencyCode }`, `Unavailable` sections with `data: null`, and NO
  * `subscriptions` key. No field here is one the backend does not send (HO-ACC-002 §5.1).
  */
 export const portalIds = {
-  cats: {
-    noodle: 'a1000000-0000-0000-0000-000000000001',
-    pepper: 'a1000000-0000-0000-0000-000000000002',
-    tofu: 'a1000000-0000-0000-0000-000000000003',
-  },
-  appointments: {
-    vaccination: 'b1000000-0000-0000-0000-000000000001',
-    london: 'b1000000-0000-0000-0000-000000000002',
-  },
   orders: {
     pending: 'c1000000-0000-0000-0000-000000000001',
     delivered: 'c1000000-0000-0000-0000-000000000002',
@@ -26,10 +17,6 @@ export const portalIds = {
     notFound: 'c1000000-0000-0000-0000-0000000000f4',
     refused: 'c1000000-0000-0000-0000-0000000000f0',
     conflict: 'c1000000-0000-0000-0000-0000000000f9',
-  },
-  visits: {
-    withSummary: 'd1000000-0000-0000-0000-000000000001',
-    withoutSummary: 'd1000000-0000-0000-0000-000000000002',
   },
   invoices: {
     overdue: 'e1000000-0000-0000-0000-000000000001',
@@ -43,23 +30,7 @@ const ready = <T>(data: T) => ({ state: 'Ready' as const, data });
 const unavailable = () => ({ state: 'Unavailable' as const, data: null });
 
 const HOW_TO_PAY =
-  'You can pay at the clinic by cash or card, or by bank transfer. Contact the clinic if you need the transfer details.';
-
-function cat(
-  catId: string,
-  name: string,
-  overallStatus: 'Current' | 'DueSoon' | 'Overdue',
-  earliestNextDueOn: string | null,
-  isHighRisk = false,
-): PortalCatItem {
-  return {
-    catId,
-    name,
-    isHighRisk,
-    vaccinationState: 'Ready',
-    vaccination: { overallStatus, earliestNextDueOn, bookingEligible: true },
-  };
-}
+  'You can pay at the outlet by cash or card, or by bank transfer. Contact the outlet if you need the transfer details.';
 
 export const fullBalances: PortalBalances = {
   hasOutstanding: true,
@@ -102,86 +73,12 @@ export const fullBalances: PortalBalances = {
   howToPay: HOW_TO_PAY,
 };
 
-/** Two cats (one DueSoon, one Overdue and high risk), appointments in two zones, orders in four
- *  states, balances in BDT and USD, visits with and without a summary and with a follow-up date,
- *  prescriptions. */
+/** Orders in four states and balances in BDT and USD. */
 export function fullDashboard(): PortalDashboard {
   return {
     generatedOn: GENERATED_ON,
     customer: ready({ fullName: 'Sam Rahman' }),
-    cats: ready({
-      hasCats: true,
-      hasMore: false,
-      items: [
-        cat(portalIds.cats.noodle, 'Noodle', 'DueSoon', '2026-10-30'),
-        cat(portalIds.cats.pepper, 'Pepper', 'Overdue', '2026-09-12', true),
-        cat(portalIds.cats.tofu, 'Tofu', 'Current', '2027-03-01'),
-      ],
-    }),
-    appointments: ready({
-      items: [
-        {
-          appointmentId: portalIds.appointments.vaccination,
-          catId: portalIds.cats.noodle,
-          catName: 'Noodle',
-          serviceName: 'Vaccination',
-          startsOn: '2026-10-20T04:30:00+00:00',
-          endsOn: '2026-10-20T04:50:00+00:00',
-          performerName: 'Dr Rahman',
-          branchName: 'Gulshan branch',
-          branchTimeZoneId: 'Asia/Dhaka',
-          status: 'Booked',
-        },
-        {
-          appointmentId: portalIds.appointments.london,
-          catId: portalIds.cats.pepper,
-          catName: 'Pepper',
-          serviceName: 'Consultation',
-          startsOn: '2026-10-22T16:00:00+00:00',
-          endsOn: '2026-10-22T16:20:00+00:00',
-          performerName: null,
-          branchName: 'London branch',
-          branchTimeZoneId: 'Europe/London',
-          status: 'CheckedIn',
-        },
-      ],
-    }),
     balances: ready(structuredClone(fullBalances)),
-    visits: ready({
-      items: [
-        {
-          visitId: portalIds.visits.withSummary,
-          catId: portalIds.cats.noodle,
-          catName: 'Noodle',
-          visitedOn: '2026-09-30',
-          serviceName: 'Consultation',
-          vetName: 'Dr Rahman',
-          hasDischargeSummary: true,
-          followUpOn: '2026-10-14',
-        },
-        {
-          visitId: portalIds.visits.withoutSummary,
-          catId: portalIds.cats.pepper,
-          catName: 'Pepper',
-          visitedOn: '2026-08-28',
-          serviceName: 'Vaccination',
-          vetName: 'Dr Chowdhury',
-          hasDischargeSummary: false,
-          followUpOn: null,
-        },
-      ],
-    }),
-    prescriptions: ready({
-      byCat: [
-        {
-          catId: portalIds.cats.noodle,
-          catName: 'Noodle',
-          activeCount: 2,
-          earliestEndsOn: '2026-10-18',
-        },
-        { catId: portalIds.cats.pepper, catName: 'Pepper', activeCount: 1, earliestEndsOn: null },
-      ],
-    }),
     orders: ready({
       items: [
         {
@@ -229,13 +126,11 @@ export function fullDashboard(): PortalDashboard {
   };
 }
 
-/** A brand-new customer: every section `Ready` and empty, `hasCats: false`. */
+/** A brand-new customer: every section `Ready` and empty. */
 export function newCustomerDashboard(): PortalDashboard {
   return {
     generatedOn: GENERATED_ON,
     customer: ready({ fullName: 'Nusrat Jahan' }),
-    cats: ready({ hasCats: false, hasMore: false, items: [] }),
-    appointments: ready({ items: [] }),
     balances: ready({
       hasOutstanding: false,
       outstanding: [],
@@ -245,36 +140,13 @@ export function newCustomerDashboard(): PortalDashboard {
       invoices: [],
       howToPay: HOW_TO_PAY,
     }),
-    visits: ready({ items: [] }),
-    prescriptions: ready({ byCat: [] }),
     orders: ready({ items: [] }),
   };
 }
 
-/** `balances` and `visits` Unavailable (and nothing else lost). */
+/** `balances` Unavailable (and nothing else lost). */
 export function degradedDashboard(): PortalDashboard {
-  return { ...fullDashboard(), balances: unavailable(), visits: unavailable() };
-}
-
-/** `cats` Unavailable — the no-cats invitation must NOT show. */
-export function catsUnavailableDashboard(): PortalDashboard {
-  return { ...fullDashboard(), cats: unavailable() };
-}
-
-/** 13 cats: the backend shows 12 and says `hasMore`. */
-export function manyCatsDashboard(): PortalDashboard {
-  const items = Array.from({ length: 12 }, (_, index) =>
-    cat(
-      `a2000000-0000-0000-0000-0000000000${String(index + 10)}`,
-      `Cat ${index + 1}`,
-      'Current',
-      '2027-01-01',
-    ),
-  );
-  return {
-    ...fullDashboard(),
-    cats: ready({ hasCats: true, hasMore: true, items }),
-  };
+  return { ...fullDashboard(), balances: unavailable() };
 }
 
 /** The `orders` key absent: "not delivered yet" (HO-POR-001 §1 Amended 2026-10-09). */
@@ -289,24 +161,23 @@ export const reorderResults = {
   mixed: {
     addedCount: 3,
     unavailable: [
-      { productName: 'Feliway Classic diffuser refill', reason: 'OutOfStock' },
-      { productName: 'Catit Creamy lick treats', reason: 'NotPurchasable' },
-      { productName: 'Hill’s c/d Urinary Care', reason: 'PrescriptionNotAuthorised' },
-      { productName: 'Tasty Bites chicken', reason: 'CartFull' },
+      { productName: 'Organic rice 5 kg', reason: 'OutOfStock' },
+      { productName: 'Mustard oil 1 L', reason: 'NotPurchasable' },
+      { productName: 'Raw honey 500 g', reason: 'QuantityOutOfRange' },
+      { productName: 'Red lentils 1 kg', reason: 'CartFull' },
       { productName: 'Mystery item', reason: 'SomethingTheClientHasNeverHeardOf' },
     ],
   } satisfies ReorderResult,
   nothing: {
     addedCount: 0,
     unavailable: [
-      { productName: 'Royal Canin Renal', reason: 'OutOfStock' },
-      { productName: 'Hill’s z/d Skin', reason: 'PrescriptionNotAuthorised' },
+      { productName: 'Brown sugar 1 kg', reason: 'OutOfStock' },
+      { productName: 'Ghee 400 g', reason: 'NotPurchasable' },
     ],
   } satisfies ReorderResult,
 };
 
-export type PortalScenario =
-  'full' | 'new' | 'degraded' | 'catsUnavailable' | 'manyCats' | 'ordersNotDelivered' | 'failed';
+export type PortalScenario = 'full' | 'new' | 'degraded' | 'ordersNotDelivered' | 'failed';
 
 export function dashboardFor(scenario: PortalScenario): PortalDashboard {
   switch (scenario) {
@@ -314,10 +185,6 @@ export function dashboardFor(scenario: PortalScenario): PortalDashboard {
       return newCustomerDashboard();
     case 'degraded':
       return degradedDashboard();
-    case 'catsUnavailable':
-      return catsUnavailableDashboard();
-    case 'manyCats':
-      return manyCatsDashboard();
     case 'ordersNotDelivered':
       return ordersNotDeliveredDashboard();
     default:

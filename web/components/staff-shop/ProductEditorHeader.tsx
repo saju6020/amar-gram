@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import { Check, Circle, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+import { ActionLink } from '@/components/back-office/ActionLink';
+import { PageHeader } from '@/components/back-office/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
+import { StatusPill } from '@/components/back-office/StatusPill';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import type {
@@ -11,7 +15,7 @@ import type {
   StaffProductDetail,
 } from '@/lib/api/staff-shop';
 
-const STATUS_VARIANT = { Draft: 'neutral', Active: 'success', Archived: 'neutral' } as const;
+const STATUS_TONE = { Draft: 'neutral', Active: 'success', Archived: 'warning' } as const;
 const STATUS_TEXT = {
   Draft: 'Draft',
   Active: 'Active (in the shop)',
@@ -79,6 +83,11 @@ export interface ProductEditorHeaderProps {
  * checklist and the status actions for the CURRENT status, each confirmed (UI-3) with what it
  * affects. **Publish is never disabled to express invalidity**: pressing it with an unmet blocking
  * item shows the server's refusal and moves focus to the checklist.
+ *
+ * HO-P4 §11.4.4/§11.4.5: a breadcrumb, the `h1`, a "Preview in shop" link (listed and active only)
+ * and a "Status" card holding the status text, the checklist and the transition commands. The card
+ * lives in the editor layout so the commands are reachable from every section, and exists once (a
+ * status change is a command with `expectedVersion`, never a radio saved with the Details form).
  */
 export function ProductEditorHeader({
   product,
@@ -95,42 +104,69 @@ export function ProductEditorHeader({
     archive: `Archive ${product.name}? It will disappear from the shop and can't be edited until restored.`,
   };
 
+  // "Preview in shop" only for a product the shop actually shows (listed and active).
+  const showPreview = product.status === 'Active' && product.listedOnStorefront;
+
   return (
-    <header className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="font-display text-2xl font-semibold text-ink">{product.name}</h1>
-          <p className="flex items-center gap-2 text-sm text-ink-muted">
-            <Badge variant={STATUS_VARIANT[product.status]}>{STATUS_TEXT[product.status]}</Badge>
-            <span>{product.brand}</span>
+    <header className="flex flex-col gap-4">
+      <nav aria-label="Breadcrumb">
+        <ol className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0 text-sm text-ink-muted">
+          <li>
+            <Link href="/staff/shop/products" className="font-semibold text-accent">
+              Products
+            </Link>
+          </li>
+          <li aria-hidden="true">/</li>
+          <li aria-current="page" className="[overflow-wrap:anywhere]">
+            {product.name}
+          </li>
+        </ol>
+      </nav>
+      <PageHeader
+        title={product.name}
+        description={product.brand}
+        actions={
+          showPreview ? (
+            <ActionLink href={`/shop/products/${product.slug}`} variant="outline">
+              Preview in shop
+            </ActionLink>
+          ) : undefined
+        }
+      />
+      <Panel
+        title="Status"
+        actions={ACTIONS[product.status].map((transition) => (
+          <Button
+            key={transition}
+            variant={transition === 'publish' ? 'primary' : 'secondary'}
+            onClick={() => setPending(transition)}
+          >
+            {LABEL[transition]}
+          </Button>
+        ))}
+      >
+        <div className="flex flex-col gap-3">
+          <p className="m-0">
+            <StatusPill tone={STATUS_TONE[product.status]}>
+              {STATUS_TEXT[product.status]}
+            </StatusPill>
           </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {ACTIONS[product.status].map((transition) => (
-            <Button
-              key={transition}
-              variant={transition === 'publish' ? 'primary' : 'secondary'}
-              onClick={() => setPending(transition)}
+          {error && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center gap-3 rounded-[var(--radius-md)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink"
             >
-              {LABEL[transition]}
-            </Button>
-          ))}
-        </div>
-      </div>
-      {error && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center gap-3 rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink"
-        >
-          <span>{error}</span>
-          {isConflict && (
-            <Button variant="secondary" size="sm" onClick={onReload}>
-              Reload
-            </Button>
+              <span>{error}</span>
+              {isConflict && (
+                <Button variant="secondary" size="sm" onClick={onReload}>
+                  Reload
+                </Button>
+              )}
+            </div>
           )}
+          <PublishChecklist ref={checklistRef} items={product.publishChecklist} />
         </div>
-      )}
-      <PublishChecklist ref={checklistRef} items={product.publishChecklist} />
+      </Panel>
       <ConfirmDialog
         open={pending !== null}
         onOpenChange={(open) => !open && setPending(null)}

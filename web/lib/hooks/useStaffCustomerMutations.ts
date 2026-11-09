@@ -2,6 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   registerWalkInCustomer,
   mergeCustomer,
+  addCustomerNote,
+  setCustomerTags,
+  requestCustomerPasswordReset,
   type RegisterWalkInCustomerRequest,
   type MergeCustomerRequest,
 } from '@/lib/api/staff-customers';
@@ -15,7 +18,7 @@ export function useRegisterWalkInCustomer() {
 }
 
 /**
- * ADR-FE-011 — one request to the merge endpoint, never client-orchestrated cat moves. Takes
+ * ADR-FE-011 — one request to the merge endpoint, never client-orchestrated follow-up calls. Takes
  * `duplicateCustomerId` as part of the mutate call (not fixed at hook-creation time) so
  * `MergeReview` can re-run it identically — same id, same body — from its "Run again" recovery
  * path (§11.13) without re-instantiating the hook.
@@ -24,7 +27,7 @@ export function useRegisterWalkInCustomer() {
  * (`['staff-customers','customer', id]`) — the same reasoning as this codebase's session queries
  * (`lib/hooks/useSession.ts`): `MergeReview` itself is still the mounted observer at merge time
  * (the detail screen for either customer isn't open yet), so `invalidateQueries`'s default
- * `refetchType: 'active'` would leave the pre-merge `catCount` sitting in the cache — fresh enough
+ * `refetchType: 'active'` would leave the pre-merge record sitting in the cache — fresh enough
  * (`staleTime: 30_000`, `app/providers.tsx`) that the detail screen would show it unrefetched the
  * moment "View the surviving record" is clicked, silently contradicting ADR-FE-011(c)'s own "fresh
  * read" promise for the one screen a real user checks right after a merge. The duplicates LIST
@@ -51,4 +54,33 @@ export function useMergeCustomer() {
       });
     },
   });
+}
+
+/** HO-P5 BG-19. A note changes the list and the profile's `noteCount`, so both are refetched. */
+export function useAddCustomerNote(customerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (text: string) => addCustomerNote(customerId, text),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'notes', customerId] });
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'customer', customerId] });
+    },
+  });
+}
+
+/** HO-P5 BG-19. The whole set is replaced; the response is the set as stored. The profile and the list rows show tags. */
+export function useSetCustomerTags(customerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (tags: string[]) => setCustomerTags(customerId, tags),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'customer', customerId] });
+      void queryClient.invalidateQueries({ queryKey: ['staff-customers', 'browse'] });
+    },
+  });
+}
+
+/** HO-P5 BG-19. Nothing is cached: the result holds only the masked destination and the expiry, never the token. */
+export function useRequestCustomerPasswordReset(customerId: string) {
+  return useMutation({ mutationFn: () => requestCustomerPasswordReset(customerId) });
 }

@@ -11,12 +11,12 @@ version is below.
 ## 1. `Program.cs`
 
 ```csharp
-using CatEcommerce.Application.CommandHandlers.Cat;
-using CatEcommerce.Application.Commands.Cat;
-using CatEcommerce.Infrastructure.Persistence;
-using CatEcommerce.Read.Queries.Cat;
-using CatEcommerce.Read.QueryHandlers.Cat;
-using CatEcommerce.Read.ViewModels;
+using AmarGram.Application.CommandHandlers.Product;
+using AmarGram.Application.Commands.Product;
+using AmarGram.Infrastructure.Persistence;
+using AmarGram.Read.Queries.Product;
+using AmarGram.Read.QueryHandlers.Product;
+using AmarGram.Read.ViewModels;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Platform.Infrastructure.Core.Commands;
@@ -45,8 +45,8 @@ builder.Services.AddScoped<IUserContextProvider, DevUserContextProvider>();
 // dispatches in-process, which is the entire point of the change. Do not re-add it.
 
 // ── Persistence: EF Core over PostgreSQL, replacing the MongoDB repositories ──
-builder.Services.AddDbContext<CatEcommerceDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("CatEcommerce")));
+builder.Services.AddDbContext<AmarGramDbContext>(o =>
+    o.UseNpgsql(builder.Configuration.GetConnectionString("AmarGram")));
 
 // Our EF Core implementation of the platform's aggregate repository contract.
 // (Replaces AddAggregateRootRepository() / AddReadRepository() from
@@ -55,16 +55,16 @@ builder.Services.AddScoped(typeof(IAggregateRootRepository<>), typeof(EfAggregat
 
 // ── Your own: Command Handlers, Validators, Query Handlers, Domain Services ───
 // Command handlers run in THIS host now — there is no CommandWorker.
-builder.Services.AddScoped<ICommandHandlerAsync<RegisterCatCommand>, RegisterCatCommandHandler>();
-builder.Services.AddScoped<IValidator<RegisterCatCommand>, RegisterCatCommandValidator>();
+builder.Services.AddScoped<ICommandHandlerAsync<CreateProductCommand>, CreateProductCommandHandler>();
+builder.Services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
 
-builder.Services.AddScoped<IQueryHandlerAsync<GetCatQuery, CatViewModel?>, GetCatQueryHandler>();
+builder.Services.AddScoped<IQueryHandlerAsync<GetProductQuery, ProductViewModel?>, GetProductQueryHandler>();
 
 // Domain services — only where domain logic spans aggregates (architecture.md §4).
 // builder.Services.AddScoped<IStockAllocationService, FefoStockAllocationService>();
 
 // Domain event handlers — in-process now, no EventConsumerAdapter.
-// builder.Services.AddScoped<IEventHandlerAsync<CatVaccinatedEvent>, RecalculateStatusHandler>();
+// builder.Services.AddScoped<IEventHandlerAsync<ProductCertifiedEvent>, RecalculateStatusHandler>();
 
 var app = builder.Build();
 
@@ -95,8 +95,8 @@ app.Run();
 ```
 
 > **`UseHttpPipeline()` is not called.** See ADR-342 in `.ai/decisions/adr.md`,
-> `src/Api/CatEcommerce.Api/Program.cs` and
-> `src/Api/CatEcommerce.Api/Hosting/HostPipelineExtensions.cs` for the exact, current pipeline and
+> `src/Api/AmarGram.Api/Program.cs` and
+> `src/Api/AmarGram.Api/Hosting/HostPipelineExtensions.cs` for the exact, current pipeline and
 > why it was dropped: the platform's own exception handler logs request bodies verbatim (a
 > credential leak) and its CORS policy allows any origin with credentials.
 
@@ -205,7 +205,7 @@ One connection string. No `BusConfig`, no `config/dev-services.json`, no
 ```jsonc
 {
   "ConnectionStrings": {
-    "CatEcommerce": "Host=localhost;Port=5432;Database=catecommerce_dev;Username=postgres;Password=..."
+    "AmarGram": "Host=localhost;Port=5432;Database=amargram_dev;Username=postgres;Password=..."
   },
   "Logging": { "LogLevel": { "Default": "Information" } }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { use, useState } from 'react';
-import Link from 'next/link';
+import { ActionLink } from '@/components/back-office/ActionLink';
 import { PageHeading, Panel } from '@/components/inventory/fields';
 import { QueryBoundary } from '@/components/inventory/QueryBoundary';
 import { StorageChip } from '@/components/inventory/StorageChip';
@@ -40,9 +40,9 @@ export default function SkuStockPage({ params }: { params: Promise<{ skuId: stri
               </span>
             }
             actions={
-              <Link href="/staff/inventory/stock" className="text-sm font-semibold text-accent-ink">
+              <ActionLink href="/staff/inventory/stock" variant="outline">
                 All stock
-              </Link>
+              </ActionLink>
             }
           />
           <Panel title="Figures">

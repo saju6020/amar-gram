@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .h2{font-weight:700;font-size:14px;margin:0 0 4px}
@@ -28,10 +28,10 @@ select.branchpick{font:inherit;font-size:13px;padding:6px 10px;border:1px solid 
   <div style="flex:1;max-width:440px">
     <div class="h2" style="margin-bottom:12px">Active-branch picker — in the staff header</div>
     <div class="topnav-mini" style="background:#fff;border-radius:var(--radius-md);border:1px solid var(--border)">
-      <div class="brand">PurrCare · staff</div>
+      <div class="brand">Amar Gram · staff</div>
       <div style="font-size:13px;display:flex;align-items:center;gap:14px">
         <select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>
-        Dr. Nusrat Jahan
+        Nusrat Jahan
       </div>
     </div>
     <p style="font-size:12.5px;color:var(--ink-muted);margin-top:12px;line-height:1.5">Hidden entirely for a staff member with only one branch (ADR-FE-015). Changing it sends <code>X-Branch-Id</code> on every request from then on and resets branch-scoped queries — nothing about the choice is saved between reloads.</p>

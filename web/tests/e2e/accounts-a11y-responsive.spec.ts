@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, signInAsStaff, signInAsCustomer } from './fixtures';
+import { test, expect, signInAsStaff, signInAsCustomer, secondStaff } from './fixtures';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 import type { Page } from '@playwright/test';
 
@@ -9,8 +9,7 @@ import type { Page } from '@playwright/test';
  * ACCEPTANCE gate HIGH (this pass) — this used to run against a 7-route "representative sample",
  * narrowed only in this file's own header comment and disclosed nowhere else (not §1 Amended, not
  * the TC sheet, not any gate file). `ROUTES` now covers every §8.3 screen this handover owns (19
- * routes: the full `(auth)`/`(portal)`/`(staff)` set — HO-CAT-002's own cat/vaccine routes are out
- * of scope, §4.2). Each entry carries its own `audience`, rather than the old prefix guess
+ * routes: the full `(auth)`/`(portal)`/`(staff)` set). Each entry carries its own `audience`, rather than the old prefix guess
  * (`route.startsWith('/staff/')`), because two `(auth)` pages — `/staff/sign-in` and
  * `/staff/forgot-password` — live under a `/staff/` path without needing a staff session (§8.3's
  * own note: route groups, not path prefixes, gate a session). Dynamic routes use seeded MSW ids
@@ -44,7 +43,7 @@ const ROUTES: RouteCase[] = [
   // (staff) — staff session.
   { path: '/staff/admin/staff-accounts', audience: 'staff' },
   { path: '/staff/admin/staff-accounts/new', audience: 'staff' },
-  { path: `/staff/admin/staff-accounts/${accountsFixtureIds.nurseStaffId}`, audience: 'staff' },
+  { path: `/staff/admin/staff-accounts/${secondStaff.staffId}`, audience: 'staff' },
   { path: '/staff/customers/new', audience: 'staff' },
   { path: `/staff/customers/${accountsFixtureIds.customerId}`, audience: 'staff' },
   { path: '/staff/customers/duplicates', audience: 'staff' },
@@ -127,6 +126,13 @@ test('E-X1 (idle lock open): axe on the staff idle-lock dialog, background inert
   await signInAsStaff(page);
   await page.goto('/staff/customers/new');
   await page.waitForLoadState('networkidle');
+  // `networkidle` is not "the staff session has loaded": the first `GET /api/staff/session` can lose
+  // the MSW start-up race and sit in its retry while `StaffSessionGuard` still shows "Loading…", so
+  // `IdleLock` (its child) is not mounted yet. Forcing the idle timeout in that window makes the
+  // guard's own first read the `session_idle_timeout` and a second read `session_invalid`, which
+  // redirects to sign-in instead of locking. Wait for the real page (as `staff-auth.spec.ts` does
+  // implicitly by filling a field first) so the lock is exercised the way it happens in use.
+  await page.getByLabel(/full name/i).waitFor();
 
   const cookies = await page.context().cookies();
   const staffSessionCookie = cookies.find((c) => c.name === 'pc_staff_session');

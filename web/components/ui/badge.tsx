@@ -3,13 +3,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 /**
- * shadcn/ui-style Badge — copied in and owned (HO-CAT-002 §3.1, §9; named as a permitted
+ * shadcn/ui-style Badge — copied in and owned (the scaffold handover §3.1, §9; named as a permitted
  * dependency by HO-ACC-002 §10 alongside Table/Alert). Styled to match the `.badge`/`.b-active`/
  * `.b-draft`/`.b-arch` rules in docs/design/shop/StaffProductList.dc.html.
  *
  * **UI-6 — colour is never the only signal.** This component supplies colour and shape only; the
- * caller is responsible for passing an icon alongside the text (HighRiskBadge,
- * VaccinationStatusBadge and every other status badge do). A `Badge` with text but no icon is
+ * caller is responsible for passing an icon alongside the text (OrderStatusBadge,
+ * BatchStateBadge and every other status badge do). A `Badge` with text but no icon is
  * still fine for a purely informational count (e.g. NTF's unread badge) — it is a *status* badge
  * (current/draft/overdue/…) that must never be colour-only.
  */

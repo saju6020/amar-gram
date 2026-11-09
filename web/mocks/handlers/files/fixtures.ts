@@ -57,7 +57,7 @@ export function buildStoredFileViewModel(
     url: contentUrl(fileStorageFixtureIds.freshImage, 5 * 60),
     contentType: 'image/png',
     sizeInBytes: onePixelPngBytes().byteLength,
-    originalFileName: 'whiskers.png',
+    originalFileName: 'organic-rice.png',
     urlExpiresOn: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     ...overrides,
   };

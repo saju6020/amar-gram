@@ -1,45 +1,26 @@
 import Link from 'next/link';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Sprout } from 'lucide-react';
 import { LimitedMarkup } from '@/components/content/LimitedMarkup';
 import { HearthBand } from '@/components/hearth/HearthBand';
 import { LineArtBasket } from '@/components/hearth/LineArtBasket';
 import { buttonVariants } from '@/components/ui/button';
-import { formatPriceRange } from '@/lib/format/shop';
-import { availabilityText } from '@/lib/shop/labels';
 import { isSafeLink, plainExcerpt, productHref } from '@/lib/shop/helpers';
 import type { CatalogueItem, StorefrontBanner } from '@/lib/api/shop-catalogue';
 
-const FALLBACK_HEADLINE = 'Fresh from the village, with the origin on every product';
+const H1_CLASS =
+  'm-0 font-display text-[clamp(2.5rem,5vw,4rem)] font-bold leading-[1.02] tracking-[-0.03em] text-ink';
 
-/**
- * The page's own headline, styled (layout from owner's option C, 2026-10-16; Amar Gram copy, 2026-10-23): "Fresh"
- * very large in leaf-green extra-bold, "from the village," below it, and the promise as a small capitals line with
- * "origin" on a turmeric pill. The text — and so the heading's accessible name — is exactly FALLBACK_HEADLINE.
- */
-function FancyHeadline() {
-  return (
-    <>
-      <span className="block text-[1.45em] font-extrabold leading-[0.95] tracking-[-0.035em] text-accent">
-        Fresh
-      </span>{' '}
-      <span className="block">from the village,</span>{' '}
-      <span className="mt-4 block font-sans text-[max(13px,0.36em)] font-bold uppercase leading-[1.9] tracking-[0.05em] text-ink-muted [text-wrap:balance]">
-        with the{' '}
-        <span className="mx-[0.2em] inline-block whitespace-nowrap rounded-pill bg-warm px-[0.8em] py-[0.15em] leading-normal text-ink">
-          origin
-        </span>{' '}
-        on every product
-      </span>
-    </>
-  );
+/** "{producer} · {country}" for the harvest card, from what the item carries; empty parts are skipped. */
+function originLine(item: CatalogueItem): string {
+  return [item.brand, item.countryOfOrigin?.name].filter(Boolean).join(' · ');
 }
 
 /**
- * The storefront home hero (docs/design/shop/ShopHome.dc.html). It is built from the Home banner
- * the API sends: its title is the headline, its body the lead and its link the main button. The
- * API sends no eyebrow line and no highlighted phrase, so the design's eyebrow pill and italic
- * phrase are not drawn. With no banner the page's own headline is used. The floating card shows
- * one real product (the newest), only when there is one.
+ * The storefront home hero (docs/design/store/Home.dc.html), shown from `md`; the phone has the
+ * seasonal card instead. With a `Home` banner, its title is the headline, its body the lead and its
+ * link the main button. With none, the design's own headline and intro. The arched picture area is
+ * the shop's illustration, never a fake photo. The "This week's harvest" card links to the newest
+ * product, only when there is one.
  */
 export function ShopHero({
   banner,
@@ -51,66 +32,82 @@ export function ShopHero({
   lang?: string;
 }) {
   const bannerHeadline = banner ? plainExcerpt(banner.title, 120) : '';
-  const headline = bannerHeadline || FALLBACK_HEADLINE;
   const bannerLink = banner && isSafeLink(banner.linkUrl) ? banner.linkUrl : null;
+  const harvestOrigin = featured ? originLine(featured) : '';
   return (
     <HearthBand
       aria-labelledby="hero-title"
-      className="grid items-center gap-8 overflow-hidden px-6 py-10 md:px-12 md:py-14 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:pl-16"
+      className="hidden items-center gap-10 overflow-hidden px-6 py-10 md:grid md:px-10 md:py-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:px-12"
     >
       <div className="flex flex-col gap-5">
-        <h1
-          id="hero-title"
-          className="m-0 font-display text-[clamp(2.25rem,5vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.03em] text-ink"
-        >
-          {headline === FALLBACK_HEADLINE ? <FancyHeadline /> : headline}
-        </h1>
-        {banner?.body && (
+        {bannerHeadline ? (
+          <h1 id="hero-title" className={H1_CLASS}>
+            {bannerHeadline}
+          </h1>
+        ) : (
+          <>
+            <p className="m-0 text-[13px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+              From our village to your kitchen
+            </p>
+            <h1 id="hero-title" className={H1_CLASS}>
+              Honest food,{' '}
+              <em className="block font-medium italic text-leaf">grown the slow way.</em>
+            </h1>
+          </>
+        )}
+        {banner?.body ? (
           <LimitedMarkup
             body={banner.body}
-            className="max-w-[460px] text-[17px] leading-relaxed text-ink-muted"
+            className="max-w-[460px] text-lg leading-relaxed text-ink-muted"
           />
+        ) : (
+          !bannerHeadline && (
+            <p className="m-0 max-w-[460px] text-lg text-ink-muted">
+              Rice, honey, oils and spices bought straight from the families who grow them, with the
+              origin named on our products.
+            </p>
+          )
         )}
         <div className="flex flex-wrap gap-3">
           <Link
             href={bannerLink ?? '/shop/products'}
-            className={buttonVariants({ variant: 'pill', size: 'pillMd' })}
+            className={buttonVariants({ variant: 'pill', size: 'pillLg' })}
           >
-            {bannerLink ? 'Find out more' : 'Shop all products'}
-            <ArrowRight size={16} aria-hidden="true" />
+            {bannerLink ? 'Find out more' : 'Shop the harvest'}
+            <ArrowRight size={18} aria-hidden="true" />
           </Link>
           <Link
-            href="/shop/countries"
-            className={buttonVariants({ variant: 'pillSecondary', size: 'pillMd' })}
+            href="#growers"
+            className={buttonVariants({ variant: 'pillSecondary', size: 'pillLg' })}
           >
-            Shop by country
+            Meet the growers
           </Link>
         </div>
       </div>
-      <div className="relative hidden h-[340px] lg:block">
+      <div className="relative hidden min-h-[360px] lg:block">
         <div
           aria-hidden="true"
-          className="absolute right-10 top-2.5 grid size-[300px] place-items-center rounded-pill bg-surface text-warm-ink"
+          className="absolute inset-0 bottom-10 left-10 grid place-items-center rounded-t-[200px] rounded-b-3xl bg-surface text-warm-ink"
         >
           <LineArtBasket />
         </div>
         {featured && (
           <Link
             href={productHref(featured.slug, { lang })}
-            className="absolute bottom-[18px] left-0 flex w-[270px] items-center gap-3 rounded-[18px] border border-border bg-surface px-4 py-3.5 text-ink no-underline"
+            className="absolute bottom-0 left-0 flex max-w-[300px] items-center gap-3.5 rounded-[20px] border-[1.5px] border-border bg-surface px-[18px] py-3.5 text-ink no-underline"
           >
             <span
               aria-hidden="true"
-              className="grid size-11 flex-none place-items-center rounded-[12px] bg-accent-tint text-accent"
+              className="grid size-12 flex-none place-items-center rounded-[14px] bg-warm text-ink"
             >
-              <Check size={22} />
+              <Sprout size={24} />
             </span>
             <span className="flex min-w-0 flex-col">
-              <strong className="truncate text-sm">{featured.name}</strong>
-              <span className="mt-0.5 text-[13px] text-ink-muted">
-                {availabilityText(featured.availability)} ·{' '}
-                {formatPriceRange(featured.fromPrice, featured.priceVaries)}
-              </span>
+              <strong className="text-[15px]">This week&apos;s harvest</strong>
+              <span className="truncate text-sm text-ink-muted">{featured.name}</span>
+              {harvestOrigin && (
+                <span className="truncate text-[13px] text-ink-muted">{harvestOrigin}</span>
+              )}
             </span>
           </Link>
         )}

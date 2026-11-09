@@ -2,9 +2,8 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * `components/common/FieldWithUnit.tsx` — HO-CAT-002 §11.7, UI-8: "Unit rendered adjacent and
- * always visible, inside the label's accessible name." Used for weight entry, weight-chart axes,
- * medication dosage (CAT), and every stock quantity (`formatQuantity`, HO-IMP-002 §8.4).
+ * `components/common/FieldWithUnit.tsx` — the scaffold handover §11.7, UI-8: "Unit rendered adjacent and
+ * always visible, inside the label's accessible name." Used for weight entry and every stock quantity (`formatQuantity`, HO-IMP-002 §8.4).
  *
  * The unit appears twice, once each for a different reason:
  *  - inside the `<label>` itself, so it is part of the input's accessible name for a screen
@@ -13,7 +12,7 @@ import { cn } from '@/lib/utils';
  *    without it being announced twice.
  *
  * A bare numeric input with no unit anywhere is what UI-8 exists to prevent — do not use a plain
- * `<input>` for a weight, dose or quantity field; use this.
+ * `<input>` for a weight or quantity field; use this.
  */
 export interface FieldWithUnitProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,

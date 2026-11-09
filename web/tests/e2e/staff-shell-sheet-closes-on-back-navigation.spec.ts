@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * CODE_REVIEW gate MEDIUM finding (HO-CAT-002, 2nd pass): `StaffShell` is a persistent App Router
+ * CODE_REVIEW gate MEDIUM finding (staff shell, 2nd pass): `StaffShell` is a persistent App Router
  * layout component, so its below-`sm` nav sheet's `sheetOpen` state used to survive any route
  * change that didn't come from one of the sheet's own `SheetNav` links — most notably the
  * browser's Back/Forward buttons, which are chrome, not page DOM, so neither the dialog's overlay
@@ -31,20 +31,26 @@ test('the nav sheet closes on browser Back and does not trap focus afterwards', 
   page,
 }) => {
   await page.setViewportSize({ width: 360, height: 900 });
-  await page.goto('/staff/cats');
+  await page.goto('/staff/orders');
   await page.waitForLoadState('networkidle');
 
   const trigger = page.locator('[aria-label="Expand menu"]');
 
-  // Reach /staff/vaccines via a real in-sheet link click — a soft, client-side transition, not a
+  // Reach /staff/inventory via a real in-sheet link click — a soft, client-side transition, not a
   // second page.goto(). Clicking a SheetNav link also closes the sheet itself (onNavigate), which
   // is the correct, expected behaviour and not what this test is about.
   await trigger.focus();
   await trigger.press('Enter');
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByRole('link', { name: 'Vaccine catalogue' }).click();
+  // The sheet's groups are collapsible (only the current page's group starts open) and the link is
+  // labelled "Inventory & batches" (staff-nav-groups.ts), so open its group first.
+  await page.getByRole('dialog').getByRole('button', { name: 'Catalogue & stock' }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('link', { name: 'Inventory & batches', exact: true })
+    .click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.waitForURL('**/staff/vaccines');
+  await page.waitForURL('**/staff/inventory');
 
   // Re-open the sheet on this second page, then go back with it open.
   await trigger.focus();
@@ -53,7 +59,7 @@ test('the nav sheet closes on browser Back and does not trap focus afterwards', 
 
   await page.goBack();
   await page.waitForLoadState('networkidle');
-  await expect(page).toHaveURL(/\/staff\/cats$/);
+  await expect(page).toHaveURL(/\/staff\/orders$/);
 
   await expect(page.getByRole('dialog')).toHaveCount(0);
   // Radix's `hideOthers` clears the rest of the document's `aria-hidden` the moment the dialog

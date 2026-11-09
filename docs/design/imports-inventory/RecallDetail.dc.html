@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 :root{--overlay:rgba(28,26,23,.4);--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
@@ -66,7 +66,7 @@ tbody tr:last-child td{border-bottom:none}
 tfoot td{background:var(--surface-sunken);font-weight:700}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.dim td{color:var(--ink-faint)}
-tr.unusable td{background:#fdfbf8}
+tr.unusable td{background:#FFFAF0}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px}
 .grid2{display:flex;gap:18px;align-items:flex-start}
 .grid2 > *{flex:1;min-width:0}
@@ -107,30 +107,30 @@ tr.unusable td{background:#fdfbf8}
 </style>
 </helmet>
 <div style="width:1280px;height:1220px;background:var(--surface-page);overflow:auto;position:relative">
-<div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+<div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
 <div class="main">
   <nav class="secnav" aria-label="Inventory"><a href="StockOverview.dc.html">Stock</a><a href="GoodsReceipt.dc.html">Receipts</a><a href="TransferForm.dc.html">Transfers</a><a href="AdjustmentForm.dc.html">Adjustments</a><a href="ApprovalQueue.dc.html">Approvals</a><a href="CountSheet.dc.html">Counts</a><a href="Ledger.dc.html">Ledger</a><a href="Alerts.dc.html">Alerts <span class="count">7 open</span></a><a href="NearExpiryReport.dc.html">Reports</a><a href="RecallList.dc.html" class="active" aria-current="page">Recalls</a><a href="StorageBreach.dc.html">Storage</a><a href="StockSettings.dc.html">Locations &amp; settings</a></nav>
   <div class="titlerow">
-    <div><h1 class="h1">Recall · lot AMX-5521</h1><p class="sub" style="margin:4px 0 0"><span class="b b-danger"><i aria-hidden="true">⊘</i> Active — stock held</span> · MED-AMX-50 · Amoxicillin oral suspension 50 mg/ml · declared 22 Sep 2026, 14:02 (Asia/Dhaka) by Rezwan Ahmed</p></div>
+    <div><h1 class="h1">Recall · lot MDJ-5521</h1><p class="sub" style="margin:4px 0 0"><span class="b b-danger"><i aria-hidden="true">⊘</i> Active — stock held</span> · DAT-MDJ-PK · Medjool dates snack pack, 100 g · declared 22 Sep 2026, 14:02 (Asia/Dhaka) by Rezwan Ahmed</p></div>
     <div class="actions"><a class="btn btn-sec" style="text-decoration:none" href="RecallDialogs.dc.html">Withdraw…</a><a class="btn btn-sec" style="text-decoration:none" href="RecallDialogs.dc.html">Close recall…</a></div>
   </div>
-  <div class="card" style="margin-top:12px;font-size:13px;line-height:1.55"><strong>Advice to customers:</strong> "Please stop giving this medicine and contact the clinic. We will replace it free of charge." <span class="muted">· Reason (internal): Manufacturer notice MN-2026-118 — possible under-strength suspension.</span></div>
+  <div class="card" style="margin-top:12px;font-size:13px;line-height:1.55"><strong>Advice to customers:</strong> "Please don't eat these dates and contact us. We will replace them or refund you in full." <span class="muted">· Reason (internal): Supplier notice MN-2026-118 — mould found in packs from one packing run.</span></div>
 
   <div class="step"><span class="n" aria-hidden="true">1</span><h2 class="h2">Stock still held</h2></div>
   <table>
     <thead><tr><th>Location</th><th class="num">Held</th><th>State</th><th></th></tr></thead>
-    <tbody><tr><td>UTR-DISP · Dispensary</td><td class="num">1,120 ml</td><td><span class="b b-danger"><i aria-hidden="true">⊘</i> Recalled — held</span> cannot be sold, dispensed or used</td><td><a class="link" href="AdjustmentForm.dc.html">Write off as recall disposal →</a></td></tr></tbody>
+    <tbody><tr><td>DHN-PACK · Packing station</td><td class="num">1,120 packs</td><td><span class="b b-danger"><i aria-hidden="true">⊘</i> Recalled — held</span> cannot be sold or packed for orders</td><td><a class="link" href="AdjustmentForm.dc.html">Write off as recall disposal →</a></td></tr></tbody>
   </table>
 
   <div class="step"><span class="n" aria-hidden="true">2</span><h2 class="h2">Where it went</h2><button class="btn btn-sec" type="button" style="margin-left:auto">Export CSV</button></div>
   <nav class="ttabs" aria-label="Trace"><a href="#" class="active" aria-current="page">Received<span class="n2">4</span></a><a href="#">Returned<span class="n2">1</span></a><a href="#">Unshipped — dispatch blocked<span class="n2">1</span></a><a href="#">Unidentified counter sales<span class="n2">2</span></a></nav>
   <table>
-    <thead><tr><th>Date</th><th>How</th><th class="num">Quantity</th><th>Reference</th><th>Customer · contact</th><th>Cat</th><th>Current owner</th></tr></thead>
+    <thead><tr><th>Date</th><th>How</th><th class="num">Quantity</th><th>Reference</th><th>Customer · contact</th><th>Delivery</th></tr></thead>
     <tbody>
-      <tr><td>12 Sep 2026</td><td>Dispensed</td><td class="num">60 ml</td><td>RX-UTR-2231</td><td>Farhana Yasmin<div class="small muted">01711-345678 · farhana.y@example.com</div></td><td>Mishti</td><td>Farhana Yasmin</td></tr>
-      <tr><td>14 Sep 2026</td><td>Bought in the shop</td><td class="num">100 ml</td><td>Order ORD-10388</td><td>Kamrul Hasan<div class="small muted">01819-220044 · kamrul.h@example.com</div></td><td class="muted">None recorded</td><td class="muted">Not applicable</td></tr>
-      <tr><td>15 Sep 2026</td><td>Given during boarding</td><td class="num">20 ml</td><td>Stay BRD-UTR-0412</td><td>Nafisa Rahman<div class="small muted">01552-908117 · nafisa.r@example.com</div></td><td>Tiger</td><td>Nafisa Rahman</td></tr>
-      <tr><td>16 Sep 2026</td><td>Dispensed</td><td class="num">40 ml</td><td>RX-UTR-2260</td><td>Sadia Chowdhury<div class="small muted">01923-551200 · sadia.c@example.com</div><div class="small muted">Merged account — shown as the surviving record</div></td><td>Luna</td><td>Imran Hossain <span class="small muted">(transferred 20 Sep)</span></td></tr>
+      <tr><td>12 Sep 2026</td><td>Online order</td><td class="num">60 packs</td><td>Order ORD-10377</td><td>Farhana Yasmin<div class="small muted">01711-345678 · farhana.y@example.com</div></td><td>Delivered 13 Sep 2026</td></tr>
+      <tr><td>14 Sep 2026</td><td>Bought at the counter</td><td class="num">100 packs</td><td>Order ORD-10388</td><td>Kamrul Hasan<div class="small muted">01819-220044 · kamrul.h@example.com</div></td><td>Collected in store</td></tr>
+      <tr><td>15 Sep 2026</td><td>Subscription box</td><td class="num">20 packs</td><td>Subscription SUB-DHN-0412</td><td>Nafisa Rahman<div class="small muted">01552-908117 · nafisa.r@example.com</div></td><td>Delivered 16 Sep 2026</td></tr>
+      <tr><td>16 Sep 2026</td><td>Online order</td><td class="num">40 packs</td><td>Order ORD-10402</td><td>Sadia Chowdhury<div class="small muted">01923-551200 · sadia.c@example.com</div><div class="small muted">Merged account — shown as the surviving record</div></td><td>Delivered 17 Sep 2026</td></tr>
     </tbody>
   </table>
   <p class="note">1–4 of 4 · 50 per page · contact details are shown because this page is for recall managers only.</p>

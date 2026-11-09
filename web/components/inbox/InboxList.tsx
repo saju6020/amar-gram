@@ -1,6 +1,6 @@
 'use client';
 
-import { EmptyCatIllustration, EmptyState } from '@/components/common/EmptyState';
+import { EmptyWarmIllustration, EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { SimplePager } from '@/components/notifications/SimplePager';
@@ -82,13 +82,13 @@ export function InboxList({
           <EmptyState
             title="No unread messages"
             description="You're all caught up."
-            icon={<EmptyCatIllustration />}
+            icon={<EmptyWarmIllustration />}
           />
         ) : (
           <EmptyState
             title="No messages yet."
-            description="Reminders and updates about your cats will appear here."
-            icon={<EmptyCatIllustration />}
+            description="Updates about your orders and account will appear here."
+            icon={<EmptyWarmIllustration />}
           />
         )
       ) : (

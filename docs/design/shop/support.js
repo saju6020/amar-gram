@@ -1,5 +1,5 @@
 /*
- * Local runtime for the PurrCare *.dc.html design-canvas mockups.
+ * Local runtime for the Amar Gram *.dc.html design-canvas mockups.
  *
  * Reimplements just enough of the hosted canvas's rendering engine to make these files open
  * directly in a browser (double-click, or file:// / a static server — either works):
@@ -12,16 +12,14 @@
  *
  * Screens whose renderVals() returns {} (the majority — see each area's README, "No live
  * interaction") render as static markup. A handful of files (TemplateEditor.dc.html,
- * TemplatePreviewStates.dc.html) show literal "{{catName}}"-style text on purpose — per
+ * TemplatePreviewStates.dc.html) show literal "{{productName}}"-style text on purpose — per
  * ADR-FE-023, the client never actually renders a template — so any {{expr}} whose identifier
  * isn't present in scope is left exactly as written rather than blanked out.
  *
  * Two layers are applied at render time on top of that, without touching the .dc.html source:
  *
- * 1. One staff shell. The four areas were designed with four different staff shells (Cat
- *    Profile's list screens: sidebar with the user bottom-left; its detail screens: no sidebar,
- *    user top-right; Administration: top bar over a flat sidebar; Accounts & Notifications: top
- *    bar only). Every staff screen is rebuilt into the same shape: a collapsible sidebar with one
+ * 1. One staff shell. The areas were designed with different staff shells (Administration: top
+ *    bar over a flat sidebar; Accounts & Notifications: top bar only). Every staff screen is rebuilt into the same shape: a collapsible sidebar with one
  *    shared navigation on the left, and a header with the breadcrumb on the left and the short
  *    "Name · Role" (plus the branch picker, where the screen has one) top-right. Customer-portal
  *    screens are a different app and are left as designed.
@@ -265,65 +263,27 @@
   // highlight that item; hrefs are resolved relative to whichever area folder is being viewed.
   var STAFF_NAV = [
     { section: 'Overview' },
+    { label: 'Back office (new)', area: 'back-office', file: 'Dashboard.dc.html', icon: I.grid, match: [] },
+    { label: 'Store front', area: 'store', file: 'Home.dc.html', icon: I.bag, match: [] },
     { label: 'Home', area: 'reporting', file: 'DashboardReception.dc.html', icon: I.home,
-      match: ['DashboardReception', 'DashboardAdmin', 'DashboardNurse', 'DashboardStates', 'DashboardMobile'] },
+      match: ['DashboardReception', 'DashboardAdmin', 'DashboardStates', 'DashboardMobile'] },
     { label: 'Reports', area: 'reporting', file: 'ReportCatalogue.dc.html', icon: I.chart,
-      match: ['ReportCatalogue', 'ReportViewer', 'ReportRevenueChart', 'ReportRestrictedColumns', 'ReportFilterBar',
-        'ReportFilterErrors', 'ReportEmptyLoading', 'ReportExportStates', 'ReportMobile', 'ReportPermissionDenied'] },
-
-    { section: 'Clinic' },
-    { label: 'Front desk', area: 'appointments', file: 'FrontDeskToday.dc.html', icon: I.clipboard,
-      match: ['FrontDeskToday', 'FrontDeskQueue', 'FrontDeskStart', 'FrontDeskOffline', 'OfflineBannerStates'] },
-    { label: 'Appointments', area: 'appointments', file: 'Calendar.dc.html', icon: I.calendar,
-      match: ['Calendar', 'CalendarMoveConfirm', 'CalendarMoveRefused', 'MoveDialog', 'CalendarAgenda360',
-        'StaffBooking', 'StaffAppointmentDetail', 'FlaggedAppointments'] },
-    { label: 'Cats', area: 'cat-profile', file: 'Main.dc.html', icon: I.list,
-      match: ['Main', 'CatOverview', 'CatHealthy', 'CatDeceased', 'CatMedical', 'CatWeights', 'CatVaccinations',
-        'CatRegister', 'IdleLock', 'ClinicalHistoryPage', 'ConsentListAndDetail', 'ConsentCapture', 'ConsentStates',
-        'CatPrescriptions', 'ComposerWarnings', 'ComposerAllergyBlock', 'ComposerWeightRequired', 'ComposerStates',
-        'PrescriptionDetail', 'DietAuthorisationForm', 'CatDietAuthorisations'] },
-    { label: 'Visits', area: 'consultation', file: 'OpenVisits.dc.html', icon: I.stethoscope,
-      match: ['OpenVisits', 'QuickVitals', 'VitalsConfirm', 'Workspace', 'DraftRecovery', 'SaveConflict', 'ProblemList',
-        'WorkspaceRoles', 'WorkspaceMobile360', 'FinaliseDialog', 'VisitRecord', 'HistoryDrawer', 'OrderDiagnostic',
-        'RecordTreatment', 'TreatmentStates', 'PhotosAndFollowUp', 'DischargeSummary'] },
-    { label: 'Diagnostics', area: 'consultation', file: 'PendingDiagnostics.dc.html', icon: I.flask,
-      match: ['PendingDiagnostics', 'ResultEntry', 'DiagnosticOrderDetail'] },
-    { label: 'Surgery', area: 'surgery', file: 'TheatreDayList.dc.html', icon: I.scissors,
-      match: ['TheatreDayList', 'BookSurgery', 'BookSurgeryClashes', 'BookSurgeryStates', 'SurgeryPreOp', 'SurgeryPreOpVet',
-        'ConsentOverride', 'RescheduleCancel', 'AnaesthesiaLog', 'DrugEntry', 'VitalsEntry', 'CorrectEntry', 'EndProcedure',
-        'ReportDraft', 'ReportFinal', 'RecoveryTab', 'DischargeForm', 'Discharged'] },
-    { label: 'Recovery board', area: 'surgery', file: 'RecoveryBoard.dc.html', icon: I.pulse, match: ['RecoveryBoard'] },
-    { label: 'Pharmacy', area: 'pharmacy', file: 'DispensaryQueue.dc.html', icon: I.pill,
-      match: ['DispensaryQueue', 'DispenseScreen', 'DispenseStates', 'WitnessDialog', 'DispensingDetail', 'MedicineLabel'] },
-    { label: 'Controlled drugs', area: 'pharmacy', file: 'ControlledRegister.dc.html', icon: I.lock,
-      match: ['ControlledRegister', 'RegisterBalancesIntegrity', 'RegisterEntryDetail', 'RegisterCorrection'] },
-    { label: 'Vaccines', area: 'cat-profile', file: 'Vaccines.dc.html', icon: I.syringe, match: ['Vaccines'] },
-
-    { section: 'Boarding' },
-    { label: 'Boarding', area: 'boarding', file: 'BoardingDashboard.dc.html', icon: I.house,
-      match: ['BoardingDashboard', 'StayList', 'StaffBookingOverride', 'StayWorkspace', 'CheckInVaccinationHold',
-        'CheckInBelongingsSignature', 'CheckInIncomplete', 'CheckOutEarly', 'OccupancyBoard', 'ExtendRelocate',
-        'IsolationPanel', 'ReferralCharges', 'IncidentQueue', 'IncidentFormResolve', 'DaycareDayList'] },
-    { label: 'Care tasks', area: 'boarding', file: 'TaskBoard.dc.html', icon: I.checklist, match: ['TaskBoard', 'ObservationSheet'] },
+      match: ['ReportCatalogue', 'ReportViewer', 'ReportRevenueChart', 'ReportRestrictedColumns', 'ReportFilterBar', 'ReportFilterErrors', 'ReportEmptyLoading', 'ReportExportStates', 'ReportMobile', 'ReportPermissionDenied'] },
 
     { section: 'Customers' },
     { label: 'Customers', area: 'accounts-identity', file: 'CustomerDetail.dc.html', icon: I.user,
-      match: ['CustomerDetail', 'WalkIn', 'CustomerAppointmentsPanel', 'CustomerSubscriptionsPanel', 'CustomerOrdersPanel',
-        'ErasePersonalData', 'EraseConfirm', 'EraseStates'] },
+      match: ['CustomerDetail', 'WalkIn', 'CustomerSubscriptionsPanel', 'CustomerOrdersPanel', 'ErasePersonalData', 'EraseConfirm', 'EraseStates'] },
     { label: 'Duplicates', area: 'accounts-identity', file: 'Duplicates.dc.html', icon: I.copy, match: ['Duplicates', 'MergeReview'] },
     { label: 'Subscriptions', area: 'subscriptions', file: 'StaffSubscriptions.dc.html', icon: I.repeat,
-      match: ['StaffSubscriptions', 'StaffUnpaid', 'StaffPrescriptionSuspended', 'StaffSubscriptionDetail', 'StaffDialogs',
-        'StaffDetailReadOnly'] },
+      match: ['StaffSubscriptions', 'StaffUnpaid', 'StaffSubscriptionDetail', 'StaffDialogs', 'StaffDetailReadOnly'] },
     { label: 'Notification log', area: 'notifications', file: 'NotificationLog.dc.html', icon: I.bell,
       match: ['NotificationLog', 'NotificationDetail'] },
 
     { section: 'Shop' },
     { label: 'Catalogue', area: 'shop', file: 'StaffProductList.dc.html', icon: I.bag,
-      match: ['StaffProductList', 'NewProduct', 'EditorDetails', 'EditorFood', 'EditorVariants', 'EditorImages',
-        'EditorBundle', 'EditorRelated', 'EditorTranslations', 'SourcingOrigins', 'ReviewModeration'] },
+      match: ['StaffProductList', 'NewProduct', 'EditorDetails', 'EditorFood', 'EditorVariants', 'EditorImages', 'EditorBundle', 'EditorRelated', 'EditorTranslations', 'SourcingOrigins', 'ReviewModeration'] },
     { label: 'Orders', area: 'orders', file: 'OrderQueue.dc.html', icon: I.box,
-      match: ['OrderQueue', 'OrderQueueMobile', 'StaffOrderDetail', 'DispatchDialog', 'RecordDelivery', 'RecordCollection',
-        'DeliveryFailure', 'AwaitingPayment', 'PaymentApproval', 'Reconciliation', 'Refunds', 'PickList'] },
+      match: ['OrderQueue', 'OrderQueueMobile', 'StaffOrderDetail', 'DispatchDialog', 'RecordDelivery', 'RecordCollection', 'DeliveryFailure', 'AwaitingPayment', 'PaymentApproval', 'Reconciliation', 'Refunds', 'PickList'] },
     { label: 'Returns', area: 'orders', file: 'ReturnsList.dc.html', icon: I.undo, match: ['ReturnsList', 'ReturnDetail', 'ReturnReceive'] },
     { label: 'Point of sale', area: 'orders', file: 'PosSale.dc.html', icon: I.register, match: ['PosSale', 'PosComplete', 'PosMobile'] },
 
@@ -331,8 +291,7 @@
     { label: 'Billing home', area: 'billing', file: 'BillingHome.dc.html', icon: I.receipt,
       match: ['BillingHome', 'CustomerAccount', 'ApplyCreditAndVoid'] },
     { label: 'Invoices', area: 'billing', file: 'InvoiceList.dc.html', icon: I.file,
-      match: ['InvoiceList', 'InvoiceComposer', 'ComposerDialogs', 'ComposerErrors', 'InvoiceDetail', 'CreditNoteWizard',
-        'CreditNoteResult', 'CreditNoteDetail', 'CorrectedReissue'] },
+      match: ['InvoiceList', 'InvoiceComposer', 'ComposerDialogs', 'ComposerErrors', 'InvoiceDetail', 'CreditNoteWizard', 'CreditNoteResult', 'CreditNoteDetail', 'CorrectedReissue'] },
     { label: 'Payments', area: 'billing', file: 'PaymentList.dc.html', icon: I.cash,
       match: ['PaymentList', 'RecordPayment', 'PaymentMethodVariants', 'SplitTender', 'PaymentDetail'] },
     { label: 'Approvals', area: 'billing', file: 'ApprovalsQueue.dc.html', icon: I.approve, match: ['ApprovalsQueue'] },
@@ -363,15 +322,8 @@
     { label: 'Reorder', area: 'imports-inventory', file: 'ReorderSuggestions.dc.html', icon: I.refresh, match: ['ReorderSuggestions'] },
 
     { section: 'Configuration' },
-    { label: 'Services & pricing', area: 'administration', file: 'ServiceList.dc.html', icon: I.tag,
-      match: ['ServiceList', 'ServiceForm', 'EffectiveDatedHistory', 'TaxClasses'] },
-    { label: 'Clinical catalogues', area: 'consultation', file: 'DiagnosisCodes.dc.html', icon: I.book,
-      match: ['DiagnosisCodes', 'CatalogueEditors'] },
-    { label: 'Formulary', area: 'pharmacy', file: 'FormularyList.dc.html', icon: I.pill,
-      match: ['FormularyList', 'FormularyEditor', 'FormularyActions'] },
-    { label: 'Surgery protocols', area: 'surgery', file: 'Protocols.dc.html', icon: I.checklist, match: ['Protocols'] },
-    { label: 'Surgery campaigns', area: 'surgery', file: 'Campaigns.dc.html', icon: I.megaphone, match: ['Campaigns', 'CampaignCases'] },
-    { label: 'Boarding units & rates', area: 'boarding', file: 'AdminUnits.dc.html', icon: I.house, match: ['AdminUnits', 'AdminRateCards'] },
+    { label: 'Tax classes', area: 'administration', file: 'TaxClasses.dc.html', icon: I.tag,
+      match: ['TaxClasses', 'EffectiveDatedHistory'] },
     { label: 'Delivery zones', area: 'orders', file: 'DeliveryZones.dc.html', icon: I.map, match: ['DeliveryZones'] },
     { label: 'Discount codes', area: 'orders', file: 'DiscountCodes.dc.html', icon: I.percent, match: ['DiscountCodes'] },
     { label: 'Couriers', area: 'orders', file: 'Couriers.dc.html', icon: I.truck, match: ['Couriers'] },
@@ -384,7 +336,7 @@
 
     { section: 'Administration' },
     { label: 'Branches', area: 'administration', file: 'BranchList.dc.html', icon: I.pin,
-      match: ['BranchList', 'BranchDetails', 'WeeklyHoursEditor', 'Closures', 'Rooms'] },
+      match: ['BranchList', 'BranchDetails', 'WeeklyHoursEditor', 'Closures'] },
     { label: 'Rosters & leave', area: 'administration', file: 'RosterWeekView.dc.html', icon: I.clock,
       match: ['RosterWeekView', 'RosterPatternEditor', 'MyLeave', 'LeaveApprovals'] },
     { label: 'Staff accounts', area: 'accounts-identity', file: 'StaffAccountsList.dc.html', icon: I.users,
@@ -393,8 +345,7 @@
     { label: 'Report schedules', area: 'reporting', file: 'ScheduleList.dc.html', icon: I.calendar,
       match: ['ScheduleList', 'ScheduleForm', 'ScheduleDetail', 'ScheduleConfirmDialogs'] },
     { label: 'Retention', area: 'cross-cutting', file: 'RetentionSchedule.dc.html', icon: I.archive,
-      match: ['RetentionSchedule', 'RetentionRunNow', 'RetentionRuns', 'RetentionRunDetail', 'ErasureLedger',
-        'ErasureLedgerDetail', 'ReapplyAfterRestore', 'ReapplyStates'] },
+      match: ['RetentionSchedule', 'RetentionRunNow', 'RetentionRuns', 'RetentionRunDetail', 'ErasureLedger', 'ErasureLedgerDetail', 'ReapplyAfterRestore', 'ReapplyStates'] },
     { label: 'Backup & restore', area: 'cross-cutting', file: 'BackupStatus.dc.html', icon: I.database,
       match: ['BackupStatus', 'RecordRestoreTest', 'RecordRestoreTestParseError', 'RestoreTestDetail'] },
     { label: 'Performance', area: 'cross-cutting', file: 'Performance.dc.html', icon: I.gauge, match: ['Performance'] },
@@ -402,13 +353,10 @@
     { label: 'System', area: 'administration', file: 'MaintenanceSwitch.dc.html', icon: I.power, match: ['MaintenanceSwitch'] }
   ];
 
-  // Cat Profile was designed before sign-in existed and shows a fixed identity throughout.
-  var CAT_PROFILE_WHO = { name: 'Dr. A. Rahman', role: 'Veterinarian', note: 'Fixed dev identity — no sign-in yet' };
-
-  var BRAND_SVG = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#15605A" stroke-width="1.6" ' +
-    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5c-3.3 0-6 2.5-6 5.6 0 2.2 1.2 3.4 1.2 5.2 ' +
-    '0 1.2-.6 1.7-.6 2.4 0 .6.5 1 1.2 1h8.4c.7 0 1.2-.4 1.2-1 0-.7-.6-1.2-.6-2.4 0-1.8 1.2-3 1.2-5.2C18 7.5 15.3 5 12 5Z"/>' +
-    '<path d="M7 7 5.5 4.2 8.4 5.1"/><path d="m17 7 1.5-2.8-2.9.9"/></svg>';
+  var BRAND_SVG = '<svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">' +
+    '<rect width="32" height="32" rx="9" fill="#3F6A1E"/><g transform="translate(4.8 4.8) scale(0.7)" fill="#F4F8E8">' +
+    '<path d="M16 28V15" stroke="#F4F8E8" stroke-width="2.4" stroke-linecap="round"/><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"/>' +
+    '<path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"/><path d="M6 28h20" stroke="#F4F8E8" stroke-width="2.4" stroke-linecap="round"/></g></svg>';
 
   function navHref(area, file) {
     return area === AREA ? file : '../' + area + '/' + file;
@@ -440,25 +388,25 @@
     var aside = document.createElement('aside');
     aside.className = 'dc-aside';
     aside.style.cssText = 'width:240px;flex-shrink:0;align-self:flex-start;position:sticky;top:0;height:100vh;' +
-      'overflow-y:auto;background:#F3F1EB;border-right:1px solid #E5E1D8;padding:20px 14px;' +
+      'overflow-y:auto;background:#F3F1EB;border-right:1px solid #E5DCC8;padding:20px 14px;' +
       'display:flex;flex-direction:column;gap:18px;box-sizing:border-box;';
 
     var row = document.createElement('div');
     row.className = 'dc-nav-toggle-row';
     row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:6px;';
     var brand = document.createElement('a');
-    brand.href = navHref('cat-profile', 'Main.dc.html');
-    brand.style.cssText = 'display:flex;align-items:center;gap:10px;text-decoration:none;color:#1C1A17;min-width:0;';
-    brand.innerHTML = BRAND_SVG + '<span class="dc-nav-label" style="font-family:\'Newsreader\',Georgia,serif;' +
-      'font-size:20px;font-weight:600;letter-spacing:-0.01em;white-space:nowrap;">PurrCare</span>';
+    brand.href = navHref('reporting', 'DashboardReception.dc.html');
+    brand.style.cssText = 'display:flex;align-items:center;gap:10px;text-decoration:none;color:#2A1F12;min-width:0;';
+    brand.innerHTML = BRAND_SVG + '<span class="dc-nav-label" style="font-family:\'Fraunces\',Georgia,serif;' +
+      'font-size:20px;font-weight:600;letter-spacing:-0.01em;white-space:nowrap;">Amar Gram</span>';
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'dc-nav-toggle';
     btn.style.cssText = 'border:1px solid #DDD8CD;background:#fff;border-radius:6px;width:26px;height:26px;' +
       'display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0;';
-    btn.innerHTML = '<svg class="dc-nav-toggle-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#5C574F" ' +
+    btn.innerHTML = '<svg class="dc-nav-toggle-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#69553C" ' +
       'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>' +
-      '<svg class="dc-nav-menu-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5C574F" ' +
+      '<svg class="dc-nav-menu-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#69553C" ' +
       'stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
     row.appendChild(brand);
     row.appendChild(btn);
@@ -470,7 +418,7 @@
 
     // Sections fold: the one holding the current page is always open, the rest remember
     // whether you last left them open. Keeps a ~70-item menu scannable.
-    var OPEN_KEY = 'purrcare-nav-open';
+    var OPEN_KEY = 'amargram-nav-open';
     var openSections = [];
     try { openSections = JSON.parse(window.localStorage.getItem(OPEN_KEY) || '[]'); } catch (e) { openSections = []; }
     function saveOpen() {
@@ -490,7 +438,7 @@
         head.setAttribute('aria-expanded', String(isOpen));
         head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;width:100%;border:none;' +
           'background:none;cursor:pointer;font:inherit;font-size:11px;font-weight:700;letter-spacing:.06em;' +
-          'text-transform:uppercase;color:#8C8578;padding:10px 12px 4px;text-align:left;';
+          'text-transform:uppercase;color:#8C7B61;padding:10px 12px 4px;text-align:left;';
         head.innerHTML = '<span>' + escapeHtml(n.section) + '</span><svg class="dc-nav-chevron" width="12" height="12" ' +
           'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
           'stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
@@ -517,7 +465,7 @@
       var el = document.createElement('a');
       el.href = navHref(n.area, n.file);
       if (isActive) el.setAttribute('aria-current', 'page');
-      el.style.cssText = base + (isActive ? 'background:#E6F0EE;color:#0E4742;font-weight:600;' : 'color:#5C574F;');
+      el.style.cssText = base + (isActive ? 'background:#E3EDC6;color:#0E4742;font-weight:600;' : 'color:#69553C;');
       el.innerHTML = iconSvg(n.icon) + '<span class="dc-nav-label">' + escapeHtml(n.label) + '</span>';
       el.title = n.label;
       items.appendChild(el);
@@ -526,7 +474,7 @@
 
     // Wide screens: the button collapses the rail to icons (remembered across pages). Narrow
     // screens: the rail is a top bar and the same button opens/closes the menu (not remembered).
-    var STORAGE_KEY = 'purrcare-nav-collapsed';
+    var STORAGE_KEY = 'amargram-nav-collapsed';
     var narrow = window.matchMedia('(max-width: 900px)');
     var icon = btn.querySelector('.dc-nav-toggle-icon');
     function syncButton() {
@@ -559,13 +507,13 @@
   function buildBreadcrumb(active) {
     var nav = document.createElement('nav');
     nav.setAttribute('aria-label', 'Breadcrumb');
-    nav.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:14px;color:#5C574F;min-width:0;';
+    nav.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:14px;color:#69553C;min-width:0;';
     if (active.item) {
       nav.innerHTML = '<span>' + escapeHtml(active.section) + '</span><span aria-hidden="true">/</span>' +
-        '<a href="' + navHref(active.item.area, active.item.file) + '" style="color:#1C1A17;font-weight:600;text-decoration:none;">' +
+        '<a href="' + navHref(active.item.area, active.item.file) + '" style="color:#2A1F12;font-weight:600;text-decoration:none;">' +
         escapeHtml(active.item.label) + '</a>';
     } else {
-      nav.innerHTML = '<span style="color:#1C1A17;font-weight:600;">' + escapeHtml(document.title.split(' — ')[0]) + '</span>';
+      nav.innerHTML = '<span style="color:#2A1F12;font-weight:600;">' + escapeHtml(document.title.split(' — ')[0]) + '</span>';
     }
     return nav;
   }
@@ -575,11 +523,11 @@
     box.className = 'dc-identity';
     box.style.cssText = 'display:flex;align-items:center;gap:14px;flex-shrink:0;';
     if (who.branchSelect) {
-      who.branchSelect.style.cssText = 'font:inherit;font-size:13px;padding:5px 8px;border:1px solid #CBC3B2;border-radius:6px;background:#fff;';
+      who.branchSelect.style.cssText = 'font:inherit;font-size:13px;padding:5px 8px;border:1px solid #CDBB99;border-radius:6px;background:#fff;';
       box.appendChild(who.branchSelect);
     }
     var line = document.createElement('span');
-    line.style.cssText = 'font-size:13px;color:#5C574F;white-space:nowrap;';
+    line.style.cssText = 'font-size:13px;color:#69553C;white-space:nowrap;';
     line.textContent = [who.name, who.role].filter(Boolean).join(' · ');
     if (who.note) line.title = who.note;
     box.appendChild(line);
@@ -590,7 +538,7 @@
   // with the short identity always last — the top-right corner.
   function normalizeHeader(header, who) {
     header.style.cssText = 'height:56px;min-height:56px;flex-shrink:0;display:flex;align-items:center;' +
-      'justify-content:space-between;gap:16px;padding:0 26px;border-bottom:1px solid #E5E1D8;background:#FFFFFF;' +
+      'justify-content:space-between;gap:16px;padding:0 26px;border-bottom:1px solid #E5DCC8;background:#FFFFFF;' +
       'box-sizing:border-box;';
 
     Array.prototype.slice.call(header.children).forEach(function (child, i) {
@@ -607,7 +555,7 @@
     Array.prototype.slice.call(header.children).slice(1).forEach(function (c) { right.appendChild(c); });
 
     var identity = buildIdentity(who);
-    if (right.children.length) identity.style.cssText += 'border-left:1px solid #E5E1D8;padding-left:16px;';
+    if (right.children.length) identity.style.cssText += 'border-left:1px solid #E5DCC8;padding-left:16px;';
     right.appendChild(identity);
     header.appendChild(right);
   }
@@ -615,7 +563,7 @@
   function makeRow() {
     var row = document.createElement('div');
     row.className = 'dc-shell-row';
-    row.style.cssText = 'display:flex;width:100%;min-height:100vh;background:#FAF9F6;';
+    row.style.cssText = 'display:flex;width:100%;min-height:100vh;background:#F7F4EC;';
     return row;
   }
 
@@ -629,7 +577,7 @@
     return out;
   }
 
-  // Administration, Accounts & Identity and Notifications staff screens: a .topnav ("PurrCare ·
+  // Administration, Accounts & Identity and Notifications staff screens: a .topnav ("Amar Gram ·
   // staff" + identity), sometimes a flat .sidebar, then the page content.
   function shellFromTopnav(root) {
     var topnav = root.querySelector('.topnav');
@@ -676,63 +624,6 @@
     return true;
   }
 
-  // Cat Profile list screens (Main, Vaccines): an <aside> (each with its own nav and a bottom
-  // identity block) beside a content column that already has a header.
-  function shellFromCatAside(root) {
-    var aside = root.querySelector('aside');
-    if (!aside) return false;
-    var row = aside.parentElement;
-    var column = aside.nextElementSibling;
-    if (!column) return false;
-
-    var active = activeNav();
-    row.replaceChild(buildAside(active), aside);
-    row.classList.add('dc-shell-row');
-
-    var header = column.querySelector(':scope > header');
-    if (!header) {
-      header = document.createElement('header');
-      column.insertBefore(header, column.firstChild);
-    }
-    // These screens put the page title (and its primary action) in the header bar itself. Every
-    // other staff screen has the breadcrumb there and the title just below — move it down to match.
-    if (header.firstElementChild && header.firstElementChild.tagName === 'H1') {
-      var titleRow = document.createElement('div');
-      titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 26px 0;';
-      while (header.firstElementChild) titleRow.appendChild(header.firstElementChild);
-      column.insertBefore(titleRow, header.nextSibling);
-    }
-    if (!header.querySelector('nav[aria-label="Breadcrumb"]')) {
-      header.insertBefore(buildBreadcrumb(active), header.firstChild);
-    }
-    normalizeHeader(header, CAT_PROFILE_WHO);
-    column.style.minWidth = '0';
-    return true;
-  }
-
-  // Cat Profile detail screens: no sidebar at all, just a breadcrumb header (sometimes with the
-  // identity top-right) over the content.
-  function shellFromCatBreadcrumb(root) {
-    var crumb = root.querySelector('header > nav[aria-label="Breadcrumb"]');
-    if (!crumb) return false;
-    var header = crumb.parentElement;
-    var column = header.parentElement;
-    if (!column || column.parentNode !== root) return false;
-
-    normalizeHeader(header, CAT_PROFILE_WHO);
-
-    var row = makeRow();
-    root.insertBefore(row, column);
-    row.appendChild(buildAside(activeNav()));
-    row.appendChild(column);
-    column.style.width = 'auto';
-    column.style.maxWidth = 'none';
-    column.style.height = 'auto';
-    column.style.flex = '1 1 auto';
-    column.style.minWidth = '0';
-    return true;
-  }
-
   // The sidebar is position:sticky at full viewport height. Any scrolling/clipping ancestor
   // (Administration's artboard is overflow:auto) would become its scroll container and pin it
   // there instead of to the page, so it would scroll away and stop short.
@@ -747,10 +638,9 @@
   }
 
   function applyStaffShell(root) {
-    // The aside/breadcrumb shapes are Cat Profile's own staff layouts; elsewhere an <aside> or a
-    // breadcrumb header is ordinary page content (a storefront filter panel, a portal crumb).
-    var catProfile = AREA === 'cat-profile';
-    if (shellFromTopnav(root) || (catProfile && (shellFromCatAside(root) || shellFromCatBreadcrumb(root)))) {
+    // Only the .topnav shape is rebuilt; elsewhere an <aside> or a breadcrumb header is ordinary
+    // page content (a storefront filter panel, a portal crumb).
+    if (shellFromTopnav(root)) {
       releaseStickyAncestors(root);
     }
   }
@@ -768,7 +658,7 @@
       '.dc-nav-toggle-icon{transition:transform .15s ease}' +
       '.dc-nav-menu-icon{display:none}' +
       '.dc-aside nav a:not([aria-current]):hover{background:#EAE6DC}' +
-      '.dc-nav-section:hover{color:#5C574F !important}' +
+      '.dc-nav-section:hover{color:#69553C !important}' +
       '.dc-nav-chevron{transition:transform .15s ease}' +
       '.dc-nav-items{display:flex;flex-direction:column;gap:2px}' +
       '.dc-nav-group.dc-closed .dc-nav-items{display:none}' +
@@ -784,11 +674,11 @@
       '@media (max-width:900px){' +
       '.dc-shell-row{flex-direction:column !important}' +
       '.dc-shell-row > .dc-aside{position:sticky !important;top:0;z-index:30;height:auto !important;width:100% !important;' +
-      'padding:10px 16px !important;gap:10px !important;border-right:none !important;border-bottom:1px solid #E5E1D8}' +
+      'padding:10px 16px !important;gap:10px !important;border-right:none !important;border-bottom:1px solid #E5DCC8}' +
       '.dc-shell-row > .dc-aside nav{display:none !important}' +
       '.dc-shell-row > .dc-aside.dc-aside-mobile-open nav{display:flex !important;position:absolute;left:0;right:0;top:100%;' +
       'max-height:calc(100vh - 60px);overflow-y:auto;background:#F3F1EB;padding:8px 16px 14px;' +
-      'border-bottom:1px solid #E5E1D8;box-shadow:0 12px 24px rgba(28,26,23,.12)}' +
+      'border-bottom:1px solid #E5DCC8;box-shadow:0 12px 24px rgba(28,26,23,.12)}' +
       '.dc-nav-toggle-icon{display:none}' +
       '.dc-nav-menu-icon{display:block}' +
       '.dc-shell-row header{height:auto !important;min-height:56px !important;flex-wrap:wrap;row-gap:6px;' +

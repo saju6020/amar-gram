@@ -39,7 +39,7 @@ const eslintConfig = [
               name: '@tanstack/react-query',
               importNames: ['useQuery', 'useMutation', 'useInfiniteQuery'],
               message:
-                'Only lib/hooks/ may call useQuery/useMutation directly (HO-CAT-002 §8.2). Add or use a hook there instead.',
+                'Only lib/hooks/ may call useQuery/useMutation directly (the scaffold handover §8.2). Add or use a hook there instead.',
             },
           ],
         },
@@ -56,10 +56,9 @@ const eslintConfig = [
     // ARCH gate HIGH 3 (first pass) — the rule above only bans importing useQuery/useMutation
     // FROM @tanstack/react-query directly, which a component calling an area hook (e.g.
     // useCaptcha(), itself built on useQuery) never does — passing that rule while still
-    // violating HO-CAT-002 §8.2 rule 4 ("components take props and callbacks; the page wires
+    // violating the scaffold handover §8.2 rule 4 ("components take props and callbacks; the page wires
     // hooks together"). This closes that gap for the four component folders §8.2 rule 4 governs
-    // (components/cat/** already follows it without needing enforcement, being HO-CAT-002's own
-    // precedent) by banning ANY import from lib/hooks/* there too.
+    // by banning ANY import from lib/hooks/* there too.
     //
     // ARCH gate LOW (second pass) — the `@/lib/hooks/*` glob only caught the path alias; a
     // relative import (`../../lib/hooks/useCaptcha`) was not caught. `**/lib/hooks/*` and
@@ -89,14 +88,14 @@ const eslintConfig = [
               name: '@tanstack/react-query',
               importNames: ['useQuery', 'useMutation', 'useInfiniteQuery'],
               message:
-                'Only lib/hooks/ may call useQuery/useMutation directly (HO-CAT-002 §8.2). Add or use a hook there instead.',
+                'Only lib/hooks/ may call useQuery/useMutation directly (the scaffold handover §8.2). Add or use a hook there instead.',
             },
           ],
           patterns: [
             {
               group: ['@/lib/hooks/*', '@/lib/hooks', '**/lib/hooks/*', '**/lib/hooks'],
               message:
-                'Components under components/{account,admin,auth,customer}/** take props and callbacks (HO-CAT-002 §8.2 rule 4) — the page wires lib/hooks/ together, not the component. (Exemptions: components/staff/**, components/portal/** and the session reads in components/common/{portal-header,staff-shell}.tsx are session infrastructure per HO-ACC-002 §11.3/§11.5/§11.9, and live outside these four folders already; SignOutButton.tsx has its own override below.)',
+                'Components under components/{account,admin,auth,customer}/** take props and callbacks (the scaffold handover §8.2 rule 4) — the page wires lib/hooks/ together, not the component. (Exemptions: components/staff/**, components/portal/** and the session reads in components/common/{portal-header,staff-shell}.tsx are session infrastructure per HO-ACC-002 §11.3/§11.5/§11.9, and live outside these four folders already; SignOutButton.tsx has its own override below.)',
             },
           ],
         },
@@ -125,7 +124,7 @@ const eslintConfig = [
               name: '@tanstack/react-query',
               importNames: ['useQuery', 'useMutation', 'useInfiniteQuery'],
               message:
-                'Only lib/hooks/ may call useQuery/useMutation directly (HO-CAT-002 §8.2). Add or use a hook there instead.',
+                'Only lib/hooks/ may call useQuery/useMutation directly (the scaffold handover §8.2). Add or use a hook there instead.',
             },
           ],
         },
@@ -164,7 +163,14 @@ const eslintConfig = [
     // `parseFloat(`, `parseInt(` and no unary `+` in the Billing components, the Billing API
     // modules or `lib/money/**`. (A later `no-restricted-syntax` block replaces the earlier one's
     // options rather than merging, so the `srcDoc` selectors above are repeated here.)
-    files: ['components/billing/**', 'lib/api/billing-*', 'lib/api/my-billing.ts', 'lib/money/**'],
+    files: [
+      'components/billing/**',
+      // HO-P5 Amended (aj): the per-source cash-up is Billing presentation outside components/billing/.
+      'components/back-office-admin/CashUpSources.tsx',
+      'lib/api/billing-*',
+      'lib/api/my-billing.ts',
+      'lib/money/**',
+    ],
     rules: {
       'no-restricted-syntax': [
         'error',

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 /**
- * shadcn/ui-style Table — copied in and owned (HO-CAT-002 §3.1, §9). Plain semantic
+ * shadcn/ui-style Table — copied in and owned (the scaffold handover §3.1, §9). Plain semantic
  * `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` (no Radix primitive underneath one is
  * needed for a table), styled to match docs/design/shop/StaffProductList.dc.html's table rule.
  * `components/common/DataTable.tsx` is built on this — reuse it rather than a second `<table>`.

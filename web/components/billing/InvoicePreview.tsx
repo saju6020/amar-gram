@@ -73,7 +73,7 @@ export function InvoicePreview({
               <dl className="ml-auto grid w-full max-w-xs grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">
                 <dt className="text-ink-muted">Net</dt>
                 <dd className="text-right"><Amount money={preview.totals.net} /></dd>
-                <dt className="text-ink-muted">Discounts</dt>
+                <dt className="text-ink-muted">{preview.totals.discountLabel || 'Discounts'}</dt>
                 <dd className="text-right"><Amount money={preview.totals.discount} /></dd>
                 <dt className="text-ink-muted">Tax</dt>
                 <dd className="text-right"><Amount money={preview.totals.tax} /></dd>

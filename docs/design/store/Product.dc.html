@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — Haat product page</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: {{c.bg}}; color: {{c.ink}}; font-family: 'Work Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.5">
+
+  <header style="max-width: 1200px; margin: 0 auto; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+    <a href="{{nav.home}}" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: {{c.ink}}">
+      <span style="width: 40px; height: 40px; border-radius: 50% 50% 50% 8px; background: {{c.logo}}; display: grid; place-items: center; color: {{c.onLogo}}">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+      </span>
+      <span style="font-family: Fraunces, Georgia, serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">Amar <span style="color: {{c.word}}">Gram</span></span>
+    </a>
+    <a href="{{nav.cart}}" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; text-decoration: none; background: {{c.ink}}; color: {{c.bg}}; font-weight: 600">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>Basket · {{cartCount}}
+    </a>
+  </header>
+
+  <nav aria-label="Breadcrumb" style="max-width: 1200px; margin: 0 auto; padding: 0 24px 16px; font-size: 14px; color: {{c.muted}}; display: flex; flex-wrap: wrap; gap: 8px">
+    <a href="{{nav.home}}" style="color: {{c.primary}}">Home</a><span aria-hidden="true">/</span><a href="{{nav.catalogue}}" style="color: {{c.primary}}">Rice &amp; grains</a><span aria-hidden="true">/</span><span aria-current="page">Chinigura aromatic rice</span>
+  </nav>
+
+  <main style="max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start">
+    <div style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+      <div role="img" aria-label="Product photo placeholder: Chinigura rice in a jute sack" style="aspect-ratio: 1 / 1; border-radius: 32px; background: {{c.placeholder}}; display: grid; place-items: center; color: {{c.body}}; font-size: 14px; position: relative">
+        [Product photo {{thumbN}} — rice in jute sack]
+        <span style="position: absolute; top: 20px; left: 20px; padding: 6px 14px; border-radius: 999px; background: {{c.organic}}; color: #FFFFFF; font-size: 13px; font-weight: 600">Certified organic</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{thumbs}}" as="t" hint-placeholder-count="4">
+          <button type="button" onClick="{{t.pick}}" aria-label="Show photo {{t.n}}" aria-pressed="{{t.on}}" style="aspect-ratio: 1 / 1; border-radius: 18px; background: {{c.band}}; border: {{t.border}}; cursor: pointer; font: inherit; font-size: 12px; color: {{c.muted}}">{{t.n}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+      <span style="align-self: flex-start; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: {{c.tag}}">Grown in Birganj, Dinajpur</span>
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 48px; line-height: 1.05; font-weight: 700; letter-spacing: -0.03em">Chinigura aromatic rice</h1>
+      <p style="margin: 0; font-size: 17px; color: {{c.body}}">Small, fragrant grains for polao and payesh. Hand-sorted and sun-dried after the Aman harvest, packed by the growers' co-operative.</p>
+
+      <fieldset style="border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px">
+        <legend style="font-weight: 600; margin-bottom: 10px">Pack size</legend>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px">
+          <sc-for list="{{sizes}}" as="s" hint-placeholder-count="4">
+            <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.on}}" style="min-height: 52px; min-width: 96px; padding: 6px 16px; border-radius: 16px; border: {{s.border}}; background: {{s.bg}}; color: {{c.ink}}; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; line-height: 1.2">
+              <strong style="font-size: 16px">{{s.label}}</strong><span style="font-size: 13px; color: {{c.muted}}">{{s.price}}</span>
+            </button>
+          </sc-for>
+        </div>
+      </fieldset>
+
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <strong style="font-family: Fraunces, Georgia, serif; font-size: 40px">{{total}}</strong>
+        <span style="font-size: 15px; color: {{c.muted}}">{{unitNote}}</span>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+        <div role="group" aria-label="Quantity" style="display: flex; align-items: center; border: 1.5px solid {{c.ink}}; border-radius: 999px; min-height: 52px">
+          <button type="button" onClick="{{dec}}" aria-label="One less" style="width: 52px; height: 52px; border: 0; background: transparent; font: inherit; font-size: 22px; cursor: pointer; color: {{c.ink}}">−</button>
+          <span aria-live="polite" style="min-width: 32px; text-align: center; font-weight: 600; font-size: 18px">{{qty}}</span>
+          <button type="button" onClick="{{inc}}" aria-label="One more" style="width: 52px; height: 52px; border: 0; background: transparent; font: inherit; font-size: 22px; cursor: pointer; color: {{c.ink}}">+</button>
+        </div>
+        <button type="button" onClick="{{add}}" style="flex: 1 1 200px; min-height: 52px; border-radius: 999px; border: 0; background: {{c.primary}}; color: {{c.onPrimary}}; font: inherit; font-weight: 600; font-size: 17px; cursor: pointer">Add to basket</button>
+      </div>
+      <sc-if value="{{justAdded}}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-radius: 16px; background: {{c.soft}}; color: {{c.softInk}}">
+          <span>{{addedText}}</span><a href="{{nav.cart}}" style="font-weight: 600; color: {{c.softInk}}">View basket</a>
+        </div>
+      </sc-if>
+
+      <ul style="list-style: none; margin: 0; padding: 18px 20px; border-radius: 20px; border: 1.5px dashed {{c.placeholder}}; display: flex; flex-direction: column; gap: 10px; font-size: 15px; color: {{c.primary}}">
+        <li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"></path><circle cx="7" cy="18" r="2"></circle><circle cx="17" cy="18" r="2"></circle></svg><span style="color: {{c.ink}}">Delivered in Dhaka within [DAYS]; elsewhere in [DAYS]</span></li>
+        <li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M3 10h18"></path></svg><span style="color: {{c.ink}}">Cash on delivery available</span></li>
+        <li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"></path></svg><span style="color: {{c.ink}}">Repeat monthly and skip any time</span></li>
+      </ul>
+    </div>
+  </main>
+
+  <section aria-label="Product details" style="max-width: 1200px; margin: 56px auto 0; padding: 0 24px">
+    <div role="tablist" aria-label="Details" style="display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1.5px solid {{c.border}}">
+      <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="3">
+        <button type="button" role="tab" aria-selected="{{tb.on}}" onClick="{{tb.pick}}" style="min-height: 48px; padding: 0 18px; border: 0; background: transparent; font: inherit; font-weight: 600; color: {{tb.color}}; border-bottom: {{tb.line}}; cursor: pointer; margin-bottom: -1.5px">{{tb.label}}</button>
+      </sc-for>
+    </div>
+    <div role="tabpanel" style="padding: 24px 0; max-width: 720px; font-size: 17px; color: {{c.body}}">{{tabBody}}</div>
+  </section>
+
+  <section aria-labelledby="haat-also" style="max-width: 1200px; margin: 24px auto 0; padding: 0 24px 64px">
+    <h2 id="haat-also" style="margin: 0 0 20px; font-family: Fraunces, Georgia, serif; font-size: 30px; font-weight: 700">Goes well with</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px">
+      <sc-for list="{{related}}" as="r" hint-placeholder-count="4">
+        <a href="#" style="display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: {{c.ink}}">
+          <span role="img" aria-label="{{r.name}} photo placeholder" style="aspect-ratio: 4 / 3; border-radius: 20px; background: {{r.tint}}; display: grid; place-items: center; font-size: 13px; color: {{c.body}}">[Photo]</span>
+          <strong style="font-size: 16px">{{r.name}}</strong>
+          <span style="font-size: 15px; color: {{c.muted}}">{{r.price}}</span>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"palette":{"editor":"enum","options":["paddy","mango","tomato"],"default":"paddy"},"$preview":{"width":1280,"height":1560}}'>
+const HAAT_PALETTES = {
+  paddy: { bg: '#F2E8D0', surface: '#FFF9EC', band: '#E6D3A3', primary: '#7A4E10', onPrimary: '#FFF9EC', word: '#9A6914', border: '#D9C59A', muted: '#6A5A40', body: '#54472F', placeholder: '#D3BC86', soft: '#EFE0B8', softInk: '#4A340C', organic: '#557A1F', tag: '#557A1F', ink: '#2B2214' },
+  mango: { bg: '#FBF3E2', surface: '#FFFAF0', band: '#F5DFA6', primary: '#B4531A', onPrimary: '#FFFAF0', word: '#557A1F', border: '#E6D3AE', muted: '#69553C', body: '#53432D', placeholder: '#EFCB86', soft: '#F8E3C4', softInk: '#6A300E', organic: '#557A1F', tag: '#557A1F', ink: '#2A1F12' },
+  tomato: { bg: '#EFE4C8', surface: '#FFF8E8', band: '#E2CB92', primary: '#A83A24', onPrimary: '#FFF8E8', word: '#557A1F', border: '#D8C392', muted: '#66573A', body: '#4F4430', placeholder: '#D3BC82', soft: '#F3DCCB', softInk: '#6B2516', organic: '#557A1F', tag: '#557A1F', ink: '#2A2216' }
+};
+// Banana-leaf green layer (owner, 2026-10-24): logo, thumbnails, selected sizes and the added message.
+const HAAT_LEAF = { logo: '#3F6A1E', onLogo: '#F4F8E8', soft: '#E3EDC6', softInk: '#2F5114' };
+const HAAT_LEAF_BAND = { paddy: '#E2EAC2', mango: '#E6EFC9', tomato: '#E0E8BE' };
+Object.keys(HAAT_PALETTES).forEach((k) => Object.assign(HAAT_PALETTES[k], HAAT_LEAF, { band: HAAT_LEAF_BAND[k] }));
+const HAAT_LINKS = {
+  paddy: { home: 'Home.dc.html', cart: 'BasketPhone.dc.html' },
+  mango: { home: 'Home.dc.html', cart: 'BasketPhone.dc.html', catalogue: 'Catalogue.dc.html' },
+  tomato: { home: 'Tomato-Home.dc.html', cart: 'Tomato-Cart.dc.html' }
+};
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { size: 1, qty: 1, thumb: 0, tab: 0, count: 2, justAdded: false }; }
+  renderVals() {
+    const key = 'mango';
+    const c = HAAT_PALETTES[key];
+    const sizes = [['500 g', 95], ['1 kg', 180], ['2 kg', 350], ['5 kg', 840]];
+    const tabs = [
+      ['Description', 'Chinigura is a short-grain aromatic rice from northern Bangladesh. Rinse twice and cook with 1¾ cups of water per cup of rice. Keep it in a dry, closed tin.'],
+      ['Origin & batch', 'Grown by the Birganj growers’ co-operative, Dinajpur. Batch, harvest month and packing date are printed on the back of each pack.'],
+      ['How it’s grown', 'Rain-fed Aman crop, no synthetic pesticides. Certified organic by [CERTIFIER]; certificate number on the pack.']
+    ];
+    const s = this.state;
+    const fmt = (n) => '৳' + n.toLocaleString('en-IN');
+    const set = (patch) => () => this.setState(patch);
+    return {
+      c, nav: { catalogue: '#', ...HAAT_LINKS[key] },
+      cartCount: s.count,
+      thumbN: s.thumb + 1,
+      thumbs: [0, 1, 2, 3].map((i) => ({ n: i + 1, on: s.thumb === i, border: s.thumb === i ? '2px solid ' + c.primary : '2px solid transparent', pick: set({ thumb: i }) })),
+      sizes: sizes.map(([label, price], i) => ({
+        label, price: fmt(price), on: s.size === i,
+        border: s.size === i ? '2px solid ' + c.primary : '1.5px solid ' + c.border,
+        bg: s.size === i ? c.soft : c.surface,
+        pick: set({ size: i, justAdded: false })
+      })),
+      total: fmt(sizes[s.size][1] * s.qty),
+      unitNote: s.qty > 1 ? s.qty + ' × ' + sizes[s.size][0] : sizes[s.size][0] + ' pack',
+      qty: s.qty,
+      dec: () => this.setState({ qty: Math.max(1, s.qty - 1), justAdded: false }),
+      inc: () => this.setState({ qty: Math.min(20, s.qty + 1), justAdded: false }),
+      add: () => this.setState({ count: s.count + s.qty, justAdded: true }),
+      justAdded: s.justAdded,
+      addedText: 'Added ' + s.qty + ' × ' + sizes[s.size][0] + ' to your basket.',
+      tabs: tabs.map(([label], i) => ({ label, on: s.tab === i, color: s.tab === i ? c.ink : c.muted, line: s.tab === i ? '3px solid ' + c.primary : '3px solid transparent', pick: set({ tab: i }) })),
+      tabBody: tabs[s.tab][1],
+      related: [
+        { name: 'Moong dal, split', price: '৳170 · 1 kg', tint: '#D9C9A0' },
+        { name: 'Pure cow ghee', price: '৳750 · 400 g', tint: '#E8DD8C' },
+        { name: 'Whole garam masala', price: '৳160 · 100 g', tint: '#E9B08A' },
+        { name: 'Sundarbans wild honey', price: '৳650 · 500 g', tint: '#F0CF7A' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

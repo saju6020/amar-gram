@@ -1,0 +1,1619 @@
+{
+ "_about": "Amar Gram dev catalogue (HO-P2 section 1.5): about 40 organic and everyday Bangladeshi products across all 11 categories. Prices in BDT. \"origin\" is the ISO country; \"district\" is the district of origin and is written into the description and tags by the seeder. \"brand\" holds the producer. All producers, certificate numbers and descriptions are invented sample data for development only.",
+ "products": [
+  {
+   "slug": "kalijira-rice",
+   "name": "Kalijira Rice",
+   "brand": "Barind Farms",
+   "category": "RiceAndGrains",
+   "subcategory": "AromaticRice",
+   "description": "Tiny, fragrant Kalijira grains, the rice for polao and khichuri. Grown without synthetic pesticides in Dinajpur.",
+   "origin": "BD",
+   "district": "Dinajpur",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "rice",
+    "polao"
+   ],
+   "food": {
+    "ingredientList": "Kalijira rice (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from milling",
+    "netWeight": "1 kg",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0100"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "KJ-1KG",
+     "size": "1 kg",
+     "grams": 1050,
+     "price": 260
+    },
+    {
+     "code": "KJ-2KG",
+     "size": "2 kg",
+     "grams": 2080,
+     "price": 500
+    },
+    {
+     "code": "KJ-5KG",
+     "size": "5 kg",
+     "grams": 5150,
+     "price": 1210
+    }
+   ]
+  },
+  {
+   "slug": "miniket-rice",
+   "name": "Miniket Rice",
+   "brand": "Barind Farms",
+   "category": "RiceAndGrains",
+   "subcategory": "EverydayRice",
+   "description": "Polished everyday Miniket rice, steady grains that cook up fluffy.",
+   "origin": "BD",
+   "district": "Naogaon",
+   "certifications": [],
+   "tags": [
+    "rice"
+   ],
+   "food": {
+    "ingredientList": "Miniket rice (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from milling",
+    "netWeight": "5 kg",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MK-5KG",
+     "size": "5 kg",
+     "grams": 5150,
+     "price": 420
+    },
+    {
+     "code": "MK-10KG",
+     "size": "10 kg",
+     "grams": 10250,
+     "price": 820
+    },
+    {
+     "code": "MK-25KG",
+     "size": "25 kg",
+     "grams": 25400,
+     "price": 1980
+    }
+   ]
+  },
+  {
+   "slug": "hand-pounded-red-rice",
+   "name": "Hand-pounded Red Rice",
+   "brand": "Padma Organics",
+   "category": "RiceAndGrains",
+   "subcategory": "EverydayRice",
+   "description": "Unpolished red rice, hand-pounded the old way, with the bran left on.",
+   "origin": "BD",
+   "district": "Rangpur",
+   "certifications": [
+    "CertifiedOrganic",
+    "Traditional"
+   ],
+   "tags": [
+    "rice",
+    "whole-grain"
+   ],
+   "food": {
+    "ingredientList": "Red rice (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "9 months from milling",
+    "netWeight": "2 kg",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0102"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "RR-1KG",
+     "size": "1 kg",
+     "grams": 1050,
+     "price": 180
+    },
+    {
+     "code": "RR-2KG",
+     "size": "2 kg",
+     "grams": 2080,
+     "price": 345
+    }
+   ]
+  },
+  {
+   "slug": "chira-flattened-rice",
+   "name": "Chira (Flattened Rice)",
+   "brand": "Madhupur Gram Foods",
+   "category": "RiceAndGrains",
+   "subcategory": "FlattenedAndPuffedRice",
+   "description": "Sun-dried flattened rice for chira-doi, jaggery and breakfast bowls.",
+   "origin": "BD",
+   "district": "Tangail",
+   "certifications": [
+    "Traditional"
+   ],
+   "tags": [
+    "breakfast"
+   ],
+   "food": {
+    "ingredientList": "Flattened rice (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "6 months from packing",
+    "netWeight": "500 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "CH-500G",
+     "size": "500 g",
+     "grams": 560,
+     "price": 75
+    },
+    {
+     "code": "CH-1KG",
+     "size": "1 kg",
+     "grams": 1060,
+     "price": 140
+    }
+   ]
+  },
+  {
+   "slug": "stone-ground-atta",
+   "name": "Stone-ground Atta",
+   "brand": "Sonar Bangla Farms",
+   "category": "RiceAndGrains",
+   "subcategory": "Flour",
+   "description": "Whole wheat atta, stone-ground in small batches for soft rutis.",
+   "origin": "BD",
+   "district": "Bogura",
+   "certifications": [],
+   "tags": [
+    "flour"
+   ],
+   "food": {
+    "ingredientList": "Whole wheat (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "4 months from milling",
+    "netWeight": "2 kg",
+    "allergens": "Contains gluten"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "AT-1KG",
+     "size": "1 kg",
+     "grams": 1040,
+     "price": 95
+    },
+    {
+     "code": "AT-2KG",
+     "size": "2 kg",
+     "grams": 2060,
+     "price": 180
+    }
+   ]
+  },
+  {
+   "slug": "sundarbans-wild-honey",
+   "name": "Sundarbans Wild Honey",
+   "brand": "Sundarbans Harvest",
+   "category": "HoneyAndGur",
+   "subcategory": "Honey",
+   "description": "Raw, unheated honey gathered by honey-hunters from the edge of the Sundarbans.",
+   "origin": "BD",
+   "district": "Satkhira",
+   "certifications": [],
+   "tags": [
+    "honey",
+    "raw"
+   ],
+   "food": {
+    "ingredientList": "Raw honey (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "24 months from harvest",
+    "netWeight": "500 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "SH-250G",
+     "size": "250 g",
+     "grams": 420,
+     "price": 650
+    },
+    {
+     "code": "SH-500G",
+     "size": "500 g",
+     "grams": 780,
+     "price": 1200
+    },
+    {
+     "code": "SH-1KG",
+     "size": "1 kg",
+     "grams": 1480,
+     "price": 2300
+    }
+   ]
+  },
+  {
+   "slug": "mustard-flower-honey",
+   "name": "Mustard Flower Honey",
+   "brand": "Padma Organics",
+   "category": "HoneyAndGur",
+   "subcategory": "Honey",
+   "description": "Pale, creamy honey from mustard fields in the cold season. Sets naturally.",
+   "origin": "BD",
+   "district": "Faridpur",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "honey"
+   ],
+   "food": {
+    "ingredientList": "Raw honey (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "24 months from harvest",
+    "netWeight": "500 g",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0106"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MF-500G",
+     "size": "500 g",
+     "grams": 780,
+     "price": 850
+    },
+    {
+     "code": "MF-1KG",
+     "size": "1 kg",
+     "grams": 1480,
+     "price": 1600
+    }
+   ]
+  },
+  {
+   "slug": "khejur-gur-liquid",
+   "name": "Khejur Gur (Liquid Date Molasses)",
+   "brand": "Madhupur Gram Foods",
+   "category": "HoneyAndGur",
+   "subcategory": "DateMolasses",
+   "description": "Winter date-palm sap, slow-boiled to a dark, smoky liquid gur.",
+   "origin": "BD",
+   "district": "Jessore",
+   "certifications": [],
+   "tags": [
+    "gur",
+    "winter"
+   ],
+   "food": {
+    "ingredientList": "Date palm sap (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "3 months, refrigerate after opening",
+    "netWeight": "1 kg",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "KG-500G",
+     "size": "500 g",
+     "grams": 620,
+     "price": 380
+    },
+    {
+     "code": "KG-1KG",
+     "size": "1 kg",
+     "grams": 1180,
+     "price": 720
+    }
+   ]
+  },
+  {
+   "slug": "patali-gur-block",
+   "name": "Patali Gur Block",
+   "brand": "Haat Bazaar Co-op",
+   "category": "HoneyAndGur",
+   "subcategory": "SugarcaneGur",
+   "description": "Firm blocks of sugarcane gur, boiled in open pans without chemical bleach.",
+   "origin": "BD",
+   "district": "Natore",
+   "certifications": [],
+   "tags": [
+    "gur"
+   ],
+   "food": {
+    "ingredientList": "Sugarcane juice (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "6 months from packing",
+    "netWeight": "1 kg",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "PG-500G",
+     "size": "500 g",
+     "grams": 540,
+     "price": 150
+    },
+    {
+     "code": "PG-1KG",
+     "size": "1 kg",
+     "grams": 1060,
+     "price": 290
+    }
+   ]
+  },
+  {
+   "slug": "pure-mustard-oil",
+   "name": "Pure Mustard Oil",
+   "brand": "Padma Organics",
+   "category": "OilsAndGhee",
+   "subcategory": "MustardOil",
+   "description": "Cold-pressed, pungent mustard oil in the traditional style. Pressed in small batches.",
+   "origin": "BD",
+   "district": "Sirajganj",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "oil",
+    "cold-pressed"
+   ],
+   "food": {
+    "ingredientList": "Cold-pressed mustard seed oil (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from pressing",
+    "netWeight": "1 L",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0109"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MO-1L",
+     "size": "1 L",
+     "grams": 960,
+     "price": 850
+    },
+    {
+     "code": "MO-2L",
+     "size": "2 L",
+     "grams": 1900,
+     "price": 1650
+    },
+    {
+     "code": "MO-5L",
+     "size": "5 L",
+     "grams": 4700,
+     "price": 3950
+    }
+   ]
+  },
+  {
+   "slug": "desi-cow-ghee",
+   "name": "Desi Cow Ghee",
+   "brand": "Rupsha Dairy",
+   "category": "OilsAndGhee",
+   "subcategory": "Ghee",
+   "description": "Slow-simmered ghee from cow butter, golden and nutty.",
+   "origin": "BD",
+   "district": "Pabna",
+   "certifications": [],
+   "tags": [
+    "ghee"
+   ],
+   "food": {
+    "ingredientList": "Cow milk butter (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "9 months from packing",
+    "netWeight": "500 g",
+    "allergens": "Contains milk"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "GH-250G",
+     "size": "250 g",
+     "grams": 330,
+     "price": 520
+    },
+    {
+     "code": "GH-500G",
+     "size": "500 g",
+     "grams": 620,
+     "price": 990
+    },
+    {
+     "code": "GH-1KG",
+     "size": "1 kg",
+     "grams": 1180,
+     "price": 1900
+    }
+   ]
+  },
+  {
+   "slug": "coconut-oil-cold-pressed",
+   "name": "Cold-pressed Coconut Oil",
+   "brand": "Sundarbans Harvest",
+   "category": "OilsAndGhee",
+   "subcategory": "OtherOils",
+   "description": "Virgin coconut oil from the coast, for cooking and for hair.",
+   "origin": "BD",
+   "district": "Barishal",
+   "certifications": [],
+   "tags": [
+    "oil"
+   ],
+   "food": {
+    "ingredientList": "Coconut oil (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "18 months from pressing",
+    "netWeight": "500 ml",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "CO-250ML",
+     "size": "250 ml",
+     "grams": 290,
+     "price": 380
+    },
+    {
+     "code": "CO-500ML",
+     "size": "500 ml",
+     "grams": 540,
+     "price": 700
+    }
+   ]
+  },
+  {
+   "slug": "black-seed-oil",
+   "name": "Black Seed (Kalojira) Oil",
+   "brand": "Padma Organics",
+   "category": "OilsAndGhee",
+   "subcategory": "OtherOils",
+   "description": "Cold-pressed kalojira oil, bottled in dark glass.",
+   "origin": "BD",
+   "district": "Faridpur",
+   "certifications": [
+    "CertifiedOrganic",
+    "Halal"
+   ],
+   "tags": [
+    "oil",
+    "kalojira"
+   ],
+   "food": {
+    "ingredientList": "Black cumin seed oil (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from pressing",
+    "netWeight": "100 ml",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0112"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "BS-100ML",
+     "size": "100 ml",
+     "grams": 190,
+     "price": 480
+    }
+   ]
+  },
+  {
+   "slug": "turmeric-powder",
+   "name": "Turmeric Powder (Holud)",
+   "brand": "Teesta Valley",
+   "category": "Spices",
+   "subcategory": "GroundSpices",
+   "description": "Deep-orange turmeric, sun-dried and stone-ground, with no colour added.",
+   "origin": "BD",
+   "district": "Rangpur",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "spice"
+   ],
+   "food": {
+    "ingredientList": "Turmeric root (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from grinding",
+    "netWeight": "200 g",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0113"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "TP-100G",
+     "size": "100 g",
+     "grams": 130,
+     "price": 95
+    },
+    {
+     "code": "TP-200G",
+     "size": "200 g",
+     "grams": 240,
+     "price": 180
+    },
+    {
+     "code": "TP-500G",
+     "size": "500 g",
+     "grams": 560,
+     "price": 430
+    }
+   ]
+  },
+  {
+   "slug": "red-chilli-powder",
+   "name": "Red Chilli Powder",
+   "brand": "Teesta Valley",
+   "category": "Spices",
+   "subcategory": "GroundSpices",
+   "description": "Hot, bright chilli powder from sun-dried Bogura chillies.",
+   "origin": "BD",
+   "district": "Bogura",
+   "certifications": [],
+   "tags": [
+    "spice"
+   ],
+   "food": {
+    "ingredientList": "Dried red chilli (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from grinding",
+    "netWeight": "200 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "CP-100G",
+     "size": "100 g",
+     "grams": 130,
+     "price": 110
+    },
+    {
+     "code": "CP-200G",
+     "size": "200 g",
+     "grams": 240,
+     "price": 205
+    }
+   ]
+  },
+  {
+   "slug": "whole-cumin-seeds",
+   "name": "Whole Cumin Seeds (Jeera)",
+   "brand": "Haat Bazaar Co-op",
+   "category": "Spices",
+   "subcategory": "WholeSpices",
+   "description": "Whole cumin seeds for tempering. Clean and sorted by hand.",
+   "origin": "BD",
+   "district": "Kushtia",
+   "certifications": [],
+   "tags": [
+    "spice"
+   ],
+   "food": {
+    "ingredientList": "Cumin seeds (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "18 months from packing",
+    "netWeight": "100 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "CS-100G",
+     "size": "100 g",
+     "grams": 120,
+     "price": 85
+    },
+    {
+     "code": "CS-250G",
+     "size": "250 g",
+     "grams": 270,
+     "price": 200
+    }
+   ]
+  },
+  {
+   "slug": "panch-phoron",
+   "name": "Panch Phoron",
+   "brand": "Haat Bazaar Co-op",
+   "category": "Spices",
+   "subcategory": "SpiceBlends",
+   "description": "The Bengali five-seed blend: fenugreek, nigella, mustard, fennel and cumin.",
+   "origin": "BD",
+   "district": "Kushtia",
+   "certifications": [],
+   "tags": [
+    "spice",
+    "blend"
+   ],
+   "food": {
+    "ingredientList": "Cumin, fennel, fenugreek, nigella, black mustard",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "18 months from packing",
+    "netWeight": "100 g",
+    "allergens": "Contains mustard"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "PP-100G",
+     "size": "100 g",
+     "grams": 120,
+     "price": 90
+    },
+    {
+     "code": "PP-250G",
+     "size": "250 g",
+     "grams": 270,
+     "price": 210
+    }
+   ]
+  },
+  {
+   "slug": "masoor-dal",
+   "name": "Masoor Dal (Red Lentils)",
+   "brand": "Sonar Bangla Farms",
+   "category": "Pulses",
+   "subcategory": "Lentils",
+   "description": "Split red lentils that cook in 15 minutes. Cleaned and sorted.",
+   "origin": "BD",
+   "district": "Pabna",
+   "certifications": [],
+   "tags": [
+    "dal"
+   ],
+   "food": {
+    "ingredientList": "Split red lentils (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from packing",
+    "netWeight": "1 kg",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MD-1KG",
+     "size": "1 kg",
+     "grams": 1030,
+     "price": 150
+    },
+    {
+     "code": "MD-2KG",
+     "size": "2 kg",
+     "grams": 2050,
+     "price": 290
+    }
+   ]
+  },
+  {
+   "slug": "moong-dal-organic",
+   "name": "Organic Moong Dal",
+   "brand": "Padma Organics",
+   "category": "Pulses",
+   "subcategory": "Lentils",
+   "description": "Small yellow moong dal, grown organically. Light on the stomach.",
+   "origin": "BD",
+   "district": "Jhenaidah",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "dal"
+   ],
+   "food": {
+    "ingredientList": "Split mung beans (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from packing",
+    "netWeight": "1 kg",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0118"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MG-500G",
+     "size": "500 g",
+     "grams": 520,
+     "price": 140
+    },
+    {
+     "code": "MG-1KG",
+     "size": "1 kg",
+     "grams": 1030,
+     "price": 270
+    }
+   ]
+  },
+  {
+   "slug": "mashkalai-dal",
+   "name": "Mashkalai Dal (Black Gram)",
+   "brand": "Madhupur Gram Foods",
+   "category": "Pulses",
+   "subcategory": "Lentils",
+   "description": "Black gram for the classic Bengali boot-dal and for boris.",
+   "origin": "BD",
+   "district": "Tangail",
+   "certifications": [],
+   "tags": [
+    "dal"
+   ],
+   "food": {
+    "ingredientList": "Split black gram (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from packing",
+    "netWeight": "500 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MS-500G",
+     "size": "500 g",
+     "grams": 520,
+     "price": 130
+    }
+   ]
+  },
+  {
+   "slug": "chola-chickpeas",
+   "name": "Chola (Chickpeas)",
+   "brand": "Sonar Bangla Farms",
+   "category": "Pulses",
+   "subcategory": "ChickpeasAndPeas",
+   "description": "Plump chickpeas for ghugni and curries.",
+   "origin": "BD",
+   "district": "Rajshahi",
+   "certifications": [],
+   "tags": [
+    "chickpeas"
+   ],
+   "food": {
+    "ingredientList": "Chickpeas (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from packing",
+    "netWeight": "1 kg",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "CC-1KG",
+     "size": "1 kg",
+     "grams": 1030,
+     "price": 175
+    },
+    {
+     "code": "CC-2KG",
+     "size": "2 kg",
+     "grams": 2050,
+     "price": 340
+    }
+   ]
+  },
+  {
+   "slug": "sylhet-black-tea",
+   "name": "Sylhet Black Tea",
+   "brand": "Teesta Valley",
+   "category": "TeaAndDrinks",
+   "subcategory": "Tea",
+   "description": "Strong, bright CTC black tea from Moulvibazar gardens.",
+   "origin": "BD",
+   "district": "Moulvibazar",
+   "certifications": [
+    "PesticideFree"
+   ],
+   "tags": [
+    "tea"
+   ],
+   "food": {
+    "ingredientList": "Black tea (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "18 months from packing",
+    "netWeight": "400 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "BT-200G",
+     "size": "200 g",
+     "grams": 230,
+     "price": 190
+    },
+    {
+     "code": "BT-400G",
+     "size": "400 g",
+     "grams": 440,
+     "price": 360
+    }
+   ]
+  },
+  {
+   "slug": "srimangal-green-tea",
+   "name": "Srimangal Green Tea",
+   "brand": "Teesta Valley",
+   "category": "TeaAndDrinks",
+   "subcategory": "Tea",
+   "description": "Delicate green tea leaf from organic estates near Srimangal.",
+   "origin": "BD",
+   "district": "Moulvibazar",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "tea",
+    "green-tea"
+   ],
+   "food": {
+    "ingredientList": "Green tea leaves (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "18 months from packing",
+    "netWeight": "100 g",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0122"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "GT-100G",
+     "size": "100 g",
+     "grams": 130,
+     "price": 320
+    }
+   ]
+  },
+  {
+   "slug": "tulsi-herbal-tea",
+   "name": "Tulsi Herbal Tea",
+   "brand": "Meghna Naturals",
+   "category": "TeaAndDrinks",
+   "subcategory": "HerbalTea",
+   "description": "Sun-dried holy basil, ginger and lemongrass for an evening cup.",
+   "origin": "BD",
+   "district": "Comilla",
+   "certifications": [],
+   "tags": [
+    "tea",
+    "herbal"
+   ],
+   "food": {
+    "ingredientList": "Tulsi leaf, ginger, lemongrass",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from packing",
+    "netWeight": "50 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "TH-50G",
+     "size": "50 g",
+     "grams": 70,
+     "price": 220
+    }
+   ]
+  },
+  {
+   "slug": "bel-sharbat-syrup",
+   "name": "Bel Sharbat Syrup",
+   "brand": "Haat Bazaar Co-op",
+   "category": "TeaAndDrinks",
+   "subcategory": "JuicesAndSyrups",
+   "description": "Wood-apple syrup, a cooling summer drink. Mix one part to four with water.",
+   "origin": "BD",
+   "district": "Rajshahi",
+   "certifications": [
+    "Traditional"
+   ],
+   "tags": [
+    "drink",
+    "summer"
+   ],
+   "food": {
+    "ingredientList": "Wood apple pulp, sugar",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "8 months, refrigerate after opening",
+    "netWeight": "750 ml",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "BE-750ML",
+     "size": "750 ml",
+     "grams": 900,
+     "price": 340
+    }
+   ]
+  },
+  {
+   "slug": "himsagar-mango",
+   "name": "Himsagar Mango",
+   "brand": "Barind Farms",
+   "category": "FreshProduce",
+   "subcategory": "Fruit",
+   "description": "Fibre-free, honey-sweet Himsagar mangoes from Rajshahi orchards, picked ripe in season.",
+   "origin": "BD",
+   "district": "Rajshahi",
+   "certifications": [],
+   "tags": [
+    "mango",
+    "seasonal"
+   ],
+   "food": {
+    "ingredientList": "Himsagar mango",
+    "storageInstructions": "Keep refrigerated or cool, as marked on the pack.",
+    "shelfLife": "5 days at room temperature",
+    "netWeight": "2 kg",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "HM-2KG",
+     "size": "2 kg box",
+     "grams": 2100,
+     "price": 420
+    },
+    {
+     "code": "HM-5KG",
+     "size": "5 kg box",
+     "grams": 5200,
+     "price": 980
+    },
+    {
+     "code": "HM-12KG",
+     "size": "12 kg crate",
+     "grams": 12400,
+     "price": 2250
+    }
+   ]
+  },
+  {
+   "slug": "organic-banana-bunch",
+   "name": "Organic Sagar Banana (Bunch)",
+   "brand": "Padma Organics",
+   "category": "FreshProduce",
+   "subcategory": "Fruit",
+   "description": "Sweet Sagar bananas on the stem, grown without chemical ripeners.",
+   "origin": "BD",
+   "district": "Narsingdi",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "banana"
+   ],
+   "food": {
+    "ingredientList": "Sagar banana",
+    "storageInstructions": "Keep refrigerated or cool, as marked on the pack.",
+    "shelfLife": "5 days at room temperature",
+    "netWeight": "1 dozen",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0126"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "BN-12",
+     "size": "Dozen",
+     "grams": 1700,
+     "price": 150,
+     "pack": 12
+    },
+    {
+     "code": "BN-24",
+     "size": "Two dozen",
+     "grams": 3400,
+     "price": 290,
+     "pack": 24
+    }
+   ]
+  },
+  {
+   "slug": "seasonal-vegetable-box",
+   "name": "Seasonal Vegetable Box",
+   "brand": "Padma Organics",
+   "category": "FreshProduce",
+   "subcategory": "Vegetables",
+   "description": "Five to seven vegetables from our growers this week, packed on the morning of delivery.",
+   "origin": "BD",
+   "district": "Gazipur",
+   "certifications": [
+    "CertifiedOrganic"
+   ],
+   "tags": [
+    "vegetables",
+    "box"
+   ],
+   "food": {
+    "ingredientList": "Seasonal vegetables",
+    "storageInstructions": "Keep refrigerated or cool, as marked on the pack.",
+    "shelfLife": "4 days, keep cool",
+    "netWeight": "3 kg",
+    "allergens": "None",
+    "organicCertifier": "Bangladesh Organic Council",
+    "organicCertificateNumber": "BOC-2026-0127"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "VB-3KG",
+     "size": "3 kg box",
+     "grams": 3200,
+     "price": 480
+    },
+    {
+     "code": "VB-5KG",
+     "size": "5 kg box",
+     "grams": 5300,
+     "price": 760
+    }
+   ]
+  },
+  {
+   "slug": "country-potato",
+   "name": "Desi Potato",
+   "brand": "Sonar Bangla Farms",
+   "category": "FreshProduce",
+   "subcategory": "Vegetables",
+   "description": "Firm country potatoes, good for curries and mash.",
+   "origin": "BD",
+   "district": "Munshiganj",
+   "certifications": [],
+   "tags": [
+    "vegetables"
+   ],
+   "food": {
+    "ingredientList": "Potato",
+    "storageInstructions": "Keep refrigerated or cool, as marked on the pack.",
+    "shelfLife": "3 weeks, store cool and dark",
+    "netWeight": "5 kg",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "PT-2KG",
+     "size": "2 kg",
+     "grams": 2050,
+     "price": 90
+    },
+    {
+     "code": "PT-5KG",
+     "size": "5 kg",
+     "grams": 5100,
+     "price": 210
+    }
+   ]
+  },
+  {
+   "slug": "ajwa-dates",
+   "name": "Ajwa Dates",
+   "brand": "Haat Bazaar Co-op",
+   "category": "DatesAndDryFruit",
+   "subcategory": "Dates",
+   "description": "Soft, dark Ajwa dates, imported and packed in Dhaka.",
+   "origin": "BD",
+   "district": "Dhaka",
+   "certifications": [],
+   "tags": [
+    "dates",
+    "ramadan"
+   ],
+   "food": {
+    "ingredientList": "Dates (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months, store cool",
+    "netWeight": "500 g",
+    "allergens": "May contain date stones"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "AJ-250G",
+     "size": "250 g",
+     "grams": 290,
+     "price": 750
+    },
+    {
+     "code": "AJ-500G",
+     "size": "500 g",
+     "grams": 560,
+     "price": 1450
+    }
+   ]
+  },
+  {
+   "slug": "khejur-fresh-dates",
+   "name": "Fresh Khejur (Local Dates)",
+   "brand": "Madhupur Gram Foods",
+   "category": "DatesAndDryFruit",
+   "subcategory": "Dates",
+   "description": "Chewy local dates from Jessore palms, sold in the cold months.",
+   "origin": "BD",
+   "district": "Jessore",
+   "certifications": [
+    "Traditional"
+   ],
+   "tags": [
+    "dates"
+   ],
+   "food": {
+    "ingredientList": "Dates (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "3 months, refrigerate",
+    "netWeight": "500 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "KF-500G",
+     "size": "500 g",
+     "grams": 560,
+     "price": 320
+    }
+   ]
+  },
+  {
+   "slug": "roasted-cashew-nuts",
+   "name": "Roasted Cashew Nuts",
+   "brand": "Haat Bazaar Co-op",
+   "category": "DatesAndDryFruit",
+   "subcategory": "Nuts",
+   "description": "Whole cashews, dry-roasted with a little salt.",
+   "origin": "BD",
+   "district": "Cox's Bazar",
+   "certifications": [],
+   "tags": [
+    "nuts"
+   ],
+   "food": {
+    "ingredientList": "Cashew nuts, salt",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "6 months from roasting",
+    "netWeight": "250 g",
+    "allergens": "Contains tree nuts"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "CN-250G",
+     "size": "250 g",
+     "grams": 290,
+     "price": 480
+    },
+    {
+     "code": "CN-500G",
+     "size": "500 g",
+     "grams": 560,
+     "price": 920
+    }
+   ]
+  },
+  {
+   "slug": "dried-jackfruit-chips",
+   "name": "Dried Jackfruit Chips",
+   "brand": "Sundarbans Harvest",
+   "category": "DatesAndDryFruit",
+   "subcategory": "DriedFruit",
+   "description": "Crisp, sun-dried jackfruit pieces with no added sugar.",
+   "origin": "BD",
+   "district": "Bandarban",
+   "certifications": [],
+   "tags": [
+    "snack",
+    "fruit"
+   ],
+   "food": {
+    "ingredientList": "Jackfruit (100%)",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "6 months from packing",
+    "netWeight": "150 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "JF-150G",
+     "size": "150 g",
+     "grams": 190,
+     "price": 260
+    }
+   ]
+  },
+  {
+   "slug": "free-range-desi-eggs",
+   "name": "Free-range Desi Eggs",
+   "brand": "Rupsha Dairy",
+   "category": "DairyAndEggs",
+   "subcategory": "Eggs",
+   "description": "Eggs from free-ranging desi hens fed on grain and kitchen scraps.",
+   "origin": "BD",
+   "district": "Pabna",
+   "certifications": [
+    "PesticideFree"
+   ],
+   "tags": [
+    "eggs"
+   ],
+   "food": {
+    "ingredientList": "Hen eggs",
+    "storageInstructions": "Keep refrigerated or cool, as marked on the pack.",
+    "shelfLife": "14 days from collection",
+    "netWeight": "12 eggs",
+    "allergens": "Contains egg"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "EG-6",
+     "size": "Half dozen",
+     "grams": 330,
+     "price": 150,
+     "pack": 6
+    },
+    {
+     "code": "EG-12",
+     "size": "Dozen",
+     "grams": 660,
+     "price": 290,
+     "pack": 12
+    }
+   ]
+  },
+  {
+   "slug": "mishti-doi",
+   "name": "Mishti Doi",
+   "brand": "Rupsha Dairy",
+   "category": "DairyAndEggs",
+   "subcategory": "MilkAndYoghurt",
+   "description": "Bogura-style sweet yoghurt, set in earthen pots with jaggery.",
+   "origin": "BD",
+   "district": "Bogura",
+   "certifications": [],
+   "tags": [
+    "yoghurt",
+    "sweet"
+   ],
+   "food": {
+    "ingredientList": "Milk, sugarcane gur, culture",
+    "storageInstructions": "Keep refrigerated or cool, as marked on the pack.",
+    "shelfLife": "5 days, refrigerate",
+    "netWeight": "500 g",
+    "allergens": "Contains milk"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MSD-500G",
+     "size": "500 g pot",
+     "grams": 650,
+     "price": 290
+    },
+    {
+     "code": "MSD-1KG",
+     "size": "1 kg pot",
+     "grams": 1200,
+     "price": 540
+    }
+   ]
+  },
+  {
+   "slug": "fresh-cow-milk",
+   "name": "Fresh Pasteurised Cow Milk",
+   "brand": "Rupsha Dairy",
+   "category": "DairyAndEggs",
+   "subcategory": "MilkAndYoghurt",
+   "description": "Full-cream cow milk from small farms, pasteurised the same day.",
+   "origin": "BD",
+   "district": "Pabna",
+   "certifications": [],
+   "tags": [
+    "milk"
+   ],
+   "food": {
+    "ingredientList": "Cow milk",
+    "storageInstructions": "Keep refrigerated or cool, as marked on the pack.",
+    "shelfLife": "4 days, refrigerate",
+    "netWeight": "1 L",
+    "allergens": "Contains milk"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "FM-1L",
+     "size": "1 L",
+     "grams": 1050,
+     "price": 110
+    },
+    {
+     "code": "FM-2L",
+     "size": "2 L",
+     "grams": 2080,
+     "price": 210
+    }
+   ]
+  },
+  {
+   "slug": "puffed-rice-muri",
+   "name": "Muri (Puffed Rice)",
+   "brand": "Haat Bazaar Co-op",
+   "category": "SnacksAndSweets",
+   "subcategory": "Snacks",
+   "description": "Crisp puffed rice for jhal muri and for breakfast.",
+   "origin": "BD",
+   "district": "Kushtia",
+   "certifications": [
+    "Traditional"
+   ],
+   "tags": [
+    "snack"
+   ],
+   "food": {
+    "ingredientList": "Rice, salt",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "3 months from packing",
+    "netWeight": "400 g",
+    "allergens": "None"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "MU-400G",
+     "size": "400 g",
+     "grams": 440,
+     "price": 70
+    }
+   ]
+  },
+  {
+   "slug": "nolen-gur-sandesh",
+   "name": "Nolen Gur Sandesh",
+   "brand": "Madhupur Gram Foods",
+   "category": "SnacksAndSweets",
+   "subcategory": "TraditionalSweets",
+   "description": "Soft sandesh sweetened with fresh date-palm gur, made in the cold months.",
+   "origin": "BD",
+   "district": "Tangail",
+   "certifications": [],
+   "tags": [
+    "sweet"
+   ],
+   "food": {
+    "ingredientList": "Milk, nolen gur",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "3 days, refrigerate",
+    "netWeight": "250 g",
+    "allergens": "Contains milk"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "NS-250G",
+     "size": "250 g",
+     "grams": 290,
+     "price": 380
+    },
+    {
+     "code": "NS-500G",
+     "size": "500 g",
+     "grams": 560,
+     "price": 740
+    }
+   ]
+  },
+  {
+   "slug": "mango-pickle-achar",
+   "name": "Mango Pickle (Achar)",
+   "brand": "Haat Bazaar Co-op",
+   "category": "SnacksAndSweets",
+   "subcategory": "Pickles",
+   "description": "Green mango pickle in mustard oil, aged in the sun.",
+   "origin": "BD",
+   "district": "Rajshahi",
+   "certifications": [],
+   "tags": [
+    "pickle"
+   ],
+   "food": {
+    "ingredientList": "Green mango, mustard oil, salt, spices",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from packing",
+    "netWeight": "400 g",
+    "allergens": "Contains mustard"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "AC-400G",
+     "size": "400 g",
+     "grams": 560,
+     "price": 260
+    },
+    {
+     "code": "AC-800G",
+     "size": "800 g",
+     "grams": 1100,
+     "price": 490
+    }
+   ]
+  },
+  {
+   "slug": "olive-pickle-jolpai",
+   "name": "Jolpai (Olive) Pickle",
+   "brand": "Haat Bazaar Co-op",
+   "category": "SnacksAndSweets",
+   "subcategory": "Pickles",
+   "description": "Sweet-and-sour Bangladeshi olive pickle.",
+   "origin": "BD",
+   "district": "Sylhet",
+   "certifications": [
+    "Traditional"
+   ],
+   "tags": [
+    "pickle"
+   ],
+   "food": {
+    "ingredientList": "Jolpai, sugar, spices, mustard oil",
+    "storageInstructions": "Store in a cool, dry place away from direct sunlight.",
+    "shelfLife": "12 months from packing",
+    "netWeight": "300 g",
+    "allergens": "Contains mustard"
+   },
+   "expiry": true,
+   "skus": [
+    {
+     "code": "JP-300G",
+     "size": "300 g",
+     "grams": 440,
+     "price": 230
+    }
+   ]
+  },
+  {
+   "slug": "jute-shopping-bag",
+   "name": "Jute Shopping Bag",
+   "brand": "Sonar Bangla Farms",
+   "category": "HouseholdAndCare",
+   "subcategory": "JuteAndBags",
+   "description": "A sturdy hand-woven jute bag for the haat, with a cotton lining and a stitched handle.",
+   "origin": "BD",
+   "district": "Faridpur",
+   "certifications": [],
+   "tags": [
+    "jute",
+    "bag"
+   ],
+   "expiry": false,
+   "skus": [
+    {
+     "code": "JB-STD",
+     "size": "Standard",
+     "grams": 320,
+     "price": 250
+    },
+    {
+     "code": "JB-LRG",
+     "size": "Large",
+     "grams": 480,
+     "price": 350
+    }
+   ]
+  },
+  {
+   "slug": "jute-produce-pouch",
+   "name": "Jute Produce Pouch (Set of 3)",
+   "brand": "Sonar Bangla Farms",
+   "category": "HouseholdAndCare",
+   "subcategory": "JuteAndBags",
+   "description": "Three drawstring jute pouches for loose vegetables and spices.",
+   "origin": "BD",
+   "district": "Faridpur",
+   "certifications": [],
+   "tags": [
+    "jute",
+    "bag"
+   ],
+   "expiry": false,
+   "skus": [
+    {
+     "code": "JP-SET3",
+     "size": "Set of 3",
+     "grams": 240,
+     "price": 180,
+     "pack": 3
+    }
+   ]
+  },
+  {
+   "slug": "neem-soap-bar",
+   "name": "Neem Soap Bar",
+   "brand": "Meghna Naturals",
+   "category": "HouseholdAndCare",
+   "subcategory": "NaturalCare",
+   "description": "Cold-process soap with neem and coconut oil. No synthetic fragrance.",
+   "origin": "BD",
+   "district": "Comilla",
+   "certifications": [
+    "PesticideFree"
+   ],
+   "tags": [
+    "soap",
+    "neem"
+   ],
+   "expiry": false,
+   "skus": [
+    {
+     "code": "NM-100G",
+     "size": "100 g",
+     "grams": 120,
+     "price": 140
+    },
+    {
+     "code": "NM-3PK",
+     "size": "Pack of 3",
+     "grams": 330,
+     "price": 390,
+     "pack": 3
+    }
+   ]
+  },
+  {
+   "slug": "herbal-hand-balm",
+   "name": "Herbal Hand Balm",
+   "brand": "Meghna Naturals",
+   "category": "HouseholdAndCare",
+   "subcategory": "NaturalCare",
+   "description": "Beeswax and mustard-oil balm for dry hands and heels.",
+   "origin": "BD",
+   "district": "Comilla",
+   "certifications": [],
+   "tags": [
+    "balm"
+   ],
+   "expiry": false,
+   "skus": [
+    {
+     "code": "HB-50G",
+     "size": "50 g",
+     "grams": 80,
+     "price": 780
+    }
+   ]
+  }
+ ]
+}

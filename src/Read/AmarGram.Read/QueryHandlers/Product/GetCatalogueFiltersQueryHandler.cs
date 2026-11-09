@@ -1,0 +1,66 @@
+using AmarGram.Infrastructure.Persistence;
+using AmarGram.Read.Queries.Product;
+using AmarGram.Shared.Common.Constants;
+using AmarGram.Shared.Common.Enums;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Platform.Infrastructure.Core.Queries;
+
+namespace AmarGram.Read.QueryHandlers.Product;
+
+/// <summary>HO-SHP-001 section 8.8 -- cached 60s in memory (Shop:Catalogue:FacetCacheSeconds).</summary>
+public sealed class GetCatalogueFiltersQueryHandler(AmarGramDbContext db, IMemoryCache cache, Microsoft.Extensions.Options.IOptions<AmarGram.Infrastructure.Configuration.ShopOptions> shopOptions)
+    : IQueryHandlerAsync<GetCatalogueFiltersQuery, CatalogueFiltersViewModel>
+{
+    public async Task<QueryResponse<CatalogueFiltersViewModel>> HandleAsync(GetCatalogueFiltersQuery query)
+    {
+        // Key on the PARSED category, never the raw text: junk input resolves to the all-categories key,
+        // so it neither misses the cache nor grows it.
+        ProductCategory? parsed = !string.IsNullOrWhiteSpace(query.Category) && EnumerationParsing.TryParse<ProductCategory>(query.Category, out var c) ? c : null;
+        var cacheKey = $"shop:filters:{parsed?.Value.ToString() ?? "all"}";
+        if (cache.TryGetValue(cacheKey, out CatalogueFiltersViewModel? cached) && cached is not null)
+            return new QueryResponse<CatalogueFiltersViewModel> { Result = cached };
+
+        var entries = db.StorefrontCatalogueEntries.AsNoTracking().AsQueryable();
+
+        if (parsed is { } category)
+            entries = entries.Where(e => e.Category == category.Value);
+
+        // Anonymous projection, ordered in SQL, THEN mapped: EF cannot order by a member of a record built
+        // from a positional constructor (the endpoint answered 500 before this).
+        var brandGroups = await entries.GroupBy(e => e.Brand).Select(g => new { Name = g.Key, Count = g.Count() }).OrderBy(b => b.Name).ToListAsync();
+        var brands = brandGroups.Select(b => new BrandCount(b.Name, b.Count)).ToList();
+
+        var originGroups = await entries.Where(e => e.CountryOfOriginCode != null)
+            .GroupBy(e => e.CountryOfOriginCode!)
+            .Select(g => new { Code = g.Key, Count = g.Count() })
+            .ToListAsync();
+        var origins = originGroups.Select(o => new OriginCount(o.Code, CountryCodes.FindName(o.Code) ?? o.Code, o.Count))
+            .OrderBy(o => o.Name).ToList();
+
+        // HO-P2 §1.4: one count per product per certification (the array column is unnested in SQL).
+        var certificationGroups = await entries.SelectMany(e => e.Certifications)
+            .GroupBy(c => c)
+            .Select(g => new { Value = g.Key, Count = g.Count() })
+            .ToListAsync();
+        var certifications = certificationGroups.OrderBy(c => c.Value)
+            .Select(c => new NamedCount(Enumeration.FromValue<Certification>(c.Value).DisplayName, c.Count)).ToList();
+
+        // HO-P3 G1: distinct district names (case-insensitive), most products first then A-Z.
+        var districtGroups = await entries.Where(e => e.DistrictOfOrigin != null)
+            .GroupBy(e => e.DistrictOfOrigin!)
+            .Select(g => new { Value = g.Key, Count = g.Count() })
+            .ToListAsync();
+        var districts = districtGroups.GroupBy(d => d.Value, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new NamedCount(g.First().Value, g.Sum(x => x.Count)))
+            .OrderBy(d => d.Value, StringComparer.OrdinalIgnoreCase).ToList();
+
+        var minPrice = await entries.Where(e => e.MinPrice != null).Select(e => (decimal?)e.MinPrice!.Value).MinAsync();
+        var maxPrice = await entries.Where(e => e.MaxPrice != null).Select(e => (decimal?)e.MaxPrice!.Value).MaxAsync();
+
+        var result = new CatalogueFiltersViewModel(brands, origins, certifications, new PriceBounds(minPrice, maxPrice), districts);
+        cache.Set(cacheKey, result, TimeSpan.FromSeconds(shopOptions.Value.Catalogue.FacetCacheSeconds));
+
+        return new QueryResponse<CatalogueFiltersViewModel> { Result = result };
+    }
+}

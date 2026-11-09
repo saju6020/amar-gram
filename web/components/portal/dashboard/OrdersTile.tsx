@@ -10,7 +10,7 @@ import { StatusBadge } from './StatusBadge';
 import { TileEmpty, TileRow } from './DashboardSection';
 
 /** The shop's own zone: an order's day is the day in Dhaka, not in the viewer's browser zone (the
- *  dashboard carries no zone for orders; same helpers as the appointments tile). */
+ *  dashboard carries no zone for orders). */
 const COMMERCE_TIME_ZONE = 'Asia/Dhaka';
 
 /** Re-order is shown from the order item's own `canReorder` (Orders' rule) and goes through

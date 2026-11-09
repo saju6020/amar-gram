@@ -76,7 +76,9 @@ describe('InboxItem / InboxList — HO-NTF-002 §11.1, ADR-FE-162', () => {
     expect(
       await screen.findByRole('link', { name: 'Inbox, 3 unread messages' }),
     ).toBeInTheDocument();
-    const header = await screen.findByRole('button', { name: /Momo is due a vaccination/i });
+    const header = await screen.findByRole('button', {
+      name: /Order SO-2026-00042 is on its way/i,
+    });
     await user.click(header); // open
     await user.click(header); // close
     await user.click(header); // open again — still only one POST
@@ -118,7 +120,7 @@ describe('InboxItem / InboxList — HO-NTF-002 §11.1, ADR-FE-162', () => {
   });
 
   it.each([
-    ['/portal/cats/1', true],
+    ['/portal/orders/1', true],
     ['//evil.example', false],
     ['https://evil.example', false],
     ['/\\evil', false],
@@ -163,7 +165,7 @@ describe('InboxItem / InboxList — HO-NTF-002 §11.1, ADR-FE-162', () => {
     );
     expect(screen.getByText('No messages yet.')).toBeInTheDocument();
     expect(
-      screen.getByText('Reminders and updates about your cats will appear here.'),
+      screen.getByText('Updates about your orders and account will appear here.'),
     ).toBeInTheDocument();
   });
 

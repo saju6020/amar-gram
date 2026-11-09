@@ -93,7 +93,7 @@ export function ApplyCreditDialog({
           <DialogTitle>Apply customer credit</DialogTitle>
           <DialogDescription>
             Uses the customer’s free credit (<Amount money={freeCredit} />) against one invoice,
-            oldest payment first. Deposits set aside for an order or a stay are not touched.
+            oldest payment first. Deposits set aside for an order are not touched.
           </DialogDescription>
         </DialogHeader>
         {result ? (

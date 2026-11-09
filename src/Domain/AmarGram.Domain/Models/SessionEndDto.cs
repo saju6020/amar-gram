@@ -1,0 +1,6 @@
+using AmarGram.Shared.Common.Enums;
+using Platform.Infrastructure.Common.Security;
+
+namespace AmarGram.Domain.Models;
+
+public sealed record SessionEndDto(DateTimeOffset EndedOn, SessionEndReason Reason, UserContext UserContext, Guid CorrelationId);

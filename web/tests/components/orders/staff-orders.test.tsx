@@ -26,9 +26,9 @@ import { CouriersPage } from '@/components/ordering-admin/CouriersPage';
 import { PaymentSettingsPage } from '@/components/ordering-admin/PaymentSettingsPage';
 import { getStaffOrder } from '@/lib/api/staff-orders';
 import { STAFF_ORDER_POLL_MS } from '@/lib/hooks/useStaffOrders';
-import { setUrl } from '../booking/nav-mock';
+import { setUrl } from '../common/nav-mock';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
@@ -78,7 +78,7 @@ describe('DispatchDialog - U-D3', () => {
     renderWithClient(<DispatchDialog orderId={ids.orders.confirmedCod} open onOpenChange={() => undefined} onReallocate={onReallocate} />);
     const dialog = await screen.findByRole('dialog');
     await waitFor(() => expect(within(dialog).getByRole('option', { name: 'Pathao Courier' })).toBeInTheDocument());
-    await user.selectOptions(within(dialog).getByLabelText(/Courier/), 'Pathao Courier');
+    await user.selectOptions(within(dialog).getByLabelText(/Which courier/), 'Pathao Courier');
     await user.click(within(dialog).getByRole('button', { name: 'Dispatch' }));
     expect(await within(dialog).findByText('Batch B-2231 has been recalled and cannot be dispatched.')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Reallocate a line' }));
@@ -94,7 +94,7 @@ describe('DispatchDialog - U-D3', () => {
     renderWithClient(<DispatchDialog orderId={ids.orders.confirmedCod} open onOpenChange={() => undefined} onReallocate={() => undefined} />);
     const dialog = await screen.findByRole('dialog');
     await waitFor(() => expect(within(dialog).getByRole('option', { name: 'Pathao Courier' })).toBeInTheDocument());
-    await user.selectOptions(within(dialog).getByLabelText(/Courier/), 'Pathao Courier');
+    await user.selectOptions(within(dialog).getByLabelText(/Which courier/), 'Pathao Courier');
     await user.click(within(dialog).getByRole('button', { name: 'Dispatch' }));
     expect(await within(dialog).findByText('This order cannot be dispatched now.')).toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: 'Reallocate a line' })).not.toBeInTheDocument();

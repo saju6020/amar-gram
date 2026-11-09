@@ -36,7 +36,7 @@ function asRoles(roleIds: string[]) {
 }
 
 describe('NavItem roles — Reports entry (owner 2026-10-14)', () => {
-  it.each([['Vet'], ['Accountant'], ['Administrator'], ['Reception']])(
+  it.each([['Inventory'], ['Accountant'], ['Administrator'], ['ShopManager']])(
     'shows Reports to %s',
     async (role) => {
       asRoles([role]);
@@ -44,30 +44,22 @@ describe('NavItem roles — Reports entry (owner 2026-10-14)', () => {
     },
   );
 
-  it('hides Reports from a Nurse, who still has Home', async () => {
-    asRoles(['Nurse']);
-    expect((await screen.findAllByRole('link', { name: 'Home' })).length).toBeGreaterThan(0);
+  it('hides Reports from Reception, who still has the Dashboard', async () => {
+    asRoles(['Reception']);
+    expect((await screen.findAllByRole('link', { name: 'Dashboard' })).length).toBeGreaterThan(0);
     await screen.findByText(/Test Person/);
     expect(screen.queryByRole('link', { name: 'Reports' })).not.toBeInTheDocument();
   });
 
-  it('copies the roles of Reports.Any and not the Nurse', () => {
+  it('copies the roles of Reports.Any and not Reception', () => {
     expect([...REPORT_ROLES].sort()).toEqual(
-      [
-        'Accountant',
-        'Administrator',
-        'Caretaker',
-        'Inventory',
-        'Reception',
-        'ShopManager',
-        'Vet',
-      ].sort(),
+      ['Accountant', 'Administrator', 'Inventory', 'ShopManager'].sort(),
     );
   });
 
   it('an item with no roles is for everyone; one with roles needs a match', () => {
     expect(canSeeNavItem({}, [])).toBe(true);
-    expect(canSeeNavItem({ roles: ['Vet'] }, [])).toBe(false);
-    expect(canSeeNavItem({ roles: ['Vet'] }, ['Nurse', 'Vet'])).toBe(true);
+    expect(canSeeNavItem({ roles: ['Accountant'] }, [])).toBe(false);
+    expect(canSeeNavItem({ roles: ['Accountant'] }, ['Reception', 'Accountant'])).toBe(true);
   });
 });

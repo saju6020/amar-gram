@@ -11,7 +11,7 @@ import {
   hoursAgo,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_notifications_templates_mock_db__';
+const PERSIST_KEY = '__amargram_notifications_templates_mock_db__';
 
 /**
  * `mocks/handlers/notifications/templates.ts` — HO-NTF-002 §12, HO-NTF-001 §8.2/§8.3/§12.4. Three
@@ -82,16 +82,16 @@ const STANDARD: Variable[] = [
     isStandard: true,
   },
   {
-    name: 'clinicName',
-    description: 'The clinic branch name',
+    name: 'outletName',
+    description: 'The outlet name (Amar Gram when no outlet applies)',
     kind: 'Text',
     sample: 'Amar Gram',
     requiredOn: [],
     isStandard: true,
   },
   {
-    name: 'clinicPhone',
-    description: 'The clinic branch phone number',
+    name: 'outletPhone',
+    description: 'The outlet phone number',
     kind: 'Text',
     sample: '+880 2 5555 0100',
     requiredOn: [],
@@ -129,7 +129,7 @@ const DEFINITIONS: Definition[] = [
         'resetLink',
         'The one-time reset link',
         'Url',
-        'https://purrcare.example/reset-password#token=sample',
+        'https://amargram.example/reset-password#token=sample',
         ['Sms', 'Email'],
       ),
       v('expiresInMinutes', 'Minutes until the link expires', 'Text', '30'),
@@ -148,79 +148,82 @@ const DEFINITIONS: Definition[] = [
     ],
   },
   {
-    key: notificationFixtureIds.vaccinationKey,
-    displayName: 'Vaccination due',
-    description: 'Reminds an owner that a vaccination is coming up.',
+    key: notificationFixtureIds.orderDispatchedKey,
+    displayName: 'Order dispatched',
+    description: 'Sent when an order leaves the shop with a courier.',
     category: 'Transactional',
     urgency: 'Normal',
     channels: ALL,
     containsSecret: false,
     variables: [
-      v('catName', "The cat's name", 'Text', 'Momo'),
-      v('vaccineName', 'The vaccine that is due', 'Text', 'Feline Core'),
-      v('dueOn', 'The date it is due', 'Date', '2026-10-12'),
-      v('bookingLink', 'A direct booking link', 'Url', 'https://purrcare.example/book?catId=1', [
-        'Sms',
-        'Email',
-        'InApp',
-      ]),
+      v('orderNumber', 'The order number', 'Text', 'SO-2026-00042'),
+      v('courierName', 'The courier', 'Text', 'Pathao Courier'),
+      v('dispatchedOn', 'The date it left the shop', 'Date', '2026-10-12'),
+      v(
+        'orderLink',
+        'A link to the order page',
+        'Url',
+        'https://amargram.example/portal/orders/1',
+        ['Sms', 'Email', 'InApp'],
+      ),
       ...STANDARD,
     ],
     defaults: [
       content(
         'Sms',
-        "Amar Gram: {{catName}}'s {{vaccineName}} vaccine is due on {{dueOn}}. Book: {{bookingLink}}",
+        'Amar Gram: order {{orderNumber}} is on its way with {{courierName}}. Track: {{orderLink}}',
       ),
       content(
         'Email',
-        "Hello {{recipientName}},\n\n{{catName}}'s {{vaccineName}} vaccine is due on {{dueOn}}.\n\n[Book a visit]({{bookingLink}})\n\n{{clinicName}} - {{clinicPhone}}",
-        { subject: '{{catName}} is due a vaccination' },
+        'Hello {{recipientName}},\n\nOrder {{orderNumber}} left the shop on {{dispatchedOn}} with {{courierName}}.\n\n[View your order]({{orderLink}})\n\n{{outletName}} - {{outletPhone}}',
+        { subject: 'Order {{orderNumber}} is on its way' },
       ),
       content(
         'InApp',
-        "{{catName}}'s {{vaccineName}} vaccine is due on {{dueOn}}. Book a visit: {{bookingLink}}",
+        'Order {{orderNumber}} is on its way with {{courierName}}. View it: {{orderLink}}',
         {
-          title: '{{catName}} is due a vaccination',
-          linkPath: '{{bookingLink}}',
+          title: 'Order {{orderNumber}} is on its way',
+          linkPath: '{{orderLink}}',
         },
       ),
     ],
   },
   {
-    key: notificationFixtureIds.dewormingKey,
-    displayName: 'Deworming due',
-    description: 'Reminds an owner that a deworming treatment is coming up.',
+    key: notificationFixtureIds.orderDeliveredKey,
+    displayName: 'Order delivered',
+    description: 'Sent when an order has been delivered.',
     category: 'Transactional',
     urgency: 'Normal',
     channels: ALL,
     containsSecret: false,
     variables: [
-      v('catName', "The cat's name", 'Text', 'Momo'),
-      v('treatmentName', 'The treatment that is due', 'Text', 'Broad-spectrum dewormer'),
-      v('dueOn', 'The date it is due', 'Date', '2026-10-12'),
-      v('bookingLink', 'A direct booking link', 'Url', 'https://purrcare.example/book?catId=1', [
-        'Sms',
-        'Email',
-        'InApp',
-      ]),
+      v('orderNumber', 'The order number', 'Text', 'SO-2026-00042'),
+      v('deliveredOn', 'The date it was delivered', 'Date', '2026-10-12'),
+      v(
+        'orderLink',
+        'A link to the order page',
+        'Url',
+        'https://amargram.example/portal/orders/1',
+        ['Sms', 'Email', 'InApp'],
+      ),
       ...STANDARD,
     ],
     defaults: [
       content(
         'Sms',
-        'Amar Gram: {{catName}} is due {{treatmentName}} on {{dueOn}}. Book: {{bookingLink}}',
+        'Amar Gram: order {{orderNumber}} was delivered on {{deliveredOn}}. Details: {{orderLink}}',
       ),
       content(
         'Email',
-        'Hello {{recipientName}},\n\n{{catName}} is due {{treatmentName}} on {{dueOn}}.\n\n[Book a visit]({{bookingLink}})',
-        { subject: '{{catName}} is due a deworming treatment' },
+        'Hello {{recipientName}},\n\nOrder {{orderNumber}} was delivered on {{deliveredOn}}.\n\n[View your order]({{orderLink}})',
+        { subject: 'Order {{orderNumber}} has been delivered' },
       ),
       content(
         'InApp',
-        '{{catName}} is due {{treatmentName}} on {{dueOn}}. Book a visit: {{bookingLink}}',
+        'Order {{orderNumber}} was delivered on {{deliveredOn}}. View it: {{orderLink}}',
         {
-          title: '{{catName}} is due a deworming treatment',
-          linkPath: '{{bookingLink}}',
+          title: 'Order {{orderNumber}} has been delivered',
+          linkPath: '{{orderLink}}',
         },
       ),
     ],
@@ -239,36 +242,36 @@ const DEFINITIONS: Definition[] = [
         'unsubscribeLink',
         'Stops marketing messages on this channel',
         'Url',
-        'https://purrcare.example/unsubscribe#token=sample',
+        'https://amargram.example/unsubscribe#token=sample',
         ['Sms', 'Email', 'InApp'],
       ),
       ...STANDARD,
     ],
     defaults: [
-      content('Sms', '{{clinicName}}: spring offers are here. Stop: {{unsubscribeLink}}'),
+      content('Sms', '{{outletName}}: spring offers are here. Stop: {{unsubscribeLink}}'),
       content(
         'Email',
         'Hello {{recipientName}},\n\nSpring offers are here.\n\n[Unsubscribe]({{unsubscribeLink}})',
-        { subject: 'News from {{clinicName}}' },
+        { subject: 'News from {{outletName}}' },
       ),
       content('InApp', 'Spring offers are here. Stop these messages: {{unsubscribeLink}}', {
-        title: 'News from {{clinicName}}',
+        title: 'News from {{outletName}}',
       }),
     ],
   },
 ];
 
 function seedCustomisations(): Record<string, Customisation> {
-  const vaccination = DEFINITIONS.find((d) => d.key === notificationFixtureIds.vaccinationKey)!;
+  const dispatched = DEFINITIONS.find((d) => d.key === notificationFixtureIds.orderDispatchedKey)!;
   return {
-    [notificationFixtureIds.vaccinationKey]: {
+    [notificationFixtureIds.orderDispatchedKey]: {
       version: 2,
       lastEditedOn: hoursAgo(72),
-      contents: vaccination.defaults.map((c) =>
+      contents: dispatched.defaults.map((c) =>
         c.channel === 'Sms'
           ? {
               ...c,
-              body: "Amar Gram: it's time for {{catName}}'s {{vaccineName}} vaccine ({{dueOn}}). Book: {{bookingLink}}",
+              body: 'Amar Gram: good news, order {{orderNumber}} left the shop on {{dispatchedOn}}. Track: {{orderLink}}',
             }
           : c,
       ),
@@ -371,7 +374,7 @@ function validateContents(def: Definition, contents: Array<Content | null>): Vio
         return {
           propertyName: prop,
           errorCode: 'MalformedTemplatePlaceholder',
-          errorMessage: `"${fragment}" is not a valid placeholder. Write placeholders like {{catName}}.`,
+          errorMessage: `"${fragment}" is not a valid placeholder. Write placeholders like {{customerName}}.`,
         };
       }
       for (const match of text.matchAll(PLACEHOLDER)) {
@@ -519,9 +522,9 @@ function render(
     parts.push(encodeHtml(sub(c.body.slice(last))));
     htmlBody =
       `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#1c1a17">` +
-      `<h2 style="color:#1f4d29">${encodeHtml(values.clinicName ?? '')}</h2>` +
+      `<h2 style="color:#1f4d29">${encodeHtml(values.outletName ?? '')}</h2>` +
       `<div style="white-space:pre-wrap">${parts.join('')}</div>` +
-      `<p style="color:#5c574f;font-size:12px">${encodeHtml(values.clinicPhone ?? '')}</p>` +
+      `<p style="color:#5c574f;font-size:12px">${encodeHtml(values.outletPhone ?? '')}</p>` +
       // Canary: if this ever ran outside a sandbox it would set the flag the tests look for.
       `<script>window.parent.__previewScriptRan = true;</script>` +
       `</body></html>`;

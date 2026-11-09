@@ -28,7 +28,7 @@ run bash "$script" --confirm
 run bash "$script" --target latest --confirm --bogus
 { [ "$rc" = 2 ] && [ -z "$calls" ]; } && ok "TG-2b unknown argument: exit 2, not called" || bad "TG-2b rc=$rc calls=[$calls]"
 
-echo "archive_command = 'pgbackrest ... purrcare-production'" > "$PGDATA/postgresql.auto.conf"
+echo "archive_command = 'pgbackrest ... amargram-production'" > "$PGDATA/postgresql.auto.conf"
 run bash "$script" --target latest --confirm
 { [ "$rc" = 3 ] && [ -z "$calls" ]; } && ok "TG-3a production marker without the flag: exit 3, not called" || bad "TG-3a rc=$rc calls=[$calls]"
 run bash "$script" --target latest --confirm --i-understand-this-replaces-production

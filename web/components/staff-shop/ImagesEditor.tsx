@@ -3,10 +3,15 @@
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { ImageIcon } from 'lucide-react';
+import { StatusPill } from '@/components/back-office/StatusPill';
 import { Button } from '@/components/ui/button';
+import { FileUploader } from '@/components/files/FileUploader';
 import { submitSection } from '@/lib/shop/submitSection';
 import type { StaffImage, StaffProductDetail } from '@/lib/api/staff-shop';
 import { Field, SectionFrame, inputClass } from './SectionFrame';
+
+const MAX_IMAGES = 12;
 
 const row = z.object({
   fileId: z
@@ -17,7 +22,7 @@ const row = z.object({
   altText: z.string().trim().min(1, 'Describe the image in a short alt text.').max(200),
 });
 const schema = z.object({
-  images: z.array(row).max(12, 'A product can have up to 12 images.'),
+  images: z.array(row).max(MAX_IMAGES, 'A product can have up to 12 images.'),
   primary: z.string(),
 });
 type Values = z.infer<typeof schema>;
@@ -33,8 +38,10 @@ export interface ImagesEditorProps {
 /**
  * HO-SHP-002 §11.6 `ImagesEditor`, ADR-FE-035 — an ordered list; each image has the stored file's id
  * (the API takes a `fileId` from File Storage), a product-level or per-SKU scope, **alt text
- * (required)** and a primary radio. **There is no upload here** (HO-SHP-001 ADR-091; §4): the honest
- * note says so. *Save replaces the set*; the list starts from the images the staff read returns
+ * (required)** and a primary radio. HO-P4 §11.4.8: a square grid whose last tile is the shared
+ * `FileUploader` (purpose `ProductImage`, virus-scanned server-side); an uploaded file is appended
+ * as a new image and still needs its alt text. The stored-file-id field stays for images that were
+ * attached before. *Save replaces the set*; the list starts from the images the staff read returns
  * (HO-SHP-001-FU1), in order, so saving unchanged keeps them.
  */
 export function ImagesEditor({ product, onSave, onReload }: ImagesEditorProps) {
@@ -64,9 +71,12 @@ export function ImagesEditor({ product, onSave, onReload }: ImagesEditorProps) {
 
   return (
     <SectionFrame
-      title="Images"
+      title="Photos"
       description={
-        <>Image upload isn&apos;t available yet — enter the stored file&apos;s key (its file id).</>
+        <>
+          Each uploaded photo is scanned for viruses before it can be used. Give every photo a short
+          alt text, choose one primary photo, and save to replace the set.
+        </>
       }
       errors={errors}
       isDirty={isDirty}
@@ -91,13 +101,19 @@ export function ImagesEditor({ product, onSave, onReload }: ImagesEditorProps) {
         if (ok) reset(values);
       })}
     >
-      <ol className="m-0 flex list-none flex-col gap-3 p-0">
+      <ol className="m-0 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 xl:grid-cols-3">
         {fields.map((field, index) => (
           <li
             key={field.id}
-            className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-border bg-surface p-3"
+            className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3"
           >
-            <p className="text-sm font-bold text-ink">Image {index + 1}</p>
+            <div className="flex aspect-square items-center justify-center rounded-[var(--radius-md)] bg-surface-sunken text-ink-muted">
+              <ImageIcon size={40} aria-hidden="true" />
+            </div>
+            <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-ink">
+              Image {index + 1}
+              {primary === String(index) && <StatusPill tone="success">Primary</StatusPill>}
+            </p>
             <Field
               id={`img-${index}-file`}
               label="Stored file id"
@@ -142,7 +158,7 @@ export function ImagesEditor({ product, onSave, onReload }: ImagesEditorProps) {
                   type="radio"
                   value={String(index)}
                   checked={primary === String(index)}
-                  className="h-4 w-4 accent-[var(--accent)]"
+                  className="h-4 w-4 accent-leaf"
                   {...register('primary')}
                 />
                 Primary image
@@ -171,6 +187,16 @@ export function ImagesEditor({ product, onSave, onReload }: ImagesEditorProps) {
             </div>
           </li>
         ))}
+        <li className="flex flex-col justify-center rounded-2xl border border-dashed border-border-strong bg-surface p-3">
+          <FileUploader
+            id="img-upload"
+            label="+ Upload photo"
+            purpose="ProductImage"
+            audience="staff"
+            disabled={fields.length >= MAX_IMAGES}
+            onUploaded={(file) => append({ fileId: file.fileId, skuId: '', altText: '' })}
+          />
+        </li>
       </ol>
       {errors.images?.message && (
         <p role="alert" className="text-xs font-semibold text-danger-ink">

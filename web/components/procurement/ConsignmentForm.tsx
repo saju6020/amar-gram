@@ -83,7 +83,7 @@ export function ConsignmentForm({
     if (state.purchaseOrderIds.length === 0) { local.fields.purchaseOrderIds = 'Choose at least one purchase order.'; local.firstTarget ??= 'purchaseOrderIds'; }
     state.hsCodes.forEach((row, index) => {
       if (row.code.trim() !== '' && !HS_CODE_PATTERN.test(row.code.trim())) {
-        local.lines[index] = { code: 'An HS code is four digits followed by up to three groups of two (for example 2309.10).' };
+        local.lines[index] = { code: 'An HS code is four digits followed by up to three groups of two (for example 1006.30).' };
         local.firstTarget ??= `line-${index}-code`;
       }
     });

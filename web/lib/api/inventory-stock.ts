@@ -23,6 +23,13 @@ export interface StockSummary {
   heldQuantity: string;
   nextExpiresOn: string | null;
   storage: Storage | null;
+  // HO-P5 BG-16 -- Read/ViewModels/InventoryStockViewModels.cs:21-30. Optional so a reader tolerates a missing one.
+  /** The SKU's reorder point at this branch (a quantity string); "0" when reordering is switched off for it. */
+  reorderLevel?: string;
+  /** The branch default stands in for an explicit policy. */
+  reorderLevelIsDefault?: boolean;
+  /** The server's verdict (the `belowReorderPoint` filter's rule); never worked out here. */
+  belowReorderLevel?: boolean;
 }
 
 export interface StockListParams {
@@ -54,6 +61,12 @@ export interface StockMatrixBatch {
   daysToExpiry: number | null;
   status: BatchStatus;
   locations: StockLocationQuantity[];
+  // HO-P5 BG-16 -- Read/ViewModels/InventoryStockViewModels.cs:49-52.
+  /** When the batch was received (an instant). */
+  receivedOn?: string | null;
+  supplierId?: string | null;
+  /** `null` when the receipt named no supplier. */
+  supplierName?: string | null;
 }
 
 export interface SkuStockMatrix {
@@ -85,7 +98,7 @@ export interface FefoPreview {
   stockUnit: string;
 }
 
-export type FefoPurpose = 'Sale' | 'Dispense' | 'ClinicalUse' | 'BoardingUse';
+export type FefoPurpose = 'Sale';
 
 /** A refusal (unknown SKU, a purpose the location does not permit) is a `400`. */
 export async function getFefoPreview(params: {

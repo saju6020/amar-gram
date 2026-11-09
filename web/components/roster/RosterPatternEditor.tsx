@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import { describeApiError } from '@/lib/api/errors';
 import { formatDateOnly, todayInZone } from '@/lib/format/time';
-import { DAYS_OF_WEEK, type DayOfWeekName, type Room } from '@/lib/api/admin-branches';
+import { DAYS_OF_WEEK, type DayOfWeekName } from '@/lib/api/admin-branches';
 import type { ShiftSlot } from '@/lib/api/admin-rosters';
 import { RosterSlotDayRow, type RosterSlot } from './RosterSlotDayRow';
 
@@ -17,7 +17,7 @@ function toWeekSlots(slots: ShiftSlot[]): WeekSlots {
   for (const slot of slots) {
     state[slot.dayOfWeek] = [
       ...(state[slot.dayOfWeek] ?? []),
-      { starts: slot.starts, ends: slot.ends, defaultRoomId: slot.defaultRoomId },
+      { starts: slot.starts, ends: slot.ends },
     ];
   }
   return state;
@@ -39,7 +39,6 @@ export interface RosterPatternEditorProps {
   currentPattern: ShiftSlot[];
   nextPattern: ShiftSlot[] | null;
   nextPatternEffectiveFrom: string | null;
-  rooms: Room[];
   onSetPattern: (slots: ShiftSlot[], effectiveFrom: string | null) => Promise<unknown>;
   onCancelScheduled: () => Promise<unknown>;
   isPending: boolean;
@@ -51,7 +50,6 @@ export function RosterPatternEditor({
   currentPattern,
   nextPattern,
   nextPatternEffectiveFrom,
-  rooms,
   onSetPattern,
   onCancelScheduled,
   isPending,
@@ -125,7 +123,6 @@ export function RosterPatternEditor({
             day={day}
             timeZoneId={timeZoneId}
             slots={week[day] ?? []}
-            rooms={rooms}
             onChange={(slots) => {
               setWeek((current) => ({ ...current, [day]: slots }));
               setSaved(false);

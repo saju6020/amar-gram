@@ -1,0 +1,54 @@
+using AmarGram.Domain.Events.Administration;
+using AmarGram.Domain.Exceptions;
+using AmarGram.Domain.Models;
+using AmarGram.Shared.Common.Constants;
+using Platform.Infrastructure.Core.Domain;
+
+namespace AmarGram.Domain.Aggregates.Administration;
+
+/// <summary>HO-ADM-001 §8.6.</summary>
+public sealed class TaxClassAggregate : AggregateRoot
+{
+    public string Code { get; private set; } = default!;
+    public string Name { get; private set; } = default!;
+    public bool IsActive { get; private set; }
+
+    private TaxClassAggregate() { }
+
+    public TaxClassAggregate(Guid id) : base(id) { }
+
+    public void Create(TaxClassCreateDto dto)
+    {
+        ValidateName(dto.Name);
+
+        Code = dto.Code;
+        Name = dto.Name;
+        IsActive = true;
+
+        SetDefaultValue(dto.UserContext);
+
+        AddDomainEvent(new TaxClassCreatedEvent { TaxClassId = Id, CorrelationId = dto.CorrelationId, UserContext = dto.UserContext });
+        UpdateVersion();
+    }
+
+    public void Update(TaxClassUpdateDto dto)
+    {
+        ValidateName(dto.Name);
+
+        // FU1 ORD-54 (ADR-217): the delivery charge is always invoiced under this class; there is no fallback, so it must stay active. (No tax class can be deleted.)
+        if (!dto.IsActive && Code == DeliveryTaxFacts.ClassCode)
+            throw new DomainRuleViolationException(BusinessViolationCodes.DeliveryTaxClassRequired, AdministrationMessages.DeliveryTaxClassRequired, nameof(dto.IsActive));
+
+        Name = dto.Name;
+        IsActive = dto.IsActive;
+
+        AddDomainEvent(new TaxClassUpdatedEvent { TaxClassId = Id, CorrelationId = dto.CorrelationId, UserContext = dto.UserContext });
+        UpdateVersion();
+    }
+
+    private static void ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Length > 200)
+            throw new DomainRuleViolationException(BusinessViolationCodes.NameRequired, "A tax class name is required.", nameof(Name));
+    }
+}

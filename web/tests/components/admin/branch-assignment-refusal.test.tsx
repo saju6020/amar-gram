@@ -6,10 +6,8 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
 import { administrationFixtureIds } from '@/mocks/handlers/admin';
 import TaxClassDetailPage from '@/app/(staff)/staff/admin/tax-classes/[taxClassId]/page';
-import ServiceDetailPage from '@/app/(staff)/staff/admin/services/[serviceId]/page';
 import BranchRosterPage from '@/app/(staff)/staff/admin/branches/[branchId]/roster/page';
 import ClosuresPage from '@/app/(staff)/staff/admin/branches/[branchId]/closures/page';
-import RoomsPage from '@/app/(staff)/staff/admin/branches/[branchId]/rooms/page';
 import SettingsPage from '@/app/(staff)/staff/admin/settings/page';
 import SystemPage from '@/app/(staff)/staff/admin/system/page';
 import MyLeavePage from '@/app/(staff)/staff/leave/page';
@@ -54,15 +52,6 @@ const PAGES: Array<{ name: string; url: string; page: () => React.ReactNode }> =
     ),
   },
   {
-    name: 'service detail',
-    url: '*/api/admin/services/:serviceId',
-    page: () => (
-      <ServiceDetailPage
-        params={resolvedParams({ serviceId: administrationFixtureIds.serviceConsultationId })}
-      />
-    ),
-  },
-  {
     name: 'roster',
     url: '*/api/admin/branches/:branchId/rosters',
     page: () => <BranchRosterPage params={branchParams()} />,
@@ -71,11 +60,6 @@ const PAGES: Array<{ name: string; url: string; page: () => React.ReactNode }> =
     name: 'closures',
     url: '*/api/admin/branches/:branchId/closures',
     page: () => <ClosuresPage params={branchParams()} />,
-  },
-  {
-    name: 'rooms',
-    url: '*/api/admin/branches/:branchId/rooms',
-    page: () => <RoomsPage params={branchParams()} />,
   },
   { name: 'settings', url: '*/api/admin/settings', page: () => <SettingsPage /> },
   { name: 'system', url: '*/api/system/status', page: () => <SystemPage /> },

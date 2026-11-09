@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -50,36 +50,36 @@ progress::-webkit-progress-value{background:var(--accent);border-radius:3px}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Tanvir Islam · Nurse</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Tanvir Islam · Content editor</div></div>
   <div class="main">
     <h1 class="h1">Interrupted and cancelled uploads</h1>
-    <p class="sub">Boarding diary for Luna, stay BRD-0192 (host illustrative). Two ways an upload stops before it finishes.</p>
+    <p class="sub">Harvest story for Sundarbans wild honey, origin page (host illustrative). Two ways an upload stops before it finishes.</p>
     <div class="cols">
       <section class="card" aria-labelledby="h-net">
         <h2 id="h-net">Connection dropped — network / abort</h2>
-        <p class="lead">Clinic Wi-Fi dropped mid-file. Only that file fails; the next one in the queue still runs (E3). Retry is manual (OQ-2).</p>
+        <p class="lead">Warehouse Wi-Fi dropped mid-file. Only that file fails; the next one in the queue still runs (E3). Retry is manual (OQ-2).</p>
         <ul class="queue" aria-label="Files">
           <li class="frow">
             <div class="ftype" aria-hidden="true">JPG</div>
-            <div class="fbody"><div class="fname">luna-breakfast.jpg</div><div class="fmeta">3.6 MB · <span class="st-ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Uploaded</span></div></div>
+            <div class="fbody"><div class="fname">honey-mangroves.jpg</div><div class="fmeta">3.6 MB · <span class="st-ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Uploaded</span></div></div>
             <button type="button" class="btn-sm">Remove</button>
           </li>
           <li class="frow bad">
             <div class="ftype" aria-hidden="true">MP4</div>
             <div class="fbody">
-              <div class="fname">luna-feather-wand.mp4</div>
+              <div class="fname">honey-smoking-hives.mp4</div>
               <div class="fmeta">31.7 MB · <span class="st-err"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20Z"/><path d="M12 10v5M12 18h.01"/></svg>Stopped at 18.2 MB of 31.7 MB</span></div>
-              <div class="msg">luna-feather-wand.mp4 did not finish uploading.</div>
+              <div class="msg">honey-smoking-hives.mp4 did not finish uploading.</div>
             </div>
-            <div class="acts"><button type="button" class="btn-sm btn-pri" aria-label="Retry luna-feather-wand.mp4">Retry</button><button type="button" class="btn-sm" aria-label="Remove luna-feather-wand.mp4">Remove</button></div>
+            <div class="acts"><button type="button" class="btn-sm btn-pri" aria-label="Retry honey-smoking-hives.mp4">Retry</button><button type="button" class="btn-sm" aria-label="Remove honey-smoking-hives.mp4">Remove</button></div>
           </li>
           <li class="frow">
             <div class="ftype" aria-hidden="true">JPG</div>
-            <div class="fbody"><div class="fname">luna-nap.jpg</div><div class="fmeta">2.8 MB · Uploading — 1.1 MB of 2.8 MB (39%)</div><progress max="100" value="39" aria-label="Uploading luna-nap.jpg"></progress></div>
+            <div class="fbody"><div class="fname">honey-filtering.jpg</div><div class="fmeta">2.8 MB · Uploading — 1.1 MB of 2.8 MB (39%)</div><progress max="100" value="39" aria-label="Uploading honey-filtering.jpg"></progress></div>
             <button type="button" class="btn-sm">Cancel</button>
           </li>
         </ul>
-        <div class="live">Announced once: "luna-feather-wand.mp4 did not finish uploading. Retry is available."</div>
+        <div class="live">Announced once: "honey-smoking-hives.mp4 did not finish uploading. Retry is available."</div>
       </section>
 
       <section class="card" aria-labelledby="h-cx">
@@ -89,20 +89,20 @@ progress::-webkit-progress-value{background:var(--accent);border-radius:3px}
         <ul class="queue" aria-label="Files, before cancel">
           <li class="frow">
             <div class="ftype" aria-hidden="true">MP4</div>
-            <div class="fbody"><div class="fname">luna-zoomies.mp4</div><div class="fmeta">44.0 MB · Uploading — 9.7 MB of 44.0 MB (22%)</div><progress max="100" value="22" aria-label="Uploading luna-zoomies.mp4"></progress></div>
-            <button type="button" class="btn-sm focus" aria-label="Cancel uploading luna-zoomies.mp4">Cancel</button>
+            <div class="fbody"><div class="fname">honey-extraction.mp4</div><div class="fmeta">44.0 MB · Uploading — 9.7 MB of 44.0 MB (22%)</div><progress max="100" value="22" aria-label="Uploading honey-extraction.mp4"></progress></div>
+            <button type="button" class="btn-sm focus" aria-label="Cancel uploading honey-extraction.mp4">Cancel</button>
           </li>
         </ul>
         <div class="step">2 · After Enter</div>
         <ul class="queue" aria-label="Files, after cancel">
           <li class="frow">
             <div class="ftype" aria-hidden="true">JPG</div>
-            <div class="fbody"><div class="fname">luna-sunspot.jpg</div><div class="fmeta">4.1 MB · <span class="st-ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Uploaded</span></div></div>
+            <div class="fbody"><div class="fname">honey-combs-dawn.jpg</div><div class="fmeta">4.1 MB · <span class="st-ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Uploaded</span></div></div>
             <button type="button" class="btn-sm focus">Remove</button>
           </li>
         </ul>
-        <p style="font-size:12.5px;color:var(--ink-muted);margin:10px 0 0">The zoomies row is gone; focus moves to the nearest remaining row's button, or to the drop zone when none is left. No orphan remains in the host's list.</p>
-        <div class="live">Announced once: "Upload of luna-zoomies.mp4 cancelled."</div>
+        <p style="font-size:12.5px;color:var(--ink-muted);margin:10px 0 0">The extraction row is gone; focus moves to the nearest remaining row's button, or to the drop zone when none is left. No orphan remains in the host's list.</p>
+        <div class="live">Announced once: "Upload of honey-extraction.mp4 cancelled."</div>
       </section>
     </div>
     <div class="anno"><strong>Failure wording</strong> uses a warning triangle and "Stopped at …" so the state reads without colour. Progress ticks are never announced — only the terminal event, once (ADR-FE-153).</div>

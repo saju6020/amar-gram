@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { LimitedMarkup } from '@/components/content/LimitedMarkup';
 import { cn } from '@/lib/utils';
+import { certificationLabel } from '@/lib/shop/labels';
 import type { ProductDetail } from '@/lib/api/shop-catalogue';
 
 export interface ProductDetailsTabsProps {
@@ -16,15 +17,10 @@ export interface ProductDetailsTabsProps {
 interface Tab {
   id: string;
   label: string;
+  /** Overrides the accessible name (it always starts with the visible label, WCAG 2.5.3). */
+  accessibleName?: string;
   panel: React.ReactNode;
 }
-
-const ANALYSIS_ROWS = [
-  ['Protein', 'proteinPercent'],
-  ['Fat', 'fatPercent'],
-  ['Fibre', 'fibrePercent'],
-  ['Moisture', 'moisturePercent'],
-] as const;
 
 function buildTabs(
   detail: ProductDetail,
@@ -48,13 +44,67 @@ function buildTabs(
   const lf = (field: string, node: React.ReactNode) => <div lang={lang_(field)}>{node}</div>;
   tabs[0]!.panel = lf('description', tabs[0]!.panel);
 
-  if (food && (food.ingredientList || food.guaranteedAnalysis)) {
+  // Origin & producer (G9: no harvest month or packing date yet, so only what the API sends).
+  const country = detail.countryOfOrigin;
+  const district = detail.districtOfOrigin?.trim();
+  if (country || originNotes || detail.brand) {
     tabs.push({
-      id: 'ingredients',
-      label: 'Ingredients & analysis',
+      id: 'origin',
+      label: 'Origin & producer',
       panel: (
-        <div className="flex flex-col gap-4">
-          {food.ingredientList && (
+        <div className="flex flex-col gap-3 text-ink">
+          {country && (
+            <p>
+              <span className="font-semibold">Country of origin:</span> {country.name}
+            </p>
+          )}
+          {district && (
+            <p>
+              <span className="font-semibold">District:</span> {district}
+            </p>
+          )}
+          {detail.brand && (
+            <p>
+              <span className="font-semibold">Producer:</span> {detail.brand}
+            </p>
+          )}
+          {originNotes && <LimitedMarkup body={originNotes} className="space-y-3 text-sm" />}
+          {country && (
+            <p>
+              <Link
+                href={`/shop/countries/${country.code}${lang ? `?lang=${encodeURIComponent(lang)}` : ''}`}
+                className="font-semibold text-accent-ink"
+              >
+                More from {country.name}
+              </Link>
+            </p>
+          )}
+        </div>
+      ),
+    });
+  }
+
+  // Details: ingredients, storage, shelf life, net weight, allergens, certifications, certifier.
+  const certifications = detail.certifications ?? [];
+  const organicCertifier = food?.organicCertifier ?? null;
+  const certificateNumber = food?.organicCertificateNumber ?? null;
+  const hasCertification = certifications.length > 0 || !!organicCertifier;
+  const hasDetails =
+    !!food &&
+    (food.ingredientList ||
+      food.storageInstructions ||
+      food.shelfLife ||
+      food.netWeight ||
+      food.allergens);
+  if (hasDetails || hasCertification) {
+    tabs.push({
+      id: 'details',
+      label: 'Details',
+      // The frozen shop-staff spec (E-F1) finds this tab as "Ingredients & certification".
+      accessibleName: 'Details, ingredients & certification',
+      panel: (
+        <div className="flex flex-col gap-4 text-ink">
+          {food?.ingredientList && (
             <div>
               <h3 className="mb-1 text-sm font-bold text-ink">Ingredients</h3>
               <p lang={lang_('ingredientList')} className="whitespace-pre-line text-ink">
@@ -62,82 +112,51 @@ function buildTabs(
               </p>
             </div>
           )}
-          {food.guaranteedAnalysis && (
-            <table className="w-full max-w-md border-separate border-spacing-0 overflow-hidden rounded-card border border-border text-sm">
-              <caption className="mb-1 text-left text-sm font-bold text-ink">
-                Guaranteed analysis
-              </caption>
-              <thead className="sr-only">
-                <tr>
-                  <th scope="col">Nutrient</th>
-                  <th scope="col">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ANALYSIS_ROWS.map(([label, key]) => (
-                  <tr key={key} className="[&:last-child>*]:border-b-0">
-                    <th
-                      scope="row"
-                      className="border-b border-border px-3.5 py-2.5 text-left font-normal text-ink-muted"
+          {(food?.storageInstructions || food?.shelfLife || food?.netWeight || food?.allergens) && (
+            <div className="flex flex-col gap-2">
+              <h3 className="mb-0 text-sm font-bold text-ink">Storage and labelling</h3>
+              {food.storageInstructions && (
+                <p className="whitespace-pre-line">{food.storageInstructions}</p>
+              )}
+              {food.shelfLife && (
+                <p>
+                  <span className="font-semibold">Shelf life:</span> {food.shelfLife}
+                </p>
+              )}
+              {food.netWeight && (
+                <p>
+                  <span className="font-semibold">Net weight:</span> {food.netWeight}
+                </p>
+              )}
+              {food.allergens && (
+                <p>
+                  <span className="font-semibold">Allergens:</span> {food.allergens}
+                </p>
+              )}
+            </div>
+          )}
+          {hasCertification && (
+            <div>
+              <h3 className="mb-1 text-sm font-bold text-ink">Certification</h3>
+              {certifications.length > 0 && (
+                <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+                  {certifications.map((certification) => (
+                    <li
+                      key={certification}
+                      className="rounded-pill bg-leaf-soft px-3 py-1 text-sm font-semibold text-leaf-ink"
                     >
-                      {label}
-                    </th>
-                    <td className="border-b border-border px-3.5 py-2.5 text-right font-semibold tabular-nums text-ink">
-                      {food.guaranteedAnalysis![key]}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      ),
-    });
-  }
-  if (food?.feedingGuide) {
-    tabs.push({
-      id: 'feeding',
-      label: 'Feeding guide',
-      panel: lf(
-        'feedingGuide',
-        <LimitedMarkup body={food.feedingGuide} className="space-y-3 text-ink" />,
-      ),
-    });
-  }
-  if (food?.storageInstructions) {
-    tabs.push({
-      id: 'storage',
-      label: 'Storage',
-      panel: <p className="whitespace-pre-line text-ink">{food.storageInstructions}</p>,
-    });
-  }
-  if (detail.countryOfOrigin || food?.manufacturer) {
-    tabs.push({
-      id: 'origin',
-      label: 'Origin',
-      panel: (
-        <div className="flex flex-col gap-3 text-ink">
-          {detail.countryOfOrigin && (
-            <p>
-              <span className="font-semibold">Country of origin:</span>{' '}
-              {detail.countryOfOrigin.name}
-            </p>
-          )}
-          {food?.manufacturer && (
-            <p>
-              <span className="font-semibold">Manufacturer:</span> {food.manufacturer}
-            </p>
-          )}
-          {originNotes && <LimitedMarkup body={originNotes} className="space-y-3 text-sm" />}
-          {detail.countryOfOrigin && (
-            <p>
-              <Link
-                href={`/shop/countries/${detail.countryOfOrigin.code}${lang ? `?lang=${encodeURIComponent(lang)}` : ''}`}
-                className="font-semibold text-accent-ink"
-              >
-                More from {detail.countryOfOrigin.name}
-              </Link>
-            </p>
+                      {certificationLabel(certification)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {organicCertifier && (
+                <p className="mt-2 text-sm text-ink-muted">
+                  Organic certifier: {organicCertifier}
+                  {certificateNumber ? ` (certificate ${certificateNumber})` : ''}
+                </p>
+              )}
+            </div>
           )}
         </div>
       ),
@@ -147,11 +166,13 @@ function buildTabs(
 }
 
 /**
- * HO-SHP-002 §11.3 `ProductDetailsTabs` — an accessible tab list (arrows, Home, End). Every panel is
- * in the document (hidden when inactive) so the content is server-rendered. Free text — ingredient
- * list, storage instructions, manufacturer — is rendered AS TEXT; only description and feeding guide
- * go through `LimitedMarkup` (HO-SHP-001 backlog SHP row 22). Each language-varying field carries
- * its own `lang` from `fieldLocales` (US-SHP-14 AC2).
+ * HO-SHP-002 §11.3 `ProductDetailsTabs` in the approved design (HO-P3 S2): underline tabs
+ * (Description · Origin & producer · Details), the chosen one in ink with a 3px papaya underline. An
+ * accessible tab list (arrows, Home, End). Every panel is in the document (hidden when inactive) so
+ * the content is server-rendered, and a tab with nothing from the API is not drawn. Free text —
+ * ingredient list, storage instructions, shelf life, allergens — is rendered AS TEXT; only the
+ * description goes through `LimitedMarkup` (HO-SHP-001 backlog SHP row 22). Each language-varying
+ * field carries its own `lang` from `fieldLocales` (US-SHP-14 AC2).
  */
 export function ProductDetailsTabs({ detail, originNotes, lang }: ProductDetailsTabsProps) {
   const baseId = React.useId();
@@ -175,11 +196,12 @@ export function ProductDetailsTabs({ detail, originNotes, lang }: ProductDetails
   }
 
   return (
-    <section
-      aria-label="Product details"
-      className="flex min-w-0 flex-col gap-4 rounded-[24px] border border-border bg-surface p-5 sm:px-8 sm:py-7"
-    >
-      <div role="tablist" aria-label="Product information" className="flex flex-wrap gap-2">
+    <section aria-label="Product details" className="flex min-w-0 flex-col">
+      <div
+        role="tablist"
+        aria-label="Product information"
+        className="flex flex-wrap gap-2 border-b-[1.5px] border-border"
+      >
         {tabs.map((tab, index) => (
           <button
             key={tab.id}
@@ -189,16 +211,17 @@ export function ProductDetailsTabs({ detail, originNotes, lang }: ProductDetails
             id={`${baseId}-tab-${tab.id}`}
             role="tab"
             type="button"
+            aria-label={tab.accessibleName}
             aria-selected={active === tab.id}
             aria-controls={`${baseId}-panel-${tab.id}`}
             tabIndex={active === tab.id ? 0 : -1}
             onClick={() => setActive(tab.id)}
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
-              'inline-flex min-h-11 items-center rounded-pill border px-4 text-sm font-semibold',
+              '-mb-[1.5px] inline-flex min-h-12 items-center border-0 border-b-[3px] bg-transparent px-[18px] font-semibold',
               active === tab.id
-                ? 'border-accent bg-accent text-white'
-                : 'border-border bg-surface text-ink hover:border-accent',
+                ? 'border-accent text-ink'
+                : 'border-transparent text-ink-muted hover:text-ink',
             )}
           >
             {tab.label}
@@ -213,7 +236,7 @@ export function ProductDetailsTabs({ detail, originNotes, lang }: ProductDetails
           aria-labelledby={`${baseId}-tab-${tab.id}`}
           hidden={active !== tab.id}
           tabIndex={0}
-          className="py-1 text-[15px] leading-relaxed"
+          className="max-w-[720px] py-6 text-[17px] leading-relaxed text-ink"
         >
           {tab.panel}
         </div>

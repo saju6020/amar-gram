@@ -9,7 +9,6 @@ function line(key: string, imageUrl?: string | null): DisplayLine {
     key,
     productName: `Product ${key}`,
     variantLabel: '400 g',
-    cat: null,
     quantity: 1,
     unitPrice: money,
     lineTotal: money,

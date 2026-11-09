@@ -1,30 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { PageHeader } from '@/components/billing/PageHeader';
+import { ActionLink } from '@/components/back-office/ActionLink';
+import { PageHeader } from '@/components/back-office/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
-import { RefundDialog } from '@/components/refunds/RefundDialog';
+import { Button } from '@/components/ui/button';
 import { describeOrderingError } from '@/lib/api/errors';
 import type { StaffOrderAction, StaffOrderDetail as OrderDetail, StaffOrderLine } from '@/lib/api/staff-orders';
-import { formatOrderWhen, orderActionLabel } from '@/lib/format/orders';
-import {
-  useCancelStaffOrder,
-  useMarkReadyForCollection,
-  useStaffOrder,
-  useStartPacking,
-} from '@/lib/hooks/useStaffOrders';
+import { formatOrderWhen, orderActionLabel, orderChannelLabel } from '@/lib/format/orders';
+import { useMarkPacked, useMarkReadyForCollection, useStaffOrder, useStartPacking } from '@/lib/hooks/useStaffOrders';
 import { ApprovePaymentPanel } from './ApprovePaymentPanel';
-import { ConfirmTransferDialog } from './ConfirmTransferDialog';
-import { DeliveryFailureDialog } from './DeliveryFailureDialog';
-import { DispatchDialog, TrackingDialog } from './DispatchDialog';
-import { OrderReasonDialog } from './OrderReasonDialog';
 import { OrderStatusBadge } from './OrderStatusBadge';
 import { OrderSummary } from './OrderSummary';
-import { RecordDeliveryDialog } from './RecordDeliveryDialog';
-import { ReallocateLineDialog } from './ReallocateLineDialog';
+import { StaffOrderDialogs, type StaffOrderDialogKind } from './StaffOrderDialogs';
 import {
   CustomerFulfilmentPanel,
   PaymentsPanel,
@@ -40,22 +31,19 @@ import {
  * dialogs live here, not under the buttons, so a refetch that removes an action never closes a dialog
  * someone is typing in. A `403` shows the permission-denied state.
  */
-type Dialog = 'transfer' | 'cancel' | 'dispatch' | 'tracking' | 'delivery' | 'failure' | 'refund' | 'reallocate';
-
-const PRIMARY: StaffOrderAction[] = ['ConfirmPayment', 'StartPacking', 'Dispatch', 'MarkReadyForCollection', 'RecordDelivery', 'RecordDeliveryFailure', 'Refund'];
+const PRIMARY: StaffOrderAction[] = ['ConfirmPayment', 'StartPacking', 'Dispatch', 'MarkPacked', 'MarkReadyForCollection', 'RecordDelivery', 'RecordDeliveryFailure', 'Refund'];
 
 function Detail({ order }: { order: OrderDetail }) {
-  const router = useRouter();
-  const [dialog, setDialog] = useState<Dialog | null>(null);
+  const [dialog, setDialog] = useState<StaffOrderDialogKind | null>(null);
   const [reallocLine, setReallocLine] = useState<string | undefined>();
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const startPacking = useStartPacking();
   const ready = useMarkReadyForCollection(order.id);
-  const cancel = useCancelStaffOrder(order.id);
-  const open = (next: Dialog | null) => setDialog(next);
+  const packed = useMarkPacked(order.id);
+  const open = (next: StaffOrderDialogKind | null) => setDialog(next);
   const allowed = new Set<string>(order.allowedActions);
-  const fulfilmentWork = allowed.has('StartPacking') || allowed.has('Dispatch') || allowed.has('MarkReadyForCollection');
+  const fulfilmentWork = allowed.has('StartPacking') || allowed.has('MarkPacked') || allowed.has('Dispatch') || allowed.has('MarkReadyForCollection');
 
   async function direct(run: () => Promise<unknown>) {
     setError(null);
@@ -73,6 +61,7 @@ function Detail({ order }: { order: OrderDetail }) {
       case 'StartPacking': return void direct(() => startPacking.mutateAsync(order.id));
       case 'Dispatch': return open('dispatch');
       case 'MarkReadyForCollection': return void direct(() => ready.mutateAsync());
+      case 'MarkPacked': return void direct(() => packed.mutateAsync());
       case 'RecordDelivery': return open('delivery');
       case 'RecordDeliveryFailure': return open('failure');
       case 'Refund': return open('refund');
@@ -81,21 +70,24 @@ function Detail({ order }: { order: OrderDetail }) {
   }
 
   const bar = PRIMARY.filter((a) => allowed.has(a) && !(a === 'ConfirmPayment' && order.heldPayment));
-  const busy = startPacking.isPending || ready.isPending;
+  const busy = startPacking.isPending || ready.isPending || packed.isPending;
 
   return (
     <div className="flex flex-col gap-5">
+      <Link href="/staff/orders" className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-accent-ink no-underline hover:underline">
+        <ChevronLeft size={14} aria-hidden="true" />
+        Orders
+      </Link>
       <PageHeader
-        back={{ href: '/staff/orders', label: 'Orders' }}
         title={`Order ${order.orderNumber}`}
-        description={`Placed ${formatOrderWhen(order.placedOn, order.branchTimeZoneId, true)} · ${order.channel === 'Counter' ? 'Counter sale' : 'Online'}`}
+        description={`Placed ${formatOrderWhen(order.placedOn, order.branchTimeZoneId, true)} · ${order.channel === 'Counter' ? 'Counter sale' : orderChannelLabel(order.channel)}`}
         actions={
           <>
             <OrderStatusBadge status={order.status} />
             {order.fulfilmentMethod !== 'Counter' && (
-              <Link href={`/staff/orders/${order.id}/packing-slip`} className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+              <ActionLink href={`/staff/orders/${order.id}/packing-slip`} variant="outline">
                 Packing slip
-              </Link>
+              </ActionLink>
             )}
           </>
         }
@@ -103,7 +95,7 @@ function Detail({ order }: { order: OrderDetail }) {
       {(bar.length > 0 || allowed.has('Cancel')) && (
         <div role="group" aria-label="Order actions" className="flex flex-wrap gap-2">
           {bar.map((action) => (
-            <Button key={action} onClick={() => perform(action)} disabled={busy} variant={action === 'Refund' ? 'secondary' : 'primary'}>
+            <Button key={action} onClick={() => perform(action)} disabled={busy} variant={action === 'Refund' || action === 'MarkPacked' ? 'secondary' : 'primary'}>
               {orderActionLabel(action, order.fulfilmentMethod)}
             </Button>
           ))}
@@ -127,57 +119,22 @@ function Detail({ order }: { order: OrderDetail }) {
           <StaffHistoryPanel order={order} />
         </div>
         <div className="flex min-w-0 flex-col gap-5">
-          <div className="rounded-[var(--radius-md)] border border-border bg-surface p-4">
+          <Panel aria-label="Order totals">
             <OrderSummary totals={order.totals} discountCode={order.discountCode} serviceLevel={order.fulfilment.serviceLevel} fulfilment={order.fulfilmentMethod} />
-          </div>
+          </Panel>
           <CustomerFulfilmentPanel order={order} />
           <PaymentsPanel order={order} />
         </div>
       </div>
 
-      <ConfirmTransferDialog
-        target={{
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          version: order.version,
-          amount: order.totals.grandTotal,
-          zone: order.branchTimeZoneId,
-          customerReference: order.customerTransferReference,
-        }}
-        open={dialog === 'transfer'}
-        onOpenChange={(next) => open(next ? 'transfer' : null)}
-        onDone={(outcome) =>
-          setNotice(outcome.awaitingApproval
-            ? 'Recorded. A second staff member must approve it before the order is confirmed.'
-            : 'Transfer confirmed. The order is now confirmed.')
-        }
+      <StaffOrderDialogs
+        order={order}
+        dialog={dialog}
+        onDialogChange={open}
+        reallocateLineId={reallocLine}
+        onReallocateAny={() => { setReallocLine(undefined); open('reallocate'); }}
+        onNotice={setNotice}
       />
-      <OrderReasonDialog
-        open={dialog === 'cancel'}
-        onOpenChange={(next) => open(next ? 'cancel' : null)}
-        title={`Cancel order ${order.orderNumber}`}
-        consequence="The reserved items are released back to stock. Anything the customer has already paid becomes a refund due."
-        confirmLabel="Cancel order"
-        reasonLabel="Why is it being cancelled?"
-        onSubmit={(note) => cancel.mutateAsync(note)}
-      />
-      <DispatchDialog
-        orderId={order.id}
-        open={dialog === 'dispatch'}
-        onOpenChange={(next) => open(next ? 'dispatch' : null)}
-        onReallocate={() => { setReallocLine(undefined); open('reallocate'); }}
-      />
-      <TrackingDialog orderId={order.id} current={order.shipment?.trackingNumber ?? null} open={dialog === 'tracking'} onOpenChange={(next) => open(next ? 'tracking' : null)} />
-      <RecordDeliveryDialog order={order} open={dialog === 'delivery'} onOpenChange={(next) => open(next ? 'delivery' : null)} />
-      <DeliveryFailureDialog
-        orderId={order.id}
-        fulfilmentMethod={order.fulfilmentMethod}
-        open={dialog === 'failure'}
-        onOpenChange={(next) => open(next ? 'failure' : null)}
-        onReturnOpened={(id) => router.push(`/staff/returns/${id}`)}
-      />
-      <ReallocateLineDialog orderId={order.id} lines={order.lines} initialLineId={reallocLine} open={dialog === 'reallocate'} onOpenChange={(next) => open(next ? 'reallocate' : null)} />
-      <RefundDialog orderId={order.id} orderNumber={order.orderNumber} open={dialog === 'refund'} onOpenChange={(next) => open(next ? 'refund' : null)} />
     </div>
   );
 }

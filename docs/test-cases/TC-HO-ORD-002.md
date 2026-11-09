@@ -26,7 +26,7 @@ the build; a case that was not executed says so. Mock (MSW) and real-API runs ar
 |---|---|---|
 | U-E5, E-D2 (restock) | Replaced by **U-E5\***: the received return stays `Received` and the screen sends the person to Inventory's quarantine screen | Restock / write-off left Ordering (HO-ORD-001 gate fix 3) |
 | U-D8 | `SecondApproverMustDiffer` plus Billing's `ApproverMustDiffer` / `PaymentNotPending` all render the server's message | PASS (E-C3 (e2e)) |
-| U-F3, E-F2 | A counter sale needs **customer name and mobile**; a prescription line needs an existing customer who owns the cat | Amended (2), ADR-216 |
+| U-F3 | A counter sale needs **customer name and mobile** | Amended (2), ADR-216 |
 | U-F4 | Cash tender over the total: `changeDue` is read from the **sale response** (the quote carries none) | PASS (tests/components/pos/pos.test.tsx) |
 | U-B1 | New: `DeliveryTaxNotConfigured` quote blocking reason shows a delivery-unavailable state and keeps pickup selectable | PASS (E-B3 (e2e)) |
 | U-D7 | COD / counter never show *Awaiting approval*; only a bank-transfer confirmation can | PASS (E-C1 (e2e)) |
@@ -40,7 +40,6 @@ the build; a case that was not executed says so. Mock (MSW) and real-API runs ar
 | U-A1 | Changed price, limited line, unavailable line each stated as text; unavailable line blocks Checkout and offers removal | `tests/components/cart/cart.test.tsx` | PASS (tests/components/cart/cart.test.tsx) |
 | U-A2 | Stepper stops at `maxQuantityPerLine` / available quantity with a message | `cart.test.tsx` | PASS (tests/components/cart/cart.test.tsx) |
 | U-A3 | `guestCartPending: true` → merge called once, cart refetched, notice lists dropped lines | `cart.test.tsx` | PASS (E-A1 (e2e)) |
-| U-A4 | Prescription `AddToCartButton`: signed out / signed in (unauthorised cat disabled + booking link) | `cart.test.tsx` | PASS (tests/components/cart/cart.test.tsx) |
 | U-A5 | Checkout while signed out → `/sign-in?next=/checkout`; allow-list otherwise unchanged | `cart.test.tsx`, `tests/unit/lib/ordering-next-path.test.ts` | PASS (tests/unit/lib/ordering-next-path.test.ts) |
 | **B — checkout** | | | |
 | U-B1 | `delivery.available=false` → pickup preselected with explanation; `DeliveryTaxNotConfigured` → unavailable state, pickup selectable | `tests/components/checkout/checkout.test.tsx` | PASS (E-B3 (e2e)) |
@@ -51,7 +50,6 @@ the build; a case that was not executed says so. Mock (MSW) and real-API runs ar
 | U-B6 | New fingerprint clears the tick, announces, disables Place | `checkout.test.tsx` | PASS (tests/components/checkout/checkout.test.tsx) |
 | U-B7 | `OrderSummary`: six rows always present, server strings | `checkout.test.tsx` | PASS (tests/components/checkout/checkout.test.tsx) |
 | U-B8 | `DiscountMinimumSpendNotMet` shown inline; totals unchanged | `checkout.test.tsx` | PASS (tests/components/checkout/checkout.test.tsx) |
-| U-B9 | Rx line without a cat blocks Place; picker focused | `checkout.test.tsx` | PASS (E-B6 (e2e)) |
 | U-B10 | Reload mid-checkout restores every choice from the URL | `checkout.test.tsx` (URL state hook) | PASS (tests/components/checkout/checkout.test.tsx) |
 | U-B11 | Place → `409 CheckoutQuoteChanged` re-quotes, re-opens panel, one message | `checkout.test.tsx` | PASS (tests/components/checkout/checkout.test.tsx) |
 | U-B12 | Double click → one request; same key on manual retry | `checkout.test.tsx` | PASS (E-B8 (e2e)) |
@@ -85,7 +83,7 @@ the build; a case that was not executed says so. Mock (MSW) and real-API runs ar
 | **F — POS** | | | |
 | U-F1 | Scan burst vs typed input | `tests/components/pos/pos.test.tsx` | PASS (E-F1 (e2e), pos.test.tsx scan) |
 | U-F2 | Unknown barcode announced, search fallback, focus kept | `pos.test.tsx` | PASS (pos e2e (unknown barcode)) |
-| U-F3 | Name + mobile required; Rx line needs a customer and cat; server refusal inline | `pos.test.tsx` | PASS (E-F2 (e2e)) |
+| U-F3 | Name + mobile required; server refusal inline | `pos.test.tsx` | PASS (tests/components/pos/pos.test.tsx) |
 | U-F4 | Cash over total / card over balance: change and refusal from the server | `pos.test.tsx` | PASS (tests/components/pos/pos.test.tsx) |
 | U-F5 | Complete sale double-submit → one request | `pos.test.tsx` | PASS (E-F1/pos spec (double Enter)) |
 | U-F6 | Receipt route: 80 mm sheet + plain-text alternative | `pos.test.tsx` | PASS (tests/components/pos/pos.test.tsx) |
@@ -113,7 +111,6 @@ the build; a case that was not executed says so. Mock (MSW) and real-API runs ar
 | E-B3 | Address outside every zone → pickup completes | PASS | | NOT RUN |
 | E-B4 | COD above ceiling disabled with reason; bank transfer completes | PASS | | NOT RUN |
 | E-B5 | Discount code invalid then valid | PASS | | NOT RUN |
-| E-B6 | Prescription diet: authorised cat, then lapsed | PASS | | NOT RUN |
 | E-B7 | Two contexts, last unit | NOT RUN (needs real parallelism) | | NOT RUN (needs real parallelism) |
 | E-B8 | Double click + manual retry → one order | PASS | | NOT RUN |
 | E-C1 | Bank transfer: instructions, submit reference, staff confirms | PASS | | NOT RUN |
@@ -125,7 +122,6 @@ the build; a case that was not executed says so. Mock (MSW) and real-API runs ar
 | E-E1 | Pick list for three orders → print preview → start packing | PASS | | NOT RUN |
 | E-E2 | Manifest CSV download | PASS | | NOT RUN |
 | E-F1 | Counter sale of three scanned items, cash, receipt; keyboard only, timed < 60 s | PASS | | NOT RUN |
-| E-F2 | Counter sale of a prescription SKU blocked until customer and cat | PASS | | NOT RUN |
 | E-X1 | axe (zero serious/critical, at 360 and 1440) on the routes listed below | `ordering-a11y-responsive.spec.ts` | PASS on chromium and mobile-360 (34 tests each). **Routes covered:** staff - `/staff/orders`, `/staff/orders/awaiting-payment`, `/staff/orders/reconciliation`, four order details (confirmed COD, held payment, dispatched COD, delivered), the packing slip, `/staff/fulfilment/pick-list`, `/staff/returns` and three return details, `/staff/refunds`, `/staff/pos` and `/staff/pos` after one scan (basket line on screen), the receipt, the delivery-zone list / new / edit, the discount-code list / new / edit, `/staff/admin/couriers`, `/staff/admin/payment-settings`; customer - `/cart`, `/portal/orders`, four order details (awaiting transfer with its countdown, dispatched, delivered, expired), the return request, `/checkout?step=review` with a price change (the changes panel on screen) and `/checkout/complete/{bank-transfer order}` (instructions and countdown). **Not covered:** the other `/checkout` steps (fulfilment, slot, payment) and the empty cart; the pick list "start packing" progress state. | n/a |
 | E-X2 | 360 / 768 / 1024 / 1440: no horizontal scroll, on the same routes as E-X1 | `ordering-a11y-responsive.spec.ts` | PASS on chromium and mobile-360 (34 tests each). The storefront header on `/cart` is excluded from the measurement (HO-SHP-002's; Shop follow-up ORD-81). | n/a |
 | E-X3 | no card field and no payment-gateway origin on the routes above | `ordering-a11y-responsive.spec.ts` | PASS on the same routes (checked at every viewport); not measured during the full E-B1 / E-F1 flows | n/a |
@@ -144,12 +140,12 @@ TEST gate's own observed result, filled in one row at a time. Specs have `retrie
 | T-2 | `npx eslint . --max-warnings 0` | clean | PASS | `eslint . --max-warnings 0` exit 0 |
 | T-3 | `npx vitest run --maxWorkers=2` | all pass | PASS | 203 files, 1371 tests passed (531 s) |
 | T-4 | `npx next build` | passes | PASS | `next build` exit 0 |
-| T-5 | `ordering-customer.spec.ts` chromium, `--retries=0` | 10 pass | PASS | 10 passed, none retried (3.2 m). An earlier run right after `next build` failed E-B6 on both attempts (see T-10) |
+| T-5 | `ordering-customer.spec.ts` chromium, `--retries=0` | 10 pass | PASS | 10 passed, none retried (3.2 m). An earlier run right after `next build` failed a case since removed on both attempts (see T-10) |
 | T-6 | `ordering-staff.spec.ts` chromium, `--retries=0` | 14 pass, no retry needed | PASS | Run 1: 14 passed, none retried. Run 2: 13 passed, 1 flaky (E-D2, see T-10) |
 | T-7 | `ordering-pos.spec.ts` chromium, `--retries=0` | 5 pass | PASS | Re-run: 5 passed, none retried. First run: E-F1 failed on both attempts (see T-10) |
 | T-8 | `ordering-a11y-responsive.spec.ts` chromium, `--retries=0` (last) | all pass | PASS | 31 passed in two halves (customer 7, staff 24), none retried; run last |
 | T-9 | mobile-360: `ordering-a11y-responsive.spec.ts` (E-X2 incl. `/cart`, `/staff/orders`) | no horizontal scroll | PASS | mobile-360: customer 7 + staff 24 = 31 passed, none retried, incl. `/cart` (header excluded, ORD-81) and `/staff/orders` |
-| T-10 | Staff-spec flake judgement: repeat the two specs that needed a retry | stable, or a defect named | PASS | No assertion about product behaviour ever failed. Every failure was the page or the mock not being there: E-B6 (add-to-cart button never appeared, snapshot showed the signed-out header) x2 runs, E-F1 (`window.__orderingMock` not installed, then Point of sale heading missing), E-D2 (Approve return button not found for 20 s). All were the first visit to a route after the dev server was started, with memory under pressure; each passed on a plain re-run (E-B6 3 times, E-F1, E-D2 in run 1). Judged cold-start flakiness, not a product defect. Not proven for E-B6: the cause of the signed-out header was not isolated. Backlog 91 |
+| T-10 | Staff-spec flake judgement: repeat the two specs that needed a retry | stable, or a defect named | PASS | No assertion about product behaviour ever failed. Every failure was the page or the mock not being there: a case since removed (add-to-cart button never appeared, snapshot showed the signed-out header) x2 runs, E-F1 (`window.__orderingMock` not installed, then Point of sale heading missing), E-D2 (Approve return button not found for 20 s). All were the first visit to a route after the dev server was started, with memory under pressure; each passed on a plain re-run (that case 3 times, E-F1, E-D2 in run 1). Judged cold-start flakiness, not a product defect. Not proven for that case: the cause of the signed-out header was not isolated. Backlog 91 |
 | T-11 | Real-API E-series | NOT RUN by owner rule | NOT RUN | Owner rule: no real API against `catecommerce_dev` |
 
 ### Regression cases from earlier gates
@@ -160,11 +156,11 @@ TEST gate's own observed result, filled in one row at a time. Specs have `retrie
 | R2 | ARCH HIGH | Customer orders panel searched the queue by phone/name | staff-orders test: no queue request from the panel | PASS | staff-orders.test.tsx:271 asserts the "not available yet" text and no queue search; green in T-3 |
 | R3 | CODE MED | Key kept after definitive 4xx | `idempotency-renewal.test.ts`, checkout and pos tests | PASS | idempotency-renewal.test.ts, pos.test.tsx:346 (new key after a refusal), checkout.test.tsx:478; green in T-3 |
 | R4 | CODE MED | `RequestInProgress` dead end | checkout test | PASS | checkout.test.tsx:451 (link to My orders, then same key); green in T-3 |
-| R5 | CODE MED | Policy/prescription refusal did not re-read the quote | checkout test | PASS | Policy half: checkout.test.tsx:478. The PrescriptionCatRequired branch (CheckoutScreen.tsx:212) has no test of its own. Backlog 90 |
+| R5 | CODE MED | Policy refusal did not re-read the quote | checkout test | PASS | checkout.test.tsx:478; green in T-3 |
 | R6 | CODE MED | POS two scans in flight | pos test | PASS | pos.test.tsx:179 (two different scans) and :193 (same item twice -> quantity 2); green in T-3 |
-| R7 | CODE MED | POS review opened too early | pos test | PASS | pos.test.tsx:242, :268, :279 (review blocked until customer, cat, canSell); green in T-3 |
+| R7 | CODE MED | POS review opened too early | pos test | PASS | pos.test.tsx:242, :268, :279 (review blocked until customer, canSell); green in T-3 |
 | R8 | CODE MED | Countdown asked once at expiry; StrictMode | my-orders test | PASS | my-orders.test.tsx:190 (asks every 10 s), :209 (stops), :220 (StrictMode); green in T-3 |
-| R9 | ARCH B2-B5 | Reverted files equal master | `git diff master --` on the five paths is empty | PASS | `git diff master --stat` on ShopHeader, ShopAccountLinks, billing/ResponsiveTable, cat-profiles.ts, public/mockServiceWorker.js is empty |
+| R9 | ARCH B2-B5 | Reverted files equal master | `git diff master --` on the five paths is empty | PASS | `git diff master --stat` on ShopHeader, ShopAccountLinks, billing/ResponsiveTable, a profiles module since removed, public/mockServiceWorker.js is empty |
 | R10 | SEC LOW | Staff tracking link without `safeHttpUrl` | staff-orders test | PASS | my-orders/staff-orders tests render `javascript:`, `data:` and `ftp:` URLs as plain text (staff-orders.test.tsx:296); green in T-3 |
 
 ### Acceptance-criteria coverage

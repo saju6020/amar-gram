@@ -68,7 +68,7 @@ describe('PersonalDataExportCard — U-J1', () => {
     revokeObjectURL.mockClear();
   });
 
-  it('downloads a Blob named purrcare-my-data.json and revokes the URL', async () => {
+  it('downloads a Blob named amargram-my-data.json and revokes the URL', async () => {
     // The real handler requires a session cookie, which jsdom's fetch cannot carry across
     // requests (see mocks/handlers/areas/accounts.ts's top-of-file doc comment) — overridden
     // here so this test exercises the download mechanism itself, not session plumbing that a
@@ -90,7 +90,6 @@ describe('PersonalDataExportCard — U-J1', () => {
           },
           addresses: [],
           notificationPreferences: [],
-          cats: [],
         }),
       ),
     );

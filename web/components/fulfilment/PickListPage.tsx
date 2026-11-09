@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { AccessRefusedState } from '@/components/admin/AccessRefusedState';
+import { ActionLink } from '@/components/back-office/ActionLink';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { StaffOrdersTabs } from '@/components/orders/StaffOrdersTabs';
 import { PrintSheet } from '@/components/print/PrintSheet';
@@ -12,7 +13,7 @@ import { describeOrderingError } from '@/lib/api/errors';
 import type { PickList } from '@/lib/api/staff-orders';
 import { formatDateOnly, formatInZone } from '@/lib/format/time';
 import { useBranchTimeZone } from '@/lib/hooks/useBranchTimeZone';
-import { usePickList, useStaffOrderQueue, useStartPacking } from '@/lib/hooks/useStaffOrders';
+import { useCanManageRiders, usePickList, useStaffOrderQueue, useStartPacking } from '@/lib/hooks/useStaffOrders';
 
 /**
  * `components/fulfilment/PickListPage.tsx` — ⭐ HO-ORD-002 §11.10, US-ORD-10 AC1, ADR-FE-094. The stock to
@@ -35,27 +36,39 @@ function Sheet({ list, zone }: { list: PickList; zone: string }) {
             {group.locationName}
           </h2>
           <div tabIndex={0} role="region" aria-label={`Batches to pick from ${group.locationName}`} className="overflow-x-auto print:overflow-visible">
-          <table className="w-full border-collapse text-left text-sm">
+          <table className="w-full border-collapse text-left text-xs sm:text-sm">
             <caption className="sr-only">Batches to pick from {group.locationName}</caption>
             <thead>
               <tr className="border-b border-border">
-                <th scope="col" className="py-1 pr-2">Product</th>
-                <th scope="col" className="py-1 pr-2">Batch</th>
-                <th scope="col" className="py-1 pr-2">Expires</th>
-                <th scope="col" className="py-1 pr-2 text-right">Quantity</th>
+                <th scope="col" className="py-1 pr-1.5 sm:pr-2">Product</th>
+                <th scope="col" className="py-1 pr-1.5 sm:pr-2">Batch</th>
+                <th scope="col" className="hidden py-1 pr-2 sm:table-cell">Expires</th>
+                <th scope="col" className="py-1 pr-1.5 text-right sm:pr-2">
+                  <span aria-hidden="true" className="sm:hidden">Qty</span>
+                  <span className="max-sm:sr-only">Quantity</span>
+                </th>
                 <th scope="col" className="py-1">Orders</th>
               </tr>
             </thead>
             <tbody>
-              {group.batches.map((batch) => (
+              {group.batches.map((batch) => {
+                const expires = batch.expiresOn ? formatDateOnly(batch.expiresOn) : '—';
+                return (
                 <tr key={batch.batchId} className="border-b border-border align-top last:border-0">
-                  <td className="py-1.5 pr-2 [overflow-wrap:anywhere]">{`${batch.productName} ${batch.variantLabel}`.trim()}</td>
-                  <td className="py-1.5 pr-2 font-semibold">{batch.batchNumber}</td>
-                  <td className="py-1.5 pr-2">{batch.expiresOn ? formatDateOnly(batch.expiresOn) : '—'}</td>
-                  <td className="py-1.5 pr-2 text-right font-semibold tabular-nums">{batch.quantity}</td>
+                  <td className="py-1.5 pr-1.5 [overflow-wrap:anywhere] sm:pr-2">{`${batch.productName} ${batch.variantLabel}`.trim()}</td>
+                  <td className="py-1.5 pr-1.5 [overflow-wrap:anywhere] sm:pr-2">
+                    <span className="font-semibold">{batch.batchNumber}</span>
+                    {/* Below `sm` the Expires column is hidden, so the date sits under the batch it belongs to. */}
+                    <span className="block text-ink-muted sm:hidden">
+                      <span className="[overflow-wrap:normal]">Expires</span> {expires}
+                    </span>
+                  </td>
+                  <td className="hidden whitespace-nowrap py-1.5 pr-2 sm:table-cell">{expires}</td>
+                  <td className="py-1.5 pr-1.5 text-right font-semibold tabular-nums sm:pr-2">{batch.quantity}</td>
                   <td className="py-1.5 [overflow-wrap:anywhere]">{batch.orders.map((o) => `${o.orderNumber} (${o.quantity})`).join(', ')}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           </div>
@@ -73,6 +86,7 @@ export function PickListPage() {
   const list = usePickList(chosen.length > 0 ? chosen : undefined);
   const confirmed = useStaffOrderQueue({ status: 'Confirmed', pageNumber: 1, pageSize: 100 });
   const startPacking = useStartPacking();
+  const canManageRiders = useCanManageRiders();
   const [selection, setSelection] = useState<string[]>(chosen);
   const [progress, setProgress] = useState<{ done: number; total: number; failures: Array<{ number: string; message: string }> } | null>(null);
   const [running, setRunning] = useState(false);
@@ -112,7 +126,7 @@ export function PickListPage() {
       controls={
         <div className="flex flex-col gap-4">
           <StaffOrdersTabs />
-          <details className="rounded-[var(--radius-md)] border border-border bg-surface p-3">
+          <details className="rounded-2xl border border-border bg-surface p-3">
             <summary className="cursor-pointer text-sm font-semibold text-ink">
               Choose orders {chosen.length > 0 ? `(${chosen.length} chosen)` : '(all confirmed and packing orders)'}
             </summary>
@@ -140,6 +154,11 @@ export function PickListPage() {
             <Button onClick={() => void packAll()} disabled={running || toPack.length === 0} aria-busy={running}>
               {running ? 'Starting…' : `Start packing ${toPack.length} order${toPack.length === 1 ? '' : 's'}`}
             </Button>
+            {canManageRiders && (
+              <ActionLink href="/staff/fulfilment/riders" variant="outline">
+                Manage riders
+              </ActionLink>
+            )}
             {progress && (
               <p role="status" className="text-sm font-semibold text-ink">
                 {progress.done} of {progress.total} started{progress.failures.length > 0 ? `, ${progress.failures.length} could not be started` : ''}.

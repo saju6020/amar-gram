@@ -1,7 +1,6 @@
 import { apiFetch } from './client';
 import type { Money } from '../format/money';
 import type { PagedResult } from './types';
-import type { CartCat } from './cart';
 import type { OrderTotals, TransferInstructions } from './checkout';
 
 /**
@@ -19,6 +18,7 @@ export type OrderStatus =
   | 'PendingPayment'
   | 'Confirmed'
   | 'Packing'
+  | 'Packed' // HO-P5 BG-4: Domain/DomainServices/OrderTransitionRules.cs:21-22, 56 (optional, Packing -> Packed)
   | 'Dispatched'
   | 'Delivered'
   | 'Cancelled'
@@ -31,6 +31,7 @@ export const ORDER_STATUSES: OrderStatus[] = [
   'PendingPayment',
   'Confirmed',
   'Packing',
+  'Packed',
   'Dispatched',
   'Delivered',
   'Cancelled',
@@ -56,7 +57,6 @@ export interface OrderLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  cat: CartCat | null;
   quantity: number;
   unitPrice: Money;
   lineSubtotal: Money;
@@ -67,6 +67,8 @@ export interface OrderLine {
   lineTotal: Money;
   /** The product's current photo, a signed API-relative URL (customer views only; absent or null when none). */
   imagePath?: string | null;
+  /** "Subscription discount (10%)" on a subscription order's discounted line; null otherwise. // Read/ViewModels/OrderViewModels.cs:16 (owner decision 2026-11-09) */
+  discountLabel?: string | null;
 }
 
 export interface OrderFulfilmentView {
@@ -85,6 +87,8 @@ export interface OrderFulfilmentView {
   pickupBranchId: string | null;
   pickupBranchName: string | null;
   pickupBranchAddress: string | null;
+  /** The customer's note for the rider (Delivery only; the server drops it for Pickup). Read/ViewModels/OrderViewModels.cs:23 */
+  riderNote?: string | null;
 }
 
 export interface CustomerStatusChange {
@@ -102,7 +106,7 @@ export interface CustomerShipment {
 export interface ReturnableLine {
   lineId: string;
   maxQuantity: number;
-  returnClass: 'Food' | 'Litter' | 'Other';
+  returnClass: 'Food' | 'Household' | 'Other';
 }
 
 export interface CustomerRefund {

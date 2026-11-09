@@ -34,7 +34,7 @@ function section(
 ) {
   return render(
     <ReviewsSection
-      slug="royal-canin-kitten"
+      slug="organic-rolled-oats"
       rating={{ average: 4.5, count: 23 }}
       reviews={{ items: reviews, pageNumber: 1, pageSize: 10, totalCount: reviews.length }}
       onPage={() => {}}
@@ -55,7 +55,7 @@ describe('ReviewsSection — HO-SHP-002 §11.3, US-SHP-09', () => {
     });
     expect(screen.getByRole('link', { name: 'Write a review' })).toHaveAttribute(
       'href',
-      '/portal/reviews/new?product=royal-canin-kitten',
+      '/portal/reviews/new?product=organic-rolled-oats',
     );
   });
 
@@ -68,7 +68,7 @@ describe('ReviewsSection — HO-SHP-002 §11.3, US-SHP-09', () => {
     });
     expect(screen.getByRole('link', { name: 'Edit your review' })).toHaveAttribute(
       'href',
-      '/portal/reviews/new?product=royal-canin-kitten&reviewId=rv-9',
+      '/portal/reviews/new?product=organic-rolled-oats&reviewId=rv-9',
     );
     expect(screen.queryByRole('link', { name: 'Write a review' })).not.toBeInTheDocument();
   });
@@ -122,34 +122,22 @@ describe('RecommendationBlocks — US-SHP-08', () => {
   const recs = (overrides: Partial<Recommendations> = {}): Recommendations => ({
     frequentlyBoughtTogether: [makeItem({ productId: 'a', name: 'Bundle Mate' })],
     upSell: [],
-    lifeStage: {
-      basis: 'Generic',
-      lifeStages: ['Kitten'],
-      items: [makeItem({ productId: 'b', name: 'Kitten Pick' })],
-    },
     ...overrides,
   });
 
-  it('U-B9: an empty block is not rendered; the life-stage heading names the audience', () => {
+  it('U-B9: an empty block is not rendered', () => {
     renderWithClient(<RecommendationBlocks recommendations={recs()} />);
     expect(screen.getByRole('heading', { name: 'Frequently bought together' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'You might also like' })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Recommended for kittens' })).toBeInTheDocument();
   });
 
-  it('U-B9: the heading reads "for your cats" when basis is YourCats', () => {
+  it('U-B9: the up-sell block has its own heading', () => {
     renderWithClient(
       <RecommendationBlocks
-        recommendations={recs({
-          lifeStage: {
-            basis: 'YourCats',
-            lifeStages: ['Kitten'],
-            items: [makeItem({ productId: 'b' })],
-          },
-        })}
+        recommendations={recs({ upSell: [makeItem({ productId: 'b', name: 'Upgrade Pick' })] })}
       />,
     );
-    expect(screen.getByRole('heading', { name: 'Recommended for your cats' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'You might also like' })).toBeInTheDocument();
   });
 
   it('renders nothing at all when every block is empty', () => {
@@ -158,7 +146,6 @@ describe('RecommendationBlocks — US-SHP-08', () => {
         recommendations={{
           frequentlyBoughtTogether: [],
           upSell: [],
-          lifeStage: { basis: 'Generic', lifeStages: [], items: [] },
         }}
       />,
     );

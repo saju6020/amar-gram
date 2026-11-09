@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 :root{--overlay:rgba(28,26,23,.4);--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
@@ -66,7 +66,7 @@ tbody tr:last-child td{border-bottom:none}
 tfoot td{background:var(--surface-sunken);font-weight:700}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.dim td{color:var(--ink-faint)}
-tr.unusable td{background:#fdfbf8}
+tr.unusable td{background:#FFFAF0}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px}
 .grid2{display:flex;gap:18px;align-items:flex-start}
 .grid2 > *{flex:1;min-width:0}
@@ -99,17 +99,17 @@ tr.unusable td{background:#fdfbf8}
 </style>
 </helmet>
 <div style="width:1280px;height:960px;background:var(--surface-page);overflow:auto;position:relative">
-<div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+<div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
 <div class="main">
   <nav class="secnav" aria-label="Inventory"><a href="StockOverview.dc.html">Stock</a><a href="GoodsReceipt.dc.html" class="active" aria-current="page">Receipts</a><a href="TransferForm.dc.html">Transfers</a><a href="AdjustmentForm.dc.html">Adjustments</a><a href="ApprovalQueue.dc.html">Approvals</a><a href="CountSheet.dc.html">Counts</a><a href="Ledger.dc.html">Ledger</a><a href="Alerts.dc.html">Alerts <span class="count">7 open</span></a><a href="NearExpiryReport.dc.html">Reports</a><a href="RecallList.dc.html">Recalls</a><a href="StorageBreach.dc.html">Storage</a><a href="StockSettings.dc.html">Locations &amp; settings</a></nav>
-  <div class="titlerow"><div><h1 class="h1">Receipt GRN-UTR-0388</h1><p class="sub" style="margin:4px 0 0">Posted 18 Sep 2026, 10:05 (Asia/Dhaka) by Rezwan Ahmed · against <a class="link" href="PurchaseOrderDetail.dc.html">PO-UTR-0142</a> · delivery DN-87120</p></div><span class="b b-neutral"><i aria-hidden="true">■</i> Posted — read-only</span></div>
+  <div class="titlerow"><div><h1 class="h1">Receipt GRN-DHN-0388</h1><p class="sub" style="margin:4px 0 0">Posted 18 Sep 2026, 10:05 (Asia/Dhaka) by Rezwan Ahmed · against <a class="link" href="PurchaseOrderDetail.dc.html">PO-DHN-0142</a> · delivery DN-87120</p></div><span class="b b-neutral"><i aria-hidden="true">■</i> Posted — read-only</span></div>
   <div class="banner banner-neutral" style="margin-top:12px"><i aria-hidden="true">ⓘ</i><span>A posted receipt cannot be edited. To correct stock, raise an <a class="link" href="AdjustmentForm.dc.html">adjustment</a>.</span></div>
   <h2 class="h2">Lines</h2>
   <table>
     <thead><tr><th>SKU</th><th>Lot</th><th>Expiry</th><th class="num">Accepted</th><th class="num">Rejected</th><th>Rejection</th><th>Location</th><th class="num">Unit cost</th></tr></thead>
     <tbody>
-      <tr><td><strong>FD-KDC-2KG</strong><div class="small muted">Kitten dry food, chicken 2 kg</div></td><td>L2406A</td><td>21 Jan 2027</td><td class="num">30 bags</td><td class="num">10 bags</td><td>Damaged packaging — "Torn and wet, refused at the door"</td><td>UTR-WH</td><td class="num">৳1,450.0000</td></tr>
-      <tr><td><strong>FD-WET-TUN</strong><div class="small muted">Adult wet food pouch, tuna 85 g</div></td><td>W2412</td><td>15 Mar 2027</td><td class="num">240 pouches</td><td class="num">0 pouches</td><td class="muted">None</td><td>UTR-WH</td><td class="num">৳95.0000</td></tr>
+      <tr><td><strong>RIC-CHG-5KG</strong><div class="small muted">Chinigura aromatic rice 5 kg</div></td><td>L2406A</td><td>21 Jan 2027</td><td class="num">30 bags</td><td class="num">10 bags</td><td>Damaged packaging — "Torn and wet, refused at the door"</td><td>DHN-WH</td><td class="num">৳1,450.0000</td></tr>
+      <tr><td><strong>TRM-PWD-200</strong><div class="small muted">Turmeric powder 200 g</div></td><td>W2412</td><td>15 Mar 2027</td><td class="num">240 pouches</td><td class="num">0 pouches</td><td class="muted">None</td><td>DHN-WH</td><td class="num">৳95.0000</td></tr>
     </tbody>
   </table>
   <div class="grid2" style="margin-top:20px">
@@ -118,8 +118,8 @@ tr.unusable td{background:#fdfbf8}
       <table>
         <thead><tr><th>Batch</th><th>SKU</th><th>State</th></tr></thead>
         <tbody>
-          <tr><td><a class="link" href="BatchDetail.dc.html">L2406A</a></td><td>FD-KDC-2KG</td><td><span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></td></tr>
-          <tr><td><a class="link" href="BatchDetail.dc.html">W2412</a></td><td>FD-WET-TUN</td><td><span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></td></tr>
+          <tr><td><a class="link" href="BatchDetail.dc.html">L2406A</a></td><td>RIC-CHG-5KG</td><td><span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></td></tr>
+          <tr><td><a class="link" href="BatchDetail.dc.html">W2412</a></td><td>TRM-PWD-200</td><td><span class="b b-ok"><i aria-hidden="true">✓</i> Available</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -128,8 +128,8 @@ tr.unusable td{background:#fdfbf8}
       <table>
         <thead><tr><th>Time</th><th>Kind</th><th class="num">Quantity</th><th>Location</th><th>Lot</th></tr></thead>
         <tbody>
-          <tr><td>18 Sep 2026, 10:05</td><td>Receipt</td><td class="num"><span class="plus">+30 bags</span></td><td>UTR-WH</td><td>L2406A</td></tr>
-          <tr><td>18 Sep 2026, 10:05</td><td>Receipt</td><td class="num"><span class="plus">+240 pouches</span></td><td>UTR-WH</td><td>W2412</td></tr>
+          <tr><td>18 Sep 2026, 10:05</td><td>Receipt</td><td class="num"><span class="plus">+30 bags</span></td><td>DHN-WH</td><td>L2406A</td></tr>
+          <tr><td>18 Sep 2026, 10:05</td><td>Receipt</td><td class="num"><span class="plus">+240 pouches</span></td><td>DHN-WH</td><td>W2412</td></tr>
         </tbody>
       </table>
       <p class="note">Rejected quantities are recorded on the receipt only — they never entered stock, so they have no ledger entry.</p>

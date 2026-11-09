@@ -1,4 +1,6 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
+import { registerStaffBranchesProvider } from '../areas/accounts';
+import { db as orderingDb } from '../ordering/store';
 import {
   administrationFixtureIds,
   validationError,
@@ -10,10 +12,11 @@ import {
   zonedTimeToUtcIso,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_admin_branches_mock_db__';
+// HO-P5: bumped when a branch gained a `type`, so an older tab's saved branches (without one) are not read.
+const PERSIST_KEY = '__amargram_admin_branches_mock_db_p5__';
 
 /** `mocks/handlers/admin/branches.ts` — HO-ADM-002 §12, HO-ADM-001 §12.4. Branches, opening
- *  hours, closures, rooms, staff branch assignment and the active-branch feed. Two branches in
+ *  hours, closures, staff branch assignment and the active-branch feed. Two branches in
  *  different zones (Asia/Dhaka, Europe/London) so zone rendering is exercised (§12). */
 
 interface OpeningInterval {
@@ -32,6 +35,8 @@ interface Branch {
   email: string | null;
   isActive: boolean;
   weeklyHours: OpeningInterval[];
+  /** HO-P5 BG-21 -- Outlet or Warehouse; descriptive only (Shared/Enums/BranchType.cs). */
+  type: 'Outlet' | 'Warehouse';
 }
 
 interface Closure {
@@ -44,14 +49,6 @@ interface Closure {
   partialFrom: string | null;
   partialTo: string | null;
   isCancelled: boolean;
-}
-
-interface Room {
-  id: string;
-  branchId: string;
-  name: string;
-  kind: string;
-  isActive: boolean;
 }
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -71,16 +68,50 @@ function fromMinutes(total: number): string {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
+/** The branch-local date (yyyy-MM-dd) of an instant in an IANA zone. */
+function localDateOf(instantMs: number, timeZoneId: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: timeZoneId, year: 'numeric', month: '2-digit', day: '2-digit' }).format(
+    new Date(instantMs),
+  );
+}
+
+/**
+ * The open intervals of one branch-local date as minutes since midnight, closures applied: a whole-day closure leaves none, a
+ * part-day one cuts its window out. The calendar read and today's hours on the outlet card both use it, as the server's
+ * `IBranchCalendar.OpenIntervalsAsync` is behind both (AdminBranchCardDetails.cs:52-68).
+ */
+function openMinutesOn(branch: Branch, dateStr: string, branchClosures: Closure[]): Array<[number, number]> {
+  const onDate = branchClosures.filter((c) => dateStr >= c.startsOn && dateStr <= c.endsOn);
+  if (onDate.some((c) => !c.partialFrom)) return [];
+  const dayName = DAY_NAMES[new Date(`${dateStr}T12:00:00Z`).getUTCDay()];
+  let open: Array<[number, number]> = branch.weeklyHours
+    .filter((h) => h.dayOfWeek === dayName)
+    .map((h) => [toMinutes(h.opens), toMinutes(h.closes)]);
+  for (const c of onDate) {
+    const cutFrom = toMinutes(c.partialFrom as string);
+    const cutTo = toMinutes(c.partialTo as string);
+    open = open.flatMap(([a, b]): Array<[number, number]> => {
+      if (cutTo <= a || cutFrom >= b) return [[a, b]];
+      const kept: Array<[number, number]> = [];
+      if (a < cutFrom) kept.push([a, cutFrom]);
+      if (cutTo < b) kept.push([cutTo, b]);
+      return kept;
+    });
+  }
+  return open;
+}
+
 function seedBranches(): Map<string, Branch> {
   const main: Branch = {
     id: administrationFixtureIds.mainBranchId,
     code: 'MAIN',
-    name: 'Main clinic',
+    name: 'Dhanmondi outlet',
     timeZoneId: 'Asia/Dhaka',
     addressLine: '12 Gulshan Avenue, Dhaka',
     phoneNumber: '+880212345678',
-    email: 'main@purrcare.test',
+    email: 'main@amargram.test',
     isActive: true,
+    type: 'Outlet',
     weeklyHours: [
       { dayOfWeek: 'Monday', opens: '09:00', closes: '13:00' },
       { dayOfWeek: 'Monday', opens: '14:00', closes: '18:00' },
@@ -97,12 +128,13 @@ function seedBranches(): Map<string, Branch> {
   const london: Branch = {
     id: administrationFixtureIds.londonBranchId,
     code: 'LDN',
-    name: 'London clinic',
+    name: 'London outlet',
     timeZoneId: 'Europe/London',
     addressLine: '5 Baker Street, London',
     phoneNumber: '+442071234567',
-    email: 'london@purrcare.test',
+    email: 'london@amargram.test',
     isActive: true,
+    type: 'Outlet',
     weeklyHours: [
       { dayOfWeek: 'Monday', opens: '08:00', closes: '17:00' },
       { dayOfWeek: 'Tuesday', opens: '08:00', closes: '17:00' },
@@ -146,33 +178,12 @@ function seedClosures(): Map<string, Closure> {
   ]);
 }
 
-function seedRooms(): Map<string, Room> {
-  const consultation: Room = {
-    id: administrationFixtureIds.consultationRoomId,
-    branchId: administrationFixtureIds.mainBranchId,
-    name: 'Consultation 1',
-    kind: 'Consultation',
-    isActive: true,
-  };
-  const theatre: Room = {
-    id: administrationFixtureIds.theatreRoomId,
-    branchId: administrationFixtureIds.mainBranchId,
-    name: 'Theatre 1',
-    kind: 'Theatre',
-    isActive: true,
-  };
-  return new Map([
-    [consultation.id, consultation],
-    [theatre.id, theatre],
-  ]);
-}
-
 type StaffBranchAssignment = { branchIds: string[]; primaryBranchId: string };
 
 function seedStaffBranchAssignments(): Map<string, StaffBranchAssignment> {
   return new Map([
     [
-      administrationFixtureIds.vetStaffId,
+      administrationFixtureIds.rosterStaffId,
       {
         branchIds: [administrationFixtureIds.mainBranchId],
         primaryBranchId: administrationFixtureIds.mainBranchId,
@@ -191,14 +202,12 @@ function seedStaffBranchAssignments(): Map<string, StaffBranchAssignment> {
 interface PersistedShape {
   branches: Array<[string, Branch]>;
   closures: Array<[string, Closure]>;
-  rooms: Array<[string, Room]>;
   staffBranchAssignments: Array<[string, StaffBranchAssignment]>;
 }
 const persisted = loadPersisted<PersistedShape>(PERSIST_KEY);
 
 let branches = persisted ? new Map(persisted.branches) : seedBranches();
 let closures = persisted ? new Map(persisted.closures) : seedClosures();
-let rooms = persisted ? new Map(persisted.rooms) : seedRooms();
 let staffBranchAssignments = persisted
   ? new Map(persisted.staffBranchAssignments)
   : seedStaffBranchAssignments();
@@ -207,7 +216,6 @@ function persist(): void {
   savePersisted(PERSIST_KEY, {
     branches: [...branches.entries()],
     closures: [...closures.entries()],
-    rooms: [...rooms.entries()],
     staffBranchAssignments: [...staffBranchAssignments.entries()],
   });
 }
@@ -215,7 +223,6 @@ function persist(): void {
 export function resetAdminBranchesMockData(): void {
   branches = seedBranches();
   closures = seedClosures();
-  rooms = seedRooms();
   staffBranchAssignments = seedStaffBranchAssignments();
   clearPersisted(PERSIST_KEY);
 }
@@ -228,12 +235,49 @@ export function getBranchSnapshot(branchId: string): Branch | undefined {
   return branches.get(branchId);
 }
 
+/** HO-P5 BG-22 -- the branches a staff account is assigned to, the primary first and then by name; registered with the
+ *  accounts mock so the staff list can show them without that file importing this one. */
+registerStaffBranchesProvider((staffAccountId) => {
+  const assignment = staffBranchAssignments.get(staffAccountId);
+  if (!assignment) return [];
+  return assignment.branchIds
+    .flatMap((id) => {
+      const branch = branches.get(id);
+      return branch ? [{ id, name: branch.name, isPrimary: id === assignment.primaryBranchId }] : [];
+    })
+    .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.name.localeCompare(b.name));
+});
+
+/**
+ * ADR-046's sole-branch rule as the roster commands use it (RosterCommandHandlers.cs:75-86): a staff member is assignable
+ * to a branch when they are assigned to it explicitly, or when no other active branch exists.
+ */
+export function isStaffAssignedToBranch(staffAccountId: string, branchId: string): boolean {
+  if (staffBranchAssignments.get(staffAccountId)?.branchIds.includes(branchId)) return true;
+  return ![...branches.values()].some((b) => b.isActive && b.id !== branchId);
+}
+
 export function getBranchClosures(branchId: string): Closure[] {
   return [...closures.values()].filter((c) => c.branchId === branchId && !c.isCancelled);
 }
 
-function branchSummary(b: Branch) {
-  // The real BranchSummaryViewModel also carries the address, contact details and weekly hours (contract check).
+/**
+ * `AdminBranchViewModel` (AdministrationBranchViewModels.cs:10-21), the shape of the list and of the single read. HO-P5 BG-21:
+ * `todayHours` is the branch-local today with closures applied ("HH:mm-HH:mm" per interval joined by ", ", or "Closed"),
+ * `deliveryAreas` the names of the branch's active delivery zones in priority order (read from the ordering mock's zones), and
+ * `activeStaffCount` the staff accounts assigned to the branch (AdminBranchCardDetails.cs:20-50).
+ */
+function adminBranchView(b: Branch) {
+  const date = localDateOf(Date.now(), b.timeZoneId);
+  const intervals = openMinutesOn(b, date, getBranchClosures(b.id)).sort((x, y) => x[0] - y[0]).map(([a, c]) => ({
+    dayOfWeek: DAY_NAMES[new Date(`${date}T12:00:00Z`).getUTCDay()] ?? 'Monday',
+    opens: fromMinutes(a),
+    closes: fromMinutes(c),
+  }));
+  const areas = orderingDb.zones
+    .filter((z) => z.isActive && z.branchId === b.id)
+    .sort((x, y) => x.priority - y.priority || x.name.localeCompare(y.name))
+    .map((z) => z.name);
   return {
     id: b.id,
     code: b.code,
@@ -244,7 +288,25 @@ function branchSummary(b: Branch) {
     email: b.email,
     isActive: b.isActive,
     weeklyHours: b.weeklyHours,
+    type: b.type,
+    todayHours: {
+      date,
+      isOpenToday: intervals.length > 0,
+      summary: intervals.length === 0 ? 'Closed' : intervals.map((i) => `${i.opens}-${i.closes}`).join(', '),
+      intervals,
+    },
+    deliveryAreas: [...new Set(areas)],
+    activeStaffCount: [...staffBranchAssignments.values()].filter((a) => a.branchIds.includes(b.id)).length,
   };
+}
+
+/** `type` is optional on the wire; blank is valid, a name is matched without regard to case, anything else is refused with
+ *  the validator's own wording (`MustBeValidEnumeration`, BranchCommandValidators.cs:19,31 / ValidationRuleExtensions.cs:48-50). */
+function parseBranchType(raw: unknown): { ok: true; value: Branch['type'] | null } | { ok: false } {
+  if (raw === undefined || raw === null || (typeof raw === 'string' && raw.trim() === '')) return { ok: true, value: null };
+  if (typeof raw !== 'string') return { ok: false };
+  const found = (['Outlet', 'Warehouse'] as const).find((t) => t.toLowerCase() === raw.toLowerCase());
+  return found ? { ok: true, value: found } : { ok: false };
 }
 
 export const adminBranchesHandlers: HttpHandler[] = [
@@ -264,13 +326,15 @@ export const adminBranchesHandlers: HttpHandler[] = [
   }),
 
   http.get('*/api/admin/branches', () =>
-    HttpResponse.json([...branches.values()].map(branchSummary)),
+    HttpResponse.json(
+      [...branches.values()].sort((a, b) => a.name.localeCompare(b.name)).map(adminBranchView),
+    ),
   ),
 
   http.get('*/api/admin/branches/:branchId', ({ params }) => {
     const branch = branches.get(params.branchId as string);
     if (!branch) return notFound();
-    return HttpResponse.json(branch);
+    return HttpResponse.json(adminBranchView(branch));
   }),
 
   http.post('*/api/admin/branches', async ({ request }) => {
@@ -281,8 +345,12 @@ export const adminBranchesHandlers: HttpHandler[] = [
       addressLine?: string | null;
       phoneNumber?: string | null;
       email?: string | null;
+      type?: string | null;
     };
     if (!body.code?.trim()) return validationError('Code', 'RequiredField', 'Enter a code.');
+    const type = parseBranchType(body.type);
+    if (!type.ok)
+      return validationError('Type', 'PredicateValidator', 'is not a recognised BranchType.', 'CreateBranchCommand');
     if ([...branches.values()].some((b) => b.code === body.code)) {
       return validationError(
         'Code',
@@ -301,6 +369,8 @@ export const adminBranchesHandlers: HttpHandler[] = [
       email: body.email ?? null,
       isActive: true,
       weeklyHours: [],
+      // Absent means Outlet (BranchRequests.cs:11-12).
+      type: type.value ?? 'Outlet',
     });
     persist();
     return HttpResponse.json({ branchId: id }, { status: 201 });
@@ -309,13 +379,18 @@ export const adminBranchesHandlers: HttpHandler[] = [
   http.put('*/api/admin/branches/:branchId', async ({ request, params }) => {
     const branch = branches.get(params.branchId as string);
     if (!branch) return notFound();
-    const body = (await request.json()) as Partial<Branch>;
+    const body = (await request.json()) as Partial<Omit<Branch, 'type'>> & { type?: string | null };
+    const type = parseBranchType(body.type);
+    if (!type.ok)
+      return validationError('Type', 'PredicateValidator', 'is not a recognised BranchType.', 'UpdateBranchDetailsCommand');
     Object.assign(branch, {
       name: body.name,
       timeZoneId: body.timeZoneId,
       addressLine: body.addressLine ?? null,
       phoneNumber: body.phoneNumber ?? null,
       email: body.email ?? null,
+      // Absent leaves the type unchanged (BranchRequests.cs:22-23).
+      type: type.value ?? branch.type,
     });
     persist();
     return noContent();
@@ -402,36 +477,6 @@ export const adminBranchesHandlers: HttpHandler[] = [
     return noContent();
   }),
 
-  http.get('*/api/admin/branches/:branchId/rooms', ({ params }) => {
-    const list = [...rooms.values()].filter((r) => r.branchId === params.branchId);
-    return HttpResponse.json(list);
-  }),
-
-  http.post('*/api/admin/branches/:branchId/rooms', async ({ request, params }) => {
-    const body = (await request.json()) as { name: string; kind: string };
-    const branchId = params.branchId as string;
-    if ([...rooms.values()].some((r) => r.branchId === branchId && r.name === body.name)) {
-      return validationError(
-        'Name',
-        'RoomNameAlreadyExists',
-        'A room with this name already exists at this branch.',
-      );
-    }
-    const id = crypto.randomUUID();
-    rooms.set(id, { id, branchId, name: body.name, kind: body.kind, isActive: true });
-    persist();
-    return HttpResponse.json({ roomId: id }, { status: 201 });
-  }),
-
-  http.put('*/api/admin/branches/:branchId/rooms/:roomId', async ({ request, params }) => {
-    const room = rooms.get(params.roomId as string);
-    if (!room) return notFound();
-    const body = (await request.json()) as { name: string; kind: string; isActive: boolean };
-    Object.assign(room, body);
-    persist();
-    return noContent();
-  }),
-
   http.get('*/api/admin/branches/:branchId/calendar', ({ params, request }) => {
     // HO-ADM-002-FU1 §12.2 — returns what the real `BranchCalendar.OpenIntervals` returns: an
     // unknown branch is `200 []`, a range over 62 days is `400`, and the open intervals are real
@@ -451,24 +496,7 @@ export const adminBranchesHandlers: HttpHandler[] = [
     const intervals: Array<{ start: string; end: string }> = [];
     for (let day = dayNumber(from); day <= dayNumber(to); day += 1) {
       const dateStr = dateOfDayNumber(day);
-      const onDate = branchClosures.filter((c) => dateStr >= c.startsOn && dateStr <= c.endsOn);
-      if (onDate.some((c) => !c.partialFrom)) continue;
-      const dayName = DAY_NAMES[new Date(day * 86_400_000).getUTCDay()];
-      let open: Array<[number, number]> = branch.weeklyHours
-        .filter((h) => h.dayOfWeek === dayName)
-        .map((h) => [toMinutes(h.opens), toMinutes(h.closes)]);
-      for (const c of onDate) {
-        const cutFrom = toMinutes(c.partialFrom as string);
-        const cutTo = toMinutes(c.partialTo as string);
-        open = open.flatMap(([a, b]): Array<[number, number]> => {
-          if (cutTo <= a || cutFrom >= b) return [[a, b]];
-          const kept: Array<[number, number]> = [];
-          if (a < cutFrom) kept.push([a, cutFrom]);
-          if (cutTo < b) kept.push([cutTo, b]);
-          return kept;
-        });
-      }
-      for (const [a, b] of open) {
+      for (const [a, b] of openMinutesOn(branch, dateStr, branchClosures)) {
         intervals.push({
           start: zonedTimeToUtcIso(dateStr, fromMinutes(a), branch.timeZoneId),
           end: zonedTimeToUtcIso(dateStr, fromMinutes(b), branch.timeZoneId),

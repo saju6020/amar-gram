@@ -15,7 +15,6 @@ interface Values {
   name: string;
   description: string;
   ingredientList: string;
-  feedingGuide: string;
 }
 
 function LocaleForm({
@@ -40,19 +39,17 @@ function LocaleForm({
       name: existing?.name ?? '',
       description: existing?.description ?? '',
       ingredientList: existing?.ingredientList ?? '',
-      feedingGuide: existing?.feedingGuide ?? '',
     },
   });
   // Removing the translation empties its form (the editor itself is not remounted, S9).
   const hadTranslation = React.useRef(!!existing);
   React.useEffect(() => {
     if (hadTranslation.current && !existing) {
-      reset({ name: '', description: '', ingredientList: '', feedingGuide: '' });
+      reset({ name: '', description: '', ingredientList: '' });
     }
     hadTranslation.current = !!existing;
   }, [existing, reset]);
   const description = watch('description');
-  const feeding = watch('feedingGuide');
   return (
     <>
       <SectionFrame
@@ -69,7 +66,6 @@ function LocaleForm({
             'name',
             'description',
             'ingredientList',
-            'feedingGuide',
           ]);
           if (ok) reset(values);
         })}
@@ -111,22 +107,6 @@ function LocaleForm({
             {...register('ingredientList')}
           />
         </Field>
-        <Field id={`tr-${locale}-feed`} label="Feeding guide">
-          <textarea
-            id={`tr-${locale}-feed`}
-            lang={locale}
-            rows={4}
-            className={inputClass}
-            {...register('feedingGuide')}
-          />
-        </Field>
-        <div
-          role="group"
-          aria-label={`${language} feeding guide preview`}
-          className="rounded-[var(--radius-sm)] border border-border bg-surface p-3 text-sm"
-        >
-          <LimitedMarkup body={feeding || ''} className="space-y-2" />
-        </div>
       </SectionFrame>
       {existing && (
         <Button variant="ghost" className="self-start" onClick={() => setConfirm(true)}>
@@ -160,7 +140,7 @@ export interface TranslationsEditorProps {
 
 /**
  * HO-SHP-002 §11.6 `TranslationsEditor` — US-SHP-14 AC3. HIDDEN with one enabled language; with more,
- * one sub-form per non-default locale (name, description, ingredient list, feeding guide) beside the
+ * one sub-form per non-default locale (name, description, ingredient list) beside the
  * default text, plus **Remove translation** (confirmed).
  */
 export function TranslationsEditor({

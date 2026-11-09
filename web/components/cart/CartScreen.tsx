@@ -24,7 +24,6 @@ import {
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import { useHydrated } from '@/lib/hooks/useHydrated';
 import type { CartLine } from '@/lib/api/cart';
-import { formatMoney } from '@/lib/format/money';
 import { cn } from '@/lib/utils';
 import { CartLineRow } from './CartLineRow';
 import { CartMergeNotice } from './CartMergeNotice';
@@ -32,15 +31,15 @@ import { CartMergeNotice } from './CartMergeNotice';
 const TILE_TONES: PackTone[] = ['warm', 'sunken', 'teal'];
 
 /**
- * `components/cart/CartScreen.tsx` — ⭐ HO-ORD-002 §11.1 `CartPage`, US-ORD-01, 02, in the Hearth layout
- * (docs/design/orders/Cart.dc.html). Lines as rounded cards with image, variant, cat chip, quantity
- * stepper, line subtotal and **Remove** (reversible, so no confirm — an *Undo* toast re-adds the line);
- * availability and price changes as text; the summary shows the item count and subtotal (both the
- * server's), *"Worked out at checkout"* for delivery and tax, and **Checkout · amount** (signed out →
- * sign-in with `?next=/checkout`). An unavailable line blocks Checkout until it is removed, with the
- * reason beside the button. There is no free-delivery card here: the cart has no address or zone, so
- * the server cannot say what is still needed (the card appears on checkout). Loading, empty and error
- * states are all real. On a phone only the Checkout pill (and a one-line reason) sticks to the bottom.
+ * `components/cart/CartScreen.tsx` — ⭐ HO-ORD-002 §11.1 `CartPage`, US-ORD-01, 02, rebuilt for HO-P3 S3
+ * (docs/design/store/BasketPhone.dc.html; visible copy says "basket", ADR-FE-174). Lines as rounded cards
+ * with image, variant, quantity stepper, line subtotal and **Remove** (reversible, so no confirm — an *Undo*
+ * toast re-adds the line); availability and price changes as text. The summary shows the **server's**
+ * subtotal and *"Delivery and total are worked out at checkout"*: no total, delivery charge or
+ * free-delivery figure is worked out here (the basket has no address or zone, so the server cannot say; G5).
+ * **Go to checkout** (signed out → sign-in with `?next=/checkout`). An unavailable line blocks it until it
+ * is removed, with the reason beside the button. Loading, empty and error states are all real. On a phone
+ * the summary footer (subtotal and the Checkout pill) sticks to the bottom.
  */
 export function CartScreen() {
   const cart = useCart();
@@ -55,11 +54,11 @@ export function CartScreen() {
 
   // The header's CartBadge may already have the cart when this page hydrates: keep the server's loading state
   // for the hydration render, then show the cart.
-  if (!hydrated || cart.isPending) return <LoadingState rows={5} label="Loading your cart…" />;
+  if (!hydrated || cart.isPending) return <LoadingState rows={5} label="Loading your basket…" />;
   if (cart.isError || !cart.data) {
     return (
       <ErrorState
-        title="We couldn't load your cart."
+        title="We couldn't load your basket."
         description="Your items are safe — please try again."
         headingLevel={2}
         onRetry={() => void cart.refetch()}
@@ -85,17 +84,11 @@ export function CartScreen() {
       onSuccess: () => {
         const label = `${line.productName} ${line.variantLabel}`.trim();
         toast({
-          title: `Removed ${label} from your cart.`,
+          title: `Removed ${label} from your basket.`,
           action: (
             <ToastAction
               altText={`Undo removing ${label}`}
-              onClick={() =>
-                add.mutate({
-                  skuId: line.skuId,
-                  quantity: line.quantity,
-                  catId: line.cat?.id,
-                })
-              }
+              onClick={() => add.mutate({ skuId: line.skuId, quantity: line.quantity })}
             >
               Undo
             </ToastAction>
@@ -107,20 +100,21 @@ export function CartScreen() {
   }
 
   const checkoutHref = signedIn ? '/checkout' : `/sign-in?next=${encodeURIComponent('/checkout')}`;
-  const checkoutLabel = `${signedIn || session.isPending ? 'Checkout' : 'Sign in to check out'} · ${formatMoney(data.subtotal)}`;
+  const checkoutLabel = signedIn || session.isPending ? 'Go to checkout' : 'Sign in to check out';
   const hasLines = data.lines.length > 0;
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-3.5">
-        <h1 className="m-0 font-display text-[32px] font-semibold leading-[1.1] text-ink md:text-[40px]">
-          Your cart
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2">
+        <h1 className="m-0 font-display text-[32px] font-bold leading-[1.1] tracking-tight text-ink md:text-[40px]">
+          Your basket
         </h1>
         {hasLines && (
           <span className="rounded-pill bg-warm-soft px-3.5 py-1.5 text-[13px] font-bold text-warm-ink">
             {`${data.itemCount} ${data.itemCount === 1 ? 'item' : 'items'}`}
           </span>
         )}
+        {hasLines && <span className="text-[13px] text-ink-muted md:hidden">Step 1 of 2</span>}
       </div>
       {notice && <CartMergeNotice result={notice} onDismiss={dismiss} />}
       {error && (
@@ -133,7 +127,7 @@ export function CartScreen() {
       )}
       {!hasLines ? (
         <HearthEmpty
-          title="Your cart is empty."
+          title="Your basket is empty."
           description="Find organic food and everyday goods — what you add stays here, even if you sign in later."
           action={
             <Link href="/shop" className={buttonVariants({ variant: 'pill', size: 'pillLg' })}>
@@ -143,7 +137,7 @@ export function CartScreen() {
         />
       ) : (
         <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-          <section aria-label="Items in your cart" className="min-w-0">
+          <section aria-label="Items in your basket" className="min-w-0">
             <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
               {data.lines.map((line, index) => (
                 <CartLineRow
@@ -162,27 +156,24 @@ export function CartScreen() {
               whole page; the summary, warning and notes stay in normal flow above it. */}
           <div className="flex min-w-0 flex-col gap-4 max-md:contents">
             <aside
-              aria-label="Cart summary"
+              aria-label="Basket summary"
               className={cn(summaryCardClass, 'flex flex-col gap-4 max-md:contents')}
             >
-              <div className="flex flex-col gap-4 max-md:rounded-card max-md:border max-md:border-border max-md:bg-surface max-md:p-5">
-                <h2 className="m-0 font-display text-2xl font-semibold text-ink">Order summary</h2>
-                <dl className="m-0">
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dashed border-border py-[9px] text-sm">
-                    <dt className="text-ink-muted">{`Items subtotal (${data.itemCount})`}</dt>
-                    <dd className="m-0 whitespace-nowrap">
+              <div className="flex flex-col gap-4">
+                <h2 className="m-0 font-display text-2xl font-bold text-ink max-md:sr-only">
+                  Basket summary
+                </h2>
+                <dl className="m-0 max-md:hidden">
+                  <div className="flex items-baseline justify-between gap-3 text-base">
+                    <dt className="font-semibold text-ink">{`Subtotal (${data.itemCount} ${data.itemCount === 1 ? 'item' : 'items'})`}</dt>
+                    <dd className="m-0 whitespace-nowrap font-display text-[28px] font-bold text-ink">
                       <Amount money={data.subtotal} />
                     </dd>
                   </div>
-                  <div className="flex items-baseline justify-between gap-3 border-b border-dashed border-border py-[9px] text-sm">
-                    <dt className="text-ink-muted">Delivery</dt>
-                    <dd className="m-0 text-right">Worked out at checkout</dd>
-                  </div>
-                  <div className="flex items-baseline justify-between gap-3 py-[9px] text-sm">
-                    <dt className="text-ink-muted">Tax</dt>
-                    <dd className="m-0 text-right">Worked out at checkout</dd>
-                  </div>
                 </dl>
+                <p className="m-0 rounded-2xl border-[1.5px] border-dashed border-border-strong px-4 py-3.5 text-sm text-ink-muted">
+                  Delivery and total are worked out at checkout.
+                </p>
                 {blocker && (
                   <p className={cn(bannerWarnClass, 'm-0')}>
                     <TriangleAlert size={15} aria-hidden="true" className="mt-0.5 flex-none" />
@@ -192,15 +183,21 @@ export function CartScreen() {
               </div>
               {!signedIn && !session.isPending && (
                 <p className="m-0 text-center text-xs leading-relaxed text-ink-muted md:order-3">
-                  You&rsquo;ll be asked to sign in first — your cart comes with you.
+                  You&rsquo;ll be asked to sign in first — your basket comes with you.
                 </p>
               )}
-              {/* Phone: the bar holds only the Checkout pill (its label carries the subtotal) and,
-                  when it is disabled, a one-line reason. Scroll-padding is in globals.css. */}
+              {/* Phone: the bar holds the server's subtotal, the Go to checkout pill and, when it is
+                  disabled, a one-line reason. Scroll-padding is in globals.css. */}
               <div
                 data-sticky-bar=""
-                className="flex min-w-0 flex-col gap-1.5 max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-4 max-md:border-t max-md:border-border max-md:bg-surface max-md:px-4 max-md:pb-4 max-md:pt-3 md:order-2"
+                className="flex min-w-0 flex-col gap-1.5 max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-4 max-md:border-t-[1.5px] max-md:border-border max-md:bg-surface max-md:px-4 max-md:pb-4 max-md:pt-3 md:order-2"
               >
+                <p className="m-0 flex items-baseline justify-between gap-3 text-sm text-ink-muted md:hidden">
+                  <span>Subtotal</span>
+                  <b className="font-display text-xl text-ink">
+                    <Amount money={data.subtotal} />
+                  </b>
+                </p>
                 {blocker ? (
                   <>
                     <Button
@@ -231,7 +228,7 @@ export function CartScreen() {
             </aside>
             {signedIn && (
               <p className="m-0 text-sm text-ink-muted max-lg:hidden">
-                Your cart is saved to your account, so it&rsquo;s there on your other devices too.
+                Your basket is saved to your account, so it&rsquo;s there on your other devices too.
               </p>
             )}
           </div>

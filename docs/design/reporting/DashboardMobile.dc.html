@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .dialog h2{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 10px}
 .dialog p{font-size:13.5px;line-height:1.5;margin:0 0 10px}
 .dactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
-.sk{background:linear-gradient(90deg,var(--surface-sunken),#ebe7dd);border-radius:4px;height:10px}
+.sk{background:linear-gradient(90deg,var(--surface-sunken),#EDE4D1);border-radius:4px;height:10px}
 .rcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px}
 .rcard h3{font-size:14px;margin:0 0 8px}
 .rcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;font-size:12.5px}
@@ -127,15 +127,15 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .recip label:last-child{border-bottom:none}
 .recip .roles{font-size:12px;color:var(--ink-muted)}
 .recip label.dis{background:var(--surface-sunken);color:var(--ink-muted)}
-.cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
-.cat-card b{font-size:14px;color:var(--accent-ink)}
-.cat-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
-.cat-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
+.rep-card b{font-size:14px;color:var(--accent-ink)}
+.rep-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
+.rep-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
 
 </style>
 </helmet>
 <div style="width:360px;height:900px;background:var(--surface-page);position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active outlet"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Cashier</div></div>
   <div class="main" style="padding:18px 16px">
     <h1 class="h1" style="font-size:19px">Today — Wed 23 Sep 2026 · Uttara</h1>
     <p class="sub" style="font-size:12px">Asia/Dhaka</p>
@@ -143,38 +143,38 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
     <p class="vh" role="status" aria-live="polite">Dashboard updated 09:42</p>
     <div style="display:flex;flex-direction:column;gap:10px">
       <section class="tile" aria-labelledby="m1">
-        <h2 id="m1">Appointments today</h2>
+        <h2 id="m1">Orders today</h2>
         <dl class="figs">
-          <div class="fig"><dt>Booked</dt><dd>38</dd></div>
-          <div class="fig"><dt>Checked in</dt><dd>21</dd></div>
-          <div class="fig"><dt>Completed</dt><dd>14</dd></div>
-          <div class="fig"><dt>No-show</dt><dd>2</dd></div>
+          <div class="fig"><dt>Placed</dt><dd>38</dd></div>
+          <div class="fig"><dt>Packed</dt><dd>21</dd></div>
+          <div class="fig"><dt>Delivered or collected</dt><dd>14</dd></div>
+          <div class="fig"><dt>Cancelled</dt><dd>2</dd></div>
         </dl>
         <a class="drill" href="ReportMobile.dc.html">View report →</a>
       </section>
       <section class="tile" aria-labelledby="m2">
-        <h2 id="m2">Queue now</h2>
+        <h2 id="m2">Packing queue now</h2>
         <dl class="figs">
-          <div class="fig"><dt>Waiting now</dt><dd>5 <span class="unit">cats</span></dd></div>
-          <div class="fig"><dt>Emergencies</dt><dd>1 <span class="flag flag-danger"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Emergency</span></dd></div>
+          <div class="fig"><dt>Waiting to pack</dt><dd>5 <span class="unit">orders</span></dd></div>
+          <div class="fig"><dt>Same-day</dt><dd>1 <span class="flag flag-danger"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5M12 17.4v.6"/><path d="M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> Same day</span></dd></div>
           <div class="fig"><dt>Longest wait</dt><dd>34 <span class="unit">min</span></dd></div>
         </dl>
         <a class="drill" href="ReportMobile.dc.html">View report →</a>
       </section>
       <section class="tile" aria-labelledby="m3">
-        <h2 id="m3">Vaccinations due</h2>
+        <h2 id="m3">Low stock</h2>
         <dl class="figs">
-          <div class="fig"><dt>Next 7 days</dt><dd>17 <span class="unit">cats</span></dd></div>
-          <div class="fig"><dt>Overdue</dt><dd>6 <span class="unit">cats</span></dd></div>
+          <div class="fig"><dt>Below reorder level</dt><dd>17 <span class="unit">products</span></dd></div>
+          <div class="fig"><dt>Out of stock</dt><dd>6 <span class="unit">products</span></dd></div>
         </dl>
         <a class="drill" href="ReportMobile.dc.html">View report →</a>
       </section>
       <section class="tile" aria-labelledby="m4">
-        <h2 id="m4">Surgery today</h2>
+        <h2 id="m4">Counter sales today</h2>
         <dl class="figs">
-          <div class="fig"><dt>Scheduled</dt><dd>3</dd></div>
-          <div class="fig"><dt>In theatre</dt><dd>1</dd></div>
-          <div class="fig"><dt>In recovery</dt><dd>1</dd></div>
+          <div class="fig"><dt>Sales</dt><dd>46</dd></div>
+          <div class="fig"><dt>Returns</dt><dd>1</dd></div>
+          <div class="fig"><dt>Open tills</dt><dd>2</dd></div>
         </dl>
       </section>
     </div>

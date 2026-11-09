@@ -24,13 +24,16 @@ interface RouteCase {
   heading: RegExp;
 }
 
-const { mainBranchId, serviceConsultationId, taxClassStandardId, contentPageId, policyKey } =
-  administrationFixtureIds;
+const { mainBranchId, taxClassStandardId, contentPageId, policyKey } = administrationFixtureIds;
 
 const ROUTES: RouteCase[] = [
   { path: '/staff/admin/branches', audience: 'staff', heading: /branches/i },
   { path: '/staff/admin/branches/new', audience: 'staff', heading: /new branch/i },
-  { path: `/staff/admin/branches/${mainBranchId}`, audience: 'staff', heading: /main clinic/i },
+  {
+    path: `/staff/admin/branches/${mainBranchId}`,
+    audience: 'staff',
+    heading: /dhanmondi outlet/i,
+  },
   {
     path: `/staff/admin/branches/${mainBranchId}/hours`,
     audience: 'staff',
@@ -46,17 +49,9 @@ const ROUTES: RouteCase[] = [
     audience: 'staff',
     heading: /calendar/i,
   },
-  { path: `/staff/admin/branches/${mainBranchId}/rooms`, audience: 'staff', heading: /rooms/i },
   { path: `/staff/admin/branches/${mainBranchId}/roster`, audience: 'staff', heading: /roster/i },
   { path: '/staff/admin/leave', audience: 'staff', heading: /leave approvals/i },
   { path: '/staff/leave', audience: 'staff', heading: /my leave/i },
-  { path: '/staff/admin/services', audience: 'staff', heading: /services/i },
-  { path: '/staff/admin/services/new', audience: 'staff', heading: /new service/i },
-  {
-    path: `/staff/admin/services/${serviceConsultationId}`,
-    audience: 'staff',
-    heading: /general consultation/i,
-  },
   { path: '/staff/admin/tax-classes', audience: 'staff', heading: /tax classes/i },
   {
     path: `/staff/admin/tax-classes/${taxClassStandardId}`,

@@ -11,7 +11,7 @@ import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import { applyValidationErrors, describeApiError, describeUnexpectedError } from '@/lib/api/errors';
 import { ApiValidationError } from '@/lib/api/client';
 import { timeZoneOptions } from '@/lib/format/time';
-import type { BranchDetail } from '@/lib/api/admin-branches';
+import { BRANCH_TYPES, type BranchDetail, type BranchType } from '@/lib/api/admin-branches';
 
 const schema = z.object({
   code: z.string().trim().min(1, 'Enter a code.').max(20),
@@ -20,6 +20,7 @@ const schema = z.object({
   addressLine: z.string().trim().optional(),
   phoneNumber: z.string().trim().optional(),
   email: z.string().trim().optional(),
+  type: z.enum(['Outlet', 'Warehouse']),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -30,6 +31,7 @@ const FIELD_MAP = {
   AddressLine: 'addressLine',
   PhoneNumber: 'phoneNumber',
   Email: 'email',
+  Type: 'type',
 } as const;
 const KNOWN_FIELDS = Object.values(FIELD_MAP);
 
@@ -46,6 +48,8 @@ export interface BranchDetailsFormProps {
     addressLine: string | null;
     phoneNumber: string | null;
     email: string | null;
+    /** HO-P5 BG-21: Outlet or Warehouse (BranchRequests.cs:11-12, 22-23). */
+    type: BranchType;
   }) => Promise<unknown>;
   isPending: boolean;
   onSetActivation?: (isActive: boolean) => Promise<unknown>;
@@ -76,6 +80,7 @@ export function BranchDetailsForm({
       addressLine: branch?.addressLine ?? '',
       phoneNumber: branch?.phoneNumber ?? '',
       email: branch?.email ?? '',
+      type: branch?.type ?? 'Outlet',
     },
   });
 
@@ -88,6 +93,7 @@ export function BranchDetailsForm({
         addressLine: values.addressLine || null,
         phoneNumber: values.phoneNumber || null,
         email: values.email || null,
+        type: values.type,
       });
     } catch (error) {
       if (error instanceof ApiValidationError) {
@@ -176,6 +182,30 @@ export function BranchDetailsForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
+        <label htmlFor="type" className="text-sm font-semibold text-ink">
+          Type
+        </label>
+        <select
+          id="type"
+          aria-invalid={!!errors.type}
+          className="min-h-11 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          {...register('type')}
+        >
+          {BRANCH_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+        {errors.type && (
+          <p role="alert" className="text-xs font-semibold text-danger-ink">
+            {errors.type.message}
+          </p>
+        )}
+        <p className="text-xs text-ink-muted">An outlet serves customers; a warehouse is where stock is kept.</p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
         <label htmlFor="timeZoneId" className="text-sm font-semibold text-ink">
           Time zone
         </label>
@@ -259,8 +289,8 @@ export function BranchDetailsForm({
           title={branch.isActive ? `Deactivate ${branch.name}?` : `Reactivate ${branch.name}?`}
           consequence={
             branch.isActive
-              ? `${branch.name} will stop appearing for new bookings and staff assignment. Existing records are kept.`
-              : `${branch.name} will be available again for bookings and staff assignment.`
+              ? `${branch.name} will stop appearing for new orders and staff assignment. Existing records are kept.`
+              : `${branch.name} will be available again for orders and staff assignment.`
           }
           confirmLabel={branch.isActive ? 'Deactivate' : 'Reactivate'}
           variant={branch.isActive ? 'destructive' : 'primary'}

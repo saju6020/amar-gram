@@ -53,9 +53,8 @@ describe('SECURITY HIGH: the board never trusts a cold load', () => {
     seed();
     xctMock.pingMode = 'ok';
     renderWithClient(<OfflineBoard />);
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/staff/front-desk'));
-    expect(screen.queryByText('Luna')).toBeNull();
-    expect(screen.queryByRole('heading', { name: /appointments/ })).toBeNull();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/staff'));
+    expect(screen.queryByText(/Read-only copy for this device/)).toBeNull();
   });
 
   it('a degraded server (5xx) is still a server that answers: it leaves too', async () => {
@@ -63,13 +62,13 @@ describe('SECURITY HIGH: the board never trusts a cold load', () => {
     xctMock.pingMode = 'serverError';
     renderWithClient(<OfflineBoard />);
     await waitFor(() => expect(replace).toHaveBeenCalled());
-    expect(screen.queryByText('Luna')).toBeNull();
+    expect(screen.queryByText(/Read-only copy for this device/)).toBeNull();
   });
 
   it('shows data only while offline', async () => {
     seed();
     renderWithClient(<OfflineBoard />);
-    expect(await screen.findByText('Luna')).toBeInTheDocument();
+    expect(await screen.findByText(/Read-only copy for this device/)).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
   });
 
@@ -77,7 +76,7 @@ describe('SECURITY HIGH: the board never trusts a cold load', () => {
     seed({ lastActivityAt: new Date(Date.now() - 31 * 60_000).toISOString() });
     renderWithClient(<OfflineBoard />);
     expect(await screen.findByText(LOCKED_TEXT)).toBeInTheDocument();
-    expect(screen.queryByText('Luna')).toBeNull();
+    expect(screen.queryByText(/Read-only copy for this device/)).toBeNull();
   });
 
   it('opens locked when no activity was ever recorded', async () => {
@@ -99,7 +98,7 @@ describe('SECURITY HIGH: the board never trusts a cold load', () => {
     stores.device.set('settings', { ...device, lastActivityAt: new Date().toISOString() });
     renderWithClient(<OfflineBoard />);
     expect(await screen.findByText(LOCKED_TEXT)).toBeInTheDocument();
-    expect(screen.queryByText('Luna')).toBeNull();
+    expect(screen.queryByText(/Read-only copy for this device/)).toBeNull();
   });
 
   it('the idle timer locks an open board and persists it', async () => {
@@ -109,7 +108,7 @@ describe('SECURITY HIGH: the board never trusts a cold load', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(100);
     });
-    expect(screen.getByText('Luna')).toBeInTheDocument();
+    expect(screen.getByText(/Read-only copy for this device/)).toBeInTheDocument();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(31 * 60_000);
     });
@@ -124,7 +123,7 @@ describe('SECURITY HIGH: the board never trusts a cold load', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(100);
     });
-    expect(screen.getByText('Luna')).toBeInTheDocument();
+    expect(screen.getByText(/Read-only copy for this device/)).toBeInTheDocument();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(6 * 60_000); // 25 + 6 > 30
     });
@@ -178,7 +177,7 @@ describe('SECURITY HIGH: the board never trusts a cold load', () => {
       Date.parse((stores.device.get('settings') as { lastActivityAt: string }).lastActivityAt);
     const before = lastActivity();
     renderWithClient(<OfflineBoard />);
-    await screen.findByText('Luna');
+    await screen.findByText(/Read-only copy for this device/);
     await waitFor(() => expect(lastActivity()).toBeGreaterThan(before));
   });
 });
@@ -196,9 +195,9 @@ describe('CODE_REVIEW HIGH: a second outage in one page load does not bounce the
       recordOutcome('unreachable');
     });
     renderWithClient(<OfflineBoard />);
-    expect(await screen.findByText('Luna')).toBeInTheDocument();
+    expect(await screen.findByText(/Read-only copy for this device/)).toBeInTheDocument();
     expect(replace).not.toHaveBeenCalled();
     act(() => recordOutcome('reachable'));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith('/staff/front-desk'));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/staff'));
   });
 });

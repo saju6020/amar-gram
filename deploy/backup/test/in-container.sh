@@ -4,5 +4,5 @@
 set -euo pipefail
 
 umask 077
-/opt/purrcare/scripts/render-config.sh /drill/pgbackrest.drill.conf.template /etc/pgbackrest/pgbackrest.conf
+/opt/amargram/scripts/render-config.sh /drill/pgbackrest.drill.conf.template /etc/pgbackrest/pgbackrest.conf
 exec "$@"

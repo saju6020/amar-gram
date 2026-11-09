@@ -1,8 +1,8 @@
 # Notifications — UX
 
-The clickable design for backlog §13 *Notifications*, built against
-[`HO-NTF-002`](../../handover/HO-NTF-002.md), the frontend handover. Fourth area, after
-[Cat Profiles](../cat-profile/README.md), [Accounts & Identity](../accounts-identity/README.md) and
+The clickable design for Amar Gram *Notifications*, built against
+[`HO-NTF-002`](../../handover/HO-NTF-002.md), the frontend handover. Third area, after
+[Accounts & Identity](../accounts-identity/README.md) and
 [Administration](../administration/README.md).
 
 ## Where to review it
@@ -42,7 +42,7 @@ is one editor, not a whole section.
 
 ## The design system
 
-Built on the [PurrCare design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN). This
+Built on the [Amar Gram design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN). This
 area needed one small, clearly reusable addition rather than a new component: **`Badge` gained a
 Count variant** — a number on a nav icon, for the inbox's unread badge — documented as the one
 deliberate exception to "icon and word both," because it sits on an icon that already carries its

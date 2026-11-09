@@ -1,4 +1,4 @@
-import { test, expect, signInAsStaff } from './fixtures';
+import { test, expect, signInAsStaff, inventoryStaff } from './fixtures';
 import { notificationFixtureIds as ids } from '../../mocks/handlers/notifications';
 import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
 
@@ -40,7 +40,7 @@ test("E-E1: open a customer's messages from their page, filter to failures, open
 
   // Open the failed SMS: every attempt is listed.
   await failed.click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Vaccination due' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Order dispatched' })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Delivery attempts' }).getByRole('row')).toHaveCount(
     4,
   );
@@ -97,13 +97,13 @@ test('a range over 93 days is refused before any request is made', async ({ page
   expect(logRequests).toHaveLength(0);
 });
 
-test('E-E2: a nurse opening /staff/notifications gets PermissionDeniedState from the server 403', async ({
+test('E-E2: a staff member without the notifications permission opening /staff/notifications gets PermissionDeniedState from the server 403', async ({
   page,
 }) => {
   await page.context().clearCookies();
   await page.goto('/staff/sign-in');
-  await page.getByLabel(/mobile number or email/i).fill(accountsFixtureIds.nurseIdentifier);
-  await page.getByLabel(/^password/i).fill(accountsFixtureIds.nursePassword);
+  await page.getByLabel(/mobile number or email/i).fill(inventoryStaff.identifier);
+  await page.getByLabel(/^password/i).fill(inventoryStaff.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/staff\//);
 
@@ -111,7 +111,7 @@ test('E-E2: a nurse opening /staff/notifications gets PermissionDeniedState from
   await expect(page.getByText(/you don.t have permission to do this/i)).toBeVisible();
   await expect(page.getByRole('table', { name: 'Message log' })).toHaveCount(0);
 
-  // The templates screen is refused the same way for a nurse.
+  // The templates screen is refused the same way.
   await page.goto('/staff/admin/notification-templates');
   await expect(page.getByText(/you don.t have permission to do this/i)).toBeVisible();
 });

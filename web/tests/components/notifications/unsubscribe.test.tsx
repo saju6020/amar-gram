@@ -45,7 +45,7 @@ describe('UnsubscribePage — HO-NTF-002 §11.4, ADR-FE-161', () => {
     expect(screen.getByRole('heading', { name: 'Stop marketing messages?' })).toBeInTheDocument();
     expect(
       screen.getByText(
-        /You.ll still receive important messages about your account, your cats and your orders\./,
+        /You.ll still receive important messages about your account and your orders\./,
       ),
     ).toBeInTheDocument();
     await new Promise((resolve) => setTimeout(resolve, 60));

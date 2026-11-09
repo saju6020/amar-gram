@@ -6,7 +6,7 @@ import type { ReportCatalogueEntry, ReportColumn, ReportParameter } from '@/lib/
 /**
  * `mocks/handlers/reports/fixtures.ts` — HO-RPT-002 §12. Generated from HO-RPT-001 §12.4 and the
  * real controllers' shapes (`StaffReportsController`, `ReportResultFormatter`). The catalogue is
- * filtered to the caller's roles (a restricted column is ABSENT, never blank); the Nurse gets a
+ * filtered to the caller's roles (a restricted column is ABSENT, never blank); Reception gets a
  * `403` for the whole catalogue. Two branches in different zones prove every instant follows the
  * payload's `timeZoneId`.
  */
@@ -18,17 +18,17 @@ export const reportFixtureIds = {
   timeoutFrom: '2020-01-01',
   tooLargePdfFrom: '2021-01-01',
   rateLimitedFrom: '2019-01-01',
-  clinicalFailFrom: '2018-01-01',
+  serverErrorFrom: '2018-01-01',
 } as const;
 
 export const BRANCHES: Record<string, { name: string; timeZoneId: string; offset: string }> = {
   [administrationFixtureIds.mainBranchId]: {
-    name: 'Main clinic',
+    name: 'Main outlet',
     timeZoneId: 'Asia/Dhaka',
     offset: '+06:00',
   },
   [administrationFixtureIds.londonBranchId]: {
-    name: 'London clinic',
+    name: 'London outlet',
     timeZoneId: 'Europe/London',
     offset: '+01:00',
   },
@@ -77,18 +77,15 @@ const col = (
   extra: Partial<ReportColumn> = {},
 ): ReportColumn => ({ key, label, type, unit: null, sortable: true, description: null, ...extra });
 
-const DAILY_COLUMNS: ReportColumn[] = [
-  col('start', 'Start', 'Instant'),
-  col('cat', 'Cat', 'Text'),
-  col('customer', 'Customer', 'Text'),
-  col('service', 'Service', 'Text', { sortable: false }),
-  col('performer', 'Performer', 'Text'),
-  col('room', 'Room', 'Text'),
-  col('channel', 'Channel', 'Text'),
-  col('walkIn', 'Walk-in', 'Boolean'),
+const FULFILMENT_COLUMNS: ReportColumn[] = [
+  col('orderNumber', 'Order', 'Text'),
+  col('placedOn', 'Placed', 'Instant'),
+  col('channel', 'Channel', 'Text', { sortable: false }),
   col('status', 'Status', 'Text'),
-  col('checkedInOn', 'Checked in', 'Instant'),
-  col('waitMinutes', 'Wait', 'Integer', { unit: 'min' }),
+  col('ageHours', 'Age (hours)', 'Integer', { unit: 'h' }),
+  col('slaBreach', 'Dispatch SLA breached', 'Boolean'),
+  col('dispatchedOn', 'Dispatched', 'Instant'),
+  col('deliveredOn', 'Delivered', 'Instant'),
 ];
 
 const REVENUE_ALL: ReportColumn[] = [
@@ -121,7 +118,7 @@ const NEAR_EXPIRY_PARAMS: ReportParameter[] = [
     name: 'category',
     label: 'Category',
     type: 'Enum',
-    allowedValues: ['All', 'Food', 'Medicine'],
+    allowedValues: ['All', 'Food', 'Consumable'],
     default: 'All',
   },
   {
@@ -156,27 +153,12 @@ function entry(
 
 const ALL_ENTRIES: ReportCatalogueEntry[] = [
   entry({
-    key: 'clinic-daily-schedule',
-    title: 'Daily schedule',
+    key: 'order-fulfilment',
+    title: 'Order fulfilment',
     description:
-      'Every booked appointment and walk-in for a day: who, what, where, and when they were seen.',
-    category: 'ClinicOperations',
-    columns: DAILY_COLUMNS,
-  }),
-  entry({
-    key: 'vaccination-due-list',
-    title: 'Vaccination due list',
-    description: 'Cats whose vaccinations are due or overdue.',
-    category: 'Clinical',
-    defaultPeriod: 'Next30Days',
-    defaultRange: { from: '2026-10-14', to: '2026-11-12' },
-    maxRangeDays: 90,
-    columns: [
-      col('cat', 'Cat', 'Text'),
-      col('vaccine', 'Vaccine', 'Text'),
-      col('dueOn', 'Due on', 'Date'),
-      col('owner', 'Owner', 'Text'),
-    ],
+      'Every order placed in the range with its age, whether it breached the dispatch service level, and when it was dispatched and delivered.',
+    category: 'Sales',
+    columns: FULFILMENT_COLUMNS,
   }),
   entry({
     key: 'stock-near-expiry',
@@ -208,8 +190,8 @@ const ALL_ENTRIES: ReportCatalogueEntry[] = [
   }),
   entry({
     key: 'revenue-by-business-line',
-    title: 'Revenue by business line',
-    description: 'Net revenue for clinic, shop and boarding, with margin where costs are known.',
+    title: 'Revenue by sales channel',
+    description: 'Net revenue for the shop, with margin where costs are known.',
     category: 'Financial',
     timeBucketed: true,
     defaultPeriod: 'MonthToDate',
@@ -260,11 +242,8 @@ const ALL_ENTRIES: ReportCatalogueEntry[] = [
 
 /** Which categories each staff role may open (ActionRoles.Reports.cs: Growth is Administrator only, Sales also opens to the Accountant). */
 const ROLE_CATEGORIES: Record<string, string[]> = {
-  Administrator: ['ClinicOperations', 'Clinical', 'Stock', 'Sales', 'Financial', 'Growth'],
-  Reception: ['ClinicOperations'],
-  Vet: ['ClinicOperations', 'Clinical'],
-  Nurse: [],
-  Caretaker: [],
+  Administrator: ['Stock', 'Sales', 'Financial', 'Growth'],
+  Reception: [],
   Inventory: ['Stock'],
   ShopManager: ['Sales'],
   Accountant: ['Sales', 'Financial'],

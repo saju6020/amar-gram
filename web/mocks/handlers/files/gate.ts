@@ -4,9 +4,7 @@
  * — never a real `sleep` (task rule: "use promises you release manually"). Named so more than one
  * in-flight upload can be controlled independently if a future test needs it.
  *
- * Used from Vitest specs (same Node process as `msw/node`'s handlers). The dev-only harness page
- * that once exposed it to Playwright was deleted when the cat photo page became a real consumer
- * of the uploader (owner decision 2026-09-28; HO-CAT-002 follow-up 2026-10-09).
+ * Used from Vitest specs (same Node process as `msw/node`'s handlers).
  */
 const gates = new Map<string, { promise: Promise<void>; release: () => void }>();
 

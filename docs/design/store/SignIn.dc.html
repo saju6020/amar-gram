@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — Sign in or create an account</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FBF3E2; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.5; display: flex; flex-wrap: wrap">
+
+  <section aria-label="Why join" style="flex: 1 1 420px; background: #3F6A1E; color: #F4F8E8; padding: 48px; display: flex; flex-direction: column; gap: 28px; justify-content: space-between; position: relative; overflow: hidden">
+    <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #F4F8E8">
+      <span style="width: 44px; height: 44px; border-radius: 50% 50% 50% 8px; background: #F4F8E8; display: grid; place-items: center; color: #3F6A1E">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+      </span>
+      <span style="font-family: Fraunces, Georgia, serif; font-size: 28px; font-weight: 700">Amar <span style="color: #F7D87A">Gram</span></span>
+    </a>
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 460px">
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -0.03em">Welcome <em style="font-weight: 500; color: #F7D87A">home.</em></h1>
+      <p style="margin: 0; color: #DCE8C3; font-size: 18px">One account for your orders, repeat deliveries and saved addresses.</p>
+      <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px">
+        <sc-for list="{{reasons}}" as="r" hint-placeholder-count="3">
+          <li style="display: flex; gap: 12px; align-items: center">
+            <span style="width: 36px; height: 36px; border-radius: 50%; background: #55823A; display: grid; place-items: center; flex: none">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F7D87A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"></path></svg>
+            </span>{{r}}
+          </li>
+        </sc-for>
+      </ul>
+    </div>
+    <span style="font-size: 14px; color: #DCE8C3">Staff member? <a href="../back-office/StaffSignIn.dc.html" style="color: #F7D87A; font-weight: 600">Sign in to the back office</a></span>
+  </section>
+
+  <main style="flex: 1 1 480px; display: flex; align-items: center; justify-content: center; padding: 48px 24px">
+    <div style="width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 22px">
+      <div role="tablist" aria-label="Account" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: #FFFAF0; border: 1.5px solid #E6D3AE">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+          <button type="button" role="tab" aria-selected="{{t.on}}" onClick="{{t.pick}}" style="min-height: 44px; border-radius: 999px; border: 0; background: {{t.bg}}; color: {{t.ink}}; font: inherit; font-weight: 600; cursor: pointer">{{t.label}}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{isSignIn}}" hint-placeholder-val="{{ true }}">
+        <form style="display: flex; flex-direction: column; gap: 16px">
+          <h2 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 34px; font-weight: 700">Sign in</h2>
+          <p style="margin: 0; color: #69553C">Use the mobile number or email you registered with.</p>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Mobile number or email
+            <input type="text" autocomplete="username" aria-invalid="{{err}}" style="min-height: 52px; padding: 0 14px; border-radius: 14px; border: {{fieldBorder}}; background: #FFFFFF; font: inherit; font-weight: 400; color: #2A1F12">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Password
+            <input type="password" autocomplete="current-password" aria-invalid="{{err}}" style="min-height: 52px; padding: 0 14px; border-radius: 14px; border: {{fieldBorder}}; background: #FFFFFF; font: inherit; font-weight: 400; color: #2A1F12">
+          </label>
+          <sc-if value="{{err}}" hint-placeholder-val="{{ false }}">
+            <p role="alert" style="margin: 0; padding: 12px 14px; border-radius: 12px; background: #FBE3DA; color: #8A2814; font-size: 15px">That mobile number or email and password don't match. Check them and try again.</p>
+          </sc-if>
+          <a href="#" style="align-self: flex-end; font-size: 15px; font-weight: 600; color: #B4531A">Forgot password?</a>
+          <button type="button" onClick="{{tryWrong}}" style="min-height: 54px; border-radius: 999px; border: 0; background: #B4531A; color: #FFFAF0; font: inherit; font-weight: 600; font-size: 17px; cursor: pointer">Sign in</button>
+          <a href="Account.dc.html" style="text-align: center; font-size: 14px; color: #69553C">(Prototype: skip to my account)</a>
+        </form>
+      </sc-if>
+
+      <sc-if value="{{isRegister}}" hint-placeholder-val="{{ false }}">
+        <form style="display: flex; flex-direction: column; gap: 14px">
+          <h2 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 34px; font-weight: 700">Create your account</h2>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Full name<input type="text" autocomplete="name" style="min-height: 50px; padding: 0 14px; border-radius: 14px; border: 1.5px solid #E6D3AE; background: #FFFFFF; font: inherit; font-weight: 400"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Mobile number<input type="tel" autocomplete="tel" placeholder="01XXXXXXXXX" style="min-height: 50px; padding: 0 14px; border-radius: 14px; border: 1.5px solid #E6D3AE; background: #FFFFFF; font: inherit; font-weight: 400"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Email <span style="font-weight: 400; color: #69553C">(optional)</span><input type="email" autocomplete="email" style="min-height: 50px; padding: 0 14px; border-radius: 14px; border: 1.5px solid #E6D3AE; background: #FFFFFF; font: inherit; font-weight: 400"></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 600">Password<input type="password" autocomplete="new-password" style="min-height: 50px; padding: 0 14px; border-radius: 14px; border: 1.5px solid #E6D3AE; background: #FFFFFF; font: inherit; font-weight: 400"><span style="font-weight: 400; font-size: 14px; color: #69553C">At least 8 characters.</span></label>
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; border: 1.5px dashed #EFCB86">
+            <span role="img" aria-label="Security check placeholder" style="width: 120px; height: 44px; border-radius: 8px; background: #EFCB86"></span>
+            <label style="flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600">Type the characters<input type="text" style="min-height: 44px; padding: 0 10px; border-radius: 10px; border: 1.5px solid #E6D3AE; background: #FFFFFF; font: inherit"></label>
+          </div>
+          <a href="Account.dc.html" style="min-height: 54px; display: grid; place-items: center; border-radius: 999px; background: #B4531A; color: #FFFAF0; text-decoration: none; font-weight: 600; font-size: 17px">Create account</a>
+          <span style="font-size: 13px; color: #69553C; text-align: center">Can't do the security check? Call [PHONE] and we'll set it up.</span>
+        </form>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 0, err: false }; }
+  renderVals() {
+    const s = this.state;
+    return {
+      reasons: ['Track every order to your door', 'Reorder your staples in a tap', 'Skip or pause a repeat delivery any time'],
+      tabs: ['Sign in', 'Create account'].map((label, i) => ({ label, on: s.tab === i, bg: s.tab === i ? '#3F6A1E' : 'transparent', ink: s.tab === i ? '#F4F8E8' : '#2A1F12', pick: () => this.setState({ tab: i, err: false }) })),
+      isSignIn: s.tab === 0, isRegister: s.tab === 1,
+      err: s.err, fieldBorder: s.err ? '2px solid #A3301B' : '1.5px solid #E6D3AE',
+      tryWrong: () => this.setState({ err: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

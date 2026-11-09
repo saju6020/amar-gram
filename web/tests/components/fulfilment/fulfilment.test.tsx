@@ -7,9 +7,9 @@ import { orderingIds as ids } from '../../../mocks/handlers/ordering/fixtures';
 import { resetOrderingMockData } from '../../../mocks/handlers/ordering/store';
 import { PackingSlipPage } from '@/components/fulfilment/PackingSlipPage';
 import { PickListPage } from '@/components/fulfilment/PickListPage';
-import { setUrl } from '../booking/nav-mock';
+import { setUrl } from '../common/nav-mock';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
@@ -28,8 +28,11 @@ describe('Pick list - U-E1', () => {
     expect(groups.length).toBeGreaterThan(0);
     const firstGroup = groups[0]!.closest('section')!;
     const table = within(firstGroup).getByRole('table');
-    const headers = within(table).getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['Product', 'Batch', 'Expires', 'Quantity', 'Orders']);
+    // By accessible name: below `sm` the Quantity header shows "Qty" (aria-hidden) over a visually hidden "Quantity".
+    const headers = within(table).getAllByRole('columnheader');
+    const names = ['Product', 'Batch', 'Expires', 'Quantity', 'Orders'];
+    expect(headers).toHaveLength(names.length);
+    names.forEach((name, index) => expect(within(table).getByRole('columnheader', { name })).toBe(headers[index]));
     const rows = within(table).getAllByRole('row').slice(1);
     expect(rows.length).toBeGreaterThan(0);
     expect(within(rows[0]!).getAllByRole('cell')[4]).toHaveTextContent(/ORD-2026-\d{6} \(\d+\)/);

@@ -1,9 +1,9 @@
 # Billing & Payments — UX
 
-The clickable design for backlog §12 *Billing and Payments*, built against
+The clickable design for Amar Gram's *Billing and Payments* area, built against
 [`HO-BIL-002`](../../handover/HO-BIL-002.md), the frontend handover (wire shapes from
 [`HO-BIL-001`](../../handover/HO-BIL-001.md) §12.4). It follows
-[Cat Profiles](../cat-profile/README.md), [Accounts & Identity](../accounts-identity/README.md),
+[Accounts & Identity](../accounts-identity/README.md),
 [Administration](../administration/README.md) and [Notifications](../notifications/README.md).
 
 ## Where to review it
@@ -28,15 +28,15 @@ approvals, reversal, credit/refund, variance and reconciliation. Every such stat
 | Row | File | Screen | Shows |
 |---|---|---|---|
 | Home & customer account — US-BIL-03, 08 | `BillingHome.dc.html` | Billing home | Approvals / drafts / today's payments / uncaptured tiles; Capture's captured-vs-skipped result with the reason |
-| | `CustomerAccount.dc.html` | Customer billing account | ⭐ summary (outstanding, "Overdue since 3 Sep", free credit, earmarked deposit, unbilled, loyalty) and the Unbilled charges tab; Void only where allowed, "Void via the order" written out elsewhere |
+| | `CustomerAccount.dc.html` | Customer billing account | ⭐ summary (outstanding, "Overdue since 3 Sep", free credit, earmarked pre-order advance, unbilled, loyalty) and the Unbilled charges tab; Void only where allowed, "Void via the order" written out elsewhere |
 | | `ApplyCreditAndVoid.dc.html` | Apply credit, void charge | Apply-credit form → result with **free credit remaining**; void confirmation with its required reason |
-| Invoices — US-BIL-01, 02, 07, 10 | `InvoiceComposer.dc.html` | Composer (draft) | ⭐ Clinic / Shop / Boarding groups, "Already on another invoice" row, preview with rate per line, *"Estimate at today's tax rates"*, loyalty control |
+| Invoices — US-BIL-01, 02, 07, 10 | `InvoiceComposer.dc.html` | Composer (draft) | ⭐ charges grouped by channel (Online / Counter (POS) / Subscription), "Already on another invoice" row, preview with rate per line, *"Estimate at today's tax rates"*, loyalty control |
 | | `ComposerDialogs.dc.html` | Composer dialogs | Manual charge; issue confirm naming customer and total; in-flight state; discard naming the charges returned |
 | | `ComposerErrors.dc.html` | Composer states | 409 reloaded, missing tax rate, missing billing profile (Issue disabled with reason), empty |
 | | `InvoiceList.dc.html` | Invoice list | Filters, sort, CSV, pagination; every status in words; corrected pair |
 | | `InvoiceDetail.dc.html` | Invoice detail | ⭐ seller/bill-to snapshot, 12-column lines incl. rate %, loyalty share, totals to outstanding, payments; no edit |
 | Payments — US-BIL-11, 04, 03 | `RecordPayment.dc.html` | Record payment | ⭐ Card in store: *Terminal slip number* refusing a card number client-side; "Pay the rest"; allocation |
-| | `PaymentMethodVariants.dc.html` | Form by method | Cash, transfer, COD (collector required), deposit earmark; the flags each is drawn from; `AllocationExceedsOutstanding` message |
+| | `PaymentMethodVariants.dc.html` | Form by method | Cash, transfer, COD (collector required), pre-order advance earmark; the flags each is drawn from; `AllocationExceedsOutstanding` message |
 | | `SplitTender.dc.html` | Split tender | ⭐ 1,000 → 400 / 350 / 250 → *Invoice paid*; pending-approval result ends the loop |
 | | `PaymentList.dc.html` | Payment list | Accepted, pending, reversed (struck through, with reason), rejected |
 | | `PaymentDetail.dc.html` | Payment detail + reverse | Allocation trail; reverse dialog in the UI-3 wording |
@@ -60,7 +60,7 @@ approvals, reversal, credit/refund, variance and reconciliation. Every such stat
 
 ## The design system
 
-This area uses the [PurrCare design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN) and
+This area uses the [Amar Gram design system](https://claude.ai/artifact/Y2WzXo2hnfc7a9ac7GHNvN) and
 adds no new component. `Table` (money columns right-aligned, tabular numerals), `Tabs`, `Dialog`
 (its `shadow-modal` exception), `Badge`, `Banner` and `Field` cover everything here. The only
 recurring new pattern is the **side-by-side state panel**. Where a screen's key moments are a

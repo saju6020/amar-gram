@@ -21,9 +21,9 @@ done
 [ -n "$target" ] || { echo "--target is required" >&2; exit 2; }
 [ "$confirm" = true ] || { echo "refusing to restore without --confirm: this replaces the data directory" >&2; exit 2; }
 
-stanza="${PGBACKREST_STANZA:-purrcare}"
+stanza="${PGBACKREST_STANZA:-amargram}"
 pgdata="${PGDATA:?PGDATA is not set}"
-marker="${PRODUCTION_CLUSTER_MARKER:-purrcare-production}"
+marker="${PRODUCTION_CLUSTER_MARKER:-amargram-production}"
 
 # A data directory whose postgresql.auto.conf names the production cluster is production: an extra, explicit flag is required.
 if [ -f "$pgdata/postgresql.auto.conf" ] && grep -q -- "$marker" "$pgdata/postgresql.auto.conf" && [ "$production" != true ]; then

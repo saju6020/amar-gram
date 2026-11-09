@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { sanitizeNextPath } from '@/lib/validation/nextPath';
 
 /** U-A5 (pure half) - the sign-in page's allow-list as HO-ORD-002 ADR-FE-098 amends it. */
-const ALLOWED = ['/portal/', '/book', '/shop', '/cart', '/checkout'];
-const FALLBACK = '/portal/cats';
+const ALLOWED = ['/portal/', '/shop', '/cart', '/checkout'];
+const FALLBACK = '/portal';
 
 describe('sign-in next path with /cart and /checkout allowed (U-A5)', () => {
   it.each([

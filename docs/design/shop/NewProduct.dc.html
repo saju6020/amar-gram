@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px}
 a{color:var(--accent-ink)}
@@ -47,7 +47,7 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
 </style>
 </helmet>
 <div style="width:1280px;height:960px;background:var(--surface-page)">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div class="main">
     <a class="back" href="StaffProductList.dc.html">← Products</a>
     <h1 class="h1">New product</h1>
@@ -57,26 +57,26 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
       <fieldset>
         <legend>Kind</legend>
         <div class="kinds" role="radiogroup" aria-label="Kind">
-          <label class="kind"><input type="radio" name="k"><span><b>Standard</b>One product with one or more sizes, flavours or colours.</span></label>
+          <label class="kind"><input type="radio" name="k"><span><b>Standard</b>One product with one or more sizes or pack types.</span></label>
           <label class="kind on"><input type="radio" name="k" checked><span><b>Kit</b>Several products sold together at one price. Can't be changed later.</span></label>
         </div>
       </fieldset>
       <div class="row">
-        <div class="field"><label for="np-name">Name</label><input id="np-name" value="New Kitten Starter Kit"></div>
-        <div class="field"><label for="np-brand">Brand</label><input id="np-brand" value="PurrCare"></div>
+        <div class="field"><label for="np-name">Name</label><input id="np-name" value="Village breakfast kit"></div>
+        <div class="field"><label for="np-brand">Producer</label><input id="np-brand" value="Amar Gram"></div>
       </div>
       <div class="row">
-        <div class="field"><label for="np-cat">Category</label><select id="np-cat"><option selected>Cat food</option><option>Litter</option><option>Litter pots &amp; accessories</option><option>Bags &amp; carriers</option><option>Health &amp; grooming</option><option>Toys &amp; furniture</option></select></div>
-        <div class="field"><label for="np-sub">Subcategory <span class="muted" style="font-weight:400">(optional)</span></label><select id="np-sub"><option>None</option><option selected>Kitten</option><option>Dry</option><option>Wet</option></select><div class="hint">Only Cat food's subcategories are listed.</div></div>
+        <div class="field"><label for="np-category">Category</label><select id="np-category"><option>Rice &amp; grains</option><option selected>Honey &amp; gur</option><option>Oils &amp; ghee</option><option>Spices</option><option>Pulses</option><option>Tea</option><option>Fresh produce</option><option>Dates &amp; dry fruit</option></select></div>
+        <div class="field"><label for="np-sub">Subcategory <span class="muted" style="font-weight:400">(optional)</span></label><select id="np-sub"><option>None</option><option selected>Gift kits</option><option>Honey</option><option>Gur</option></select><div class="hint">Only Honey &amp; gur's subcategories are listed.</div></div>
       </div>
       <div class="row">
-        <div class="field"><label for="np-tax">Tax class</label><select id="np-tax"><option selected>Standard rate (STD) — 15%</option><option>Zero-rated (medicine) (ZERO) — 0%</option></select></div>
-        <div class="field"><label for="np-sku">Kit SKU code</label><input id="np-sku" value="KIT-KITTEN-START"><div class="hint">Kits are sold as one SKU. Capitals, numbers and dashes.</div></div>
+        <div class="field"><label for="np-tax">Tax class</label><select id="np-tax"><option selected>Standard rate (STD) — 15%</option><option>Zero-rated (fresh produce) (ZERO) — 0%</option></select></div>
+        <div class="field"><label for="np-sku">Kit SKU code</label><input id="np-sku" value="KIT-VILLAGE-BREAKFAST"><div class="hint">Kits are sold as one SKU. Capitals, numbers and dashes.</div></div>
       </div>
       <div class="field">
         <label for="np-slug">Web address</label>
-        <div class="prefix"><span>purrcare.example/shop/products/</span><input id="np-slug" class="bad" value="new-kitten-starter-kit" aria-invalid="true" aria-describedby="np-slug-err"></div>
-        <div class="err" id="np-slug-err"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg>Another product already uses this web address. Try “new-kitten-starter-kit-2026”.</div>
+        <div class="prefix"><span>amargram.example/shop/products/</span><input id="np-slug" class="bad" value="village-breakfast-kit" aria-invalid="true" aria-describedby="np-slug-err"></div>
+        <div class="err" id="np-slug-err"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg>Another product already uses this web address. Try “village-breakfast-kit-2026”.</div>
         <div class="hint">Suggested from the name; you can change it until the product is first published, then it's fixed so links keep working.</div>
       </div>
       <div style="display:flex;gap:10px"><button class="btn" type="submit">Create draft</button><a class="btn2" href="StaffProductList.dc.html">Cancel</a></div>

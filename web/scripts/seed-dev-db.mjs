@@ -5,12 +5,12 @@
 //   run seed-dev.mjs (and its --verify checks) -> stop the API.
 //
 //   PGPASSWORD=... SEED_STAFF_PASSWORD=... SEED_CUSTOMER_PASSWORD=... \
-//     node web/scripts/seed-dev-db.mjs --db catecommerce_seedcheck
+//     node web/scripts/seed-dev-db.mjs --db amargram_seedcheck
 //
 // Options:
-//   --db <name>        REQUIRED. The database to build. catecommerce_test is always refused;
-//                      catecommerce_dev is refused unless --i-mean-dev is also passed.
-//   --i-mean-dev       Allow --db catecommerce_dev (back it up first; see the runbook).
+//   --db <name>        REQUIRED. The database to build. amargram_test is always refused;
+//                      amargram_dev is refused unless --i-mean-dev is also passed.
+//   --i-mean-dev       Allow --db amargram_dev (back it up first; see the runbook).
 //   --port <n>         Port for the seeding API (default 5099). Must be free; 5005 and 3000 are refused.
 //   --skip-build       Reuse the last Release build of the API (src/Api/.../bin/Release).
 //   --no-verify        Skip the read-only checks after seeding.
@@ -19,7 +19,7 @@
 //   PostgreSQL; PSQL may point at psql(.exe) if it is not on PATH.
 //
 // Why a private API copy: the developer's own API usually runs from bin/Debug (which locks those
-// files), and its appsettings.Development.json points at catecommerce_dev. This script builds in
+// files), and its appsettings.Development.json points at amargram_dev. This script builds in
 // Release, publishes to a temp folder and deletes appsettings.Development.json from that copy, so
 // the seeding API can only ever reach the database named here.
 
@@ -31,8 +31,8 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '..', '..');
-const apiProject = join(repo, 'src', 'Api', 'CatEcommerce.Api');
-const infraProject = join(repo, 'src', 'Infrastructure', 'CatEcommerce.Infrastructure');
+const apiProject = join(repo, 'src', 'Api', 'AmarGram.Api');
+const infraProject = join(repo, 'src', 'Infrastructure', 'AmarGram.Infrastructure');
 
 function parseArgs(argv) {
   const out = {};
@@ -61,13 +61,13 @@ const port = Number(args.port ?? 5099);
 
 // ── refusals first ───────────────────────────────────────────────────────────────────────────────
 if (!db)
-  fail('pass the target database explicitly: --db <name> (e.g. --db catecommerce_seedcheck).');
+  fail('pass the target database explicitly: --db <name> (e.g. --db amargram_seedcheck).');
 if (!/^[a-z][a-z0-9_]{0,62}$/.test(db)) fail(`"${db}" is not a plain lower-case database name.`);
-if (db === 'catecommerce_test')
-  fail('refusing catecommerce_test: it belongs to the integration tests.');
-if (db === 'catecommerce_dev' && !args['i-mean-dev'])
+if (db === 'amargram_test')
+  fail('refusing amargram_test: it belongs to the integration tests.');
+if (db === 'amargram_dev' && !args['i-mean-dev'])
   fail(
-    'refusing catecommerce_dev without --i-mean-dev (back it up first, see docs/runbooks/dev-seed.md).',
+    'refusing amargram_dev without --i-mean-dev (back it up first, see docs/runbooks/dev-seed.md).',
   );
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
   fail('--port must be a number between 1024 and 65535.');
@@ -191,38 +191,38 @@ const bootstrap = sql(
   `
   INSERT INTO account.staff_account ("Id", full_name, mobile_number, email_address, failed_login_count, security_stamp, role_ids,
     "CreatedBy", "CreatedDate", "LastUpdatedDate", "LastUpdatedBy", "TenantId", "VerticalId", "IsMarkedToDelete", "Version")
-  SELECT gen_random_uuid(), 'Farhana Akter', '+8801711000001', 'e2e.admin@purrcare.test', 0, gen_random_uuid(), ARRAY['Administrator']::varchar(50)[],
+  SELECT gen_random_uuid(), 'Farhana Akter', '+8801711000001', 'e2e.admin@amargram.test', 0, gen_random_uuid(), ARRAY['Administrator']::varchar(50)[],
     '00000000-0000-0000-0000-000000000000', now(), now(), '00000000-0000-0000-0000-000000000000',
     '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', false, 1
-  WHERE NOT EXISTS (SELECT 1 FROM account.staff_account WHERE email_address = 'e2e.admin@purrcare.test')
+  WHERE NOT EXISTS (SELECT 1 FROM account.staff_account WHERE email_address = 'e2e.admin@amargram.test')
   RETURNING 1`,
 );
 log(
   bootstrap === '1'
-    ? 'inserted the bootstrap Administrator e2e.admin@purrcare.test (password set next, via reset)'
+    ? 'inserted the bootstrap Administrator e2e.admin@amargram.test (password set next, via reset)'
     : 'bootstrap Administrator already present',
 );
 
 // ── 4. private API copy ──────────────────────────────────────────────────────────────────────────
-const work = mkdtempSync(join(tmpdir(), 'purrcare-seed-'));
+const work = mkdtempSync(join(tmpdir(), 'amargram-seed-'));
 const apiDir = join(work, 'api');
 run(
   'dotnet',
   ['publish', apiProject, '-c', 'Release', '--no-build', '-nologo', '-v', 'q', '-o', apiDir],
   { label: 'publishing a private copy of the API', quiet: true },
 );
-rmSync(join(apiDir, 'appsettings.Development.json'), { force: true }); // its connection string names catecommerce_dev
+rmSync(join(apiDir, 'appsettings.Development.json'), { force: true }); // its connection string names amargram_dev
 const apiLog = join(work, 'api.log');
 const exe = join(
   apiDir,
-  process.platform === 'win32' ? 'CatEcommerce.Api.exe' : 'CatEcommerce.Api',
+  process.platform === 'win32' ? 'AmarGram.Api.exe' : 'AmarGram.Api',
 );
 
 const apiEnv = {
   ...process.env,
   ASPNETCORE_ENVIRONMENT: 'Development',
   ASPNETCORE_URLS: apiBase,
-  ConnectionStrings__CatEcommerce: connectionString,
+  ConnectionStrings__AmarGram: connectionString,
   // Reset links must be absolute https URLs or the message is suppressed as RenderFailed.
   Account__WebBaseUrl: 'https://localhost:3000',
   PublicSite__WebBaseUrl: 'https://localhost:3000',

@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -101,7 +101,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main hasdlg">
     <div class="titlerow"><div><h1 class="h1">Farhana Yasmin — billing account</h1><p class="sub">Outstanding ৳1,150.00 · Free credit ৳690.00 · Unbilled ৳10,890.00</p></div></div>
     <div class="card" style="height:640px"></div>
@@ -114,7 +114,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
         <p class="small muted" style="margin:0 0 12px">Free credit available: <b style="color:var(--ink)">৳690.00</b></p>
         <div class="field">
           <label for="ac-inv">Invoice</label>
-          <select id="ac-inv"><option>INV-UTR-2627-000377 — ৳1,150.00 outstanding (overdue)</option></select>
+          <select id="ac-inv"><option>INV-DHN-2627-000377 — ৳1,150.00 outstanding (overdue)</option></select>
         </div>
         <div class="field">
           <label for="ac-amt">Amount <span class="opt">(optional)</span></label>
@@ -129,13 +129,13 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <p class="statelabel">2 · Result from the server</p>
       <div class="dialog" role="dialog" aria-labelledby="ac-r">
         <h2 id="ac-r">Credit applied</h2>
-        <div class="banner b-info" role="status" style="margin:0"><span aria-hidden="true">✓</span><span>৳400.00 of customer credit is now paying INV-UTR-2627-000377.</span></div>
+        <div class="banner b-info" role="status" style="margin:0"><span aria-hidden="true">✓</span><span>৳400.00 of customer credit is now paying INV-DHN-2627-000377.</span></div>
         <div class="applied">
-          <div><span>INV-UTR-2627-000377</span><span class="num">৳400.00 applied</span></div>
+          <div><span>INV-DHN-2627-000377</span><span class="num">৳400.00 applied</span></div>
           <div><span>Invoice now outstanding</span><span class="num">৳750.00</span></div>
           <div><span>Free credit remaining</span><span class="num" aria-label="BDT 290.00">৳290.00</span></div>
         </div>
-        <p class="small muted" style="margin:0">Taken from the credit released by CN-UTR-2627-000031.</p>
+        <p class="small muted" style="margin:0">Taken from the credit released by CN-DHN-2627-000031.</p>
         <div class="dactions"><button class="btn" type="button">Done</button></div>
       </div>
     </div>
@@ -144,7 +144,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <p class="statelabel">3 · Void an unbilled charge</p>
       <div class="dialog" role="dialog" aria-labelledby="vc-t">
         <h2 id="vc-t">Void this charge?</h2>
-        <div class="consequence"><b>Standard consultation — Luna, 21 Sep, ৳800.00</b> will be removed from Farhana Yasmin's unbilled charges and can't be invoiced. The void and its reason are kept in the audit log; the charge is not deleted.</div>
+        <div class="consequence"><b>Red lentils 1 kg × 5, 21 Sep, ৳800.00</b> will be removed from Farhana Yasmin's unbilled charges and can't be invoiced. The void and its reason are kept in the audit log; the charge is not deleted.</div>
         <div class="field">
           <label for="vc-r">Reason <span class="req" aria-hidden="true">*</span></label>
           <textarea id="vc-r" class="invalid" aria-invalid="true" aria-describedby="vc-e"></textarea>

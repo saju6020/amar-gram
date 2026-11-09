@@ -15,7 +15,10 @@ import { server } from '../../mocks/server';
  *   CONTRACT_CUSTOMER_EMAIL / CONTRACT_CUSTOMER_PASSWORD   (default JOURNEY_CUSTOMER_*)
  *   E2E_STAFF_ADMIN / E2E_STAFF_PASSWORD                    (the seeded e2e.admin)
  * The API must be on a scratch database (the check places one cash-on-delivery order for the seeded customer when she
- * has none, so the order shapes can be compared); it refuses catecommerce_dev / catecommerce_test.
+ * has none, so the order shapes can be compared); it refuses amargram_dev / amargram_test.
+ * HO-P6 (§12): for the subscription reads it also makes a product subscribable when none of the first few is (staff
+ * `GET` the detail, `PUT` it back with `isSubscribable: true`), and starts one subscription for the seeded customer
+ * when she has none (Delivery, her first address, the first available method from `payment-methods`).
  */
 
 const REAL = (process.env.CONTRACT_API_BASE_URL ?? '').replace(/\/+$/, '');
@@ -114,7 +117,26 @@ interface Diff {
   unverified: string[];
 }
 
+/** Paths the server types as a dictionary (`IReadOnlyDictionary<string, T>`): the keys are data, not fields, so only
+ *  the values' shape is compared, and a side with no entries leaves it unverified (as an empty array does).
+ *  `OpenAlertSummaryViewModel.ByKind` (Read/ViewModels/AlertsAndReportsViewModels.cs:17) lists only the kinds with an
+ *  open alert; a scratch database with none sends `{}` (HO-P6 integration part 2). */
+const DICTIONARY_PATHS = new Set(['$.open.byKind']);
+
+function valuesOf(shape: Shape): Shape | undefined {
+  let out: Shape | undefined;
+  for (const v of shape.props?.values() ?? []) out = out ? merge(out, v) : v;
+  return out;
+}
+
 function compare(mock: Shape, real: Shape, path: string, diff: Diff) {
+  if (DICTIONARY_PATHS.has(path) && mock.props && real.props) {
+    const mv = valuesOf(mock);
+    const rv = valuesOf(real);
+    if (mv && rv) compare(mv, rv, `${path}{}`, diff);
+    else if (mv || rv) diff.unverified.push(`${path}{} (${mv ? 'real' : 'mock'} dictionary was empty)`);
+    return;
+  }
   const mt = [...mock.types].filter((t) => t !== 'null');
   const rt = [...real.types].filter((t) => t !== 'null');
   if (mt.length === 0 || rt.length === 0) {
@@ -154,12 +176,25 @@ interface Ctx {
   branchId: string | null;
   staffId: string | null;
   quotePath: string;
+  // HO-P5 (§12, §17.1 step 5): ids for the wiring pass's staff reads.
+  productId: string | null;
+  skuId: string | null;
+  customerId: string | null;
+  draftId: string | null;
+  today: string;
+  weekAhead: string;
+  // HO-P6 (§12, §17.1 step 4): ids for the subscription reads, set by `ensureSubscription` before the LATE phase.
+  subSkuId: string | null;
+  subscriptionId: string | null;
+  subCustomerId: string | null;
 }
 interface Endpoint {
   id: string;
   who: Who;
   paths: (ctx: Ctx) => string[];
 }
+
+const SUBS = '/api/customers/me/subscriptions';
 
 const e = (
   id: string,
@@ -171,12 +206,12 @@ const ENDPOINTS: Endpoint[] = [
   // public shop
   e('GET /api/shop/products', 'anon', () => [
     '/api/shop/products',
-    '/api/shop/products?category=CatFood',
-    '/api/shop/products?brand=Whiskas&page=1',
+    '/api/shop/products?category=RiceAndGrains',
+    '/api/shop/products?brand=Sonar%20Bangla%20Farms&page=1',
   ]),
   e('GET /api/shop/filters', 'anon', () => [
     '/api/shop/filters',
-    '/api/shop/filters?category=CatFood',
+    '/api/shop/filters?category=RiceAndGrains',
   ]),
   e('GET /api/shop/categories', 'anon'),
   e('GET /api/shop/origins', 'anon'),
@@ -205,18 +240,14 @@ const ENDPOINTS: Endpoint[] = [
   e('GET /api/customers/me/notification-preferences', 'customer'),
   e('GET /api/customers/me/policy-acceptances/pending', 'customer'),
   e('GET /api/cart', 'customer'),
-  e('GET /api/cats', 'customer', () => ['/api/cats?pageNumber=1&pageSize=10']),
   e('GET /api/customers/me/checkout/quote', 'customer', (c) => [c.quotePath]),
   e('GET /api/customers/me/orders', 'customer'),
   e('GET /api/customers/me/orders/{orderId}', 'customer', (c) =>
     c.orderId ? [`/api/customers/me/orders/${c.orderId}`] : [],
   ),
   e('GET /api/customers/me/wishlist', 'customer'),
-  e('GET /api/customers/me/shop/products/{slug}/purchasability', 'customer', (c) =>
-    c.slugs
-      .slice(0, 2)
-      .map((s) => `/api/customers/me/shop/products/${encodeURIComponent(s)}/purchasability`),
-  ),
+  // `GET /api/customers/me/shop/products/{slug}/purchasability` was retired with CustomerShopController (HO-P1,
+  // 380e387): neither the API nor the mocks serve it, so it is no longer listed (HO-P6 integration).
   e('GET /api/portal/dashboard', 'customer'),
   // staff
   e('GET /api/staff/session', 'staff'),
@@ -249,6 +280,101 @@ const ENDPOINTS: Endpoint[] = [
     '/api/staff/inventory/stock?pageNumber=1&pageSize=20',
   ]),
   e('GET /api/staff/shop/products', 'staff'),
+  // ---- HO-P5 wiring pass (§12; integration step) ----
+  // S1 store front
+  e('GET /api/shop/delivery-promise', 'anon'),
+  // S2 sales
+  e('GET /api/staff/dashboard', 'staff'),
+  e('GET /api/staff/dashboard/sales-series', 'staff', () => [
+    '/api/staff/dashboard/sales-series?days=14',
+  ]),
+  e('GET /api/staff/orders/status-counts', 'staff'),
+  e('GET /api/staff/riders', 'staff', () => [
+    '/api/staff/riders',
+    '/api/staff/riders?activeOnly=true',
+  ]),
+  e('GET /api/staff/pos/browse', 'staff', () => [
+    '/api/staff/pos/browse?pageNumber=1&pageSize=24',
+    '/api/staff/pos/browse?category=RiceAndGrains&pageNumber=1&pageSize=24',
+  ]),
+  // S3 catalogue and stock
+  e('GET /api/staff/shop/products/{id}', 'staff', (c) =>
+    c.productId ? [`/api/staff/shop/products/${c.productId}`] : [],
+  ),
+  e('GET /api/staff/inventory/stock/{skuId}', 'staff', (c) =>
+    c.skuId ? [`/api/staff/inventory/stock/${c.skuId}`] : [],
+  ),
+  e('GET /api/staff/inventory/alerts/summary', 'staff', () => [
+    '/api/staff/inventory/alerts/summary',
+    '/api/staff/inventory/alerts/summary?arrivalWindowDays=7',
+  ]),
+  e('GET /api/staff/procurement/consignments', 'staff', (c) => [
+    '/api/staff/procurement/consignments?arrivingWithinDays=30',
+    ...(c.branchId ? [`/api/staff/procurement/consignments?branchId=${c.branchId}`] : []),
+  ]),
+  e('GET /api/staff/inventory/goods-receipt-drafts', 'staff'),
+  e('GET /api/staff/inventory/goods-receipt-drafts/{id}', 'staff', (c) =>
+    c.draftId ? [`/api/staff/inventory/goods-receipt-drafts/${c.draftId}`] : [],
+  ),
+  // S4 customers, money and admin
+  e('GET /api/staff/customers/browse', 'staff', () => [
+    '/api/staff/customers/browse?pageNumber=1&pageSize=20',
+  ]),
+  e('GET /api/staff/customers/{id}', 'staff', (c) =>
+    c.customerId ? [`/api/staff/customers/${c.customerId}`] : [],
+  ),
+  e('GET /api/staff/customers/{id}/notes', 'staff', (c) =>
+    c.customerId ? [`/api/staff/customers/${c.customerId}/notes`] : [],
+  ),
+  e('GET /api/staff/billing/cash-ups/{date}', 'staff', (c) => [
+    `/api/staff/billing/cash-ups/${c.today}`,
+  ]),
+  e('GET /api/admin/branches/{id}/roster-cells', 'staff', (c) =>
+    c.branchId
+      ? [`/api/admin/branches/${c.branchId}/roster-cells?from=${c.today}&to=${c.weekAhead}`]
+      : [],
+  ),
+  // ---- HO-P6 subscriptions (§12; integration step). All read in the LATE phase, after `ensureSubscription`. ----
+  // C1, C2: a subscribable SKU; C2 with the customer's delivery address.
+  e('GET /api/customers/me/subscriptions/options', 'customer', (c) =>
+    c.subSkuId ? [`${SUBS}/options?skuId=${c.subSkuId}`] : [],
+  ),
+  e('GET /api/customers/me/subscriptions/payment-methods', 'customer', (c) =>
+    c.subSkuId && c.addressId
+      ? [`${SUBS}/payment-methods?skuId=${c.subSkuId}&quantity=1&deliveryAddressId=${c.addressId}`]
+      : [],
+  ),
+  // C3, C4, C5
+  e('GET /api/customers/me/subscriptions', 'customer', () => [
+    `${SUBS}?status=live`,
+    `${SUBS}?status=cancelled`,
+  ]),
+  e('GET /api/customers/me/subscriptions/{id}', 'customer', (c) =>
+    c.subscriptionId ? [`${SUBS}/${c.subscriptionId}`] : [],
+  ),
+  e('GET /api/customers/me/subscriptions/{id}/cycles', 'customer', (c) =>
+    c.subscriptionId ? [`${SUBS}/${c.subscriptionId}/cycles?pageNumber=1&pageSize=20`] : [],
+  ),
+  // T1, T2, T3, T5, T6, T9
+  e('GET /api/staff/subscriptions', 'staff', () => [
+    '/api/staff/subscriptions?pageNumber=1&pageSize=20',
+    '/api/staff/subscriptions?status=Active&sort=-nextDeliveryOn&pageNumber=1&pageSize=20',
+  ]),
+  e('GET /api/staff/subscriptions/unpaid', 'staff', () => [
+    '/api/staff/subscriptions/unpaid?pageNumber=1&pageSize=20',
+  ]),
+  e('GET /api/staff/subscriptions/due-tomorrow', 'staff'),
+  e('GET /api/staff/subscriptions/{id}', 'staff', (c) =>
+    c.subscriptionId ? [`/api/staff/subscriptions/${c.subscriptionId}`] : [],
+  ),
+  e('GET /api/staff/subscriptions/{id}/cycles', 'staff', (c) =>
+    c.subscriptionId
+      ? [`/api/staff/subscriptions/${c.subscriptionId}/cycles?pageNumber=1&pageSize=20`]
+      : [],
+  ),
+  e('GET /api/staff/customers/{id}/subscriptions', 'staff', (c) =>
+    c.subCustomerId ? [`/api/staff/customers/${c.subCustomerId}/subscriptions`] : [],
+  ),
 ];
 
 interface Collected {
@@ -271,7 +397,117 @@ const rowsOf = (body: unknown): unknown[] => {
   return b?.items ?? b?.results ?? b?.orders ?? b?.addresses ?? [];
 };
 
-const LATE = /orders|\/api\/cart|checkout\/quote|portal\/dashboard|policy-acceptances/;
+const LATE =
+  /orders|\/api\/cart|checkout\/quote|portal\/dashboard|policy-acceptances|subscriptions/;
+
+interface ProductForPut {
+  version?: number;
+  name?: string;
+  brand?: string;
+  description?: string | null;
+  category?: string;
+  subcategory?: string | null;
+  tags?: string[];
+  taxClassId?: string;
+  countryOfOriginCode?: string | null;
+  districtOfOrigin?: string | null;
+  listedOnStorefront?: boolean;
+  isExpiryTracked?: boolean;
+  certifications?: string[];
+  isSubscribable?: boolean;
+  skus?: unknown[];
+}
+
+/** HO-P6 (§12): a SKU the customer can subscribe to (C1 says `subscribable`). The first pass only reads; when none of
+ *  the first five products has one, the second pass `PUT`s each product back with `isSubscribable: true` until one
+ *  does (the real side runs only on a scratch database, checked before `collect` is called for it). */
+async function subscribableSkuId(who: Record<Who, Client>): Promise<string | null> {
+  const list = await who.staff.get('/api/staff/shop/products');
+  const productIds = rowsOf(list.json)
+    .map((row) => idOf(row, 'productId', 'id'))
+    .filter((id): id is string => !!id)
+    .slice(0, 5);
+  for (const flip of [false, true]) {
+    for (const productId of productIds) {
+      const path = `/api/staff/shop/products/${productId}`;
+      const detail = (await who.staff.get(path)).json as ProductForPut | undefined;
+      if (!detail) continue;
+      if (detail.isSubscribable !== true) {
+        if (!flip) continue;
+        await who.staff.request('PUT', path, {
+          expectedVersion: detail.version,
+          name: detail.name,
+          brand: detail.brand,
+          description: detail.description,
+          category: detail.category,
+          subcategory: detail.subcategory,
+          tags: detail.tags ?? [],
+          taxClassId: detail.taxClassId,
+          countryOfOriginCode: detail.countryOfOriginCode,
+          districtOfOrigin: detail.districtOfOrigin ?? null,
+          listedOnStorefront: detail.listedOnStorefront,
+          isExpiryTracked: detail.isExpiryTracked,
+          certifications: detail.certifications ?? [],
+          isSubscribable: true,
+        });
+      }
+      for (const sku of detail.skus ?? []) {
+        const skuId = idOf(sku, 'skuId', 'id');
+        if (!skuId) continue;
+        const options = await who.customer.get(`${SUBS}/options?skuId=${skuId}`);
+        if ((options.json as { subscribable?: boolean } | undefined)?.subscribable === true)
+          return skuId;
+      }
+    }
+  }
+  return null;
+}
+
+/** HO-P6 (§12): one live subscription for the signed-in customer (the mock's Sam has seeded ones), a subscribable SKU,
+ *  and that customer's id as staff see it (for T9). */
+async function ensureSubscription(
+  who: Record<Who, Client>,
+  addressId: string,
+): Promise<Pick<Ctx, 'subSkuId' | 'subscriptionId' | 'subCustomerId'>> {
+  type Live = { id?: string; product?: { skuId?: string } };
+  const firstLive = async () =>
+    rowsOf((await who.customer.get(`${SUBS}?status=live`)).json)[0] as Live | undefined;
+  let live = await firstLive();
+  let skuId = live?.product?.skuId ?? null;
+  if (!live) {
+    skuId = await subscribableSkuId(who);
+    if (skuId && addressId) {
+      const methods = await who.customer.get(
+        `${SUBS}/payment-methods?skuId=${skuId}&quantity=1&deliveryAddressId=${addressId}`,
+      );
+      const options = (Array.isArray(methods.json) ? methods.json : []) as Array<{
+        method?: string;
+        isAvailable?: boolean;
+      }>;
+      const method = options.find((m) => m.isAvailable === true)?.method;
+      if (method)
+        await who.customer.request('POST', SUBS, {
+          skuId,
+          quantity: 1,
+          intervalWeeks: 4,
+          fulfilment: 'Delivery',
+          deliveryAddressId: addressId,
+          paymentMethod: method,
+        });
+      live = await firstLive();
+    }
+  }
+  const subscriptionId = idOf(live, 'id');
+  const staffDetail = subscriptionId
+    ? await who.staff.get(`/api/staff/subscriptions/${subscriptionId}`)
+    : null;
+  const subCustomerId = idOf(
+    (staffDetail?.json as { customer?: unknown } | undefined)?.customer,
+    'id',
+    'customerId',
+  );
+  return { subSkuId: live?.product?.skuId ?? skuId, subscriptionId, subCustomerId };
+}
 
 /** The mock starts nearly empty for the signed-in customer (no address, no banner/FAQ, nothing pending), which would
  *  leave those shapes uncompared. Give it the same kind of data the seeded real database has, through its own
@@ -362,6 +598,12 @@ async function collect(
   const policyKeys = rowsOf(policies.json)
     .map((p) => idOf(p, 'key', 'policyKey'))
     .filter((k): k is string => !!k);
+  const staffProducts = await who.staff.get('/api/staff/shop/products');
+  const stock = await who.staff.get('/api/staff/inventory/stock?pageNumber=1&pageSize=20');
+  const customers = await who.staff.get('/api/staff/customers/browse?pageNumber=1&pageSize=20');
+  const drafts = await who.staff.get('/api/staff/inventory/goods-receipt-drafts');
+  const day = (offset: number) =>
+    new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
 
   const ctx: Ctx = {
     who,
@@ -373,6 +615,15 @@ async function collect(
     branchId: idOf(rowsOf(branches.json)[0], 'branchId', 'id'),
     staffId: idOf(rowsOf(staff.json)[0], 'staffAccountId', 'id'),
     quotePath,
+    productId: idOf(rowsOf(staffProducts.json)[0], 'productId', 'id'),
+    skuId: idOf(rowsOf(stock.json)[0], 'skuId', 'id'),
+    customerId: idOf(rowsOf(customers.json)[0], 'id', 'customerId'),
+    draftId: idOf(rowsOf(drafts.json)[0], 'draftId', 'id'),
+    today: day(0),
+    weekAhead: day(6),
+    subSkuId: null,
+    subscriptionId: null,
+    subCustomerId: null,
   };
 
   const side: Side = {};
@@ -447,6 +698,7 @@ async function collect(
     await ensureCartLine(); // placing emptied the cart: put a line back so cart and quote have content
   }
   ctx.orderId = idOf(rowsOf(orders.json)[0], 'orderId', 'id');
+  Object.assign(ctx, await ensureSubscription(who, addressId));
   await run(LATE);
   return side;
 }
@@ -481,7 +733,7 @@ describe.skipIf(!REAL)('mock-vs-real contract (GET responses)', () => {
       MOCK,
       {
         customer: ['signed-in-customer@example.com', 'Password123!'],
-        staff: ['admin@purrcare.test', 'AdminPass123!'],
+        staff: ['admin@amargram.test', 'AdminPass123!'],
       },
       { seed: true },
     );
@@ -497,7 +749,7 @@ describe.skipIf(!REAL)('mock-vs-real contract (GET responses)', () => {
       throw new Error(
         `Could not confirm which database ${REAL} uses (GET /api/dev/database); refusing to run.`,
       );
-    if (database === 'catecommerce_dev' || database === 'catecommerce_test')
+    if (database === 'amargram_dev' || database === 'amargram_test')
       throw new Error(
         `${REAL} is on ${database}; the contract check places an order and needs a scratch database.`,
       );

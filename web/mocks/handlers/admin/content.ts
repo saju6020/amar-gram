@@ -9,7 +9,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_admin_content_mock_db__';
+const PERSIST_KEY = '__amargram_admin_content_mock_db__';
 
 /** `mocks/handlers/admin/content.ts` — HO-ADM-002 §12, HO-ADM-001 §8.8/§12.4. Content
  *  (pages/FAQs/banners) in every status, a policy with two versions, and a pending acceptance for
@@ -54,8 +54,8 @@ function seedContent(): Map<string, ContentItem> {
     kind: 'Page',
     slug: 'about-us',
     title: 'About us',
-    draftBody: 'We are Amar Gram, a **feline-only** clinic.\n\n## Our story\nFounded in 2020.',
-    publishedBody: 'We are Amar Gram, a **feline-only** clinic.\n\n## Our story\nFounded in 2020.',
+    draftBody: 'We are Amar Gram, an **organic** grocer.\n\n## Our story\nFounded in 2020.',
+    publishedBody: 'We are Amar Gram, an **organic** grocer.\n\n## Our story\nFounded in 2020.',
     publishedOn: '2027-01-01T00:00:00Z',
     status: 'Published',
     placement: null,
@@ -67,9 +67,9 @@ function seedContent(): Map<string, ContentItem> {
   const faq: ContentItem = {
     id: administrationFixtureIds.contentFaqId,
     kind: 'Faq',
-    slug: 'do-you-see-dogs',
-    title: 'Do you see dogs?',
-    draftBody: 'No — we care for cats only.',
+    slug: 'do-you-deliver-outside-dhaka',
+    title: 'Do you deliver outside Dhaka?',
+    draftBody: 'Yes — we deliver to every district.',
     publishedBody: null,
     publishedOn: null,
     status: 'Draft',

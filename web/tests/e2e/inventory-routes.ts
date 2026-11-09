@@ -11,9 +11,9 @@ export interface InventoryRoute {
 }
 
 export const INVENTORY_ROUTES: InventoryRoute[] = [
-  { path: '/staff/inventory', heading: /^inventory$/i },
+  { path: '/staff/inventory', heading: /^inventory & batches$/i },
   { path: '/staff/inventory/stock', heading: /^stock$/i },
-  { path: `/staff/inventory/stock/${ids.foodSkuId}`, heading: /kitten dry food/i },
+  { path: `/staff/inventory/stock/${ids.foodSkuId}`, heading: /organic rice 5 kg/i },
   { path: '/staff/inventory/batches', heading: /^batches$/i },
   { path: `/staff/inventory/batches/${ids.batchFoodFarId}`, heading: /lot L2409E/i },
   { path: `/staff/inventory/batches/${ids.batchFoodExpiredId}`, heading: /lot L2405Z/i },
@@ -44,7 +44,7 @@ export const INVENTORY_ROUTES: InventoryRoute[] = [
   { path: '/staff/inventory/locations', heading: /stock locations/i },
   { path: '/staff/procurement/suppliers', heading: /^suppliers$/i },
   { path: '/staff/procurement/suppliers/new', heading: /new supplier/i },
-  { path: `/staff/procurement/suppliers/${ids.supplierId}`, heading: /meridian pet supplies/i },
+  { path: `/staff/procurement/suppliers/${ids.supplierId}`, heading: /meridian/i },
   { path: '/staff/procurement/purchase-orders', heading: /purchase orders/i },
   { path: '/staff/procurement/purchase-orders/new', heading: /new purchase order/i },
   { path: `/staff/procurement/purchase-orders/${ids.poPartId}`, heading: /PO-2026-000001/i },

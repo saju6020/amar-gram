@@ -2,7 +2,7 @@ import { setupServer } from 'msw/node';
 import { handlers } from './handlers';
 
 /**
- * Node-side MSW server for Vitest and Playwright's API-mocking runs (HO-CAT-002 §5.1). Import
+ * Node-side MSW server for Vitest and Playwright's API-mocking runs (the scaffold handover §5.1). Import
  * and `server.listen()` / `server.resetHandlers()` / `server.close()` from a test setup file —
  * see web/tests/setup.ts.
  *

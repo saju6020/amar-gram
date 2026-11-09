@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -33,7 +33,7 @@ a{color:var(--accent-ink)}
 .tab.active{color:var(--ink);border-bottom-color:var(--accent)}
 .empty{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:36px 26px;text-align:center}
 .empty p{font-size:15px;line-height:1.55;margin:12px 0 18px}
-.empty-cat{width:72px;height:72px;border-radius:50%;background:var(--warm-soft);color:var(--warm-ink);display:flex;align-items:center;justify-content:center;flex:none;margin:0 auto}
+.empty-icon{width:72px;height:72px;border-radius:50%;background:var(--warm-soft);color:var(--warm-ink);display:flex;align-items:center;justify-content:center;flex:none;margin:0 auto}
 .scard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:18px 20px;display:flex;flex-direction:column;gap:8px;text-decoration:none;color:var(--ink);margin-bottom:12px}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .pname{font-weight:700;font-size:15.5px}
@@ -44,8 +44,8 @@ a{color:var(--accent-ink)}
 </helmet>
 <div style="width:1280px;height:760px;background:var(--surface-page)">
   <div class="topnav">
-    <div class="brand">PurrCare</div>
-    <nav class="pnav" aria-label="Portal"><a href="#">My cats</a><a href="#">Appointments</a><a href="#">Shop</a><a href="#">Orders</a><a class="active" aria-current="page" href="MySubscriptions.dc.html">Subscriptions</a><a href="#">Inbox</a></nav>
+    <div class="brand">Amar Gram</div>
+    <nav class="pnav" aria-label="Portal"><a href="#">Home</a><a href="#">Shop</a><a href="#">Orders</a><a class="active" aria-current="page" href="MySubscriptions.dc.html">Subscriptions</a><a href="#">Inbox</a></nav>
     <div class="who"><div class="avatar">FY</div>Farhana Yasmin</div>
   </div>
   <div class="cols">
@@ -55,8 +55,8 @@ a{color:var(--accent-ink)}
         <h1 class="h1">My subscriptions</h1>
         <nav class="tabs" aria-label="Subscription status"><a class="tab active" aria-current="page" href="#">Active &amp; paused (0)</a><a class="tab" href="#">Cancelled (0)</a></nav>
         <div class="empty">
-          <span class="empty-cat"><svg width="42" height="42" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 23 17 9l10 7M45 23l2-14-10 7"/><path d="M18 26c0-7 6-11 14-11s14 4 14 11-6 11-14 11-14-4-14-11Z"/><path d="M26 25v1.5M38 25v1.5M30 30.5l2 1.5 2-1.5"/><path d="M22 36c-4 6-5 13-3 21h26c2-8 1-15-3-21"/><path d="M45 55c6 0 9-4 7.5-9"/></svg></span>
-          <p>No subscriptions yet. Set up regular deliveries so your cat never runs out of food or litter — look for <strong>Subscribe</strong> in the shop.</p>
+          <span class="empty-icon"><svg width="42" height="42" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 52C14 28 30 14 52 12c0 24-14 40-38 40"/><path d="M14 52 38 28"/></svg></span>
+          <p>No subscriptions yet. Set up regular deliveries so your kitchen never runs out of rice, oil or honey — look for <strong>Subscribe</strong> in the shop.</p>
           <a class="btn" href="#">Go to the shop</a>
         </div>
       </div>
@@ -66,10 +66,10 @@ a{color:var(--accent-ink)}
       <div class="cap">Cancelled tab</div>
       <div class="frame">
         <h1 class="h1">My subscriptions</h1>
-        <nav class="tabs" aria-label="Subscription status"><a class="tab" href="MySubscriptions.dc.html">Active &amp; paused (6)</a><a class="tab active" aria-current="page" href="#">Cancelled (1)</a></nav>
+        <nav class="tabs" aria-label="Subscription status"><a class="tab" href="MySubscriptions.dc.html">Active &amp; paused (5)</a><a class="tab active" aria-current="page" href="#">Cancelled (1)</a></nav>
         <a class="scard" href="#">
-          <div class="top"><span class="pname">Chicken wet food</span><span class="badge b-neutral"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Cancelled</span></div>
-          <div class="muted small">12 × 85 g · 1 per delivery · every 2 weeks · cash on delivery</div>
+          <div class="top"><span class="pname">Desi eggs</span><span class="badge b-neutral"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Cancelled</span></div>
+          <div class="muted small">12 pcs tray · 1 per delivery · every 2 weeks · cash on delivery</div>
           <div style="font-size:14px">Ended after the delivery on Mon 3 Aug 2026</div>
           <div class="muted small">Your reason: Switching to another product</div>
           <div class="muted small">No next order — cancelled. To start again, subscribe from the product page.</div>

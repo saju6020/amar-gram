@@ -5,12 +5,12 @@
  * never `//` (protocol-relative — still an off-site redirect in a browser).
  *
  * ARCH gate LOW (first pass): a bare `startsWith` let a prefix match a longer, unrelated path
- * segment too — `/book` also "matched" `/bookXYZ`, a path outside the intended `/book/**` area. A
+ * segment too — `/shop` also "matched" `/shopXYZ`, a path outside the intended `/shop/**` area. A
  * prefix now only matches at a `/`-boundary (or the exact path), the same rule a router would use.
  *
  * A-APT1 hardening: the value is also resolved with `new URL(next, origin)`; it must stay on that
  * origin and the NORMALISED pathname (dot-segments and `%2e` collapsed) is what the prefix is
- * checked against, so `/book/..//evil` (normalises to `//evil`) and `/portal/../..//evil` fall
+ * checked against, so `/shop/..//evil` (normalises to `//evil`) and `/portal/../..//evil` fall
  * back. A backslash or any control character (tab, CR, LF, …) is rejected outright — browsers
  * strip or rewrite them, turning `/\evil` or `/<TAB>/evil` into an off-site URL. A valid value is
  * returned unchanged (query string included).

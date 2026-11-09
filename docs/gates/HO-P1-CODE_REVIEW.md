@@ -1,0 +1,25 @@
+GATE: CODE_REVIEW
+HANDOVER: HO-P1 (HO-P1-RETIRE-CLINIC)
+COMMITS: 3d8127b + uncommitted working tree (AmarGram rename, InitialAmarGram / InitialAmarGramSql baseline); base bda6b93
+DATE: 2026-10-24
+STATUS: FAIL
+
+FINDINGS
+- [HIGH] deploy/backup/scripts/verify-restore.sql:22-27 — the `row-counts-nonzero` restore-drill check still selects from `clinic.cat` and `clinic.appointment`. Those schemas no longer exist in the baseline, so psql errors on a fresh restore and the drill cannot report a pass. The restore drill is the HO-XCT-001 §12.8 evidence that backups work. Fix: count a kept table instead (for example `ordering.sales_order` or `product.product`), or count `account.customer_account` only.
+- [HIGH] deploy/backup/test/run-drill-test.sh:122 — the drill test seeds `drill.insert_default('clinic','cat')` and `('clinic','appointment')`. It fails against the new schema. Fix: seed kept tables, matching the change to verify-restore.sql.
+- [MEDIUM] src/Shared/AmarGram.Shared/Common/Enums/ProductCategory.cs:7, src/Domain/AmarGram.Domain/Aggregates/Product/ProductAggregate.cs:55 (plus SkuRows.cs:41, CatalogueLookup.cs:109, GetOriginsQueryHandler.cs:39, GetProductDetailQueryHandler.cs:88) — HO-P1 §1 says nothing that remains refers to cats, but `ProductCategory.CatFood` is still the only "food" category. `IsFood`, expiry tracking, the country-of-origin and full-labelling publication checks, return class and StockClass.Food all key off it, and the categories Litter, LitterPots and BagsAndCarriers are still cat-themed. A general shop cannot mark any other product as food. Fix: rename to a generic Food category (value 1 unchanged) and decide the category set before the UI phase.
+- [LOW] deploy/backup/restore-mode.env:7,10 — still sets `Clinic__Worker__Enabled` and `Pharmacy__Worker__Enabled`. They are harmless but stale. `Reporting` and `ImageVariantBackfill` are not in the list, as before.
+- [LOW] src/Read/AmarGram.Read/QueryHandlers/Operations/GetFrontDeskOfflineSnapshotQueryHandler.cs:28 — `KnownSections = []`, so the offline snapshot endpoint, its action and `RecordOfflineSnapshotIssued` stay live but always return an empty snapshot. Reception holds `Dashboard.View` but no tile maps to the Reception role, so its dashboard is empty. Decide whether to keep or remove these.
+- [LOW] src/Api/AmarGram.Api/Background/RetentionWorkCycle.cs:~168 — `SourceCutoff` returns null for every key, so the purge-source pass iterates and does nothing. Intentional per the comment; the worker still runs. No action needed unless the pass is meant to go.
+
+NO ISSUE FOUND (checked)
+- Authorization: OwnerScope was used only on cat and visit routes. Every remaining customer controller carries `RequireCustomerSession` and takes the caller's own id; none of those controllers changed. Customers calling a `[RequireAction]` endpoint get 403 plus an audit row, as before for out-of-scope actions. NulByteRejectionFilter checks "AmarGram". Every action used in `[RequireAction]` is mapped in ActionRoles (scripted check). Kept ActionRoles rows only lost the Nurse, Vet and Caretaker roles, nothing was widened. StaffRoleCatalogue cells are unchanged for kept roles. RosterableRoles is now Reception only, which is the same as before for non-clinical roles.
+- Money: enumeration numeric values are unchanged for every kept member (BusinessLine.Shop=2, ChargeSourceKind Order=5 and Manual=7, ItemKind Product=2 and Fee=5, EarmarkKind.Order=1, MovementKind 1-9 and 13). The manual charge validator now requires description, unit price and tax class. Invoice issue-from-charges selector is exactly one form (`FormCount == 1`). Payment allocation earmark matches Order only. Billing immutability, append-only, no-delete and no-truncate trigger tables match the old chain exactly (10 append-only and 4 no-delete tables).
+- Stock: the ledger sign check is generated from MovementKindRules and covers all 10 remaining kinds. Consuming is Sale only. Recall trace, WasConsumedByParty, reservations and FEFO have no CatId residue. No caller of `AdjustAsync` remains.
+- Baseline SQL: all 125 EF tables are created; the retention-guard list equals the old chain's non-clinic list (151 pairs, 0 missing, 0 extra). Sequences, audit triggers, leave exclusion, product views, inventory views, reporting views (kept ones, with `rv_customer_activity.v2`) and seeds (MAIN branch, 3 stock locations, DELIVERY tax class) are all carried over. `dotnet ef migrations has-pending-model-changes` reports no pending changes.
+- Wiring: every Handler, Validator, Source, Tile and Guard class is registered. Notification template keys used all exist in the catalogue. The 17 report keys each have a builder. Dashboard tile keys match their sources. Settings keys: all 46 SettingKeys have definitions. No removed config section is read.
+- Not run: integration tests (per instruction); the web tree was not reviewed.
+
+SCOPE CHECK
+- files in allowed scope: not assessed (handover lists scope by module, whole-tree rename)
+- files outside allowed scope: none found in src, tests or deploy beyond those named above

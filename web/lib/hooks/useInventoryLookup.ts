@@ -44,8 +44,11 @@ export function useBarcodeLookup() {
   return async (barcode: string) => (await lookupSkus({ barcode }))[0] ?? null;
 }
 
-export function useLocations() {
-  return useInventoryQuery('locations', [], getLocations, { staleTime: 30_000 });
+/** The active branch's locations, or another branch's when `branchId` is given (HO-P5 BG-18: the receiving form). */
+export function useLocations(branchId?: string) {
+  return useInventoryQuery('locations', branchId ? [branchId] : [], () => getLocations(branchId), {
+    staleTime: 30_000,
+  });
 }
 
 export function useCreateLocation() {

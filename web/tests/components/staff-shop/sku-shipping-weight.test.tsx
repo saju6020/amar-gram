@@ -15,7 +15,7 @@ import type { StaffProductDetail } from '@/lib/api/staff-shop';
 
 const SKU = (over: Partial<StaffSku> = {}): StaffSku => ({
   skuId: 'sku-1',
-  code: 'RC-K-2KG',
+  code: 'OAT-2KG',
   barcode: null,
   sizeOrWeight: '2 kg',
   flavour: null,
@@ -71,8 +71,8 @@ describe('Edit SKU — shipping weight', () => {
     const user = userEvent.setup();
     table(SKU());
     expect(screen.getByText('2100 g')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Edit RC-K-2KG' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Edit SKU RC-K-2KG' });
+    await user.click(screen.getByRole('button', { name: 'Edit OAT-2KG' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit SKU OAT-2KG' });
     expect(within(dialog).getByLabelText(/Shipping weight \(g\)/)).toHaveValue(2100);
     expect(within(dialog).getByLabelText('Size or weight')).toHaveValue('2 kg');
   });
@@ -80,7 +80,7 @@ describe('Edit SKU — shipping weight', () => {
   it('round-trips the unchanged value on save', async () => {
     const user = userEvent.setup();
     const onUpdateSku = table(SKU());
-    await user.click(screen.getByRole('button', { name: 'Edit RC-K-2KG' }));
+    await user.click(screen.getByRole('button', { name: 'Edit OAT-2KG' }));
     await user.click(await screen.findByRole('button', { name: 'Save SKU' }));
     expect(onUpdateSku).toHaveBeenCalledWith(
       expect.objectContaining({ skuId: 'sku-1' }),
@@ -92,13 +92,13 @@ describe('Edit SKU — shipping weight', () => {
     const user = userEvent.setup();
     const onUpdateSku = table(SKU({ shippingWeightGrams: null }));
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
-    await user.click(screen.getByRole('button', { name: 'Edit RC-K-2KG' }));
+    await user.click(screen.getByRole('button', { name: 'Edit OAT-2KG' }));
     const field = await screen.findByLabelText(/Shipping weight \(g\)/);
     expect(field).toHaveValue(null);
     await user.click(screen.getByRole('button', { name: 'Save SKU' }));
     expect(onUpdateSku.mock.calls[0]![1].shippingWeightGrams).toBeNull();
 
-    await user.click(await screen.findByRole('button', { name: 'Edit RC-K-2KG' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit OAT-2KG' }));
     await user.type(await screen.findByLabelText(/Shipping weight \(g\)/), '450');
     await user.click(screen.getByRole('button', { name: 'Save SKU' }));
     expect(onUpdateSku.mock.calls[1]![1].shippingWeightGrams).toBe(450);
@@ -107,7 +107,7 @@ describe('Edit SKU — shipping weight', () => {
   it('refuses a value outside 1..100000 without calling the API', async () => {
     const user = userEvent.setup();
     const onUpdateSku = table(SKU());
-    await user.click(screen.getByRole('button', { name: 'Edit RC-K-2KG' }));
+    await user.click(screen.getByRole('button', { name: 'Edit OAT-2KG' }));
     const field = await screen.findByLabelText(/Shipping weight \(g\)/);
     await user.clear(field);
     await user.type(field, '100001');
@@ -124,7 +124,7 @@ describe('Edit SKU — shipping weight', () => {
   it('maps the server InvalidShippingWeight to the field error and keeps the typed value', async () => {
     const user = userEvent.setup();
     const onUpdateSku = table(SKU(), vi.fn().mockRejectedValue(violation()));
-    await user.click(screen.getByRole('button', { name: 'Edit RC-K-2KG' }));
+    await user.click(screen.getByRole('button', { name: 'Edit OAT-2KG' }));
     await user.click(await screen.findByRole('button', { name: 'Save SKU' }));
     expect(
       await screen.findByText('Enter a shipping weight between 1 and 100000 g.'),
@@ -171,19 +171,19 @@ describe('Add SKU — shipping weight', () => {
 describe('Shop mock parity — store, return and validate', () => {
   const id = shopFixtureIds.multiVariantProductId;
   const sku2kg = async () =>
-    (await getStaffProduct(id)).skus.find((s) => s.code === 'RC-K-2KG') as StaffSku;
+    (await getStaffProduct(id)).skus.find((s) => s.code === 'OAT-2KG') as StaffSku;
 
   it('returns the weight on the staff read (null when unset)', async () => {
     const product = await getStaffProduct(id);
-    expect(product.skus.find((s) => s.code === 'RC-K-2KG')?.shippingWeightGrams).toBe(2100);
-    expect(product.skus.find((s) => s.code === 'RC-K-400G')?.shippingWeightGrams).toBeNull();
+    expect(product.skus.find((s) => s.code === 'OAT-2KG')?.shippingWeightGrams).toBe(2100);
+    expect(product.skus.find((s) => s.code === 'OAT-400G')?.shippingWeightGrams).toBeNull();
   });
 
   it('stores the weight on add and update; an update that omits it clears it', async () => {
     let p = await getStaffProduct(id);
     const added = await addSku(id, {
       expectedVersion: p.version,
-      code: 'RC-K-NEW',
+      code: 'OAT-NEW',
       sizeOrWeight: '800 g',
       shippingWeightGrams: 800,
     });
@@ -220,7 +220,7 @@ describe('Shop mock parity — store, return and validate', () => {
     await expect(
       addSku(id, {
         expectedVersion: p.version,
-        code: 'RC-K-BAD',
+        code: 'OAT-BAD',
         sizeOrWeight: '1 kg',
         shippingWeightGrams: 100001,
       }),

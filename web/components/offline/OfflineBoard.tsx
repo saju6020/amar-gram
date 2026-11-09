@@ -9,17 +9,14 @@ import { LoadingState } from '@/components/common/LoadingState';
 import { useConnectivity } from '@/lib/hooks/useConnectivity';
 import { useIdleTimeout } from '@/lib/hooks/useIdleTimeout';
 import { useDeviceSettings, useKnownStaffAccountId } from '@/lib/hooks/useOfflineSnapshot';
-import { formatBranchDateLong } from '@/lib/format/appointment';
-import { formatInZone, timeOnlyInZone } from '@/lib/format/time';
+import { formatBranchDateLong, formatInZone, timeOnlyInZone } from '@/lib/format/time';
 import { startActivityRecording } from '@/lib/offline/activity';
 import { idleElapsedMs, isBoardLocked, lockOfflineBoard } from '@/lib/offline/device';
-import { describeOmittedSection, type OmittedSectionName } from '@/lib/offline/labels';
+import { describeOmittedSection } from '@/lib/offline/labels';
 import { isSnapshotUsable, readLatestSnapshot, type SnapshotRecord } from '@/lib/offline/snapshot';
-import { OfflineAppointmentsList } from './OfflineAppointmentsList';
-import { OfflineBoardingTasksList } from './OfflineBoardingTasksList';
 import { OfflineBoardRefusal } from './OfflineBoardRefusal';
 
-const FRONT_DESK = '/staff/front-desk';
+const STAFF_HOME = '/staff';
 /** While the board is open it keeps asking whether the server is back. */
 export const BOARD_RECHECK_MS = 5_000;
 
@@ -27,7 +24,7 @@ export const BOARD_RECHECK_MS = 5_000;
 export function safeReturnPath(from: string | null): string {
   return from && from.startsWith('/staff/') && !from.startsWith('//') && !from.startsWith('/staff/offline')
     ? from
-    : FRONT_DESK;
+    : STAFF_HOME;
 }
 
 function minutesAgo(iso: string): string {
@@ -207,8 +204,8 @@ export function OfflineBoard() {
             Locked. Sign in again when the connection returns.
           </h2>
           <p className="text-sm text-ink-muted">
-            Today&rsquo;s list was hidden after {idleMinutes} minutes without use, to protect patient
-            and customer details on a screen nobody is watching. It can&rsquo;t be unlocked while
+            Today&rsquo;s list was hidden after {idleMinutes} minutes without use, to protect customer
+            details on a screen nobody is watching. It can&rsquo;t be unlocked while
             offline, because signing in needs the server. This page keeps checking the connection;
             when it&rsquo;s back you&rsquo;ll be taken to the staff app, which asks you to sign in.
           </p>
@@ -217,10 +214,6 @@ export function OfflineBoard() {
     );
   }
 
-  const omitted = (name: OmittedSectionName) =>
-    body.omittedSections.find((section) => section.section === name);
-  const appointmentsOmitted = omitted('appointments');
-  const boardingOmitted = omitted('boardingTasks');
 
   return (
     <div className="flex flex-col gap-6">
@@ -242,26 +235,18 @@ export function OfflineBoard() {
         </p>
       </header>
 
-      {appointmentsOmitted ? (
-        <p className="rounded-[var(--radius-md)] border border-border bg-surface p-4 text-sm text-ink">
-          {describeOmittedSection('appointments', appointmentsOmitted.reason)}
+      {body.omittedSections.map((omission) => (
+        <p
+          key={omission.section}
+          className="rounded-[var(--radius-md)] border border-border bg-surface p-4 text-sm text-ink"
+        >
+          {describeOmittedSection(omission.section, omission.reason)}
         </p>
-      ) : (
-        <OfflineAppointmentsList
-          items={body.sections.appointments?.items ?? []}
-          timeZoneId={zone}
-        />
-      )}
-
-      {boardingOmitted ? (
+      ))}
+      {body.omittedSections.length === 0 && (
         <p className="rounded-[var(--radius-md)] border border-border bg-surface p-4 text-sm text-ink">
-          {describeOmittedSection('boardingTasks', boardingOmitted.reason)}
+          Nothing from today was saved for offline use in this copy.
         </p>
-      ) : (
-        <OfflineBoardingTasksList
-          items={body.sections.boardingTasks?.items ?? []}
-          timeZoneId={zone}
-        />
       )}
 
       <p className="text-sm text-ink-muted">

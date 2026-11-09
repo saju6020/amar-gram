@@ -1,5 +1,8 @@
+import { Fragment } from 'react';
 import type { DashboardFigure } from '@/lib/api/dashboard';
 import { formatFigure, NOT_RECORDED_TEXT } from '@/lib/format/report';
+
+const NO_BREAK_SPACE = String.fromCharCode(0xa0);
 
 /**
  * `components/dashboard/TileFigure.tsx` — HO-RPT-002 §11.2. One labelled figure of a tile, rendered
@@ -17,12 +20,29 @@ export function TileFigure({
 }) {
   const text = formatFigure(figure.value, figure.type, figure.unit, timeZoneId);
   const notRecorded = text === NOT_RECORDED_TEXT;
+  // A figure stays on one line when it fits. If it cannot, it may break after a thousands separator
+  // (never mid-group) and between the words of a date, but never between a number and its unit
+  // ("12 h" is not "12" over "h"): that one space is non-breaking. A run with no break opportunity
+  // that is still too wide for the tile (a long figure with no commas) breaks anywhere
+  // (`overflow-wrap`) rather than running out of the tile. `<wbr>` adds no text, so the accessible
+  // name is unchanged.
+  const unit = figure.unit && !notRecorded ? ` ${figure.unit}` : null;
+  const bound =
+    unit && text.endsWith(unit) ? text.slice(0, -unit.length) + NO_BREAK_SPACE + figure.unit : text;
+  const parts = bound.split(/(?<=,)/);
 
   return (
     <div className="min-w-0">
       <dt className="text-xs font-semibold text-ink-muted">{figure.label}</dt>
-      <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-x-2 text-xl font-semibold tabular-nums text-ink">
-        <span>{text}</span>
+      <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-x-2 font-display text-[28px] font-bold leading-tight tabular-nums text-ink">
+        <span className="min-w-0 [overflow-wrap:anywhere]">
+          {parts.map((part, index) => (
+            <Fragment key={index}>
+              {index > 0 && <wbr />}
+              {part}
+            </Fragment>
+          ))}
+        </span>
         {notRecorded && <span className="sr-only">Not recorded</span>}
       </dd>
     </div>

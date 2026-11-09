@@ -2,9 +2,7 @@ import { http, HttpResponse, type HttpHandler } from 'msw';
 import { db as shopDb } from '../shop/store';
 import { noContent, notFound, orderingIds as ids, violation } from './fixtures';
 import {
-  CAT_NAMES,
   allocateOrder,
-  authorisedCatsFor,
   batchFor,
   db,
   findOrder,
@@ -22,11 +20,12 @@ import {
 } from './store';
 import { computeQuote, type QuoteLineInput } from './quote';
 import { orderLineView, totalsView } from './customer';
+import { normaliseMobile } from './staff';
 
 /**
  * `mocks/handlers/ordering/pos.ts` — HO-ORD-002 §12.1. The point of sale as `StaffPosController`
  * really answers it: the flat `PosSku` (with `sellable` and `fefoBatches`), a quote WITHOUT any tender
- * evaluation, a sale that needs `customerName` + `customerMobile` (ADR-216; a refused sale still stores
+ * evaluation (HO-P5: now a change preview when `tenderedCash` is sent), a sale whose `customerName` + `customerMobile` come together (ADR-216; both left out is an anonymous sale; a refused sale still stores
  * the walk-in), `TendersDoNotCoverTotal` / `TerminalReferenceRequired` from the tender rules, and the
  * `changeDue` only in the sale response.
  */
@@ -45,7 +44,6 @@ function posSku(skuId: string) {
     barcode: info.barcode,
     unitPrice: info.priceCents !== null ? money(info.priceCents) : null,
     sellable,
-    requiresPrescription: info.requiresPrescription,
     isBundle: info.isBundle,
     fefoBatches:
       sellable > 0 && !info.isBundle
@@ -63,6 +61,28 @@ function posSku(skuId: string) {
 }
 
 const allSkus = () => shopDb.products.flatMap((p) => p.skus.map((s) => ({ product: p, sku: s })));
+
+/** The fixed `ProductCategory` enumeration: Shared/Common/Enums/ProductCategory.cs:21-31. */
+const POS_CATEGORIES = [
+  'RiceAndGrains',
+  'HoneyAndGur',
+  'OilsAndGhee',
+  'Spices',
+  'Pulses',
+  'TeaAndDrinks',
+  'FreshProduce',
+  'DatesAndDryFruit',
+  'DairyAndEggs',
+  'SnacksAndSweets',
+  'HouseholdAndCare',
+];
+
+/** Api/Contracts/Order/PosRequests.cs:31-33 and ReturnAndRefundCommandValidators.cs:93-97: the buyer's details are both given or neither. */
+const BOTH_OR_NEITHER = 'must be given with the %s (or leave both empty for a sale without customer details).';
+/** Shared/Common/Constants/AnonymousCounterCustomer.cs:19-22 and OrderMessages.cs:20. */
+const ANONYMOUS_RECIPIENT = 'Walk-in customer';
+/** AnonymousCounterCustomer.NormalisedMobile (AnonymousCounterCustomer.cs:17): every typed form (01…, +8801…, 8801…) normalises to this. */
+const ANONYMOUS_RESERVED_NORMALISED = '+8801000000000';
 
 export const posOrderingHandlers: HttpHandler[] = [
   http.get(`${API}/sku`, ({ request }) => {
@@ -91,12 +111,59 @@ export const posOrderingHandlers: HttpHandler[] = [
     return HttpResponse.json(rows);
   }),
 
+  // HO-P5 BG-6: the counter grid. Api/Controllers/StaffPosController.cs:50-63 and Read/QueryHandlers/Order/PosQueryHandlers.cs:76-99:
+  // sellable SKUs in name order (then code), optionally within one product category, paged -- 20 by default, 100 at most.
+  // `category` is a ProductCategory name, matched case-insensitively (EnumerationParsing.cs:20-30), else 400; `pageSize <= 0` is 400;
+  // `fefoBatches` is empty here (`withFefoPreview: false`). A page can be short of `pageSize`: the server drops a bundle whose component is not sellable.
+  http.get(`${API}/browse`, ({ request }) => {
+    const url = new URL(request.url);
+    const requested = url.searchParams.get('category')?.trim() ?? '';
+    const category = requested === '' ? null : (POS_CATEGORIES.find((name) => name.toLowerCase() === requested.toLowerCase()) ?? undefined);
+    if (category === undefined) return HttpResponse.json({ error: 'category is not a product category.' }, { status: 400 });
+    const rawNumber = url.searchParams.get('pageNumber');
+    const rawSize = url.searchParams.get('pageSize');
+    if (rawNumber !== null && Number(rawNumber) > 1_000_000) {
+      return violation('pageNumber', 'InvalidPageNumber', 'pageNumber must not exceed 1000000.');
+    }
+    if (rawSize !== null && Number(rawSize) <= 0) return violation('pageSize', 'InvalidPageSize', 'pageSize must be greater than zero.');
+    const pageNumber = rawNumber !== null && Number(rawNumber) > 0 ? Math.trunc(Number(rawNumber)) : 1;
+    const pageSize = rawSize !== null ? Math.min(Math.trunc(Number(rawSize)), 100) : 20;
+
+    const rows = allSkus()
+      .filter(
+        ({ product, sku }) =>
+          sku.status === 'Active' &&
+          product.status === 'Active' &&
+          product.listed &&
+          sku.price !== null &&
+          (category === null || product.category === category),
+      )
+      .sort(
+        (a, b) =>
+          a.product.name.localeCompare(b.product.name) || a.sku.code.localeCompare(b.sku.code) || a.sku.skuId.localeCompare(b.sku.skuId),
+      );
+    const items = rows
+      .slice((pageNumber - 1) * pageSize, pageNumber * pageSize)
+      .map(({ sku }) => posSku(sku.skuId))
+      .filter((x) => x !== null)
+      .map((sku) => ({ ...sku, fefoBatches: [] }));
+    return HttpResponse.json({ items, pageNumber, pageSize, totalCount: rows.length });
+  }),
+
   http.post(`${API}/quote`, async ({ request }) => {
     const body = (await request.json()) as {
       customerId?: string | null;
-      lines: Array<{ skuId: string; quantity: number; catId?: string | null }>;
+      lines: Array<{ skuId: string; quantity: number }>;
       discountCode?: string | null;
+      tenderedCash?: number | null;
     };
+    // HO-P5 BG-7: Api/Controllers/StaffPosController.cs:75-76 -- above zero, at most 9,999,999,999.99, at most two decimals.
+    const tendered = body.tenderedCash;
+    if (tendered !== undefined && tendered !== null) {
+      if (typeof tendered !== 'number' || !(tendered > 0) || tendered > 9_999_999_999.99 || Number(tendered.toFixed(2)) !== tendered) {
+        return HttpResponse.json({ error: 'tenderedCash must be above zero with at most two decimal places.' }, { status: 400 });
+      }
+    }
     if (!body.lines || body.lines.length === 0 || body.lines.some((l) => l.quantity < 1)) {
       return violation('Lines', 'InvalidQuery', 'lines must have 1 to 50 items, each with a quantity of at least 1.');
     }
@@ -104,7 +171,6 @@ export const posOrderingHandlers: HttpHandler[] = [
       lineId: uuid(),
       skuId: l.skuId,
       quantity: l.quantity,
-      catId: l.catId ?? null,
       priceWhenAddedCents: skuInfo(l.skuId)?.priceCents ?? 0,
     }));
     const result = computeQuote(lines, {
@@ -112,7 +178,19 @@ export const posOrderingHandlers: HttpHandler[] = [
       discountCode: body.discountCode ?? undefined,
       customerHasOrders: !!body.customerId,
     });
-    return HttpResponse.json(result.wire);
+    // HO-P5 BG-7: with a tendered amount and a sale that can be made (and no quantity cut down), exactly one of
+    // `changeDue` (the cash covers the total; zero when exact) and `cashShort` -- both absent otherwise.
+    // Read/QueryHandlers/Order/PosQueryHandlers.cs:113-123, by the rule of Domain/DomainServices/TenderCalculator.cs:49-52.
+    // The arithmetic is the server's, done here because this handler IS the server.
+    const changes = (result.wire.changes as Array<{ kind: string }> | undefined) ?? [];
+    if (tendered !== undefined && tendered !== null && result.wire.canSell === true && changes.every((c) => c.kind !== 'QuantityReduced')) {
+      const handed = Math.round(tendered * 100);
+      const grand = result.totals.grand;
+      return HttpResponse.json(
+        handed >= grand ? { ...result.wire, changeDue: money(handed - grand), cashShort: null } : { ...result.wire, changeDue: null, cashShort: money(grand - handed) },
+      );
+    }
+    return HttpResponse.json({ ...result.wire, changeDue: null, cashShort: null });
   }),
 
   http.post(`${API}/sales`, async ({ request }) => {
@@ -123,15 +201,22 @@ export const posOrderingHandlers: HttpHandler[] = [
     const body = (await request.json()) as {
       customerName?: string;
       customerMobile?: string;
-      lines: Array<{ skuId: string; quantity: number; catId?: string | null }>;
+      lines: Array<{ skuId: string; quantity: number }>;
       discountCode?: string | null;
       tenders: Array<{ method: string; amount: unknown; reference?: string | null }>;
     };
     const name = body.customerName?.trim() ?? '';
     const mobile = body.customerMobile?.trim() ?? '';
+    // HO-P5 BG-8: both or neither. Neither is an anonymous walk-in sale (no customer on the order).
+    const anonymous = name === '' && mobile === '';
     const problems: Array<{ propertyName: string; errorCode: string; errorMessage: string }> = [];
-    if (!name) problems.push({ propertyName: 'CustomerName', errorCode: 'NotEmptyValidator', errorMessage: "Enter the customer's name." });
-    if (!/^\+?[0-9]{8,15}$/.test(mobile.replace(/[\s-]/g, ''))) {
+    if (!anonymous && !name) {
+      problems.push({ propertyName: 'CustomerName', errorCode: 'NotEmptyValidator', errorMessage: BOTH_OR_NEITHER.replace('%s', 'mobile number') });
+    }
+    if (!anonymous && !mobile) {
+      problems.push({ propertyName: 'CustomerMobile', errorCode: 'NotEmptyValidator', errorMessage: BOTH_OR_NEITHER.replace('%s', 'name') });
+    }
+    if (!anonymous && mobile && !/^\+?[0-9]{8,15}$/.test(mobile.replace(/[\s-]/g, ''))) {
       problems.push({ propertyName: 'CustomerMobile', errorCode: 'InvalidMobile', errorMessage: "Enter the customer's mobile number." });
     }
     if (problems.length > 0) {
@@ -140,14 +225,28 @@ export const posOrderingHandlers: HttpHandler[] = [
         { status: 400 },
       );
     }
+    // The reserved walk-in number cannot be typed as a real customer (CompleteCounterSaleCommandHandler.cs:65-66).
+    if (!anonymous && normaliseMobile(mobile) === ANONYMOUS_RESERVED_NORMALISED) {
+      return violation('CustomerMobile', 'InvalidMobileNumber', 'This does not look like a valid mobile number.');
+    }
     if (mobile === '01700000000') {
       return violation('CustomerMobile', 'AccountNotActive', "This customer's account is closed, so a sale can't be recorded against it.");
+    }
+    // A code limited per customer or to a first order cannot be policed without a customer on the order (CompleteCounterSaleCommandHandler.cs:82-84).
+    if (anonymous && body.discountCode?.trim()) {
+      const limited = db.codes.find((c) => c.code.toLowerCase() === body.discountCode!.trim().toLowerCase());
+      if (limited && (limited.perCustomerLimit !== null || limited.firstOrderOnly)) {
+        return violation(
+          'DiscountCode',
+          'DiscountCustomerLimitReached',
+          "This discount code is limited per customer or to a first order, so it needs the customer's name and mobile number.",
+        );
+      }
     }
     const lines: QuoteLineInput[] = body.lines.map((l) => ({
       lineId: uuid(),
       skuId: l.skuId,
       quantity: l.quantity,
-      catId: l.catId ?? null,
       priceWhenAddedCents: skuInfo(l.skuId)?.priceCents ?? 0,
     }));
     const result = computeQuote(lines, {
@@ -155,20 +254,6 @@ export const posOrderingHandlers: HttpHandler[] = [
       discountCode: body.discountCode ?? undefined,
       customerHasOrders: true,
     });
-    // A prescription line needs an existing customer who owns an authorised cat.
-    for (const l of lines) {
-      const info = skuInfo(l.skuId);
-      if (info?.requiresPrescription) {
-        const isKnown = mobile.endsWith(ids.customerMobile.slice(-9));
-        if (!l.catId || !isKnown || !authorisedCatsFor(l.skuId).includes(l.catId)) {
-          return violation(
-            'Lines',
-            'PrescriptionCatRequired',
-            `'${info.productName}' needs an existing customer and one of their cats with a current vet authorisation.`,
-          );
-        }
-      }
-    }
     if (!result.canPlace && result.blocking.some((c) => c !== 'PaymentMethodUnavailable')) {
       return violation('Lines', result.blocking[0] ?? 'NothingToPlace', '');
     }
@@ -198,7 +283,6 @@ export const posOrderingHandlers: HttpHandler[] = [
       skuId: p.skuId,
       productName: p.productName,
       variantLabel: p.variantLabel,
-      catId: p.catId,
       quantity: p.quantity,
       unitCents: p.unitCents,
       subtotalCents: p.subtotalCents,
@@ -219,8 +303,8 @@ export const posOrderingHandlers: HttpHandler[] = [
       placedOn,
       channel: 'Counter',
       customerId: known ? ids.customerId : null,
-      customerName: name,
-      customerMobile: mobile,
+      customerName: anonymous ? ANONYMOUS_RECIPIENT : name,
+      customerMobile: anonymous ? null : mobile,
       status: 'Delivered',
       fulfilmentMethod: 'Counter',
       paymentMethod: 'InStore',
@@ -233,8 +317,8 @@ export const posOrderingHandlers: HttpHandler[] = [
       taxCents: result.totals.tax,
       grandTotalCents: grand,
       fulfilment: {
-        recipientName: name,
-        recipientPhone: mobile,
+        recipientName: anonymous ? ANONYMOUS_RECIPIENT : name,
+        recipientPhone: anonymous ? null : mobile,
         line1: null,
         line2: null,
         city: null,
@@ -343,4 +427,4 @@ export const posOrderingHandlers: HttpHandler[] = [
   }),
 ];
 
-export { CAT_NAMES, noContent };
+export { noContent };

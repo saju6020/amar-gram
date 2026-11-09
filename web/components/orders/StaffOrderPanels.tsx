@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Amount } from '@/components/billing/Amount';
-import { Section } from '@/components/billing/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
 import { Button } from '@/components/ui/button';
 import type { StaffOrderDetail, StaffOrderLine } from '@/lib/api/staff-orders';
 import { fulfilmentLabel, formatOrderWhen, paymentMethodLabel } from '@/lib/format/orders';
@@ -15,11 +15,15 @@ import { OrderStatusBadge } from './OrderStatusBadge';
  * returned, the shipment, and the status history **with staff names**. Everything shown is the server's;
  * the only decision made here is which fields exist.
  */
+/** Below `sm` the label sits above its value, so the value gets the card's full width instead of a few characters. */
+const ROW_LIST =
+  'm-0 grid grid-cols-1 gap-x-4 gap-y-0.5 text-sm sm:grid-cols-[minmax(0,9rem)_minmax(0,1fr)] sm:gap-y-1';
+
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
       <dt className="text-ink-muted">{label}</dt>
-      <dd className="m-0 min-w-0 [overflow-wrap:anywhere]">{children}</dd>
+      <dd className="m-0 mb-2 min-w-0 [overflow-wrap:anywhere] sm:mb-0">{children}</dd>
     </>
   );
 }
@@ -28,8 +32,8 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
   const f = order.fulfilment;
   const address = [f.line1, f.line2, f.city, f.district, f.postalCode].filter(Boolean).join(', ');
   return (
-    <Section title="Customer and fulfilment">
-      <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
+    <Panel title="Customer and fulfilment">
+      <dl className={ROW_LIST}>
         <Row label="Customer">
           {order.customerAnonymised ? (
             'Customer anonymised'
@@ -45,6 +49,8 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
         {f.recipientPhone && <Row label="Phone">{f.recipientPhone}</Row>}
         {address && <Row label="Address">{address}</Row>}
         {f.deliveryInstructions && <Row label="Instructions">{f.deliveryInstructions}</Row>}
+        {/* HO-P5 G4 / OQ-7: the customer's note for the rider, as plain text only (React escapes it; never a link, never stored; <bdi> isolates bidi/format characters such as U+202E the server lets through). */}
+        {f.riderNote && <Row label="Note for the rider"><bdi>{f.riderNote}</bdi></Row>}
         {f.zoneName && <Row label="Delivery zone">{f.zoneName}</Row>}
         {f.slotDate && f.slotWindow && <Row label="Slot">{`${formatDateOnly(f.slotDate)}, ${f.slotWindow} (${order.branchTimeZoneId})`}</Row>}
         {f.pickupBranchName && <Row label="Collect at">{f.pickupBranchName}</Row>}
@@ -52,7 +58,7 @@ export function CustomerFulfilmentPanel({ order }: { order: StaffOrderDetail }) 
         <Row label="Payment">{paymentMethodLabel(order.paymentMethod)}</Row>
         {order.discountCode && <Row label="Discount code">{order.discountCode}</Row>}
       </dl>
-    </Section>
+    </Panel>
   );
 }
 
@@ -68,13 +74,12 @@ export function StaffLinesPanel({
     key: l.lineId,
     productName: l.productName,
     variantLabel: l.variantLabel,
-    cat: l.cat,
     quantity: l.quantity,
     unitPrice: l.unitPrice,
     lineTotal: l.lineTotal,
   }));
   return (
-    <Section title="Items">
+    <Panel title="Items">
       <OrderLines
         caption="Items on this order"
         lines={lines}
@@ -95,6 +100,7 @@ export function StaffLinesPanel({
                   ))}
                 </ul>
               )}
+              {source.picked && <p>Picked.</p>}
               {source.quantityReturned > 0 && <p>{source.quantityReturned} returned.</p>}
               {onReallocate && (
                 <Button variant="ghost" size="sm" onClick={() => onReallocate(source)}>
@@ -105,14 +111,14 @@ export function StaffLinesPanel({
           );
         }}
       />
-    </Section>
+    </Panel>
   );
 }
 
 export function PaymentsPanel({ order }: { order: StaffOrderDetail }) {
   return (
-    <Section title="Money">
-      <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
+    <Panel title="Money">
+      <dl className={ROW_LIST}>
         <Row label="Paid"><Amount money={order.amountPaid} /></Row>
         <Row label="Refunded"><Amount money={order.amountRefunded} /></Row>
         <Row label="Refund due"><Amount money={order.refundDue} /></Row>
@@ -139,47 +145,53 @@ export function PaymentsPanel({ order }: { order: StaffOrderDetail }) {
         )}
         {order.creditNoteIds.length > 0 && <Row label="Credit notes">{order.creditNoteIds.length}</Row>}
       </dl>
-    </Section>
+    </Panel>
   );
 }
 
 export function ShipmentPanel({ order, onEditTracking }: { order: StaffOrderDetail; onEditTracking: () => void }) {
   const s = order.shipment;
   if (!s) return null;
+  // HO-P5 BG-5: an order that left with an in-house rider has a rider and no tracking number (the server refuses one).
+  const byRider = s.riderId != null || s.riderName != null;
   return (
-    <Section
+    <Panel
       title="Shipment"
       actions={
-        <Button variant="secondary" size="sm" onClick={onEditTracking}>
-          {s.trackingNumber ? 'Change tracking number' : 'Enter tracking number'}
-        </Button>
+        byRider ? undefined : (
+          <Button variant="secondary" size="sm" onClick={onEditTracking}>
+            {s.trackingNumber ? 'Change tracking number' : 'Enter tracking number'}
+          </Button>
+        )
       }
     >
-      <dl className="m-0 grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
-        <Row label="Courier">{s.courierName}</Row>
-        <Row label="Tracking number">
-          {s.trackingNumber ? (
-            safeHttpUrl(s.trackingUrl) ? (
-              <a href={safeHttpUrl(s.trackingUrl) ?? undefined} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-ink hover:underline">
-                {s.trackingNumber}
-              </a>
+      <dl className={ROW_LIST}>
+        {byRider ? <Row label="Rider">{s.riderName ?? 'Our delivery rider'}</Row> : <Row label="Courier">{s.courierName}</Row>}
+        {!byRider && (
+          <Row label="Tracking number">
+            {s.trackingNumber ? (
+              safeHttpUrl(s.trackingUrl) ? (
+                <a href={safeHttpUrl(s.trackingUrl) ?? undefined} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent-ink hover:underline">
+                  {s.trackingNumber}
+                </a>
+              ) : (
+                s.trackingNumber
+              )
             ) : (
-              s.trackingNumber
-            )
-          ) : (
-            'Not entered yet'
-          )}
-        </Row>
+              'Not entered yet'
+            )}
+          </Row>
+        )}
         <Row label="Dispatched">{formatOrderWhen(s.dispatchedOn, order.branchTimeZoneId)}</Row>
         {s.lastTrackingStatus && <Row label="Courier status">{s.lastTrackingStatus}</Row>}
       </dl>
-    </Section>
+    </Panel>
   );
 }
 
 export function StaffHistoryPanel({ order }: { order: StaffOrderDetail }) {
   return (
-    <Section title="History">
+    <Panel title="History">
       <ol aria-label="Status history" className="m-0 flex list-none flex-col gap-2 p-0 text-sm">
         {order.statusHistory.map((entry, index) => (
           <li key={`${entry.changedOn}-${index}`} className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -190,6 +202,6 @@ export function StaffHistoryPanel({ order }: { order: StaffOrderDetail }) {
           </li>
         ))}
       </ol>
-    </Section>
+    </Panel>
   );
 }

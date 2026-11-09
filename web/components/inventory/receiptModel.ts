@@ -1,9 +1,15 @@
 import type { SkuLookup, StockLocation } from '@/lib/api/inventory-lookup';
-import type { PostGoodsReceiptRequest } from '@/lib/api/inventory-receipts';
+import type {
+  GoodsReceiptDraft,
+  PostGoodsReceiptRequest,
+  SaveGoodsReceiptDraftRequest,
+} from '@/lib/api/inventory-receipts';
 import type { PurchaseOrderDetail } from '@/lib/api/procurement-orders';
 import type { ReceiptDraft, ReceiptDraftLine } from '@/lib/drafts/receipt-draft';
 import { quantityProblem, QUANTITY_PATTERN, UNIT_COST_PATTERN, RATE_PATTERN, isZeroDecimal } from '@/lib/validation/inventory';
 import { FALLBACK_CURRENCY_CODE } from '@/lib/shop/currency';
+import { ApiForbiddenError } from '@/lib/api/client';
+import { describeUnexpectedError } from '@/lib/api/errors';
 import { describeStorage } from './labels';
 import { newRowKey, type DistributedErrors } from './lineErrors';
 
@@ -111,7 +117,7 @@ export function validateReceipt(state: ReceiptFormState): DistributedErrors {
       if (problem) flag('quantityRejected', problem);
     }
     if (takes && line.lotNumber.trim() === '') flag('lotNumber', 'A lot number is required for accepted stock.');
-    if (takes && line.expiryRequired && line.expiresOn === '') flag('expiresOn', 'Food and medicine must be received with an expiry date.');
+    if (takes && line.expiryRequired && line.expiresOn === '') flag('expiresOn', 'Food and other perishables must be received with an expiry date.');
     if (rejects && line.rejectionReason === '') flag('rejectionReason', 'Say why the stock was rejected.');
     if (line.locationId === '') flag('locationId', 'Choose where it is going.');
     if (takes && !line.costFromPurchaseOrder) {
@@ -126,6 +132,111 @@ export function validateReceipt(state: ReceiptFormState): DistributedErrors {
 }
 
 const orNull = (v: string) => (v.trim() === '' ? null : v.trim());
+
+/**
+ * HO-P5 BG-18 -- the form as the whole-form draft `PUT` (`SaveGoodsReceiptDraftRequest`). A draft is checked for
+ * SHAPE only, so a half-filled form is legal: an empty quantity goes as "0" (the server's `decimal` cannot take a
+ * blank), every other empty field as `null`. Only the allow-listed fields travel (no label, unit or storage text).
+ */
+export function toDraftRequest(
+  state: ReceiptFormState,
+  target: { branchId: string | null; supplierId: string | null },
+): SaveGoodsReceiptDraftRequest {
+  return {
+    branchId: target.branchId,
+    supplierId: target.supplierId,
+    purchaseOrderId: state.source === 'purchase-order' ? orNull(state.purchaseOrderId) : null,
+    consignmentId: state.source === 'consignment' ? orNull(state.consignmentId) : null,
+    deliveryReference: orNull(state.deliveryReference),
+    receivedOn: null,
+    note: null,
+    lines: state.lines.map((line) => ({
+      skuId: line.skuId,
+      purchaseOrderLineId: orNull(line.purchaseOrderLineId),
+      lotNumber: orNull(line.lotNumber),
+      manufacturedOn: orNull(line.manufacturedOn),
+      expiresOn: orNull(line.expiresOn),
+      quantityAccepted: orNull(line.quantityAccepted) ?? '0',
+      quantityRejected: orNull(line.quantityRejected) ?? '0',
+      rejectionReason: orNull(line.rejectionReason),
+      rejectionNote: orNull(line.rejectionNote),
+      locationId: orNull(line.locationId),
+      holdForInspection: line.holdForInspection,
+      unitCostAmount: orNull(line.unitCostAmount),
+      unitCostCurrency: orNull(line.unitCostCurrency),
+      exchangeRateToBase: orNull(line.exchangeRateToBase),
+    })),
+  };
+}
+
+/**
+ * The form a saved draft describes. The server keeps no labels or units, so each line takes them from the SKU lookup
+ * (by SKU code); a "0" quantity was a blank field when it was saved and comes back blank (the post request treats both
+ * alike). A line that came from a purchase order keeps its cost read-only, as it was.
+ */
+export function stateFromDraft(
+  draft: GoodsReceiptDraft,
+  skusByCode: Record<string, SkuLookup | null | undefined>,
+): ReceiptFormState {
+  const blankIfZero = (v: string) => (isZeroDecimal(v) ? '' : v);
+  return {
+    source: draft.purchaseOrderId ? 'purchase-order' : draft.consignmentId ? 'consignment' : 'direct',
+    purchaseOrderId: draft.purchaseOrderId ?? '',
+    consignmentId: draft.consignmentId ?? '',
+    deliveryReference: draft.deliveryReference ?? '',
+    lines: draft.lines.map((line) => {
+      const sku = line.skuCode ? skusByCode[line.skuCode] : undefined;
+      const base = sku
+        ? lineFromSku(sku, line.locationId ?? '')
+        : {
+            ...lineFromSku(
+              {
+                skuId: line.skuId,
+                productId: '',
+                skuCode: line.skuCode ?? '',
+                displayName: line.displayName ?? line.skuCode ?? 'Item',
+                barcode: null,
+                stockClass: 'General',
+                expiryRequired: false,
+                stockUnit: '',
+                allowsFractionalQuantity: true,
+                countryOfOriginCode: null,
+                isActive: true,
+                storage: null,
+              },
+              line.locationId ?? '',
+            ),
+          };
+      return {
+        ...base,
+        purchaseOrderLineId: line.purchaseOrderLineId ?? '',
+        lotNumber: line.lotNumber ?? '',
+        manufacturedOn: line.manufacturedOn ?? '',
+        expiresOn: line.expiresOn ?? '',
+        quantityAccepted: blankIfZero(line.quantityAccepted),
+        quantityRejected: blankIfZero(line.quantityRejected),
+        rejectionReason: line.rejectionReason ?? '',
+        rejectionNote: line.rejectionNote ?? '',
+        holdForInspection: line.holdForInspection,
+        unitCostAmount: line.unitCostAmount ?? '',
+        unitCostCurrency: line.unitCostCurrency ?? base.unitCostCurrency,
+        exchangeRateToBase: line.exchangeRateToBase ?? '',
+        costFromPurchaseOrder: !!line.purchaseOrderLineId,
+      };
+    }),
+  };
+}
+
+/** NFR-USA-4: `BranchNotAssigned` is a 403 whose body is `{ error }` (`InventoryControllerSupport.cs:42-46`) or, from the
+ *  shared action filter, an `errors` list; either way it means "choose one of your branches", not "never". */
+export function describeReceiptError(error: unknown): string {
+  if (error instanceof ApiForbiddenError) {
+    const body = error.body as { error?: string; errors?: Array<{ errorCode?: string }> };
+    if (body.error === 'BranchNotAssigned' || body.errors?.[0]?.errorCode === 'BranchNotAssigned')
+      return "You aren't assigned to that branch. Choose one of your branches.";
+  }
+  return describeUnexpectedError(error);
+}
 
 export function toPostRequest(state: ReceiptFormState): PostGoodsReceiptRequest {
   return {

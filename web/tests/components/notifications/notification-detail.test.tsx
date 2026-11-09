@@ -41,14 +41,14 @@ describe('NotificationDetail — HO-NTF-002 §11.5', () => {
   it('shows the full destination, recipient link, template, every attempt and the chain', async () => {
     renderDetail(ids.failedSmsId);
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Vaccination due' }),
+      await screen.findByRole('heading', { level: 1, name: 'Order dispatched' }),
     ).toBeInTheDocument();
     expect(screen.getByText('+8801799999999')).toBeInTheDocument(); // full, not masked
     expect(screen.getByRole('link', { name: 'Sam Rahman' })).toHaveAttribute(
       'href',
       `/staff/customers/${ids.customerId}`,
     );
-    expect(screen.getByText('care.vaccination-due')).toBeInTheDocument();
+    expect(screen.getByText('order.dispatched')).toBeInTheDocument();
 
     const attempts = screen.getByRole('table', { name: 'Delivery attempts' });
     expect(within(attempts).getAllByRole('row')).toHaveLength(1 + 3); // header + 3 attempts
@@ -108,7 +108,7 @@ describe('NotificationDetail — HO-NTF-002 §11.5', () => {
 describe('ResendPanel — HO-NTF-002 §11.5, US-NTF-06 AC2', () => {
   it('U-E6: the confirm names channel and destination; a 201 held for quiet hours shows the time and a link', async () => {
     const user = userEvent.setup();
-    renderDetail(ids.heldId); // a deworming SMS: the mock holds its resend for quiet hours
+    renderDetail(ids.heldId); // an order-delivered SMS: the mock holds its resend for quiet hours
     await user.click(await screen.findByRole('button', { name: 'Resend' }));
 
     const dialog = await screen.findByRole('dialog');

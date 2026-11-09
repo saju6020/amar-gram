@@ -3,6 +3,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { PageHeader } from '@/components/back-office/PageHeader';
+import { Panel } from '@/components/back-office/Panel';
 import { Button } from '@/components/ui/button';
 import { UnsavedChangesGuard } from '@/components/account/UnsavedChangesGuard';
 import {
@@ -22,7 +24,7 @@ const schema = z
   .object({
     kind: z.enum(['Standard', 'Bundle']),
     name: z.string().trim().min(1, 'Enter the product name.').max(200),
-    brand: z.string().trim().min(1, 'Enter the brand.').max(100),
+    brand: z.string().trim().min(1, 'Enter the producer.').max(100),
     category: z.string().min(1, 'Choose a category.'),
     subcategory: z.string(),
     taxClassId: z.string().min(1, 'Choose a tax class.'),
@@ -117,113 +119,120 @@ export function NewProductForm({ categories, taxClasses, onCreate }: NewProductF
 
   const nameField = register('name');
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex max-w-xl flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex max-w-2xl flex-col gap-5">
       <UnsavedChangesGuard when={isDirty && !isSubmitting && !isSubmitSuccessful} />
-      <h1 className="font-display text-2xl font-semibold text-ink">New product</h1>
-      {errors.root && (
-        <p
-          role="alert"
-          className="rounded-[var(--radius-sm)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink"
-        >
-          {errors.root.message}
-        </p>
-      )}
-      <Field id="np-kind" label="Kind" error={errors.kind?.message}>
-        <select id="np-kind" className={inputClass} {...register('kind')}>
-          <option value="Standard">Standard</option>
-          <option value="Bundle">Kit (bundle)</option>
-        </select>
-      </Field>
-      <Field id="np-name" label="Name" error={errors.name?.message}>
-        <input
-          id="np-name"
-          className={inputClass}
-          aria-invalid={!!errors.name}
-          {...nameField}
-          onChange={(event) => {
-            void nameField.onChange(event);
-            if (!dirtyFields.slug) setValue('slug', suggestSlug(event.target.value));
-          }}
-        />
-      </Field>
-      <Field id="np-brand" label="Brand" error={errors.brand?.message}>
-        <input
-          id="np-brand"
-          className={inputClass}
-          aria-invalid={!!errors.brand}
-          {...register('brand')}
-        />
-      </Field>
-      <Field id="np-category" label="Category" error={errors.category?.message}>
-        <select
-          id="np-category"
-          className={inputClass}
-          aria-invalid={!!errors.category}
-          {...register('category', { onChange: () => setValue('subcategory', '') })}
-        >
-          <option value="">Choose…</option>
-          {categories.map((c) => (
-            <option key={c.value} value={c.value}>
-              {categoryLabel(c.value)}
-            </option>
-          ))}
-        </select>
-      </Field>
-      {subcategories.length > 0 && (
-        <Field id="np-sub" label="Subcategory" error={errors.subcategory?.message}>
-          <select id="np-sub" className={inputClass} {...register('subcategory')}>
-            <option value="">None</option>
-            {subcategories.map((s) => (
-              <option key={s.value} value={s.value}>
-                {subcategoryLabel(s.value)}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-      <Field id="np-tax" label="Tax class" error={errors.taxClassId?.message}>
-        <select
-          id="np-tax"
-          className={inputClass}
-          aria-invalid={!!errors.taxClassId}
-          {...register('taxClassId')}
-        >
-          <option value="">Choose…</option>
-          {taxClasses
-            .filter((t) => t.isActive)
-            .map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-        </select>
-      </Field>
-      <Field
-        id="np-slug"
-        label="Web address (slug)"
-        error={errors.slug?.message}
-        hint="Suggested from the name. It can't be changed after the product is first published."
-      >
-        <input
-          id="np-slug"
-          className={inputClass}
-          aria-invalid={!!errors.slug}
-          {...register('slug')}
-        />
-      </Field>
-      {kind === 'Bundle' && (
-        <Field id="np-kit" label="Kit SKU code" error={errors.bundleSkuCode?.message}>
-          <input
-            id="np-kit"
-            className={inputClass}
-            aria-invalid={!!errors.bundleSkuCode}
-            {...register('bundleSkuCode')}
-          />
-        </Field>
-      )}
-      <Button type="submit" disabled={isSubmitting} className="self-start">
-        {isSubmitting ? 'Creating…' : 'Create product'}
-      </Button>
+      <PageHeader
+        title="New product"
+        description="Start with the basics. You add pack sizes, prices and photos next."
+      />
+      <Panel title="Product basics">
+        <div className="flex flex-col gap-4">
+          {errors.root && (
+            <p
+              role="alert"
+              className="rounded-[var(--radius-md)] bg-danger-bg p-3 text-sm font-semibold text-danger-ink"
+            >
+              {errors.root.message}
+            </p>
+          )}
+          <Field id="np-kind" label="Kind" error={errors.kind?.message}>
+            <select id="np-kind" className={inputClass} {...register('kind')}>
+              <option value="Standard">Standard</option>
+              <option value="Bundle">Kit (bundle)</option>
+            </select>
+          </Field>
+          <Field id="np-name" label="Name" error={errors.name?.message}>
+            <input
+              id="np-name"
+              className={inputClass}
+              aria-invalid={!!errors.name}
+              {...nameField}
+              onChange={(event) => {
+                void nameField.onChange(event);
+                if (!dirtyFields.slug) setValue('slug', suggestSlug(event.target.value));
+              }}
+            />
+          </Field>
+          <Field id="np-brand" label="Producer" error={errors.brand?.message}>
+            <input
+              id="np-brand"
+              className={inputClass}
+              aria-invalid={!!errors.brand}
+              {...register('brand')}
+            />
+          </Field>
+          <Field id="np-category" label="Category" error={errors.category?.message}>
+            <select
+              id="np-category"
+              className={inputClass}
+              aria-invalid={!!errors.category}
+              {...register('category', { onChange: () => setValue('subcategory', '') })}
+            >
+              <option value="">Choose…</option>
+              {categories.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {categoryLabel(c.value)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {subcategories.length > 0 && (
+            <Field id="np-sub" label="Subcategory" error={errors.subcategory?.message}>
+              <select id="np-sub" className={inputClass} {...register('subcategory')}>
+                <option value="">None</option>
+                {subcategories.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {subcategoryLabel(s.value)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          <Field id="np-tax" label="Tax class" error={errors.taxClassId?.message}>
+            <select
+              id="np-tax"
+              className={inputClass}
+              aria-invalid={!!errors.taxClassId}
+              {...register('taxClassId')}
+            >
+              <option value="">Choose…</option>
+              {taxClasses
+                .filter((t) => t.isActive)
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+            </select>
+          </Field>
+          <Field
+            id="np-slug"
+            label="Web address (slug)"
+            error={errors.slug?.message}
+            hint="Suggested from the name. It can't be changed after the product is first published."
+          >
+            <input
+              id="np-slug"
+              className={inputClass}
+              aria-invalid={!!errors.slug}
+              {...register('slug')}
+            />
+          </Field>
+          {kind === 'Bundle' && (
+            <Field id="np-kit" label="Kit SKU code" error={errors.bundleSkuCode?.message}>
+              <input
+                id="np-kit"
+                className={inputClass}
+                aria-invalid={!!errors.bundleSkuCode}
+                {...register('bundleSkuCode')}
+              />
+            </Field>
+          )}
+          <Button type="submit" disabled={isSubmitting} className="self-start">
+            {isSubmitting ? 'Creating…' : 'Create product'}
+          </Button>
+        </div>
+      </Panel>
     </form>
   );
 }

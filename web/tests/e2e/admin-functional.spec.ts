@@ -99,18 +99,34 @@ test('E-B1: create a branch in Europe/London, set hours, add a holiday', async (
   // Calendar half (HO-ADM-002-FU1 E-B1): the detail view's Calendar tab skips the holiday.
   await page.getByRole('link', { name: 'Calendar' }).click();
   await page.goto(`/staff/admin/branches/${branchId}/calendar?month=2028-12`);
-  const calendarGrid = page.getByRole('grid');
   await expect(page.getByText(/Times in Europe\/London/)).toBeVisible();
-  await expect(
-    calendarGrid.getByRole('gridcell', { name: /Monday 25 December 2028/ }),
-  ).toHaveAccessibleName(/Closed — Public holiday: Christmas Day/);
-  await expect(
-    calendarGrid.getByRole('gridcell', { name: /Monday 18 December 2028/ }),
-  ).toHaveAccessibleName(/Open 08:00–17:00/);
-  await expect(
-    calendarGrid.getByRole('gridcell', { name: /Tuesday 26 December 2028/ }),
-  ).toHaveAccessibleName(/Closed \(regular weekly closure\)/);
+  // The page shows a grid from 768 px and a day list below it (HO-ADM-002-FU1 E-CAL6); at the
+  // 360 px project there is no gridcell to find, so read the same status sentence from the list.
+  const expectDay = async (long: string, short: string, text: RegExp) => {
+    if ((page.viewportSize()?.width ?? 1280) >= 768) {
+      await expect(
+        page.getByRole('grid').getByRole('gridcell', { name: new RegExp(long) }),
+      ).toHaveAccessibleName(text);
+    } else {
+      await expect(
+        page.getByRole('listitem').filter({ hasText: new RegExp(`^${short}`) }),
+      ).toContainText(text);
+    }
+  };
+  await expectDay('Monday 25 December 2028', 'Mon 25 Dec', /Closed — Public holiday: Christmas Day/);
+  await expectDay('Monday 18 December 2028', 'Mon 18 Dec', /Open 08:00–17:00/);
+  await expectDay('Tuesday 26 December 2028', 'Tue 26 Dec', /Closed \(regular weekly closure\)/);
 });
+
+/** The sidebar's outlet picker: in the aside from `sm` up, at the top of the nav sheet below it. */
+async function outletPicker(page: Page) {
+  const width = page.viewportSize()?.width ?? 1280;
+  if (width < 640) {
+    await page.getByRole('button', { name: 'Expand menu' }).click();
+    return page.getByRole('dialog').getByRole('combobox', { name: 'Outlet' });
+  }
+  return page.locator('aside').getByRole('combobox', { name: 'Outlet' });
+}
 
 test('E-B2: a staff member assigned to two branches sees the picker, and switching sends the new branch header', async ({
   page,
@@ -131,40 +147,87 @@ test('E-B2: a staff member assigned to two branches sees the picker, and switchi
   // ADR-FE-016: the active branch is never persisted, so a `page.reload()` here would re-seed
   // from the primary branch, not prove anything about switching — the request to watch for is the
   // one `useSetActiveBranch`'s own `['admin']` query invalidation fires immediately on selection.
-  await page.goto('/staff/admin/services');
-  const picker = page.getByLabel(/^branch$/i);
+  await page.goto('/staff/admin/tax-classes');
+  // HO-P4 S0 (ADR-FE-182): the picker is the sidebar's "Outlet" select (in the nav sheet below `sm`).
+  const picker = await outletPicker(page);
   await expect(picker).toBeVisible();
   await page.waitForLoadState('networkidle');
 
   const nextAdminRequest = page.waitForRequest(
-    (request) => request.url().includes('/api/admin/services') && request.method() === 'GET',
+    (request) => request.url().includes('/api/admin/tax-classes') && request.method() === 'GET',
   );
   await picker.selectOption(administrationFixtureIds.londonBranchId);
   const request = await nextAdminRequest;
   expect(request.headers()['x-branch-id']).toBe(administrationFixtureIds.londonBranchId);
 });
 
-test('E-C1: schedule a price for next month — appears under Scheduled, current stays unchanged', async ({
+// HO-P5 §16 E15 (BG-21): the outlet card carries the type, the address, today's hours, the delivery areas and the staff count.
+test('E15: outlet cards show the type, address, today\'s hours, delivery areas and staff count; a warehouse can be created', async ({
   page,
 }) => {
+  test.setTimeout(60_000);
+  // Imported here, not at the top, so the line numbers the baseline list in HO-P5 §1 names (E-B1 at :56) do not move.
+  const { expectAxeClean, expectNoHorizontalScroll } = await import('./reports-helpers');
   await signInAsStaff(page);
-  await page.goto(`/staff/admin/services/${administrationFixtureIds.serviceConsultationId}`);
-  await page.getByRole('button', { name: /schedule a new price/i }).click();
-  await page.getByRole('radio', { name: /a future date and time/i }).click();
-  const future = new Date();
-  future.setMonth(future.getMonth() + 1);
-  const value = future.toISOString().slice(0, 16);
-  await page.getByLabel(/effective date and time/i).fill(value);
-  await page.getByLabel(/amount \(bdt\)/i).fill('2200.00');
-  await page.getByRole('button', { name: /^schedule$/i }).click();
+  await page.goto('/staff/admin/branches');
+  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Dhanmondi outlet' }) });
+  await expect(card.getByText('Outlet', { exact: true })).toBeVisible();
+  await expect(card.getByText('12 Gulshan Avenue, Dhaka')).toBeVisible();
+  await expect(card.getByText('Today', { exact: true })).toBeVisible();
+  await expect(card.getByText('Delivers to')).toBeVisible();
+  await expect(card.getByText('Dhaka City')).toBeVisible();
+  await expect(card.getByText('2 staff')).toBeVisible();
 
-  await expect(page.getByText('Scheduled')).toBeVisible();
-  await expect(page.getByText(/2,?200\.00/)).toBeVisible();
-  // The current price (from the seeded fixture) is unchanged.
-  await expect(page.getByText('Current')).toBeVisible();
+  await page.goto('/staff/admin/branches/new');
+  const code = `WH${Date.now().toString().slice(-6)}`;
+  await page.getByLabel('Code').fill(code);
+  await page.getByLabel('Name').fill('E2E warehouse');
+  await page.getByLabel('Type').selectOption('Warehouse');
+  const createResponse = page.waitForResponse(
+    (response) => response.url().includes('/api/admin/branches') && response.request().method() === 'POST',
+  );
+  await page.getByRole('button', { name: /create branch/i }).click();
+  const { branchId } = (await (await createResponse).json()) as { branchId: string };
+  await waitForUrlOrGoto(page, new RegExp(`/staff/admin/branches/${branchId}$`), `/staff/admin/branches/${branchId}`);
+  await expect(page.getByLabel('Type')).toHaveValue('Warehouse');
+
+  await page.goto('/staff/admin/branches');
+  const warehouse = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'E2E warehouse' }) });
+  await expect(warehouse.getByText('Warehouse', { exact: true })).toBeVisible();
+  await expect(warehouse.getByText('0 staff')).toBeVisible();
+  await expectAxeClean(page);
+  await expectNoHorizontalScroll(page);
 });
 
-test('E-D1: a nurse requests leave, an administrator approves it, and the roster view marks the days "On leave"', async ({
+// HO-P5 §16 E15 (BG-23): a roster cell is a button that cycles Morning -> Evening -> Off -> Morning through the server.
+test('E15: a roster cell cycles to the next shift and the change is announced', async ({ page }) => {
+  const { expectAxeClean, expectNoHorizontalScroll } = await import('./reports-helpers');
+  await signInAsStaff(page);
+  await page.goto(`/staff/admin/branches/${administrationFixtureIds.mainBranchId}/roster`);
+
+  const first = page.getByRole('button', { name: /^Nadia Karim, .*Change shift$/ }).first();
+  await expect(first).toBeVisible();
+  const label = (await first.getAttribute('aria-label')) ?? '';
+  const match = /^(Nadia Karim, [^:]+): (Morning|Evening|Off|Custom)/.exec(label);
+  expect(match, label).not.toBeNull();
+  const [, prefix, current] = match as RegExpExecArray;
+  const next = ({ Morning: 'Evening', Evening: 'Off', Off: 'Morning', Custom: 'Morning' } as Record<string, string>)[current!]!;
+
+  const cell = page.getByRole('button', { name: new RegExp(`^${prefix!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: `) }).first();
+  await cell.click();
+  if (current === 'Custom') {
+    // A day with its own hours asks before they are replaced.
+    await expect(page.getByRole('dialog', { name: "Replace this day's hours?" })).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: 'Replace hours' }).click();
+  }
+  await expect(cell).toHaveAttribute('aria-label', new RegExp(`: ${next}`));
+  await expect(page.locator('p[role="status"]', { hasText: new RegExp(`^${prefix!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}: ${next}$`) })).toBeAttached();
+
+  await expectAxeClean(page);
+  await expectNoHorizontalScroll(page);
+});
+
+test('E-D1: a staff member requests leave, an administrator approves it, and the roster view marks the days "On leave"', async ({
   page,
 }) => {
   await signInAsStaff(page);
@@ -199,7 +262,10 @@ test('E-D1: a nurse requests leave, an administrator approves it, and the roster
   await expect(page.getByText('Leave requested.')).toBeVisible();
 
   await page.goto('/staff/admin/leave?status=Requested');
-  const row = page.getByRole('row', { name: /nadia nurse/i }).last();
+  const row = page
+    .getByRole('row')
+    .filter({ has: page.getByRole('button', { name: /^approve$/i }) })
+    .last();
   await row.getByRole('button', { name: /^approve$/i }).click();
   await page
     .getByRole('dialog')
@@ -315,18 +381,20 @@ test('E-F2: publishing a policy version that requires acceptance prompts a custo
   await expect(page.getByLabel(/full name/i)).toBeVisible();
 });
 
-test('E-G1: the audit log shows the seeded price-change row with a before/after diff; export downloads', async ({
+test('E-G1: the audit log shows the seeded maintenance row with a before/after diff; export downloads', async ({
   page,
 }) => {
   await signInAsStaff(page);
-  await page.goto('/staff/admin/audit-log?from=2027-01-01&to=2027-01-31&action=ServicePriceSet');
-  await expect(page.getByText('ServicePriceSet')).toBeVisible();
+  await page.goto(
+    '/staff/admin/audit-log?from=2027-01-01&to=2027-01-31&action=MaintenanceModeChanged',
+  );
+  await expect(page.getByText('MaintenanceModeChanged')).toBeVisible();
   await page
     .getByRole('button', { name: /show details/i })
     .first()
     .click();
-  await expect(page.getByText('1500.00')).toBeVisible();
-  await expect(page.getByText('1800.00')).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: 'maintenanceMode' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'true', exact: true }).first()).toBeVisible();
 
   // A SW-served top-level-navigation response is not always surfaced to a real browser's download
   // pipeline the same way a genuine network response is — a documented MSW/browser limitation, not
@@ -346,7 +414,7 @@ test('E-G1: the audit log shows the seeded price-change row with a before/after 
   }, exportHref!);
   expect(result.status).toBe(200);
   expect(result.contentDisposition).toContain('attachment');
-  expect(result.text).toContain('ServicePriceSet');
+  expect(result.text).toContain('MaintenanceModeChanged');
 });
 
 test('E-G3: an export over the row cap shows the narrow-the-range note', async ({ page }) => {
@@ -394,8 +462,8 @@ test('E-B3: long branch names keep the picker row inside the viewport (360/768/1
   // The seeded MSW store answers `GET /api/admin/branches` (a `page.route` does not reach it), so
   // the 40-character names are written through the real admin PUT before the page loads.
   const longNames: Record<string, string> = {
-    [mainBranchId]: 'Main clinic and surgical centre of Dhaka',
-    [londonBranchId]: 'London clinic and boarding hotel annex!!',
+    [mainBranchId]: 'Dhanmondi outlet and warehouse of Dhaka!',
+    [londonBranchId]: 'London outlet and click-and-collect desk',
   };
   for (const [id, name] of Object.entries(longNames)) {
     expect(name).toHaveLength(40);
@@ -417,26 +485,26 @@ test('E-B3: long branch names keep the picker row inside the viewport (360/768/1
   // One navigation only: a second full page load drops the in-browser MSW session, and the layout
   // is CSS-responsive, so resizing the viewport is enough.
   await page.goto('/staff/admin/leave');
-  const picker = page.getByLabel(/^branch$/i);
-  await expect(picker).toBeVisible();
-  await expect(picker).toHaveAttribute('title', /^Main clinic and surgical centre of Dhaka$/);
-  for (const width of [360, 768, 1024, 1440]) {
+  // HO-P4 S0 (ADR-FE-182): the picker lives in the sidebar ("Outlet"), or in the nav sheet below `sm`.
+  // At each width the select must stay inside the surface that holds it and inside the viewport.
+  for (const width of [1440, 1024, 768]) {
     await page.setViewportSize({ width, height: 800 });
-    // Not `documentElement.scrollWidth`: several staff pages (tables, forms) overflow at 360 on
-    // their own, which is outside this picker's scope. The shell parts this follow-up owns are
-    // measured directly: the picker row must stay inside the viewport and inside <main>'s padding.
+    const picker = page.locator('aside').getByRole('combobox', { name: 'Outlet' });
+    await expect(picker).toBeVisible();
+    await expect(picker).toHaveAttribute('title', /^Dhanmondi outlet and warehouse of Dhaka!$/);
     const box = await page.evaluate(() => {
-      const row = document.getElementById('active-branch-picker')!.parentElement!;
-      const rect = row.getBoundingClientRect();
-      return {
-        left: rect.left,
-        right: rect.right,
-        rowOverflow: row.scrollWidth - row.clientWidth,
-        inner: window.innerWidth,
-      };
+      const select = document.querySelector('aside select')!;
+      const rect = select.getBoundingClientRect();
+      const aside = document.querySelector('aside')!.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, asideRight: aside.right, inner: window.innerWidth };
     });
-    expect(box.right, `picker row right edge at ${width}`).toBeLessThanOrEqual(box.inner);
-    expect(box.rowOverflow, `picker row overflow at ${width}`).toBeLessThanOrEqual(0);
-    expect(box.right - box.left).toBeLessThanOrEqual(448 + 0.5); // max-w-md
+    expect(box.right, `picker right edge at ${width}`).toBeLessThanOrEqual(box.asideRight + 0.5);
+    expect(box.right, `picker right edge at ${width}`).toBeLessThanOrEqual(box.inner);
   }
+  await page.setViewportSize({ width: 360, height: 800 });
+  const sheetPicker = await outletPicker(page);
+  await expect(sheetPicker).toBeVisible();
+  await expect(sheetPicker).toHaveAttribute('title', /^Dhanmondi outlet and warehouse of Dhaka!$/);
+  const sheetBox = (await sheetPicker.boundingBox())!;
+  expect(sheetBox.x + sheetBox.width, 'picker right edge in the sheet at 360').toBeLessThanOrEqual(360);
 });

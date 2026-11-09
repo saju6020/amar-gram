@@ -86,8 +86,7 @@ const TRACE_CUSTOMERS: RecallTraceCustomer[] = [
   },
 ];
 
-/** A trace for a recall declared in this session: one purchase, one dispense, one boarding feed,
- *  one unshipped reservation and some unidentified counter sales (US-IMP-11 AC2). */
+/** A trace for a recall declared in this session: three purchases, one unshipped reservation and some unidentified counter sales (US-IMP-11 AC2). */
 function buildTrace(batch: MBatch): RecallTrace {
   const sku = skuOf(batch.skuId);
   const [a, b, c] = TRACE_CUSTOMERS as [
@@ -103,12 +102,6 @@ function buildTrace(batch: MBatch): RecallTrace {
     locationCode: locationOf(positionsOf(batch.id)[0]?.locationId ?? '')?.code ?? null,
     referenceLabel: label,
     customer,
-    cat: {
-      catId: `c3-${customer.customerId.slice(-3)}`,
-      name: `${customer.name.split(' ')[0]}'s cat`,
-      currentOwner: customer,
-    },
-    householdCats: [] as string[],
   });
   return {
     batchId: batch.id,
@@ -119,8 +112,8 @@ function buildTrace(batch: MBatch): RecallTrace {
     batchStatus: batch.status,
     received: [
       row('Sale', a, 'Order PC-001301', 72),
-      row('Dispense', b, 'RX-2026-000071', 48),
-      row('BoardingUse', c, 'Stay BR-2026-000021', 24),
+      row('Sale', b, 'Counter sale POS-2026-000071', 48),
+      row('Sale', c, 'Order PC-001321', 24),
     ],
     returned: [],
     unshippedDispatchBlocked: [
@@ -129,7 +122,6 @@ function buildTrace(batch: MBatch): RecallTrace {
         referenceId: 'a3000000-0000-4000-8000-0000000000aa',
         quantity: '2',
         customer: a,
-        cat: { catId: 'c3-unshipped', name: 'Mishti', currentOwner: a },
       },
     ],
     unidentified: { count: 2, quantity: '3' },

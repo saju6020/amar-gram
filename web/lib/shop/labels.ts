@@ -1,55 +1,63 @@
 /**
- * `lib/shop/labels.ts` — HO-SHP-002 §11. Display names for the API's enumeration values (which come
- * by name, e.g. `CatFood`, `AllLifeStages`). Labels are English-only chrome (C-8); product CONTENT is
- * what FR-SHP-15 translates. Unknown values fall back to a spaced version of the name.
+ * `lib/shop/labels.ts` — HO-SHP-002 §11, HO-P2 §2.3. Display names for the API's enumeration values
+ * (which come by name, e.g. `RiceAndGrains`, `CertifiedOrganic`). Labels are English-only chrome (C-8);
+ * product CONTENT is what FR-SHP-15 translates. Unknown values fall back to a spaced version of the name.
  */
 
-const CATEGORY_LABELS: Record<string, string> = {
-  CatFood: 'Food',
-  Litter: 'Litter',
-  LitterPotsAndAccessories: 'Litter pots & accessories',
-  BagsAndCarriers: 'Bags & carriers',
-  HealthAndGrooming: 'Health & grooming',
-  ToysAndFurniture: 'Toys & furniture',
+/** HO-P2 §1.1, in the enumeration's order (value 1–11). */
+export const CATEGORY_LABELS: Record<string, string> = {
+  RiceAndGrains: 'Rice & grains',
+  HoneyAndGur: 'Honey & gur',
+  OilsAndGhee: 'Oils & ghee',
+  Spices: 'Spices',
+  Pulses: 'Pulses',
+  TeaAndDrinks: 'Tea & drinks',
+  FreshProduce: 'Fresh produce',
+  DatesAndDryFruit: 'Dates & dry fruit',
+  DairyAndEggs: 'Dairy & eggs',
+  SnacksAndSweets: 'Snacks & sweets',
+  HouseholdAndCare: 'Household & natural care',
 };
 
+/** HO-P2 §1.1's IsFood rule: every category is food except household & natural care. */
+const NON_FOOD_CATEGORIES: ReadonlySet<string> = new Set(['HouseholdAndCare']);
+export const isFoodCategory = (category: string) =>
+  category in CATEGORY_LABELS && !NON_FOOD_CATEGORIES.has(category);
+
+/** HO-P2 §1.2's examples; any other subcategory falls back to its spaced name. */
 const SUBCATEGORY_LABELS: Record<string, string> = {
-  HoodedBoxes: 'Hooded boxes',
-  TravelBags: 'Travel bags',
-  StorageBags: 'Storage bags',
+  AromaticRice: 'Aromatic rice',
+  EverydayRice: 'Everyday rice',
+  FlattenedAndPuffedRice: 'Flattened & puffed rice',
+  Flour: 'Flour',
+  Honey: 'Honey',
+  DateMolasses: 'Date molasses (gur)',
+  DateMolassesGur: 'Date molasses (gur)',
+  SugarcaneGur: 'Sugarcane gur',
+  MustardOil: 'Mustard oil',
+  Ghee: 'Ghee',
+  OtherOils: 'Other oils',
+  JuteAndBags: 'Jute & bags',
+  NaturalCare: 'Natural care',
 };
 
-const LIFE_STAGE_LABELS: Record<string, string> = {
-  Kitten: 'Kitten',
-  Adult: 'Adult',
-  Senior: 'Senior',
-  AllLifeStages: 'All life stages',
+/** HO-P2 §1.3 — replaces health focus and protein source. */
+export const CERTIFICATION_LABELS: Record<string, string> = {
+  CertifiedOrganic: 'Certified organic',
+  PesticideFree: 'Pesticide-free',
+  Traditional: 'Traditional',
+  Halal: 'Halal',
 };
-
-const PROTEIN_LABELS: Record<string, string> = { PlantBased: 'Plant-based' };
+export const CERTIFICATIONS = Object.keys(CERTIFICATION_LABELS);
 
 function spaced(value: string): string {
   return value.replace(/([a-z])([A-Z])/g, '$1 $2');
 }
 
 export const categoryLabel = (value: string) => CATEGORY_LABELS[value] ?? spaced(value);
-export const subcategoryLabel = (value: string) => SUBCATEGORY_LABELS[value] ?? spaced(value);
-export const lifeStageLabel = (value: string) => LIFE_STAGE_LABELS[value] ?? spaced(value);
-export const proteinLabel = (value: string) => PROTEIN_LABELS[value] ?? spaced(value);
-
-/** "Recommended for kittens / adult cats / senior cats" (US-SHP-08). */
-export function lifeStageAudience(stages: string[]): string {
-  const names = stages.map((stage) =>
-    stage === 'Kitten'
-      ? 'kittens'
-      : stage === 'Senior'
-        ? 'senior cats'
-        : stage === 'Adult'
-          ? 'adult cats'
-          : 'cats of every age',
-  );
-  return names.length > 0 ? names.join(' and ') : 'cats';
-}
+export const subcategoryLabel = (value: string) =>
+  SUBCATEGORY_LABELS[value] ?? spaced(value).replace(/ And /g, ' & ');
+export const certificationLabel = (value: string) => CERTIFICATION_LABELS[value] ?? spaced(value);
 
 export const SORT_LABELS = {
   relevance: 'Relevance',

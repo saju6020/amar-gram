@@ -46,8 +46,8 @@ export async function clearSettingOverride(key: string, branchId: string): Promi
   });
 }
 
-/** Falls back to a title-cased last segment of the dotted key (`booking.slotHoldMinutes` ->
- *  "Slot hold minutes") when the payload carries no `displayName` — a presentation nicety, never
+/** Falls back to a title-cased last segment of the dotted key (`inventory.expiryAlertDays` ->
+ *  "Expiry alert days") when the payload carries no `displayName` — a presentation nicety, never
  *  a substitute for a real label the server should eventually send. */
 export function settingLabel(definition: SettingDefinitionView): string {
   if (definition.displayName) return definition.displayName;

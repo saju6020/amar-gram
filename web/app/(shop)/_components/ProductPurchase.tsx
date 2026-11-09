@@ -6,17 +6,17 @@ import { BuyBox } from '@/components/product/BuyBox';
 import { ProductGallery } from '@/components/product/ProductGallery';
 import { VariantSelector } from '@/components/product/VariantSelector';
 import { PurchaseRow } from '@/components/product/PurchaseRow';
-import { PrescriptionGate } from '@/components/prescription/PrescriptionGate';
 import { StockAlertButton } from '@/components/wishlist/StockAlertButton';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import { SubscribeOffer } from '@/components/subscriptions/SubscribeOffer';
 import { ApiUnauthorizedError, ApiValidationError } from '@/lib/api/client';
 import { describeApiError, SHOP_CODE_MESSAGES } from '@/lib/api/errors';
 import type { ProductDetail } from '@/lib/api/shop-catalogue';
 import type { StockAlertDeliverability } from '@/lib/api/shop-customer';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 import { useCustomerSession } from '@/lib/hooks/useSession';
 import {
   useCancelStockAlert,
-  usePurchasability,
   useRequestStockAlert,
   useSetWishlistItem,
   useStockAlerts,
@@ -30,8 +30,10 @@ export interface ProductPurchaseProps {
   lang: string;
   /** The server-rendered heading block, laid out beside the gallery. */
   heading: React.ReactNode;
-  /** An override for the buy box action slot; by default the quantity / *Add to cart* / wishlist row (§3.3). */
+  /** An override for the buy box action slot; by default the quantity / *Add to basket* / wishlist row (§3.3). */
   actions?: React.ReactNode;
+  /** HO-P5 G5: the public delivery promise's lead time, passed to the delivery card; absent when unknown. */
+  leadTimeDays?: number | null;
 }
 
 function messageFor(error: unknown): string {
@@ -44,8 +46,7 @@ function messageFor(error: unknown): string {
 /**
  * HO-SHP-002 §11.3 — the product page's interactive island: gallery, variant selector and buy box
  * for the SELECTED variant (`?sku=`, ADR in §8.4). Price, availability and the best-before notice
- * come straight from the SKU the API sent; the personal parts (prescription gate, wishlist, stock
- * alert) load after the server-rendered page and never block it (§8.2).
+ * come straight from the SKU the API sent; the personal parts (wishlist, stock alert) load after the server-rendered page and never block it (§8.2).
  */
 export function ProductPurchase({
   detail,
@@ -53,11 +54,14 @@ export function ProductPurchase({
   lang,
   heading,
   actions,
+  leadTimeDays,
 }: ProductPurchaseProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [skuId, setSkuId] = React.useState(initialSkuId);
+  // The quantity in the buy row; it only words the note beside the price ("2 × 1 kg"), never the price.
+  const [quantity, setQuantity] = React.useState(1);
   const urlSku = searchParams.get('sku');
   // The URL is the source of truth, including when `?sku=` goes away (Back to the first variant's
   // URL): then the default variant applies again (S8). On first render an absent `?sku=` keeps
@@ -72,9 +76,11 @@ export function ProductPurchase({
 
   const sku = defaultSku(detail.skus, skuId);
   const session = useCustomerSession();
-  const signedIn = !!session.data;
-  const sessionKnown = !session.isPending;
-  const purchasability = usePurchasability(detail.slug, signedIn && detail.prescriptionRequired);
+  // The session can already be cached when the page hydrates (the header loads it first): read it from the next
+  // render on, so the first client render matches the server HTML.
+  const hydrated = useHydrated();
+  const signedIn = hydrated && !!session.data;
+  const sessionKnown = hydrated && !session.isPending;
   const wishlist = useWishlist(signedIn);
   const alerts = useStockAlerts(signedIn);
   const setWishlist = useSetWishlistItem();
@@ -126,12 +132,15 @@ export function ProductPurchase({
         images={[...sku.images, ...detail.images]}
         productName={detail.name}
         category={detail.category}
+        organic={!!detail.certifications?.includes('CertifiedOrganic')}
       />
       <div className="flex min-w-0 flex-col gap-5">
         {heading}
         <BuyBox
           sku={sku}
           pricesIncludeTax={detail.pricesIncludeTax}
+          quantity={quantity}
+          leadTimeDays={leadTimeDays}
           variants={
             <VariantSelector skus={detail.skus} selectedSkuId={sku.skuId} onSelect={select} />
           }
@@ -141,35 +150,20 @@ export function ProductPurchase({
                 key={sku.skuId}
                 skuId={sku.skuId}
                 productName={detail.name}
-                requiresPrescription={detail.prescriptionRequired}
+                skuLabel={sku.label}
+                onQuantityChange={setQuantity}
                 disabled={outOfStock || !sku.price}
                 disabledReason={
                   outOfStock ? 'This variant is out of stock.' : 'This variant has no price yet.'
                 }
-                signedIn={sessionKnown ? signedIn : undefined}
-                eligibleCatIds={
-                  purchasability.data?.skus
-                    .find((s) => s.skuId === sku.skuId)
-                    ?.eligibleCats.map((cat) => cat.catId) ?? []
-                }
-                signInHref={signInHref}
                 trailing={wishlistButton}
               />
             )
           }
-          wishlist={actions ? wishlistButton : null}
-          gate={
-            detail.prescriptionRequired && sessionKnown ? (
-              <PrescriptionGate
-                audience={guest ? 'guest' : 'customer'}
-                isLoading={signedIn && purchasability.isPending}
-                isError={signedIn && purchasability.isError}
-                onRetry={() => void purchasability.refetch()}
-                purchasability={purchasability.data?.skus.find((s) => s.skuId === sku.skuId)}
-                signInHref={signInHref}
-              />
-            ) : null
+          subscribe={
+            signedIn && sku.price ? <SubscribeOffer key={sku.skuId} skuId={sku.skuId} /> : null
           }
+          wishlist={actions ? wishlistButton : null}
           stockAlert={
             outOfStock && sessionKnown ? (
               <StockAlertButton

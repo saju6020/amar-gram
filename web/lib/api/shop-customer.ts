@@ -1,32 +1,12 @@
 import { apiFetch } from './client';
 import type { Money } from '@/lib/format/money';
-import type { Availability, CatalogueItem, ProductImageRef } from './shop-catalogue';
+import type { Availability, ProductImageRef } from './shop-catalogue';
 
 /**
  * `lib/api/shop-customer.ts` — HO-SHP-002 §8.3. The signed-in customer's side of the shop
- * (HO-SHP-001 §12.4 "Customer"): purchasability, review eligibility, my reviews, wishlist, stock
- * alerts and food suggestions. Every route is `no-store`; another customer's id is a `404`.
+ * (HO-SHP-001 §12.4 "Customer"): review eligibility, my reviews, wishlist and stock alerts. Every
+ * route is `no-store`; another customer's id is a `404`.
  */
-
-export type PurchaseBlockReason =
-  'OutOfStock' | 'PrescriptionSignInRequired' | 'PrescriptionAuthorisationRequired' | 'NotOnSale';
-
-export interface EligibleCat {
-  catId: string;
-  name: string;
-  /** `yyyy-MM-dd` — the last day the authorisation is valid. */
-  validTo: string;
-}
-export interface SkuPurchasability {
-  skuId: string;
-  purchasable: boolean;
-  purchaseBlockReason: PurchaseBlockReason | null;
-  eligibleCats: EligibleCat[];
-}
-
-export function getPurchasability(slug: string): Promise<{ skus: SkuPurchasability[] }> {
-  return apiFetch(`/api/customers/me/shop/products/${encodeURIComponent(slug)}/purchasability`);
-}
 
 export interface ReviewEligibility {
   canReview: boolean;
@@ -147,24 +127,4 @@ export function cancelStockAlert(stockAlertId: string): Promise<void> {
   return apiFetch(`/api/customers/me/stock-alerts/${encodeURIComponent(stockAlertId)}`, {
     method: 'DELETE',
   });
-}
-
-export type RecommendationReasonCode =
-  'LifeStageMatch' | 'Sterilised' | 'WeightManagement' | 'ConditionMatch';
-export interface FoodRecommendations {
-  cat: { catId: string; name: string; lifeStage: string | null; lifeStageIsEstimated: boolean };
-  items: Array<{
-    item: CatalogueItem;
-    reasons: Array<{ code: RecommendationReasonCode | string; values: Record<string, string> }>;
-  }>;
-  excludedForAllergy: Array<{ allergen: string; count: number }>;
-  /** `AddDateOfBirth`, `IngredientsUnknownExcluded`. */
-  hints: string[];
-}
-
-export function getFoodRecommendations(catId: string, lang?: string): Promise<FoodRecommendations> {
-  const query = lang ? `?locale=${encodeURIComponent(lang)}` : '';
-  return apiFetch(
-    `/api/customers/me/cats/${encodeURIComponent(catId)}/food-recommendations${query}`,
-  );
 }

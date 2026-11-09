@@ -5,28 +5,22 @@ import { accountsFixtureIds } from '../areas/accounts';
  * `mocks/handlers/admin/fixtures.ts` — shared ids and small response helpers for every
  * `mocks/handlers/admin/*.ts` file (HO-ADM-002 §12). Reuses `accountsFixtureIds`'s already-seeded
  * staff/customer ids (read-only import — this file never mutates that module's own state) so an
- * e2e spec that signs in as the seeded administrator/nurse also has a rosterable staff member and
+ * e2e spec that signs in as the seeded administrator or second staff member also has a rosterable staff member and
  * a customer with a pending policy acceptance to exercise, without inventing a second identity.
  *
- * Role/session enforcement is deliberately NOT modelled here — HO-CAT-002's own precedent
- * (`mocks/handlers/areas/cat-profiles.ts`) does not re-resolve the `pc_staff_session` cookie
- * either (only `accounts.ts` owns that cookie's identity mapping, and `mocks/handlers/areas/**`
- * is outside this handover's §13 scope to import from or extend). A `403` a specific test needs
+ * Role/session enforcement is deliberately NOT modelled here: only `accounts.ts` owns the
+ * `pc_staff_session` cookie's identity mapping. A `403` a specific test needs
  * (U-A1, U-X1) is produced with `server.use(...)` overriding that one endpoint for that one test,
  * exactly the pattern `accounts.ts`'s own doc comment prescribes.
  */
 export const administrationFixtureIds = {
   mainBranchId: 'b0000000-0000-0000-0000-00000000a001',
   londonBranchId: 'b0000000-0000-0000-0000-00000000a002',
-  consultationRoomId: 'r0000000-0000-0000-0000-00000000a001',
-  theatreRoomId: 'r0000000-0000-0000-0000-00000000a002',
   closurePublicHolidayId: 'c0000000-0000-0000-0000-00000000a001',
   closureHalfDayId: 'c0000000-0000-0000-0000-00000000a002',
-  vetStaffId: accountsFixtureIds.nurseStaffId, // reused as the one rosterable, nameable staff fixture
+  rosterStaffId: accountsFixtureIds.stockStaffId, // reused as the one rosterable, nameable staff fixture
   adminStaffId: accountsFixtureIds.adminStaffId,
   leaveRequestId: 'l0000000-0000-0000-0000-00000000a001',
-  serviceConsultationId: 's0000000-0000-0000-0000-00000000a001',
-  serviceUnpricedId: 's0000000-0000-0000-0000-00000000a002',
   taxClassStandardId: 't0000000-0000-0000-0000-00000000a001',
   contentPageId: 'k0000000-0000-0000-0000-00000000a001',
   contentFaqId: 'k0000000-0000-0000-0000-00000000a002',

@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,16 +104,16 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:1060px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main">
-    <div class="titlerow"><div><h1 class="h1">Reconciliation</h1><p class="sub">Uttara · import the bank's statement and match its credits to transfer payments.</p></div></div>
+    <div class="titlerow"><div><h1 class="h1">Reconciliation</h1><p class="sub">Dhanmondi outlet · import the bank's statement and match its credits to transfer payments.</p></div></div>
     <nav class="subtabs" aria-label="Reconciliation"><a href="CodReconciliation.dc.html">Cash on delivery</a><a class="on" href="#" aria-current="page">Bank</a></nav>
 
     <table>
       <thead><tr><th>Statement</th><th>Bank account</th><th>Period</th><th>Imported (Asia/Dhaka)</th><th class="num">Lines</th><th class="num">Matched</th><th>Unmatched</th></tr></thead>
       <tbody>
-        <tr><td><a href="BankMatch.dc.html">brac-uttara-0916-0922.csv</a></td><td>BRAC Bank ••4410</td><td>16–22 Sep 2026</td><td>23 Sep, 09:12 by Rezwan Ahmed</td><td class="num">16</td><td class="num">11</td><td><span class="pill p-warn"><span aria-hidden="true">⚠</span> 5 lines · 4 payments</span></td></tr>
-        <tr><td><a href="BankMatch.dc.html">brac-uttara-0901-0915.csv</a></td><td>BRAC Bank ••4410</td><td>1–15 Sep 2026</td><td>16 Sep, 10:03 by Rezwan Ahmed</td><td class="num">42</td><td class="num">42</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> All matched</span></td></tr>
+        <tr><td><a href="BankMatch.dc.html">brac-dhanmondi-0916-0922.csv</a></td><td>BRAC Bank ••4410</td><td>16–22 Sep 2026</td><td>23 Sep, 09:12 by Rezwan Ahmed</td><td class="num">16</td><td class="num">11</td><td><span class="pill p-warn"><span aria-hidden="true">⚠</span> 5 lines · 4 payments</span></td></tr>
+        <tr><td><a href="BankMatch.dc.html">brac-dhanmondi-0901-0915.csv</a></td><td>BRAC Bank ••4410</td><td>1–15 Sep 2026</td><td>16 Sep, 10:03 by Rezwan Ahmed</td><td class="num">42</td><td class="num">42</td><td><span class="pill p-ok"><span aria-hidden="true">✓</span> All matched</span></td></tr>
       </tbody>
     </table>
 
@@ -122,7 +122,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <div>
         <p class="statelabel">Form — file refused in the browser</p>
         <div class="card">
-          <div class="field"><label for="st-a">Bank account <span class="req">*</span></label><select id="st-a"><option>BRAC Bank ••4410 — PurrCare Veterinary Ltd.</option></select></div>
+          <div class="field"><label for="st-a">Bank account <span class="req">*</span></label><select id="st-a"><option>BRAC Bank ••4410 — Amar Gram Ltd.</option></select></div>
           <div class="two">
             <div class="field"><label for="st-f">From <span class="req">*</span></label><input id="st-f" value="23 Sep 2026"></div>
             <div class="field"><label for="st-t">To <span class="req">*</span></label><input id="st-t" value="29 Sep 2026"></div>
@@ -153,7 +153,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <div>
         <p class="statelabel">Server: already imported</p>
         <div class="card">
-          <div class="banner b-warn" role="alert"><span aria-hidden="true">ⓘ</span><span><b>This exact file was already imported</b> for BRAC Bank ••4410 on 23 Sep 2026, 09:12 as brac-uttara-0916-0922.csv. Importing it again would count the same money twice, so it was refused.</span></div>
+          <div class="banner b-warn" role="alert"><span aria-hidden="true">ⓘ</span><span><b>This exact file was already imported</b> for BRAC Bank ••4410 on 23 Sep 2026, 09:12 as brac-dhanmondi-0916-0922.csv. Importing it again would count the same money twice, so it was refused.</span></div>
           <a href="BankMatch.dc.html">Open the existing statement →</a>
         </div>
       </div>

@@ -11,7 +11,8 @@ test('E-E1: add three addresses, change default, remove one — one default thro
 }) => {
   await page.goto('/portal/account/addresses');
 
-  for (const label of ['Home', 'Office', 'Parents']) {
+  // Sam's seeded book already holds "Home" (default) and "Office" (HO-P6 Amended (e)): this spec's own addresses are labelled apart.
+  for (const label of ['E2E Home', 'E2E Office', 'E2E Parents']) {
     await page.getByRole('button', { name: 'Add address' }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel('Label').fill(label);
@@ -31,20 +32,23 @@ test('E-E1: add three addresses, change default, remove one — one default thro
   // root — every broader ancestor also matches both text filters, since text content bubbles up.
   const officeCard = page
     .locator('div')
-    .filter({ hasText: 'Office' })
-    .filter({ hasText: 'Set as default' })
+    .filter({ hasText: 'E2E Office' })
+    .filter({ hasText: 'Make default' })
     .last();
-  await officeCard.getByRole('button', { name: 'Set as default' }).click();
+  await officeCard.getByRole('button', { name: 'Make default' }).click();
   await expect(page.getByText('Default', { exact: true })).toHaveCount(1);
 
   const homeCard = page
     .locator('div')
-    .filter({ hasText: 'Home' })
+    .filter({ hasText: 'E2E Home' })
     .filter({ hasText: 'Remove' })
     .last();
   await homeCard.getByRole('button', { name: 'Remove' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Remove', exact: true }).click();
-  await expect(page.getByText('Home')).toHaveCount(0);
+  await expect(page.getByText('E2E Home')).toHaveCount(0);
+  // The seeded addresses are untouched.
+  await expect(page.getByText('Home', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('Office', { exact: true })).toHaveCount(1);
   await expect(page.getByText('Default', { exact: true })).toHaveCount(1);
 });
 
@@ -74,7 +78,7 @@ test('E-E2: opt into SMS marketing, save, reload — persisted; transactional ce
 test('unsaved changes on the profile form: the browser Back button is intercepted, and confirming Leave completes it', async ({
   page,
 }) => {
-  await page.goto('/portal/cats');
+  await page.goto('/portal/orders');
   await page.goto('/portal/account/profile');
 
   // Not an anchored regex: the label's accessible name carries trailing content from its own
@@ -98,13 +102,13 @@ test('unsaved changes on the profile form: the browser Back button is intercepte
   await dialog.getByRole('button', { name: /^leave$/i }).click();
 
   // The ORIGINAL Back intent is replayed for real now — lands on the page visited before.
-  await expect(page).toHaveURL(/\/portal\/cats/);
+  await expect(page).toHaveURL(/\/portal\/orders/);
 });
 
 test('unsaved changes on the profile form: Cancel after a Back press keeps the draft and stays put', async ({
   page,
 }) => {
-  await page.goto('/portal/cats');
+  await page.goto('/portal/orders');
   await page.goto('/portal/account/profile');
 
   // See the sibling test above for why this is a plain string, not an anchored regex.
@@ -129,7 +133,7 @@ test('unsaved changes on the profile form: Cancel after a Back press keeps the d
 test('unsaved changes on the profile form: after a successful save, one Back press goes straight to the previous page', async ({
   page,
 }) => {
-  await page.goto('/portal/cats');
+  await page.goto('/portal/orders');
   await page.goto('/portal/account/profile');
 
   const fullNameField = page.getByLabel('Full name');
@@ -142,7 +146,7 @@ test('unsaved changes on the profile form: after a successful save, one Back pre
   // One press, straight through — no ConfirmDialog (the form is clean, nothing to guard) and no
   // stray sentinel left behind to absorb this press instead of actually leaving.
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page).toHaveURL(/\/portal\/cats/);
+  await expect(page).toHaveURL(/\/portal\/orders/);
 });
 
 // ARCHITECTURE gate third pass, LOW (a) — when the guarded page is the tab's very first history

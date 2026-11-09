@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -48,35 +48,35 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Dr. Nusrat Jahan · Vet</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Nusrat Jahan · Warehouse lead</div></div>
   <div class="main">
-    <h1 class="h1">Milo — add clinical photo</h1>
-    <p class="sub">Visit of 23 Sep 2026 · host panel is illustrative (HO-EMR-002 PhotosPanel). Three files chosen; two are refused in the browser before anything is sent (C2, ADR-FE-149).</p>
+    <h1 class="h1">Himsagar mango, 5 kg — add product photos</h1>
+    <p class="sub">Product photos panel · host panel is illustrative (HO-SHP-002). Three files chosen; two are refused in the browser before anything is sent (C2, ADR-FE-149).</p>
     <div class="grid">
       <div class="card">
-        <h2>Photos</h2>
+        <h2>Product photos</h2>
         <button type="button" class="drop" aria-describedby="c-hint">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
           <span class="dt">Choose files or drop them here</span>
-          <span class="dh" id="c-hint">· JPEG, PNG or WebP · up to 15 MB each</span>
+          <span class="dh" id="c-hint">· JPEG, PNG or WebP · up to 5 MB each</span>
         </button>
         <ul class="queue" aria-label="Files">
           <li class="frow">
             <div class="ftype" aria-hidden="true">JPG</div>
             <div class="fbody">
-              <div class="fname">wound-left-flank.jpg</div>
+              <div class="fname">mango-crate-front.jpg</div>
               <div class="fmeta">3.2 MB · <span class="st-ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Uploaded</span></div>
             </div>
-            <button type="button" class="btn-sm" aria-label="Remove wound-left-flank.jpg">Remove</button>
+            <button type="button" class="btn-sm" aria-label="Remove mango-crate-front.jpg">Remove</button>
           </li>
           <li class="frow bad">
             <div class="ftype" aria-hidden="true">PNG</div>
             <div class="fbody">
-              <div class="fname">wound-scan-fullres.png</div>
+              <div class="fname">mango-orchard-fullres.png</div>
               <div class="fmeta">22.8 MB · <span class="st-err"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>Not uploaded</span></div>
-              <div class="msg" role="status">That file is 22.8 MB. The largest allowed here is 15 MB.</div>
+              <div class="msg" role="status">That file is 22.8 MB. The largest allowed here is 5 MB.</div>
             </div>
-            <button type="button" class="btn-sm" aria-label="Dismiss wound-scan-fullres.png">Dismiss</button>
+            <button type="button" class="btn-sm" aria-label="Dismiss mango-orchard-fullres.png">Dismiss</button>
           </li>
           <li class="frow bad">
             <div class="ftype" aria-hidden="true">HEIC</div>
@@ -92,9 +92,9 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
       </div>
       <aside class="anno" aria-label="Design notes">
         <h3>Network — this batch</h3>
-        <div class="net">POST /api/staff/files?purpose=ClinicalPhoto<br>&nbsp;&nbsp;wound-left-flank.jpg · 201<br><span style="color:var(--ink-faint)">— nothing else sent —</span></div>
+        <div class="net">POST /api/staff/files?purpose=ProductImage<br>&nbsp;&nbsp;mango-crate-front.jpg · 201<br><span style="color:var(--ink-faint)">— nothing else sent —</span></div>
         <h3>Live region (polite)</h3>
-        <div class="live">"wound-scan-fullres.png not uploaded: that file is 22.8 MB. The largest allowed here is 15 MB."<br>"IMG_2231.HEIC not uploaded: it is a HEIC file…"<br>"wound-left-flank.jpg uploaded."</div>
+        <div class="live">"mango-orchard-fullres.png not uploaded: that file is 22.8 MB. The largest allowed here is 5 MB."<br>"IMG_2231.HEIC not uploaded: it is a HEIC file…"<br>"mango-crate-front.jpg uploaded."</div>
         <h3>What this board shows</h3>
         <ul>
           <li>§8.2 sentences, word for word, with the real size and the purpose's own cap and list.</li>

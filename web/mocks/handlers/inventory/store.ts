@@ -10,7 +10,7 @@ import type {
   BatchStatusChange,
   LedgerEntry,
 } from '@/lib/api/inventory-stock';
-import type { GoodsReceiptDetail } from '@/lib/api/inventory-receipts';
+import type { GoodsReceiptDetail, GoodsReceiptDraftLine } from '@/lib/api/inventory-receipts';
 import type {
   AdjustmentDetail,
   CountDetail,
@@ -37,11 +37,12 @@ import {
  * kept simple and always-fresh in Vitest.
  */
 
-const PERSIST_KEY = '__purrcare_inventory_mock_db__';
+// HO-P5 S3: bumped (v2) so a browser's stale copy does not lack the receipt drafts.
+const PERSIST_KEY = '__amargram_inventory_mock_db__v2';
 
 export const staffNames: Record<string, string> = {
   [accountsFixtureIds.adminStaffId]: 'Rezwan Ahmed',
-  [accountsFixtureIds.nurseStaffId]: 'Nadia Karim',
+  [accountsFixtureIds.stockStaffId]: 'Nadia Karim',
 };
 export const ACTOR_ID = accountsFixtureIds.adminStaffId;
 
@@ -120,6 +121,24 @@ export interface MLedger extends LedgerEntry {
   branchId: string;
 }
 
+/** HO-P5 BG-18 -- a goods-receipt draft as the server keeps it (`GoodsReceiptDraftAggregate`). */
+export interface MDraft {
+  draftId: string;
+  ownerId: string;
+  branchId: string;
+  supplierId: string | null;
+  purchaseOrderId: string | null;
+  consignmentId: string | null;
+  deliveryReference: string | null;
+  receivedOn: string | null;
+  note: string | null;
+  version: number;
+  updatedOn: string;
+  /** Open until a receipt is posted from it or the owner discards it; a closed draft can never be saved again. */
+  status: 'Open' | 'Posted' | 'Discarded';
+  lines: GoodsReceiptDraftLine[];
+}
+
 export interface MockDb {
   seq: number;
   locations: Array<StockLocation & { branchId: string }>;
@@ -150,6 +169,7 @@ export interface MockDb {
     preferredSupplierId: string | null;
     isDefaulted: boolean;
   }>;
+  receiptDrafts: MDraft[];
 }
 
 const LOCATION_MOVEMENTS: Record<StockLocation['kind'], string[]> = {
@@ -174,29 +194,6 @@ const LOCATION_MOVEMENTS: Record<StockLocation['kind'], string[]> = {
     'CountLoss',
     'Wastage',
     'Sale',
-  ],
-  ClinicDispensary: [
-    'Receipt',
-    'TransferIn',
-    'TransferOut',
-    'AdjustmentIn',
-    'AdjustmentOut',
-    'CountGain',
-    'CountLoss',
-    'Wastage',
-    'Dispense',
-    'ClinicalUse',
-  ],
-  BoardingStore: [
-    'Receipt',
-    'TransferIn',
-    'TransferOut',
-    'AdjustmentIn',
-    'AdjustmentOut',
-    'CountGain',
-    'CountLoss',
-    'Wastage',
-    'BoardingUse',
   ],
   Quarantine: [
     'Receipt',
@@ -241,15 +238,15 @@ function seed(): MockDb {
     condition: 'Refrigerated' as const,
     minTemperatureC: 2,
     maxTemperatureC: 8,
-    handlingNotes: 'Keep in the dispensary fridge. Do not freeze.',
+    handlingNotes: 'Keep in the cold-store fridge. Do not freeze.',
   };
 
   const skus: SkuLookup[] = [
     {
       skuId: ids.foodSkuId,
       productId: 'f2000000-0000-4000-8000-000000000001',
-      skuCode: 'FD-KDC-2KG',
-      displayName: 'Kitten dry food, chicken 2 kg',
+      skuCode: 'FD-RCE-5KG',
+      displayName: 'Organic rice 5 kg',
       barcode: ids.foodBarcode,
       stockClass: 'Food',
       expiryRequired: true,
@@ -260,12 +257,12 @@ function seed(): MockDb {
       storage: ambient,
     },
     {
-      skuId: ids.vaccineSkuId,
+      skuId: ids.chilledSkuId,
       productId: 'f2000000-0000-4000-8000-000000000002',
-      skuCode: 'MED-FVX-TRI',
-      displayName: 'Feline tricat vaccine',
-      barcode: ids.vaccineBarcode,
-      stockClass: 'Medicine',
+      skuCode: 'FD-MLK-LSE',
+      displayName: 'Fresh cow milk',
+      barcode: ids.chilledBarcode,
+      stockClass: 'Food',
       expiryRequired: true,
       stockUnit: 'ml',
       allowsFractionalQuantity: true,
@@ -274,10 +271,10 @@ function seed(): MockDb {
       storage: fridge,
     },
     {
-      skuId: ids.litterSkuId,
+      skuId: ids.bagSkuId,
       productId: 'f2000000-0000-4000-8000-000000000003',
-      skuCode: 'GEN-LTR-5L',
-      displayName: 'Cat litter, clumping 5 L',
+      skuCode: 'GEN-JUT-BAG',
+      displayName: 'Jute shopping bag, large',
       barcode: '8901234567890',
       stockClass: 'General',
       expiryRequired: false,
@@ -291,7 +288,7 @@ function seed(): MockDb {
       skuId: ids.wetFoodSkuId,
       productId: 'f2000000-0000-4000-8000-000000000004',
       skuCode: 'FD-ADT-POUCH',
-      displayName: 'Adult wet food pouches, tuna',
+      displayName: 'Sundarban honey, 500 g jar',
       barcode: '4000000000017',
       stockClass: 'Food',
       expiryRequired: true,
@@ -339,7 +336,7 @@ function seed(): MockDb {
   const recall: BatchRecall = {
     recallNumber: 'RCL-2026-000001',
     reason: 'Supplier notice: possible contamination in lot L7702R.',
-    customerAdvice: 'Stop using this vaccine lot and contact the clinic for a replacement dose.',
+    customerAdvice: 'Stop using this milk lot and return it to the shop for a refund.',
     declaredOn: instantOffset(-2, 10),
     declaredBy: ACTOR_ID,
     notifiedOn: none,
@@ -377,12 +374,12 @@ function seed(): MockDb {
         },
       ],
     }),
-    batch(ids.batchVaccineId, ids.vaccineSkuId, 'L7701V', 60, 'Available', {
+    batch(ids.batchChilledId, ids.chilledSkuId, 'L7701V', 60, 'Available', {
       purchaseUnitCost: 30.5,
       unitCostBase: 30.5,
       originCountryCode: 'US',
     }),
-    batch(ids.batchRecalledId, ids.vaccineSkuId, 'L7702R', 30, 'Recalled', {
+    batch(ids.batchRecalledId, ids.chilledSkuId, 'L7702R', 30, 'Recalled', {
       statusReason: 'Recalled',
       recall,
       recallStatus: 'Active',
@@ -399,12 +396,12 @@ function seed(): MockDb {
         },
       ],
     }),
-    batch(ids.batchLitterId, ids.litterSkuId, 'LTR-0912', null, 'Available', {
+    batch(ids.batchBagId, ids.bagSkuId, 'LTR-0912', null, 'Available', {
       purchaseUnitCost: 800,
       unitCostBase: 800,
       originCountryCode: 'TH',
     }),
-    batch(ids.batchWrittenOffId, ids.litterSkuId, 'LTR-0801', null, 'WrittenOff', {
+    batch(ids.batchWrittenOffId, ids.bagSkuId, 'LTR-0801', null, 'WrittenOff', {
       statusReason: 'Water damage',
       purchaseUnitCost: 800,
       unitCostBase: 800,
@@ -436,10 +433,10 @@ function seed(): MockDb {
     { batchId: ids.batchFoodTodayId, locationId: ids.shopFloorId, onHand: 3, reserved: 0 },
     { batchId: ids.batchFoodExpiredId, locationId: ids.warehouseId, onHand: 4, reserved: 0 },
     { batchId: ids.batchFoodQuarantinedId, locationId: ids.warehouseId, onHand: 5, reserved: 0 },
-    { batchId: ids.batchVaccineId, locationId: ids.dispensaryId, onHand: 50.5, reserved: 5 },
-    { batchId: ids.batchRecalledId, locationId: ids.dispensaryId, onHand: 20, reserved: 0 },
-    { batchId: ids.batchRecalledId, locationId: ids.boardingStoreId, onHand: 10, reserved: 0 },
-    { batchId: ids.batchLitterId, locationId: ids.shopFloorId, onHand: 40, reserved: 0 },
+    { batchId: ids.batchChilledId, locationId: ids.coldStoreId, onHand: 50.5, reserved: 5 },
+    { batchId: ids.batchRecalledId, locationId: ids.coldStoreId, onHand: 20, reserved: 0 },
+    { batchId: ids.batchRecalledId, locationId: ids.backStoreId, onHand: 10, reserved: 0 },
+    { batchId: ids.batchBagId, locationId: ids.shopFloorId, onHand: 40, reserved: 0 },
     { batchId: ids.batchWetFoodId, locationId: ids.warehouseId, onHand: 8, reserved: 0 },
     { batchId: ids.batchWetFoodId, locationId: ids.quarantineId, onHand: 6, reserved: 0 },
     { batchId: ids.batchLondonId, locationId: ids.londonWarehouseId, onHand: 12, reserved: 0 },
@@ -464,13 +461,13 @@ function seed(): MockDb {
     cancellationReason: null,
     clearedOn: null,
     version: 1,
-    hsCodes: [{ code: '2309.10', description: 'Dog or cat food, retail packs' }],
+    hsCodes: [{ code: '1006.30', description: 'Rice, semi-milled or wholly milled' }],
     purchaseOrders: [
       {
         id: ids.poPartId,
         number: 'PO-2026-000001',
         supplierId: ids.supplierId,
-        supplierName: 'Meridian Pet Supplies Ltd',
+        supplierName: 'Meridian Organic Supplies Ltd',
         status: 'Issued',
       },
     ],
@@ -512,7 +509,7 @@ function seed(): MockDb {
     lines: [
       {
         batchId: ids.batchFoodFarId,
-        skuCode: 'FD-KDC-2KG',
+        skuCode: 'FD-RCE-5KG',
         lotNumber: 'L2409E',
         quantity: '30',
         purchaseCostBase: money(13500),
@@ -521,7 +518,7 @@ function seed(): MockDb {
       },
       {
         batchId: ids.batchFoodSoonId,
-        skuCode: 'FD-KDC-2KG',
+        skuCode: 'FD-RCE-5KG',
         lotNumber: 'L2408B',
         quantity: '30',
         purchaseCostBase: money(13500),
@@ -682,7 +679,7 @@ function seed(): MockDb {
         },
         {
           lineId: ids.poPartLine2Id,
-          skuId: ids.litterSkuId,
+          skuId: ids.bagSkuId,
           orderedQuantity: 50,
           acceptedQuantity: 0,
           rejectedQuantity: 0,
@@ -705,7 +702,7 @@ function seed(): MockDb {
       deliverToLocationId: ids.warehouseId,
       currencyCode: 'USD',
       expectedDeliveryOn: dateOffset(20),
-      notes: 'Vaccine order, cold chain',
+      notes: 'Dairy order, cold chain',
       status: 'Issued',
       statusReason: null,
       issuedOn: instantOffset(-2),
@@ -713,7 +710,7 @@ function seed(): MockDb {
       lines: [
         {
           lineId: 'd2000000-0000-4000-8000-000000000003',
-          skuId: ids.vaccineSkuId,
+          skuId: ids.chilledSkuId,
           orderedQuantity: 200.5,
           acceptedQuantity: 0,
           rejectedQuantity: 0,
@@ -738,7 +735,7 @@ function seed(): MockDb {
       lines: [
         {
           lineId: 'd2000000-0000-4000-8000-000000000004',
-          skuId: ids.litterSkuId,
+          skuId: ids.bagSkuId,
           orderedQuantity: 60,
           acceptedQuantity: 0,
           rejectedQuantity: 0,
@@ -763,7 +760,7 @@ function seed(): MockDb {
       lines: [
         {
           lineId: 'd2000000-0000-4000-8000-000000000005',
-          skuId: ids.litterSkuId,
+          skuId: ids.bagSkuId,
           orderedQuantity: 40,
           acceptedQuantity: 30,
           rejectedQuantity: 0,
@@ -816,7 +813,7 @@ function seed(): MockDb {
       'Receipt',
       ids.batchFoodFarId,
       ids.foodSkuId,
-      'FD-KDC-2KG',
+      'FD-RCE-5KG',
       'L2409E',
       ids.warehouseId,
       'WH1',
@@ -828,7 +825,7 @@ function seed(): MockDb {
       'Receipt',
       ids.batchFoodSoonId,
       ids.foodSkuId,
-      'FD-KDC-2KG',
+      'FD-RCE-5KG',
       'L2408B',
       ids.warehouseId,
       'WH1',
@@ -840,7 +837,7 @@ function seed(): MockDb {
       'Sale',
       ids.batchFoodFarId,
       ids.foodSkuId,
-      'FD-KDC-2KG',
+      'FD-RCE-5KG',
       'L2409E',
       ids.shopFloorId,
       'SHOP',
@@ -856,19 +853,19 @@ function seed(): MockDb {
     ),
     ledgerBase(
       4,
-      'Dispense',
-      ids.batchVaccineId,
-      ids.vaccineSkuId,
-      'MED-FVX-TRI',
+      'Sale',
+      ids.batchChilledId,
+      ids.chilledSkuId,
+      'FD-MLK-LSE',
       'L7701V',
-      ids.dispensaryId,
-      'DISP',
+      ids.coldStoreId,
+      'COLD',
       -1.5,
       'ml',
       {
-        referenceKind: 'Prescription',
+        referenceKind: 'PosSale',
         referenceId: 'a3000000-0000-4000-8000-000000000002',
-        referenceLabel: 'RX-2026-000045',
+        referenceLabel: 'Counter sale POS-2026-000045',
       },
     ),
   ];
@@ -903,8 +900,8 @@ function seed(): MockDb {
   const alerts: MAlert[] = [
     alert(ids.alertExpiryId, 'ExpiryThreshold', 'Open', {
       skuId: ids.foodSkuId,
-      skuCode: 'FD-KDC-2KG',
-      displayName: 'Kitten dry food, chicken 2 kg',
+      skuCode: 'FD-RCE-5KG',
+      displayName: 'Organic rice 5 kg',
       batchId: ids.batchFoodSoonId,
       lotNumber: 'L2408B',
       thresholdDays: 60,
@@ -912,8 +909,8 @@ function seed(): MockDb {
     }),
     alert('a2000000-0000-4000-8000-000000000002', 'Expired', 'Open', {
       skuId: ids.foodSkuId,
-      skuCode: 'FD-KDC-2KG',
-      displayName: 'Kitten dry food, chicken 2 kg',
+      skuCode: 'FD-RCE-5KG',
+      displayName: 'Organic rice 5 kg',
       batchId: ids.batchFoodExpiredId,
       lotNumber: 'L2405Z',
       quantityAtRaise: '4',
@@ -921,23 +918,23 @@ function seed(): MockDb {
     alert('a2000000-0000-4000-8000-000000000003', 'LowStock', 'Open', {
       skuId: ids.wetFoodSkuId,
       skuCode: 'FD-ADT-POUCH',
-      displayName: 'Adult wet food pouches, tuna',
+      displayName: 'Sundarban honey, 500 g jar',
       locationId: ids.warehouseId,
       locationCode: 'WH1',
       quantityAtRaise: '8',
     }),
     alert('a2000000-0000-4000-8000-000000000004', 'Shortfall', 'Acknowledged', {
       skuId: ids.foodSkuId,
-      skuCode: 'FD-KDC-2KG',
-      displayName: 'Kitten dry food, chicken 2 kg',
+      skuCode: 'FD-RCE-5KG',
+      displayName: 'Organic rice 5 kg',
       locationId: ids.shopFloorId,
       locationCode: 'SHOP',
       acknowledgedBy: ACTOR_ID,
       acknowledgedOn: instantOffset(-2),
     }),
     alert('a2000000-0000-4000-8000-000000000005', 'StorageBreach', 'Open', {
-      locationId: ids.dispensaryId,
-      locationCode: 'DISP',
+      locationId: ids.coldStoreId,
+      locationCode: 'COLD',
     }),
     alert('a2000000-0000-4000-8000-000000000006', 'LedgerMismatch', 'Resolved', {
       resolvedOn: instantOffset(-1),
@@ -950,10 +947,10 @@ function seed(): MockDb {
       branchId: ids.mainBranchId,
       summary: {
         id: ids.breachId,
-        locationId: ids.dispensaryId,
-        locationCode: 'DISP',
+        locationId: ids.coldStoreId,
+        locationCode: 'COLD',
         observedOn: instantOffset(-1, 7),
-        condition: 'Dispensary fridge door left open overnight',
+        condition: 'Cold-store fridge door left open overnight',
         status: 'Open',
         affectedBatchCount: 2,
         reportedBy: ACTOR_ID,
@@ -963,16 +960,16 @@ function seed(): MockDb {
       durationMinutes: 240,
       affectedBatches: [
         {
-          batchId: ids.batchVaccineId,
-          skuCode: 'MED-FVX-TRI',
-          displayName: 'Feline tricat vaccine',
+          batchId: ids.batchChilledId,
+          skuCode: 'FD-MLK-LSE',
+          displayName: 'Fresh cow milk',
           lotNumber: 'L7701V',
           heldAtLocation: '50.5',
         },
         {
           batchId: ids.batchRecalledId,
-          skuCode: 'MED-FVX-TRI',
-          displayName: 'Feline tricat vaccine',
+          skuCode: 'FD-MLK-LSE',
+          displayName: 'Fresh cow milk',
           lotNumber: 'L7702R',
           heldAtLocation: '20',
         },
@@ -1036,17 +1033,11 @@ function seed(): MockDb {
     null,
     { isAnonymised: true },
   );
-  const cat = (id: string, name: string, owner: ReturnType<typeof customer>) => ({
-    catId: id,
-    name,
-    currentOwner: owner,
-  });
-
   const recallTrace: RecallTrace = {
     batchId: ids.batchRecalledId,
     recallNumber: 'RCL-2026-000001',
-    skuCode: 'MED-FVX-TRI',
-    displayName: 'Feline tricat vaccine',
+    skuCode: 'FD-MLK-LSE',
+    displayName: 'Fresh cow milk',
     lotNumber: 'L7702R',
     batchStatus: 'Recalled',
     received: [
@@ -1054,56 +1045,46 @@ function seed(): MockDb {
         occurredOn: instantOffset(-12),
         kind: 'Sale',
         quantity: '2',
-        locationId: ids.dispensaryId,
-        locationCode: 'DISP',
+        locationId: ids.coldStoreId,
+        locationCode: 'COLD',
         referenceLabel: 'Order PC-001234',
         customer: nusrat,
-        cat: cat('c3000000-0000-4000-8000-000000000001', 'Mishti', nusrat),
-        householdCats: [],
       },
       {
         occurredOn: instantOffset(-9),
-        kind: 'Dispense',
+        kind: 'Sale',
         quantity: '1.5',
-        locationId: ids.dispensaryId,
-        locationCode: 'DISP',
-        referenceLabel: 'RX-2026-000045',
+        locationId: ids.coldStoreId,
+        locationCode: 'COLD',
+        referenceLabel: 'Counter sale POS-2026-000045',
         customer: karim,
-        cat: cat('c3000000-0000-4000-8000-000000000002', 'Tiger', karim),
-        householdCats: [],
       },
       {
         occurredOn: instantOffset(-6),
-        kind: 'BoardingUse',
+        kind: 'Sale',
         quantity: '1',
-        locationId: ids.boardingStoreId,
-        locationCode: 'BOARD',
-        referenceLabel: 'Stay BR-2026-000009',
+        locationId: ids.backStoreId,
+        locationCode: 'BACK',
+        referenceLabel: 'Order PC-001238',
         customer: anika,
-        cat: cat('c3000000-0000-4000-8000-000000000003', 'Luna', anika),
-        householdCats: [],
       },
       {
         occurredOn: instantOffset(-5),
         kind: 'Sale',
         quantity: '3',
-        locationId: ids.dispensaryId,
-        locationCode: 'DISP',
+        locationId: ids.coldStoreId,
+        locationCode: 'COLD',
         referenceLabel: 'Order PC-001240',
         customer: survivor,
-        cat: null,
-        householdCats: ['Pepper', 'Biscuit'],
       },
       {
         occurredOn: instantOffset(-4),
         kind: 'Sale',
         quantity: '1',
-        locationId: ids.dispensaryId,
-        locationCode: 'DISP',
+        locationId: ids.coldStoreId,
+        locationCode: 'COLD',
         referenceLabel: 'Order PC-001241',
         customer: anonymised,
-        cat: null,
-        householdCats: [],
       },
     ],
     returned: [
@@ -1121,20 +1102,19 @@ function seed(): MockDb {
         referenceId: 'a3000000-0000-4000-8000-000000000006',
         quantity: '2',
         customer: karim,
-        cat: cat('c3000000-0000-4000-8000-000000000002', 'Tiger', karim),
       },
     ],
     unidentified: { count: 3, quantity: '6' },
     stockHeld: [
       {
-        locationId: ids.dispensaryId,
-        locationCode: 'DISP',
+        locationId: ids.coldStoreId,
+        locationCode: 'COLD',
         branchId: ids.mainBranchId,
         onHand: '20',
       },
       {
-        locationId: ids.boardingStoreId,
-        locationCode: 'BOARD',
+        locationId: ids.backStoreId,
+        locationCode: 'BACK',
         branchId: ids.mainBranchId,
         onHand: '10',
       },
@@ -1150,7 +1130,7 @@ function seed(): MockDb {
     receivedOn: instantOffset(-10),
     receivedBy: ACTOR_ID,
     supplierId: ids.supplierId,
-    supplierName: 'Meridian Pet Supplies Ltd',
+    supplierName: 'Meridian Organic Supplies Ltd',
     purchaseOrderId: ids.poPartId,
     purchaseOrderNumber: 'PO-2026-000001',
     consignmentId: ids.consignmentClearedId,
@@ -1160,8 +1140,8 @@ function seed(): MockDb {
       {
         lineId: 'b2000000-0000-4000-8000-000000000001',
         skuId: ids.foodSkuId,
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food, chicken 2 kg',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice 5 kg',
         stockUnit: 'bags',
         lotNumber: 'L2409E',
         manufacturedOn: dateOffset(-60),
@@ -1181,8 +1161,8 @@ function seed(): MockDb {
       {
         lineId: 'b2000000-0000-4000-8000-000000000002',
         skuId: ids.foodSkuId,
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food, chicken 2 kg',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice 5 kg',
         stockUnit: 'bags',
         lotNumber: 'L2408B',
         manufacturedOn: dateOffset(-70),
@@ -1218,8 +1198,8 @@ function seed(): MockDb {
       {
         lineId: 'b3000000-0000-4000-8000-000000000001',
         skuId: ids.foodSkuId,
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food, chicken 2 kg',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice 5 kg',
         batchId: ids.batchFoodFarId,
         lotNumber: 'L2409E',
         quantity: '6',
@@ -1239,7 +1219,7 @@ function seed(): MockDb {
     stockUnit: sku.stockUnit,
     unitCostBase: { amount: cost.toFixed(4), currencyCode: MOCK_BASE_CURRENCY },
   });
-  const [foodSku, vaccineSku] = [skus[0]!, skus[1]!];
+  const [foodSku, chilledSku] = [skus[0]!, skus[1]!];
 
   const adjustments: MockDb['adjustments'] = [
     {
@@ -1264,7 +1244,7 @@ function seed(): MockDb {
     },
     {
       _branchId: ids.mainBranchId,
-      _requesterId: accountsFixtureIds.nurseStaffId,
+      _requesterId: accountsFixtureIds.stockStaffId,
       id: ids.adjustmentPendingId,
       number: 'ADJ-2026-000002',
       branchId: ids.mainBranchId,
@@ -1274,7 +1254,7 @@ function seed(): MockDb {
       note: 'Pallet short on the monthly check; security informed.',
       status: 'PendingApproval',
       valueBase: money(18500),
-      requestedBy: accountsFixtureIds.nurseStaffId,
+      requestedBy: accountsFixtureIds.stockStaffId,
       requestedOn: instantOffset(-1),
       decidedBy: null,
       decidedOn: null,
@@ -1285,22 +1265,22 @@ function seed(): MockDb {
     {
       _branchId: ids.mainBranchId,
       _staleOnApprove: true,
-      _requesterId: accountsFixtureIds.nurseStaffId,
+      _requesterId: accountsFixtureIds.stockStaffId,
       id: ids.adjustmentStaleId,
       number: 'ADJ-2026-000003',
       branchId: ids.mainBranchId,
-      locationId: ids.dispensaryId,
-      locationCode: 'DISP',
+      locationId: ids.coldStoreId,
+      locationCode: 'COLD',
       reason: 'Expired',
       note: 'Opened vials past their date.',
       status: 'PendingApproval',
       valueBase: money(12200),
-      requestedBy: accountsFixtureIds.nurseStaffId,
+      requestedBy: accountsFixtureIds.stockStaffId,
       requestedOn: instantOffset(-2),
       decidedBy: null,
       decidedOn: null,
       decisionNote: null,
-      lines: [adjLine(ids.batchVaccineId, vaccineSku, 'L7701V', '-40', 30.5)],
+      lines: [adjLine(ids.batchChilledId, chilledSku, 'L7701V', '-40', 30.5)],
       allowedActions: ['approve', 'reject', 'withdraw'],
     },
   ];
@@ -1359,7 +1339,7 @@ function seed(): MockDb {
         lines: [
           {
             skuId: ids.foodSkuId,
-            skuCode: 'FD-KDC-2KG',
+            skuCode: 'FD-RCE-5KG',
             displayName: foodSku.displayName,
             batchId: ids.batchFoodSoonId,
             lotNumber: 'L2408B',
@@ -1371,7 +1351,7 @@ function seed(): MockDb {
           },
           {
             skuId: ids.foodSkuId,
-            skuCode: 'FD-KDC-2KG',
+            skuCode: 'FD-RCE-5KG',
             displayName: foodSku.displayName,
             batchId: ids.batchFoodFarId,
             lotNumber: 'L2409E',
@@ -1414,10 +1394,10 @@ function seed(): MockDb {
         willNeedApproval: true,
         lines: [
           {
-            skuId: ids.vaccineSkuId,
-            skuCode: 'MED-FVX-TRI',
-            displayName: vaccineSku.displayName,
-            batchId: ids.batchVaccineId,
+            skuId: ids.chilledSkuId,
+            skuCode: 'FD-MLK-LSE',
+            displayName: chilledSku.displayName,
+            batchId: ids.batchChilledId,
             lotNumber: 'L7701V',
             stockUnit: 'ml',
             bookQuantity: '50.5',
@@ -1430,18 +1410,18 @@ function seed(): MockDb {
       id: ids.countApprovalId,
       number: 'CNT-2026-000003',
       branchId: ids.mainBranchId,
-      locationId: ids.dispensaryId,
-      locationCode: 'DISP',
+      locationId: ids.coldStoreId,
+      locationCode: 'COLD',
       scope: 'FullLocation',
       skuIds: [],
       status: 'AwaitingApproval',
       openedOn: instantOffset(-3, 8),
-      openedBy: accountsFixtureIds.nurseStaffId,
+      openedBy: accountsFixtureIds.stockStaffId,
       submittedOn: instantOffset(-3, 12),
       varianceValueBase: money(-9150),
       isBlind: false,
       lines: [
-        countLine(vaccineSku, ids.batchVaccineId, 'L7701V', dateOffset(60), '20.5', '50.5', '-30'),
+        countLine(chilledSku, ids.batchChilledId, 'L7701V', dateOffset(60), '20.5', '50.5', '-30'),
       ],
       allowedActions: ['approve', 'reject'],
       version: 5,
@@ -1453,8 +1433,8 @@ function seed(): MockDb {
     locations: [
       location(ids.mainBranchId, ids.warehouseId, 'WH1', 'Main warehouse', 'Warehouse'),
       location(ids.mainBranchId, ids.shopFloorId, 'SHOP', 'Shop floor', 'ShopFloor'),
-      location(ids.mainBranchId, ids.dispensaryId, 'DISP', 'Clinic dispensary', 'ClinicDispensary'),
-      location(ids.mainBranchId, ids.boardingStoreId, 'BOARD', 'Boarding store', 'BoardingStore'),
+      location(ids.mainBranchId, ids.coldStoreId, 'COLD', 'Cold store', 'Warehouse'),
+      location(ids.mainBranchId, ids.backStoreId, 'BACK', 'Back store', 'Warehouse'),
       location(ids.mainBranchId, ids.quarantineId, 'QRN', 'Quarantine shelf', 'Quarantine'),
       location(ids.londonBranchId, ids.londonWarehouseId, 'LWH', 'London warehouse', 'Warehouse'),
       location(
@@ -1471,8 +1451,8 @@ function seed(): MockDb {
       [skus[1]!.productId]: { productId: skus[1]!.productId, storage: fridge, version: 2 },
     },
     suppliers: [
-      supplier(ids.supplierId, 'MERIDIAN', 'Meridian Pet Supplies Ltd', 'DE', 'BDT', 14, true),
-      supplier(ids.supplier2Id, 'VETPHARMA', 'VetPharma Distribution', 'US', 'USD', 21, true),
+      supplier(ids.supplierId, 'MERIDIAN', 'Meridian Organic Supplies Ltd', 'DE', 'BDT', 14, true),
+      supplier(ids.supplier2Id, 'AGRONEXUS', 'AgroNexus Distribution', 'US', 'USD', 21, true),
       supplier(ids.inactiveSupplierId, 'OLDCO', 'Old Co Imports', 'TH', 'BDT', 30, false),
     ],
     purchaseOrders,
@@ -1515,6 +1495,24 @@ function seed(): MockDb {
         reorderQuantity: null,
         preferredSupplierId: null,
         isDefaulted: true,
+      },
+    ],
+    // HO-P5 BG-18: one open draft that is ANOTHER staff member's -- the signed-in caller never lists it and gets a 404 for it.
+    receiptDrafts: [
+      {
+        draftId: ids.otherStaffDraftId,
+        ownerId: accountsFixtureIds.stockStaffId,
+        branchId: ids.mainBranchId,
+        supplierId: ids.supplierId,
+        purchaseOrderId: null,
+        consignmentId: null,
+        deliveryReference: 'NADIA-DRAFT',
+        receivedOn: null,
+        note: null,
+        version: 3,
+        updatedOn: instantOffset(-2),
+        status: 'Open',
+        lines: [],
       },
     ],
   };

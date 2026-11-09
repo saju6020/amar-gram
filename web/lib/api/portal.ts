@@ -6,7 +6,7 @@ import { apiFetch } from './client';
  * differ the merged code wins — recorded in HO-POR-002 §1 Amended 2026-10-13 and ADR-FE-126.
  *
  * Differences that shape these types:
- *  - the dashboard has NO `stays` and NO `subscriptions` key (owner skipped BRD and SUB). Every
+ *  - the dashboard carries only customer, orders and balances, and NO `subscriptions` key. Every
  *    section key is optional here because a missing key means "not delivered yet" — never empty,
  *    never unavailable;
  *  - `Unavailable` carries `data: null`;
@@ -30,72 +30,6 @@ export interface PortalMoney {
 
 export interface PortalCustomer {
   fullName: string;
-}
-
-export type VaccinationOverallStatus = 'Current' | 'DueSoon' | 'Overdue';
-
-export interface PortalVaccination {
-  overallStatus: VaccinationOverallStatus;
-  earliestNextDueOn: string | null;
-  bookingEligible: boolean;
-}
-
-export interface PortalCatItem {
-  catId: string;
-  name: string;
-  isHighRisk: boolean;
-  /** Per-cat degradation: `Unavailable` means this cat's vaccination could not be read. */
-  vaccinationState: PortalSectionState;
-  vaccination: PortalVaccination | null;
-}
-
-export interface PortalCats {
-  hasCats: boolean;
-  hasMore: boolean;
-  items: PortalCatItem[];
-}
-
-export interface PortalAppointmentItem {
-  appointmentId: string;
-  catId: string;
-  catName: string;
-  serviceName: string;
-  startsOn: string | null;
-  endsOn: string | null;
-  performerName: string | null;
-  branchName: string;
-  branchTimeZoneId: string;
-  status: string;
-}
-
-export interface PortalAppointments {
-  items: PortalAppointmentItem[];
-}
-
-export interface PortalVisitItem {
-  visitId: string;
-  catId: string;
-  catName: string;
-  visitedOn: string;
-  serviceName: string;
-  vetName: string;
-  hasDischargeSummary: boolean;
-  followUpOn: string | null;
-}
-
-export interface PortalVisits {
-  items: PortalVisitItem[];
-}
-
-export interface PortalPrescriptionCat {
-  catId: string;
-  catName: string;
-  activeCount: number;
-  earliestEndsOn: string | null;
-}
-
-export interface PortalPrescriptions {
-  byCat: PortalPrescriptionCat[];
 }
 
 export interface PortalOrderItem {
@@ -139,11 +73,7 @@ export interface PortalBalances {
 export interface PortalDashboard {
   generatedOn: string;
   customer?: PortalSection<PortalCustomer>;
-  cats?: PortalSection<PortalCats>;
-  appointments?: PortalSection<PortalAppointments>;
   balances?: PortalSection<PortalBalances>;
-  visits?: PortalSection<PortalVisits>;
-  prescriptions?: PortalSection<PortalPrescriptions>;
   orders?: PortalSection<PortalOrders>;
 }
 

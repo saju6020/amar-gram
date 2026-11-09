@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main hasdlg">
     <div class="titlerow"><div><h1 class="h1">Draft invoice — Farhana Yasmin</h1><p class="sub">5 charges selected · 500 loyalty points redeemed</p></div></div>
     <div class="card" style="height:640px"></div>
@@ -114,15 +114,15 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <p class="statelabel">Add manual charge</p>
       <div class="dialog" role="dialog" aria-labelledby="mc-t">
         <h2 id="mc-t">Add a manual charge</h2>
-        <div class="seg" role="radiogroup" aria-label="Charge type"><span role="radio" aria-checked="false">Service</span><span class="on" role="radio" aria-checked="true">Fee</span></div>
-        <div class="field"><label for="mc-d">Description <span class="req" aria-hidden="true">*</span></label><input id="mc-d" value="After-hours surcharge"></div>
+        <div class="seg" role="radiogroup" aria-label="Charge type"><span role="radio" aria-checked="false">Product</span><span class="on" role="radio" aria-checked="true">Fee</span></div>
+        <div class="field"><label for="mc-d">Description <span class="req" aria-hidden="true">*</span></label><input id="mc-d" value="Express delivery fee"></div>
         <div class="two">
           <div class="field"><label for="mc-p">Unit price (৳) <span class="req" aria-hidden="true">*</span></label><input id="mc-p" value="500.00" inputmode="decimal"></div>
           <div class="field"><label for="mc-q">Quantity</label><input id="mc-q" value="1" inputmode="numeric"></div>
         </div>
-        <div class="field"><label for="mc-t2">Tax class <span class="req" aria-hidden="true">*</span></label><select id="mc-t2"><option>STD — Standard rate</option><option>ZERO — Zero-rated (medicine)</option></select></div>
-        <div class="field"><label for="mc-b">Business line</label><select id="mc-b"><option>Clinic</option><option>Shop</option><option>Boarding</option></select></div>
-        <p class="hint" style="margin:0">For a <b>Service</b>, pick it from the services list — its price is the server's current price and can't be typed.</p>
+        <div class="field"><label for="mc-t2">Tax class <span class="req" aria-hidden="true">*</span></label><select id="mc-t2"><option>STD — Standard rate</option><option>ZERO — Zero-rated (basic food)</option></select></div>
+        <div class="field"><label for="mc-b">Channel</label><select id="mc-b"><option>Online</option><option>Counter (POS)</option><option>Subscription</option></select></div>
+        <p class="hint" style="margin:0">For a <b>Product</b>, pick it from the product list — its price is the server's current price and can't be typed.</p>
         <div class="dactions"><button class="btn btn-sec" type="button">Cancel</button><button class="btn" type="button">Add to draft</button></div>
       </div>
     </div>
@@ -131,7 +131,7 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
       <p class="statelabel">Issue — confirm</p>
       <div class="dialog" role="alertdialog" aria-labelledby="is-t" aria-describedby="is-d">
         <h2 id="is-t">Issue this invoice?</h2>
-        <p id="is-d" style="font-size:14px;line-height:1.55;margin:0">Issue invoice for <b>৳10,228.57</b> to <b>Farhana Yasmin</b>? It gets the next Uttara number and can no longer be changed.</p>
+        <p id="is-d" style="font-size:14px;line-height:1.55;margin:0">Issue invoice for <b>৳10,228.57</b> to <b>Farhana Yasmin</b>? It gets the next Dhanmondi outlet number and can no longer be changed.</p>
         <div class="consequence">Tax is fixed at today's rates (STD 15%, ZERO 0%). 500 loyalty points are redeemed. Mistakes after this are corrected with a credit note, never an edit.</div>
         <div class="dactions"><button class="btn btn-sec" type="button">Go back</button><button class="btn" type="button">Issue invoice</button></div>
       </div>
@@ -148,11 +148,11 @@ tr.total td{font-weight:700;background:var(--surface-sunken)}
         <h2 id="dd-t">Discard this draft?</h2>
         <p style="font-size:14px;line-height:1.55;margin:0">These 5 charges go back to Farhana Yasmin's unbilled list:</p>
         <ul class="cl">
-          <li>Standard consultation — Luna</li>
-          <li>Vaccination — FVRCP booster, Luna</li>
-          <li>Meloxicam oral suspension, 10 ml</li>
-          <li>Royal Canin Indoor 27, 2 kg</li>
-          <li>Standard suite — Milo × 3</li>
+          <li>Red lentils 1 kg × 5</li>
+          <li>Cold-pressed mustard oil 1 L × 4</li>
+          <li>Turmeric powder 200 g × 3</li>
+          <li>Sundarbans wild honey 2 kg jar</li>
+          <li>Weekly organic veg box × 3</li>
         </ul>
         <div class="consequence">The 500 redeemed loyalty points are returned to her balance. No invoice number was used.</div>
         <div class="dactions"><button class="btn btn-sec" type="button">Keep draft</button><button class="btn btn-danger-solid" type="button">Discard draft</button></div>

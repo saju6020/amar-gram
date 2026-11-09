@@ -4,11 +4,11 @@ import { formatDateOnly } from './time';
  * `lib/format/inventory.ts` — HO-IMP-002 §8.4, ADR-FE-041/047. Stock display helpers.
  *
  * Quantities arrive as strings (`"12"`, `"0.5"`) with the stock unit beside them. Nothing here does
- * arithmetic on them: trimming is string surgery, and every quantity is returned WITH its unit
+ * arithmetic on them: trimming is string work, and every quantity is returned WITH its unit
  * (UI-8) — there is deliberately no helper that formats a bare number.
  */
 
-/** `"12.000"` -> `"12"`, `"0.500"` -> `"0.5"`, `"3"` -> `"3"`. String surgery only. */
+/** `"12.000"` -> `"12"`, `"0.500"` -> `"0.5"`, `"3"` -> `"3"`. String work only. */
 export function trimDecimalString(value: string): string {
   const trimmed = value.trim();
   if (!trimmed.includes('.')) return trimmed;

@@ -10,8 +10,7 @@ import { apiFetch } from './client';
  * nothing is computed (ADR-FE-131): a total, a coverage percentage and a default range all arrive
  * from the server.
  */
-export type ReportCategory =
-  'ClinicOperations' | 'Clinical' | 'Boarding' | 'Stock' | 'Sales' | 'Financial' | 'Growth';
+export type ReportCategory = 'Stock' | 'Sales' | 'Financial' | 'Growth';
 
 export type ReportKind = 'Period' | 'AsAt';
 

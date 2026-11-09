@@ -15,7 +15,7 @@ const replace = vi.fn();
 let search = '';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace, push: vi.fn() }),
-  usePathname: () => '/shop/products/royal-canin-kitten',
+  usePathname: () => '/shop/products/organic-rolled-oats',
   useSearchParams: () => new URLSearchParams(search),
 }));
 
@@ -48,7 +48,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
 
     await user.click(screen.getByRole('radio', { name: /2 kg/ }));
     expect(replace).toHaveBeenCalledWith(
-      `/shop/products/royal-canin-kitten?sku=${shopFixtureIds.skuKitten2kg}`,
+      `/shop/products/organic-rolled-oats?sku=${shopFixtureIds.skuOats2kg}`,
       {
         scroll: false,
       },
@@ -58,13 +58,13 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
     await user.click(screen.getByRole('radio', { name: /4 kg/ }));
     expect(buyBox().getByText('৳4,400.00')).toBeInTheDocument();
     // The 4 kg variant has its own image, shown first.
-    expect(screen.getAllByRole('img')[0]).toHaveAccessibleName('Royal Canin Kitten 4 kg bag');
+    expect(screen.getAllByRole('img')[0]).toHaveAccessibleName('Organic Rolled Oats 4 kg bag');
   });
 
   it('U-B2: an out-of-stock variant offers the alert while the others still read In stock', async () => {
     const user = userEvent.setup();
     purchase();
-    const selector = within(screen.getByRole('group', { name: 'Choose a size' }));
+    const selector = within(screen.getByRole('group', { name: 'Pack size' }));
     await user.click(screen.getByRole('radio', { name: /4 kg/ }));
 
     const buyBox = within(screen.getByRole('region', { name: 'Price and availability' }));
@@ -80,7 +80,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
   it('U-B2 (signed in): the alert is a button, and the request shows the channel', async () => {
     const user = userEvent.setup();
     signInForTest();
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten4kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats4kg);
     // The seeded session already has a PENDING alert for the 4 kg size.
     expect(await screen.findByText(/You.ll be told when it.s back/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel alert' }));
@@ -103,18 +103,18 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
   });
 
   it('U-B11: a guest clicking Save is sent to sign in with ?next= back to the same variant', async () => {
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats2kg);
     const link = await screen.findByRole('link', { name: 'Save' });
     expect(link).toHaveAttribute(
       'href',
-      `/sign-in?next=${encodeURIComponent(`/shop/products/royal-canin-kitten?sku=${shopFixtureIds.skuKitten2kg}`)}`,
+      `/sign-in?next=${encodeURIComponent(`/shop/products/organic-rolled-oats?sku=${shopFixtureIds.skuOats2kg}`)}`,
     );
   });
 
   it('a signed-in customer toggles Save / Saved (the label carries the state)', async () => {
     const user = userEvent.setup();
     signInForTest();
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats2kg);
     const button = await screen.findByRole('button', { name: 'Save' });
     // S15: the state is announced once, by the label, not also by aria-pressed.
     expect(button).not.toHaveAttribute('aria-pressed');
@@ -144,7 +144,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
         HttpResponse.json({ title: 'boom' }, { status: 500 }),
       ),
     );
-    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuKitten2kg);
+    purchase(shopFixtureIds.multiVariantSlug, shopFixtureIds.skuOats2kg);
     await user.click(await screen.findByRole('button', { name: 'Save' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
 
@@ -153,12 +153,12 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
   });
 
   it('S8: Back to a URL without ?sku= returns to the default variant', () => {
-    search = `sku=${shopFixtureIds.skuKitten2kg}`;
+    search = `sku=${shopFixtureIds.skuOats2kg}`;
     const detail = mockDetail(shopFixtureIds.multiVariantSlug);
     const { rerender } = renderWithClient(
       <ProductPurchase
         detail={detail}
-        initialSkuId={shopFixtureIds.skuKitten2kg}
+        initialSkuId={shopFixtureIds.skuOats2kg}
         lang=""
         heading={<h1>{detail.name}</h1>}
       />,
@@ -170,7 +170,7 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
     rerender(
       <ProductPurchase
         detail={detail}
-        initialSkuId={shopFixtureIds.skuKitten2kg}
+        initialSkuId={shopFixtureIds.skuOats2kg}
         lang=""
         heading={<h1>{detail.name}</h1>}
       />,
@@ -178,12 +178,12 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
     expect(price().getByText('৳650.00')).toBeInTheDocument();
   });
 
-  it('puts the Add to cart button in the action slot (HO-ORD-002)', () => {
+  it('puts the Add to basket button in the action slot (HO-ORD-002)', () => {
     const { container } = purchase();
     const slot = container.querySelector('[data-slot="buy-box-actions"]');
     expect(slot).toBeInTheDocument();
     expect(slot).not.toBeEmptyDOMElement();
-    expect(screen.getByRole('button', { name: /add to cart/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /add to basket/i })).toBeEnabled();
   });
 
   it('handles every SKU being out of stock (fail-closed availability) with honest messaging', () => {
@@ -204,16 +204,16 @@ describe('ProductPurchase — HO-SHP-002 §11.3', () => {
         heading={<h1>x</h1>}
       />,
     );
-    const group = within(screen.getByRole('group', { name: 'Choose a size' }));
+    const group = within(screen.getByRole('group', { name: 'Pack size' }));
     expect(group.getAllByText('Out of stock')).toHaveLength(3);
     expect(screen.getAllByText('Out of stock').length).toBeGreaterThan(3);
-    expect(screen.getByRole('button', { name: /add to cart/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /add to basket/i })).toBeDisabled();
     expect(screen.getByText('This variant is out of stock.')).toBeInTheDocument();
   });
 });
 
 describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
-  it('U-B4: ingredients as text, the analysis table with % in every cell, feeding guide, storage, origin', async () => {
+  it('U-B4: details as text (ingredients, certifications, certificate, storage) and the origin tab', async () => {
     const user = userEvent.setup();
     render(
       <ProductDetailsTabs
@@ -222,26 +222,20 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
       />,
     );
 
-    await user.click(screen.getByRole('tab', { name: 'Ingredients & analysis' }));
-    const panel = screen.getByRole('tabpanel', { name: 'Ingredients & analysis' });
-    expect(within(panel).getByText(/Dehydrated poultry protein/)).toBeInTheDocument();
-    const table = within(panel).getByRole('table', { name: 'Guaranteed analysis' });
-    const cells = within(table).getAllByRole('cell');
-    expect(cells).toHaveLength(4);
-    for (const cell of cells) expect(cell.textContent).toMatch(/%$/);
+    // HO-P3 S2: three tabs - Description, Origin & producer, Details.
+    await user.click(screen.getByRole('tab', { name: /^Details/ }));
+    const panel = screen.getByRole('tabpanel', { name: /^Details/ });
+    expect(within(panel).getByText(/Whole grain rolled oats/)).toBeInTheDocument();
+    expect(within(panel).getByText('Certified organic')).toBeInTheDocument();
+    expect(within(panel).getByText('Pesticide-free')).toBeInTheDocument();
+    expect(panel).toHaveTextContent('Organic certifier: Bangladesh Organic Council');
+    expect(panel).toHaveTextContent(/cool, dry place/);
+    expect(panel).toHaveTextContent('Shelf life: 12 months from packing');
 
-    await user.click(screen.getByRole('tab', { name: 'Feeding guide' }));
-    const feeding = screen.getByRole('tabpanel', { name: 'Feeding guide' });
-    expect(within(feeding).getByRole('heading', { name: 'Daily amounts' })).toBeInTheDocument();
-    expect(within(feeding).getByText('40 g').tagName).toBe('STRONG');
-
-    await user.click(screen.getByRole('tab', { name: 'Storage' }));
-    expect(screen.getByRole('tabpanel', { name: 'Storage' })).toHaveTextContent(/cool, dry place/);
-
-    await user.click(screen.getByRole('tab', { name: 'Origin' }));
-    const origin = screen.getByRole('tabpanel', { name: 'Origin' });
-    expect(origin).toHaveTextContent('Country of origin: Thailand');
-    expect(origin).toHaveTextContent('Manufacturer: Amar Gram Test Foods Ltd');
+    await user.click(screen.getByRole('tab', { name: 'Origin & producer' }));
+    const origin = screen.getByRole('tabpanel', { name: 'Origin & producer' });
+    expect(origin).toHaveTextContent('Country of origin: Bangladesh');
+    expect(origin).toHaveTextContent('Producer:');
     expect(within(origin).getByText('here').tagName).toBe('STRONG');
   });
 
@@ -250,13 +244,13 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
     render(<ProductDetailsTabs detail={mockDetail(shopFixtureIds.multiVariantSlug)} />);
     screen.getByRole('tab', { name: 'Description' }).focus();
     await user.keyboard('{ArrowRight}');
-    expect(screen.getByRole('tab', { name: 'Ingredients & analysis' })).toHaveFocus();
-    expect(screen.getByRole('tab', { name: 'Ingredients & analysis' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Origin & producer' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Origin & producer' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
     await user.keyboard('{End}');
-    expect(screen.getByRole('tab', { name: 'Origin' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: /^Details/ })).toHaveFocus();
     await user.keyboard('{Home}');
     expect(screen.getByRole('tab', { name: 'Description' })).toHaveFocus();
   });
@@ -272,9 +266,9 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
   });
 
   it('U-F3: a field that fell back to English carries lang="en"; the others lang="bn"', () => {
-    const detail = mockDetail(shopFixtureIds.thaiKittenSlug, 'bn');
+    const detail = mockDetail(shopFixtureIds.thaiRiceSlug, 'bn');
     expect(detail.locale).toBe('bn');
-    expect(detail.fieldLocales.feedingGuide).toBe('en');
+    expect(detail.fieldLocales.ingredientList).toBe('bn');
     const { container } = render(
       <>
         <ProductHeading
@@ -289,12 +283,8 @@ describe('ProductDetailsTabs — US-SHP-03 AC1, US-SHP-14 AC2', () => {
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveAttribute('lang', 'bn');
     expect(container.querySelector('[role="tabpanel"] [lang="bn"]')).not.toBeNull(); // description
-    // The feeding-guide element carries lang="en".
-    const feeding = container.querySelector('[role="tabpanel"][id$="panel-feeding"]')!;
-    expect(feeding.querySelector('[lang="en"]')).not.toBeNull();
-    expect(feeding.querySelector('[lang="bn"]')).toBeNull();
     // Ingredients are in bn.
-    const ingredients = container.querySelector('[role="tabpanel"][id$="panel-ingredients"]')!;
+    const ingredients = container.querySelector('[role="tabpanel"][id$="panel-details"]')!;
     expect(ingredients.querySelector('p[lang="bn"]')).not.toBeNull();
   });
 });
@@ -306,13 +296,13 @@ describe('BundleContents — US-SHP-12', () => {
     render(<BundleContents components={detail.bundle!.components} />);
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(2);
-    expect(items[0]).toHaveTextContent('1 × Royal Canin Kitten (400 g)');
+    expect(items[0]).toHaveTextContent('1 × Organic Rolled Oats (400 g)');
     expect(within(items[0]!).getByText('In stock')).toBeInTheDocument();
-    expect(items[1]).toHaveTextContent('2 × Catnip Mouse Set');
+    expect(items[1]).toHaveTextContent('2 × Jute Shopping Bag');
     expect(within(items[1]!).getByText('Out of stock')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Royal Canin Kitten' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Organic Rolled Oats' })).toHaveAttribute(
       'href',
-      '/shop/products/royal-canin-kitten',
+      '/shop/products/organic-rolled-oats',
     );
   });
 });

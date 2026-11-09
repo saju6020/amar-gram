@@ -52,7 +52,7 @@ export function OrderSummary({
         : 'Delivery';
   const rows: Array<[string, OrderTotals['subtotal']]> = [
     ['Items subtotal', totals.subtotal],
-    ['Item discounts', totals.lineDiscountTotal],
+    [totals.lineDiscountLabel || 'Item discounts', totals.lineDiscountTotal],
     [discountCode ? `Order discount (${discountCode})` : 'Order discount', totals.orderDiscount],
     [deliveryLabel, totals.deliveryCharge],
     ['Tax', totals.taxTotal],

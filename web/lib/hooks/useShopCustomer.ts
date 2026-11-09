@@ -3,9 +3,7 @@ import {
   addWishlistItem,
   cancelStockAlert,
   editReview,
-  getFoodRecommendations,
   getMyReviews,
-  getPurchasability,
   getReviewEligibility,
   getStockAlerts,
   getWishlist,
@@ -32,15 +30,6 @@ function noRetryOnRefusal(failureCount: number, error: unknown) {
       error instanceof ApiUnauthorizedError
     ) && failureCount < 1
   );
-}
-
-export function usePurchasability(slug: string, enabled: boolean) {
-  return useQuery({
-    queryKey: ['shop', 'purchasability', slug],
-    queryFn: () => getPurchasability(slug),
-    enabled,
-    retry: noRetryOnRefusal,
-  });
 }
 
 export function useReviewEligibility(slug: string, enabled: boolean) {
@@ -130,14 +119,5 @@ export function useWithdrawReview() {
   return useMutation({
     mutationFn: (reviewId: string) => withdrawReview(reviewId),
     onSuccess: () => invalidateReviews(queryClient),
-  });
-}
-
-export function useFoodRecommendations(catId: string, lang: string) {
-  return useQuery({
-    queryKey: ['me', 'cat', catId, 'food', lang],
-    queryFn: () => getFoodRecommendations(catId, lang || undefined),
-    enabled: !!catId,
-    retry: noRetryOnRefusal,
   });
 }

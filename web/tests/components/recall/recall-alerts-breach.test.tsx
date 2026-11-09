@@ -41,7 +41,7 @@ function alert(overrides: Partial<InventoryAlert>): InventoryAlert {
     status: 'Open',
     skuId: 'k',
     skuCode: 'FD-ADT-POUCH',
-    displayName: 'Adult wet food',
+    displayName: 'Sundarban honey',
     batchId: null,
     lotNumber: null,
     locationId: 'l',
@@ -93,7 +93,7 @@ describe('U-F1 — AlertList', () => {
     );
     for (const text of [
       /expires in 60 days or less/i,
-      /expired — cannot be sold, dispensed or fed/i,
+      /expired — cannot be sold or used/i,
       /below reorder point/i,
       /shortfall recorded/i,
       /storage breach/i,
@@ -175,8 +175,8 @@ describe('U-F3 — NearExpiryReport', () => {
     rows: [
       {
         skuId: 'k',
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice',
         batchId: 'b1',
         lotNumber: 'L2408B',
         expiresOn: '2026-11-21',
@@ -191,8 +191,8 @@ describe('U-F3 — NearExpiryReport', () => {
       },
       {
         skuId: 'k',
-        skuCode: 'FD-KDC-2KG',
-        displayName: 'Kitten dry food',
+        skuCode: 'FD-RCE-5KG',
+        displayName: 'Organic rice',
         batchId: 'b2',
         lotNumber: 'L2405Z',
         expiresOn: '2026-10-04',
@@ -236,10 +236,10 @@ function recalledBatch(): BatchDetail {
   return {
     id: 'rb',
     skuId: 'k2',
-    skuCode: 'MED-FVX-TRI',
-    displayName: 'Feline tricat vaccine',
+    skuCode: 'FD-MLK-LSE',
+    displayName: 'Fresh cow milk',
     stockUnit: 'ml',
-    stockClass: 'Medicine',
+    stockClass: 'Food',
     branchId: 'br',
     lotNumber: 'L7702R',
     manufacturedOn: null,
@@ -263,15 +263,15 @@ function recalledBatch(): BatchDetail {
     positions: [
       {
         locationId: 'd',
-        locationCode: 'DISP',
-        locationKind: 'ClinicDispensary',
+        locationCode: 'COLD',
+        locationKind: 'Warehouse',
         onHand: '20',
         reserved: '0',
       },
       {
         locationId: 'bs',
-        locationCode: 'BOARD',
-        locationKind: 'BoardingStore',
+        locationCode: 'BACK',
+        locationKind: 'Warehouse',
         onHand: '10',
         reserved: '0',
       },
@@ -340,8 +340,8 @@ function trace(): RecallTrace {
   return {
     batchId: 'rb',
     recallNumber: 'RCL-2026-000001',
-    skuCode: 'MED-FVX-TRI',
-    displayName: 'Feline tricat vaccine',
+    skuCode: 'FD-MLK-LSE',
+    displayName: 'Fresh cow milk',
     lotNumber: 'L7702R',
     batchStatus: 'Recalled',
     received: [
@@ -350,44 +350,36 @@ function trace(): RecallTrace {
         kind: 'Sale',
         quantity: '2',
         locationId: 'd',
-        locationCode: 'DISP',
+        locationCode: 'COLD',
         referenceLabel: 'Order PC-001234',
         customer: nusrat,
-        cat: { catId: 'k1', name: 'Mishti', currentOwner: nusrat },
-        householdCats: [],
       },
       {
         occurredOn: '2026-09-28T04:00:00Z',
-        kind: 'Dispense',
+        kind: 'Sale',
         quantity: '1.5',
         locationId: 'd',
-        locationCode: 'DISP',
-        referenceLabel: 'RX-2026-000045',
+        locationCode: 'COLD',
+        referenceLabel: 'Counter sale POS-45',
         customer: customer('c2', 'Karim Uddin'),
-        cat: null,
-        householdCats: ['Tiger'],
       },
       {
         occurredOn: '2026-10-01T04:00:00Z',
-        kind: 'BoardingUse',
+        kind: 'Return',
         quantity: '1',
         locationId: 'bs',
-        locationCode: 'BOARD',
-        referenceLabel: 'Stay BR-9',
+        locationCode: 'BACK',
+        referenceLabel: 'Order PC-001238',
         customer: customer('c3', 'Anika Rahman'),
-        cat: null,
-        householdCats: [],
       },
       {
         occurredOn: '2026-10-02T04:00:00Z',
         kind: 'Sale',
         quantity: '3',
         locationId: 'd',
-        locationCode: 'DISP',
+        locationCode: 'COLD',
         referenceLabel: 'Order PC-001240',
         customer: customer('c4', 'Farhana Akter', { originalCustomerId: 'old' }),
-        cat: null,
-        householdCats: [],
       },
     ],
     returned: [
@@ -405,16 +397,15 @@ function trace(): RecallTrace {
         referenceId: 'o1',
         quantity: '2',
         customer: customer('c2', 'Karim Uddin'),
-        cat: { catId: 'k2', name: 'Tiger', currentOwner: null },
       },
     ],
     unidentified: { count: 3, quantity: '6' },
-    stockHeld: [{ locationId: 'd', locationCode: 'DISP', branchId: 'br', onHand: '20' }],
+    stockHeld: [{ locationId: 'd', locationCode: 'COLD', branchId: 'br', onHand: '20' }],
   };
 }
 
 describe('U-F5 — RecallTraceTable', () => {
-  it('has all four tabs populated: purchase, dispense, boarding feed, a merged survivor, unshipped, unidentified', async () => {
+  it('has all four tabs populated: purchases, a return, a merged survivor, unshipped, unidentified', async () => {
     const user = userEvent.setup();
     renderWithClient(
       <RecallTraceTable
@@ -425,13 +416,12 @@ describe('U-F5 — RecallTraceTable', () => {
       />,
     );
     expect(screen.getAllByText('Bought').length).toBeGreaterThan(0);
-    expect(screen.getByText('Dispensed')).toBeInTheDocument();
-    expect(screen.getByText('Fed during boarding')).toBeInTheDocument();
+    expect(screen.getByText('Counter sale POS-45')).toBeInTheDocument();
+    expect(screen.getByText('Returned')).toBeInTheDocument();
     expect(screen.getAllByText('01711000001').length).toBeGreaterThan(0);
     expect(
       screen.getByText(/merged account — shown as the surviving customer/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/household cats — not specifically recorded/i)).toBeInTheDocument();
     expect(screen.getByText('1.5 ml')).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: /returned/i }));
     expect(screen.getByText('Return RT-2')).toBeInTheDocument();
@@ -457,8 +447,8 @@ function recallDetail(): RecallDetail {
       recallNumber: 'RCL-2026-000001',
       status: 'Active',
       skuId: 'k2',
-      skuCode: 'MED-FVX-TRI',
-      displayName: 'Feline tricat vaccine',
+      skuCode: 'FD-MLK-LSE',
+      displayName: 'Fresh cow milk',
       lotNumber: 'L7702R',
       expiresOn: '2026-11-06',
       declaredOn: '2026-10-05T04:00:00Z',
@@ -479,7 +469,7 @@ function recallDetail(): RecallDetail {
       closedOn: null,
       closingNote: null,
     },
-    held: [{ locationId: 'd', locationCode: 'DISP', branchId: 'br', onHand: '20' }],
+    held: [{ locationId: 'd', locationCode: 'COLD', branchId: 'br', onHand: '20' }],
   };
 }
 
@@ -616,7 +606,7 @@ function breach(overrides: Partial<BreachDetail> = {}): BreachDetail {
     summary: {
       id: 'br1',
       locationId: 'd',
-      locationCode: 'DISP',
+      locationCode: 'COLD',
       observedOn: '2026-10-06T01:00:00Z',
       condition: 'Fridge door left open',
       status: 'Open',
@@ -629,15 +619,15 @@ function breach(overrides: Partial<BreachDetail> = {}): BreachDetail {
     affectedBatches: [
       {
         batchId: 'b1',
-        skuCode: 'MED-FVX-TRI',
-        displayName: 'Feline tricat vaccine',
+        skuCode: 'FD-MLK-LSE',
+        displayName: 'Fresh cow milk',
         lotNumber: 'L7701V',
         heldAtLocation: '50.5',
       },
       {
         batchId: 'b2',
-        skuCode: 'MED-FVX-TRI',
-        displayName: 'Feline tricat vaccine',
+        skuCode: 'FD-MLK-LSE',
+        displayName: 'Fresh cow milk',
         lotNumber: 'L7702R',
         heldAtLocation: '20',
       },
@@ -659,7 +649,7 @@ describe('U-F8 — storage breach', () => {
     renderWithClient(
       <StorageBreachDetailView
         breach={breach()}
-        unitBySku={{ 'MED-FVX-TRI': 'ml' }}
+        unitBySku={{ 'FD-MLK-LSE': 'ml' }}
         quarantineName="Quarantine shelf (QRN)"
         justReported={2}
         timeZoneId="Asia/Dhaka"
@@ -675,7 +665,7 @@ describe('U-F8 — storage breach', () => {
       within(dialog).getByText(/moves to quarantine shelf \(qrn\) pending a decision/i),
     ).toBeInTheDocument();
     expect(
-      within(dialog).getByText(/50\.5 ml of feline tricat vaccine, lot L7701V → quarantine shelf/i),
+      within(dialog).getByText(/50\.5 ml of fresh cow milk, lot L7701V → quarantine shelf/i),
     ).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: /^quarantine affected stock$/i }));
     await waitFor(() => expect(onQuarantine).toHaveBeenCalled());
@@ -721,7 +711,7 @@ describe('U-F8 — storage breach', () => {
         isPending={false}
       />,
     );
-    await user.selectOptions(screen.getByLabelText(/where did it happen/i), ids.dispensaryId);
+    await user.selectOptions(screen.getByLabelText(/where did it happen/i), ids.coldStoreId);
     await user.type(screen.getByLabelText(/what happened/i), 'Fridge door open');
     const observed = screen.getByLabelText(/when was it observed/i);
     await user.clear(observed);

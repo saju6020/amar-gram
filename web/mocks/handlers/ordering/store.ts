@@ -1,5 +1,7 @@
+import { isFoodCategory } from '@/lib/shop/labels';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import { findSku } from '../shop/store';
+import { subscriptionOrderSeeds } from '../subscriptions/fixtures';
 import { orderingIds as ids } from './fixtures';
 
 /**
@@ -7,11 +9,27 @@ import { orderingIds as ids } from './fixtures';
  * the other mock stores) Ordering database plus the *mock server's* rules. Amounts are integer minor
  * units here and ONLY here; every response renders them as the API does
  * (`{ amount: "1250.00", currencyCode: "BDT" }`). The real UI never computes any of this
- * (ADR-FE-092). The catalogue (names, prices, in-stock flags, prescription flag, barcodes) is the SHOP
+ * (ADR-FE-092). The catalogue (names, prices, in-stock flags, barcodes) is the SHOP
  * mock's, so Add to cart on a real product page reaches a real cart line.
  */
 
-const PERSIST_KEY = '__purrcare_ordering_mock_db__';
+// HO-P6 S0: v4 (the subscription-order ids became real GUIDs), v3 for the subscription-channel orders. Unlike the subscriptions
+// mock this store does not reseed daily, so after midnight a persisted tab keeps orders placed relative to the day it was seeded
+// (`placedDaysAgo` off by one against fresh cycle dates); accepted, mocks only. HO-P5 S0: bumped (v2) so a stale sessionStorage copy without riders, picked ticks or the new seeds is not loaded.
+const PERSIST_KEY = '__amargram_ordering_mock_db__v4';
+
+/** Seed ids HO-P5 adds (kept here: `ordering/fixtures.ts` is not S0's file). */
+export const riderIds = {
+  rafiq: 'a2000000-0000-0000-0000-000000000001',
+  jahid: 'a2000000-0000-0000-0000-000000000002',
+  kamalInactive: 'a2000000-0000-0000-0000-000000000003',
+} as const;
+export const p5OrderIds = {
+  packedWaiting: 'f0000000-0000-0000-0000-000000000112',
+  dispatchedWithRider: 'f0000000-0000-0000-0000-000000000113',
+} as const;
+/** Customer-facing carrier name of an in-house dispatch: Shared/Common/Constants/OrderRules.cs:25 */
+export const RIDER_CARRIER_NAME = 'Our delivery rider';
 export const CURRENCY = 'BDT';
 export const ZONE = ids.timeZoneId;
 export const DEFAULT_STOCK = 25;
@@ -54,7 +72,6 @@ export interface DbCartLine {
   lineId: string;
   skuId: string;
   quantity: number;
-  catId: string | null;
   priceWhenAddedCents: Cents;
 }
 
@@ -73,7 +90,6 @@ export interface DbOrderLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  catId: string | null;
   quantity: number;
   unitCents: Cents;
   subtotalCents: Cents;
@@ -83,14 +99,19 @@ export interface DbOrderLine {
   taxCents: Cents;
   totalCents: Cents;
   quantityReturned: number;
-  returnClass: 'Food' | 'Litter' | 'Other';
+  returnClass: 'Food' | 'Household' | 'Other';
   allocations: DbAllocation[];
+  /** HO-P5 BG-4 pick-list tick: Read/ViewModels/StaffOrderViewModels.cs:19. Absent = not picked (optional so unrelated builders compile). */
+  picked?: boolean;
+  pickedOn?: string | null;
+  pickedBy?: string | null;
 }
 
 export type OrderStatusName =
   | 'PendingPayment'
   | 'Confirmed'
   | 'Packing'
+  | 'Packed'
   | 'Dispatched'
   | 'Delivered'
   | 'Cancelled'
@@ -122,6 +143,8 @@ export interface DbFulfilment {
   pickupBranchId: string | null;
   pickupBranchName: string | null;
   pickupBranchAddress: string | null;
+  /** HO-P5 G4: Read/ViewModels/OrderViewModels.cs:23. Absent = none (optional so unrelated builders compile). */
+  riderNote?: string | null;
 }
 
 export interface DbOrder {
@@ -129,7 +152,7 @@ export interface DbOrder {
   version: number;
   orderNumber: string;
   placedOn: string;
-  channel: 'Online' | 'Counter';
+  channel: 'Online' | 'Counter' | 'Subscription';
   customerId: string | null;
   customerName: string;
   customerMobile: string | null;
@@ -157,14 +180,19 @@ export interface DbOrder {
     collectedOn: string;
     recordedBy: string;
   } | null;
+  /** HO-P5 BG-5: Read/ViewModels/StaffOrderViewModels.cs:27-30 -- `courierId` is null when the order left with an in-house rider. */
   shipment: {
-    courierId: string;
+    courierId: string | null;
     courierName: string;
     trackingNumber: string | null;
     trackingUrl: string | null;
     dispatchedOn: string;
     lastTrackingStatus: string | null;
+    riderId?: string | null;
+    riderName?: string | null;
   } | null;
+  /** HO-P5 BG-4: when the order was marked packed (StaffOrderViewModels.cs:38 `PackedOn`). */
+  packedOn?: string | null;
   collectBy: string | null;
   invoiceNumber: string | null;
   amountPaidCents: Cents;
@@ -287,6 +315,15 @@ export interface DbCode {
   version: number;
 }
 
+/** HO-P5 BG-5: Read/ViewModels/RiderViewModels.cs:3-4 plus the owning branch. */
+export interface DbRider {
+  id: string;
+  branchId: string;
+  name: string;
+  mobileNumber: string | null;
+  isActive: boolean;
+}
+
 export interface DbBank {
   configured: boolean;
   accountName: string | null;
@@ -306,11 +343,10 @@ export interface Db {
   issues: DbIssue[];
   zones: DbZone[];
   couriers: DbCourier[];
+  riders: DbRider[];
   codes: DbCode[];
   bank: DbBank;
   stock: Record<string, number>;
-  /** Cats whose prescription authorisation has lapsed (E-B6). */
-  lapsedCats: string[];
   /** Batch ids a recall has been recorded against (BatchRecalled on dispatch, U-D3). */
   recalledBatches: string[];
   /** The staff member the mock acts as (`__orderingMock.actAs`). */
@@ -360,9 +396,8 @@ export interface SkuInfo {
   barcode: string | null;
   priceCents: Cents | null;
   purchasable: boolean;
-  requiresPrescription: boolean;
   isBundle: boolean;
-  returnClass: 'Food' | 'Litter' | 'Other';
+  returnClass: 'Food' | 'Household' | 'Other';
   categoryId: number;
 }
 
@@ -379,10 +414,13 @@ export function skuInfo(skuId: string): SkuInfo | undefined {
     barcode: sku.barcode,
     priceCents: sku.price ? centsOfString(sku.price) : null,
     purchasable: product.status === 'Active' && sku.status === 'Active' && sku.price !== null,
-    requiresPrescription: product.prescriptionRequired,
     isBundle: product.kind === 'Bundle',
     returnClass:
-      product.category === 'CatFood' ? 'Food' : product.category === 'Litter' ? 'Litter' : 'Other',
+      isFoodCategory(product.category)
+        ? 'Food'
+        : product.category === 'HouseholdAndCare'
+          ? 'Household'
+          : 'Other',
     categoryId: 1,
   };
 }
@@ -393,26 +431,6 @@ export function stockOf(skuId: string): number {
   const found = findSku(skuId);
   return found && found.sku.inStock ? DEFAULT_STOCK : 0;
 }
-
-/** Cats the Rx products are authorised for (shop mock parity): the eligible-food SKU has two. */
-export function authorisedCatsFor(skuId: string): string[] {
-  if (skuId === ids.skuRxEligible) {
-    // The cat-profiles mock's Whiskers and Mittens are the same cats under their own ids (POS picks from those).
-    return [
-      ids.catWhiskers,
-      ids.catMittens,
-      '20000000-0000-0000-0000-000000000001',
-      '20000000-0000-0000-0000-000000000004',
-    ].filter((id) => !db.lapsedCats.includes(id));
-  }
-  return [];
-}
-
-export const CAT_NAMES: Record<string, string> = {
-  [ids.catWhiskers]: 'Whiskers',
-  [ids.catMittens]: 'Mittens',
-  [ids.catBiscuit]: 'Biscuit',
-};
 
 export const PICKUP_BRANCHES = [
   { id: ids.mainBranchId, name: 'Amar Gram Dhanmondi', address: 'House 12, Road 5, Dhanmondi, Dhaka', phone: '+880 1700 000001' },
@@ -464,7 +482,6 @@ function line(
     skuId,
     productName: info?.productName ?? 'Product',
     variantLabel: info?.variantLabel ?? '',
-    catId: null,
     quantity,
     unitCents: unit,
     subtotalCents: unit * quantity,
@@ -492,7 +509,7 @@ interface OrderSpec {
   fulfilmentMethod?: DbOrder['fulfilmentMethod'];
   paymentMethod: DbOrder['paymentMethod'];
   lines: DbOrderLine[];
-  channel?: 'Online' | 'Counter';
+  channel?: 'Online' | 'Counter' | 'Subscription';
   customerName?: string;
   customerId?: string | null;
   deliveryChargeCents?: Cents;
@@ -588,9 +605,9 @@ function step(order: DbOrder, to: OrderStatusName, minutes: number, by: string =
 }
 
 function seedOrders(): DbOrder[] {
-  const kitten2 = ids.skuKitten2kg;
-  const kitten400 = ids.skuKitten400;
-  const whiskas = ids.skuWhiskas;
+  const oats2 = ids.skuOats2kg;
+  const oats400 = ids.skuOats400;
+  const rice = ids.skuJasmineRice;
 
   const awaiting = orderFrom({
     id: ids.orders.awaitingTransfer,
@@ -598,7 +615,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 90,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten2, 2)],
+    lines: [line(1, oats2, 2)],
     extra: { paymentDueBy: hoursFromNow(30) },
   });
 
@@ -608,7 +625,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 240,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten400, 3)],
+    lines: [line(1, oats400, 3)],
     customerName: 'Farhana Yasmin',
     customerId: 'c0000000-0000-0000-0000-0000000000a2',
     extra: {
@@ -624,7 +641,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 600,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten2, 80)],
+    lines: [line(1, oats2, 80)],
     customerName: 'Nusrat Jahan',
     customerId: 'c0000000-0000-0000-0000-0000000000a3',
     extra: {
@@ -647,7 +664,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 120,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, kitten2, 1)), allocated(line(2, whiskas, 2))],
+    lines: [allocated(line(1, oats2, 1)), allocated(line(2, rice, 2))],
   });
 
   const packing = orderFrom({
@@ -657,7 +674,7 @@ function seedOrders(): DbOrder[] {
     placedMinutesAgo: 300,
     fulfilmentMethod: 'Pickup',
     paymentMethod: 'PayOnCollection',
-    lines: [allocated(line(1, kitten400, 2))],
+    lines: [allocated(line(1, oats400, 2))],
     extra: { collectBy: addDays(todayLocal(), 6) },
   });
   step(packing, 'Packing', 200);
@@ -668,7 +685,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 1500,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, kitten2, 2))],
+    lines: [allocated(line(1, oats2, 2))],
   });
   step(dispatched, 'Packing', 1400);
   step(dispatched, 'Dispatched', 1300);
@@ -679,6 +696,8 @@ function seedOrders(): DbOrder[] {
     trackingUrl: 'https://track.example/pathao/PC-88213004',
     dispatchedOn: minutesAgo(1300),
     lastTrackingStatus: 'Out for delivery',
+    riderId: null,
+    riderName: null,
   };
 
   const delivered = orderFrom({
@@ -687,7 +706,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 4000,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, kitten2, 2)), allocated(line(2, kitten400, 1))],
+    lines: [allocated(line(1, oats2, 2)), allocated(line(2, oats400, 1))],
   });
   step(delivered, 'Packing', 3900);
   step(delivered, 'Dispatched', 3800);
@@ -699,6 +718,8 @@ function seedOrders(): DbOrder[] {
     trackingUrl: null,
     dispatchedOn: minutesAgo(3800),
     lastTrackingStatus: null,
+    riderId: null,
+    riderName: null,
   };
   delivered.cod = {
     amountCents: delivered.grandTotalCents,
@@ -707,6 +728,7 @@ function seedOrders(): DbOrder[] {
     collectedOn: minutesAgo(3000),
     recordedBy: ids.adminStaffId,
   };
+  delivered.fulfilment.riderNote = 'Please ring the bell twice; the gate is stiff.';
   delivered.amountPaidCents = delivered.grandTotalCents;
   delivered.invoiceNumber = 'INV-MAIN-2627-000398';
   delivered.returnWindowEndsOn = addDays(todayLocal(), 5);
@@ -717,7 +739,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 3200,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten400, 2)],
+    lines: [line(1, oats400, 2)],
   });
   step(expired, 'Cancelled', 100, ids.adminStaffId);
   expired.cancellationReason = 'PaymentWindowExpired';
@@ -733,7 +755,7 @@ function seedOrders(): DbOrder[] {
     channel: 'Counter',
     customerName: 'Walk-in customer',
     customerId: null,
-    lines: [allocated(line(1, whiskas, 1))],
+    lines: [allocated(line(1, rice, 1))],
   });
   step(counter, 'Delivered', 59);
   counter.invoiceNumber = 'INV-MAIN-2627-000401';
@@ -748,7 +770,7 @@ function seedOrders(): DbOrder[] {
     status: 'Confirmed',
     placedMinutesAgo: 2500,
     paymentMethod: 'CashOnDelivery',
-    lines: [allocated(line(1, whiskas, 1))],
+    lines: [allocated(line(1, rice, 1))],
   });
   step(openedFood, 'Packing', 2400);
   step(openedFood, 'Dispatched', 2300);
@@ -763,7 +785,7 @@ function seedOrders(): DbOrder[] {
     status: 'PendingPayment',
     placedMinutesAgo: 900,
     paymentMethod: 'BankTransfer',
-    lines: [line(1, kitten400, 1)],
+    lines: [line(1, oats400, 1)],
     customerName: 'Tanvir Ahmed',
     customerId: 'c0000000-0000-0000-0000-0000000000a4',
   });
@@ -773,6 +795,53 @@ function seedOrders(): DbOrder[] {
   cancelledPaid.amountPaidCents = cancelledPaid.grandTotalCents;
   cancelledPaid.refundDueCents = cancelledPaid.grandTotalCents;
   cancelledPaid.invoiceNumber = 'INV-MAIN-2627-000397';
+
+  // HO-P5 S0 (BG-4): packed, every line picked, waiting for a rider. Another customer, so Sam's list is unchanged.
+  const packedAt = minutesAgo(55);
+  const packedWaiting = orderFrom({
+    id: p5OrderIds.packedWaiting,
+    seq: 112,
+    status: 'Confirmed',
+    placedMinutesAgo: 400,
+    paymentMethod: 'CashOnDelivery',
+    lines: [
+      allocated(line(1, oats2, 1, { picked: true, pickedOn: minutesAgo(70), pickedBy: ids.adminStaffId })),
+      allocated(line(2, rice, 1, { picked: true, pickedOn: minutesAgo(65), pickedBy: ids.adminStaffId })),
+    ],
+    customerName: 'Mizanur Rahman',
+    customerId: 'c0000000-0000-0000-0000-0000000000a5',
+  });
+  step(packedWaiting, 'Packing', 90);
+  step(packedWaiting, 'Packed', 55);
+  packedWaiting.packedOn = packedAt;
+  packedWaiting.fulfilment.slotDate = addDays(todayLocal(), 1);
+  packedWaiting.fulfilment.slotWindow = '10:00-13:00';
+
+  // HO-P5 S0 (BG-5): cash on delivery on the road with an in-house rider (feeds the orders.cod-with-riders tile).
+  const withRider = orderFrom({
+    id: p5OrderIds.dispatchedWithRider,
+    seq: 113,
+    status: 'Confirmed',
+    placedMinutesAgo: 500,
+    paymentMethod: 'CashOnDelivery',
+    lines: [allocated(line(1, oats400, 2, { picked: true, pickedOn: minutesAgo(200), pickedBy: ids.adminStaffId }))],
+    customerName: 'Shirin Akter',
+    customerId: 'c0000000-0000-0000-0000-0000000000a6',
+  });
+  step(withRider, 'Packing', 220);
+  step(withRider, 'Dispatched', 120);
+  withRider.shipment = {
+    courierId: null,
+    courierName: RIDER_CARRIER_NAME,
+    trackingNumber: null,
+    trackingUrl: null,
+    dispatchedOn: minutesAgo(120),
+    lastTrackingStatus: null,
+    riderId: riderIds.rafiq,
+    riderName: 'Rafiq Hasan',
+  };
+  withRider.fulfilment.slotDate = todayLocal();
+  withRider.fulfilment.slotWindow = '14:00-17:00';
 
   return [
     awaiting,
@@ -786,6 +855,82 @@ function seedOrders(): DbOrder[] {
     counter,
     openedFood,
     cancelledPaid,
+    packedWaiting,
+    withRider,
+    ...seedSubscriptionOrders(),
+  ];
+}
+
+/**
+ * HO-P6 S0: one `Subscription`-channel order per seeded `Generated` subscription cycle, carrying the cycle's
+ * `orderId` and `orderNumber` (`mocks/handlers/subscriptions/fixtures.ts`). The state of the cycle's order maps
+ * to an order status: awaiting payment is a pending bank transfer, expired is the transfer window closing,
+ * refused is a parcel that came back. Each carries the seeded 10% subscriber discount.
+ */
+function seedSubscriptionOrders(): DbOrder[] {
+  return subscriptionOrderSeeds().map((seed) => {
+    const minutes = seed.placedDaysAgo * 1440;
+    const base = line(1, seed.skuId, seed.quantity);
+    const discount = Math.round(base.subtotalCents / 10);
+    // The subscriber discount is a line discount (the server labels it from `LineDiscount`, OrderQueryHandlers.cs:153-156).
+    const item = { ...base, discountCents: discount, totalCents: base.subtotalCents - discount };
+    const order = orderFrom({
+      id: seed.orderId,
+      seq: Number(seed.orderNumber.slice(-6)),
+      status: seed.paymentMethod === 'BankTransfer' ? 'PendingPayment' : 'Confirmed',
+      placedMinutesAgo: minutes,
+      fulfilmentMethod: seed.fulfilmentMethod,
+      paymentMethod: seed.paymentMethod,
+      channel: 'Subscription',
+      customerId: seed.customerId,
+      customerName: seed.customerName,
+      lines: [item],
+      extra: { customerMobile: seed.customerMobile },
+    });
+    order.lineDiscountCents = discount;
+    order.grandTotalCents = order.subtotalCents - discount + order.deliveryChargeCents;
+    order.fulfilment.recipientPhone = seed.customerMobile;
+
+    switch (seed.state) {
+      case 'AwaitingPayment':
+        order.paymentDueBy = hoursFromNow(seed.paymentDueInHours);
+        break;
+      case 'Confirmed':
+        if (order.status === 'PendingPayment') step(order, 'Confirmed', minutes - 60);
+        order.amountPaidCents = order.paymentMethod === 'BankTransfer' ? order.grandTotalCents : 0;
+        break;
+      case 'Expired':
+        order.paymentDueBy = minutesAgo(minutes - 2880);
+        step(order, 'Cancelled', Math.max(1, minutes - 2880));
+        order.cancellationReason = 'PaymentWindowExpired';
+        break;
+      case 'Cancelled':
+        step(order, 'Cancelled', Math.max(1, minutes - 120));
+        order.cancellationReason = 'CustomerRequest';
+        break;
+      case 'Delivered':
+        if (order.status === 'PendingPayment') step(order, 'Confirmed', minutes - 60);
+        step(order, 'Packing', minutes - 600);
+        step(order, 'Dispatched', minutes - 900);
+        step(order, 'Delivered', Math.max(1, minutes - 1200));
+        order.amountPaidCents = order.grandTotalCents;
+        break;
+      case 'Refused':
+        step(order, 'Packing', minutes - 600);
+        step(order, 'Dispatched', minutes - 900);
+        step(order, 'Cancelled', Math.max(1, minutes - 1200));
+        order.cancellationReason = 'StaffDecision';
+        break;
+    }
+    return order;
+  });
+}
+
+function seedRiders(): DbRider[] {
+  return [
+    { id: riderIds.rafiq, branchId: ids.mainBranchId, name: 'Rafiq Hasan', mobileNumber: '01711000101', isActive: true },
+    { id: riderIds.jahid, branchId: ids.mainBranchId, name: 'Jahid Alam', mobileNumber: '01711000102', isActive: true },
+    { id: riderIds.kamalInactive, branchId: ids.mainBranchId, name: 'Kamal Mia', mobileNumber: null, isActive: false },
   ];
 }
 
@@ -829,7 +974,7 @@ function seedReturns(): DbReturn[] {
           quantity: 1,
           reason: 'QualityDefect',
           condition: 'Opened',
-          customerNote: 'The kibble smelled stale.',
+          customerNote: 'The rice smelled stale.',
           defectConfirmed: false,
           defectNote: null,
           quantityReceived: 0,
@@ -990,6 +1135,7 @@ function seed(): Db {
     refunds: [],
     issues: seedIssues(),
     zones: seedZones(),
+    riders: seedRiders(),
     couriers: [
       { id: ids.courierPathaoId, name: 'Pathao Courier', trackingUrlTemplate: 'https://track.example/pathao/{tracking}', supportsCod: true, isActive: true },
       { id: ids.courierInHouseId, name: 'In-house rider', trackingUrlTemplate: null, supportsCod: true, isActive: true },
@@ -1004,8 +1150,7 @@ function seed(): Db {
       routingNumber: '060261726',
       isActive: true,
     },
-    stock: { [ids.skuWhiskas]: 1 },
-    lapsedCats: [],
+    stock: { [ids.skuJasmineRice]: 1 },
     recalledBatches: [],
     actor: ids.adminStaffId,
     transferWindowSeconds: 48 * 3600,

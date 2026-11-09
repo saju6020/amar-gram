@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Product editor: Food &amp; labelling — US-SHP-03</title>
+<title>Product editor: Details &amp; labelling — US-SHP-03</title>
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:16px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px}
 a{color:var(--accent-ink)}
@@ -61,20 +61,20 @@ legend{font-size:13px;font-weight:600;margin-bottom:6px;padding:0}
 </style>
 </helmet>
 <div style="width:1280px;height:1080px;background:var(--surface-page)">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div class="main">
     <a class="back" href="StaffProductList.dc.html">← Products</a>
     <div class="edhead">
       <div>
-        <h1 class="h1">Royal Canin Kitten</h1>
-        <div class="meta"><span class="badge b-draft"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:12px;height:12px"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Draft</span>Standard product · Cat food › Kitten · never published</div>
+        <h1 class="h1">Chinigura aromatic rice</h1>
+        <div class="meta"><span class="badge b-draft"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:12px;height:12px"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Draft</span>Standard product · Rice &amp; grains › Aromatic rice · never published</div>
       </div>
       <button class="btn" type="button">Publish</button>
     </div>
-    <div class="checkline"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--danger-ink)"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Publish checklist: <b>1 required item missing</b> (country of origin) · 2 warnings</span><a href="EditorDetails.dc.html" style="margin-left:auto;font-weight:600">Show checklist</a></div>
+    <div class="checkline"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--danger-ink)"><path d="M18 6 6 18M6 6l12 12"/></svg><span>Publish checklist: <b>1 required item missing</b> (origin) · 2 warnings</span><a href="EditorDetails.dc.html" style="margin-left:auto;font-weight:600">Show checklist</a></div>
 
     <nav class="tabnav" aria-label="Product sections">
-      <a href="EditorDetails.dc.html">Details</a><a class="active" href="#" aria-current="page">Food &amp; labelling</a><a href="EditorVariants.dc.html">Variants &amp; prices</a><a href="EditorImages.dc.html">Images</a><a href="EditorRelated.dc.html">Related</a><a href="EditorTranslations.dc.html">Translations</a>
+      <a href="EditorDetails.dc.html">Details</a><a class="active" href="#" aria-current="page">Details &amp; labelling</a><a href="EditorVariants.dc.html">Variants &amp; prices</a><a href="EditorImages.dc.html">Images</a><a href="EditorRelated.dc.html">Related</a><a href="EditorTranslations.dc.html">Translations</a>
     </nav>
 
     <div class="conflict" role="alert"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:16px;height:16px"><path d="M12 3 2 20h20Z"/><path d="M12 10v4M12 17h.01"/></svg><span><b>This product was changed by someone else. Reload to see the latest.</b> Nothing was saved; what you typed is still below.</span><button class="btn2" type="button" style="margin-left:auto">Reload</button></div>
@@ -82,47 +82,40 @@ legend{font-size:13px;font-weight:600;margin-bottom:6px;padding:0}
     <div class="layout">
       <form class="form">
         <div class="col">
-          <div class="field"><label for="f-man">Manufacturer</label><input id="f-man" value="Royal Canin SAS, Aimargues, France"></div>
-          <div style="display:flex;gap:12px">
-            <div class="field" style="flex:1"><label for="f-ls">Life stage</label><select id="f-ls"><option selected>Kitten</option><option>Adult</option><option>Senior</option><option>All life stages</option></select></div>
-            <div class="field" style="flex:1"><label for="f-pr">Main protein</label><select id="f-pr"><option selected>Chicken</option><option>Salmon</option><option>Tuna</option></select></div>
-          </div>
-          <div class="field"><label for="f-ing">Ingredient list</label><textarea id="f-ing">Dehydrated poultry protein, rice, animal fats, maize, vegetable protein isolate, hydrolysed animal proteins, beet pulp, fish oil…</textarea><div class="hint">Plain text. Customers can search it — for example “salmon” or “chicken”.</div></div>
+          <div class="field"><label for="f-man">Producer and packer</label><input id="f-man" value="Dinajpur Farmers' Co-op, Birganj, Dinajpur"></div>
+          <div class="field"><label for="f-ing">Ingredients</label><textarea id="f-ing">100% Chinigura aromatic rice (Aman 2026 harvest). No additives, polish or added fragrance.</textarea><div class="hint">Plain text. Customers can search it — for example “aman” or “chinigura”.</div></div>
           <fieldset>
-            <legend>Guaranteed analysis <span style="font-weight:400;color:var(--ink-muted)">(all four, or none)</span></legend>
+            <legend>Net weight and shelf life</legend>
             <div class="ga">
-              <div><label for="g1">Protein</label><div class="unit"><input id="g1" value="34.0"><span>%</span></div></div>
-              <div><label for="g2">Fat</label><div class="unit"><input id="g2" value="16.0"><span>%</span></div></div>
-              <div><label for="g3">Fibre</label><div class="unit"><input id="g3" value="2.8"><span>%</span></div></div>
-              <div><label for="g4">Moisture</label><div class="unit"><input id="g4" value="8.0"><span>%</span></div></div>
+              <div><label for="g1">Net weight</label><div class="unit"><input id="g1" value="1000"><span>g</span></div></div>
+              <div><label for="g2">Shelf life</label><div class="unit"><input id="g2" value="12"><span>months</span></div></div>
             </div>
-            <div class="hint">Each 0–100 %, together no more than 100 %.</div>
+            <div class="hint">Net weight is per pack as sold; each size on Variants &amp; prices can override it. Shelf life counts from the packing date.</div>
           </fieldset>
         </div>
         <div class="col">
-          <div class="field"><label for="f-fg">Feeding guide</label><textarea id="f-fg" style="font-family:ui-monospace,Consolas,monospace;font-size:12.5px">Feed across **three or four meals** until 6 months, then two.</textarea><div class="hint">Preview shows it as the shop will: “Feed across <b>three or four meals</b> until 6 months, then two.”</div></div>
+          <div class="field"><label for="f-fg">How to use</label><textarea id="f-fg" style="font-family:ui-monospace,Consolas,monospace;font-size:12.5px">Rinse twice and soak for **20 minutes** before cooking.</textarea><div class="hint">Preview shows it as the shop will: “Rinse twice and soak for <b>20 minutes</b> before cooking.”</div></div>
           <div class="field"><label for="f-st">Storage instructions</label><textarea id="f-st" style="height:52px" placeholder="For example: keep sealed in a cool, dry place"></textarea><div class="hint">Empty — the checklist warns about this, but it doesn't block publishing.</div></div>
           <fieldset>
-            <legend>Health focus <span style="font-weight:400;color:var(--ink-muted)">(up to 6)</span></legend>
-            <div class="hf">
-              <label><input type="checkbox">Sterilised</label><label><input type="checkbox">Weight management</label><label><input type="checkbox">Urinary</label>
-              <label><input type="checkbox">Renal</label><label><input type="checkbox" checked>Digestive</label><label><input type="checkbox">Skin &amp; coat</label>
-              <label><input type="checkbox">Hairball</label><label><input type="checkbox">Dental</label><label><input type="checkbox">Sensitive</label>
+            <legend>Organic certification</legend>
+            <label class="rx"><input type="checkbox" style="margin-top:2px"><span><b>Certified organic</b><small>Shows the Certified organic badge and includes the product in the storefront's organic filter.</small></span></label>
+            <div style="display:flex;gap:12px;margin-top:10px">
+              <div class="field" style="flex:1"><label for="f-cb">Certifier</label><input id="f-cb" value="BSTI Organic"></div>
+              <div class="field" style="flex:1"><label for="f-cn">Certificate number</label><input id="f-cn" value="BD-ORG-2026-0418"></div>
             </div>
           </fieldset>
-          <label class="rx"><input type="checkbox" style="margin-top:2px"><span><b>Prescription diet — requires vet authorisation</b><small>Only customers with an authorised cat will be able to buy it.</small></span></label>
-          <div style="display:flex;gap:10px;margin-top:14px"><button class="btn" type="submit">Save food details</button><button class="btn2" type="button">Discard changes</button></div>
+          <div style="display:flex;gap:10px;margin-top:14px"><button class="btn" type="submit">Save details &amp; labelling</button><button class="btn2" type="button">Discard changes</button></div>
         </div>
       </form>
 
       <div class="side">
-        <div class="statelabel">When “Prescription diet” is ticked</div>
+        <div class="statelabel">When “Certified organic” is ticked</div>
         <div class="dialog" role="alertdialog" aria-labelledby="rx-t">
-          <h2 id="rx-t">Make Royal Canin Kitten a prescription diet?</h2>
-          <p>Customers will need a cat with a current authorisation from our vets to buy it. Everyone else will still see it, with a link to book a consultation. It can't be added to a kit.</p>
-          <div class="dactions"><button class="btn2" type="button">Cancel</button><button class="btn" type="button">Require authorisation</button></div>
+          <h2 id="rx-t">Mark Chinigura aromatic rice as certified organic?</h2>
+          <p>The storefront will show a Certified organic badge on this product, list it under the organic filter, and show the certifier and certificate number BD-ORG-2026-0418 on the product page. Only do this if the certificate is current.</p>
+          <div class="dactions"><button class="btn2" type="button">Cancel</button><button class="btn" type="button">Mark as certified organic</button></div>
         </div>
-        <p style="font-size:12px;color:var(--ink-faint);margin-top:12px;line-height:1.5">This tab exists only for Cat food. On a Litter or Toys product the tab is not shown at all.</p>
+        <p style="font-size:12px;color:var(--ink-faint);margin-top:12px;line-height:1.5">This tab exists for every food and grocery category. On a non-food product, such as a jute basket, the tab is not shown at all.</p>
       </div>
     </div>
   </div>

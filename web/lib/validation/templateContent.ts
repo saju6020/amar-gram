@@ -9,7 +9,7 @@ import type {
 /**
  * `lib/validation/templateContent.ts` — HO-NTF-002 §11.3, NFR-USA-5. Form values, request mapping and
  * the length rules of the template editor. **Placeholder rules are deliberately NOT here**: whether
- * `{{catname}}` exists, whether a required variable is present, whether markup is allowed — all of
+ * `{{customername}}` exists, whether a required variable is present, whether markup is allowed — all of
  * that is `TemplateRules.Validate` on the server, shown via the preview and save `400`s
  * (ADR-FE-163). The client only knows lengths (so the counters and a fast "too long" message work)
  * and which fields each channel has.

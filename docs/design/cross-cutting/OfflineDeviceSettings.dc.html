@@ -8,10 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
-:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2b2823}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2A1F12}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -111,14 +111,14 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative;overflow:hidden">
   <header class="obar">
-    <span class="logo">PurrCare</span>
+    <span class="logo">Amar Gram</span>
     <span class="meta">Offline copy · this device</span>
     <span class="spacer"></span>
-    <a href="FrontDeskOffline.dc.html" style="font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back to the front desk</a>
+    <a href="FrontDeskOffline.dc.html" style="font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Back to the counter</a>
   </header>
   <main class="omain" style="max-width:780px">
     <h1 class="h1">Offline copy on this device</h1>
-    <p class="sub">If the internet drops, this device can still show today's appointments and boarding tasks — read-only — from a copy it keeps. It is off unless someone turns it on, because the copy contains customers' names and phone numbers.</p>
+    <p class="sub">If the internet drops, this device can still show today's pickup orders and packing list — read-only — from a copy it keeps. It is off unless someone turns it on, because the copy contains customers' names and phone numbers.</p>
 
     <div class="card" style="margin-bottom:16px">
       <div class="row" style="align-items:flex-start;gap:14px">
@@ -130,14 +130,14 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
       </div>
       <div class="banner banner-ok" style="margin-top:14px;font-size:13px">
         <svg class="ic18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
-        <div>Last saved at <strong>10:42 (Asia/Dhaka)</strong> for Uttara — 6 appointments and 4 boarding tasks. It refreshes every minute while you're online.</div>
+        <div>Last saved at <strong>10:42 (Asia/Dhaka)</strong> for Uttara outlet — 6 pickup orders and 4 orders to pack. It refreshes every minute while you're online.</div>
       </div>
     </div>
 
     <div class="card" style="margin-bottom:16px">
       <h2 class="h2">What's kept, and for how long</h2>
       <dl class="kv">
-        <dt>What</dt><dd>Today's appointments (time, cat, customer name and phone, service, vet, room, status, handling notes for high-risk cats) and today's boarding tasks, for the branch you're working in. Nothing else — no medical records, no passwords.</dd>
+        <dt>What</dt><dd>Today's pickup orders (time, order number, customer name and phone, items, packer, shelf, status, handling notes such as "keep chilled") and today's packing list, for the outlet you're working in. Nothing else — no payment details, no passwords.</dd>
         <dt>Where</dt><dd>In this browser on this device only. It is never sent anywhere else.</dd>
         <dt>Who can open it</dt><dd>Only the person who saved it, and it locks after 15 minutes without use.</dd>
         <dt>How long</dt><dd>Until 02:00 the next morning (Asia/Dhaka), after which it's out of date and won't open.</dd>

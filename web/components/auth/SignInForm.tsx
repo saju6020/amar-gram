@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -56,6 +56,8 @@ export interface SignInFormProps {
 const SIGN_IN_FAILED_MESSAGE =
   "That mobile number or email and password don't match an account. Check them and try again, or reset your password.";
 
+const noSubscription = () => () => {};
+
 export function SignInForm({
   audience,
   onSignIn,
@@ -69,6 +71,9 @@ export function SignInForm({
   const hearth = appearance === 'hearth';
   // Signed in, next page still loading: the button stays busy so it never looks idle (or re-clickable) meanwhile.
   const [leaving, setLeaving] = useState(false);
+  // `false` in the server HTML and during hydration, `true` once the form is live (same as lib/hooks/useHydrated,
+  // which components/auth may not import).
+  const hydrated = useSyncExternalStore(noSubscription, () => true, () => false);
   const {
     register,
     handleSubmit,
@@ -184,7 +189,9 @@ export function SignInForm({
       <div className="flex flex-col gap-3">
         <Button
           type="submit"
-          disabled={busy}
+          // Disabled in the server HTML until the form is live, so an early click can't fall back to a
+          // plain form post that reloads the page and drops what was typed.
+          disabled={busy || !hydrated}
           aria-busy={busy}
           {...(hearth
             ? { variant: 'pill' as const, size: 'pillLg' as const, className: 'w-full' }

@@ -42,7 +42,7 @@ function renderWithClient(children: React.ReactNode) {
 }
 
 describe('DuplicateGroupList — US-ACC-11', () => {
-  it('U-I1: lists cats including a deceased badge, shows NotYetRecordedNotice, no orders/balances columns', async () => {
+  it('U-I1: lists each member with their details, shows NotYetRecordedNotice, no orders/balances columns', async () => {
     server.use(
       http.get('*/api/staff/customers/duplicates', () =>
         HttpResponse.json({
@@ -54,7 +54,6 @@ describe('DuplicateGroupList — US-ACC-11', () => {
                   fullName: 'Alpha',
                   mobileNumber: '017',
                   emailAddress: null,
-                  cats: [{ catId: 'c1', name: 'Late Cat', isDeceased: true }],
                   mobileMatchedOn: 'Primary',
                   recordStatus: 'Complete',
                   registrationChannel: 'SelfService',
@@ -64,7 +63,6 @@ describe('DuplicateGroupList — US-ACC-11', () => {
                   fullName: 'Beta',
                   mobileNumber: '017',
                   emailAddress: null,
-                  cats: [{ catId: 'c2', name: 'Live Cat', isDeceased: false }],
                   mobileMatchedOn: 'Primary',
                   recordStatus: 'Incomplete',
                   registrationChannel: 'Reception',
@@ -80,10 +78,9 @@ describe('DuplicateGroupList — US-ACC-11', () => {
     );
     renderWithClient(<DuplicateGroupListWithHooks />);
 
-    expect(await screen.findByText('Late Cat')).toBeInTheDocument();
-    expect(screen.getByText('Deceased')).toBeInTheDocument();
-    expect(screen.getByText('Live Cat')).toBeInTheDocument();
-    expect(screen.queryByText('Deceased')?.closest('li')?.textContent).not.toMatch(/Live Cat/);
+    expect(await screen.findByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+    expect(screen.getByText(/Walk-in/)).toBeInTheDocument();
     expect(
       screen.getByText(/orders, invoices and balances aren.t recorded in the system yet/i),
     ).toBeInTheDocument();

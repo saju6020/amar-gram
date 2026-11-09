@@ -41,7 +41,7 @@ async function renderPage(sessionGate?: Promise<void>) {
     render(
       <QueryClientProvider client={client}>
         <Suspense fallback={<p>suspended</p>}>
-          <EditorPage params={Promise.resolve({ key: ids.vaccinationKey })} />
+          <EditorPage params={Promise.resolve({ key: ids.orderDispatchedKey })} />
         </Suspense>
       </QueryClientProvider>,
     );
@@ -74,7 +74,7 @@ describe('Template editor page — NTF backlog N4 / N15', () => {
     server.use(http.get(KEY, () => new HttpResponse(null, { status: 500 })));
     await act(async () => {
       await client.invalidateQueries({
-        queryKey: ['admin', 'notification-templates', ids.vaccinationKey],
+        queryKey: ['admin', 'notification-templates', ids.orderDispatchedKey],
         exact: true,
       });
     });
@@ -91,19 +91,19 @@ describe('Template editor page — NFR-USA-5 under refetch failures (CODE_REVIEW
   it('U-C7-R: a failed background refetch keeps the editor and the typed value, and says so', async () => {
     const client = await renderPage();
     const subject = (await screen.findByLabelText('Email subject')) as HTMLInputElement;
-    fireEvent.change(subject, { target: { value: 'Typed {{catName}} subject' } });
+    fireEvent.change(subject, { target: { value: 'Typed {{orderNumber}} subject' } });
 
     server.use(http.get(KEY, () => new HttpResponse(null, { status: 500 })));
     await act(async () => {
       await client.invalidateQueries({
-        queryKey: ['admin', 'notification-templates', ids.vaccinationKey],
+        queryKey: ['admin', 'notification-templates', ids.orderDispatchedKey],
         exact: true,
       });
     });
 
     expect(await screen.findByText(REFRESH_FAILED)).toBeInTheDocument();
     const still = screen.getByLabelText('Email subject') as HTMLInputElement;
-    expect(still.value).toBe('Typed {{catName}} subject');
+    expect(still.value).toBe('Typed {{orderNumber}} subject');
     expect(screen.queryByText("We couldn't load this template just now.")).not.toBeInTheDocument();
   });
 
@@ -111,7 +111,7 @@ describe('Template editor page — NFR-USA-5 under refetch failures (CODE_REVIEW
     const user = userEvent.setup();
     await renderPage();
     const subject = (await screen.findByLabelText('Email subject')) as HTMLInputElement;
-    fireEvent.change(subject, { target: { value: 'My unsaved subject {{catName}}' } });
+    fireEvent.change(subject, { target: { value: 'My unsaved subject {{orderNumber}}' } });
 
     server.use(http.put(KEY, () => new HttpResponse(null, { status: 409 })));
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
@@ -127,7 +127,7 @@ describe('Template editor page — NFR-USA-5 under refetch failures (CODE_REVIEW
       expect(screen.getByText('Something went wrong. Please try again.')).toBeInTheDocument(),
     );
     expect((screen.getByLabelText('Email subject') as HTMLInputElement).value).toBe(
-      'My unsaved subject {{catName}}',
+      'My unsaved subject {{orderNumber}}',
     );
     expect(screen.getByRole('button', { name: 'Reload' })).toBeEnabled(); // pending state ended
     expect(screen.queryByText("We couldn't load this template just now.")).not.toBeInTheDocument();

@@ -1,7 +1,7 @@
 import { test, expect, signInAsStaff, signInAsCustomer } from './fixtures';
 import AxeBuilder from '@axe-core/playwright';
 
-// Smoke coverage for the foundation itself, ahead of any area's own E2E specs (HO-CAT-002 §16).
+// Smoke coverage for the foundation itself, ahead of any area's own E2E specs (foundation §16).
 test('placeholder home page has no serious/critical accessibility violations', async ({ page }) => {
   await page.goto('/');
   // HO-SHP-002 OQ-1: the root now lands a signed-out visitor on the public shop.

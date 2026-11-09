@@ -44,10 +44,10 @@ version-based optimistic concurrency built in, complementing the `xmin` row vers
 One generic implementation covers every aggregate:
 
 ```csharp
-namespace CatEcommerce.Infrastructure.Repositories;
+namespace AmarGram.Infrastructure.Repositories;
 
 public sealed class EfAggregateRootRepository<TAggregate>(
-    CatEcommerceDbContext db,
+    AmarGramDbContext db,
     IServiceProvider serviceProvider)
     : IAggregateRootRepository<TAggregate> where TAggregate : AggregateRoot
 {
@@ -140,18 +140,18 @@ weakening the generic one — a partially loaded aggregate cannot enforce its ow
 One DbContext for the solution, in `src/Infrastructure/Persistence/`:
 
 ```csharp
-public sealed class CatEcommerceDbContext(DbContextOptions<CatEcommerceDbContext> options)
+public sealed class AmarGramDbContext(DbContextOptions<AmarGramDbContext> options)
     : DbContext(options)
 {
-    public DbSet<CatAggregate> Cats => Set<CatAggregate>();
-    public DbSet<AppointmentAggregate> Appointments => Set<AppointmentAggregate>();
+    public DbSet<ProductAggregate> Products => Set<ProductAggregate>();
+    public DbSet<OrderAggregate> Orders => Set<OrderAggregate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
-        => modelBuilder.ApplyConfigurationsFromAssembly(typeof(CatEcommerceDbContext).Assembly);
+        => modelBuilder.ApplyConfigurationsFromAssembly(typeof(AmarGramDbContext).Assembly);
 }
 ```
 
-Optionally group tables by bounded context with a schema (`clinic.*`, `boarding.*`) — useful for
+Optionally group tables by bounded context with a schema (`catalogue.*`, `ordering.*`) — useful for
 readability and permissions, and it costs nothing now. It is **not** a boundary: this is one
 solution with one DbContext.
 
@@ -163,15 +163,15 @@ The Domain project has no EF Core reference and no persistence attributes. `[Bso
 is gone. All mapping is in `IEntityTypeConfiguration<T>` classes in Infrastructure.
 
 ```csharp
-public sealed class CatConfiguration : IEntityTypeConfiguration<CatAggregate>
+public sealed class ProductConfiguration : IEntityTypeConfiguration<ProductAggregate>
 {
-    public void Configure(EntityTypeBuilder<CatAggregate> builder)
+    public void Configure(EntityTypeBuilder<ProductAggregate> builder)
     {
-        builder.ToTable("cat", "clinic");
+        builder.ToTable("product", "catalogue");
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Name).HasMaxLength(100).IsRequired();
-        builder.Property(x => x.MicrochipNumber).HasMaxLength(20);
+        builder.Property(x => x.Barcode).HasMaxLength(20);
 
         // value object → owned, no separate identity
         builder.OwnsOne(x => x.Weight, w =>
@@ -181,17 +181,17 @@ public sealed class CatConfiguration : IEntityTypeConfiguration<CatAggregate>
         });
 
         // aggregate child collection → owned, loads and saves with the aggregate
-        builder.OwnsMany(x => x.Vaccinations, v =>
+        builder.OwnsMany(x => x.Certificates, v =>
         {
-            v.ToTable("cat_vaccination", "clinic");
-            v.WithOwner().HasForeignKey("cat_id");
+            v.ToTable("product_certificate", "catalogue");
+            v.WithOwner().HasForeignKey("product_id");
             v.HasKey("Id");
-            v.HasIndex(p => p.NextDueOn);      // drives the due/overdue report, SRS FR-CAT-7
+            v.HasIndex(p => p.ExpiresOn);      // drives the expiring-certificates report
         });
 
         // the aggregate exposes IReadOnlyList over a private backing field
         builder.Metadata
-            .FindNavigation(nameof(CatAggregate.Vaccinations))!
+            .FindNavigation(nameof(ProductAggregate.Certificates))!
             .SetPropertyAccessMode(PropertyAccessMode.Field);
 
         builder.Property<uint>("xmin").IsRowVersion();     // optimistic concurrency, §6
@@ -202,7 +202,7 @@ public sealed class CatConfiguration : IEntityTypeConfiguration<CatAggregate>
 
 ### `OwnsMany`, not `HasMany`, for aggregate children
 
-A vaccination has no life outside its cat. Mapping it as **owned** means EF Core loads, saves and
+A certificate has no life outside its product. Mapping it as **owned** means EF Core loads, saves and
 deletes it with the aggregate, and nothing can query or modify it independently — the persistence
 model matches the aggregate boundary instead of quietly contradicting it.
 
@@ -245,11 +245,11 @@ builder.Property<uint>("xmin").IsRowVersion();
 ```
 
 PostgreSQL's system column, so it costs no extra column and no application bookkeeping. Two staff
-editing the same cat now produce a `DbUpdateConcurrencyException` on the second save, which the
+editing the same product now produce a `DbUpdateConcurrencyException` on the second save, which the
 Api maps to `409 Conflict` telling the user to reload.
 
 The previous architecture had no concurrency guard at all — silent last-write-wins, which is not
-acceptable for clinical records. `AggregateRoot.UpdateVersion()` remains the domain-level version;
+acceptable for financial and stock records. `AggregateRoot.UpdateVersion()` remains the domain-level version;
 `xmin` is the database-level guard beneath it.
 
 ---
@@ -262,15 +262,15 @@ code.
 > This replaces the manual `scripts/create-mongo-indexes.js` run with `mongosh`, and closes the
 > old open question about whether index creation should stay manual.
 
-Index at minimum: every column filtered on in a list screen; every id column (`cat_id`,
-`owner_id`); `expiry_date` on batches (FEFO is on the hot path of every order, SRS FR-IMP-7);
-`next_due_on` on vaccinations; and natural keys that must be unique — microchip, invoice number,
+Index at minimum: every column filtered on in a list screen; every id column (`product_id`,
+`customer_id`); `expiry_date` on batches (FEFO is on the hot path of every order, SRS FR-IMP-7);
+`expires_on` on certificates; and natural keys that must be unique — barcode, invoice number,
 SKU barcode.
 
 ```csharp
-builder.HasIndex(x => x.MicrochipNumber)
+builder.HasIndex(x => x.Barcode)
        .IsUnique()
-       .HasFilter("microchip_number IS NOT NULL");    // partial: nulls allowed
+       .HasFilter("barcode IS NOT NULL");    // partial: nulls allowed
 ```
 
 ---
@@ -291,7 +291,7 @@ builder.HasIndex(x => x.MicrochipNumber)
 ## 9. Migrations
 
 ```bash
-dotnet ef migrations add AddCatVaccinationIndex \
+dotnet ef migrations add AddProductCertificateIndex \
   --project src/Infrastructure/{Root}.Infrastructure \
   --startup-project src/Api/{Root}.Api \
   --output-dir Migrations

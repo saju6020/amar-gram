@@ -35,24 +35,6 @@ afterEach(() => {
   Reflect.deleteProperty(navigator, 'serviceWorker');
 });
 
-describe('owner decision 2026-10-14: no customer phone number on the device', () => {
-  it('the API still sends customerPhone, and it never reaches IndexedDB', async () => {
-    const body = buildSnapshot('both', xctFixtureIds.branchId, 1);
-    expect(JSON.stringify(body)).toContain('+8801711000111'); // the payload as the API sends it
-    await enableOfflineCopy(xctFixtureIds.staffAccountId);
-    await writeSnapshot(body, '"e"');
-    const stored = JSON.stringify(await readSnapshot(xctFixtureIds.branchId));
-    expect(stored).not.toMatch(/customerPhone|8801711/);
-    expect(stored).toContain('Luna'); // the rest of the item is kept
-  });
-
-  it('also when the copy arrives through a sync', async () => {
-    await enableOfflineCopy(xctFixtureIds.staffAccountId);
-    await syncSnapshot(xctFixtureIds.branchId, xctFixtureIds.staffAccountId, { ignoreFreshness: true });
-    expect(JSON.stringify([...stores.snapshot.values()])).not.toMatch(/customerPhone|8801711/);
-  });
-});
-
 describe('only one tab refreshes the snapshot', () => {
   it('a copy another tab just confirmed is left alone; an old one is fetched', async () => {
     await enableOfflineCopy(xctFixtureIds.staffAccountId);
@@ -79,8 +61,8 @@ describe('only one tab refreshes the snapshot', () => {
 describe('touchSnapshot does not overwrite another tab\'s newer body', () => {
   it('skips when the stored ETag is not the one the 304 confirmed', async () => {
     await enableOfflineCopy(xctFixtureIds.staffAccountId);
-    await writeSnapshot(buildSnapshot('both', xctFixtureIds.branchId, 1), '"old"', 1_000);
-    await writeSnapshot(buildSnapshot('both', xctFixtureIds.branchId, 2), '"new"', 2_000); // another tab
+    await writeSnapshot(buildSnapshot('current', xctFixtureIds.branchId, 1), '"old"', 1_000);
+    await writeSnapshot(buildSnapshot('current', xctFixtureIds.branchId, 2), '"new"', 2_000); // another tab
     await touchSnapshot(xctFixtureIds.branchId, '"old"', 9_000);
     const stored = await readSnapshot(xctFixtureIds.branchId);
     expect(stored?.etag).toBe('"new"');

@@ -12,8 +12,8 @@
  *     board with an explanation instead of a dead session guard.
  */
 const VERSION = 1;
-const SHELL_CACHE = 'purrcare-shell-v' + VERSION;
-const ASSET_CACHE = 'purrcare-assets-v' + VERSION;
+const SHELL_CACHE = 'amargram-shell-v' + VERSION;
+const ASSET_CACHE = 'amargram-assets-v' + VERSION;
 const SHELL_URL = '/staff/offline';
 
 function isStaticAsset(url) {
@@ -82,7 +82,7 @@ self.addEventListener('activate', (event) => {
       .then((names) =>
         Promise.all(
           names
-            .filter((name) => name.startsWith('purrcare-') && name !== SHELL_CACHE && name !== ASSET_CACHE)
+            .filter((name) => name.startsWith('amargram-') && name !== SHELL_CACHE && name !== ASSET_CACHE)
             .map((name) => caches.delete(name)),
         ),
       )
@@ -141,7 +141,7 @@ self.addEventListener('message', (event) => {
     event.waitUntil(cacheShell().catch(() => undefined));
   } else if (data.type === 'purge') {
     event.waitUntil(
-      caches.keys().then((names) => Promise.all(names.filter((n) => n.startsWith('purrcare-')).map((n) => caches.delete(n)))),
+      caches.keys().then((names) => Promise.all(names.filter((n) => n.startsWith('amargram-')).map((n) => caches.delete(n)))),
     );
   } else if (data.type === 'version' && event.source) {
     event.source.postMessage({ type: 'version', version: VERSION });

@@ -5,7 +5,7 @@ import { LineArtBasket } from './LineArtBasket';
 /**
  * The Hearth empty state (docs/design/orders/MyOrders.dc.html, CartStates): a centred card with the
  * line-art harvest basket in a warm-soft disc, a display-font headline, a sentence and the next step. Empty is a
- * calm place, not a problem, so warmth is allowed; errors never use this.
+ * calm place, not a problem, so colour is allowed; errors never use this.
  */
 export function HearthEmpty({
   title,
@@ -25,13 +25,13 @@ export function HearthEmpty({
       role="status"
       aria-live="polite"
       className={cn(
-        'flex flex-col items-center gap-2.5 rounded-card border border-border bg-surface p-9 text-center',
+        'flex flex-col items-center gap-2.5 rounded-3xl border-[1.5px] border-border bg-surface p-9 text-center',
         className,
       )}
     >
       <span
         aria-hidden="true"
-        className="grid size-36 place-items-center rounded-pill bg-warm-soft text-warm-ink"
+        className="grid size-36 place-items-center rounded-pill bg-leaf-soft text-leaf-ink"
       >
         <LineArtBasket width={76} height={84} />
       </span>

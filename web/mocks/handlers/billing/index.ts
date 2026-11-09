@@ -5,7 +5,7 @@ import { staffBillingHandlers } from './staff';
 
 /**
  * `mocks/handlers/billing/index.ts` — HO-BIL-002 §12/§13. This handover's own handlers live under
- * `mocks/handlers/billing/**`; `mocks/handlers/areas/billing.ts` stays the empty stub HO-CAT-002
+ * `mocks/handlers/billing/**`; `mocks/handlers/areas/billing.ts` stays the empty stub the area
  * scaffolded (HO-ADM-002's precedent), and `mocks/handlers/index.ts` adds this array.
  */
 export const billingAreaHandlers: HttpHandler[] = [

@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Revenue by business line — US-RPT-03</title>
+<title>Revenue by channel — US-RPT-03</title>
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .dialog h2{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 10px}
 .dialog p{font-size:13.5px;line-height:1.5;margin:0 0 10px}
 .dactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
-.sk{background:linear-gradient(90deg,var(--surface-sunken),#ebe7dd);border-radius:4px;height:10px}
+.sk{background:linear-gradient(90deg,var(--surface-sunken),#EDE4D1);border-radius:4px;height:10px}
 .rcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px}
 .rcard h3{font-size:14px;margin:0 0 8px}
 .rcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;font-size:12.5px}
@@ -127,21 +127,21 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .recip label:last-child{border-bottom:none}
 .recip .roles{font-size:12px;color:var(--ink-muted)}
 .recip label.dis{background:var(--surface-sunken);color:var(--ink-muted)}
-.cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
-.cat-card b{font-size:14px;color:var(--accent-ink)}
-.cat-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
-.cat-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
-.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;margin:4px 0 6px}.legend span{display:inline-flex;align-items:center;gap:6px}.sw{width:16px;height:12px;border:1px solid #15605a;border-radius:2px;display:inline-block}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
+.rep-card b{font-size:14px;color:var(--accent-ink)}
+.rep-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
+.rep-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;margin:4px 0 6px}.legend span{display:inline-flex;align-items:center;gap:6px}.sw{width:16px;height:12px;border:1px solid #B4531A;border-radius:2px;display:inline-block}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active outlet"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="padding:22px 32px">
     <a class="back" href="ReportCatalogue.dc.html">← All reports</a>
     <div class="titlerow">
       <div>
-        <h1 class="h1">Revenue by business line</h1>
-        <p class="sub">Clinic, shop and boarding net revenue, cost of goods and margin with its coverage.</p>
+        <h1 class="h1">Revenue by channel</h1>
+        <p class="sub">Online, counter and subscription net revenue, cost of goods and margin with its coverage.</p>
       </div>
       <div class="acts">
         <a class="btn" href="ScheduleForm.dc.html"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg> Schedule this report</a>
@@ -162,63 +162,63 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
       </div>
       <div class="f"><label for="from">From (Asia/Dhaka)</label><input id="from" value="2026-06-01" size="10"></div>
       <div class="f"><label for="to">To (Asia/Dhaka)</label><input id="to" value="2026-08-31" size="10"><div class="hint">Up to 731 days</div></div>
-      <div class="f"><label for="br">Branch</label><select id="br"><option>All branches</option><option>Uttara (primary)</option><option>Banani</option></select></div>
+      <div class="f"><label for="br">Outlet</label><select id="br"><option>All outlets</option><option>Uttara (primary)</option><option>Banani</option></select></div>
       <div class="f"><label for="gb">Group by</label><select id="gb"><option>Day</option><option>Week</option><option selected>Month</option></select></div>
       <div class="fbtns"><button type="button" class="btn">Reset</button><button type="button" class="btn btn-primary">Apply</button></div>
     </form>
 
     <div class="notes">
-      <p>Margin covers 46.8 % of net revenue. 53.2 % came from services, boarding, or batches with no landed cost yet.</p>
-      <p>Aug 2026: margin covers 83.0 % of shop revenue. 17.0 % came from batches with no landed cost yet.</p>
-      <p>Clinic margin covers medicines and consumables only; services have no cost.</p>
+      <p>Margin covers 46.8 % of net revenue. 53.2 % came from delivery fees, subscription boxes, or batches with no landed cost yet.</p>
+      <p>Aug 2026: margin covers 83.0 % of counter revenue. 17.0 % came from batches with no landed cost yet.</p>
+      <p>Online margin covers products only; delivery fees have no cost.</p>
     </div>
 
     <section class="card" style="margin-bottom:14px" aria-labelledby="ch">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-        <h2 class="h2" id="ch" style="margin:0">Net revenue by month and line (৳, BDT)</h2>
+        <h2 class="h2" id="ch" style="margin:0">Net revenue by month and channel (৳, BDT)</h2>
         <button type="button" class="btn btn-sm" aria-pressed="true"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg> Hide chart</button>
       </div>
       <div class="legend" aria-hidden="true">
-        <span><i class="sw" style="background:#15605a"></i>C · Clinic</span>
-        <span><i class="sw" style="background:repeating-linear-gradient(45deg,#15605a 0 2px,#bcd9d4 2px 5px)"></i>S · Shop</span>
-        <span><i class="sw" style="background:radial-gradient(#15605a 1.2px,#fff 1.4px) 0 0/5px 5px"></i>B · Boarding</span>
+        <span><i class="sw" style="background:#B4531A"></i>O · Online</span>
+        <span><i class="sw" style="background:repeating-linear-gradient(45deg,#B4531A 0 2px,#bcd9d4 2px 5px)"></i>C · Counter</span>
+        <span><i class="sw" style="background:radial-gradient(#B4531A 1.2px,#fff 1.4px) 0 0/5px 5px"></i>S · Subscription</span>
       </div>
-      <svg viewBox="0 0 760 280" width="100%" role="img" aria-label="Bar chart of net revenue by business line for June, July and August 2026. Clinic is highest each month and rises from 13.4 to 15.1 lakh taka; shop rises from 8.8 to 10.1 lakh; boarding peaks in July at 5.3 lakh. The same figures are in the table below." style="display:block;max-width:900px">
+      <svg viewBox="0 0 760 280" width="100%" role="img" aria-label="Bar chart of net revenue by channel for June, July and August 2026. Online is highest each month and rises from 13.4 to 15.1 lakh taka; counter rises from 8.8 to 10.1 lakh; subscription peaks in July at 5.3 lakh. The same figures are in the table below." style="display:block;max-width:900px">
         <defs>
-          <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#bcd9d4"/><line x1="0" y1="0" x2="0" y2="5" stroke="#15605a" stroke-width="2"/></pattern>
-          <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#fff"/><circle cx="3" cy="3" r="1.4" fill="#15605a"/></pattern>
+          <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#bcd9d4"/><line x1="0" y1="0" x2="0" y2="5" stroke="#B4531A" stroke-width="2"/></pattern>
+          <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#fff"/><circle cx="3" cy="3" r="1.4" fill="#B4531A"/></pattern>
         </defs>
-        <g font-family="Public Sans, sans-serif" font-size="11" fill="#5c574f">
+        <g font-family="Work Sans, sans-serif" font-size="11" fill="#69553C">
           <line x1="90" y1="30" x2="740" y2="30" stroke="#efece4"/><text x="82" y="34" text-anchor="end">৳16,00,000</text>
           <line x1="90" y1="80" x2="740" y2="80" stroke="#efece4"/><text x="82" y="84" text-anchor="end">৳12,00,000</text>
           <line x1="90" y1="130" x2="740" y2="130" stroke="#efece4"/><text x="82" y="134" text-anchor="end">৳8,00,000</text>
           <line x1="90" y1="180" x2="740" y2="180" stroke="#efece4"/><text x="82" y="184" text-anchor="end">৳4,00,000</text>
-          <line x1="90" y1="230" x2="740" y2="230" stroke="#cbc3b2"/><text x="82" y="234" text-anchor="end">৳0</text>
+          <line x1="90" y1="230" x2="740" y2="230" stroke="#CDBB99"/><text x="82" y="234" text-anchor="end">৳0</text>
         </g>
-        <g stroke="#15605a" stroke-width="1">
-          <rect x="136" y="62.2" width="40" height="167.8" rx="3" fill="#15605a"/>
+        <g stroke="#B4531A" stroke-width="1">
+          <rect x="136" y="62.2" width="40" height="167.8" rx="3" fill="#B4531A"/>
           <rect x="180" y="120.5" width="40" height="109.5" rx="3" fill="url(#hatch)"/>
           <rect x="224" y="178.5" width="40" height="51.5" rx="3" fill="url(#dots)"/>
-          <rect x="351" y="52.6" width="40" height="177.4" rx="3" fill="#15605a"/>
+          <rect x="351" y="52.6" width="40" height="177.4" rx="3" fill="#B4531A"/>
           <rect x="395" y="110.7" width="40" height="119.3" rx="3" fill="url(#hatch)"/>
           <rect x="439" y="164.2" width="40" height="65.8" rx="3" fill="url(#dots)"/>
-          <rect x="566" y="41.7" width="40" height="188.3" rx="3" fill="#15605a"/>
+          <rect x="566" y="41.7" width="40" height="188.3" rx="3" fill="#B4531A"/>
           <rect x="610" y="103.4" width="40" height="126.6" rx="3" fill="url(#hatch)"/>
           <rect x="654" y="168.9" width="40" height="61.1" rx="3" fill="url(#dots)"/>
         </g>
-        <g font-family="Public Sans, sans-serif" font-size="11" font-weight="700" fill="#1c1a17" text-anchor="middle">
-          <text x="156" y="246">C</text><text x="200" y="246">S</text><text x="244" y="246">B</text>
-          <text x="371" y="246">C</text><text x="415" y="246">S</text><text x="459" y="246">B</text>
-          <text x="586" y="246">C</text><text x="630" y="246">S</text><text x="674" y="246">B</text>
+        <g font-family="Work Sans, sans-serif" font-size="11" font-weight="700" fill="#2A1F12" text-anchor="middle">
+          <text x="156" y="246">O</text><text x="200" y="246">C</text><text x="244" y="246">S</text>
+          <text x="371" y="246">O</text><text x="415" y="246">C</text><text x="459" y="246">S</text>
+          <text x="586" y="246">O</text><text x="630" y="246">C</text><text x="674" y="246">S</text>
           <text x="586" y="35" font-weight="600" font-size="10.5">৳15,06,200</text>
         </g>
-        <g font-family="Public Sans, sans-serif" font-size="12" fill="#5c574f" text-anchor="middle">
+        <g font-family="Work Sans, sans-serif" font-size="12" fill="#69553C" text-anchor="middle">
           <text x="200" y="268">Jun 2026</text><text x="415" y="268">Jul 2026</text><text x="630" y="268">Aug 2026</text>
         </g>
       </svg>
       <table class="vh">
-        <caption>Net revenue by month and business line, BDT, all branches, Asia/Dhaka</caption>
-        <thead><tr><th scope="col">Month</th><th scope="col">Clinic</th><th scope="col">Shop</th><th scope="col">Boarding</th></tr></thead>
+        <caption>Net revenue by month and channel, BDT, all outlets, Asia/Dhaka</caption>
+        <thead><tr><th scope="col">Month</th><th scope="col">Online</th><th scope="col">Counter</th><th scope="col">Subscription</th></tr></thead>
         <tbody>
           <tr><th scope="row">Jun 2026</th><td>৳13,42,500</td><td>৳8,76,300</td><td>৳4,12,000</td></tr>
           <tr><th scope="row">Jul 2026</th><td>৳14,18,900</td><td>৳9,54,700</td><td>৳5,26,400</td></tr>
@@ -229,27 +229,27 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
     </section>
 
     <table class="rt">
-      <caption><b>Revenue by business line</b> · 1 Jun – 31 Aug 2026 · All branches · by month · Asia/Dhaka · BDT</caption>
+      <caption><b>Revenue by channel</b> · 1 Jun – 31 Aug 2026 · All outlets · by month · Asia/Dhaka · BDT</caption>
       <thead><tr>
         <th scope="col" aria-sort="ascending"><button type="button" class="sortbtn on">Month <svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></th>
-        <th scope="col">Line</th><th scope="col" class="num">Gross (৳)</th><th scope="col" class="num">Discounts (৳)</th><th scope="col" class="num">Credit notes (৳)</th>
+        <th scope="col">Channel</th><th scope="col" class="num">Gross (৳)</th><th scope="col" class="num">Discounts (৳)</th><th scope="col" class="num">Credit notes (৳)</th>
         <th scope="col" class="num"><button type="button" class="sortbtn">Net revenue (৳) <svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button></th><th scope="col" class="num">Tax (৳)</th><th scope="col" class="num">Cost of goods (৳)</th><th scope="col" class="num">Margin (৳)</th><th scope="col" class="num">Margin %</th><th scope="col" class="num">Coverage %</th>
       </tr></thead>
       <tbody>
-        <tr><th scope="row">Jun 2026</th><td>Clinic</td><td class="num">৳13,71,000</td><td class="num">৳21,300</td><td class="num">৳7,200</td><td class="num">৳13,42,500</td><td class="num">৳67,125</td><td class="num">৳2,11,400</td><td class="num">৳1,58,600</td><td class="num">42.9%</td><td class="num">27.6%</td></tr>
-        <tr><th scope="row">Jun 2026</th><td>Shop</td><td class="num">৳9,02,100</td><td class="num">৳19,800</td><td class="num">৳6,000</td><td class="num">৳8,76,300</td><td class="num">৳43,815</td><td class="num">৳5,48,200</td><td class="num">৳2,79,400</td><td class="num">33.8%</td><td class="num">94.2%</td></tr>
-        <tr><th scope="row">Jun 2026</th><td>Boarding</td><td class="num">৳4,18,000</td><td class="num">৳6,000</td><td class="num">৳0</td><td class="num">৳4,12,000</td><td class="num">৳20,600</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
-        <tr><th scope="row">Jul 2026</th><td>Clinic</td><td class="num">৳14,45,100</td><td class="num">৳19,700</td><td class="num">৳6,500</td><td class="num">৳14,18,900</td><td class="num">৳70,945</td><td class="num">৳2,24,800</td><td class="num">৳1,71,300</td><td class="num">43.2%</td><td class="num">27.9%</td></tr>
-        <tr><th scope="row">Jul 2026</th><td>Shop</td><td class="num">৳9,81,200</td><td class="num">৳21,400</td><td class="num">৳5,100</td><td class="num">৳9,54,700</td><td class="num">৳47,735</td><td class="num">৳5,97,600</td><td class="num">৳2,93,100</td><td class="num">32.9%</td><td class="num">93.3%</td></tr>
-        <tr><th scope="row">Jul 2026</th><td>Boarding</td><td class="num">৳5,31,400</td><td class="num">৳5,000</td><td class="num">৳0</td><td class="num">৳5,26,400</td><td class="num">৳26,320</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
-        <tr><th scope="row">Aug 2026</th><td>Clinic</td><td class="num">৳15,34,000</td><td class="num">৳22,100</td><td class="num">৳5,700</td><td class="num">৳15,06,200</td><td class="num">৳75,310</td><td class="num">৳2,40,500</td><td class="num">৳1,86,900</td><td class="num">43.7%</td><td class="num">28.4%</td></tr>
-        <tr><th scope="row">Aug 2026</th><td>Shop</td><td class="num">৳10,44,350</td><td class="num">৳24,000</td><td class="num">৳7,500</td><td class="num">৳10,12,850</td><td class="num">৳50,640</td><td class="num">৳6,21,900</td><td class="num">৳3,05,700</td><td class="num">33.0%</td><td class="num">83.0%</td></tr>
-        <tr><th scope="row">Aug 2026</th><td>Boarding</td><td class="num">৳4,94,100</td><td class="num">৳5,500</td><td class="num">৳0</td><td class="num">৳4,88,600</td><td class="num">৳24,430</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
+        <tr><th scope="row">Jun 2026</th><td>Online</td><td class="num">৳13,71,000</td><td class="num">৳21,300</td><td class="num">৳7,200</td><td class="num">৳13,42,500</td><td class="num">৳67,125</td><td class="num">৳2,11,400</td><td class="num">৳1,58,600</td><td class="num">42.9%</td><td class="num">27.6%</td></tr>
+        <tr><th scope="row">Jun 2026</th><td>Counter</td><td class="num">৳9,02,100</td><td class="num">৳19,800</td><td class="num">৳6,000</td><td class="num">৳8,76,300</td><td class="num">৳43,815</td><td class="num">৳5,48,200</td><td class="num">৳2,79,400</td><td class="num">33.8%</td><td class="num">94.2%</td></tr>
+        <tr><th scope="row">Jun 2026</th><td>Subscription</td><td class="num">৳4,18,000</td><td class="num">৳6,000</td><td class="num">৳0</td><td class="num">৳4,12,000</td><td class="num">৳20,600</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
+        <tr><th scope="row">Jul 2026</th><td>Online</td><td class="num">৳14,45,100</td><td class="num">৳19,700</td><td class="num">৳6,500</td><td class="num">৳14,18,900</td><td class="num">৳70,945</td><td class="num">৳2,24,800</td><td class="num">৳1,71,300</td><td class="num">43.2%</td><td class="num">27.9%</td></tr>
+        <tr><th scope="row">Jul 2026</th><td>Counter</td><td class="num">৳9,81,200</td><td class="num">৳21,400</td><td class="num">৳5,100</td><td class="num">৳9,54,700</td><td class="num">৳47,735</td><td class="num">৳5,97,600</td><td class="num">৳2,93,100</td><td class="num">32.9%</td><td class="num">93.3%</td></tr>
+        <tr><th scope="row">Jul 2026</th><td>Subscription</td><td class="num">৳5,31,400</td><td class="num">৳5,000</td><td class="num">৳0</td><td class="num">৳5,26,400</td><td class="num">৳26,320</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
+        <tr><th scope="row">Aug 2026</th><td>Online</td><td class="num">৳15,34,000</td><td class="num">৳22,100</td><td class="num">৳5,700</td><td class="num">৳15,06,200</td><td class="num">৳75,310</td><td class="num">৳2,40,500</td><td class="num">৳1,86,900</td><td class="num">43.7%</td><td class="num">28.4%</td></tr>
+        <tr><th scope="row">Aug 2026</th><td>Counter</td><td class="num">৳10,44,350</td><td class="num">৳24,000</td><td class="num">৳7,500</td><td class="num">৳10,12,850</td><td class="num">৳50,640</td><td class="num">৳6,21,900</td><td class="num">৳3,05,700</td><td class="num">33.0%</td><td class="num">83.0%</td></tr>
+        <tr><th scope="row">Aug 2026</th><td>Subscription</td><td class="num">৳4,94,100</td><td class="num">৳5,500</td><td class="num">৳0</td><td class="num">৳4,88,600</td><td class="num">৳24,430</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">Not available</td><td class="num">—<span class="vh">Not recorded</span></td><td class="num">0.0%</td></tr>
       </tbody>
       <tfoot><tr><th scope="row">Total</th><td></td><td class="num">৳87,21,250</td><td class="num">৳1,44,800</td><td class="num">৳38,000</td><td class="num">৳85,38,450</td><td class="num">৳4,26,920</td><td class="num">৳24,44,400</td><td class="num">৳13,95,000</td><td class="num">36.3%</td><td class="num">46.8%</td></tr></tfoot>
     </table>
     <div class="pager"><span>9 rows · all shown</span></div>
-    <p class="annot"><b>Every figure here — including the totals, the percentages and the coverage — came from the server.</b> The page adds nothing up. Boarding margin is "Not available", never ৳0, because no boarding cost is recorded (coverage 0.0%). The chart is off by default; "Show chart" appears only on reports that group by time. Bars are told apart by letter and fill pattern, not colour alone.</p>
+    <p class="annot"><b>Every figure here — including the totals, the percentages and the coverage — came from the server.</b> The page adds nothing up. Subscription margin is "Not available", never ৳0, because no cost has been allocated to subscription boxes yet (coverage 0.0%). The chart is off by default; "Show chart" appears only on reports that group by time. Bars are told apart by letter and fill pattern, not colour alone.</p>
   </div>
 </div>
 </x-dc>

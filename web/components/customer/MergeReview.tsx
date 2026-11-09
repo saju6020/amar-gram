@@ -27,14 +27,8 @@ interface MergeResult {
  * non-survivor member — for the common two-member group (the case the match rule produces almost
  * always) this is literally the one request §11.13 describes; a larger group runs the same
  * request once per remaining member in sequence, each independently re-runnable on a failure
- * (below). The server moves the cats; this component never calls a cat endpoint (ADR-FE-011(b)).
- *
- * CR MEDIUM 2 (first-pass gate fix round, item 13) — this fresh single-customer read (Q-H1) used to
- * report only `catCount`, not a per-cat list, unlike the duplicates report (Q-I1) — a §20.7 contract
- * gap against §11.13's "lists every cat", closed by extending `StaffCustomerViewModel` itself
- * (`cats`, alongside the unchanged `catCount`) rather than falling back to the report's own cat list
- * (still forbidden — ADR-FE-011(c) — the report row is exactly what a fresh read exists to not
- * trust). `MergeConfirmDialog` renders the actual names from this fresh read.
+ * (below). The server does the whole merge; this component orchestrates nothing else
+ * (ADR-FE-011(b)). The report row is never trusted for the confirmation (ADR-FE-011(c)).
  *
  * ARCH gate HIGH 3 (first pass) — takes `customerIds`/`isLoading`/`isError`/`customers`/`onMerge`/
  * `isMergePending` as props; the page (`app/(staff)/staff/customers/duplicates/review/page.tsx`)
@@ -90,7 +84,7 @@ export function MergeReview({
       <div role="status" aria-live="polite" className="flex flex-col gap-3">
         <p className="text-sm font-semibold text-ink">
           {result.isReapplication
-            ? 'This merge had already been applied; any remaining cats have now been moved.'
+            ? 'This merge had already been applied; nothing else needed to change.'
             : 'The records have been merged.'}
         </p>
         <Link

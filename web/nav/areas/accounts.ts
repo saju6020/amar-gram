@@ -13,6 +13,8 @@ export const accountsNav: NavArea = {
   audience: 'both',
   items: [
     { label: 'My account', href: '/portal/account/profile', icon: 'user', audience: 'portal' },
+    // HO-P4 §11.1.3 — the staff customer search and profile screen (built by slice S1).
+    { label: 'Customers', href: '/staff/customers', icon: 'users', audience: 'staff' },
     {
       label: 'Register walk-in',
       href: '/staff/customers/new',

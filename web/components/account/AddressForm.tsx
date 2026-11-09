@@ -126,7 +126,7 @@ export function AddressForm({ open, onOpenChange, address, onSubmit }: AddressFo
                 required={required}
                 aria-invalid={!!errors[name]}
                 aria-describedby={errors[name] ? `${name}-error` : undefined}
-                className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="min-h-11 rounded-[var(--radius-sm)] border border-border-strong bg-surface px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 {...register(name)}
               />
               {errors[name] && (
@@ -141,10 +141,15 @@ export function AddressForm({ open, onOpenChange, address, onSubmit }: AddressFo
             </div>
           ))}
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="secondary"
+              className="min-h-11"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+            <Button type="submit" className="min-h-11" disabled={isSubmitting} aria-busy={isSubmitting}>
               {isSubmitting ? 'Saving…' : 'Save address'}
             </Button>
           </DialogFooter>

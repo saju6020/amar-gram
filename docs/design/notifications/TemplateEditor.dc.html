@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--overlay:rgba(28,26,23,.4);--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:16px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--overlay:rgba(28,26,23,.4);--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px;--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -51,11 +51,11 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
 </style>
 </helmet>
 <div style="width:1280px;height:820px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div style="font-size:13px">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div style="font-size:13px">Rezwan Ahmed · Administrator</div></div>
   <div class="main">
     <div class="hd">
-      <h1 class="h1">Vaccination due soon</h1>
-      <span class="muted small">clinic.vaccination-due · Transactional · Ignores quiet hours</span>
+      <h1 class="h1">Back in stock</h1>
+      <span class="muted small">shop.back-in-stock · Transactional · Respects quiet hours</span>
       <div class="secretnote">This template does not contain a password-reset link — shown here only for templates that do.</div>
     </div>
     <nav class="chtabs" role="tablist" aria-label="Channel">
@@ -67,12 +67,12 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
 
     <div class="grid">
       <div>
-        <div class="field"><label>Subject <span class="cnt">42 / 120</span></label><input value="{{catName}}'s {{vaccineName}} is due soon"></div>
-        <div class="field"><label>Body <span class="cnt">186 / 2000</span></label><textarea rows="8">Hi {{ownerName}},
+        <div class="field"><label>Subject <span class="cnt">32 / 120</span></label><input value="{{productName}} is back in stock"></div>
+        <div class="field"><label>Body <span class="cnt">205 / 2000</span></label><textarea rows="8">Hi {{customerName}},
 
-{{catName}} is due for a {{vaccineName}} booster on {{dueDate}}. Book before your next boarding stay to avoid a hold at check-in.
+{{productName}} {{packSize}} is back in stock at {{price}}. This season's harvest is limited, so we'll hold it in your basket for 24 hours once you add it.
 
-[Book now]({{bookingUrl}})</textarea></div>
+[Shop now]({{productUrl}})</textarea></div>
         <div style="display:flex;gap:8px;margin-top:16px">
           <button type="button" class="btn btn-primary">Save changes</button>
           <button type="button" class="btn btn-outline">Reset to default</button>
@@ -81,22 +81,22 @@ body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:
 
       <div class="varpanel">
         <h3>Variables</h3>
-        <div class="varitem"><span class="name">{{catName}}</span><span class="req">Required</span><div class="desc">The cat's name</div></div>
-        <div class="varitem"><span class="name">{{ownerName}}</span><div class="desc">The customer's first name</div></div>
-        <div class="varitem"><span class="name">{{vaccineName}}</span><span class="req">Required</span><div class="desc">e.g. "Rabies booster"</div></div>
-        <div class="varitem"><span class="name">{{dueDate}}</span><span class="req">Required</span><div class="desc">Branch-local date</div></div>
-        <div class="varitem"><span class="name">{{bookingUrl}}</span><div class="desc">Offered as [Link text]({{bookingUrl}}) in email</div></div>
+        <div class="varitem"><span class="name">{{productName}}</span><span class="req">Required</span><div class="desc">The product's name</div></div>
+        <div class="varitem"><span class="name">{{customerName}}</span><div class="desc">The customer's first name</div></div>
+        <div class="varitem"><span class="name">{{packSize}}</span><span class="req">Required</span><div class="desc">e.g. "500 g"</div></div>
+        <div class="varitem"><span class="name">{{price}}</span><span class="req">Required</span><div class="desc">Current price, e.g. "৳650"</div></div>
+        <div class="varitem"><span class="name">{{productUrl}}</span><div class="desc">Offered as [Link text]({{productUrl}}) in email</div></div>
       </div>
 
       <div class="previewpanel">
         <h3>Live preview</h3>
-        <div style="font-size:12.5px;margin-bottom:6px"><strong>{{catName}}'s {{vaccineName}} is due soon</strong></div>
+        <div style="font-size:12.5px;margin-bottom:6px"><strong>{{productName}} is back in stock</strong></div>
         <div class="emailbox">
           <div class="emailhead">Email preview <span class="muted">(sandboxed — the only HTML this app renders)</span></div>
           <div class="emailframe" title="Email preview">
             <p>Hi Farhana,</p>
-            <p>Mittens is due for a Rabies booster booster on 2 Oct 2026. Book before your next boarding stay to avoid a hold at check-in.</p>
-            <p><a href="#" style="color:#15605a;font-weight:600">Book now</a></p>
+            <p>Sundarbans wild honey 500 g is back in stock at ৳650. This season's harvest is limited, so we'll hold it in your basket for 24 hours once you add it.</p>
+            <p><a href="#" style="color:#B4531A;font-weight:600">Shop now</a></p>
           </div>
         </div>
         <button type="button" class="btn-outline btn" style="font-size:12px;padding:5px 10px;margin-top:8px">Plain-text version ▾</button>

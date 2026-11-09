@@ -3,31 +3,28 @@
 <head>
 <meta charset="utf-8">
 <title>Administration — screens</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="./index.css">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="../index.html">&larr; All areas</a>
-  <div class="eyebrow">PurrCare · backlog &sect;14</div>
+  <div class="eyebrow">Amar Gram</div>
   <h1>Administration</h1>
-  <p class="lede">Six rows, twenty-two artboards &mdash; the largest area so far. No live interaction; every state is its own artboard.</p>
+  <p class="lede">Six rows, nineteen artboards &mdash; outlets and warehouses, prices and tax, shop-staff rosters, settings, content and audit. No live interaction; every state is its own artboard.</p>
 
   <div class="row-group">
-    <h2>Branches — US-ADM-01</h2>
-    <a class="screen-row" href="BranchList.dc.html"><span class="screen-name">Branch list<span class="screen-file">BranchList.dc.html</span></span><span class="screen-desc">The admin section shell (sidebar nav, active-branch picker) established here and reused everywhere below</span></a>
-    <a class="screen-row" href="BranchDetails.dc.html"><span class="screen-name">Branch &rarr; Details<span class="screen-file">BranchDetails.dc.html</span></span><span class="screen-desc">The Tabs component in its route-based form: Details · Opening hours · Closures · Rooms</span></a>
+    <h2>Branches (outlets &amp; warehouses) — US-ADM-01</h2>
+    <a class="screen-row" href="BranchList.dc.html"><span class="screen-name">Branch list<span class="screen-file">BranchList.dc.html</span></span><span class="screen-desc">Outlets and warehouses with their kind; the admin section shell (sidebar nav, active-branch picker) established here and reused everywhere below</span></a>
+    <a class="screen-row" href="BranchDetails.dc.html"><span class="screen-name">Branch &rarr; Details<span class="screen-file">BranchDetails.dc.html</span></span><span class="screen-desc">The Tabs component in its route-based form: Details · Opening hours · Closures</span></a>
     <a class="screen-row" href="WeeklyHoursEditor.dc.html"><span class="screen-name">⭐ Branch &rarr; Opening hours<span class="screen-file">WeeklyHoursEditor.dc.html</span></span><span class="screen-desc">Seven day rows, "Closed" written out for a day with none, "Copy Monday to weekdays"</span></a>
     <a class="screen-row" href="Closures.dc.html"><span class="screen-name">Branch &rarr; Closures<span class="screen-file">Closures.dc.html</span></span><span class="screen-desc">Upcoming (cancellable) vs past (read-only), the add form beside it</span></a>
-    <a class="screen-row" href="Rooms.dc.html"><span class="screen-name">Branch &rarr; Rooms<span class="screen-file">Rooms.dc.html</span></span><span class="screen-desc">Name, kind, active — deliberately plain, nothing more is specified</span></a>
     <a class="screen-row" href="BranchPickerAndAssignment.dc.html"><span class="screen-name">Two supporting pieces<span class="screen-file">BranchPickerAndAssignment.dc.html</span></span><span class="screen-desc">The header's active-branch picker (hidden with one branch) and the staff-account Branches panel with its primary radio</span></a>
   </div>
 
   <div class="row-group">
-    <h2>Services, prices &amp; tax — US-ADM-04</h2>
-    <a class="screen-row" href="ServiceList.dc.html"><span class="screen-name">Service catalogue<span class="screen-file">ServiceList.dc.html</span></span><span class="screen-desc">The "Not priced" badge — such a service cannot be booked</span></a>
-    <a class="screen-row" href="ServiceForm.dc.html"><span class="screen-name">Service editor<span class="screen-file">ServiceForm.dc.html</span></span><span class="screen-desc">Qualified roles (&ge;1 required), required room kind, tax class</span></a>
-    <a class="screen-row" href="EffectiveDatedHistory.dc.html"><span class="screen-name">⭐ Price history<span class="screen-file">EffectiveDatedHistory.dc.html</span></span><span class="screen-desc">Scheduled / Current / Past, no edit control anywhere, the schedule-change dialog with its exact confirmation sentence</span></a>
+    <h2>Prices &amp; tax — US-ADM-04</h2>
+    <a class="screen-row" href="EffectiveDatedHistory.dc.html"><span class="screen-name">⭐ Price history<span class="screen-file">EffectiveDatedHistory.dc.html</span></span><span class="screen-desc">A product's price (Chinigura rice 1 kg): Scheduled / Current / Past, no edit control anywhere, the schedule-change dialog with its exact confirmation sentence</span></a>
     <a class="screen-row" href="TaxClasses.dc.html"><span class="screen-name">Tax classes<span class="screen-file">TaxClasses.dc.html</span></span><span class="screen-desc">The same EffectiveDatedHistory pattern applied to a rate instead of a price</span></a>
   </div>
 
@@ -35,7 +32,7 @@
     <h2>Rosters &amp; leave — US-ADM-03</h2>
     <a class="screen-row" href="RosterWeekView.dc.html"><span class="screen-name">⭐ Roster week view<span class="screen-file">RosterWeekView.dc.html</span></span><span class="screen-desc">A real &lt;table&gt;, shifts/leave/exceptions/"Outside opening hours" all in text, and the below-768px day list beside it</span></a>
     <a class="screen-row" href="RosterPatternEditor.dc.html"><span class="screen-name">Roster pattern<span class="screen-file">RosterPatternEditor.dc.html</span></span><span class="screen-desc">Current pattern vs a scheduled next one with its effective date</span></a>
-    <a class="screen-row" href="MyLeave.dc.html"><span class="screen-name">My leave<span class="screen-file">MyLeave.dc.html</span></span><span class="screen-desc">Every staff member's own request/list/cancel</span></a>
+    <a class="screen-row" href="MyLeave.dc.html"><span class="screen-name">My leave<span class="screen-file">MyLeave.dc.html</span></span><span class="screen-desc">Every shop staff member's own request/list/cancel</span></a>
     <a class="screen-row" href="LeaveApprovals.dc.html"><span class="screen-name">Leave approvals<span class="screen-file">LeaveApprovals.dc.html</span></span><span class="screen-desc">Admin-only; the sole-administrator self-approval case shown as a note, not a missing button</span></a>
   </div>
 

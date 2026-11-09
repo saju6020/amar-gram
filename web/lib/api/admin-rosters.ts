@@ -8,7 +8,6 @@ export interface ShiftSlot {
   dayOfWeek: DayOfWeekName;
   starts: string; // "HH:mm"
   ends: string;
-  defaultRoomId: string | null;
 }
 
 export interface StaffRoster {
@@ -109,7 +108,6 @@ export interface AvailabilityInterval {
   branchId: string;
   start: string; // instant
   end: string;
-  defaultRoomId: string | null;
   outsideOpeningHours: boolean;
 }
 
@@ -131,5 +129,55 @@ export async function getAvailability(
   }
   return apiFetch<AvailabilityInterval[]>(
     `/api/admin/branches/${encodeURIComponent(branchId)}/availability?${query.toString()}`,
+  );
+}
+
+// -------------------------------------------------------------------------------------------
+// HO-P5 BG-23 -- the roster grid's cells
+// -------------------------------------------------------------------------------------------
+
+/** `Custom` is read-only: the day's hours match neither preset (Shared/Enums/RosterShift.cs:8-14). */
+export type RosterShiftName = 'Morning' | 'Evening' | 'Off' | 'Custom';
+
+/** The values a click may set -- everything but `Custom` (Application/CommandHandlers/Validators/RosterCommandValidators.cs:47-49). */
+export type SettableRosterShift = Exclude<RosterShiftName, 'Custom'>;
+
+/** One cell as the server reads it (Read/ViewModels/RosterCellViewModels.cs:3-7): the day's effective slots in
+ *  branch-local "HH:mm", empty for Off. Leave and opening hours are deliberately not applied. */
+export interface RosterCell {
+  staffAccountId: string;
+  branchId: string;
+  date: string; // "yyyy-MM-dd"
+  shift: RosterShiftName;
+  slots: Array<{ starts: string; ends: string }>;
+}
+
+/** Only these roles can be rostered (Shared/Constants/StaffRosterRules.cs:6-9). Presentation only: the server decides
+ *  (`StaffNotRosterable`). */
+export const ROSTERABLE_ROLE_IDS: readonly string[] = ['Reception'];
+
+/** The server's range cap: `to` at most 31 days after `from` (Shared/Constants/LeaveRules.cs:10,
+ *  Api/Controllers/AdminRostersController.cs:70-72). */
+export async function getRosterCells(
+  branchId: string,
+  params: { from: string; to: string; staffAccountId?: string },
+): Promise<RosterCell[]> {
+  const query = new URLSearchParams({ from: params.from, to: params.to });
+  if (params.staffAccountId) query.set('staffAccountId', params.staffAccountId);
+  return apiFetch<RosterCell[]>(
+    `/api/admin/branches/${encodeURIComponent(branchId)}/roster-cells?${query.toString()}`,
+  );
+}
+
+/** One click: 200 with the cell as it now reads (Api/Controllers/AdminRostersController.cs:49-68). */
+export async function setRosterShift(
+  branchId: string,
+  staffAccountId: string,
+  date: string,
+  shift: SettableRosterShift,
+): Promise<RosterCell> {
+  return apiFetch<RosterCell>(
+    `/api/admin/branches/${encodeURIComponent(branchId)}/rosters/${encodeURIComponent(staffAccountId)}/shifts/${encodeURIComponent(date)}`,
+    { method: 'PUT', body: { shift } },
   );
 }

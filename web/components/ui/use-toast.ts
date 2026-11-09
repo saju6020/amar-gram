@@ -1,8 +1,8 @@
 'use client';
 
-// Standalone toast store (the shadcn/ui `use-toast` recipe, copied in and owned — HO-CAT-002
+// Standalone toast store (the shadcn/ui `use-toast` recipe, copied in and owned — the scaffold handover
 // §3.1, §9). Deliberately NOT under lib/hooks/: that folder is reserved for TanStack Query's
-// useQuery/useMutation calls only (HO-CAT-002 §8.2 rule 3, enforced by eslint.config.mjs's
+// useQuery/useMutation calls only (the scaffold handover §8.2 rule 3, enforced by eslint.config.mjs's
 // no-restricted-imports rule) and toast state is ephemeral UI state, not server data (§8.4) — a
 // tiny module-level reducer, not a second global store (§8.4 forbids Redux/Zustand/Context-as-
 // store, which this is not: it holds nothing an area's business logic reads).

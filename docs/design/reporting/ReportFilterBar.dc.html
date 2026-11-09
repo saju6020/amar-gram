@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -104,7 +104,7 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .dialog h2{font-family:var(--font-display);font-weight:600;font-size:18px;margin:0 0 10px}
 .dialog p{font-size:13.5px;line-height:1.5;margin:0 0 10px}
 .dactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
-.sk{background:linear-gradient(90deg,var(--surface-sunken),#ebe7dd);border-radius:4px;height:10px}
+.sk{background:linear-gradient(90deg,var(--surface-sunken),#EDE4D1);border-radius:4px;height:10px}
 .rcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px}
 .rcard h3{font-size:14px;margin:0 0 8px}
 .rcard dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0;font-size:12.5px}
@@ -127,21 +127,21 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 .recip label:last-child{border-bottom:none}
 .recip .roles{font-size:12px;color:var(--ink-muted)}
 .recip label.dis{background:var(--surface-sunken);color:var(--ink-muted)}
-.cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
-.cat-card b{font-size:14px;color:var(--accent-ink)}
-.cat-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
-.cat-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
+.rep-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:13px 15px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:5px}
+.rep-card b{font-size:14px;color:var(--accent-ink)}
+.rep-card span{font-size:12.5px;color:var(--ink-muted);line-height:1.45}
+.rep-card em{font-style:normal;font-size:11.5px;color:var(--ink-faint);font-weight:600}
 
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active outlet"><option>Uttara (primary)</option><option>Banani</option></select>Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="padding:22px 32px">
     <a class="back" href="ReportCatalogue.dc.html">← All reports</a>
     <div class="titlerow">
       <div>
-        <h1 class="h1">Vaccination due list</h1>
-        <p class="sub">Cats due or overdue for a vaccine, with the owner's contact and the last reminder sent.</p>
+        <h1 class="h1">Low stock and reorder</h1>
+        <p class="sub">Items below their reorder point, with a suggested order quantity and the preferred supplier.</p>
       </div>
       <div class="acts">
         <a class="btn" href="ScheduleForm.dc.html"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg> Schedule this report</a>
@@ -152,25 +152,25 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
 
     <form class="filters" aria-label="Report filters">
       <div class="f">
-        <span class="lab">Due window</span>
+        <span class="lab">Sales window</span>
         <div class="presets" role="group" aria-label="Date range presets">
           <button type="button" class="chip" aria-pressed="false">Today</button>
           <button type="button" class="chip" aria-pressed="false">This week</button>
           <button type="button" class="chip" aria-pressed="false">This month</button>
           <button type="button" class="chip" aria-pressed="true">Custom</button>
         </div>
-        <div class="hint">Report default: the next 30 days</div>
+        <div class="hint">Report default: the last 30 days</div>
       </div>
-      <div class="f"><label for="from">From (Asia/Dhaka)</label><input id="from" value="2026-09-23" size="10"></div>
-      <div class="f"><label for="to">To (Asia/Dhaka)</label><input id="to" value="2026-10-22" size="10"><div class="hint">Up to 90 days</div></div>
-      <div class="f"><label for="br">Branch</label><select id="br"><option>All branches</option><option selected>Uttara (primary)</option><option>Banani</option></select><div class="hint">Cats count at the branch of their last visit</div></div>
+      <div class="f"><label for="from">From (Asia/Dhaka)</label><input id="from" value="2026-08-24" size="10"></div>
+      <div class="f"><label for="to">To (Asia/Dhaka)</label><input id="to" value="2026-09-22" size="10"><div class="hint">Up to 365 days</div></div>
+      <div class="f"><label for="br">Outlet</label><select id="br"><option>All outlets</option><option selected>Uttara (primary)</option><option>Banani</option></select><div class="hint">Warehouse stock is counted separately</div></div>
       <div class="f"><span class="lab">Include</span>
-        <label class="check"><input type="checkbox" checked> Overdue vaccinations</label>
-        <label class="check" style="padding-top:0"><input type="checkbox"> Deworming and parasite control</label>
+        <label class="check"><input type="checkbox" checked> Out-of-stock items</label>
+        <label class="check" style="padding-top:0"><input type="checkbox"> Seasonal products (e.g. khejur gur)</label>
       </div>
       <div class="fbtns"><button type="button" class="btn">Reset</button><button type="button" class="btn btn-primary">Apply</button></div>
     </form>
-    <p class="small muted" style="margin:-4px 0 18px">Opened with nothing in the address bar, the filters start at the report's own defaults sent by the server (here: the next 30 days, overdue included). Every filter is kept in the address bar, so the filtered report is a link you can share and it survives a reload.</p>
+    <p class="small muted" style="margin:-4px 0 18px">Opened with nothing in the address bar, the filters start at the report's own defaults sent by the server (here: the last 30 days of sales, out-of-stock included). Every filter is kept in the address bar, so the filtered report is a link you can share and it survives a reload.</p>
 
     <h2 class="h2">The control set — one control per parameter type</h2>
     <div class="grid g3">
@@ -180,9 +180,9 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
         <p class="small muted" style="margin:8px 0 0">A preset asks the server for its dates; the page never works out "last month" itself. Custom unlocks the two date fields.</p>
       </div>
       <div class="state">
-        <div class="statelabel">Branch</div>
-        <div class="f"><label for="b1">Branch</label><select id="b1"><option>All branches</option><option>Uttara (primary)</option><option>Banani</option></select></div>
-        <p class="small muted" style="margin:8px 0 0">"All branches" is offered only to roles allowed to run a report across branches (administrator, accountant). Reception sees only their own branches.</p>
+        <div class="statelabel">Outlet</div>
+        <div class="f"><label for="b1">Outlet</label><select id="b1"><option>All outlets</option><option>Uttara (primary)</option><option>Banani</option></select></div>
+        <p class="small muted" style="margin:8px 0 0">"All outlets" is offered only to roles allowed to run a report across outlets (administrator, accountant). Store staff see only their own outlets.</p>
       </div>
       <div class="state">
         <div class="statelabel">Group by (time-grouped reports)</div>
@@ -195,11 +195,11 @@ table.rt{border-collapse:separate;border-spacing:0;width:100%;background:#fff;bo
       </div>
       <div class="state">
         <div class="statelabel">Whole number with limits</div>
-        <div class="f"><label for="i1">Minimum days overdue</label><input id="i1" type="number" min="0" max="365" value="0" style="width:120px"><div class="hint">0 to 365</div></div>
+        <div class="f"><label for="i1">Days of cover below</label><input id="i1" type="number" min="0" max="365" value="0" style="width:120px"><div class="hint">0 to 365</div></div>
       </div>
       <div class="state">
         <div class="statelabel">Pick a record</div>
-        <div class="f"><label for="p1">Supplier</label><select id="p1"><option>Any supplier</option><option>Royal Canin Bangladesh</option><option>PetCare Imports Ltd.</option></select><div class="hint">Uses the area's own picker where one exists; otherwise a plain text field</div></div>
+        <div class="f"><label for="p1">Supplier</label><select id="p1"><option>Any supplier</option><option>Dinajpur Growers' Co-operative</option><option>Satkhira Honey Collectors' Co-operative</option></select><div class="hint">Uses the area's own picker where one exists; otherwise a plain text field</div></div>
       </div>
     </div>
   </div>

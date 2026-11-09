@@ -1,8 +1,8 @@
 # Orders — UX
 
-The clickable design for backlog §10 *Cart, Checkout and Orders*, built against
-[`HO-ORD-002`](../../handover/HO-ORD-002.md), the frontend handover. Fifth area, after
-[Cat Profiles](../cat-profile/README.md), [Accounts & Identity](../accounts-identity/README.md),
+The clickable design for Amar Gram's *Cart, Checkout and Orders* area, built against
+[`HO-ORD-002`](../../handover/HO-ORD-002.md), the frontend handover. It follows
+[Accounts & Identity](../accounts-identity/README.md),
 [Administration](../administration/README.md) and [Notifications](../notifications/README.md).
 
 ## Where to review it
@@ -19,7 +19,7 @@ simple `topnav` for the shared sidebar and header. Customer screens keep the hea
 
 ## The screens
 
-Nine rows, forty artboards: the largest area so far. HO-ORD-002 covers 19 stories and about 30 routes,
+Nine rows, thirty-nine artboards: the largest area so far. HO-ORD-002 covers 19 stories and about 30 routes,
 roughly twice Administration's scope. It spans both sides of the counter: a customer's cart, checkout and
 order history, and the staff queue, money screens, fulfilment, returns and the point of sale.
 
@@ -27,11 +27,10 @@ order history, and the staff queue, money screens, fulfilment, returns and the p
 |---|---|---|---|
 | Cart — US-ORD-01, 02 | `Cart.dc.html` | Cart | ⭐ merge notice with a dropped line; price change, "Only 2 left" at its maximum, an unavailable line that blocks checkout; the undo toast instead of a confirm |
 | | `CartStates.dc.html` | Cart states (three phones) | Empty cart; `AddToCartButton` idle / pending / added (live region) / disabled with reason; `CartBadge` hidden at 0; checkout while signed out |
-| | `PrescriptionCatDialog.dc.html` | Prescription cat picker | Unauthorised cats disabled with "No current authorisation for this food" and **Book a consultation**; the signed-out version |
 | Checkout — US-ORD-02…07, 18 | `CheckoutFulfilment.dc.html` | 1 · Delivery or pickup | "We don't deliver to Gazipur yet" with pickup preselected (US-ORD-06 AC2) |
 | | `CheckoutSlot.dc.html` | 2 · Slot | Service levels with the server's charge; slot windows labelled Asia/Dhaka; the skipped-step case (OQ-3) |
 | | `CheckoutPayment.dc.html` | 3 · Payment | ⭐ unavailable methods disabled with the server's reason; the three COD reasons side by side; **no card option** |
-| | `CheckoutReview.dc.html` | 4 · Review | ⭐ `ChangesPanel` as sentences, grouped, with its acknowledgement; missing prescription cat; rejected discount code; pending policy; six-row `OrderSummary`; Place order disabled, with every reason listed |
+| | `CheckoutReview.dc.html` | 4 · Review | ⭐ `ChangesPanel` as sentences, grouped, with its acknowledgement; rejected discount code; pending policy; six-row `OrderSummary`; Place order disabled, with every reason listed |
 | | `CheckoutOutcomes.dc.html` | Placing the order | Ready; `409 CheckoutQuoteChanged` (tick cleared, announced); `409 RequestInProgress`; a `400` sent back to its step |
 | | `CheckoutMobile.dc.html` | Review at 360 px | Single column of preview cards, free-delivery card, Place order pinned to the bottom |
 | | `OrderPlaced.dc.html` | Order placed · bank transfer | ⭐ reference, copy buttons, countdown on the server clock, "I've made the transfer", and the confirmation that follows |
@@ -56,7 +55,7 @@ order history, and the staff queue, money screens, fulfilment, returns and the p
 | Returns — US-ORD-13, 14 | `ReturnsList.dc.html` | Returns | Status filter, the next step for each return |
 | | `ReturnDetail.dc.html` | Return review | ⭐ Approve disabled until the flagged line's defect is confirmed with a note |
 | | `ReturnReceive.dc.html` | Receive & decide | ⭐ "Received items go to quarantine"; restock to the named original batch or write off; a recalled batch refused on its line |
-| Point of sale — US-ORD-16, 18 | `PosSale.dc.html` | Scan and tender | ⭐ scan field with focus ring, unknown barcode announced, prescription line refused, split tenders, Complete sale disabled with the server's shortfall |
+| Point of sale — US-ORD-16, 18 | `PosSale.dc.html` | Scan and tender | ⭐ scan field with focus ring, unknown barcode announced, a recalled batch refused, split tenders, Complete sale disabled with the server's shortfall |
 | | `PosComplete.dc.html` | Sale complete · void | Change due in large type; void confirmation; "This is already being processed." |
 | | `PosReceipt.dc.html` | Receipt | 80 mm print beside the server's 48-column plain text |
 | | `PosMobile.dc.html` | POS at 360 px | Stacked basket, tender as a bottom sheet |
@@ -68,11 +67,10 @@ order history, and the staff queue, money screens, fulfilment, returns and the p
 
 ## The design system
 
-Built on the PurrCare design system. The tokens are hand-copied into each artboard, as in the earlier
+Built on the Amar Gram design system. The tokens are hand-copied into each artboard, as in the earlier
 areas. This area adds no new component, only new uses of existing ones:
 
-- **`Badge`**: order and flag chips always pair a word with an `aria-hidden` icon. The cat chip (white,
-  bordered) marks a prescription line's cat.
+- **`Badge`**: order and flag chips always pair a word with an `aria-hidden` icon.
 - **`Dialog`**: several states of one flow are drawn side by side on a single scrim, for example
   form → confirmation, or refused → shortcut. The screen stays readable with no live interaction.
 - **`Table`**, **`Tabs`** (the order views: All / Awaiting payment / Reconciliation / Refunds due),
@@ -83,12 +81,12 @@ areas. This area adds no new component, only new uses of existing ones:
   inside the staff shell with its sheet as a preview, because the page has actions (Start packing) that
   are not printed.
 
-**Customer layer: Hearth (owner-approved 2026-10-16).** Customer screens add the warmer PurrCare customer tokens
-on top of the usual set: `--surface-page:#fbf6ef`, `--warm:#e8894a` (fill and decoration only,
-never text), `--warm-ink:#8a3f14` (7.5:1 on white), `--warm-soft:#fdeee2`, and `--radius-md` of
-14px. Hearth adds `--accent-tint:#e6f0ee`, `--radius-card:22px`, `--radius-band:32px` and
+**Customer layer: Hearth (owner-approved 2026-10-16).** Customer screens add the warmer Amar Gram customer tokens
+on top of the usual set: `--surface-page:#FBF3E2`, `--warm:#EDA73A` (fill and decoration only,
+never text), `--warm-ink:#7A3B10` (7.5:1 on white), `--warm-soft:#FBF1DC`, and `--radius-md` of
+14px. Hearth adds `--accent-tint:#E3EDC6`, `--radius-card:22px`, `--radius-band:32px` and
 `--radius-pill:999px`. Teal stays the colour for actions, and staff screens are unchanged.
-`PrescriptionCatDialog`, `PackingSlip` and `PosReceipt` keep the neutral tokens.
+`PackingSlip` and `PosReceipt` keep the neutral tokens.
 
 **Owner decision 2026-10-16: order screens follow the approved Hearth preview layout.** After the first
 restyle the owner said the screens were "not the same" as the preview they had approved. The customer order
@@ -113,8 +111,8 @@ choices on the left and the neutral summary on the right; order detail is hero �
    hero ("Thank you, Farhana") with the tracker's first node current.
 4. **Greeting headlines on checkout steps** use the customer's first name ("Almost there, Farhana").
 
-- **Header**: a white bar with a line-art cat head in a 40px warm-soft disc. It reads "PurrCare Shop" on
-  shop and cart pages and "PurrCare" on portal pages, where the active nav item is warm-ink with an apricot
+- **Header**: a white bar with a line-art leaf in a 40px warm-soft disc. It reads "Amar Gram Shop" on
+  shop and cart pages and "Amar Gram" on portal pages, where the active nav item is warm-ink with an apricot
   underline. The cart is a warm-soft pill with a teal count badge. Checkout shows a lock and "Secure checkout".
 - **Shapes**: buttons and inputs are pills, at least 44px tall. Place order, Checkout and Continue are
   54px teal pills. Cards use radius 22, the hero band 32.
@@ -127,16 +125,16 @@ choices on the left and the neutral summary on the right; order detail is hero �
   name, "Qty · each" and the line total. In the cart each line is its own card: tile, brand eyebrow, name,
   availability, a pill quantity stepper and the price. My orders lists each order as a rounded card with a
   tinted tile, status chip, total and a **View** pill.
-- **Order summary stays neutral**: a white card, a Newsreader title, dashed row rules and a bold 28px total.
+- **Order summary stays neutral**: a white card, a Fraunces title, dashed row rules and a bold 28px total.
   It always has all six rows.
 - **Status hero** (`OrderPlaced`, `OrderDetail`): a warm-soft band (radius 32) with an eyebrow, a large
-  Newsreader headline and a white disc with a line-art illustration. Order detail adds a tracker of 54px
+  Fraunces headline and a white disc with a line-art illustration. Order detail adds a tracker of 54px
   nodes joined by a 4px line: done nodes are teal, the current node is an apricot fill with a warm-soft
   ring, and future nodes are white with a dashed border. The "What's happened" timeline uses small
   coloured dots and shows no staff names.
-- **Warmth stops at money and problems.** Errors, the 409/400 outcomes, the expired transfer, the cancel
-  confirmation and the prescription cat dialog keep neutral and status colours. They have no warm band and
-  no cat, but they take the new shapes and header. Warm is never a status. There are no paw prints, puns or
+- **Warmth stops at money and problems.** Errors, the 409/400 outcomes, the expired transfer and the cancel
+  confirmation keep neutral and status colours. They have no warm band and
+  no illustration, but they take the new shapes and header. Warm is never a status. There are no puns or
   emoji, and every icon is an inline stroke SVG.
 - **Free-delivery nudge: now wanted** (owner decision above). It replaces the earlier "no free-delivery
   nudge" rule, and it depends on the threshold being added to the quote.
@@ -151,7 +149,7 @@ choices on the left and the neutral summary on the right; order detail is hero �
 3. **Changes must be seen before paying.** The changes panel names each product in a sentence, and
    Place order stays disabled until the acknowledgement is ticked *for this quote*. `CheckoutOutcomes`
    shows the tick cleared again after a `409` (ADR-FE-091).
-4. **Disabled always says why.** Checkout, unavailable payment methods, unauthorised cats, Place order,
+4. **Disabled always says why.** Checkout, unavailable payment methods, Place order,
    Approve payment, Approve return, Complete sale and Request a return each show a reason next to the
    control.
 5. **Confirmations name the consequence and the amount.** Cancel names the order and "your reserved

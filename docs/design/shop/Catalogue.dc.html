@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2;--accent-tint:#e6f0ee;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC;--accent-tint:#E3EDC6;--radius-card:20px;--radius-band:32px;--radius-pill:999px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink);font-size:14px}
 a{color:var(--accent-ink)}
@@ -52,7 +52,7 @@ legend{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.0
 .sortsel{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
 .sortsel select{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--border-strong);border-radius:6px;background:#fff}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px;align-items:center}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:5px 8px 5px 11px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);border:1px solid rgba(21,96,90,.25)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:5px 8px 5px 11px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);border:1px solid rgba(180,83,26,.25)}
 .chip button{border:none;background:none;color:inherit;padding:0 2px;font-size:13px;cursor:pointer}
 .clear{font-size:12.5px;font-weight:600}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
@@ -134,7 +134,7 @@ a:hover{color:var(--accent)}
 .btn-sm{margin-top:10px;font-size:13px}
 .sortsel select{border-radius:var(--radius-pill);min-height:44px;padding:0 14px}
 .chips{gap:10px}
-.chip{min-height:40px;padding:0 6px 0 16px;background:var(--accent-tint);border:1px solid rgba(21,96,90,.22);color:var(--accent-ink)}
+.chip{min-height:40px;padding:0 6px 0 16px;background:var(--accent-tint);border:1px solid rgba(180,83,26,.22);color:var(--accent-ink)}
 .chip button{width:32px;height:32px;border-radius:var(--radius-pill);display:inline-grid;place-items:center;background:#fff;color:var(--accent-ink)}
 .chip.lock{background:var(--surface-sunken);padding-right:16px}
 .pager a,.pager span{border-radius:var(--radius-pill);min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 16px}
@@ -198,8 +198,8 @@ a:hover{color:var(--accent)}
 <div style="width:1280px;min-height:1860px;background:var(--surface-page)">
   <header class="topnav">
     <div class="bar">
-      <a class="brand" href="ShopHome.dc.html"><span class="logo-disc" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3l2.2 4.2M17 3l-2.2 4.2"/><path d="M5 13a7 6 0 0 0 14 0c0-3.3-3.1-6-7-6s-7 2.7-7 6z"/><path d="M9.5 12.5h.01M14.5 12.5h.01"/><path d="M10.8 15.2l1.2.8 1.2-.8"/></svg></span>PurrCare Shop</a>
-      <form class="search" role="search" aria-label="Search products"><input aria-label="Search products" value="salmon"><button type="submit"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Search</button></form>
+      <a class="brand" href="ShopHome.dc.html"><span class="logo-disc" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12C12 7.5 9 5 4 5c0 4.5 3 7 8 7z"/><path d="M12 14c0-3.5 2.6-6 7-6 0 3.8-2.6 6-7 6z"/></svg></span>Amar Gram Shop</a>
+      <form class="search" role="search" aria-label="Search products"><input aria-label="Search products" value="rice"><button type="submit"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Search</button></form>
       <div class="acct">
         <a href="Wishlist.dc.html"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg>Wishlist</a>
         <a href="../orders/Cart.dc.html" aria-label="Cart, 2 items"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Cart <span class="count" aria-hidden="true">2</span></a>
@@ -207,7 +207,8 @@ a:hover{color:var(--accent)}
       </div>
     </div>
     <nav class="catnav" aria-label="Categories">
-      <a class="on" href="#" aria-current="true">Cat food</a><a href="#">Litter</a><a href="#">Litter pots &amp; accessories</a><a href="#">Bags &amp; carriers</a><a href="#">Health &amp; grooming</a><a href="#">Toys &amp; furniture</a><a href="ShopByCountry.dc.html">Shop by country</a>
+      <a class="on" href="Catalogue.dc.html" aria-current="true">Rice &amp; grains</a><a href="#">Honey &amp; gur</a><a href="#">Oils &amp; ghee</a><a href="#">Spices</a><a href="#">Pulses</a><a href="#">Tea</a><a href="#">Fresh produce</a><a href="#">Dates &amp; dry fruit</a><a href="ShopByCountry.dc.html">Shop by origin</a>
+
     </nav>
   </header>
 
@@ -218,47 +219,46 @@ a:hover{color:var(--accent)}
     <div class="layout">
       <section class="filters" aria-label="Filters">
         <fieldset>
-          <legend>Country of origin</legend>
-          <label class="opt"><input type="checkbox" checked><svg class="flag" viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="6" fill="#A51931"/><rect y="1" width="9" height="4" fill="#F4F5F8"/><rect y="2" width="9" height="2" fill="#2D2A4A"/></svg>Thailand<span class="n">18</span></label>
-          <label class="opt"><input type="checkbox" checked><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#000"/><rect y=".667" width="3" height=".667" fill="#D00"/><rect y="1.333" width="3" height=".667" fill="#FFCE00"/></svg>Germany<span class="n">13</span></label>
-          <label class="opt"><input type="checkbox"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#E30A17"/><circle cx="11" cy="10" r="5" fill="#fff"/><circle cx="12.3" cy="10" r="4" fill="#E30A17"/><path d="m17 10 3.6-1.2-2.2 3.1V8.1l2.2 3.1Z" fill="#fff"/></svg>Türkiye<span class="n">9</span></label>
-          <label class="opt"><input type="checkbox"><svg class="flag" viewBox="0 0 19 10" aria-hidden="true"><rect width="19" height="10" fill="#fff"/><path d="M0 0h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0zm0 1.54h19v.77H0z" fill="#B22234"/><rect width="7.6" height="5.4" fill="#3C3B6E"/></svg>United States<span class="n">7</span></label>
-          <label class="opt"><input type="checkbox"><svg class="flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><path d="M10 10a5 5 0 0 1 10 0Z" fill="#CD2E3A"/><path d="M10 10a5 5 0 0 0 10 0Z" fill="#0047A0"/><path d="M4 5h4M4 6.5h4M4 8h4M22 12h4M22 13.5h4M22 15h4" stroke="#000" stroke-width=".8"/></svg>South Korea<span class="n">5</span></label>
-          <label class="opt"><input type="checkbox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:20px;color:var(--ink-muted)"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>France<span class="n">4</span></label>
+          <legend>Origin</legend>
+          <label class="opt"><input type="checkbox" checked><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:20px;color:var(--ink-muted)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Dinajpur<span class="n">18</span></label>
+          <label class="opt"><input type="checkbox" checked><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:20px;color:var(--ink-muted)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Netrokona<span class="n">13</span></label>
+          <label class="opt"><input type="checkbox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:20px;color:var(--ink-muted)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Bogura<span class="n">9</span></label>
+          <label class="opt"><input type="checkbox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:20px;color:var(--ink-muted)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Rajshahi<span class="n">7</span></label>
+          <label class="opt"><input type="checkbox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:20px;color:var(--ink-muted)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Jashore<span class="n">5</span></label>
+          <label class="opt"><input type="checkbox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:20px;color:var(--ink-muted)"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Sylhet<span class="n">4</span></label>
         </fieldset>
         <fieldset>
-          <legend>Brand</legend>
-          <input class="narrow" aria-label="Narrow the brand list" placeholder="Find a brand">
-          <label class="opt"><input type="checkbox">Siam Harvest<span class="n">14</span></label>
-          <label class="opt"><input type="checkbox">Nordwald<span class="n">11</span></label>
-          <label class="opt"><input type="checkbox">VetLine<span class="n">4</span></label>
-          <label class="opt"><input type="checkbox">Royal Canin<span class="n">4</span></label>
-          <a href="#" style="font-size:12.5px;font-weight:600">Show all 12 brands</a>
+          <legend>Producer</legend>
+          <input class="narrow" aria-label="Narrow the producer list" placeholder="Find a producer">
+          <label class="opt"><input type="checkbox">Dinajpur Farmers&#39; Co-op<span class="n">14</span></label>
+          <label class="opt"><input type="checkbox">Haor Harvest<span class="n">11</span></label>
+          <label class="opt"><input type="checkbox">Bogura Mills<span class="n">4</span></label>
+          <label class="opt"><input type="checkbox">Amar Gram Select<span class="n">4</span></label>
+          <a href="#" style="font-size:12.5px;font-weight:600">Show all 12 producers</a>
         </fieldset>
         <fieldset>
           <legend>Category</legend>
-          <label class="opt"><input type="radio" name="cat">All categories</label>
-          <label class="opt"><input type="radio" name="cat" checked>Cat food<span class="n">56</span></label>
-          <label class="opt sub"><input type="radio" name="cat">Dry<span class="n">24</span></label>
-          <label class="opt sub"><input type="radio" name="cat">Wet<span class="n">18</span></label>
-          <label class="opt sub"><input type="radio" name="cat">Treats<span class="n">8</span></label>
-          <label class="opt sub"><input type="radio" name="cat">Therapeutic<span class="n">6</span></label>
+          <label class="opt"><input type="radio" name="category">All categories</label>
+          <label class="opt"><input type="radio" name="category" checked>Rice &amp; grains<span class="n">56</span></label>
+          <label class="opt sub"><input type="radio" name="category">Aromatic rice<span class="n">24</span></label>
+          <label class="opt sub"><input type="radio" name="category">Boiled &amp; atap rice<span class="n">18</span></label>
+          <label class="opt sub"><input type="radio" name="category">Red &amp; brown rice<span class="n">8</span></label>
+          <label class="opt sub"><input type="radio" name="category">Flattened &amp; puffed rice<span class="n">6</span></label>
         </fieldset>
         <fieldset>
-          <legend>Life stage</legend>
-          <label class="opt"><input type="checkbox">Kitten<span class="n">12</span></label>
-          <label class="opt"><input type="checkbox">Adult<span class="n">30</span></label>
-          <label class="opt"><input type="checkbox">Senior<span class="n">9</span></label>
+          <legend>Pack size</legend>
+          <label class="opt"><input type="checkbox">Under 500 g<span class="n">12</span></label>
+          <label class="opt"><input type="checkbox">500 g – 1 kg<span class="n">30</span></label>
+          <label class="opt"><input type="checkbox">Over 1 kg<span class="n">9</span></label>
         </fieldset>
         <fieldset>
-          <legend>Protein source</legend>
-          <label class="opt"><input type="checkbox">Salmon<span class="n">16</span></label>
-          <label class="opt"><input type="checkbox">Tuna<span class="n">11</span></label>
-          <label class="opt"><input type="checkbox">Chicken<span class="n">21</span></label>
-        </fieldset>
+          <legend>Certification</legend>
+          <label class="opt"><input type="checkbox">Certified organic<span class="n">16</span></label>
+          <label class="opt"><input type="checkbox">Pesticide-free (not certified)<span class="n">11</span></label>
+                  </fieldset>
         <fieldset>
           <legend>Price (৳)</legend>
-          <div class="pricebox"><div><label for="pmin">Min ৳</label><input id="pmin" inputmode="decimal" placeholder="120"></div><div><label for="pmax">Max ৳</label><input id="pmax" inputmode="decimal" placeholder="6,800"></div></div>
+          <div class="pricebox"><div><label for="pmin">Min ৳</label><input id="pmin" inputmode="decimal" placeholder="90"></div><div><label for="pmax">Max ৳</label><input id="pmax" inputmode="decimal" placeholder="1,800"></div></div>
           <button class="btn-sm" type="button">Apply price</button>
         </fieldset>
         <fieldset>
@@ -275,97 +275,97 @@ a:hover{color:var(--accent)}
 
       <section class="results" aria-label="Results">
         <div class="toolbar">
-          <div class="summary" role="status" aria-live="polite">31 products for “salmon”</div>
+          <div class="summary" role="status" aria-live="polite">31 products for “rice”</div>
           <label class="sortsel">Sort by
             <select><option>Relevance</option><option>Newest</option><option selected>Price low–high</option><option>Price high–low</option><option>Popularity</option><option>Rating</option></select>
           </label>
         </div>
         <div class="chips" aria-label="Active filters">
-          <span class="chip">Country: Thailand <button aria-label="Remove Country: Thailand">✕</button></span>
-          <span class="chip">Country: Germany <button aria-label="Remove Country: Germany">✕</button></span>
-          <span class="chip">Category: Cat food <button aria-label="Remove Category: Cat food">✕</button></span>
-          <a class="clear" href="#">Clear all</a><span class="muted" style="font-size:12px">(keeps your search “salmon”)</span>
+          <span class="chip">Origin: Dinajpur <button aria-label="Remove Origin: Dinajpur">✕</button></span>
+          <span class="chip">Origin: Netrokona <button aria-label="Remove Origin: Netrokona">✕</button></span>
+          <span class="chip">Category: Rice &amp; grains <button aria-label="Remove Category: Rice &amp; grains">✕</button></span>
+          <a class="clear" href="#">Clear all</a><span class="muted" style="font-size:12px">(keeps your search “rice”)</span>
         </div>
 
         <div class="grid3">
           <article class="card pcard">
-            <div class="pimg ph"><button class="wish" type="button" aria-pressed="false" aria-label="Save Siam Harvest Salmon Crunch Treats to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Photo coming soon</div>
+            <div class="pimg ph"><button class="wish" type="button" aria-pressed="false" aria-label="Save Red rice (lal chal) 1 kg to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>Photo coming soon</div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="6" fill="#A51931"/><rect y="1" width="9" height="4" fill="#F4F5F8"/><rect y="2" width="9" height="2" fill="#2D2A4A"/></svg>Siam Harvest · Thailand</span>
-              <h3><a href="ProductPage.dc.html">Siam Harvest Salmon Crunch Treats</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Netrokona</span>
+              <h3><a href="ProductPage.dc.html">Red rice (lal chal) 1 kg</a></h3>
               <div class="meta">No reviews yet</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span>৳320.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Siam Harvest Salmon Crunch Treats to cart">Add</button></div>
+              <div class="buy"><div class="price"><span>৳160.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Red rice (lal chal) 1 kg to cart">Add</button></div>
             </div>
           </article>
           <article class="card pcard">
-            <div class="pimg c1"><button class="wish" type="button" aria-pressed="false" aria-label="Save Siam Harvest Kitten Salmon to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+            <div class="pimg c1"><button class="wish" type="button" aria-pressed="false" aria-label="Save Chinigura aromatic rice to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="6" fill="#A51931"/><rect y="1" width="9" height="4" fill="#F4F5F8"/><rect y="2" width="9" height="2" fill="#2D2A4A"/></svg>Siam Harvest · Thailand</span>
-              <h3><a href="ProductPage.dc.html">Siam Harvest Kitten Salmon</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Dinajpur</span>
+              <h3><a href="ProductPage.dc.html">Chinigura aromatic rice</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★½</span>4.5 out of 5 (23 reviews)</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span><small>From</small> ৳1,200.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-haspopup="dialog" aria-label="Add Siam Harvest Kitten Salmon: choose a size">Add</button></div>
+              <div class="buy"><div class="price"><span><small>From</small> ৳95.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-haspopup="dialog" aria-label="Add Chinigura aromatic rice: choose a size">Add</button></div>
             </div>
           </article>
           <article class="card pcard">
-            <div class="pimg c2"><button class="wish" type="button" aria-pressed="false" aria-label="Save Siam Harvest Salmon in Gravy, 12 × 85 g to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><rect x="8" y="30" width="64" height="52" rx="6" fill="currentColor"/><rect x="18" y="44" width="44" height="18" rx="3" fill="#fff" opacity=".85"/></svg></div>
+            <div class="pimg c2"><button class="wish" type="button" aria-pressed="false" aria-label="Save Puffed rice (muri) 500 g to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><rect x="8" y="30" width="64" height="52" rx="6" fill="currentColor"/><rect x="18" y="44" width="44" height="18" rx="3" fill="#fff" opacity=".85"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="6" fill="#A51931"/><rect y="1" width="9" height="4" fill="#F4F5F8"/><rect y="2" width="9" height="2" fill="#2D2A4A"/></svg>Siam Harvest · Thailand</span>
-              <h3><a href="ProductPage.dc.html">Siam Harvest Salmon in Gravy, 12 × 85 g</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Bogura</span>
+              <h3><a href="ProductPage.dc.html">Puffed rice (muri) 500 g</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★</span>4.1 out of 5 (9 reviews)</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span>৳1,560.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Siam Harvest Salmon in Gravy, 12 × 85 g to cart">Add</button></div>
+              <div class="buy"><div class="price"><span>৳120.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Puffed rice (muri) 500 g to cart">Add</button></div>
             </div>
           </article>
           <article class="card pcard">
-            <div class="pimg c5"><span class="badge"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px"><path d="M3 7l9-4 9 4v10l-9 4-9-4Z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>Kit</span><button class="wish" type="button" aria-pressed="false" aria-label="Save Salmon Taster Kit to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><path d="M8 34l32-14 32 14v44l-32 14-32-14Z" fill="currentColor"/><path d="M8 34l32 14 32-14M40 48v44" stroke="#fff" stroke-width="2" fill="none" opacity=".8"/></svg></div>
+            <div class="pimg c5"><span class="badge"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px"><path d="M3 7l9-4 9 4v10l-9 4-9-4Z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>Kit</span><button class="wish" type="button" aria-pressed="false" aria-label="Save Village breakfast kit to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 80 100" aria-hidden="true"><path d="M8 34l32-14 32 14v44l-32 14-32-14Z" fill="currentColor"/><path d="M8 34l32 14 32-14M40 48v44" stroke="#fff" stroke-width="2" fill="none" opacity=".8"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 9 6" aria-hidden="true"><rect width="9" height="6" fill="#A51931"/><rect y="1" width="9" height="4" fill="#F4F5F8"/><rect y="2" width="9" height="2" fill="#2D2A4A"/></svg>PurrCare · Thailand</span>
-              <h3><a href="KitProduct.dc.html">Salmon Taster Kit</a></h3>
+              <span class="eyebrow"><svg class="flag" viewBox="0 0 10 6" aria-hidden="true"><rect width="10" height="6" fill="#006A4E"/><circle cx="4.5" cy="3" r="2" fill="#F42A41"/></svg>Amar Gram · Bangladesh</span>
+              <h3><a href="KitProduct.dc.html">Village breakfast kit</a></h3>
               <div class="meta">No reviews yet</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span>৳1,850.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Salmon Taster Kit to cart">Add</button></div>
+              <div class="buy"><div class="price"><span>৳1,790.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Village breakfast kit to cart">Add</button></div>
             </div>
           </article>
           <article class="card pcard">
-            <div class="pimg c3"><button class="wish" type="button" aria-pressed="false" aria-label="Save Nordwald Adult Salmon &amp; Rice to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+            <div class="pimg c3"><button class="wish" type="button" aria-pressed="false" aria-label="Save Brown rice 2 kg to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#000"/><rect y=".667" width="3" height=".667" fill="#D00"/><rect y="1.333" width="3" height=".667" fill="#FFCE00"/></svg>Nordwald · Germany</span>
-              <h3><a href="ProductPage.dc.html">Nordwald Adult Salmon &amp; Rice</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Netrokona</span>
+              <h3><a href="ProductPage.dc.html">Brown rice 2 kg</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★</span>4.0 out of 5 (8 reviews)</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span>৳2,450.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Nordwald Adult Salmon &amp; Rice to cart">Add</button></div>
+              <div class="buy"><div class="price"><span>৳340.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Brown rice 2 kg to cart">Add</button></div>
             </div>
           </article>
           <article class="card pcard">
-            <div class="pimg c6"><button class="wish" type="button" aria-pressed="false" aria-label="Save Nordwald Senior Salmon to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+            <div class="pimg c6"><button class="wish" type="button" aria-pressed="false" aria-label="Save Flattened rice (chira) 500 g to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#000"/><rect y=".667" width="3" height=".667" fill="#D00"/><rect y="1.333" width="3" height=".667" fill="#FFCE00"/></svg>Nordwald · Germany</span>
-              <h3><a href="ProductOutOfStock.dc.html">Nordwald Senior Salmon</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Bogura</span>
+              <h3><a href="ProductOutOfStock.dc.html">Flattened rice (chira) 500 g</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★½</span>4.6 out of 5 (5 reviews)</div>
               <span class="avail out"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>Out of stock</span>
-              <div class="buy"><div class="price"><span>৳2,600.00</span><span class="tax">+ VAT</span></div><a class="add ghost" href="ProductOutOfStock.dc.html" aria-label="Tell me when Nordwald Senior Salmon is back">Alert me</a></div>
+              <div class="buy"><div class="price"><span>৳110.00</span><span class="tax">+ VAT</span></div><a class="add ghost" href="ProductOutOfStock.dc.html" aria-label="Tell me when Flattened rice (chira) 500 g is back">Alert me</a></div>
             </div>
           </article>
           <article class="card pcard">
-            <div class="pimg c4"><button class="wish" type="button" aria-pressed="false" aria-label="Save Nordwald Indoor Salmon to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+            <div class="pimg c4"><button class="wish" type="button" aria-pressed="false" aria-label="Save Rice flour 1 kg to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#000"/><rect y=".667" width="3" height=".667" fill="#D00"/><rect y="1.333" width="3" height=".667" fill="#FFCE00"/></svg>Nordwald · Germany</span>
-              <h3><a href="ProductPage.dc.html">Nordwald Indoor Salmon</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Rajshahi</span>
+              <h3><a href="ProductPage.dc.html">Rice flour 1 kg</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★½</span>3.6 out of 5 (14 reviews)</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span>৳2,900.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Nordwald Indoor Salmon to cart">Add</button></div>
+              <div class="buy"><div class="price"><span>৳130.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-label="Add Rice flour 1 kg to cart">Add</button></div>
             </div>
           </article>
           <article class="card pcard">
-            <div class="pimg c1"><span class="badge rx"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6Z"/><path d="M12 9v6M9 12h6"/></svg>Vet authorisation needed</span><button class="wish" type="button" aria-pressed="false" aria-label="Save VetLine Urinary Care Salmon to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
+            <div class="pimg c1"><span class="badge"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:13px;height:13px"><path d="M12 21v-9"/><path d="M12 12C12 7.5 9 5 4 5c0 4.5 3 7 8 7z"/><path d="M12 14c0-3.5 2.6-6 7-6 0 3.8-2.6 6-7 6z"/></svg>Seasonal · new crop</span><button class="wish" type="button" aria-pressed="false" aria-label="Save Nazirshail rice, new crop to wishlist"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button><svg viewBox="0 0 120 150" aria-hidden="true"><path d="M22 18 Q60 4 98 18 L104 136 Q60 148 16 136 Z" fill="currentColor"/><rect x="30" y="54" width="60" height="44" rx="8" fill="#fff" opacity=".92"/><path d="M42 76h36M42 86h22" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></div>
             <div class="pbody">
-              <span class="eyebrow"><svg class="flag" viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#000"/><rect y=".667" width="3" height=".667" fill="#D00"/><rect y="1.333" width="3" height=".667" fill="#FFCE00"/></svg>VetLine · Germany</span>
-              <h3><a href="PrescriptionGate.dc.html">VetLine Urinary Care Salmon</a></h3>
+              <span class="eyebrow"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Dinajpur</span>
+              <h3><a href="ProductPage.dc.html">Nazirshail rice, new crop</a></h3>
               <div class="meta"><span class="stars" aria-hidden="true">★★★★★</span>4.8 out of 5 (12 reviews)</div>
               <span class="avail in"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span>
-              <div class="buy"><div class="price"><span><small>From</small> ৳3,100.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-haspopup="dialog" aria-label="Add VetLine Urinary Care Salmon: choose which authorised cat it is for">Add</button></div>
+              <div class="buy"><div class="price"><span><small>From</small> ৳150.00</span><span class="tax">+ VAT</span></div><button class="add" type="button" aria-haspopup="dialog" aria-label="Add Nazirshail rice, new crop: choose a size">Add</button></div>
             </div>
           </article>
         </div>

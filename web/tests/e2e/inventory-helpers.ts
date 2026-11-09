@@ -1,5 +1,5 @@
 import { expect, type APIRequestContext, type Locator, type Page } from '@playwright/test';
-import { accountsFixtureIds } from '../../mocks/handlers/areas/accounts';
+import { secondStaff } from './fixtures';
 
 /** `yyyy-MM-dd` for `offsetDays` from today (UTC date — good enough for a future-dated field). */
 export function dateIn(offsetDays: number): string {
@@ -49,8 +49,9 @@ export async function pickSku(
   await page.getByRole('option', { name: optionName }).first().click();
 }
 
-/** Signs in as the seeded nurse — a role with `Stock.View` but not receiving or procurement. */
-export async function signInAsNurse(page: Page): Promise<void> {
+/** Signs in as the seeded second staff account — a role with `Stock.View` but not receiving or
+ *  procurement. */
+export async function signInAsStockViewer(page: Page): Promise<void> {
   if (page.url() === 'about:blank') await page.goto('/staff/sign-in');
   const result = await page.evaluate(
     async ({ identifier, password }) => {
@@ -63,9 +64,9 @@ export async function signInAsNurse(page: Page): Promise<void> {
       });
       return { ok: response.ok, status: response.status };
     },
-    { identifier: accountsFixtureIds.nurseIdentifier, password: accountsFixtureIds.nursePassword },
+    { identifier: secondStaff.identifier, password: secondStaff.password },
   );
-  if (!result.ok) throw new Error(`nurse sign-in fixture failed with ${result.status}`);
+  if (!result.ok) throw new Error(`staff sign-in fixture failed with ${result.status}`);
 }
 
 /**

@@ -20,7 +20,7 @@ function resolvedParams<T>(value: T): Promise<T> {
 }
 
 // Owner, 2026-10-22: with no rosters yet, the staff list used to be empty, so nobody could ever be given shifts and
-// online booking had no times. Anyone can now be picked and given a first pattern.
+// no shifts could be planned. Anyone can now be picked and given a first pattern.
 describe('Branch roster page — a first shift pattern', () => {
   it('offers a staff member with no roster yet and saves their first pattern', async () => {
     let putUrl: string | null = null;
@@ -30,11 +30,11 @@ describe('Branch roster page — a first shift pattern', () => {
         HttpResponse.json({
           items: [
             {
-              id: 'vet-1',
-              fullName: 'Vera Vet',
+              id: 'staff-7',
+              fullName: 'Rina Rahman',
               mobileNumber: '01712345678',
               emailAddress: null,
-              roleIds: ['Vet'],
+              roleIds: ['ShopManager'],
               hasPassword: true,
             },
           ],
@@ -61,12 +61,12 @@ describe('Branch roster page — a first shift pattern', () => {
     );
 
     const staffSelect = (await screen.findAllByLabelText('Staff member'))[0]!;
-    await screen.findByRole('option', { name: 'Vera Vet (no shifts yet)' });
-    await user.selectOptions(staffSelect, 'vet-1');
+    await screen.findByRole('option', { name: 'Rina Rahman (no shifts yet)' });
+    await user.selectOptions(staffSelect, 'staff-7');
     await user.click(await screen.findByRole('button', { name: /save pattern/i }));
 
     await expect
       .poll(() => putUrl)
-      .toBe(`/api/admin/branches/${administrationFixtureIds.mainBranchId}/rosters/vet-1/pattern`);
+      .toBe(`/api/admin/branches/${administrationFixtureIds.mainBranchId}/rosters/staff-7/pattern`);
   });
 });

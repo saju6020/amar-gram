@@ -9,10 +9,9 @@ import { cn } from '@/lib/utils';
 type ChipKey = 'all' | 'countries' | `category:${string}`;
 
 const CHIP_CLASS =
-  'inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-pill border px-3 text-[13px] font-semibold text-ink no-underline ' +
-  'before:size-2 before:flex-none before:rounded-pill before:bg-warm before:content-[""] hover:border-accent';
+  'inline-flex min-h-11 items-center whitespace-nowrap rounded-pill border-[1.5px] px-4 text-[15px] font-medium no-underline';
 
-/** Hearth category pill chips: white, 1px border, a small apricot dot; the current one is accent-tinted. */
+/** The design's category pills: surface fill and a 1.5px border; the current one is the filled banana-leaf pill. */
 export function CategoryChips({
   categories,
   current = null,
@@ -38,7 +37,9 @@ export function CategoryChips({
           aria-current={current === chip.key ? 'page' : undefined}
           className={cn(
             CHIP_CLASS,
-            current === chip.key ? 'border-accent bg-accent-tint' : 'border-border bg-surface',
+            current === chip.key
+              ? 'border-leaf bg-leaf text-leaf-soft'
+              : 'border-border bg-surface text-ink hover:border-leaf',
           )}
         >
           {chip.label}

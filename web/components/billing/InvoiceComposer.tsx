@@ -33,7 +33,7 @@ import {
   useRemoveLoyalty,
   useSetDraftCharges,
 } from '@/lib/hooks/billing/useBillingMutations';
-import { useAdminServices, useTaxClasses } from '@/lib/hooks/useAdminCatalogue';
+import { useTaxClasses } from '@/lib/hooks/useAdminCatalogue';
 import { useStaffCustomer } from '@/lib/hooks/useStaffCustomers';
 import { ChargePicker, type PickerItem } from './ChargePicker';
 import { ComposerAlert } from './ComposerAlert';
@@ -71,7 +71,6 @@ export function InvoiceComposer({
   const customer = useStaffCustomer(customerId);
   const summary = useCustomerBillingSummary(customerId);
   const unbilled = useCustomerCharges(customerId, 'unbilled');
-  const services = useAdminServices();
   const taxClasses = useTaxClasses();
 
   const draftChargeIds = useMemo(
@@ -343,7 +342,6 @@ export function InvoiceComposer({
         onOpenChange={setChargeOpen}
         customerId={customerId}
         defaultDate={todayInZone(zone)}
-        services={services.data}
         taxClasses={taxClasses.data}
         taxClassesUnavailable={taxClasses.isError}
         onSubmit={async (request) => {

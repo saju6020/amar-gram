@@ -133,7 +133,7 @@ describe('Notification log page — HO-NTF-002 §11.5, UI-4', () => {
 
   it('U-E2: from/to are sent as day-boundary instants and every other filter reaches the API', async () => {
     currentSearch =
-      'from=2026-10-01&to=2026-10-07&channel=Email&status=Sent&templateKey=care.vaccination-due';
+      'from=2026-10-01&to=2026-10-07&channel=Email&status=Sent&templateKey=order.dispatched';
     const urls = recordLogRequests();
     renderPage();
     fireEvent.change(await screen.findByLabelText('Destination (mobile number or email)'), {
@@ -146,7 +146,7 @@ describe('Notification log page — HO-NTF-002 §11.5, UI-4', () => {
     expect(q.get('to')).toBe('2026-10-07T23:59:59.999Z');
     expect(q.get('channel')).toBe('Email');
     expect(q.get('status')).toBe('Sent');
-    expect(q.get('templateKey')).toBe('care.vaccination-due');
+    expect(q.get('templateKey')).toBe('order.dispatched');
     expect(q.get('pageSize')).toBe('25');
   });
 
@@ -226,10 +226,10 @@ describe('Notification log page — HO-NTF-002 §11.5, UI-4', () => {
     renderPage();
     const key = await screen.findByLabelText('Template key');
     const next = await screen.findByRole('button', { name: /Next/ });
-    fireEvent.change(key, { target: { value: 'care.vaccination-due' } });
+    fireEvent.change(key, { target: { value: 'order.dispatched' } });
     await user.click(next); // well inside the 300 ms debounce
     const last = new URLSearchParams(currentSearch);
-    expect(last.get('templateKey')).toBe('care.vaccination-due');
+    expect(last.get('templateKey')).toBe('order.dispatched');
     expect(last.get('page')).toBe('2');
   });
 
@@ -297,7 +297,7 @@ describe('Notification log page — HO-NTF-002 §11.5, UI-4', () => {
     );
     renderPage();
     const input = await screen.findByLabelText('Template key');
-    fireEvent.change(input, { target: { value: 'care.vaccination-due' } });
-    expect(input).toHaveValue('care.vaccination-due');
+    fireEvent.change(input, { target: { value: 'order.dispatched' } });
+    expect(input).toHaveValue('order.dispatched');
   });
 });

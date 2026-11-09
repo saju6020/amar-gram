@@ -37,8 +37,8 @@ Third pass written/executed: 2026-09-27 · commits under test for the third pass
 
 | | Count |
 |---|---|
-| Total (57 unit + 19 E2E-with-a-case + 9 regression + 2 blocked) | 87 |
-| PASS | 83 |
+| Total (56 unit + 19 E2E-with-a-case + 8 regression + 2 blocked) | 85 |
+| PASS | 81 |
 | FAIL | 2 |
 | BLOCKED | 2 |
 | NOT RUN | 0 |
@@ -101,7 +101,7 @@ Evidence for every row is "`npx vitest run` — PASS" against the file named, pa
 | U-E6 | Preference matrix | Rendered from API cells; locked cells disabled "Always on"; `<table>` | PASS | `tests/components/account/notification-preference-matrix.test.tsx` |
 | U-E7 | Toggle then navigate away | Unsaved-changes confirm; nothing saved until Save | PASS (composed, noted) | `notification-preference-matrix.test.tsx` ("never autosaves") + `unsaved-changes-guard.test.tsx` (the shared guard `NotificationPreferenceMatrix` renders when dirty) + `account-area.spec.ts` e2e proves the identical composition on `ProfileForm`; no test mounts `UnsavedChangesGuard` wrapping `NotificationPreferenceMatrix` itself and drives a real Back press |
 | U-E8 | Save sends only changed cells | Request body has exactly the changed cells | PASS | `tests/components/account/notification-preference-matrix.test.tsx` |
-| U-J1 | Download | Blob saved as `purrcare-my-data.json`; URL revoked; not cached | PASS | `tests/components/account/data-export-delete.test.tsx` |
+| U-J1 | Download | Blob saved as `amargram-my-data.json`; URL revoked; not cached | PASS | `tests/components/account/data-export-delete.test.tsx` |
 | U-J2 | Delete form | Lists every consequence; requires password + checkbox | PASS | `tests/components/account/data-export-delete.test.tsx` |
 | U-J3 | `ReauthenticationFailed` | Field error; password cleared | PASS | `tests/components/account/data-export-delete.test.tsx` |
 | U-J4 | Deletion success | Cache cleared; `/account-deleted` | PASS | `tests/components/account/data-export-delete.test.tsx` |
@@ -120,10 +120,9 @@ Evidence for every row is "`npx vitest run` — PASS" against the file named, pa
 | U-F4 | `403` | `PermissionDeniedState`, no role named | PASS | `tests/components/admin/staff-account-detail.test.tsx` |
 | U-H1 | Walk-in duplicate | Lookup called; `ExistingCustomerNotice` links record; values kept | PASS | `tests/components/customer/walk-in-customer-form.test.tsx` |
 | U-H2 | `CustomerStatusBadge` Incomplete | Text + icon, not colour alone | PASS | `tests/components/customer/walk-in-customer-form.test.tsx` |
-| U-I1 | Duplicates group | Cats incl. deceased badge; `NotYetRecordedNotice`; no orders/balances | PASS | `tests/components/customer/duplicate-group-list.test.tsx` |
-| U-I2 | Merge review | Fresh fetch on mount; no radio pre-selected; confirmation lists every cat | PASS | `tests/components/customer/merge-review.test.tsx` |
+| U-I1 | Duplicates group | Members listed; `NotYetRecordedNotice`; no orders/balances | PASS | `tests/components/customer/duplicate-group-list.test.tsx` |
+| U-I2 | Merge review | Fresh fetch on mount; no radio pre-selected | PASS | `tests/components/customer/merge-review.test.tsx` |
 | U-I3 | Merge `5xx` | "may be partly complete" + Run again sends identical body | PASS | `tests/components/customer/merge-review.test.tsx` |
-| U-I4 | Merge flow | No cat endpoint called | PASS | `tests/components/customer/merge-review.test.tsx` |
 | U-X1 | `client.ts` on `POST` | Sends `X-CSRF-Token` = `pc_csrf` cookie; `GET` does not | PASS | `tests/unit/lib/api-client.test.ts` |
 | U-X2 | Any `400` | `errorCode` appears nowhere in the DOM | PASS | `tests/unit/errors.test.ts`, `tests/components/cross-cutting.test.tsx`, others |
 | U-X3 | Unmatched `propertyName` | Form-level message | PASS | `tests/unit/errors.test.ts` |
@@ -154,11 +153,11 @@ was started this session.
 | E-E2 | Opt into SMS marketing, save, reload | Persisted; transactional cells locked | PASS | `account-area.spec.ts` — failed once at `--workers=2` (2nd full run), passed at `--workers=1`; judged environmental per CODE_REVIEW gate's own diagnosis |
 | E-J1 | Download data, then delete account | JSON downloaded; `/account-deleted`; old credentials fail | **GAP — no case written** | see "Gaps left deliberately" |
 | E-G1 | New staff: admin creates → member sets password via reset → signs in | Back office loads with their name | PASS (partial, by design) | `staff-admin.spec.ts` — file's own comment: covers only "admin creates the account"; the reset-link half needs the real API's Development log, deferred to the (BLOCKED) real-API pass |
-| E-G2 | Type into a cat form, idle timeout, re-sign-in as same person | Lock shown; typed values intact; save works | **FAIL** (first pass, intermittent, real race — see Finding F1); **PASS (second pass)** | `staff-auth.spec.ts:211` — first pass: 10/10 pass at `--workers=2`+`--workers=1` combined in most runs, but reproducibly fails ~1/3 of isolated single-worker repeats on `mobile-360` with a full redirect to `/staff/sign-in` (draft lost) instead of the lock dialog. See regression row R3 and Finding F1. **Second pass (2026-09-27), after `d14d591`/`13d46ae`/`5b01d22`: `--workers=1 --repeat-each=20` on both `chromium` and `mobile-360` (40 runs total) — 40/40 passed, 0 failures**, where the pre-fix code reproduced ~1/3 in the same isolated-repeat style. Also passed once inside the second pass's full-suite `--workers=1` regression run (see "Second pass" section). |
+| E-G2 | Type into a staff form, idle timeout, re-sign-in as same person | Lock shown; typed values intact; save works | **FAIL** (first pass, intermittent, real race — see Finding F1); **PASS (second pass)** | `staff-auth.spec.ts:211` — first pass: 10/10 pass at `--workers=2`+`--workers=1` combined in most runs, but reproducibly fails ~1/3 of isolated single-worker repeats on `mobile-360` with a full redirect to `/staff/sign-in` (draft lost) instead of the lock dialog. See regression row R3 and Finding F1. **Second pass (2026-09-27), after `d14d591`/`13d46ae`/`5b01d22`: `--workers=1 --repeat-each=20` on both `chromium` and `mobile-360` (40 runs total) — 40/40 passed, 0 failures**, where the pre-fix code reproduced ~1/3 in the same isolated-repeat style. Also passed once inside the second pass's full-suite `--workers=1` regression run (see "Second pass" section). |
 | E-G3 | Same, sign in as someone else | Draft discarded notice | PASS | `staff-auth.spec.ts:275` — this is the CODE_REVIEW/ARCHITECTURE sixth-pass gap-closer test (see R1); passed in every run this pass, including 10 isolated repeats |
-| E-F1 | A nurse opens `/staff/admin/staff-accounts` directly | `PermissionDeniedState` | PASS | `staff-admin.spec.ts` |
+| E-F1 | A non-admin staff member opens `/staff/admin/staff-accounts` directly | `PermissionDeniedState` | PASS | `staff-admin.spec.ts` |
 | E-H1 | Walk-in new number; existing number | Created Incomplete; existing record offered | PASS | `staff-customers.spec.ts` — failed once at `--workers=2`, passed at `--workers=1` (both runs); environmental |
-| E-I1 | Merge a duplicate pair with a deceased cat | Review lists both; after merge both on survivor | PASS | `staff-customers.spec.ts` — failed once at `--workers=2` (1st full run), passed reliably at `--workers=1`; environmental |
+| E-I1 | Merge a duplicate pair | Review lists both; after merge the survivor remains | PASS | `staff-customers.spec.ts` — failed once at `--workers=2` (1st full run), passed reliably at `--workers=1`; environmental |
 | E-X1 | axe on every route, clean/with-errors/idle-lock-open | Zero serious/critical violations | PASS (first/second pass, overstated — see below); **PASS, verified in full (third pass)** | `accounts-a11y-responsive.spec.ts`. **First/second-pass evidence covered only 7 of ~19 §8.3 routes, clean state only — no errors-shown or idle-lock-open run at all.** That narrowing was disclosed only in the spec's own header comment, nowhere else (ACCEPTANCE gate HIGH). **Third pass (2026-09-27)**: `ROUTES` extended to all 19 §8.3 screens this handover owns (seeded MSW ids for the `[staffAccountId]`/`[customerId]`/duplicates-review dynamic routes), plus two new dedicated cases — "E-X1 (with errors shown)" (`/register` after an empty submit, every inline `role="alert"` visible) and "E-X1 (idle lock open)" (the `__forceStaffIdleExpired`/`__invalidateQueries` path E-G2 uses, axe run with the dialog open and the background `inert`). `--workers=1`, `PORT=3102`: chromium 21/21 passed; mobile-360 21/21 passed. Zero serious/critical violations found on any route or state — no product code change was needed. |
 | E-X2 | Every route at 360/768/1024/1440 | No horizontal scroll, no clipped control | PASS (first/second pass, overstated — see below); **PASS, verified in full (third pass)** | `accounts-a11y-responsive.spec.ts` — one `/staff/admin/staff-accounts@1440px` instance failed at `--workers=2` (2nd run), passed at `--workers=1`; environmental. **First/second-pass evidence covered only the same 7 routes as E-X1 (ACCEPTANCE gate HIGH, same finding).** **Third pass (2026-09-27)**: all 19 routes × 4 widths (360/768/1024/1440), `--workers=1`, `PORT=3102`: chromium 76/76 passed; mobile-360 76/76 passed. Zero overflow found on any route at any width — no product code change was needed. |
 | E-X3 | After the whole suite | `localStorage`/`sessionStorage` empty; no `pc_session` readable | PASS | `accounts-a11y-responsive.spec.ts` |
@@ -169,13 +168,12 @@ was started this session.
 |---|---|---|---|---|---|
 | R1 | ARCHITECTURE (4th pass HIGH / CODE_REVIEW 5th pass LOW / ARCHITECTURE 6th pass LOW) | Idle-lock pause must reach mounted queries (`focusManager`/`onlineManager` swap), and the E2E proof of the pause itself (not only the `isError && !data` fallback) was vacuous | E-G3, `idle-lock-context.test.tsx` | PASS | E-G3 passed in every MSW run this pass, incl. 10 isolated `--repeat-each` runs; `idle-lock-context.test.tsx` is part of the 236-test green unit run |
 | R2 | ARCHITECTURE (5th pass MEDIUM) | Locking while genuinely offline deadlocks the re-sign-in mutation (`onlineManager` frozen `false`); gate explicitly asked TEST to add the real-browser `context.setOffline(true)` variant | `staff-auth.spec.ts` "locking while genuinely offline…" (chromium + mobile-360) | PASS (test fixed this pass — see Finding F2) | Both projects pass at `--workers=1`, and both passed inside the two full `--workers=2` runs |
-| R3 | ARCHITECTURE (4th pass HIGH) | Same lock-pause mechanism as R1, exercised via the real HTTP round trip (E-G2) rather than the unit/E-G3 mechanism proof | E-G2, U-G7, U-G8, U-G9 | **FAIL (first pass, intermittent); PASS (second pass)** | First pass: see Finding F1 — a real race between the session query's `session_idle_timeout` and the cat query's `session_invalid`, both forced to 401 by the same refocus, can resolve in the wrong order. **Second pass (2026-09-27)**: fixed in `d14d591` (route the bystander through an authoritative, serialized `queryClient.fetchQuery` on the session-status query instead of trusting its own response) and `13d46ae` (explicit `staleTime: 0` on that check, closing a CODE_REVIEW seventh-pass HIGH in the first fix). Verified: `idle-lock.test.tsx`'s U-G7/U-G8/U-G9 all PASS; E-G2 40/40 at `--workers=1 --repeat-each=20` on both projects; full-suite `--workers=1` regression run also passed (see "Second pass" section for the exact run). |
+| R3 | ARCHITECTURE (4th pass HIGH) | Same lock-pause mechanism as R1, exercised via the real HTTP round trip (E-G2) rather than the unit/E-G3 mechanism proof | E-G2, U-G7, U-G8, U-G9 | **FAIL (first pass, intermittent); PASS (second pass)** | First pass: see Finding F1 — a real race between the session query's `session_idle_timeout` and the page data query's `session_invalid`, both forced to 401 by the same refocus, can resolve in the wrong order. **Second pass (2026-09-27)**: fixed in `d14d591` (route the bystander through an authoritative, serialized `queryClient.fetchQuery` on the session-status query instead of trusting its own response) and `13d46ae` (explicit `staleTime: 0` on that check, closing a CODE_REVIEW seventh-pass HIGH in the first fix). Verified: `idle-lock.test.tsx`'s U-G7/U-G8/U-G9 all PASS; E-G2 40/40 at `--workers=1 --repeat-each=20` on both projects; full-suite `--workers=1` regression run also passed (see "Second pass" section for the exact run). |
 | R4 | SECURITY (1st pass MEDIUM) | Password/CAPTCHA/PII forms need `method="post"` (pre-hydration native-submit leak) | `SEC gate MEDIUM (first pass)` tests | PASS | Present in `register-form.test.tsx`, `sign-in-form.test.tsx`, and others per the gate's own file list; part of the green unit run |
 | R5 | SECURITY (1st pass LOW 1) | Idle-lock overlay must be opaque, not the shared translucent one | `idle-lock.test.tsx` | PASS | `document.querySelector('.bg-surface-page')` asserted non-null, `.bg-ink/40` asserted absent |
 | R6 | SECURITY (1st pass LOW 2) | Sign-in must `queryClient.clear()` (not only the session key) so a person change doesn't leak the previous person's cache | E-C2, E-C4 (E2E); source-level only at unit level | PASS (E2E); not independently unit-tested | See U-C2's own note — `(auth)/sign-in/page.tsx` is a thin page per §8.2 |
 | R7 | CODE_REVIEW (2nd pass suggestion) | `real-api-verification.spec.ts` should be *structurally* excluded from the default MSW run, not only by convention | `playwright.config.ts` `testIgnore` | PASS | `npx playwright test --project=chromium --project=mobile-360 --list` lists 0 of its tests |
 | R8 | CODE_REVIEW (developer-reported) | Playwright flakiness at default worker count — judged "most likely environmental" (dev-server route-compile contention), asked TEST to confirm | Full suite at `--workers=2` (×2) and targeted `--workers=1` reruns | PASS for every file except `staff-auth.spec.ts`'s E-G2 | 14 distinct test identities failed across the two `--workers=2` runs (different set each time); all but E-G2 passed cleanly at `--workers=1`, corroborating "environmental." E-G2 is a separate, real finding — see F1 |
-| R9 | HO-CAT-002 suites behind the new guards (§17 step 5, §19 gate 4) | Cat-profile/vaccination/weight/error-handling/staff-shell E2E and component suites must still pass wrapped in `StaffSessionGuard`/`IdleLock` | `cat-profile-header.spec.ts`, `cat-weights.spec.ts`, `cat-vaccinations.spec.ts`, `cat-error-handling.spec.ts`, `staff-shell-*.spec.ts`, plus the full 236-test unit run | PASS | All passed at `--workers=1` in the targeted rerun; the `--workers=2` failures among these were part of the same environmental pattern as R8 |
 
 ## Findings (production bugs — reported, not fixed)
 
@@ -198,7 +196,7 @@ section near the end of this file for the full second-pass record.
 
 When a real window-focus event (or the deterministic `__invalidateQueries` stand-in E-G2 and the
 production `focusManager` both use) refetches *two* stale staff-audience queries at once — the
-session-status query (`useStaffSession()`) and a page's own data query (here, the cat-profile query)
+session-status query (`useStaffSession()`) and a page's own data query (here, the edit page's own data query)
 — and **both** have just been forced to 401 by the same idle-timeout event, `IdleLock.tsx` has two
 independent, unsynchronized paths that react to them:
 
@@ -208,7 +206,7 @@ independent, unsynchronized paths that react to them:
    staff-audience `apiFetch` call, `client.ts`): `session_idle_timeout` → `lockNow()`;
    **otherwise, if not already locked, `queryClient.clear()` and redirect to `/staff/sign-in`.**
 
-The mock's `cat-profiles.ts` endpoint (matching the real API's own "idle timeout ends the session on
+The page's own mock endpoint (matching the real API's own "idle timeout ends the session on
 first detection; every later call sees `session_invalid`, never `session_idle_timeout` again"
 behaviour) reports `session_invalid`, not `session_idle_timeout` — it is not the query that detected
 the idle timeout itself, only a bystander of the same already-ended session. If the browser processes
@@ -218,11 +216,11 @@ whole cache is cleared and the user is redirected straight to `/staff/sign-in`, 
 entirely**, instead of the intended graceful in-place lock.
 
 - **Reproduced directly**: `Error Context` for one failing run shows the page has already navigated
-  to "Staff sign in" (not the cat-edit page with a dialog) when the assertion times out.
+  to "Staff sign in" (not the edit page with a dialog) when the assertion times out.
 - **Frequency observed**: 1 failure in 3 isolated (`--workers=1`, single spec, single test)
   `--repeat-each` runs on `mobile-360`; 0 failures in a separate 10-repeat run across both projects.
   Consistent with a genuine, narrow race rather than load-dependent flakiness (unlike every other
-  file in R8/R9, this one fails even fully isolated, with a warm dev server and an already-compiled
+  file in R8, this one fails even fully isolated, with a warm dev server and an already-compiled
   route).
 - **Why this is HIGH, not "flaky E2E"**: it is not the test that is racy in isolation from any real
   behaviour — the *production* session-error handling genuinely has an unguarded order dependency
@@ -281,7 +279,7 @@ projects, at `--workers=1` and inside the full suite.
 | A18 | U-G4, U-G5, E-G2, E-G3, U-G7, U-G8, U-G9 | **FAIL (first pass)** (via E-G2, same as A17) — U-G4/U-G5/E-G3 all passed even in the first pass. **PASS (second pass)** — same fix and evidence as A17 |
 | A19 | U-H1, U-H2, E-H1 | PASS |
 | A20 | U-I1 | PASS |
-| A21 | U-I2, U-I3, U-I4, E-I1 | PASS |
+| A21 | U-I2, U-I3, E-I1 | PASS |
 | A22 | U-J1, E-J1 | **Partial** — E-J1 is a gap; U-J1 passes |
 | A23 | U-J2, U-J3, U-J4, E-J1 | **Partial** — E-J1 is a gap; U-J2/U-J3/U-J4 pass |
 | A24 | E-X1 and every a11y row | **NOT MET (first/second pass — 7/~19 routes, no errors-shown or idle-lock-open axe run at all; ACCEPTANCE gate HIGH). MET (third pass)** — see E-X1's own row |
@@ -387,8 +385,8 @@ run's own error output:
 |---|---|---|---|
 | 1 | chromium | `staff-customers.spec.ts` E-H1 | `getByText('Incomplete')` not visible within 5s |
 | 2 | chromium | `staff-customers.spec.ts` E-I1 | `toHaveURL` — merge review URL never navigated to within 5s |
-| 3 | mobile-360 | `cat-deceased.spec.ts` E11/E12 | `getByLabel(/^Name/)` `toBeDisabled` — element not found within 5s |
-| 4 | mobile-360 | `cat-register.spec.ts` E2 | `getByLabel('Owner customer ID')` — 30s test timeout |
+| 3 | mobile-360 | a spec since removed in HO-P1 (E11/E12) | `getByLabel(/^Name/)` `toBeDisabled` — element not found within 5s |
+| 4 | mobile-360 | a spec since removed in HO-P1 (E2) | `getByLabel('Owner customer ID')` — 30s test timeout |
 | 5 | mobile-360 | `staff-admin.spec.ts` E-G1 (partial) | `getByLabel(/full name/i)` — 30s test timeout |
 | 6 | mobile-360 | `staff-auth.spec.ts` E-G3 | `getByLabel(/^Name/)` not visible within 5s (**before** any lock/session logic runs — same generic pattern as #1–5, not a session-handling assertion) |
 | 7 | mobile-360 | `staff-customers.spec.ts` E-H1 | Same as #1 |
@@ -396,9 +394,9 @@ run's own error output:
 | 9 | mobile-360 | `staff-shell-sheet-closes-on-back-navigation.spec.ts` | `[aria-label="Expand menu"]` — 30s test timeout |
 
 Every one of these is an "element/URL never appeared within the timeout" failure on a page unrelated
-to session/idle-lock logic (walk-in lookup, cat-deceased edit lock, cat registration, staff-account
+to session/idle-lock logic (walk-in lookup, two specs since removed in HO-P1, staff-account
 creation, a nav-sheet focus test), on tests that were already known-flaky under contention in the
-first pass (E-H1/E-I1 — see R8/R9) or are otherwise ordinary page-render assertions. Only #6 (E-G3)
+first pass (E-H1/E-I1 — see R8) or are otherwise ordinary page-render assertions. Only #6 (E-G3)
 sits in the same spec file as the mechanism under test, but its failing assertion
 (`getByLabel(/^Name/)` visible) runs at the very start of the test, before the lock is even engaged —
 identical in shape to #1–5/7–9, not a session-handling assertion failing.
@@ -411,7 +409,7 @@ individually rerun at `--workers=1` afterwards — never the entire 244-test sui
 `--workers=1` session). To confirm this rather than assume it, re-ran all 6 affected spec files
 together, fresh (`--workers=1`, both projects, freshly started dev server, no prior 26-minute
 history): `PORT=3102 npx playwright test --project=chromium --project=mobile-360 --workers=1
-tests/e2e/staff-customers.spec.ts tests/e2e/cat-deceased.spec.ts tests/e2e/cat-register.spec.ts
+tests/e2e/staff-customers.spec.ts <two specs since removed in HO-P1>
 tests/e2e/staff-admin.spec.ts tests/e2e/staff-auth.spec.ts
 tests/e2e/staff-shell-sheet-closes-on-back-navigation.spec.ts` — **30/30 passed** (2.6 minutes),
 including every one of the 9 identities that failed above, on both projects, and including E-G2/E-G3
@@ -552,7 +550,7 @@ timing dependency entirely rather than narrowing the window it was previously ge
 
 Closed by a new dated Amended row in `docs/handover/HO-ACC-002.md` §1, naming all three files the
 gate listed: `web/tests/unit/lib/register-schema.test.ts`, the `window.__apiFetch` hook in
-`web/app/providers.tsx`, and `tests/CatEcommerce.IntegrationTests/AccountsIntegrationTestBase.cs`. The
+`web/app/providers.tsx`, and `tests/AmarGram.IntegrationTests/AccountsIntegrationTestBase.cs`. The
 same row also declares the E-X1/E-X2 route-coverage extension above, closing the gate's own
 "no Amended row declares the E-X1/E-X2 route sampling" note.
 

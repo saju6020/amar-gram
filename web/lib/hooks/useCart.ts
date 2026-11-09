@@ -11,7 +11,6 @@ import {
   type AddCartLineRequest,
   type MergeCartResult,
 } from '@/lib/api/cart';
-import { getCats } from '@/lib/api/cats';
 
 /**
  * `lib/hooks/useCart.ts` — HO-ORD-002 §8.3, ADR-FE-089. The cart is SERVER state: one `['cart']`
@@ -84,8 +83,8 @@ export function useAddCartLine() {
 export function useUpdateCartLine() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { lineId: string; quantity?: number; catId?: string }) =>
-      updateCartLine(input.lineId, { quantity: input.quantity, catId: input.catId }),
+    mutationFn: (input: { lineId: string; quantity: number }) =>
+      updateCartLine(input.lineId, { quantity: input.quantity }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY }),
   });
 }
@@ -95,14 +94,5 @@ export function useRemoveCartLine() {
   return useMutation({
     mutationFn: (lineId: string) => removeCartLine(lineId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY }),
-  });
-}
-
-/** The signed-in customer's cats for `PrescriptionCatDialog` (loaded only when the dialog opens). */
-export function useCartCats(enabled: boolean) {
-  return useQuery({
-    queryKey: ['cats', { pageSize: 50, source: 'cart' }],
-    queryFn: () => getCats({ pageSize: 50 }),
-    enabled,
   });
 }

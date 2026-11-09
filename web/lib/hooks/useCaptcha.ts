@@ -15,7 +15,7 @@ import { ApiError } from '@/lib/api/client';
  * server at all") never issued a challenge to lose in the first place, so retrying THAT kind of
  * failure a couple of times is not "silently retrying a used challenge", it's recovering from a
  * request that never happened. In practice this is what saves the very first CAPTCHA fetch on a
- * page load from HO-CAT-002's own documented MSW-registration race (`app/providers.tsx`'s comment)
+ * page load from the shell handover's own documented MSW-registration race (`app/providers.tsx`'s comment)
  * in development/test, which every other query "papers over" with the default `retry: 1` — this
  * query cannot use that default (it WOULD silently retry a real `CaptchaInvalid`-shaped failure),
  * so it needs its own, narrower rule instead of none at all.

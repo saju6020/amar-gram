@@ -22,7 +22,7 @@ import { focusManager, onlineManager } from '@tanstack/react-query';
  * render the dialog and to lock/unlock) share the one value.
  *
  * ARCHITECTURE gate third pass, HIGH — a page's OWN query (e.g. `useStaffAccount(id)` on the
- * staff-account detail screen, or `useCat(id)` under `CatProfileDataShell`) can independently get
+ * staff-account detail screen) can independently get
  * its own `401` on the SAME focus event that triggers the lock, keeping its stale `data` but
  * setting `isError: true` — a page branching on `isError` alone then swaps its whole form out,
  * losing the very draft `IdleLock` exists to protect, through a code path the session-error
@@ -55,7 +55,7 @@ import { focusManager, onlineManager } from '@tanstack/react-query';
  *     value pauses that retry until the override lifts — proven live, during this round's own
  *     development, by a query with `retry: noRetryOn403` (`useStaffAccount`) hanging indefinitely
  *     once its first attempt failed while locked, never settling into the `isError` state
- *     `CatProfileDataShell`'s/the staff-account page's own `isError && !data` guard depends on.
+ *     the staff-account page's own `isError && !data` guard depends on.
  *   - `onlineManager.setOnline(false)` alone (without a listener swap) was tried first and also
  *     rejected: `onlineManager`'s own default event listener calls `setOnline(true)`/
  *     `setOnline(false)` DIRECTLY on a real `online`/`offline` event (unlike `focusManager`'s
@@ -100,7 +100,7 @@ import { focusManager, onlineManager } from '@tanstack/react-query';
  * dispatched as `{type: 'error', error: CancelledError}` (`query.js`), turning every query that
  * happened to be in flight at the exact moment of locking into `isError: true` — including a
  * page's very FIRST load, which has no `data` yet to fall back on, so this call alone could make a
- * cat/staff-account form's loading state flash straight to an error screen. The comment that
+ * staff-account form's loading state flash straight to an error screen. The comment that
  * shipped alongside it also had `revert` backwards: `revert: true` (TanStack's own default, which
  * this fix never needs to override) is what PRESERVES a query's prior state across a cancelled
  * fetch — including its `data` — precisely the safe, existing default. Pausing

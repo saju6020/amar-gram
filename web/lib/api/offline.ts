@@ -1,46 +1,12 @@
 import { apiFetch } from './client';
 
 /**
- * `lib/api/offline.ts` — HO-XCT-002 §8.2. The offline front-desk snapshot and the reachability
+ * `lib/api/offline.ts` — HO-XCT-002 §8.2. The offline staff snapshot and the reachability
  * ping. Shapes verified against `StaffOfflineSnapshotController.cs`, `SystemPingController.cs` and
  * `src/Read/.../ViewModels/OperationsSnapshotViewModels.cs` (HO-XCT-001 section 12.4).
  */
 
 export type SnapshotOmissionReason = 'NotPermitted' | 'NotAvailable';
-
-export interface SnapshotAppointmentItem {
-  appointmentId: string;
-  startsOn: string | null;
-  endsOn: string | null;
-  status: string;
-  isWalkIn: boolean;
-  triagePriority: string | null;
-  catName: string;
-  catIsHighRisk: boolean;
-  /** Present only for a high-risk cat. */
-  handlingNote: string | null;
-  customerName: string;
-  /** Sent by the API (HO-XCT-001 section 12.4) but never stored or shown: owner decision 2026-10-14. */
-  customerPhone?: string | null;
-  serviceName: string;
-  performerName: string | null;
-  roomName: string | null;
-}
-
-export interface SnapshotBoardingTaskItem {
-  taskId: string;
-  dueOn: string | null;
-  taskType: string;
-  taskLabel: string;
-  unitName: string | null;
-  catName: string;
-  catIsHighRisk: boolean;
-  handlingNote: string | null;
-  instructions: string | null;
-  status: string;
-  completedOn: string | null;
-  assigneeName: string | null;
-}
 
 export interface OfflineSnapshotBody {
   schemaVersion: number;
@@ -52,10 +18,9 @@ export interface OfflineSnapshotBody {
   staffAccountId: string;
   idleTimeoutMinutes: number;
   refreshAfterSeconds: number;
-  sections: {
-    appointments?: { items: SnapshotAppointmentItem[] };
-    boardingTasks?: { items: SnapshotBoardingTaskItem[] };
-  };
+  /** Keyed by section name. No section is defined in Amar Gram today, so the envelope arrives
+   *  with no sections (or only omissions). */
+  sections: Record<string, { items: unknown[] }>;
   omittedSections: Array<{ section: string; reason: SnapshotOmissionReason }>;
 }
 

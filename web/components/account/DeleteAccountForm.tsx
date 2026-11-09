@@ -72,14 +72,14 @@ export function DeleteAccountForm({ onDelete, isPending, error }: DeleteAccountF
 
   return (
     <div className="flex max-w-lg flex-col gap-5">
-      <div className="rounded-[var(--radius-md)] border border-danger-ink/30 bg-danger-bg p-4 text-sm text-danger-ink">
+      <div className="rounded-card border-[1.5px] border-danger-ink/30 bg-danger-bg p-4 text-sm text-danger-ink">
         <p className="font-semibold">Deleting your account will:</p>
         <ul className="mt-2 list-disc pl-5">
           <li>Remove your personal details, contact details and addresses.</li>
           <li>Sign you out — you will not be able to sign in again.</li>
           <li>
-            Keep clinical and billing records for the legally required period, with your name
-            replaced by &ldquo;Anonymised customer&rdquo;.
+            Keep order and billing records for the legally required period, with your name replaced
+            by &ldquo;Anonymised customer&rdquo;.
           </li>
           <li>This cannot be undone.</li>
         </ul>
@@ -87,7 +87,7 @@ export function DeleteAccountForm({ onDelete, isPending, error }: DeleteAccountF
 
       <Link
         href="/portal/account/data"
-        className="text-sm font-semibold text-accent-ink no-underline hover:underline"
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-accent-ink no-underline hover:underline"
       >
         Download my data first
       </Link>
@@ -114,9 +114,9 @@ export function DeleteAccountForm({ onDelete, isPending, error }: DeleteAccountF
           {...register('currentPassword')}
         />
 
-        <label className="flex items-start gap-2 text-sm text-ink">
-          <input type="checkbox" className="mt-1" {...register('understood')} />I understand this
-          cannot be undone.
+        <label className="flex min-h-11 items-center gap-2 text-sm text-ink">
+          <input type="checkbox" className="size-5 accent-leaf" {...register('understood')} />I
+          understand this cannot be undone.
         </label>
         {errors.understood && (
           <p role="alert" className="text-xs font-semibold text-danger-ink">
@@ -127,6 +127,7 @@ export function DeleteAccountForm({ onDelete, isPending, error }: DeleteAccountF
         <Button
           type="submit"
           variant="destructive"
+          size="pillMd"
           disabled={isSubmitting || isPending}
           aria-busy={isSubmitting || isPending}
           className="w-fit"

@@ -50,7 +50,7 @@ Real-run seeding: a scratch console app (outside the repo, deleted) wrote one ad
 
 | ID | Mock (chromium / mobile-360) | Real API |
 |---|---|---|
-| E-A1 three business lines, one numbered invoice, tax per line | PASS / PASS | PASS (charges created as manual fees in the three lines; the clinic/boarding item sources are Phase J and not built) |
+| E-A1 several charges, one numbered invoice, tax per line | PASS / PASS | PASS (charges created as manual fees) |
 | E-A2 second issue of the same draft | PASS / PASS (issued "elsewhere" through a direct call) | PASS (second call refused) |
 | E-B1 split tender 400 / 350 / 400 | PASS / PASS | PASS (three receipts, invoice Paid) |
 | E-B2 60 000 pending, approved in another context | PASS / PASS (seeded pending payment) | PASS (reception records, accountant approves) |
@@ -113,4 +113,4 @@ The case IDs (U-, E-) are those above; this table records what the gate itself w
 
 ### Real-run setup (this gate)
 
-Existing `e2e.bil.admin`, `e2e.bil.accountant`, `e2e.bil.reception` staff (roles Administrator, Accountant, Reception; all on MAIN) were found in `catecommerce_dev` by a read-only query and reused, with the password from the git-ignored `web/.env.e2e.local`; sign-in returned 200. The requested `e2e.vet`/`e2e.accountant` names were not created: the billing spec needs no clinical role and the three above cover admin, accountant and reception. Tax class `bdbb81d4-...` (15 %) and three `Real Customer n` accounts from the earlier seed were reused through a throwaway `seed.json` in the scratch folder. The only write this gate made to the dev DB was the MAIN billing profile above, through the API. No migrations were run. The API and the web server were stopped after the run.
+Existing `e2e.bil.admin`, `e2e.bil.accountant`, `e2e.bil.reception` staff (roles Administrator, Accountant, Reception; all on MAIN) were found in `catecommerce_dev` by a read-only query and reused, with the password from the git-ignored `web/.env.e2e.local`; sign-in returned 200. The requested `e2e.shopmanager`/`e2e.accountant` names were not created: the billing spec needs no further role and the three above cover admin, accountant and reception. Tax class `bdbb81d4-...` (15 %) and three `Real Customer n` accounts from the earlier seed were reused through a throwaway `seed.json` in the scratch folder. The only write this gate made to the dev DB was the MAIN billing profile above, through the API. No migrations were run. The API and the web server were stopped after the run.

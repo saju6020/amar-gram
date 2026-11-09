@@ -10,11 +10,11 @@ export function MaintenanceNotice({ message }: { message?: string | null }) {
   return (
     <section
       aria-labelledby="maintenance-heading"
-      className="mx-auto flex max-w-xl flex-col items-start gap-4 rounded-band border border-border bg-surface p-8 md:p-12"
+      className="mx-auto flex max-w-xl flex-col items-start gap-4 rounded-band border-[1.5px] border-border bg-surface p-8 md:p-12"
     >
       <span
         aria-hidden="true"
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-sunken text-ink-muted"
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-sunken text-ink"
       >
         <Wrench size={22} />
       </span>

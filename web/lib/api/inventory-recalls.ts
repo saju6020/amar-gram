@@ -77,12 +77,6 @@ export interface RecallTraceCustomer {
   originalCustomerId: string | null;
 }
 
-export interface RecallTraceCat {
-  catId: string;
-  name: string;
-  currentOwner: RecallTraceCustomer | null;
-}
-
 export interface RecallTraceReceived {
   occurredOn: string;
   kind: string;
@@ -91,8 +85,6 @@ export interface RecallTraceReceived {
   locationCode: string | null;
   referenceLabel: string | null;
   customer: RecallTraceCustomer | null;
-  cat: RecallTraceCat | null;
-  householdCats: string[];
 }
 
 export interface RecallTraceReturned {
@@ -108,7 +100,6 @@ export interface RecallTraceUnshipped {
   referenceId: string;
   quantity: string;
   customer: RecallTraceCustomer | null;
-  cat: RecallTraceCat | null;
 }
 
 /** The whole trace comes in one response (not paged on the real API); the table pages client-side. */

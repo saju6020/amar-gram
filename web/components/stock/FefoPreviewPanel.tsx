@@ -13,9 +13,6 @@ import type { FefoPreview, FefoPreviewLine, FefoPurpose } from '@/lib/api/invent
 
 export const FEFO_PURPOSES: ReadonlyArray<{ value: FefoPurpose; label: string }> = [
   { value: 'Sale', label: 'A sale' },
-  { value: 'Dispense', label: 'Dispensing medicine' },
-  { value: 'ClinicalUse', label: 'Clinical use' },
-  { value: 'BoardingUse', label: 'Boarding use' },
 ];
 
 export interface FefoRequest {
@@ -63,7 +60,7 @@ export function FefoPreviewPanel({
 
   return (
     <Panel title="What would be picked next?">
-      <form onSubmit={submit} noValidate className="grid items-end gap-3 sm:grid-cols-[10rem_12rem_1fr_auto]">
+      <form onSubmit={submit} noValidate className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[10rem_12rem_1fr_auto]">
         <QuantityInput id="fefo-quantity" label="Quantity" value={quantity} stockUnit={stockUnit} allowsFractional={allowsFractional} error={localError} onValueChange={setQuantity} />
         <SelectField id="fefo-purpose" label="For" value={purpose} onChange={(e) => setPurpose(e.target.value as FefoPurpose)}>
           {FEFO_PURPOSES.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}

@@ -3,21 +3,20 @@
 <head>
 <meta charset="utf-8">
 <title>Orders — screens</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="./index.css">
 </head>
 <body>
 <div class="wrap">
   <a class="back" href="../index.html">&larr; All areas</a>
-  <div class="eyebrow">PurrCare · backlog &sect;10 · HO-ORD-002</div>
+  <div class="eyebrow">Amar Gram · HO-ORD-002</div>
   <h1>Orders</h1>
-  <p class="lede">Nine rows, forty artboards &mdash; buying (cart, checkout, my orders) and selling (queue, money, fulfilment, returns, counter, settings). No payment gateway, no card field anywhere. No live interaction; every state is its own artboard.</p>
+  <p class="lede">Nine rows, thirty-nine artboards &mdash; buying (cart, checkout, my orders) and selling (queue, money, fulfilment, returns, counter, settings). No payment gateway, no card field anywhere. No live interaction; every state is its own artboard.</p>
 
   <div class="row-group">
     <h2>Cart — US-ORD-01, 02</h2>
     <a class="screen-row" href="Cart.dc.html"><span class="screen-name">⭐ Cart<span class="screen-file">Cart.dc.html</span></span><span class="screen-desc">Merge notice with a dropped line, a price change, a limited line at its maximum, an unavailable line blocking checkout with its reason, the undo toast</span></a>
     <a class="screen-row" href="CartStates.dc.html"><span class="screen-name">Cart states<span class="screen-file">CartStates.dc.html</span></span><span class="screen-desc">Empty cart, the four add-to-cart button states, the header badge (hidden at 0), checkout while signed out</span></a>
-    <a class="screen-row" href="PrescriptionCatDialog.dc.html"><span class="screen-name">Prescription cat picker<span class="screen-file">PrescriptionCatDialog.dc.html</span></span><span class="screen-desc">Authorised cat selectable, unauthorised cats disabled with the reason and a booking link; the signed-out version</span></a>
   </div>
 
   <div class="row-group">
@@ -25,7 +24,7 @@
     <a class="screen-row" href="CheckoutFulfilment.dc.html"><span class="screen-name">1 · Delivery or pickup<span class="screen-file">CheckoutFulfilment.dc.html</span></span><span class="screen-desc">"We don't deliver to Gazipur yet" with pickup preselected, branches with hours, who's collecting</span></a>
     <a class="screen-row" href="CheckoutSlot.dc.html"><span class="screen-name">2 · Slot<span class="screen-file">CheckoutSlot.dc.html</span></span><span class="screen-desc">Service levels with the server's charge, date strip and windows in Asia/Dhaka, full days disabled; the skipped-step case</span></a>
     <a class="screen-row" href="CheckoutPayment.dc.html"><span class="screen-name">⭐ 3 · Payment<span class="screen-file">CheckoutPayment.dc.html</span></span><span class="screen-desc">COD, bank transfer, pay on collection — unavailable ones disabled with the server's reason; the three COD reasons; no card option</span></a>
-    <a class="screen-row" href="CheckoutReview.dc.html"><span class="screen-name">⭐ 4 · Review<span class="screen-file">CheckoutReview.dc.html</span></span><span class="screen-desc">Changes panel as sentences with its acknowledgement, a prescription line missing its cat, a rejected discount code, a pending policy, Place order disabled with every reason</span></a>
+    <a class="screen-row" href="CheckoutReview.dc.html"><span class="screen-name">⭐ 4 · Review<span class="screen-file">CheckoutReview.dc.html</span></span><span class="screen-desc">Changes panel as sentences with its acknowledgement, a rejected discount code, a pending policy, Place order disabled with every reason</span></a>
     <a class="screen-row" href="CheckoutOutcomes.dc.html"><span class="screen-name">Placing the order<span class="screen-file">CheckoutOutcomes.dc.html</span></span><span class="screen-desc">Ready to place; quote changed (409) with the tick cleared; already being placed; a field the server rejected</span></a>
     <a class="screen-row" href="CheckoutMobile.dc.html"><span class="screen-name">Review at 360 px<span class="screen-file">CheckoutMobile.dc.html</span></span><span class="screen-desc">Single column, Place order pinned to the bottom with its reason</span></a>
     <a class="screen-row" href="OrderPlaced.dc.html"><span class="screen-name">⭐ Order placed · bank transfer<span class="screen-file">OrderPlaced.dc.html</span></span><span class="screen-desc">Payment reference, account details with copy buttons, the countdown on the server clock, "I've made the transfer"; what happens next for COD and pickup</span></a>
@@ -34,7 +33,7 @@
   <div class="row-group">
     <h2>My orders — FR-ORD-13, US-ORD-12, 13, 19</h2>
     <a class="screen-row" href="MyOrders.dc.html"><span class="screen-name">My orders<span class="screen-file">MyOrders.dc.html</span></span><span class="screen-desc">Status as word and icon, filter, pagination, and the empty state</span></a>
-    <a class="screen-row" href="OrderDetail.dc.html"><span class="screen-name">⭐ Order detail · tracking<span class="screen-file">OrderDetail.dc.html</span></span><span class="screen-desc">Track your parcel, lines with cat chips, the summary, a timeline with no staff names, the contact card in place of Cancel, return disabled with its reason</span></a>
+    <a class="screen-row" href="OrderDetail.dc.html"><span class="screen-name">⭐ Order detail · tracking<span class="screen-file">OrderDetail.dc.html</span></span><span class="screen-desc">Track your parcel, the order lines, the summary, a timeline with no staff names, the contact card in place of Cancel, return disabled with its reason</span></a>
     <a class="screen-row" href="CancelOrder.dc.html"><span class="screen-name">Cancel an order<span class="screen-file">CancelOrder.dc.html</span></span><span class="screen-desc">The confirm naming the order and the released items; the paid version adding the refund; the too-late contact card</span></a>
     <a class="screen-row" href="ExpiredOrder.dc.html"><span class="screen-name">Expired transfer<span class="screen-file">ExpiredOrder.dc.html</span></span><span class="screen-desc">"We couldn't confirm your transfer in time", Order again, and the cart listing what couldn't be added</span></a>
     <a class="screen-row" href="ReturnRequest.dc.html"><span class="screen-name">Request a return<span class="screen-file">ReturnRequest.dc.html</span></span><span class="screen-desc">Reason and condition per line, the opened-food policy line, and the server's refusal on the exact line</span></a>
@@ -62,7 +61,7 @@
   <div class="row-group">
     <h2>Fulfilment — US-ORD-10</h2>
     <a class="screen-row" href="PickList.dc.html"><span class="screen-name">⭐ Pick list<span class="screen-file">PickList.dc.html</span></span><span class="screen-desc">Grouped by location then batch, print preview, bulk Start packing with a per-order failure listed</span></a>
-    <a class="screen-row" href="PackingSlip.dc.html"><span class="screen-name">Packing slip (print)<span class="screen-file">PackingSlip.dc.html</span></span><span class="screen-desc">A4 sheet: COD amount prominent, recipient, slot, batch and cat per line, notes</span></a>
+    <a class="screen-row" href="PackingSlip.dc.html"><span class="screen-name">Packing slip (print)<span class="screen-file">PackingSlip.dc.html</span></span><span class="screen-desc">A4 sheet: COD amount prominent, recipient, slot, batch and expiry per line, notes</span></a>
   </div>
 
   <div class="row-group">
@@ -74,7 +73,7 @@
 
   <div class="row-group">
     <h2>Point of sale — US-ORD-16, 18</h2>
-    <a class="screen-row" href="PosSale.dc.html"><span class="screen-name">⭐ Scan and tender<span class="screen-file">PosSale.dc.html</span></span><span class="screen-desc">Focused scan field, an unknown barcode announced, batch and expiry per line, a prescription line refused, split tenders, Complete sale disabled with the server's shortfall</span></a>
+    <a class="screen-row" href="PosSale.dc.html"><span class="screen-name">⭐ Scan and tender<span class="screen-file">PosSale.dc.html</span></span><span class="screen-desc">Focused scan field, an unknown barcode announced, batch and expiry per line, a recalled batch refused, split tenders, Complete sale disabled with the server's shortfall</span></a>
     <a class="screen-row" href="PosComplete.dc.html"><span class="screen-name">Sale complete · void<span class="screen-file">PosComplete.dc.html</span></span><span class="screen-desc">Change due in large type, Print receipt and New sale; the void-basket confirmation; the already-processing message</span></a>
     <a class="screen-row" href="PosReceipt.dc.html"><span class="screen-name">Receipt (80 mm)<span class="screen-file">PosReceipt.dc.html</span></span><span class="screen-desc">The printed roll beside the server's 48-column plain text</span></a>
     <a class="screen-row" href="PosMobile.dc.html"><span class="screen-name">POS at 360 px<span class="screen-file">PosMobile.dc.html</span></span><span class="screen-desc">Stacked basket with the tender as a sheet at the bottom</span></a>

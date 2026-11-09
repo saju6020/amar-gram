@@ -1,7 +1,6 @@
 import { test, expect, signInAsCustomer, signInAsStaff } from './fixtures';
 import { billingIds as ids } from '../../mocks/handlers/billing';
-import { addDaysIso } from '../../lib/format/appointment';
-import { todayInZone } from '../../lib/format/time';
+import { addDaysIso, todayInZone } from '../../lib/format/time';
 
 /**
  * HO-BIL-002 §16 E-series against MSW (the real-API re-run is `billing-real-api.spec.ts`). One
@@ -16,11 +15,14 @@ test.describe('staff — invoices and payments', () => {
     await signInAsStaff(page);
   });
 
-  test('E-A1: charges from three business lines combine into one numbered invoice', async ({ page }) => {
+  test('E-A1: several charges combine into one numbered invoice', async ({ page }) => {
     await page.goto(`/staff/billing/invoices/new?customerId=${C}`);
-    await page.getByLabel(/Consultation — Momo/).check();
-    await page.getByRole('button', { name: 'Select all in Shop' }).click();
-    await page.getByRole('button', { name: 'Select all in Boarding' }).click();
+    // Not "Select all in Shop": since the clinic lines were retired every seeded charge is Shop, which
+    // includes the deliberately blocking ones (Special handling fee: tax class with no rate; Gift
+    // wrapping: already billed elsewhere when saved). Tick the issuable ones, from different sources.
+    await page.getByLabel(/Organic rice 5 kg/).check();
+    await page.getByLabel(/Mustard oil 1 L/).check();
+    await page.getByLabel(/Home delivery/).check();
     await expect(page.getByText(/Estimate at today.s tax rates/)).toBeVisible();
     const issue = page.getByRole('button', { name: 'Issue invoice' });
     await expect(issue).toBeEnabled();
@@ -29,9 +31,10 @@ test.describe('staff — invoices and payments', () => {
     await page.getByRole('dialog').getByRole('button', { name: 'Issue invoice' }).click();
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/INV-MAIN-2627-\d{6}/, { timeout: 20_000 });
     const lines = page.getByLabel('Invoice lines').first();
-    await expect(lines).toContainText('Clinic');
     await expect(lines).toContainText('Shop');
-    await expect(lines).toContainText('Boarding');
+    await expect(lines).toContainText('Organic rice 5 kg');
+    await expect(lines).toContainText('Mustard oil 1 L');
+    await expect(lines).toContainText('Home delivery');
   });
 
   test('E-A2: a draft issued elsewhere reads as already issued', async ({ page }) => {
@@ -91,7 +94,7 @@ test.describe('staff — invoices and payments', () => {
 
   test('E-B2: a payment above the limit is pending; approval by another user works', async ({ page }) => {
     await page.goto('/staff/billing/approvals');
-    await expect(page.getByText('You recorded this payment')).toBeVisible();
+    await expect(page.getByText('You recorded this one. Another staff member must approve or reject it.')).toBeVisible();
     await page.locator('button:not([disabled])', { hasText: /^Approve/ }).first().click();
     await expect(page.getByText(/approved\./)).toBeVisible();
   });
@@ -107,7 +110,7 @@ test.describe('staff — invoices and payments', () => {
 
   test('E-C1/E-C2: credit note on a paid invoice releases credit; corrected re-issue links both ways', async ({ page }) => {
     await page.goto(`/staff/billing/invoices/${ids.paidInvoiceId}/credit`);
-    await page.getByRole('textbox', { name: 'Reason' }).fill('Wrong vaccine billed');
+    await page.getByRole('textbox', { name: 'Reason' }).fill('Wrong item billed');
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Issue credit note' }).click();
@@ -151,15 +154,15 @@ test.describe('staff — close and reconcile', () => {
   });
 
   test('E-D1: a short count needs an explanation before the day closes', async ({ page }) => {
-    // decide the two pending payments first so only the variance blocks the close
+    // decide today's pending payment (another staff member's) first so only the variance blocks the close;
+    // the one this user recorded is yesterday's and only a colleague can decide it (HO-P4 Amended (i))
     await page.goto('/staff/billing/approvals');
-    await page.locator('button:not([disabled])', { hasText: /^Approve/ }).first().click();
     await page.getByRole('button', { name: /^Reject Sam Rahman/ }).first().click();
     await page.getByLabel('Reason').fill('Duplicate entry');
     await page.getByRole('button', { name: 'Reject payment' }).click();
     await page.goto(`/staff/billing/cash-up?date=${todayInZone('Asia/Dhaka')}`);
     await expect(page.getByText(/Expected cash in the till/)).toBeVisible();
-    await page.getByLabel(/Counted cash/).fill('1');
+    await page.getByLabel('Counted for Till').fill('1'); // HO-P5 BG-20: one input per source; today has the till alone
     await page.getByRole('button', { name: 'Save count' }).click();
     await expect(page.getByText(/Short BDT/).first()).toBeVisible();
     await expect(page.getByLabel(/^Explanation/)).toHaveAttribute('required', '');
@@ -222,5 +225,33 @@ test.describe('customer portal', () => {
     await expect(page.getByRole('link', { name: 'Download PDF' })).toBeVisible();
     await page.goto(`/portal/billing/invoices/${ids.otherCustomerInvoiceId}`);
     await expect(page.getByText('Invoice not found')).toBeVisible();
+  });
+});
+
+test.describe('staff — cash-up by source', () => {
+  test.beforeEach(async ({ page }) => {
+    await signInAsStaff(page);
+  });
+
+  // HO-P5 §16 E14 (BG-20, US-BIL-12): the day two days ago has a staff collector beside the till.
+  test('E14: count two sources → each source shows the server\'s over or short, and the total is the server\'s sum', async ({ page }) => {
+    const { expectAxeClean, expectNoHorizontalScroll } = await import('./reports-helpers');
+    await page.goto(`/staff/billing/cash-up?date=${addDaysIso(todayInZone('Asia/Dhaka'), -2)}`);
+    const region = page.getByRole('region', { name: 'Count cash by source' });
+    await expect(region.getByRole('rowheader', { name: 'Till' })).toBeVisible();
+    await expect(region.getByRole('rowheader', { name: 'Rezwan Ahmed' })).toBeVisible();
+    await expect(region.getByText('Not counted yet')).toHaveCount(2);
+
+    await page.getByLabel('Counted for Till').fill('100');
+    await page.getByLabel('Counted for Rezwan Ahmed').fill('1100');
+    await page.getByRole('button', { name: 'Save count' }).click();
+
+    // Rezwan collected 1,200.00 and counted 1,100.00: short by 100. The till expected nothing that day: 100 over.
+    await expect(region.getByText('Short BDT 100.00')).toBeVisible();
+    await expect(region.getByText('Over BDT 100.00')).toBeVisible();
+    await expect(page.getByText(/Counted in total:/)).toContainText('৳1,200.00');
+
+    await expectAxeClean(page);
+    await expectNoHorizontalScroll(page);
   });
 });

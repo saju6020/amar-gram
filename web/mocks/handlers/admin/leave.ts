@@ -9,7 +9,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_admin_leave_mock_db__';
+const PERSIST_KEY = '__amargram_admin_leave_mock_db__';
 
 /** `mocks/handlers/admin/leave.ts` — HO-ADM-002 §12, HO-ADM-001 §8.4/§12.4. Self-service leave and
  *  the administrator decision queue. */
@@ -33,8 +33,8 @@ interface LeaveRequest {
 function seed(): Map<string, LeaveRequest> {
   const requested: LeaveRequest = {
     id: administrationFixtureIds.leaveRequestId,
-    staffAccountId: administrationFixtureIds.vetStaffId,
-    staffFullName: 'Nadia Nurse',
+    staffAccountId: administrationFixtureIds.rosterStaffId,
+    staffFullName: 'Nadia Karim',
     startsOn: '2027-03-10',
     endsOn: '2027-03-12',
     kind: 'Annual',
@@ -84,7 +84,7 @@ function paged<T>(items: T[], pageNumber: number, pageSize: number) {
 export const adminLeaveHandlers: HttpHandler[] = [
   http.get('*/api/staff/leave-requests', () => {
     const mine = [...leaveRequests.values()].filter(
-      (l) => l.staffAccountId === administrationFixtureIds.vetStaffId,
+      (l) => l.staffAccountId === administrationFixtureIds.rosterStaffId,
     );
     return HttpResponse.json(mine);
   }),
@@ -105,7 +105,7 @@ export const adminLeaveHandlers: HttpHandler[] = [
       );
     const overlap = [...leaveRequests.values()].some(
       (l) =>
-        l.staffAccountId === (body.staffAccountId ?? administrationFixtureIds.vetStaffId) &&
+        l.staffAccountId === (body.staffAccountId ?? administrationFixtureIds.rosterStaffId) &&
         (l.status === 'Requested' || l.status === 'Approved') &&
         l.endsOn >= body.startsOn &&
         l.startsOn <= body.endsOn,
@@ -119,8 +119,8 @@ export const adminLeaveHandlers: HttpHandler[] = [
     const id = crypto.randomUUID();
     leaveRequests.set(id, {
       id,
-      staffAccountId: body.staffAccountId ?? administrationFixtureIds.vetStaffId,
-      staffFullName: 'Nadia Nurse',
+      staffAccountId: body.staffAccountId ?? administrationFixtureIds.rosterStaffId,
+      staffFullName: 'Nadia Karim',
       startsOn: body.startsOn,
       endsOn: body.endsOn,
       kind: body.kind,
@@ -176,7 +176,7 @@ export const adminLeaveHandlers: HttpHandler[] = [
     leaveRequests.set(id, {
       id,
       staffAccountId: body.staffAccountId,
-      staffFullName: 'Nadia Nurse',
+      staffFullName: 'Nadia Karim',
       startsOn: body.startsOn,
       endsOn: body.endsOn,
       kind: body.kind,

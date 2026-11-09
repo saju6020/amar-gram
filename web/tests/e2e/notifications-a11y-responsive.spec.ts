@@ -41,9 +41,9 @@ const ROUTES: RouteCase[] = [
     heading: /message templates/i,
   },
   {
-    path: `/staff/admin/notification-templates/${ids.vaccinationKey}`,
+    path: `/staff/admin/notification-templates/${ids.orderDispatchedKey}`,
     audience: 'staff',
-    heading: /vaccination due/i,
+    heading: /order dispatched/i,
   },
   {
     path: `/staff/admin/notification-templates/${ids.passwordResetKey}`,
@@ -54,7 +54,7 @@ const ROUTES: RouteCase[] = [
   {
     path: `/staff/notifications/${ids.failedSmsId}`,
     audience: 'staff',
-    heading: /vaccination due/i,
+    heading: /order dispatched/i,
   },
   {
     path: `/staff/notifications/${ids.redactedResetId}`,
@@ -133,7 +133,7 @@ test('E-X1 (editor with the preview open on each channel): zero serious/critical
   page,
 }) => {
   await signInAsStaff(page);
-  await page.goto(`/staff/admin/notification-templates/${ids.vaccinationKey}`);
+  await page.goto(`/staff/admin/notification-templates/${ids.orderDispatchedKey}`);
   await page.waitForLoadState('networkidle');
   await expect(page.getByTitle('Email preview')).toBeVisible();
   await expectNoSeriousOrCritical(page);
@@ -151,9 +151,9 @@ test('E-X1 (with errors shown): a preview error on the field and in the panel, z
   page,
 }) => {
   await signInAsStaff(page);
-  await page.goto(`/staff/admin/notification-templates/${ids.vaccinationKey}`);
+  await page.goto(`/staff/admin/notification-templates/${ids.orderDispatchedKey}`);
   await page.getByRole('tab', { name: /Text message/ }).click();
-  await page.getByLabel('SMS message').fill('Hello {{catname}} {{bookingLink}}');
+  await page.getByLabel('SMS message').fill('Hello {{ordernumber}} {{orderLink}}');
   await expect(page.getByTestId('preview-error')).toBeVisible();
   await expect(page.locator('#tpl-1-body-error')).toBeVisible();
   await expectNoSeriousOrCritical(page);
@@ -188,7 +188,7 @@ test('E-X1 (resend confirm open): zero serious/critical', async ({ page }) => {
 test('E-X1 (inbox item open): zero serious/critical', async ({ page }) => {
   await signInAsCustomer(page);
   await page.goto('/portal/inbox');
-  await page.getByRole('button', { name: /Momo is due a vaccination/ }).click();
+  await page.getByRole('button', { name: /Order SO-2026-00042 is on its way/ }).click();
   await expect(page.getByRole('link', { name: 'View', exact: true })).toBeVisible();
   await expectNoSeriousOrCritical(page);
 });

@@ -84,7 +84,7 @@ describe('U-X1 — a server 400 is mapped to its field and no errorCode reaches 
       );
     renderWithClient(
       <StorageProfileForm
-        productLabel="Vaccine"
+        productLabel="Fresh cow milk"
         initial={null}
         onSave={onSave}
         isPending={false}
@@ -138,8 +138,8 @@ describe('U-X3 — no quantity without its unit', () => {
         rows={[
           {
             skuId: 'k',
-            skuCode: 'FD-KDC-2KG',
-            displayName: 'Kitten dry food',
+            skuCode: 'FD-RCE-5KG',
+            displayName: 'Organic rice',
             stockUnit: 'bags',
             stockClass: 'Food',
             onHand: '37',
@@ -183,8 +183,8 @@ describe('U-X3 — no quantity without its unit', () => {
             {
               lineId: 'l',
               skuId: 'k',
-              skuCode: 'FD-KDC-2KG',
-              displayName: 'Kitten dry food',
+              skuCode: 'FD-RCE-5KG',
+              displayName: 'Organic rice',
               stockUnit: 'bags',
               lotNumber: 'L1',
               manufacturedOn: null,
@@ -417,7 +417,7 @@ describe('U-X5 — a 403 renders PermissionDeniedState and nothing else is fetch
         HttpResponse.json({
           staffAccountId: 's2',
           fullName: 'Nadia',
-          roleIds: ['Nurse'],
+          roleIds: ['Reception'],
           issuedOn: '2026-10-07T00:00:00Z',
           lastActivityOn: '2026-10-07T00:00:00Z',
           idleExpiresOn: '2026-10-07T01:00:00Z',

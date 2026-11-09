@@ -30,7 +30,7 @@ export function formatRating(average: number | null | undefined, count: number):
   return `${value} out of 5 (${count} ${count === 1 ? 'review' : 'reviews'})`;
 }
 
-/** `12 Nov 2026` — a date-only value, never shifted by a time zone (HO-CAT-002 §9). */
+/** `12 Nov 2026` — a date-only value, never shifted by a time zone. */
 export function formatBestBefore(dateOnly: string): string {
   if (!dateOnly) return '';
   return format(parseDateOnly(dateOnly), 'd MMM yyyy');
@@ -43,7 +43,7 @@ export function formatShortInstant(instant: string): string {
   return format(date, 'd MMM yyyy');
 }
 
-// 2026-10-16: the AmarPet import brought more origins; every featured origin now has a drawn flag.
+// 2026-10-16: the catalogue import brought more origins; every featured origin now has a drawn flag.
 const FLAG_CODES = new Set([
   'at',
   'bd',

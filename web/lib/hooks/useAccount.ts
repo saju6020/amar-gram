@@ -5,7 +5,7 @@ import {
   getNotificationPreferences,
 } from '@/lib/api/account';
 
-/** Read-side account-area queries (US-ACC-06) — HO-CAT-002 §8.2 rule 3. */
+/** Read-side account-area queries (US-ACC-06) — the shell handover §8.2 rule 3. */
 
 export function useCustomerProfile() {
   return useQuery({

@@ -3,7 +3,7 @@
 import { resolveFileUrl } from '@/lib/api/files';
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, CircleCheck, Phone } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Phone } from 'lucide-react';
 import { Amount } from '@/components/billing/Amount';
 import { QueryBoundary } from '@/components/billing/QueryBoundary';
 import { cardClass, flatCardClass } from '@/components/hearth/card';
@@ -28,6 +28,7 @@ import {
   useReorder,
   useSubmitTransferReference,
 } from '@/lib/hooks/useMyOrders';
+import { ReorderButton } from '@/components/portal/reorder/ReorderButton';
 import { useIdempotencyKey } from '@/lib/hooks/useIdempotencyKey';
 import { orderTrackerSteps } from '@/lib/orders/tracker';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,7 @@ import {
   ContactShopCard,
   ExpiredOrderCard,
   OrderTimeline,
+  PlacedConfirmation,
   TrackingPanel,
   safeHttpUrl,
 } from './OrderPanels';
@@ -63,7 +65,15 @@ export function isExpiredTransfer(order: CustomerOrderDetail): boolean {
 }
 
 const KV_TERM = 'text-xs text-ink-muted';
-const HEARTH_STATUSES = ['PendingPayment', 'Confirmed', 'Packing', 'Dispatched', 'Delivered'];
+// HO-P5 Amended (b): `Packed` (BG-4) gets the hero too; the tracker keeps it on the Packing node (ADR-FE-189).
+const HEARTH_STATUSES = [
+  'PendingPayment',
+  'Confirmed',
+  'Packing',
+  'Packed',
+  'Dispatched',
+  'Delivered',
+];
 
 function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced: boolean }) {
   const zone = order.branchTimeZoneId;
@@ -87,12 +97,13 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
     key: line.lineId,
     productName: line.productName,
     variantLabel: line.variantLabel,
-    cat: line.cat,
     quantity: line.quantity,
     unitPrice: line.unitPrice,
     lineTotal: line.lineTotal,
     taxRatePercent: line.taxRatePercent,
     imageUrl: resolveFileUrl(line.imagePath),
+    discountLabel: line.discountLabel,
+    lineDiscount: line.lineDiscount,
   }));
   const f = order.fulfilment;
   const pickup = order.fulfilmentMethod === 'Pickup';
@@ -101,14 +112,16 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
   const slotText = f.slotWindow ?? f.slotDate;
   const trackHref = safeHttpUrl(order.shipment?.trackingUrl);
   const showHero = HEARTH_STATUSES.includes(order.status);
-  const cancelBlocked = !order.canCancel && ['Packing', 'Dispatched'].includes(order.status);
+  const cancelBlocked = !order.canCancel && ['Packing', 'Packed', 'Dispatched'].includes(order.status);
   const cancelReason = contact
     ? 'This order can’t be cancelled online any more.'
     : order.status === 'Dispatched'
       ? 'It has already left the shop, so it can’t be cancelled here.'
-      : 'We’ve started packing it, so it can’t be cancelled here.';
+      : order.status === 'Packed'
+        ? 'It’s already packed, so it can’t be cancelled here.'
+        : 'We’ve started packing it, so it can’t be cancelled here.';
   const returnsNotYet =
-    !order.canRequestReturn && ['Confirmed', 'Packing', 'Dispatched'].includes(order.status);
+    !order.canRequestReturn && ['Confirmed', 'Packing', 'Packed', 'Dispatched'].includes(order.status);
   const steps = orderTrackerSteps(order, { waitingForTransfer: order.status === 'PendingPayment' });
   const codUnpaid = order.paymentMethod === 'CashOnDelivery' && !paid;
 
@@ -161,6 +174,10 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
         return pickup
           ? 'We’re packing it now and will tell you when it’s ready to collect.'
           : 'We’re packing it now and will tell you when it’s on its way.';
+      case 'Packed':
+        return pickup
+          ? 'It’s packed and we’ll tell you when it’s ready to collect.'
+          : 'It’s packed and we’ll tell you when it’s on its way.';
       case 'Dispatched':
         if (pickup) {
           return `Ready for collection at ${f.pickupBranchName ?? 'the branch'}${order.collectBy ? ` by ${formatDateOnly(order.collectBy)}` : ''}.`;
@@ -191,6 +208,7 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
     PendingPayment: 'Waiting for your transfer',
     Confirmed: 'Your order is confirmed',
     Packing: 'We’re packing your order',
+    Packed: 'Your order is packed',
     Dispatched: pickup ? 'Ready for collection' : 'On its way to you',
     Delivered: 'Delivered',
   };
@@ -206,16 +224,11 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
       </Link>
 
       {justPlaced && (
-        // Owner, 2026-10-19: checkout lands here; the order is confirmed in words before anything else.
-        <p
-          role="status"
-          className="m-0 flex items-center gap-2.5 rounded-[16px] bg-accent-tint px-4 py-3 text-[15px] font-semibold text-accent-ink"
-        >
-          <CircleCheck size={20} aria-hidden="true" className="flex-none" />
-          {`Thank you, your order ${order.orderNumber} is placed.`}
-        </p>
+        // Owner, 2026-10-19 (D-3): checkout lands here; the design's confirmation block comes before the order.
+        <PlacedConfirmation order={order} />
       )}
 
+      <div id="order-detail" className="flex scroll-mt-24 flex-col gap-6">
       {showHero ? (
         <StatusHero
           headingId="order-heading"
@@ -228,7 +241,8 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
                   href={trackHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={buttonVariants({ variant: 'pill', size: 'pillMd' })}
+                  // The courier name and number can be long: let the pill wrap at 360 px instead of widening the page.
+                  className={cn(buttonVariants({ variant: 'pill', size: 'pillMd' }), 'h-auto max-w-full whitespace-normal py-2 text-center')}
                 >
                   {`Track parcel · ${order.shipment.courierName}${order.shipment.trackingNumber ? ` ${order.shipment.trackingNumber}` : ''}`}
                   <ArrowUpRight size={14} aria-hidden="true" />
@@ -318,6 +332,41 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
                 </dd>
               </div>
             </dl>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {order.canReorder && !expired && (
+                <ReorderButton
+                  orderId={order.id}
+                  orderNumber={order.orderNumber}
+                  canReorder={order.canReorder}
+                  appearance="pill"
+                />
+              )}
+              {/* G10: the invoice PDF needs an invoice id the order does not carry, so the number links to Billing. */}
+              {order.invoiceNumber && (
+                <Link
+                  href="/portal/billing"
+                  className={buttonVariants({
+                    variant: 'pillSecondary',
+                    size: 'pillMd',
+                    className: 'no-underline',
+                  })}
+                >
+                  {`Invoice ${order.invoiceNumber}`}
+                </Link>
+              )}
+              {order.canRequestReturn && (
+                <Link
+                  href={`/portal/orders/${order.id}/return`}
+                  className={buttonVariants({
+                    variant: 'pillSecondary',
+                    size: 'pillMd',
+                    className: 'border-dashed border-accent no-underline',
+                  })}
+                >
+                  Return an item
+                </Link>
+              )}
+            </div>
           </section>
           {order.shipment && <TrackingPanel shipment={order.shipment} />}
         </div>
@@ -351,6 +400,13 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
                       <dd className="m-0">{`${f.slotWindow ?? f.slotDate} (${zone})`}</dd>
                     </div>
                   )}
+                  {f.riderNote && (
+                    // HO-P5 G4 (OQ-7): the customer's own words, shown as plain text (React escapes it).
+                    <div>
+                      <dt className={KV_TERM}>Note for the rider</dt>
+                      <dd className="m-0 [overflow-wrap:anywhere]">{f.riderNote}</dd>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div>
@@ -364,12 +420,6 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
                 <dt className={KV_TERM}>Payment</dt>
                 <dd className="m-0">{paymentMethodLabel(order.paymentMethod)}</dd>
               </div>
-              {order.invoiceNumber && (
-                <div>
-                  <dt className={KV_TERM}>Invoice</dt>
-                  <dd className="m-0">{order.invoiceNumber}</dd>
-                </div>
-              )}
             </dl>
           </section>
 
@@ -407,7 +457,7 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
               </ul>
             </section>
           )}
-          {(order.canRequestReturn || order.status === 'Delivered' || returnsNotYet) && (
+          {!order.canRequestReturn && (order.status === 'Delivered' || returnsNotYet) && (
             <section
               aria-labelledby="returns-heading"
               className={cn(flatCardClass, 'flex flex-col gap-2')}
@@ -415,17 +465,7 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
               <h2 id="returns-heading" className="sr-only">
                 Returns
               </h2>
-              {order.canRequestReturn ? (
-                <Link
-                  href={`/portal/orders/${order.id}/return`}
-                  className={cn(
-                    buttonVariants({ variant: 'pillSecondary', size: 'pillMd' }),
-                    'self-start',
-                  )}
-                >
-                  Request a return
-                </Link>
-              ) : returnsNotYet ? (
+              {returnsNotYet ? (
                 <>
                   <Button
                     variant="pillSecondary"
@@ -434,7 +474,7 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
                     aria-describedby="return-why"
                     className="self-start disabled:bg-surface"
                   >
-                    Request a return
+                    Return an item
                   </Button>
                   <p id="return-why" className="m-0 text-[13px] text-ink-muted">
                     You can request a return once the order has been delivered.
@@ -472,6 +512,7 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
           )}
           {(contact || cancelBlocked) && <ContactShopCard branch={branch} reason={cancelReason} />}
         </div>
+      </div>
       </div>
 
       <CancelOrderDialog

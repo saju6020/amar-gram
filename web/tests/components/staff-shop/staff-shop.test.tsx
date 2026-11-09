@@ -29,7 +29,7 @@ vi.mock('next/navigation', () => ({
 
 const SKU = (over: Partial<StaffSku> = {}): StaffSku => ({
   skuId: 'sku-1',
-  code: 'RC-K-2KG',
+  code: 'OAT-2KG',
   barcode: '8900000000101',
   sizeOrWeight: '2 kg',
   flavour: null,
@@ -48,23 +48,22 @@ const PRODUCT = (over: Partial<StaffProductDetail> = {}): StaffProductDetail => 
   productId: 'p1',
   version: 3,
   kind: 'Standard',
-  name: 'Royal Canin Kitten',
-  brand: 'Royal Canin',
-  description: 'Food **for** kittens',
-  category: 'CatFood',
-  subcategory: 'Kitten',
-  tags: ['kitten'],
-  slug: 'royal-canin-kitten',
+  name: 'Organic Rolled Oats',
+  brand: 'Amar Gram Farms',
+  description: 'Food **for** breakfast',
+  category: 'RiceAndGrains',
+  subcategory: 'FlattenedAndPuffedRice',
+  tags: ['oats'],
+  slug: 'organic-rolled-oats',
   status: 'Draft',
   firstPublishedOn: null,
   taxClassId: 't1',
   countryOfOriginCode: null,
-  prescriptionRequired: false,
   isExpiryTracked: true,
   listedOnStorefront: true,
   food: null,
   images: [],
-  healthFocus: [],
+  certifications: [],
   skus: [SKU()],
   publishChecklist: [
     {
@@ -108,7 +107,7 @@ describe('ProductEditorHeader — HO-SHP-002 §11.6, ADR-FE-034', () => {
 
     await user.click(publish);
     const dialog = await screen.findByRole('dialog', { name: 'Publish this product?' });
-    expect(dialog).toHaveTextContent('Publish Royal Canin Kitten? It will appear in the shop.');
+    expect(dialog).toHaveTextContent('Publish Organic Rolled Oats? It will appear in the shop.');
     await user.click(within(dialog).getByRole('button', { name: 'Publish' }));
     expect(onTransition).toHaveBeenCalledWith('publish');
 
@@ -138,7 +137,7 @@ describe('ProductEditorHeader — HO-SHP-002 §11.6, ADR-FE-034', () => {
     expect(screen.getByRole('button', { name: 'Archive' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Archive' }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent('Archive Royal Canin Kitten?');
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Archive Organic Rolled Oats?');
   });
 
   it('a 409 shows the reload message with a Reload button', async () => {
@@ -159,61 +158,61 @@ describe('ProductEditorHeader — HO-SHP-002 §11.6, ADR-FE-034', () => {
 });
 
 describe('Food section — US-SHP-03', () => {
-  it('U-D2: Cat Food shows the food form with % units on the four analysis inputs', () => {
+  it('U-D2: Food shows the food form with the generic labelling fields and optional certificate', () => {
     render(<FoodDetailsForm product={PRODUCT()} onSave={vi.fn()} onReload={() => {}} />);
-    for (const name of ['Protein', 'Fat', 'Fibre', 'Moisture']) {
-      const input = screen.getByLabelText(new RegExp(`^${name} [(]%[)]`));
-      expect(input).toBeInTheDocument();
-      expect(input.parentElement).toHaveTextContent('%');
+    for (const label of [
+      'Ingredient list',
+      'Storage instructions',
+      'Shelf life',
+      'Net weight',
+      'Allergens',
+      'Organic certifier',
+      'Certificate number',
+    ]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
     }
-    expect(screen.getByLabelText('Feeding guide')).toBeInTheDocument();
+    expect(
+      screen.getByText('Optional. Needed only when the product is marked Certified organic.'),
+    ).toBeInTheDocument();
   });
 
-  it('U-D2: a Litter product has no food section', async () => {
-    const litter = db.products.find((p) => p.category === 'Litter')!;
+  it('U-D2: a household product has no food section', async () => {
+    const detergent = db.products.find((p) => p.category === 'HouseholdAndCare')!;
     await act(async () => {
       renderWithClient(
         <Suspense fallback={null}>
-          <ProductFoodPage params={Promise.resolve({ productId: litter.productId })} />
+          <ProductFoodPage params={Promise.resolve({ productId: detergent.productId })} />
         </Suspense>,
       );
     });
     expect(
       await screen.findByText("Food details don't apply to this product", {}, { timeout: 4000 }),
     ).toBeInTheDocument();
-    expect(screen.queryByLabelText('Feeding guide')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Shelf life')).not.toBeInTheDocument();
   });
 
-  it('prescription diet asks for confirmation naming the consequence', async () => {
-    const user = userEvent.setup();
-    render(<FoodDetailsForm product={PRODUCT()} onSave={vi.fn()} onReload={() => {}} />);
-    await user.click(screen.getByRole('checkbox', { name: /Prescription diet/ }));
-    expect(await screen.findByRole('dialog')).toHaveTextContent(
-      /Customers will need a cat with a current vet authorisation/,
+  it('asks for both certificate fields once the product is Certified organic', () => {
+    render(
+      <FoodDetailsForm
+        product={PRODUCT({ certifications: ['CertifiedOrganic'] })}
+        onSave={vi.fn()}
+        onReload={() => {}}
+      />,
     );
-  });
-
-  it('requires all four analysis values or none', async () => {
-    const user = userEvent.setup();
-    const onSave = vi.fn();
-    render(<FoodDetailsForm product={PRODUCT()} onSave={onSave} onReload={() => {}} />);
-    await user.type(screen.getByLabelText(/^Protein [(]%[)]/), '32');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(
-      await screen.findByText('Enter all four analysis values, or leave all four empty.'),
+      screen.getByText(/both fields are needed before it can be published/),
     ).toBeInTheDocument();
-    expect(onSave).not.toHaveBeenCalled();
   });
 });
 
 const STORED_FOOD = {
-  manufacturer: 'Royal Canin SAS',
-  lifeStage: 'Kitten',
-  proteinSource: 'Chicken',
-  ingredientList: 'Chicken meal, rice',
-  guaranteedAnalysis: { proteinPercent: 34, fatPercent: 16, fibrePercent: 3.5, moisturePercent: 9 },
-  feedingGuide: 'Feed twice a day.',
+  ingredientList: 'Whole grain oats',
   storageInstructions: 'Keep cool and dry.',
+  shelfLife: '12 months',
+  netWeight: '500 g',
+  allergens: 'May contain gluten',
+  organicCertifier: 'Bangladesh Organic Council',
+  organicCertificateNumber: 'BOC-2026-0142',
 };
 
 describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', () => {
@@ -225,23 +224,20 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
         onReload={() => {}}
       />,
     );
-    expect(screen.getByLabelText('Manufacturer')).toHaveValue('Royal Canin SAS');
-    expect(screen.getByLabelText('Life stage')).toHaveValue('Kitten');
-    expect(screen.getByLabelText('Protein source')).toHaveValue('Chicken');
-    expect(screen.getByLabelText('Ingredient list')).toHaveValue('Chicken meal, rice');
-    expect(screen.getByLabelText(/^Protein [(]%[)]/)).toHaveValue(34);
-    expect(screen.getByLabelText(/^Fat [(]%[)]/)).toHaveValue(16);
-    expect(screen.getByLabelText(/^Fibre [(]%[)]/)).toHaveValue(3.5);
-    expect(screen.getByLabelText(/^Moisture [(]%[)]/)).toHaveValue(9);
-    expect(screen.getByLabelText('Feeding guide')).toHaveValue('Feed twice a day.');
+    expect(screen.getByLabelText('Ingredient list')).toHaveValue('Whole grain oats');
+    expect(screen.getByLabelText('Shelf life')).toHaveValue('12 months');
+    expect(screen.getByLabelText('Net weight')).toHaveValue('500 g');
+    expect(screen.getByLabelText('Allergens')).toHaveValue('May contain gluten');
+    expect(screen.getByLabelText('Organic certifier')).toHaveValue('Bangladesh Organic Council');
+    expect(screen.getByLabelText('Certificate number')).toHaveValue('BOC-2026-0142');
     expect(screen.getByLabelText('Storage instructions')).toHaveValue('Keep cool and dry.');
     expect(screen.queryByText(/Saving replaces/)).not.toBeInTheDocument();
   });
 
-  it('ProductDetailsForm ticks the stored health focus', () => {
+  it('ProductDetailsForm ticks the stored certifications', () => {
     render(
       <ProductDetailsForm
-        product={PRODUCT({ healthFocus: ['Urinary', 'Sterilised'] })}
+        product={PRODUCT({ certifications: ['Halal', 'PesticideFree'] })}
         categories={[]}
         taxClasses={[{ id: 't1', code: 'STD', name: 'Standard', isActive: true }]}
         countries={[]}
@@ -249,18 +245,18 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
         onReload={() => {}}
       />,
     );
-    const group = screen.getByRole('group', { name: 'Health focus' });
-    expect(within(group).getByRole('checkbox', { name: 'Urinary' })).toBeChecked();
-    expect(within(group).getByRole('checkbox', { name: 'Sterilised' })).toBeChecked();
-    expect(within(group).getByRole('checkbox', { name: 'Renal' })).not.toBeChecked();
+    const group = screen.getByRole('group', { name: 'Certifications' });
+    expect(within(group).getByRole('checkbox', { name: 'Halal' })).toBeChecked();
+    expect(within(group).getByRole('checkbox', { name: 'Pesticide-free' })).toBeChecked();
+    expect(within(group).getByRole('checkbox', { name: 'Traditional' })).not.toBeChecked();
   });
 
-  it('S1 regression: saving Details without touching health focus sends the loaded health focus back', async () => {
+  it('S1 regression: saving Details without touching certifications sends the loaded certifications back', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn().mockResolvedValue(undefined);
     render(
       <ProductDetailsForm
-        product={PRODUCT({ healthFocus: ['Urinary', 'Sterilised'] })}
+        product={PRODUCT({ certifications: ['Halal', 'PesticideFree'] })}
         categories={[]}
         taxClasses={[{ id: 't1', code: 'STD', name: 'Standard', isActive: true }]}
         countries={[]}
@@ -271,7 +267,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
     await user.type(screen.getByLabelText('Name'), ' 2');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(onSave).toHaveBeenCalled());
-    expect([...onSave.mock.calls[0]![0].healthFocus].sort()).toEqual(['Sterilised', 'Urinary']);
+    expect([...onSave.mock.calls[0]![0].certifications].sort()).toEqual(['Halal', 'PesticideFree']);
   });
 
   it('ImagesEditor lists the stored images in order, scope and primary, and saving unchanged sends them back', async () => {
@@ -312,8 +308,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
       screen.getAllByLabelText('Alt text (required)').map((i) => (i as HTMLInputElement).value),
     ).toEqual(['Front of pack', 'Side of pack']);
     expect(screen.getAllByRole('radio', { name: 'Primary image' })[1]).toBeChecked();
-    expect(screen.getByText(/Image upload isn.t available yet/)).toBeInTheDocument();
-    expect(screen.queryByText(/saving replaces the set/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/scanned for viruses/)).toBeInTheDocument();
     await user.type(screen.getAllByLabelText('Alt text (required)')[0]!, '!');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(onSave).toHaveBeenCalled());
@@ -326,7 +321,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
   it('VariantsTable shows the SKU label when no attribute is set (the product name)', () => {
     render(
       <VariantsTable
-        product={PRODUCT({ skus: [SKU({ sizeOrWeight: null, label: 'Royal Canin Kitten' })] })}
+        product={PRODUCT({ skus: [SKU({ sizeOrWeight: null, label: 'Organic Rolled Oats' })] })}
         onAddSku={vi.fn()}
         onUpdateSku={vi.fn()}
         onSetStatus={vi.fn()}
@@ -335,7 +330,7 @@ describe('Forms start from the loaded values — HO-SHP-001-FU1 (backlog S1)', (
         onSchedulePrice={vi.fn()}
       />,
     );
-    expect(screen.getByText('Royal Canin Kitten')).toBeInTheDocument();
+    expect(screen.getByText('Organic Rolled Oats')).toBeInTheDocument();
   });
 });
 
@@ -474,7 +469,7 @@ describe('VariantsTable — US-SHP-02, ADR-FE-032', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByLabelText('Amount (USD)')).toBeInTheDocument();
     expect(dialog).not.toHaveTextContent(/BDT/);
-    expect(dialog).not.toHaveTextContent(/Bookings and invoices/);
+    expect(dialog).not.toHaveTextContent(/Orders and invoices/);
     expect(dialog).toHaveTextContent(/Orders placed before then keep their price/);
     await user.type(within(dialog).getByLabelText('Amount (USD)'), '30');
     await user.click(within(dialog).getByRole('button', { name: /^schedule$/i }));
@@ -483,14 +478,12 @@ describe('VariantsTable — US-SHP-02, ADR-FE-032', () => {
 });
 
 describe('ImagesEditor — ADR-FE-035', () => {
-  it('U-D5: an image without alt text is a field error; the honest upload note is visible', async () => {
+  it('U-D5: an image without alt text is a field error; the upload tile and the virus-scan note are visible', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<ImagesEditor product={PRODUCT()} onSave={onSave} onReload={() => {}} />);
-    expect(
-      screen.getByText(/Image upload isn.t available yet — enter the stored file.s key/),
-    ).toBeInTheDocument();
-    expect(screen.queryByLabelText(/upload/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/scanned for viruses/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '+ Upload photo' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Add image' }));
     await user.type(
       screen.getByLabelText('Stored file id'),
@@ -512,9 +505,9 @@ describe('Sections keep their values — NFR-USA-5', () => {
         product={PRODUCT()}
         categories={[
           {
-            value: 'CatFood',
+            value: 'RiceAndGrains',
             productCount: 1,
-            subcategories: [{ value: 'Kitten', productCount: 1 }],
+            subcategories: [{ value: 'FlattenedAndPuffedRice', productCount: 1 }],
           },
         ]}
         taxClasses={[{ id: 't1', code: 'STD', name: 'Standard', isActive: true }]}
@@ -572,10 +565,10 @@ describe('Sections keep their values — NFR-USA-5', () => {
     );
     const tags = screen.getByLabelText('Tags');
     await user.clear(tags);
-    await user.type(tags, ' Grain-Free, kitten,GRAIN-FREE ');
-    expect(screen.getByText(/Saved as: grain-free, kitten/)).toBeInTheDocument();
+    await user.type(tags, ' Grain-Free, organic,GRAIN-FREE ');
+    expect(screen.getByText(/Saved as: grain-free, organic/)).toBeInTheDocument();
     // Food: expiry tracking is locked on; slug is editable before first publication.
-    expect(screen.getByRole('checkbox', { name: /Track expiry/ })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: /Track batches and expiry/ })).toBeDisabled();
   });
 });
 
@@ -601,7 +594,6 @@ describe('TranslationsEditor — US-SHP-14 AC3', () => {
               name: 'বাংলা নাম',
               description: null,
               ingredientList: null,
-              feedingGuide: null,
             },
           ],
         })}
@@ -610,7 +602,7 @@ describe('TranslationsEditor — US-SHP-14 AC3', () => {
       />,
     );
     expect(screen.getAllByRole('heading', { name: /Bangla \(bn\)/ })).toHaveLength(1);
-    expect(screen.getByText('Default: Royal Canin Kitten')).toBeInTheDocument();
+    expect(screen.getByText('Default: Organic Rolled Oats')).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveValue('বাংলা নাম');
     await user.click(screen.getByRole('button', { name: /Remove translation \(bn\)/ }));
     expect(await screen.findByRole('dialog')).toHaveTextContent(
@@ -623,8 +615,8 @@ describe('StaffProductTable via the page — UI-4, HW-2', () => {
   it('U-D8: a barcode typed and confirmed with Enter searches with that value and updates the URL', async () => {
     const user = userEvent.setup();
     renderWithClient(<StaffProductsPage />);
-    const barcode = await screen.findByLabelText('Barcode');
-    await user.type(barcode, '8900000000101{Enter}');
+    const search = await screen.findByLabelText('Name, SKU or barcode');
+    await user.type(search, '8900000000101{Enter}');
     await waitFor(() =>
       expect(push.mock.calls.some(([url]) => String(url).includes('barcode=8900000000101'))).toBe(
         true,
@@ -641,7 +633,7 @@ describe('ReviewModerationQueue — US-SHP-09', () => {
   const ITEM: ModerationItem = {
     reviewId: 'r1',
     productId: 'p1',
-    productName: 'Royal Canin Kitten',
+    productName: 'Organic Rolled Oats',
     skuLabel: '2 kg',
     rating: 2,
     title: '<b>Too</b> small',
@@ -686,7 +678,7 @@ describe('ReviewModerationQueue — US-SHP-09', () => {
     );
     await user.click(screen.getAllByRole('button', { name: /Publish review of/ })[0]!);
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('It will appear on the Royal Canin Kitten page');
+    expect(dialog).toHaveTextContent('It will appear on the Organic Rolled Oats page');
     await act(async () => {
       await user.click(within(dialog).getByRole('button', { name: 'Publish' }));
     });
@@ -708,7 +700,7 @@ describe('BundleEditor — US-SHP-12', () => {
           {
             propertyName: 'components',
             errorCode: 'InvalidBundleComponent',
-            errorMessage: 'SKU HL-CD-1_5KG is a prescription product and cannot be bundled.',
+            errorMessage: 'SKU MO-1_5L is discontinued.',
             resourceName: 'Product',
           },
         ],
@@ -721,15 +713,15 @@ describe('BundleEditor — US-SHP-12', () => {
           bundleComponents: [
             {
               componentSkuId: 'a',
-              skuCode: 'RC-K-400G',
-              productName: 'Royal Canin Kitten',
+              skuCode: 'OAT-400G',
+              productName: 'Organic Rolled Oats',
               quantity: 1,
               isOnSale: true,
             },
             {
               componentSkuId: 'b',
-              skuCode: 'HL-CD-1_5KG',
-              productName: "Hill's c/d",
+              skuCode: 'MO-1_5L',
+              productName: 'Pure Mustard Oil',
               quantity: 1,
               isOnSale: true,
             },
@@ -741,8 +733,8 @@ describe('BundleEditor — US-SHP-12', () => {
       />,
     );
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    const alert = await screen.findByText(/prescription product and cannot be bundled/);
-    expect(alert.closest('li')).toHaveTextContent("Hill's c/d");
+    const alert = await screen.findByText(/MO-1_5L is discontinued/);
+    expect(alert.closest('li')).toHaveTextContent('Pure Mustard Oil');
     expect(rowNamedBy('SKU X is a bundle', [{ code: 'Y' }])).toBe(-1);
   });
 
@@ -763,7 +755,7 @@ describe('BundleEditor — US-SHP-12', () => {
         renderPicker={(onPick) => (
           <button
             type="button"
-            onClick={() => onPick({ skuId: 'sku-1', code: 'RC-1', label: 'Royal Canin (RC-1)' })}
+            onClick={() => onPick({ skuId: 'sku-1', code: 'RC-1', label: 'Rolled Oats (RC-1)' })}
           >
             Pick RC-1
           </button>

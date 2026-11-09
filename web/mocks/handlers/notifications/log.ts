@@ -13,7 +13,7 @@ import {
   clearPersisted,
 } from './fixtures';
 
-const PERSIST_KEY = '__purrcare_notifications_log_mock_db__';
+const PERSIST_KEY = '__amargram_notifications_log_mock_db__';
 
 /**
  * `mocks/handlers/notifications/log.ts` — HO-NTF-002 §12, HO-NTF-001 §12.4 (`AdminNotificationsController`).
@@ -82,8 +82,8 @@ function base(
   return {
     id,
     createdOn: hoursAgo(2),
-    templateKey: ids.vaccinationKey,
-    templateName: 'Vaccination due',
+    templateKey: ids.orderDispatchedKey,
+    templateName: 'Order dispatched',
     category: 'Transactional',
     destination: isSms ? CUSTOMER_MOBILE : over.channel === 'InApp' ? null : CUSTOMER_EMAIL,
     recipientKind: 'Customer',
@@ -94,9 +94,9 @@ function base(
     deferredUntil: null,
     isResend: false,
     isFallback: false,
-    subject: over.channel === 'Email' ? 'Momo is due a vaccination' : null,
-    title: over.channel === 'InApp' ? 'Momo is due a vaccination' : null,
-    body: "Amar Gram: Momo's Feline Core vaccine is due on 12 Oct 2026. Book: https://purrcare.example/book",
+    subject: over.channel === 'Email' ? 'Order SO-2026-00042 is on its way' : null,
+    title: over.channel === 'InApp' ? 'Order SO-2026-00042 is on its way' : null,
+    body: 'Amar Gram: order SO-2026-00042 is on its way with Pathao Courier. Track: https://amargram.example/portal/orders/1',
     redactedReason: null,
     attempts: [],
     requestId: `r-${id}`,
@@ -163,12 +163,12 @@ function seedNotifications(): MockNotification[] {
     base(ids.heldId, {
       channel: 'Sms',
       status: 'Queued',
-      templateKey: ids.dewormingKey,
-      templateName: 'Deworming due',
+      templateKey: ids.orderDeliveredKey,
+      templateName: 'Order delivered',
       createdOn: minutesAgo(30),
       deferredUntil: nextEightAmDhaka(),
       attemptCount: 0,
-      body: 'Amar Gram: Momo is due Broad-spectrum dewormer on 12 Oct 2026. Book: https://purrcare.example/book',
+      body: 'Amar Gram: order SO-2026-00031 was delivered on 12 Oct 2026. Details: https://amargram.example/portal/orders/2',
     }),
     base(ids.retryId, {
       channel: 'Email',
@@ -445,7 +445,7 @@ export const notificationsLogHandlers: HttpHandler[] = [
       );
     }
 
-    const held = original.templateKey === ids.dewormingKey;
+    const held = original.templateKey === ids.orderDeliveredKey;
     const newId = crypto.randomUUID();
     const copy: MockNotification = {
       ...original,

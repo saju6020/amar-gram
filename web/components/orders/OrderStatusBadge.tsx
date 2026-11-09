@@ -1,5 +1,6 @@
 import {
   Ban,
+  Box,
   CircleCheck,
   Clock,
   Package,
@@ -25,6 +26,7 @@ const SPECS: Record<string, Spec> = {
   PendingPayment: { variant: 'warning', icon: Clock },
   Confirmed: { variant: 'success', icon: CircleCheck },
   Packing: { variant: 'neutral', icon: Package },
+  Packed: { variant: 'neutral', icon: Box }, // HO-P5 BG-4
   Dispatched: { variant: 'neutral', icon: Truck },
   Delivered: { variant: 'success', icon: PackageCheck },
   Cancelled: { variant: 'neutral', icon: Ban },

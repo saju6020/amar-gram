@@ -15,7 +15,7 @@ const ACTION_ICON: Record<RetentionActionAtEnd, React.ReactNode> = {
 /**
  * `components/retention/RetentionScheduleTable.tsx` — HO-XCT-002 §11.5, U-B1. One row per record
  * class: what it covers, the period in force (from the settings, with a link to change it), and
- * what happens at the end (text plus icon). Clinical, financial, regulatory and audit classes read
+ * what happens at the end (text plus icon). Financial, regulatory and audit classes read
  * "Review only": the screen says outright that nothing there is deleted automatically.
  */
 export function RetentionScheduleTable({ schedule }: { schedule: RetentionSchedule }) {

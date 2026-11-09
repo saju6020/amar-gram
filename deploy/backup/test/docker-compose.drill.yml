@@ -3,17 +3,17 @@
 #
 # repo1 is a posix volume. repo2 stands in for the off-site repository: encrypted with the same cipher settings as production, but posix, because no
 # S3-compatible server image could be pulled in the build environment. The S3 transport itself is therefore NOT exercised by this drill (see the runbook, OQ-9).
-name: purrcare-drill
+name: amargram-drill
 
 services:
   pg:
-    image: purrcare-backup:dev
-    container_name: purrcare-drill-pg
+    image: amargram-backup:dev
+    container_name: amargram-drill-pg
     entrypoint: ["bash", "/drill/entrypoint-drill.sh"]
     command: ["postgres"]
     environment:
       POSTGRES_PASSWORD: ${DRILL_PG_PASSWORD:?set by run-drill-test.sh}
-      POSTGRES_DB: catecommerce
+      POSTGRES_DB: amargram
       PGPORT: "5432"
       REPO2_CIPHER_PASS: ${DRILL_CIPHER_PASS:?set by run-drill-test.sh}
     volumes:

@@ -54,7 +54,7 @@ interface LineDraft {
 
 const POLICY: Record<string, string> = {
   Food: "Opened food can only be returned if there's a quality problem or a recall.",
-  Litter: "Used litter can't be returned.",
+  Household: "Used household and care items can't be returned unless faulty or recalled.",
 };
 
 function Form({ order }: { order: CustomerOrderDetail }) {
@@ -150,7 +150,7 @@ function Form({ order }: { order: CustomerOrderDetail }) {
     <form onSubmit={submit} noValidate className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <UnsavedChangesGuard when={dirty && !request.isPending} />
       <BackLink href={`/portal/orders/${order.id}`} label={`Order ${order.orderNumber}`} />
-      <GreetingHeader title="Request a return">
+      <GreetingHeader title="Return an item">
         Choose the items you want to send back and tell us why.
       </GreetingHeader>
       {rootError && (
@@ -166,12 +166,12 @@ function Form({ order }: { order: CustomerOrderDetail }) {
         const error = lineErrors[line.lineId];
         const name = `${line.productName} ${line.variantLabel}`.trim();
         return (
-          <fieldset key={line.lineId} className={cn(cardClass, 'm-0 flex min-w-0 flex-col gap-3')}>
+          <fieldset key={line.lineId} className="m-0 flex min-w-0 flex-col gap-3 rounded-card bg-leaf-soft p-5 sm:px-6">
             <legend className="px-1 font-semibold text-ink">{name}</legend>
-            <label className="flex items-center gap-2 text-sm font-semibold">
+            <label className="flex min-h-11 items-center gap-2 text-sm font-semibold">
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-[var(--accent)]"
+                className="size-5 accent-leaf"
                 checked={draft.selected}
                 onChange={(event) => patch(line.lineId, { selected: event.target.checked })}
               />
@@ -201,11 +201,11 @@ function Form({ order }: { order: CustomerOrderDetail }) {
                 <fieldset className="m-0 border-0 p-0">
                   <legend className="mb-1 font-semibold">Why are you returning it?</legend>
                   {REASONS.map((reason) => (
-                    <label key={reason} className="flex items-center gap-2 py-0.5">
+                    <label key={reason} className="flex min-h-11 items-center gap-2">
                       <input
                         type="radio"
                         name={`reason-${line.lineId}`}
-                        className="h-4 w-4 accent-[var(--accent)]"
+                        className="size-5 accent-leaf"
                         checked={draft.reason === reason}
                         onChange={() => patch(line.lineId, { reason })}
                       />
@@ -216,11 +216,11 @@ function Form({ order }: { order: CustomerOrderDetail }) {
                 <fieldset className="m-0 border-0 p-0">
                   <legend className="mb-1 font-semibold">What condition is it in?</legend>
                   {CONDITIONS.map((condition) => (
-                    <label key={condition} className="flex items-center gap-2 py-0.5">
+                    <label key={condition} className="flex min-h-11 items-center gap-2">
                       <input
                         type="radio"
                         name={`condition-${line.lineId}`}
-                        className="h-4 w-4 accent-[var(--accent)]"
+                        className="size-5 accent-leaf"
                         checked={draft.condition === condition}
                         onChange={() => patch(line.lineId, { condition })}
                       />
@@ -295,7 +295,7 @@ export function ReturnRequestScreen({ orderId }: { orderId: string }) {
         ) : (
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
             <BackLink href={`/portal/orders/${order.id}`} label={`Order ${order.orderNumber}`} />
-            <GreetingHeader title="Request a return" />
+            <GreetingHeader title="Return an item" />
             <p role="status" className={cn(cardClass, 'm-0 text-sm text-ink')}>
               A return can&rsquo;t be requested for this order — it may not be delivered yet, or the
               return window has closed.

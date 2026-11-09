@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils';
  * `components/stock/ExpiryBadge.tsx` — HO-IMP-002 §11.1, ADR-FE-047, UI-6. The expiry in WORDS
  * (`formatExpiry`), with an icon whose meaning is repeated in text — colour is never the only
  * signal. `isExpired` / `daysToExpiry` are the server's (derived in the branch's local date); this
- * component words them and decides nothing. The `Expired` variant repeats *"cannot be sold,
- * dispensed or fed"* (BR-3 has no override).
+ * component words them and decides nothing. The `Expired` variant repeats *"cannot be sold or
+ * used"* (BR-3 has no override).
  */
 export function ExpiryBadge({
   expiresOn,
@@ -42,7 +42,7 @@ export function ExpiryBadge({
         {text}
       </Badge>
       {severity === 'expired' && (
-        <span className="text-xs text-danger-ink">Cannot be sold, dispensed or fed.</span>
+        <span className="text-xs text-danger-ink">Cannot be sold or used.</span>
       )}
     </span>
   );

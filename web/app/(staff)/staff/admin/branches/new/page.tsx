@@ -22,6 +22,7 @@ export default function NewBranchPage() {
             addressLine: values.addressLine,
             phoneNumber: values.phoneNumber,
             email: values.email,
+            type: values.type,
           });
           router.push(`/staff/admin/branches/${result.branchId}`);
         }}

@@ -6,15 +6,7 @@ import type { SectionNavItem } from './SectionNav';
  * HO-IMP-001 §12.3's `ActionRoles` **by name only** — convenience, not authorization (ADR-FE-039).
  * Role names are the staff roles of SRS Appendix D, spelled as the server spells them.
  */
-export const STOCK_VIEW_ROLES = [
-  'Reception',
-  'Nurse',
-  'Vet',
-  'Caretaker',
-  'Inventory',
-  'ShopManager',
-  'Administrator',
-] as const; // Stock.View
+export const STOCK_VIEW_ROLES = ['Reception', 'Inventory', 'ShopManager', 'Administrator'] as const; // Stock.View
 
 export const PROCUREMENT_VIEW_ROLES = [
   'Inventory',

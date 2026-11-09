@@ -59,7 +59,7 @@ describe('CustomerSessionGuard — U-C5, ADR-FE-003', () => {
       ),
     );
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    // Stands in for "some other customer's cats/orders already in the cache" — ADR-FE-003's own
+    // Stands in for "some other customer's orders already in the cache" — ADR-FE-003's own
     // concern (SEC gate LOW, first pass): this must go too, not just the session key.
     queryClient.setQueryData(['some', 'unrelated', 'portal', 'data'], { secret: true });
 
@@ -88,8 +88,8 @@ describe('CustomerSessionGuard — U-C5, ADR-FE-003', () => {
 });
 
 describe('CustomerSessionGuard — W10', () => {
-  it('a mid-session 401 keeps the /book?… query in next, as the first redirect does', async () => {
-    window.history.replaceState(null, '', '/book?catId=c1&category=Vaccination');
+  it('a mid-session 401 keeps the /portal/orders?… query in next, as the first redirect does', async () => {
+    window.history.replaceState(null, '', '/portal/orders?page=2&status=Delivered');
     server.use(
       http.get('*/api/auth/session', () =>
         HttpResponse.json({
@@ -114,7 +114,7 @@ describe('CustomerSessionGuard — W10', () => {
     await apiFetch('/api/customers/me').catch(() => {});
     await waitFor(() =>
       expect(replace).toHaveBeenCalledWith(
-        `/sign-in?next=${encodeURIComponent('/book?catId=c1&category=Vaccination')}`,
+        `/sign-in?next=${encodeURIComponent('/portal/orders?page=2&status=Delivered')}`,
       ),
     );
     window.history.replaceState(null, '', '/');

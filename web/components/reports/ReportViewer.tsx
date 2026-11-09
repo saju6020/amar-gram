@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/back-office/PageHeader';
 import { EmptyState } from '@/components/common/EmptyState';
 import { LoadingState } from '@/components/common/LoadingState';
 import { SimplePager } from '@/components/notifications/SimplePager';
@@ -82,27 +83,31 @@ function ReportViewerBody({ definition }: { definition: ReportCatalogueEntry }) 
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/staff/reports" className="text-sm font-semibold text-accent-ink underline">
+      {/* The report list sits beside the viewer from 1024 px (the Reports layout); below it this is the way back. */}
+      <Link
+        href="/staff/reports"
+        className="text-sm font-semibold text-accent-ink underline lg:hidden"
+      >
         <span aria-hidden="true">← </span>All reports
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold text-ink">{definition.title}</h1>
-          <p className="mt-1 max-w-prose text-sm text-ink-muted">{definition.description}</p>
-        </div>
-        <div className="flex flex-wrap items-start justify-end gap-2">
-          {definition.canSchedule && (
-            <ScheduleThisReport reportKey={definition.key} filters={state.filters} />
-          )}
-          <ExportButtons
-            reportKey={definition.key}
-            query={state.query}
-            fallbackBaseName={exportBaseName(definition.key, result?.filters ?? state.filters)}
-            disabled={filtersInvalid}
-          />
-        </div>
-      </div>
+      <PageHeader
+        title={definition.title}
+        description={definition.description}
+        actions={
+          <>
+            {definition.canSchedule && (
+              <ScheduleThisReport reportKey={definition.key} filters={state.filters} />
+            )}
+            <ExportButtons
+              reportKey={definition.key}
+              query={state.query}
+              fallbackBaseName={exportBaseName(definition.key, result?.filters ?? state.filters)}
+              disabled={filtersInvalid}
+            />
+          </>
+        }
+      />
 
       <ReportFilterBar
         key={searchKey}

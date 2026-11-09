@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { ClipboardCheck, FileText, HandCoins } from 'lucide-react';
-import { addDaysIso } from '@/lib/format/appointment';
-import { formatDateOnly, todayInZone } from '@/lib/format/time';
+import { addDaysIso, formatDateOnly, todayInZone } from '@/lib/format/time';
 import { useActiveBranchZone } from '@/lib/hooks/billing/useActiveBranchZone';
 import { useApprovals, useInvoices, usePayments, useUncapturedSources } from '@/lib/hooks/billing/useBillingQueries';
 import { useCaptureSource } from '@/lib/hooks/billing/useBillingMutations';
 import { useStaffSession } from '@/lib/hooks/useSession';
+import { KpiTile } from '@/components/back-office/KpiTile';
+import { Panel } from '@/components/back-office/Panel';
 import { Amount } from './Amount';
 import { BillingCustomerSearch } from './BillingCustomerSearch';
-import { PageHeader, Section } from './PageHeader';
+import { PageHeader } from './PageHeader';
 import { PaymentStatusPill } from './StatusPill';
 import { UncapturedSourcesCard } from './UncapturedSourcesCard';
 
@@ -36,12 +37,27 @@ export function BillingHome() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Billing" description="Charges, invoices, payments and the day’s close." />
-      <Section title="Find a customer">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {isApprover && (
+          <KpiTile
+            label="Pending approvals"
+            value={approvals.isLoading ? '…' : approvals.isError ? '—' : approvals.data?.length ?? 0}
+            href="/staff/billing/approvals"
+            tone={approvals.data?.length ? 'warning' : 'neutral'}
+            note={approvals.data?.length ? 'Needs a second person' : undefined}
+          />
+        )}
+        <KpiTile label="Drafts" value={drafts.isLoading ? '…' : drafts.isError ? '—' : drafts.data?.totalCount ?? 0} href="/staff/billing/invoices?status=Draft" />
+        <KpiTile label="Payments today" value={todays.isLoading ? '…' : todays.isError ? '—' : todays.data?.totalCount ?? 0} href="/staff/billing/payments" />
+      </div>
+      <Panel title="Find a customer">
         <BillingCustomerSearch />
-      </Section>
+      </Panel>
       <div className="grid min-w-0 gap-5 lg:grid-cols-2">
         {isApprover && (
-          <Section title={`Pending approvals (${approvals.data?.length ?? 0})`} description="Large payments wait for a second person.">
+          <Panel title="Approvals queue">
+           <div className="flex flex-col gap-3">
+            <p className="text-sm text-ink-muted">Large payments wait for a second person.</p>
             <p className="text-sm text-ink">
               {approvals.isLoading
                 ? 'Loading…'
@@ -55,9 +71,12 @@ export function BillingHome() {
               <ClipboardCheck size={14} aria-hidden="true" />
               Open the approvals queue
             </Link>
-          </Section>
+           </div>
+          </Panel>
         )}
-        <Section title={`Drafts (${drafts.data?.totalCount ?? 0})`} description="Invoices saved but not issued.">
+        <Panel title="Draft invoices">
+         <div className="flex flex-col gap-3">
+          <p className="text-sm text-ink-muted">Invoices saved but not issued.</p>
           {drafts.isLoading ? (
             <p role="status" className="text-sm text-ink-muted">Loading…</p>
           ) : drafts.isError ? (
@@ -79,7 +98,8 @@ export function BillingHome() {
               ))}
             </ul>
           )}
-        </Section>
+         </div>
+        </Panel>
         <UncapturedSourcesCard
           sources={uncaptured.data}
           zone={zone}
@@ -88,7 +108,9 @@ export function BillingHome() {
           onRetry={() => void uncaptured.refetch()}
           onCapture={(source) => capture.mutateAsync({ sourceKind: source.sourceKind, sourceId: source.sourceId })}
         />
-        <Section title={`Today’s payments (${todays.data?.totalCount ?? 0})`} description={formatDateOnly(today)}>
+        <Panel title="Today’s payments">
+         <div className="flex flex-col gap-3">
+          <p className="text-sm text-ink-muted">{formatDateOnly(today)}</p>
           {todays.isLoading ? (
             <p role="status" className="text-sm text-ink-muted">Loading…</p>
           ) : todays.isError ? (
@@ -115,7 +137,8 @@ export function BillingHome() {
           <Link href="/staff/billing/payments" className="w-fit text-sm font-semibold text-accent-ink hover:underline">
             All payments
           </Link>
-        </Section>
+         </div>
+        </Panel>
       </div>
     </div>
   );

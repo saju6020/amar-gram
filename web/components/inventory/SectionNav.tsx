@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { PillTabs } from '@/components/back-office/PillTabs';
 
 export interface SectionNavItem {
   label: string;
@@ -15,7 +14,7 @@ export interface SectionNavItem {
 
 /**
  * `components/inventory/SectionNav.tsx` — HO-IMP-002 §11.1, ADR-FE-039. The tab row both sections
- * share. Items are filtered by the signed-in staff member's `roleIds` against a presentation map
+ * share, drawn as HO-P4 `PillTabs mode="link"` (a route section nav: `<nav>` + links, never `role=tab`). Items are filtered by the signed-in staff member's `roleIds` against a presentation map
  * that mirrors HO-IMP-001 §12.3 BY NAME ONLY — convenience, never authorization: every page still
  * renders `PermissionDeniedState` on a server `403`.
  */
@@ -39,28 +38,16 @@ export function SectionNav({
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   return (
-    <nav aria-label={label} className="flex flex-wrap gap-1 border-b border-border pb-3">
-      {visible.map((item) => {
-        const active = item.href === activeHref;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? 'page' : undefined}
-            className={cn(
-              'rounded-[var(--radius-sm)] px-3 py-1.5 text-sm font-semibold no-underline',
-              active ? 'bg-accent-soft text-accent-ink' : 'text-ink-muted hover:bg-surface-sunken',
-            )}
-          >
-            {item.label}
-            {item.badge && (
-              <span className="ml-1.5 rounded-full bg-warning-bg px-2 py-0.5 text-xs font-bold text-warning-ink">
-                {item.badge}
-              </span>
-            )}
-          </Link>
-        );
-      })}
-    </nav>
+    <PillTabs
+      mode="link"
+      label={label}
+      value={activeHref}
+      items={visible.map((item) => ({
+        key: item.href,
+        href: item.href,
+        // The alert badge stays TEXT plus a number inside the one link name ("Alerts 7 open").
+        label: item.badge ? `${item.label} ${item.badge}` : item.label,
+      }))}
+    />
   );
 }

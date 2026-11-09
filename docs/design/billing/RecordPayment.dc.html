@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -108,9 +108,9 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
 </style>
 </helmet>
 <div style="width:1280px;height:1150px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Shormi Akter · Reception</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Amar Gram Dhanmondi outlet (primary)</option><option>Chattogram warehouse</option></select>Shormi Akter · Reception</div></div>
   <div class="main">
-    <div class="titlerow"><div><h1 class="h1">Record payment — Farhana Yasmin</h1><p class="sub">Money received at Uttara. Each payment gets its own receipt; to split a bill across methods, record one and then take another.</p></div></div>
+    <div class="titlerow"><div><h1 class="h1">Record payment — Farhana Yasmin</h1><p class="sub">Money received at the Dhanmondi outlet. Each payment gets its own receipt; to split a bill across methods, record one and then take another.</p></div></div>
     <div class="layout">
       <form class="card" onsubmit="return false" aria-describedby="c5-sum">
         <div class="banner b-bad" role="alert" id="c5-sum"><span aria-hidden="true">⚠</span><span><b>Not sent.</b> The terminal slip number looks like a card number. Nothing has been recorded and your other entries are kept.</span></div>
@@ -147,8 +147,8 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
           <table class="alloc">
             <thead><tr><th>Invoice</th><th>Due</th><th class="num">Outstanding</th><th class="num">Apply (৳)</th></tr></thead>
             <tbody>
-              <tr><td>INV-UTR-2627-000418</td><td>7 Oct</td><td class="num">৳6,228.57</td><td class="num"><input aria-label="Apply to INV-UTR-2627-000418" value="3000.00"></td></tr>
-              <tr><td>INV-UTR-2627-000377 <span class="pill p-bad"><span aria-hidden="true">⚠</span> Overdue</span></td><td>3 Sep</td><td class="num">৳750.00</td><td class="num"><input aria-label="Apply to INV-UTR-2627-000377" placeholder="0.00"></td></tr>
+              <tr><td>INV-DHN-2627-000418</td><td>7 Oct</td><td class="num">৳6,228.57</td><td class="num"><input aria-label="Apply to INV-DHN-2627-000418" value="3000.00"></td></tr>
+              <tr><td>INV-DHN-2627-000377 <span class="pill p-bad"><span aria-hidden="true">⚠</span> Overdue</span></td><td>3 Sep</td><td class="num">৳750.00</td><td class="num"><input aria-label="Apply to INV-DHN-2627-000377" placeholder="0.00"></td></tr>
             </tbody>
           </table>
           <p class="hint">Anything not applied stays on the account as customer credit. The server checks each amount against the invoice's outstanding.</p>
@@ -164,12 +164,12 @@ legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
             <dt>Outstanding</dt><dd>৳6,978.57</dd>
             <dt>Overdue</dt><dd>৳750.00 <span class="muted">since 3 Sep</span></dd>
             <dt>Free credit</dt><dd>৳290.00</dd>
-            <dt>Earmarked</dt><dd>৳2,000.00 <span class="muted">boarding deposit</span></dd>
+            <dt>Earmarked</dt><dd>৳2,000.00 <span class="muted">pre-order advance</span></dd>
           </dl>
         </div>
         <div class="card">
           <h2 class="h2">Why the slip number, not the card</h2>
-          <p class="small muted" style="margin:0;line-height:1.55">Card payments are taken on the terminal. PurrCare only keeps the slip number so the payment can be matched to the terminal's report. A 13–19-digit number that passes the card check is refused here and never leaves the browser.</p>
+          <p class="small muted" style="margin:0;line-height:1.55">Card payments are taken on the terminal. Amar Gram only keeps the slip number so the payment can be matched to the terminal's report. A 13–19-digit number that passes the card check is refused here and never leaves the browser.</p>
         </div>
       </div>
     </div>

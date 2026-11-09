@@ -5,11 +5,14 @@ import { InboxBadge } from '@/components/inbox/InboxBadge';
 import { CartBadge } from '@/components/cart/CartBadge';
 import { AccountFrame } from '@/components/portal/AccountSidebar';
 
-// Owner-facing shell for every /portal/** route (HO-CAT-002 §8.3). `data-theme="customer"`
+// Customer-facing shell for every /portal/** route (section 8.3). `data-theme="customer"`
 // applies the warm customer design-token layer (app/globals.css) — this is the ONLY *layout* it is
 // applied on; it must never reach a staff layout or a shared component (a few HO-ACC-002 `(auth)`
 // pages also apply it directly, at the page level, for the customer-facing auth screens — see
 // that route group's own pages).
+//
+// HO-P3 (ADR-FE-176): `PortalHeader` shows the focused "Secure checkout" header on /checkout and the
+// restyled account header everywhere else; the guard, policy prompt and account frame are unchanged.
 //
 // HO-ACC-002 §11.5 / ADR-FE-001: `CustomerSessionGuard` now wraps every portal PAGE's content —
 // the header renders regardless (it is chrome, not "portal content"), but `{children}` (the actual

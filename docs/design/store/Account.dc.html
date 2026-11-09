@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amar Gram — My account</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Work+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div style="min-height: 100vh; background: #FBF3E2; color: #2A1F12; font-family: 'Work Sans', system-ui, sans-serif; font-size: 16px; line-height: 1.5">
+
+  <header style="background: #FFFAF0; border-bottom: 1.5px solid #E6D3AE">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 14px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px">
+      <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #2A1F12">
+        <span style="width: 40px; height: 40px; border-radius: 50% 50% 50% 8px; background: #3F6A1E; display: grid; place-items: center; color: #F4F8E8">
+          <svg width="24" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16 28V15" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path><path d="M16 17c0-5.5-3.6-9.4-10-9.6.2 6.4 4.1 9.8 10 9.6z"></path><path d="M16 14c.3-5.6 3.9-9.3 10.2-9.3-.4 6.3-4.4 9.6-10.2 9.3z"></path><path d="M6 28h20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+        </span>
+        <span style="font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 700">Amar <span style="color: #557A1F">Gram</span></span>
+      </a>
+      <nav aria-label="Shop" style="display: flex; gap: 6px; align-items: center">
+        <a href="Catalogue.dc.html" style="padding: 10px 14px; color: #2A1F12; text-decoration: none; font-weight: 500">Shop</a>
+        <a href="BasketPhone.dc.html" style="padding: 10px 16px; border-radius: 999px; background: #2A1F12; color: #FBF3E2; text-decoration: none; font-weight: 600">Basket · {{cartCount}}</a>
+      </nav>
+    </div>
+  </header>
+
+  <div style="max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start">
+    <nav aria-label="My account" style="flex: 1 1 220px; max-width: 260px; display: flex; flex-direction: column; gap: 4px; background: #FFFAF0; border: 1.5px solid #E6D3AE; border-radius: 24px; padding: 16px">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 8px 8px 16px; border-bottom: 1.5px dashed #EFCB86; margin-bottom: 8px">
+        <span style="width: 48px; height: 48px; border-radius: 50%; background: #E3EDC6; color: #2F5114; display: grid; place-items: center; font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: 20px">R</span>
+        <span style="display: flex; flex-direction: column; line-height: 1.3"><strong>[Customer name]</strong><span style="font-size: 13px; color: #69553C">Member since [YEAR]</span></span>
+      </div>
+      <a href="Account.dc.html" aria-current="page" style="min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 14px; background: #3F6A1E; color: #F4F8E8; text-decoration: none; font-weight: 600">Overview</a>
+      <a href="MyOrders.dc.html" style="min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 14px; color: #2A1F12; text-decoration: none; font-weight: 500">My orders</a>
+      <a href="MySubscriptions.dc.html" style="min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 14px; color: #2A1F12; text-decoration: none; font-weight: 500">Subscriptions</a>
+      <a href="Profile.dc.html" style="min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 14px; color: #2A1F12; text-decoration: none; font-weight: 500">Profile &amp; addresses</a>
+      <a href="SignIn.dc.html" style="min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 14px; color: #8A2814; text-decoration: none; font-weight: 500">Sign out</a>
+    </nav>
+
+    <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px">
+      <h1 style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 40px; font-weight: 700; letter-spacing: -0.03em">Good morning, [first name]</h1>
+
+      <section aria-labelledby="acc-track" style="background: #FFFAF0; border: 1.5px solid #E6D3AE; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: baseline">
+          <h2 id="acc-track" style="margin: 0; font-size: 20px; font-weight: 600">Order [ORDER NO] is on its way</h2>
+          <a href="MyOrders.dc.html" style="font-weight: 600; color: #B4531A">View order</a>
+        </div>
+        <ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{track}}" as="t" hint-placeholder-count="4">
+            <li style="display: flex; flex-direction: column; gap: 8px">
+              <span aria-hidden="true" style="height: 8px; border-radius: 999px; background: {{t.bar}}"></span>
+              <strong style="font-size: 14px; color: {{t.ink}}">{{t.label}}</strong>
+              <span style="font-size: 13px; color: #69553C">{{t.when}}</span>
+            </li>
+          </sc-for>
+        </ol>
+        <span style="font-size: 15px; color: #53432D">Arriving today, 4pm – 8pm · Cash on delivery ৳1,330</span>
+      </section>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px">
+        <section aria-labelledby="acc-sub" style="background: #E6EFC9; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+          <h2 id="acc-sub" style="margin: 0; font-size: 18px; font-weight: 600">Next staples box</h2>
+          <strong style="font-family: Fraunces, Georgia, serif; font-size: 28px">{{subDate}}</strong>
+          <span style="color: #2F5114; font-size: 15px">Rice 5 kg, red lentils 2 kg, mustard oil 1 L</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px">
+            <button type="button" onClick="{{skip}}" style="min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1.5px solid #2F5114; background: transparent; color: #2F5114; font: inherit; font-weight: 600; cursor: pointer">{{skipLabel}}</button>
+            <a href="MySubscriptions.dc.html" style="min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px; border-radius: 999px; background: #3F6A1E; color: #F4F8E8; text-decoration: none; font-weight: 600">Manage</a>
+          </div>
+        </section>
+        <section aria-labelledby="acc-addr" style="background: #FFFAF0; border: 1.5px solid #E6D3AE; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 8px">
+          <h2 id="acc-addr" style="margin: 0; font-size: 18px; font-weight: 600">Default address</h2>
+          <span style="color: #53432D">[House, road], Dhanmondi, Dhaka</span>
+          <span style="color: #69553C; font-size: 15px">2 saved addresses</span>
+          <a href="Profile.dc.html" style="margin-top: auto; font-weight: 600; color: #B4531A">Manage addresses</a>
+        </section>
+      </div>
+
+      <section aria-labelledby="acc-again" style="display: flex; flex-direction: column; gap: 14px">
+        <h2 id="acc-again" style="margin: 0; font-family: Fraunces, Georgia, serif; font-size: 26px; font-weight: 700">Buy again</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px">
+          <sc-for list="{{again}}" as="a" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #FFFAF0; border-radius: 18px">
+              <span role="img" aria-label="{{a.name}} photo placeholder" style="width: 56px; height: 56px; border-radius: 14px; background: {{a.tint}}; flex: none"></span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3"><strong style="font-size: 15px">{{a.name}}</strong><span style="font-size: 13px; color: #69553C">{{a.price}}</span></span>
+              <button type="button" onClick="{{a.add}}" aria-label="{{a.aria}}" style="width: 44px; height: 44px; border-radius: 50%; border: 0; background: {{a.bg}}; color: {{a.ink}}; font: inherit; font-size: 20px; font-weight: 600; cursor: pointer">{{a.sign}}</button>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { skipped: false, added: {}, count: 0 }; }
+  renderVals() {
+    const s = this.state;
+    const steps = [['Placed', '9:12am', true], ['Packed', '11:40am', true], ['Out for delivery', '2:05pm', true], ['Delivered', 'expected 4 – 8pm', false]];
+    const items = [['Chinigura rice, 1 kg', '৳180', '#E3D3A8'], ['Mustard oil, 1 L', '৳320', '#E8DD8C'], ['Red lentils, 1 kg', '৳150', '#D9C9A0'], ['Wild honey, 500 g', '৳650', '#F0CF7A']];
+    return {
+      cartCount: s.count,
+      track: steps.map(([label, when, done]) => ({ label, when, bar: done ? '#3F6A1E' : '#E6D3AE', ink: done ? '#2F5114' : '#69553C' })),
+      subDate: s.skipped ? 'Skipped · next on [DATE + 1 month]' : '[DATE]',
+      skipLabel: s.skipped ? 'Undo skip' : 'Skip this one',
+      skip: () => this.setState({ skipped: !s.skipped }),
+      again: items.map(([name, price, tint], i) => { const on = !!s.added[i]; return { name, price, tint, sign: on ? '✓' : '+', aria: on ? name + ' added' : 'Add ' + name, bg: on ? '#3F6A1E' : '#EDA73A', ink: on ? '#F4F8E8' : '#2A1F12', add: () => { if (!on) this.setState({ added: { ...s.added, [i]: true }, count: s.count + 1 }); } }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

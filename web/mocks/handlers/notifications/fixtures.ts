@@ -29,8 +29,8 @@ export const notificationFixtureIds = {
 
   // Template keys (HO-NTF-001 §8.2's shipped catalogue + the test marketing template of §12).
   passwordResetKey: 'account.password-reset',
-  vaccinationKey: 'care.vaccination-due',
-  dewormingKey: 'care.deworming-due',
+  orderDispatchedKey: 'order.dispatched',
+  orderDeliveredKey: 'order.delivered',
   marketingKey: 'marketing.test-newsletter',
 
   // Inbox items.

@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
 const REQUEST: LeaveRequest = {
   id: 'l1',
   staffAccountId: 's1',
-  staffFullName: 'Nadia Nurse',
+  staffFullName: 'Nadia Karim',
   startsOn: '2027-03-10',
   endsOn: '2027-03-12',
   kind: 'Annual',
@@ -44,7 +44,7 @@ describe('LeaveApprovalsTable — HO-ADM-002 §11.4, US-ADM-03', () => {
 
     await user.click(screen.getByRole('button', { name: /^approve$/i }));
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText(/nadia nurse/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/nadia karim/i)).toBeInTheDocument();
     expect(within(dialog).getByText(/10 mar 2027|mar 2027/i)).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole('button', { name: /^approve$/i }));
@@ -70,14 +70,14 @@ describe('LeaveApprovalsTable — HO-ADM-002 §11.4, US-ADM-03', () => {
 
     await user.click(screen.getByRole('button', { name: /^reject$/i }));
     const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText(/nadia nurse/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/nadia karim/i)).toBeInTheDocument();
     await user.type(
       within(dialog).getByLabelText(/note to the staff member/i),
-      'Clinic fully booked that week.',
+      'Outlet short-staffed that week.',
     );
     await user.click(within(dialog).getByRole('button', { name: /^reject$/i }));
 
-    expect(onReject).toHaveBeenCalledExactlyOnceWith(REQUEST, 'Clinic fully booked that week.');
+    expect(onReject).toHaveBeenCalledExactlyOnceWith(REQUEST, 'Outlet short-staffed that week.');
   });
 
   it('rejecting without a note sends no note rather than an empty string', async () => {

@@ -1,4 +1,5 @@
 import { waitForFileUploadGate } from './gate';
+import { findFileRule } from '@/lib/files/fileRules';
 
 /**
  * The upload-outcome logic shared by the real MSW handler (`handlers.ts`, used by `npm run dev`
@@ -24,11 +25,17 @@ function violation(code: string, message: string, propertyName = 'Content') {
   };
 }
 
-/** Files this mock "stored", so the cat-photo attach mock can read their metadata back the way the
- *  real handler reads the verified `StoredFileAggregate` (HO-FIL-001) instead of trusting the caller. */
-export const mockUploadedFiles = new Map<string, MockUploadFileInfo>();
-
 const scannedOnceFileNames = new Set<string>();
+
+/**
+ * HO-P5 BG-14 -- which purpose each uploaded file was stored for, so the shop mock can refuse a certificate file that is
+ * not a fresh `OrganicCertificate` upload (`SetFoodDetailsCommandHandler.cs:36-42`). Only an upload that names its purpose
+ * is recorded under it (the Vitest fake XHR does not pass one).
+ */
+const uploadedPurposes = new Map<string, string>();
+export function uploadedFilePurpose(fileId: string): string | undefined {
+  return uploadedPurposes.get(fileId);
+}
 let nextMockFileId = 1;
 
 const GATE_NAME_PATTERN = /^gate-([a-zA-Z0-9_-]+)-/;
@@ -56,8 +63,34 @@ export interface MockUploadFileInfo {
 export async function resolveMockUploadOutcome(
   file: MockUploadFileInfo,
   buildContentUrl: (fileId: string, expUnixSeconds: number) => string,
+  purpose?: string | null,
 ): Promise<MockUploadOutcome> {
   const name = file.name;
+
+  // HO-P5 BG-14: an organic certificate is a PDF or an image, at most 10 MB -- `FileRules.cs:33-37`, refused in the order
+  // `FilesController.ProcessFileSectionAsync` checks them (type at 252-255, then size at 288-291).
+  if (purpose === 'OrganicCertificate') {
+    const rule = findFileRule('OrganicCertificate');
+    if (!rule.allowedContentTypes.includes((file.type || 'application/octet-stream').toLowerCase())) {
+      return {
+        status: 400,
+        body: violation(
+          'FileTypeNotAllowed',
+          `'${file.type || 'application/octet-stream'}' is not an allowed type for purpose 'OrganicCertificate'.`,
+          'ContentType',
+        ),
+      };
+    }
+    if (file.size > rule.maxSizeInBytes) {
+      return {
+        status: 400,
+        body: violation(
+          'FileTooLarge',
+          `Exceeds the maximum size of ${rule.maxSizeInBytes} bytes for purpose 'OrganicCertificate'.`,
+        ),
+      };
+    }
+  }
 
   if (name.startsWith('reject-')) {
     return { status: 400, body: violation('FileRejected', 'The uploaded file was rejected.') };
@@ -114,8 +147,8 @@ export async function resolveMockUploadOutcome(
 
   const fileId = `mock-file-${nextMockFileId}`;
   nextMockFileId += 1;
+  if (purpose) uploadedPurposes.set(fileId, purpose);
   const exp = Math.floor(Date.now() / 1000) + 5 * 60;
-  mockUploadedFiles.set(fileId, { name, type: file.type, size: file.size });
 
   return {
     status: 201,

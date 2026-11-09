@@ -24,7 +24,7 @@ describe('Hearth forgot password', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Reset your password' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Ask at the clinic reception/)).toBeInTheDocument();
+    expect(screen.getByText(/Ask at any Amar Gram outlet/)).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText(/Mobile number or email/), 'nobody@example.com');
     await userEvent.click(screen.getByRole('button', { name: 'Send reset link' }));
@@ -50,7 +50,7 @@ describe('Hearth forgot password', () => {
         error={null}
       />,
     );
-    expect(screen.queryByText(/Ask at the clinic reception/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Ask at any Amar Gram outlet/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to sign in' })).toHaveAttribute(
       'href',
       '/staff/sign-in',

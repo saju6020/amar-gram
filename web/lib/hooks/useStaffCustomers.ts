@@ -2,7 +2,10 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   getStaffCustomer,
   findCustomers,
+  browseCustomers,
+  getCustomerNotes,
   getDuplicateCustomerGroups,
+  type BrowseCustomersParams,
   type FindCustomersParams,
   type GetDuplicateGroupsParams,
 } from '@/lib/api/staff-customers';
@@ -35,6 +38,26 @@ export function useFindCustomers(params: FindCustomersParams, enabled: boolean) 
   });
 }
 
+/** HO-P5 BG-19 -- the browsable list. `placeholderData` keeps the previous page on screen while the next loads. */
+export function useBrowseCustomers(params: BrowseCustomersParams) {
+  return useQuery({
+    queryKey: ['staff-customers', 'browse', params],
+    queryFn: () => browseCustomers(params),
+    placeholderData: (previous) => previous,
+    retry: noRetryOn403,
+  });
+}
+
+/** HO-P5 BG-19 -- a customer's staff notes, newest first. Only fetched while the Notes tab is open. */
+export function useCustomerNotes(customerId: string, enabled = true) {
+  return useQuery({
+    queryKey: ['staff-customers', 'notes', customerId],
+    queryFn: () => getCustomerNotes(customerId),
+    enabled: !!customerId && enabled,
+    retry: noRetryOn403,
+  });
+}
+
 export function useDuplicateCustomerGroups(params: GetDuplicateGroupsParams) {
   return useQuery({
     queryKey: ['staff-customers', 'duplicates', params],
@@ -44,7 +67,7 @@ export function useDuplicateCustomerGroups(params: GetDuplicateGroupsParams) {
 }
 
 /**
- * `MergeReview` (ADR-FE-011(c)) — "a fresh read of every record in the group and its cats on
+ * `MergeReview` (ADR-FE-011(c)) — "a fresh read of every record in the group on
  * arrival ... not the report row". Hitting `GET /api/staff/customers/{id}` per member (the same
  * detail endpoint the customer-detail screen uses) rather than reusing the duplicates report's
  * embedded `DuplicateCustomerMember` rows already satisfies "fresh, not the report row" — this is

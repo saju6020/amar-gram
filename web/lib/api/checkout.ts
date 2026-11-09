@@ -1,6 +1,5 @@
 import { apiFetch } from './client';
 import type { Money } from '../format/money';
-import type { CartCat } from './cart';
 
 /**
  * `lib/api/checkout.ts` — HO-ORD-002 §8.2. The checkout quote (`CheckoutQuoteViewModels.cs`) and
@@ -30,7 +29,6 @@ export interface QuoteLine {
   skuId: string;
   productName: string;
   variantLabel: string;
-  cat: CartCat | null;
   quantity: number;
   unitPrice: Money;
   lineSubtotal: Money;
@@ -45,18 +43,12 @@ export interface ExcludedLine {
   lineRef: string;
   skuId: string;
   productName: string;
-  cat: CartCat | null;
   quantity: number;
   reasonCode: string;
 }
 
 export type CheckoutChangeKind =
-  | 'PriceIncreased'
-  | 'PriceDecreased'
-  | 'QuantityReduced'
-  | 'NowUnavailable'
-  | 'PrescriptionAuthorisationExpired'
-  | 'PrescriptionCatRequired';
+  'PriceIncreased' | 'PriceDecreased' | 'QuantityReduced' | 'NowUnavailable';
 
 export interface CheckoutChange {
   kind: CheckoutChangeKind;
@@ -126,6 +118,8 @@ export interface OrderTotals {
   deliveryCharge: Money;
   taxTotal: Money;
   grandTotal: Money;
+  /** What `lineDiscountTotal` is, when it is the subscriber discount ("Subscription discount (10%)"); null otherwise. // Read/ViewModels/OrderViewModels.cs:20 (owner decision 2026-11-09) */
+  lineDiscountLabel?: string | null;
 }
 
 export interface PendingPolicy {
@@ -175,6 +169,13 @@ export function getCheckoutQuote(choices: CheckoutChoices): Promise<CheckoutQuot
 export interface PlaceOrderRequest extends CheckoutChoices {
   recipientName?: string;
   recipientPhone?: string;
+  /**
+   * HO-P5 G4: the customer's note for the rider, at most 300 characters, no control characters
+   * (`Api/Contracts/Order/PlaceOrderRequest.cs:17-18`; `Shared/Constants/OrderRules.cs:16`). The server keeps it for
+   * Delivery and drops it for Pickup (`App/CommandHandlers/Order/OrderPlacement.cs:21-33`), so it is only sent for
+   * Delivery. Component state only (ADR-FE-186): never in the URL or in storage.
+   */
+  riderNote?: string;
   quoteFingerprint: string;
 }
 
@@ -213,6 +214,7 @@ export function placeOrder(
     discountCode: request.discountCode || undefined,
     recipientName: request.recipientName || undefined,
     recipientPhone: request.recipientPhone || undefined,
+    riderNote: request.fulfilment === 'Delivery' ? request.riderNote?.trim() || undefined : undefined,
     quoteFingerprint: request.quoteFingerprint,
   };
   return apiFetch<PlacedOrder>('/api/customers/me/orders', {

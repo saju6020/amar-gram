@@ -8,7 +8,7 @@ import { server } from '../../../mocks/server';
 import { RefundDialog } from '@/components/refunds/RefundDialog';
 import type { RefundOptions } from '@/lib/api/staff-refunds';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });

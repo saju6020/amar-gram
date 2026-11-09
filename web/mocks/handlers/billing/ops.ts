@@ -1,11 +1,12 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import { looksLikeCardNumber } from '@/lib/validation/cardNumberGuard';
-import { addDaysIso } from '@/lib/format/appointment';
+import { addDaysIso } from '@/lib/format/time';
 import { billingIds as ids, forbidden, isAccountsRole, isAdministrator, notFound, pageParams, paged, violation } from './fixtures';
 import {
   cashUpFor,
   customerName,
   expectedCashCents,
+  expectedSourcesOf,
   findPayment,
   getDb,
   money,
@@ -191,26 +192,108 @@ export const opsBillingHandlers: HttpHandler[] = [
     HttpResponse.json(cashUpFor(params.date as string, ids.mainBranchId)),
   ),
 
+  // PUT …/cash-ups/{date}/count -- either the total alone or `counts[]` per source (the total is then the server's sum).
+  // StaffCashUpController.cs:33-52; RecordCashCountCommandValidator (BillingCashUpCommandValidators.cs:8-23); CashUpAggregate.cs:56-108.
   http.put(`${BASE}/cash-ups/:date/count`, async ({ params, request }) => {
     const date = params.date as string;
-    const body = (await request.json()) as { countedCash: number; explanation?: string };
+    const body = (await request.json()) as {
+      countedCash?: number | string;
+      counts?: Array<{ sourceKey?: string; countedCash?: number | string }> | null;
+      explanation?: string;
+    };
     const db = getDb();
+
+    // The validator's shape rules (all failures are reported together, as FluentValidation does).
+    const MONEY_MESSAGE = 'must not be negative and have at most two decimals.';
+    const shapeOk = (value: unknown) => {
+      const text = String(value ?? 0);
+      return /^\d{1,10}(\.\d{1,2})?$/.test(text) && Number(text) <= 9_999_999_999.99;
+    };
+    const problems: Array<{ propertyName: string; errorCode: string; errorMessage: string; resourceName: string }> = [];
+    const problem = (propertyName: string, errorCode: string, errorMessage: string) =>
+      problems.push({ propertyName, errorCode, errorMessage, resourceName: 'Billing' });
+    if (!shapeOk(body.countedCash)) problem('CountedCash', 'PredicateValidator', MONEY_MESSAGE);
+    const counts = body.counts ?? null;
+    if (counts && counts.length > 50) problem('Counts', 'PredicateValidator', 'has too many sources.');
+    (counts ?? []).forEach((line, index) => {
+      const key = line.sourceKey ?? '';
+      if (key.trim() === '') problem(`Counts[${index}].SourceKey`, 'NotEmptyValidator', `'Source Key' must not be empty.`);
+      if (key.length > 60) problem(`Counts[${index}].SourceKey`, 'MaximumLengthValidator', `The length of 'Source Key' must be 60 characters or fewer. You entered ${key.length} characters.`);
+      if (/[\u0000-\u001f\u007f-\u009f]/.test(key)) problem(`Counts[${index}].SourceKey`, 'PredicateValidator', 'must not contain control characters.');
+      if (!shapeOk(line.countedCash)) problem(`Counts[${index}].CountedCash`, 'PredicateValidator', MONEY_MESSAGE);
+    });
+    if ((body.explanation ?? '').length > 500) problem('Explanation', 'MaximumLengthValidator', "The length of 'Explanation' must be 500 characters or fewer.");
+    if (problems.length > 0) return HttpResponse.json({ errors: problems, isValid: false }, { status: 400 });
+
+    const explanation = body.explanation?.trim() || null;
+    // The aggregate refuses a card number inside RecordCount, after the open-day, source and date checks (CashUpAggregate.cs:56-73).
+    const cardNumber = () =>
+      explanation && looksLikeCardNumber(explanation)
+        ? violation('Explanation', 'ReferenceLooksLikeCardNumber', 'This looks like a card number. Card numbers must never be recorded.')
+        : null;
+    const existing = db.cashUps.find((c) => c.date === date);
+    const isSourceCount = !!counts && counts.length > 0;
+
+    if (isSourceCount) {
+      // The aggregate's order: closed, then each source once, then each one the day has, then the date, then the total's cap.
+      if (existing?.status === 'Closed') {
+        return violation('Status', 'CashUpClosed', 'This day is closed and can no longer be changed.');
+      }
+      const keys = counts.map((c) => c.sourceKey ?? '');
+      if (new Set(keys).size !== keys.length) {
+        return violation('counts', 'DuplicateCashUpSource', 'Each source can be counted once.');
+      }
+      const view = cashUpFor(date, ids.mainBranchId);
+      const known = expectedSourcesOf(date, toCents(view.expected.expectedCash.amount));
+      if (keys.some((key) => !known.some((k) => k.key === key))) {
+        return violation('counts', 'UnknownCashUpSource', 'This day has no such source of cash.');
+      }
+      // Then `RecordCount(total)`: the date first, then the total held to the same cap as one amount (CashUpAggregate.cs:110-111 -> :58, :61).
+      if (date > today()) {
+        return violation('BusinessDate', 'CashUpDateInFuture', 'A till cannot be counted for a day that has not started.');
+      }
+      const totalCents = counts.reduce((sum, c) => sum + toCents(c.countedCash), 0);
+      if (totalCents > 999_999_999_999) {
+        return violation('countedCash', 'InvalidAmount', 'The counted cash must be zero or more, with at most two decimals.');
+      }
+      const refusedCard = cardNumber();
+      if (refusedCard) return refusedCard;
+      let record = existing;
+      if (!record) {
+        record = { date, status: 'Open', version: 0, countedCents: null, explanation: null, countedOn: null, closedByName: null, closedOn: null };
+        db.cashUps.push(record);
+      }
+      // The total is the server's sum of the sources; a source left out counts as nothing at the close.
+      record.sourceCounts = counts.map((c) => ({
+        key: c.sourceKey ?? '',
+        label: known.find((k) => k.key === c.sourceKey)?.label ?? (c.sourceKey ?? ''),
+        cents: toCents(c.countedCash),
+      }));
+      record.countedCents = record.sourceCounts.reduce((sum, c) => sum + c.cents, 0);
+      record.explanation = explanation;
+      record.countedOn = new Date().toISOString();
+      record.version += 1;
+      save();
+      return HttpResponse.json(cashUpFor(date, ids.mainBranchId));
+    }
+
+    // RecordCount: open first (CashUpClosed on Status), then the date, then the explanation (CashUpAggregate.cs:56-73,136-141).
+    if (existing?.status === 'Closed') {
+      return violation('Status', 'CashUpClosed', 'This day is closed and can no longer be changed.');
+    }
     if (date > today()) {
       return violation('BusinessDate', 'CashUpDateInFuture', 'You cannot count the till for a future day.');
     }
-    let record = db.cashUps.find((c) => c.date === date);
-    if (record?.status === 'Closed') {
-      return violation('BusinessDate', 'CashUpClosed', 'This day has been closed and can no longer be changed.');
-    }
+    const refusedCard = cardNumber();
+    if (refusedCard) return refusedCard;
+    let record = existing;
     if (!record) {
       record = { date, status: 'Open', version: 0, countedCents: null, explanation: null, countedOn: null, closedByName: null, closedOn: null };
       db.cashUps.push(record);
     }
     record.countedCents = toCents(body.countedCash);
-    record.explanation = body.explanation?.trim() || null;
-    if (record.explanation && looksLikeCardNumber(record.explanation)) {
-      return violation('Explanation', 'ReferenceLooksLikeCardNumber', 'This looks like a card number. Card numbers must never be recorded.');
-    }
+    record.sourceCounts = [];
+    record.explanation = explanation;
     record.countedOn = new Date().toISOString();
     record.version += 1;
     save();
@@ -240,6 +323,8 @@ export const opsBillingHandlers: HttpHandler[] = [
       return violation('Explanation', 'VarianceExplanationRequired', 'The counted cash differs from the expected cash. Enter an explanation before closing.');
     }
     record.status = 'Closed';
+    // The expected sources are frozen with the close (CashUpAggregate.Close, CashUpAggregate.cs:112-135).
+    record.expectedSources = expectedSourcesOf(date, expectedCashCents(date, ids.mainBranchId));
     record.closedByName = ids.meName;
     record.closedOn = new Date().toISOString();
     record.version += 1;
@@ -570,7 +655,7 @@ export const opsBillingHandlers: HttpHandler[] = [
       headers: {
         'Content-Type': 'application/zip',
         'X-Export-Sha256': sha,
-        'Content-Disposition': `attachment; filename="purrcare-accounts-${from}-${to}.zip"`,
+        'Content-Disposition': `attachment; filename="amargram-accounts-${from}-${to}.zip"`,
       },
     });
   }),

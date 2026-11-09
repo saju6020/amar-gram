@@ -24,18 +24,18 @@ test('E-A1: create a supplier, build and issue a PO, receive part of it — outs
 }) => {
   await page.goto('/staff/procurement/suppliers/new');
   await page.getByLabel(/^code\b/i).fill('ACME');
-  await page.getByLabel(/^name\b/i).fill('Acme Pet Supplies');
+  await page.getByLabel(/^name\b/i).fill('Acme Grocery Supplies');
   await page.getByLabel(/^country\b/i).selectOption('DE');
   await page.getByLabel('Currency').fill('BDT');
   await page.getByLabel('Payment terms').fill('Net 30');
   await page.getByRole('button', { name: /create supplier/i }).click();
-  await expect(page.getByRole('heading', { name: 'Acme Pet Supplies' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Acme Grocery Supplies' })).toBeVisible();
 
   await page.goto('/staff/procurement/purchase-orders/new');
-  await page.getByLabel(/^supplier\b/i).selectOption({ label: 'Acme Pet Supplies (BDT)' });
+  await page.getByLabel(/^supplier\b/i).selectOption({ label: 'Acme Grocery Supplies (BDT)' });
   await page.getByLabel(/^deliver to/i).selectOption(ids.warehouseId);
   await page.getByLabel(/^expected delivery/i).fill(dateIn(10));
-  await pickSku(page, /add an item/i, 'kitten', /kitten dry food/i);
+  await pickSku(page, /add an item/i, 'rice', /organic rice 5 kg/i);
   await page.getByLabel(/^quantity/i).fill('100');
   await page.getByLabel(/^unit cost/i).fill('450');
   await page.getByRole('button', { name: /save draft/i }).click();
@@ -48,7 +48,7 @@ test('E-A1: create a supplier, build and issue a PO, receive part of it — outs
 
   // Receive part of it: the form arrives pre-filled with what the order still expects.
   await page.getByRole('link', { name: /receive goods/i }).click();
-  await expect(page.getByRole('listitem', { name: /line 1: kitten dry food/i })).toBeVisible();
+  await expect(page.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
   await expect(page.getByLabel(/^accepted/i)).toHaveValue('100');
   await page.getByLabel(/^accepted/i).fill('60');
   await page.getByLabel(/^rejected/i).fill('10');
@@ -57,7 +57,7 @@ test('E-A1: create a supplier, build and issue a PO, receive part of it — outs
   await page.getByLabel(/^expiry date/i).fill(dateIn(200));
   await page.getByRole('button', { name: /review and post/i }).click();
   const confirm = await dialog(page);
-  await expect(confirm).toContainText('60 bags of Kitten dry food');
+  await expect(confirm).toContainText('60 bags of Organic rice 5 kg');
   await confirm.getByRole('button', { name: /post receipt/i }).click();
   await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /lot L-E2E-1/i })).toBeVisible();
@@ -75,17 +75,15 @@ test('E-A2: a food SKU without an expiry date is blocked on the line’s expiry 
   await page.goto('/staff/inventory/receipts/new');
   await page.getByLabel(/^direct/i).check();
   await wedgeScan(page, ids.foodBarcode);
-  await expect(page.getByRole('listitem', { name: /line 1: kitten dry food/i })).toBeVisible();
-  await expect(page.getByText(/added: kitten dry food.* — fd-kdc-2kg/i)).toBeVisible();
+  await expect(page.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
+  await expect(page.getByText(/added: organic rice 5 kg.* — fd-rce-5kg/i)).toBeVisible();
   await page.getByLabel(/^lot number/i).fill('L-E2E-2');
   await page.getByLabel(/^accepted/i).fill('5');
   await page.getByLabel(/^unit cost/i).fill('450');
   await page.getByRole('button', { name: /review and post/i }).click();
   const expiry = page.getByLabel(/^expiry date/i);
   await expect(expiry).toHaveAttribute('aria-invalid', 'true');
-  await expect(
-    page.getByText('Food and medicine must be received with an expiry date.').first(),
-  ).toBeVisible();
+  await expect(page.getByText(/must be received with an expiry date/).first()).toBeVisible();
   await expect(expiry).toBeFocused();
 
   await expiry.fill(dateIn(120));
@@ -94,13 +92,13 @@ test('E-A2: a food SKU without an expiry date is blocked on the line’s expiry 
   await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible();
 });
 
-test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, restore, post once — confirm shown first', async ({
+test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, resume from ?draft=, post once — confirm shown first', async ({
   page,
 }) => {
   await page.goto('/staff/inventory/receipts/new');
   await page.getByLabel(/^direct/i).check();
   for (let i = 0; i < 20; i += 1)
-    await wedgeScan(page, i % 2 === 0 ? ids.foodBarcode : ids.vaccineBarcode);
+    await wedgeScan(page, i % 2 === 0 ? ids.foodBarcode : ids.chilledBarcode);
   await expect(page.getByRole('listitem', { name: /^line 20:/i })).toBeVisible();
 
   // Fill the first ten lines, wait for the autosave, then reload mid-entry.
@@ -111,9 +109,11 @@ test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, restore, post 
     await accepted.nth(i).fill('2');
   }
   await expect(page.getByText(/draft saved/i)).toBeVisible();
+  // HO-P5 ADR-FE-190: the draft is on the server; the address names it once the newest change is saved.
+  await expect(page).toHaveURL(/draft=[0-9a-f-]{36}/, { timeout: 20_000 });
+  const draftUrl = page.url();
   await page.reload();
-  await expect(page.getByText('Restore the receipt you were entering?')).toBeVisible();
-  await page.getByRole('button', { name: /restore the draft/i }).click();
+  await expect(page.getByText('Restore the receipt you were entering?')).toHaveCount(0);
   await expect(page.getByRole('listitem', { name: /^line 20:/i })).toBeVisible();
   await expect(page.getByLabel(/^lot number/i).first()).toHaveValue('L-A3-01');
 
@@ -147,9 +147,9 @@ test('E-A3: 20 lines by wedge-style scanning, a reload mid-entry, restore, post 
   await confirm.getByRole('button', { name: /post receipt/i }).click();
   await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible();
 
-  // Posted once: the draft is gone and the receipt list shows exactly one new receipt.
-  await page.goto('/staff/inventory/receipts/new');
-  await expect(page.getByText('Restore the receipt you were entering?')).toHaveCount(0);
+  // Posted once: the draft is closed (its address says so) and the receipt list shows exactly one new receipt.
+  await page.goto(draftUrl);
+  await expect(page.getByText('That draft is no longer here')).toBeVisible();
   await page.goto('/staff/inventory/receipts');
   await expect(page.getByRole('link', { name: /^GRN-/ })).toHaveCount(2); // the seeded one plus this
 });
@@ -162,7 +162,7 @@ test('E-B1: plan a consignment, add documents, clear it, receive against it, all
   await page.getByLabel(/^shipment reference/i).fill('SHP-E2E-1');
   await page.getByLabel(/PO-2026-000002/).check();
   await page.getByRole('button', { name: /add an HS code/i }).click();
-  await page.getByLabel('HS code 1', { exact: true }).fill('2309.10');
+  await page.getByLabel('HS code 1', { exact: true }).fill('1006.30');
   await page.getByRole('button', { name: /plan consignment/i }).click();
   await expect(page.getByRole('heading', { name: /^CN-/ })).toBeVisible();
 
@@ -221,7 +221,7 @@ test('E-B1: plan a consignment, add documents, clear it, receive against it, all
   await expect(page.getByText('IP-E2E').first()).toBeVisible();
   await expect(page.getByText('bol-e2e.pdf')).toBeVisible();
   await expect(page.getByText('L-B1-1')).toBeVisible();
-  await page.getByRole('link', { name: 'Batches' }).click();
+  await page.getByRole('link', { name: 'Batches', exact: true }).click();
   await expect(page.getByText(/480\.0000.*\(landed\)/)).toBeVisible();
 });
 

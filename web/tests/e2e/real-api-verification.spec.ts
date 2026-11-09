@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 /**
  * HO-ACC-002 §5.1/§12.3 — the real-API pass. Run manually against the merged HO-ACC-001 backend
- * (`dotnet run --project src/Api/CatEcommerce.Api --launch-profile https` from this worktree,
+ * (`dotnet run --project src/Api/AmarGram.Api --launch-profile https` from this worktree,
  * with this worktree's own copied, git-ignored `appsettings.Development.json`) with
  * `NEXT_PUBLIC_USE_MOCKS=false` and `NEXT_PUBLIC_API_BASE_URL` pointing at it — needs a live
  * database and a live API process this repo cannot start on its own, see this handover's own
@@ -43,6 +43,13 @@ test('register a customer, sign in, edit profile (email change + current passwor
   // Profile edit — add an email (canEditEmail is true for a self-registered customer, so this
   // exercises the email-change + current-password step-up, HO-ACC-001 §1 Amended (17)).
   await page.goto('/portal/account/profile');
+  // A database whose privacy policy requires acceptance (the dev seed) asks a new customer once, in a modal
+  // that blocks the page; a bare database has no policy and shows nothing. Accept it when it is there.
+  const policies = page.getByRole('dialog', { name: 'Updated policies' });
+  if (await policies.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false)) {
+    await policies.getByRole('button', { name: 'Accept' }).click();
+    await expect(policies).toBeHidden();
+  }
   await expect(page.getByLabel('Full name')).toHaveValue('Real API Customer');
   const emailInput = page.getByLabel(/^email$/i);
   await emailInput.fill(email);
@@ -67,7 +74,7 @@ test('request a password reset for an unknown identifier — neutral response ei
 });
 
 test('staff sign in and sign out', async ({ page }) => {
-  // Requires a staff administrator to already exist in catecommerce_dev with a password set —
+  // Requires a staff administrator to already exist in amargram_dev with a password set —
   // see this handover's own report for how the seed account used here was created.
   const identifier = process.env.E2E_STAFF_IDENTIFIER;
   const password = process.env.E2E_STAFF_PASSWORD;

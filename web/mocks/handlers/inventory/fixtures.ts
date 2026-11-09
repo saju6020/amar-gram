@@ -15,22 +15,25 @@ export const inventoryFixtureIds = {
 
   warehouseId: 'e1000000-0000-4000-8000-000000000001',
   shopFloorId: 'e1000000-0000-4000-8000-000000000002',
-  dispensaryId: 'e1000000-0000-4000-8000-000000000003',
-  boardingStoreId: 'e1000000-0000-4000-8000-000000000004',
+  coldStoreId: 'e1000000-0000-4000-8000-000000000003',
+  backStoreId: 'e1000000-0000-4000-8000-000000000004',
   quarantineId: 'e1000000-0000-4000-8000-000000000005',
   londonWarehouseId: 'e2000000-0000-4000-8000-000000000001',
   londonQuarantineId: 'e2000000-0000-4000-8000-000000000002',
 
   foodSkuId: 'f1000000-0000-4000-8000-000000000001',
-  vaccineSkuId: 'f1000000-0000-4000-8000-000000000002',
-  litterSkuId: 'f1000000-0000-4000-8000-000000000003',
+  chilledSkuId: 'f1000000-0000-4000-8000-000000000002',
+  bagSkuId: 'f1000000-0000-4000-8000-000000000003',
   wetFoodSkuId: 'f1000000-0000-4000-8000-000000000004',
   foodBarcode: '4006381333931',
-  vaccineBarcode: '5012345678900',
+  chilledBarcode: '5012345678900',
 
   supplierId: 'a1000000-0000-4000-8000-000000000001',
   supplier2Id: 'a1000000-0000-4000-8000-000000000002',
   inactiveSupplierId: 'a1000000-0000-4000-8000-000000000003',
+
+  /** HO-P5 BG-18: an open draft that belongs to ANOTHER staff member (Nadia); the signed-in caller gets a 404 for it. */
+  otherStaffDraftId: 'dd000000-0000-4000-8000-000000000001',
 
   poPartId: 'd1000000-0000-4000-8000-000000000001',
   poOpenId: 'd1000000-0000-4000-8000-000000000002',
@@ -51,9 +54,9 @@ export const inventoryFixtureIds = {
   batchFoodTodayId: 'c1000000-0000-4000-8000-000000000003',
   batchFoodExpiredId: 'c1000000-0000-4000-8000-000000000004',
   batchFoodQuarantinedId: 'c1000000-0000-4000-8000-000000000005',
-  batchVaccineId: 'c1000000-0000-4000-8000-000000000006',
+  batchChilledId: 'c1000000-0000-4000-8000-000000000006',
   batchRecalledId: 'c1000000-0000-4000-8000-000000000007',
-  batchLitterId: 'c1000000-0000-4000-8000-000000000008',
+  batchBagId: 'c1000000-0000-4000-8000-000000000008',
   batchWrittenOffId: 'c1000000-0000-4000-8000-000000000009',
   batchWetFoodId: 'c1000000-0000-4000-8000-00000000000a',
   batchLondonId: 'c1000000-0000-4000-8000-00000000000b',
@@ -84,15 +87,7 @@ export const MOCK_APPROVAL_THRESHOLD = 5000;
 // ---- roles (presentation of HO-IMP-001 §12.3, by name) ---------------------------------------
 
 export const ROLES = {
-  stockView: [
-    'Reception',
-    'Nurse',
-    'Vet',
-    'Caretaker',
-    'Inventory',
-    'ShopManager',
-    'Administrator',
-  ],
+  stockView: ['Reception', 'Inventory', 'ShopManager', 'Administrator'],
   stockManage: ['Inventory', 'Administrator'],
   approve: ['Administrator'],
   recalls: ['Inventory', 'Administrator'],
@@ -134,6 +129,34 @@ export function forbiddenResponse(): Response {
 
 export function branchOf(request: Request): string {
   return request.headers.get('x-branch-id') ?? inventoryFixtureIds.mainBranchId;
+}
+
+/**
+ * HO-P5 BG-18 -- the branches the signed-in staff member works in, as `GET /api/staff/branches/mine` answers for the
+ * administrator fixture (`admin/branches.ts`): the main outlet and London. There is no session resolution across mock
+ * areas, so a spec that needs another set overrides the endpoints with `server.use(...)`.
+ */
+export const ASSIGNED_BRANCH_IDS: readonly string[] = [
+  inventoryFixtureIds.mainBranchId,
+  inventoryFixtureIds.londonBranchId,
+];
+/** The names the admin branches mock gives those two branches (display only). */
+export const BRANCH_NAMES: Readonly<Record<string, string>> = {
+  [inventoryFixtureIds.mainBranchId]: 'Dhanmondi outlet',
+  [inventoryFixtureIds.londonBranchId]: 'London outlet',
+};
+
+/**
+ * `InventoryControllerSupport.TryResolveBranch(accessor, requestedBranchId, …)` (`InventoryControllerSupport.cs:35-56`):
+ * an explicit `branchId` the caller is not assigned to is `403 { error: "BranchNotAssigned" }`; none given, the active
+ * branch (`X-Branch-Id`). Returns the branch id, or the refusal to send.
+ */
+export function resolveBranch(request: Request, explicit?: string | null): string | Response {
+  if (!explicit) return branchOf(request);
+  if (!ASSIGNED_BRANCH_IDS.includes(explicit)) {
+    return HttpResponse.json({ error: 'BranchNotAssigned' }, { status: 403 });
+  }
+  return explicit;
 }
 
 export interface Violation {

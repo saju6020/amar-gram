@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 :root{--overlay:rgba(28,26,23,.4);--radius-lg:16px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
@@ -66,7 +66,7 @@ tbody tr:last-child td{border-bottom:none}
 tfoot td{background:var(--surface-sunken);font-weight:700}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.dim td{color:var(--ink-faint)}
-tr.unusable td{background:#fdfbf8}
+tr.unusable td{background:#FFFAF0}
 .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 18px}
 .grid2{display:flex;gap:18px;align-items:flex-start}
 .grid2 > *{flex:1;min-width:0}
@@ -105,30 +105,30 @@ tr.unusable td{background:#fdfbf8}
 </style>
 </helmet>
 <div style="width:1280px;height:1000px;background:var(--surface-page);overflow:auto;position:relative">
-<div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Dr. Nusrat Jahan · Vet</div></div>
+<div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Nusrat Jahan · Manager</div></div>
 <div class="main">
   <nav class="secnav" aria-label="Inventory"><a href="StockOverview.dc.html">Stock</a><a href="GoodsReceipt.dc.html">Receipts</a><a href="TransferForm.dc.html">Transfers</a><a href="AdjustmentForm.dc.html">Adjustments</a><a href="ApprovalQueue.dc.html">Approvals</a><a href="CountSheet.dc.html">Counts</a><a href="Ledger.dc.html">Ledger</a><a href="Alerts.dc.html">Alerts <span class="count">7 open</span></a><a href="NearExpiryReport.dc.html">Reports</a><a href="RecallList.dc.html">Recalls</a><a href="StorageBreach.dc.html" class="active" aria-current="page">Storage</a><a href="StockSettings.dc.html">Locations &amp; settings</a></nav>
-  <div class="titlerow"><h1 class="h1">Storage breach SB-UTR-0007</h1><span class="b b-warn"><i aria-hidden="true">◷</i> Open — affected stock not yet quarantined</span></div>
-  <p class="sub">Reported 22 Sep 2026, 08:15 (Asia/Dhaka) by Dr. Nusrat Jahan. The details are fixed once reported.</p>
+  <div class="titlerow"><h1 class="h1">Storage breach SB-DHN-0007</h1><span class="b b-warn"><i aria-hidden="true">◷</i> Open — affected stock not yet quarantined</span></div>
+  <p class="sub">Reported 22 Sep 2026, 08:15 (Asia/Dhaka) by Nusrat Jahan. The details are fixed once reported.</p>
   <div class="split">
     <div class="left card">
       <h2 class="h2">What happened</h2>
-      <div class="field"><label for="sb-loc">Location</label><select id="sb-loc" disabled><option>UTR-FRIDGE · Pharmacy fridge · Refrigerated 2–8 °C</option></select></div>
+      <div class="field"><label for="sb-loc">Location</label><select id="sb-loc" disabled><option>DHN-FRIDGE · Chiller · Refrigerated 2–8 °C</option></select></div>
       <div class="row2">
         <div class="field"><label for="sb-when">Observed</label><input id="sb-when" value="22 Sep 2026, 03:10" readonly><div class="hint">Asia/Dhaka</div></div>
         <div class="field"><label for="sb-dur">Duration</label><div class="unitin"><input id="sb-dur" value="5" readonly><span>hours</span></div></div>
       </div>
       <div class="field"><label for="sb-temp">Highest temperature</label><div class="unitin"><input id="sb-temp" value="14" readonly><span>°C</span></div></div>
-      <div class="field"><label for="sb-what">Description</label><textarea id="sb-what" readonly>Fridge door left ajar overnight; the logger showed 14 °C at 03:10 and back in range by 08:10.</textarea></div>
+      <div class="field"><label for="sb-what">Description</label><textarea id="sb-what" readonly>Chiller door left ajar overnight; the logger showed 14 °C at 03:10 and back in range by 08:10.</textarea></div>
     </div>
     <div class="right">
       <div class="card">
         <h2 class="h2">Affected batches (flagged by the server)</h2>
         <table>
-          <thead><tr><th>Batch</th><th>SKU</th><th>Expiry</th><th class="num">At UTR-FRIDGE</th><th>Needs</th></tr></thead>
+          <thead><tr><th>Batch</th><th>SKU</th><th>Expiry</th><th class="num">At DHN-FRIDGE</th><th>Needs</th></tr></thead>
           <tbody>
-            <tr><td><a class="link" href="BatchDetail.dc.html">AMX-5530</a></td><td>MED-AMX-50 · Amoxicillin oral suspension 50 mg/ml</td><td>30 Apr 2027</td><td class="num">1,000 ml</td><td>Refrigerated 2–8 °C</td></tr>
-            <tr><td><a class="link" href="BatchDetail.dc.html">FVX-2310</a></td><td>MED-FVX-TRI · Feline tricat vaccine</td><td>9 Feb 2027</td><td class="num">8 doses</td><td>Refrigerated 2–8 °C</td></tr>
+            <tr><td><a class="link" href="BatchDetail.dc.html">MDJ-5530</a></td><td>DAT-MDJ-PK · Medjool dates snack pack, 100 g</td><td>30 Apr 2027</td><td class="num">1,000 packs</td><td>Refrigerated 2–8 °C</td></tr>
+            <tr><td><a class="link" href="BatchDetail.dc.html">GHE-2310</a></td><td>GHE-COW-400 · Pure cow ghee 400 g</td><td>9 Feb 2027</td><td class="num">8 jars</td><td>Refrigerated 2–8 °C</td></tr>
           </tbody>
         </table>
         <div class="actions" style="margin-top:12px"><button class="btn" type="button">Quarantine affected stock…</button><button class="btn btn-sec" type="button">Close breach…</button></div>
@@ -136,12 +136,12 @@ tr.unusable td{background:#fdfbf8}
       <div class="card" role="dialog" aria-label="Quarantine affected stock" style="box-shadow:0 20px 60px rgba(20,18,10,.18);border-color:var(--border-strong)">
         <p class="statelabel">When "Quarantine affected stock…" is pressed</p>
         <h2 class="h2">Quarantine the affected stock?</h2>
-        <div class="confirm" style="margin-top:0"><strong>1,000 ml</strong> of AMX-5530 and <strong>8 doses</strong> of FVX-2310 move to <strong>UTR-QUAR Quarantine</strong> pending a decision. They stop being sellable at once. A vet can later release or write off each batch.</div>
+        <div class="confirm" style="margin-top:0"><strong>1,000 packs</strong> of MDJ-5530 and <strong>8 jars</strong> of GHE-2310 move to <strong>DHN-QUAR Quarantine</strong> pending a decision. They stop being sellable at once. A manager can later release or write off each batch.</div>
         <div class="dactions"><button class="btn btn-sec" type="button">Cancel</button><button class="btn" type="button">Quarantine stock</button></div>
       </div>
       <div class="card">
         <p class="statelabel">"Close breach…"</p>
-        <div class="field"><label for="sb-close">Closing note <span class="req" aria-hidden="true">*</span></label><textarea id="sb-close">Manufacturer confirmed both products tolerate a 5-hour excursion to 14 °C. Batches released.</textarea></div>
+        <div class="field"><label for="sb-close">Closing note <span class="req" aria-hidden="true">*</span></label><textarea id="sb-close">Both suppliers confirmed their products tolerate a 5-hour excursion to 14 °C. Batches released.</textarea></div>
         <div class="dactions"><button class="btn" type="button">Close breach</button></div>
       </div>
     </div>

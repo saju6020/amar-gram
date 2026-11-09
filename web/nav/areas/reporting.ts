@@ -2,19 +2,11 @@ import type { NavArea } from '../types';
 
 /**
  * The roles that hold `Reports.Any` (ActionRoles.Reports.cs): everyone who can open at least one
- * report category. A Nurse has the dashboard but no report category, so the Reports entry is
- * hidden for a Nurse (owner decision 2026-10-14). Presentation only: the page still renders
+ * report category. Reception has the dashboard but no report category, so the Reports entry is
+ * hidden for Reception (owner decision 2026-10-14). Presentation only: the page still renders
  * `PermissionDeniedState` on the server's 403 (defence in depth).
  */
-export const REPORT_ROLES = [
-  'Reception',
-  'Vet',
-  'Caretaker',
-  'Inventory',
-  'ShopManager',
-  'Accountant',
-  'Administrator',
-] as const;
+export const REPORT_ROLES = ['Inventory', 'ShopManager', 'Accountant', 'Administrator'] as const;
 
 /**
  * Reporting navigation entries.

@@ -10,7 +10,7 @@ import { ReturnDecisionPanel } from '@/components/returns/ReturnDecisionPanel';
 import { ReceiveReturnForm } from '@/components/returns/ReceiveReturnForm';
 import type { StaffReturnDetail, StaffReturnLine } from '@/lib/api/staff-returns';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });
@@ -20,7 +20,7 @@ function renderWithClient(ui: ReactElement) {
 function line(overrides: Partial<StaffReturnLine> = {}): StaffReturnLine {
   return {
     orderLineId: 'ln1',
-    productName: 'Royal Canin Kitten',
+    productName: 'Organic Rolled Oats',
     variantLabel: '2 kg',
     quantity: 2,
     reason: 'QualityDefect',
@@ -62,11 +62,11 @@ describe('Approving a return that needs a defect - U-E3', () => {
     renderWithClient(<ReturnDecisionPanel ret={ret([line()])} />);
     const approve = screen.getByRole('button', { name: 'Approve return' });
     expect(approve).toBeDisabled();
-    expect(screen.getByText(/Approve is unavailable until a defect is confirmed, with a note, on: Royal Canin Kitten\./)).toBeInTheDocument();
+    expect(screen.getByText(/Approve is unavailable until a defect is confirmed, with a note, on: Organic Rolled Oats\./)).toBeInTheDocument();
 
     await user.click(screen.getByRole('checkbox', { name: /Defect confirmed/ }));
     expect(approve).toBeDisabled(); // still no note
-    await user.type(screen.getByLabelText(/Defect note/), 'Torn bag, kibble stale');
+    await user.type(screen.getByLabelText(/Defect note/), 'Torn bag, rice stale');
     expect(approve).toBeEnabled();
     expect(screen.queryByText(/Approve is unavailable/)).not.toBeInTheDocument();
   });
@@ -108,14 +108,14 @@ describe('Approving a return that needs a defect - U-E3', () => {
     await user.type(screen.getByLabelText(/Defect note/), 'x');
     await user.click(screen.getByRole('button', { name: 'Approve return' }));
     const message = await screen.findByText('Describe the defect on this line.');
-    expect(message.closest('li')).toHaveTextContent('Royal Canin Kitten');
+    expect(message.closest('li')).toHaveTextContent('Organic Rolled Oats');
   });
 });
 
 describe('Receiving a return - U-E4', () => {
   it('pre-fills each line with its approved quantity, caps the input and states the quarantine rule', () => {
     renderWithClient(<ReceiveReturnForm ret={ret([line({ requiresDefectConfirmation: false, quantity: 3 })], 'Approved')} />);
-    const input = screen.getByLabelText(/Received: Royal Canin Kitten/);
+    const input = screen.getByLabelText(/Received: Organic Rolled Oats/);
     expect(input).toHaveValue(3);
     expect(input).toHaveAttribute('max', '3');
     expect(screen.getByText('Approved quantity: 3')).toBeInTheDocument();
@@ -133,7 +133,7 @@ describe('Receiving a return - U-E4', () => {
     );
     const user = userEvent.setup();
     renderWithClient(<ReceiveReturnForm ret={ret([line({ quantity: 3 })], 'Approved')} />);
-    const input = screen.getByLabelText(/Received: Royal Canin Kitten/);
+    const input = screen.getByLabelText(/Received: Organic Rolled Oats/);
     await user.clear(input);
     await user.type(input, '2');
     await user.click(screen.getByRole('button', { name: 'Record receipt' }));
@@ -150,7 +150,7 @@ describe('Receiving a return - U-E4', () => {
     renderWithClient(<ReceiveReturnForm ret={ret([line({ quantity: 3 })], 'Approved')} />);
     await user.click(screen.getByRole('button', { name: 'Record receipt' }));
     const message = await screen.findByText('You cannot receive more than 3.');
-    expect(message.closest('li')).toHaveTextContent('Received: Royal Canin Kitten');
+    expect(message.closest('li')).toHaveTextContent('Received: Organic Rolled Oats');
     expect(within(screen.getByRole('list', { name: 'Lines to receive' })).getByRole('alert')).toBe(message);
   });
 });

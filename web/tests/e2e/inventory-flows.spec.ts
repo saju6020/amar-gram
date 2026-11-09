@@ -1,6 +1,7 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect, signInAsStaff } from './fixtures';
 import { inventoryFixtureIds as ids } from '../../mocks/handlers/inventory';
-import { dialog, pickSku, signInAsNurse, warmRoutes } from './inventory-helpers';
+import { dateIn, dialog, pickSku, signInAsStockViewer, warmRoutes, wedgeScan } from './inventory-helpers';
 import { INVENTORY_ROUTES } from './inventory-routes';
 
 /**
@@ -38,7 +39,7 @@ test('E-C1: the FEFO preview changes to the next batch once the soonest-expiring
   await page.goto(`/staff/inventory/batches/${ids.batchFoodTodayId}`);
   await page.getByRole('button', { name: 'Quarantine', exact: true }).click();
   const confirm = await dialog(page);
-  await expect(confirm).toContainText('Quarantine lot L2406X of Kitten dry food');
+  await expect(confirm).toContainText('Quarantine lot L2406X of Organic rice 5 kg');
   await confirm.getByLabel(/reason/i).fill('Suspected spoilage');
   await confirm.getByRole('button', { name: /quarantine this batch/i }).click();
   await expect(page.getByText('Quarantined', { exact: true }).first()).toBeVisible();
@@ -57,7 +58,7 @@ test('E-C2: a transfer writes both ends to the ledger with its reference', async
   await page.goto('/staff/inventory/transfers/new');
   await page.getByLabel(/^from\b/i).selectOption(ids.warehouseId);
   await page.getByLabel(/^to\b/i).selectOption(ids.shopFloorId);
-  await pickSku(page, /or find an item/i, 'kitten', /kitten dry food/i);
+  await pickSku(page, /or find an item/i, 'rice', /organic rice 5 kg/i);
   await page.getByLabel(/^batch/i).selectOption(ids.batchFoodFarId);
   await page.getByLabel(/^quantity/i).fill('3');
   await page.getByRole('button', { name: /review and post/i }).click();
@@ -80,9 +81,9 @@ test('E-D1: an adjustment above the limit waits for approval; the requester cann
 }) => {
   await page.goto('/staff/inventory/adjustments/new');
   await page.getByLabel(/^location/i).selectOption(ids.warehouseId);
-  await page.getByRole('radio', { name: /theft or loss/i }).check();
+  await page.getByRole('button', { name: /^theft or loss/i }).click();
   await page.getByLabel(/^note/i).fill('Pallet short at the monthly check');
-  await pickSku(page, /or find an item/i, 'kitten', /kitten dry food/i);
+  await pickSku(page, /or find an item/i, 'rice', /organic rice 5 kg/i);
   // 12 bags at 462.5 is above the approval limit; 10 would not be.
   await page.getByLabel(/^batch/i).selectOption(ids.batchFoodFarId);
   await page.getByLabel(/^quantity/i).fill('12');
@@ -100,7 +101,7 @@ test('E-D1: an adjustment above the limit waits for approval; the requester cann
   await expect(page.getByText('Someone else has to approve your request.')).toBeVisible();
   await page.keyboard.press('Escape');
 
-  // A request made by another person (the nurse, seeded) is approved and posted.
+  // A request made by another person (seeded) is approved and posted.
   await page.goto(`/staff/inventory/adjustments/${ids.adjustmentPendingId}`);
   await page.getByRole('button', { name: 'Approve' }).click();
   await (await dialog(page)).getByRole('button', { name: /approve and post/i }).click();
@@ -122,8 +123,8 @@ test('E-D2: a blind count — no book quantity while counting, a variance report
 }) => {
   await page.goto(`/staff/inventory/counts/${ids.countOpenId}`);
   await expect(page.getByText(/this count is blind/i)).toBeVisible();
-  await pickSku(page, /or find an item/i, 'litter', /cat litter/i);
-  await page.getByLabel(/which lot of cat litter/i).selectOption(ids.batchLitterId);
+  await pickSku(page, /or find an item/i, 'jute', /jute shopping bag/i);
+  await page.getByLabel(/which lot of jute shopping bag/i).selectOption(ids.batchBagId);
   await page.getByRole('button', { name: /add to the sheet/i }).click();
   await page
     .getByLabel(/counted \(bags\)/i)
@@ -167,14 +168,33 @@ test('E-E1: an expiry alert is visible without looking for it, and the near-expi
   await expect(page.getByRole('button', { name: /export csv/i })).toBeVisible();
 });
 
+test('E10: expanding a stock row shows its batches, and Adjust opens the adjustment dialog for that item', async ({
+  page,
+}) => {
+  await page.goto('/staff/inventory/stock');
+  const toggle = page.getByRole('button', { name: /batches of organic rice 5 kg/i });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('link', { name: 'Lot L2409E' })).toBeVisible();
+  await page.getByRole('button', { name: /^adjust organic rice 5 kg$/i }).click();
+  const adjust = await dialog(page);
+  await expect(adjust).toContainText('Adjust stock · Organic rice 5 kg');
+  await expect(adjust.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
+  await adjust.getByRole('button', { name: /^theft or loss$/i }).click();
+  await expect(adjust.getByRole('button', { name: /^theft or loss$/i })).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
 test('E-E2: a low-stock alert and a reorder suggestion lead to a pre-filled purchase order', async ({
   page,
 }) => {
   await page.goto('/staff/inventory/alerts');
   await expect(page.getByRole('cell', { name: /below reorder point/i }).first()).toBeVisible();
   await page.goto('/staff/procurement/reorder');
-  await expect(page.locator('main')).toContainText('Adult wet food pouches, tuna');
-  await page.getByRole('checkbox', { name: /select adult wet food/i }).check();
+  await expect(page.locator('main')).toContainText('Sundarban honey, 500 g jar');
+  await page.getByRole('checkbox', { name: /select sundarban honey/i }).check();
   await page.getByRole('link', { name: /build the order for meridian/i }).click();
   await expect(page.getByRole('heading', { name: /new purchase order/i })).toBeVisible();
   await expect(page.getByLabel('Supplier')).toHaveValue(ids.supplierId);
@@ -191,7 +211,7 @@ test('E-F1: declare a recall, read the trace, export it, notify, then notify aga
     'All remaining stock of lot L2409E becomes unusable immediately, everywhere.',
   );
   await declare.getByLabel(/reason \(internal\)/i).fill('Supplier contamination notice');
-  await declare.getByLabel(/advice to customers/i).fill('Stop feeding it and contact us.');
+  await declare.getByLabel(/advice to customers/i).fill('Stop using it and contact us.');
   const button = declare.getByRole('button', { name: /declare recall/i });
   await declare.getByLabel(/type the lot number/i).fill('L2409');
   await expect(button).toBeDisabled();
@@ -203,8 +223,6 @@ test('E-F1: declare a recall, read the trace, export it, notify, then notify aga
   await expect(page.getByRole('heading', { name: /^recall RCL-/i })).toBeVisible();
   await expect(page.getByText(/declaring a recall messages no one/i)).toBeVisible();
   await expect(page.locator('main')).toContainText('Bought');
-  await expect(page.locator('main')).toContainText('Dispensed');
-  await expect(page.locator('main')).toContainText('Fed during boarding');
   await page.getByRole('tab', { name: /unshipped/i }).click();
   await expect(page.getByText(/must not be dispatched while the lot is recalled/i)).toBeVisible();
   await expect(page.getByRole('link', { name: /export trace as csv/i })).toHaveAttribute(
@@ -246,7 +264,7 @@ test('E-F2: withdrawing a recall quarantines the batch and says unsent messages 
 
 test('E-G1: report a storage breach, quarantine the affected stock, close it', async ({ page }) => {
   await page.goto('/staff/inventory/storage-breaches/new');
-  await page.getByLabel('Where did it happen?').selectOption(ids.dispensaryId);
+  await page.getByLabel('Where did it happen?').selectOption(ids.coldStoreId);
   await page.getByLabel('What happened?').fill('Fridge door left open overnight');
   await page.getByLabel('Temperature reached (°C)').fill('11.5');
   await page.getByRole('button', { name: /report the breach/i }).click();
@@ -260,7 +278,7 @@ test('E-G1: report a storage breach, quarantine the affected stock, close it', a
   await confirm.getByRole('button', { name: /^quarantine affected stock$/i }).click();
   await expect(page.getByText('Stock quarantined', { exact: true }).first()).toBeVisible();
 
-  await page.goto(`/staff/inventory/stock/${ids.vaccineSkuId}`);
+  await page.goto(`/staff/inventory/stock/${ids.chilledSkuId}`);
   await expect(page.locator('main')).toContainText('in quarantine location');
 
   await page.goto('/staff/inventory/storage-breaches');
@@ -276,11 +294,11 @@ test('E-G1: report a storage breach, quarantine the affected stock, close it', a
   await expect(page.getByText('Closed', { exact: true }).first()).toBeVisible();
 });
 
-test('E-X3: a nurse gets the server’s permission state on receiving and on suppliers', async ({
+test('E-X3: a stock-only staff member gets the server’s permission state on receiving and on suppliers', async ({
   page,
 }) => {
   await page.context().clearCookies();
-  await signInAsNurse(page);
+  await signInAsStockViewer(page);
   await page.goto('/staff/inventory/receipts/new');
   await expect(page.getByText(/you don.t have permission to do this/i)).toBeVisible();
   await page.goto('/staff/procurement/suppliers');
@@ -288,4 +306,120 @@ test('E-X3: a nurse gets the server’s permission state on receiving and on sup
   // …but stock is theirs to read.
   await page.goto('/staff/inventory/stock');
   await expect(page.getByRole('heading', { name: /^stock$/i })).toBeVisible();
+});
+
+/**
+ * HO-P5 S3 (E11) -- reorder level and arrivals (BG-16, BG-17) and server-side receipt drafts with "Receive into" (BG-18),
+ * run against MSW. A draft lives on the (mock) server, so a reload resumes it from `?draft=`.
+ */
+test.describe('HO-P5 S3: stock and receiving wiring (E11)', () => {
+  test('Stock by item shows "Reorder at"; the overview counts consignments arriving and links to them', async ({
+    page,
+  }) => {
+    await page.goto('/staff/inventory');
+    await expect(page.getByRole('columnheader', { name: 'Reorder at' })).toBeVisible();
+    await expect(page.getByRole('table', { name: /stock by item/i })).toContainText('(branch default)');
+
+    const arriving = page.getByRole('link', { name: /consignments? arriving in the next 7 days/ });
+    await expect(arriving).toBeVisible();
+    await arriving.click();
+    await expect(page).toHaveURL(/\/staff\/procurement\/consignments\?.*arrivingWithinDays=7/);
+    await expect(page.getByText(/Showing consignments arriving in the next 7 days/)).toBeVisible();
+    await page.getByRole('button', { name: 'Show all consignments' }).click();
+    await expect(page.getByText(/Showing consignments arriving in the next 7 days/)).toHaveCount(0);
+  });
+
+  test('type a new receipt, reload with ?draft=, the lines are back, post it; the posted draft is gone', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.foodBarcode);
+    await expect(page.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
+    await page.getByLabel(/^lot number/i).fill('L-E11-1');
+    await page.getByLabel(/^accepted/i).fill('3');
+    // The autosave says so in a polite status, and the address now names the draft.
+    await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
+    await expect(page).toHaveURL(/\/staff\/inventory\/receipts\/new\?.*draft=[0-9a-f-]{36}/, {
+      timeout: 15_000,
+    });
+    const draftUrl = page.url();
+
+    await page.reload();
+    await expect(page.getByRole('listitem', { name: /line 1: organic rice 5 kg/i })).toBeVisible();
+    await expect(page.getByLabel(/^lot number/i)).toHaveValue('L-E11-1');
+    await expect(page.getByLabel(/^accepted/i)).toHaveValue('3');
+
+    await page.getByLabel(/^expiry date/i).fill(dateIn(150));
+    await page.getByLabel(/^unit cost/i).fill('450');
+    await page.getByRole('button', { name: /review and post/i }).click();
+    await (await dialog(page)).getByRole('button', { name: /post receipt/i }).click();
+    // The receipt page is a cold compile in `next dev` (13-18 s here), so the old page stays up that long.
+    await expect(page.getByRole('heading', { name: /^GRN-/ })).toBeVisible({ timeout: 45_000 });
+
+    // Posting closed the draft: its address now says it is gone.
+    await page.goto(draftUrl);
+    await expect(page.getByText('That draft is no longer here')).toBeVisible();
+  });
+
+  test('Your drafts lists a saved draft; Continue resumes it; Discard confirms and deletes it', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.chilledBarcode);
+    await expect(page.getByRole('listitem', { name: /^line 1:/i })).toBeVisible();
+    await page.getByLabel(/^lot number/i).fill('L-E11-2');
+    // The address names the draft only once the newest change has been saved.
+    await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
+    await expect(page).toHaveURL(/draft=[0-9a-f-]{36}/, { timeout: 15_000 });
+
+    // A new receipt in the same browser: the earlier one is listed, another member's never is.
+    await page.goto('/staff/inventory/receipts/new');
+    const list = page.getByRole('list', { name: 'Your drafts' });
+    await expect(list).toBeVisible();
+    await expect(list).not.toContainText('NADIA-DRAFT');
+    await list.getByRole('button', { name: /^Continue the draft/ }).first().click();
+    await expect(page.getByLabel(/^lot number/i)).toHaveValue('L-E11-2');
+
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByRole('button', { name: /^Discard the draft/ }).first().click();
+    await (await dialog(page)).getByRole('button', { name: 'Discard draft' }).click();
+    await expect(page.getByRole('list', { name: 'Your drafts' })).toHaveCount(0);
+  });
+
+  test('"Receive into" appears for a person in two branches; changing it asks first when lines exist', async ({
+    page,
+  }) => {
+    await page.goto('/staff/inventory/receipts/new');
+    const select = page.getByLabel('Receive into');
+    await expect(select).toBeVisible();
+    await expect(select.locator('option')).toHaveCount(2);
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.foodBarcode);
+    await expect(page.getByRole('listitem', { name: /^line 1:/i })).toBeVisible();
+    const other = await select.locator('option:not(:checked)').first().getAttribute('value');
+    await select.selectOption(other!);
+    const confirm = await dialog(page);
+    await expect(confirm).toContainText('location on every line is cleared');
+    await confirm.getByRole('button', { name: 'Change branch' }).click();
+    await expect(page.getByLabel(/^location/i)).toHaveValue('');
+  });
+
+  test('the receiving screen has no axe violation and does not scroll sideways (drafts list, status, Receive into)', async ({
+    page,
+  }) => {
+    await page.goto('/staff/inventory/receipts/new');
+    await page.getByLabel(/^direct/i).check();
+    await wedgeScan(page, ids.foodBarcode);
+    await expect(page.getByText(/^Draft saved at \d\d:\d\d/)).toBeVisible();
+    const axe = await new AxeBuilder({ page }).analyze();
+    expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
 });

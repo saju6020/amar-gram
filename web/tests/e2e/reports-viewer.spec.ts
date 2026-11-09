@@ -19,52 +19,49 @@ test.describe.configure({ mode: 'serial', timeout: 120_000 });
 test.beforeAll(async ({ request }) => {
   await warmRoutes(request, [
     '/staff/reports',
-    '/staff/reports/clinic-daily-schedule',
+    '/staff/reports/payment-reconciliation',
     '/staff/reports/revenue-by-business-line',
   ]);
 });
 
-const DAILY = '/staff/reports/clinic-daily-schedule';
+const RECON = '/staff/reports/payment-reconciliation';
 
 test('E-B1: the catalogue lists reports by category and opens the generic viewer', async ({
   page,
 }) => {
   await openReportsAs(page, 'Administrator', '/staff/reports');
-  await expect(page.getByRole('heading', { level: 2, name: 'Clinic operations' })).toBeVisible();
-  await page.getByRole('link', { name: /Daily schedule/ }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Daily schedule' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Financial' })).toBeVisible();
+  await page.getByRole('link', { name: /Payment reconciliation/ }).click();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Payment reconciliation' }),
+  ).toBeVisible();
+  const caption = /Payment reconciliation · 13 Oct 2026 to 13 Oct 2026 · .+ · times in Asia\/Dhaka/;
   const body = page
-    .getByRole('table', {
-      name: /Daily schedule · 14 Oct 2026 to 14 Oct 2026 · Main clinic · times in Asia\/Dhaka/,
-    })
-    .or(
-      page.getByRole('list', {
-        name: /Daily schedule · 14 Oct 2026 to 14 Oct 2026 · Main clinic · times in Asia\/Dhaka/,
-      }),
-    );
+    .getByRole('table', { name: caption })
+    .or(page.getByRole('list', { name: caption }));
   await expect(body).toBeVisible();
-  await expect(page.getByText('Only confirmed bookings and walk-ins are listed.')).toBeVisible();
+  await expect(page.getByText(/Card in store shows what was expected only/)).toBeVisible();
 });
 
 test('E-B2: a range over the limit is refused on the field; a valid one shows results', async ({
   page,
 }) => {
-  await openReportsAs(page, 'Administrator', DAILY);
+  await openReportsAs(page, 'Administrator', RECON);
   await page.getByLabel(/^From/).fill('2026-02-01');
   await page.getByLabel(/^To/).fill('2026-12-31');
   await page.getByRole('button', { name: 'Apply' }).click();
-  await expect(page.getByText(/covers at most 31 days/)).toBeVisible();
+  await expect(page.getByText(/covers at most 93 days/)).toBeVisible();
   await expect(page).toHaveURL(/to=2026-12-31/);
   await page.getByLabel(/^To/).fill('2026-02-20');
   await page.getByRole('button', { name: 'Apply' }).click();
-  await expect(page.getByText(/covers at most 31 days/)).toHaveCount(0);
+  await expect(page.getByText(/covers at most 93 days/)).toHaveCount(0);
   await expect(reportBody(page)).toBeVisible();
 });
 
 test('E-B3: CSV and PDF both download, non-empty, and a too-large PDF explains itself', async ({
   page,
 }) => {
-  await openReportsAs(page, 'Administrator', DAILY);
+  await openReportsAs(page, 'Administrator', RECON);
   await expect(reportBody(page)).toBeVisible();
   for (const [button, extension] of [
     ['Export CSV', 'csv'],
@@ -78,7 +75,7 @@ test('E-B3: CSV and PDF both download, non-empty, and a too-large PDF explains i
     const path = await download.path();
     expect(readFileSync(path).length).toBeGreaterThan(0);
   }
-  await page.goto(`${DAILY}?from=2021-01-01&to=2021-01-02`);
+  await page.goto(`${RECON}?from=2021-01-01&to=2021-01-02`);
   await page.getByRole('button', { name: 'Export PDF' }).click();
   await expect(
     page.getByRole('alert').filter({ hasText: /Too many rows for a PDF/ }),
@@ -90,7 +87,11 @@ test('E-B4: a filtered report URL opens the same report in a second context', as
   page,
   browser,
 }) => {
-  await openReportsAs(page, 'Administrator', `${DAILY}?from=2026-10-10&to=2026-10-12&sort=-cat`);
+  await openReportsAs(
+    page,
+    'Administrator',
+    `${RECON}?from=2026-10-10&to=2026-10-12&sort=-variance`,
+  );
   await expect(page.getByLabel(/^From/)).toHaveValue('2026-10-10');
   const url = page.url();
   const context = await browser.newContext();
@@ -99,9 +100,12 @@ test('E-B4: a filtered report URL opens the same report in a second context', as
   await expect(other.getByLabel(/^From/)).toHaveValue('2026-10-10');
   await expect(other.getByLabel(/^To/)).toHaveValue('2026-10-12');
   await expect(
-    other.getByLabel('Sort by').or(other.getByRole('columnheader', { name: /^Cat/ })),
+    other
+      .getByLabel('Sort by')
+      .or(other.getByRole('columnheader', { name: /^Variance/ }))
+      .first(),
   ).toBeVisible();
-  await expect(other).toHaveURL(/sort=-cat/);
+  await expect(other).toHaveURL(/sort=-variance/);
   await context.close();
 });
 
@@ -134,7 +138,7 @@ test('E-X1/E-X2: the catalogue and a 12-column report are axe-clean, with the ch
 
   await page.goto('/staff/reports/revenue-by-business-line');
   await expect(
-    page.getByRole('table').or(page.getByRole('list', { name: /Revenue by business line/ })),
+    page.getByRole('table').or(page.getByRole('list', { name: /Revenue by sales channel/ })),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Show chart' }).click();
   await expect(page.getByTestId('chart-data-table')).toBeAttached();
@@ -144,6 +148,6 @@ test('E-X1/E-X2: the catalogue and a 12-column report are axe-clean, with the ch
     await expectNoHorizontalScroll(page);
   }
   await page.setViewportSize({ width: 360, height: 900 });
-  await expect(page.getByRole('list', { name: /Revenue by business line/ })).toBeVisible();
+  await expect(page.getByRole('list', { name: /Revenue by sales channel/ })).toBeVisible();
   await expect(page.locator('#main-content table:not(.sr-only)')).toHaveCount(0);
 });

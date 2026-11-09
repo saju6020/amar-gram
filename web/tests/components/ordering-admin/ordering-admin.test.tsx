@@ -9,9 +9,9 @@ import { violations } from '../../../mocks/handlers/ordering/fixtures';
 import { resetOrderingMockData } from '../../../mocks/handlers/ordering/store';
 import { ZoneForm } from '@/components/ordering-admin/ZoneForm';
 import { TaxClassForm } from '@/components/admin/TaxClassForm';
-import { setUrl } from '../booking/nav-mock';
+import { setUrl } from '../common/nav-mock';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } } });

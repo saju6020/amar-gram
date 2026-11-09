@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -47,7 +47,7 @@ tr:last-child td{border-bottom:none}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page)">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="padding:26px 32px">
     <div class="titlerow">
       <h1 class="h1">Subscriptions</h1>
@@ -58,29 +58,28 @@ tr:last-child td{border-bottom:none}
     <nav class="tabs" aria-label="Subscription lists">
       <a class="tab active" aria-current="page" href="StaffSubscriptions.dc.html">All<span class="count">1,284</span></a>
       <a class="tab" href="StaffUnpaid.dc.html">Unpaid<span class="count">5</span></a>
-      <a class="tab" href="StaffPrescriptionSuspended.dc.html">Prescription suspended<span class="count">2</span></a>
     </nav>
 
     <div class="filters">
       <label class="f">Status<select><option>Any status</option><option>Active</option><option>Paused</option><option>Suspended</option><option>Cancelled</option></select></label>
-      <label class="f">Suspension reason<select><option>Any reason</option><option>Unpaid orders</option><option>Authorisation ended</option><option>Product withdrawn</option></select></label>
+      <label class="f">Suspension reason<select><option>Any reason</option><option>Unpaid orders</option><option>Product withdrawn</option></select></label>
       <label class="f">Payment method<select><option>Any method</option><option>Cash on delivery</option><option>Bank transfer</option><option>Pay at the counter</option></select></label>
       <label class="f" style="flex:1 1 220px">Customer<input type="search" placeholder="Name or mobile"></label>
       <span class="muted small" style="padding-bottom:8px">Filters are kept in the address, so the view can be shared or reloaded.</span>
     </div>
 
     <table>
-      <thead><tr><th>Customer</th><th>Mobile</th><th>Product</th><th>Cat</th><th>Status</th><th>Reason</th><th aria-sort="ascending">Next order ↑</th><th>Payment</th><th>Unpaid in a row</th></tr></thead>
+      <thead><tr><th>Customer</th><th>Mobile</th><th>Product</th><th>Status</th><th>Reason</th><th aria-sort="ascending">Next order ↑</th><th>Payment</th><th>Unpaid in a row</th></tr></thead>
       <tbody>
-        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Clumping cat litter</a><div class="muted small">2 × 10 L · every 2 weeks</div></td><td class="faint">Not needed</td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Thu 24 Sep 2026</td><td>Cash on delivery</td><td>0</td></tr>
-        <tr><td><a href="#">Nafisa Rahman</a></td><td class="nowrap">01819 224466</td><td><a href="#">Adult Indoor dry food</a><div class="muted small">1 × 2 kg · every 4 weeks</div></td><td class="faint">Not needed</td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Sat 26 Sep 2026</td><td>Bank transfer</td><td><strong>1</strong> · at risk</td></tr>
-        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Senior wet food</a><div class="muted small">1 × 12 pouches · every 2 weeks</div></td><td class="faint">Not needed</td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Tue 29 Sep 2026</td><td>Cash on delivery</td><td>0</td></tr>
-        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Adult Indoor dry food</a><div class="muted small">3 × 2 kg · every 4 weeks</div></td><td class="faint">Not needed</td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Tue 20 Oct 2026</td><td>Bank transfer</td><td>0</td></tr>
-        <tr><td><a href="#">Sadia Islam</a></td><td class="nowrap">01552 118899</td><td><a href="#">Clumping cat litter</a><div class="muted small">1 × 10 L · every 4 weeks</div></td><td class="faint">Not needed</td><td><span class="badge b-neutral">❙❙ Paused</span></td><td class="faint">None</td><td class="faint">None while paused</td><td>Pay at the counter</td><td>0</td></tr>
-        <tr><td><a href="#">Tahmid Chowdhury</a></td><td class="nowrap">01911 553377</td><td><a href="#">Renal Support dry food</a><div class="muted small">1 × 1.5 kg · every 4 weeks</div></td><td>Luna</td><td><span class="badge b-warn">! Suspended</span></td><td>Authorisation ended</td><td class="faint">None while suspended</td><td>Bank transfer</td><td>0</td></tr>
-        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Renal Support dry food</a><div class="muted small">1 × 1.5 kg · every 4 weeks</div></td><td>Mittens</td><td><span class="badge b-warn">! Suspended</span></td><td>Authorisation ended</td><td class="faint">None while suspended</td><td>Bank transfer</td><td>0</td></tr>
-        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="StaffSubscriptionDetail.dc.html">Kitten dry food</a><div class="muted small">2 × 1 kg · every 2 weeks</div></td><td class="faint">Not needed</td><td><span class="badge b-warn">! Suspended</span></td><td>Unpaid orders</td><td class="faint">None while suspended</td><td>Bank transfer</td><td><strong>2</strong> · suspended</td></tr>
-        <tr><td><a href="#">Arif Hossain</a></td><td class="nowrap">01673 440022</td><td><a href="#">Chicken wet food</a><div class="muted small">1 × 12 pouches · every 2 weeks</div></td><td class="faint">Not needed</td><td><span class="badge b-neutral">✕ Cancelled</span></td><td class="faint">None</td><td class="faint">None — cancelled</td><td>Cash on delivery</td><td>0</td></tr>
+        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Cold-pressed mustard oil</a><div class="muted small">2 × 1 L · every 2 weeks</div></td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Thu 24 Sep 2026</td><td>Cash on delivery</td><td>0</td></tr>
+        <tr><td><a href="#">Nafisa Rahman</a></td><td class="nowrap">01819 224466</td><td><a href="#">Chinigura aromatic rice</a><div class="muted small">1 × 2 kg · every 4 weeks</div></td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Sat 26 Sep 2026</td><td>Bank transfer</td><td><strong>1</strong> · at risk</td></tr>
+        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Turmeric powder</a><div class="muted small">2 × 200 g · every 2 weeks</div></td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Tue 29 Sep 2026</td><td>Cash on delivery</td><td>0</td></tr>
+        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Chinigura aromatic rice</a><div class="muted small">3 × 2 kg · every 4 weeks</div></td><td><span class="badge b-active">✓ Active</span></td><td class="faint">None</td><td class="nowrap">Tue 20 Oct 2026</td><td>Bank transfer</td><td>0</td></tr>
+        <tr><td><a href="#">Sadia Islam</a></td><td class="nowrap">01552 118899</td><td><a href="#">Cold-pressed mustard oil</a><div class="muted small">1 × 1 L · every 4 weeks</div></td><td><span class="badge b-neutral">❙❙ Paused</span></td><td class="faint">None</td><td class="faint">None while paused</td><td>Pay at the counter</td><td>0</td></tr>
+        <tr><td><a href="#">Tahmid Chowdhury</a></td><td class="nowrap">01911 553377</td><td><a href="#">Sundarbans wild honey</a><div class="muted small">1 × 500 g · every 4 weeks</div></td><td><span class="badge b-neutral">❙❙ Paused</span></td><td class="faint">None</td><td class="faint">None while paused</td><td>Bank transfer</td><td>0</td></tr>
+        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="#">Pure cow ghee</a><div class="muted small">1 × 400 g · every 4 weeks</div></td><td><span class="badge b-warn">! Suspended</span></td><td>Product withdrawn</td><td class="faint">None while suspended</td><td>Bank transfer</td><td>0</td></tr>
+        <tr><td><a href="CustomerSubscriptionsPanel.dc.html">Farhana Yasmin</a></td><td class="nowrap">01712 345678</td><td><a href="StaffSubscriptionDetail.dc.html">Red lentils</a><div class="muted small">2 × 1 kg · every 2 weeks</div></td><td><span class="badge b-warn">! Suspended</span></td><td>Unpaid orders</td><td class="faint">None while suspended</td><td>Bank transfer</td><td><strong>2</strong> · suspended</td></tr>
+        <tr><td><a href="#">Arif Hossain</a></td><td class="nowrap">01673 440022</td><td><a href="#">Desi eggs</a><div class="muted small">1 × 12 pcs · every 2 weeks</div></td><td><span class="badge b-neutral">✕ Cancelled</span></td><td class="faint">None</td><td class="faint">None — cancelled</td><td>Cash on delivery</td><td>0</td></tr>
       </tbody>
     </table>
     <div class="pager"><span class="muted">Showing 1–9 of 1,284 · sorted by next order, soonest first</span><div class="pbtns"><button class="btn2" type="button" disabled title="You're on the first page">Previous</button><span class="muted">Page 1 of 143</span><button class="btn2" type="button">Next</button></div></div>

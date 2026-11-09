@@ -46,7 +46,7 @@ import {
   type DbPayment,
   type Failure,
 } from './store';
-import { addDaysIso } from '@/lib/format/appointment';
+import { addDaysIso } from '@/lib/format/time';
 
 /**
  * `mocks/handlers/billing/staff.ts` — HO-BIL-002 §12. The staff Billing endpoints, generated from
@@ -129,14 +129,10 @@ export const staffBillingHandlers: HttpHandler[] = [
   http.post(`${BASE}/charges`, async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>;
     const db = getDb();
-    let description = String(body.description ?? '');
-    let unitCents = body.unitPrice === undefined ? 0 : toCents(body.unitPrice);
-    let taxClassId = String(body.taxClassId ?? ids.taxStd);
-    if (body.serviceId) {
-      description = 'Consultation';
-      unitCents = 80_000;
-      taxClassId = ids.taxStd;
-    } else if (!description.trim()) {
+    const description = String(body.description ?? '');
+    const unitCents = body.unitPrice === undefined ? 0 : toCents(body.unitPrice);
+    const taxClassId = String(body.taxClassId ?? ids.taxStd);
+    if (!description.trim()) {
       return violation('Description', 'ReasonRequired', 'Enter a description for the fee.');
     }
     const guard = guardReference('Description', description);
@@ -146,8 +142,8 @@ export const staffBillingHandlers: HttpHandler[] = [
       id: chargeId,
       customerId: String(body.customerId),
       branchId: ids.mainBranchId,
-      businessLine: (body.businessLine as DbCharge['businessLine']) ?? 'Clinic',
-      itemKind: body.serviceId ? 'Service' : 'Fee',
+      businessLine: (body.businessLine as DbCharge['businessLine']) ?? 'Shop',
+      itemKind: 'Fee',
       sourceKind: 'Manual',
       sourceId: chargeId,
       description,
@@ -204,8 +200,8 @@ export const staffBillingHandlers: HttpHandler[] = [
       id: chargeId,
       customerId: source.customerId,
       branchId: ids.mainBranchId,
-      businessLine: 'Clinic',
-      itemKind: 'Service',
+      businessLine: 'Shop',
+      itemKind: 'Product',
       sourceKind: source.sourceKind,
       sourceId: source.sourceId,
       description: source.label,
@@ -576,8 +572,8 @@ export const staffBillingHandlers: HttpHandler[] = [
     invoice.lines = body.lines.map((l, index) => ({
       lineId: crypto.randomUUID(),
       chargeId: null,
-      businessLine: 'Clinic' as const,
-      itemKind: 'Service',
+      businessLine: 'Shop' as const,
+      itemKind: 'Product',
       sourceKind: 'Manual',
       sourceId: crypto.randomUUID(),
       description: l.description,
@@ -880,6 +876,13 @@ export const staffBillingHandlers: HttpHandler[] = [
     const body = (await request.json()) as { reason?: string };
     const payment = findPayment(params.paymentId as string);
     if (!payment) return notFound();
+    if (payment.status !== 'PendingApproval') {
+      return violation('PaymentId', 'PaymentNotPending', 'This payment is no longer waiting for approval.');
+    }
+    // PaymentAggregate.Reject refuses the recorder exactly as Approve does.
+    if (payment.recordedBy === ids.meId) {
+      return violation('ApproverId', 'ApproverMustDiffer', 'A payment must be approved by a different staff member than the one who recorded it.');
+    }
     if (!body.reason?.trim()) return violation('Reason', 'ReasonRequired', 'Enter a reason.');
     payment.status = 'Rejected';
     payment.rejectedBy = ids.meId;

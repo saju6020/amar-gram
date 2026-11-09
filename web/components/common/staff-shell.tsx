@@ -1,45 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Bed,
   Boxes,
   ChevronDown,
   Building2,
   Calendar,
-  CalendarDays,
   CalendarOff,
-  CalendarPlus,
-  Cat,
   ChartColumn,
-  ClipboardList,
   Copy,
-  FlaskConical,
   House,
   Inbox,
   LayoutDashboard,
-  ListChecks,
   Mail,
   Menu,
   Package,
+  PackageCheck,
   PanelLeftClose,
-  PawPrint,
-  Pill,
   Receipt,
-  Scissors,
+  Repeat,
   Settings,
   Settings2,
   Shield,
-  ShieldAlert,
+  ShoppingBasket,
   ShoppingCart,
-  Stethoscope,
+  Sprout,
   Store,
-  Syringe,
   Truck,
   Undo2,
   UserPlus,
+  UserSearch,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -54,6 +46,7 @@ import { useStaffSession } from '@/lib/hooks/useSession';
 import { SignOutButton } from '@/components/auth/SignOutButton';
 import { Button } from '@/components/ui/button';
 import { HearthLogo } from '@/components/hearth/HearthLogo';
+import { ActiveBranchPicker } from '@/components/branches/ActiveBranchPicker';
 import {
   Dialog,
   DialogContent,
@@ -66,7 +59,7 @@ import { cn } from '@/lib/utils';
 
 // Below `sm` (640px, Tailwind's default breakpoint), the fixed w-64 (256px) sidebar plus any real
 // content (a form, a DataTable's Previous/Next pager, …) doesn't fit UI-1's 360px floor — verified
-// by HO-CAT-002's E18. Below `sm`, the in-flow `<aside>` is therefore now ALWAYS the collapsed
+// by the scaffold handover's E18. Below `sm`, the in-flow `<aside>` is therefore now ALWAYS the collapsed
 // w-16 (64px) rail — a pure CSS fact (`w-16` with no `sm:`-gated width class overriding it below
 // `sm`), true from the very first byte of server-rendered HTML, through hydration, with no JS
 // timing involved (E18's own root cause was a *default* that depended on JS having run at all).
@@ -78,7 +71,7 @@ import { cn } from '@/lib/utils';
 // The rail's own "Expand menu" button instead opens the full nav in a Radix `Dialog` rendered as a
 // left sheet (`components/ui/dialog.tsx`'s `sheet-left` variant) — a real modal, so focus-trapping,
 // `Escape`-to-close, overlay-click-to-close, focus-return-to-trigger and hiding the rest of the
-// document from assistive tech all come from Radix itself (HO-CAT-002 §8.5), not from a second
+// document from assistive tech all come from Radix itself (the scaffold handover §8.5), not from a second
 // hand-rolled implementation of each.
 //
 // At `sm` and up, nothing here changes: the in-flow sticky aside is w-64 expanded or w-16
@@ -86,6 +79,13 @@ import { cn } from '@/lib/utils';
 // classes, so its initial value (`false`, matching the CSS default `sm:w-64`) produces identical
 // server and first-client-render markup — no hydration mismatch, and no JS-decided default below
 // `sm` either.
+//
+// HO-P4 §8.2 (ADR-FE-181/182), the approved back-office design: the aside also carries the outlet
+// picker (`ActiveBranchPicker variant="sidebar"`, always mounted so the active-branch seed effect
+// runs on every staff page; hidden in the rail and when collapsed, shown at the top of the sheet)
+// and, at its foot, the signed-in person (initials, name, roles, Sign out). The old top header is
+// gone at `sm` and up. Below `sm` the 64px rail has no room for Sign out, so a slim top bar keeps
+// the page title and the same "Sign out" button; only one of the two is ever displayed.
 /** An item with no `roles` is for everyone; otherwise the member of staff needs one of them. */
 export function canSeeNavItem(
   item: { roles?: readonly string[] },
@@ -121,7 +121,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
     return () => query.removeEventListener('change', onChange);
   }, [sheetOpen]);
 
-  // CODE_REVIEW gate MEDIUM (HO-CAT-002, 2nd pass): `StaffShell` is a persistent App Router layout
+  // CODE_REVIEW gate MEDIUM (the scaffold handover, 2nd pass): `StaffShell` is a persistent App Router layout
   // component, so `sheetOpen` otherwise survives any route change that doesn't go through one of
   // the sheet's own `SheetNav` links — most notably the browser's Back/Forward buttons, which are
   // chrome, not page DOM, so neither the dialog's overlay nor its focus trap can intercept them. A
@@ -134,14 +134,22 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   // The current page's link stays in view in a long menu (e.g. Team & settings at the bottom).
+  // Scrolls the menu's own container, not `element.scrollIntoView()`: Chrome treats that as the
+  // "sequential focus navigation starting point", so the first Tab on a fresh page skipped the skip
+  // link and the menu toggle and landed on the link after the current page's (keyboard users must
+  // start from the top of the page).
+  const navScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    document.querySelector('aside [aria-current="page"]')?.scrollIntoView?.({ block: 'center' });
+    const container = navScrollRef.current;
+    const current = container?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!container || !current) return;
+    const offset = current.getBoundingClientRect().top - container.getBoundingClientRect().top;
+    container.scrollTop += offset - (container.clientHeight - current.offsetHeight) / 2;
   }, [pathname]);
 
-  // Per-item `audience` (nav/types.ts, added by HO-CAT-002) overrides the area's own audience,
-  // for an area like Cat Profiles whose single `audience: 'both'` mixes staff-only and
-  // portal-only screens in one items array — falls back to the area's audience when an item
-  // doesn't set one, which is every pre-existing area, so this is not a behaviour change there.
+  // Per-item `audience` (nav/types.ts) overrides the area's own audience, for an area whose
+  // single `audience: 'both'` mixes staff-only and portal-only screens in one items array — falls
+  // back to the area's audience when an item doesn't set one.
   const sections: NavArea[] = navRegistry
     .map((area) => ({
       ...area,
@@ -186,13 +194,13 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
 
       <aside
         className={cn(
-          'sticky top-0 flex h-screen w-16 flex-shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200',
+          'sticky top-0 flex h-screen w-16 flex-shrink-0 flex-col border-r border-leaf-ink bg-leaf-ink text-leaf-soft transition-[width] duration-200',
           !collapsed && 'sm:w-64',
         )}
       >
         <div
           className={cn(
-            'flex h-14 flex-shrink-0 items-center justify-center gap-2 border-b border-border px-3',
+            'flex h-14 flex-shrink-0 items-center justify-center gap-2 border-b border-leaf px-3',
             !collapsed && 'sm:justify-between sm:px-4',
           )}
         >
@@ -200,7 +208,11 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           <HearthLogo
             variant="portal"
             href="/staff"
-            className={cn('sr-only min-w-0 gap-2 text-base', !collapsed && 'sm:not-sr-only')}
+            accentClassName="text-leaf-soft"
+            className={cn(
+              'sr-only min-w-0 gap-2 text-base text-leaf-soft focus-visible:outline-leaf-soft',
+              !collapsed && 'sm:not-sr-only',
+            )}
           />
 
           {/* Below sm: opens the nav sheet (a real modal Dialog — see above). At sm and up: the
@@ -220,6 +232,10 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
               <DialogDescription className="sr-only">
                 Amar Gram staff navigation, every area.
               </DialogDescription>
+              {/* The sheet is light; the picker is styled for the leaf aside, so it sits on a leaf card. */}
+              <div className="mb-3 rounded-[var(--radius-md)] bg-leaf-ink pb-3 empty:hidden">
+                <ActiveBranchPicker variant="sidebar" />
+              </div>
               <NavSections
                 sections={groups}
                 activeHref={activeHref}
@@ -234,7 +250,7 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghost"
             size="icon"
-            className="hidden text-ink-muted sm:inline-flex"
+            className="hidden text-leaf-soft hover:bg-leaf hover:text-leaf-soft focus-visible:outline-leaf-soft sm:inline-flex"
             aria-expanded={!collapsed}
             aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
             onClick={() => setCollapsed((current) => !current)}
@@ -247,7 +263,17 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
+        {/* Back-office tag and outlet picker: no room in the rail, so only the expanded aside shows them. */}
+        <div className={cn('hidden', !collapsed && 'sm:block')}>
+          <p className="px-5 pt-3 text-xs font-semibold uppercase tracking-[0.1em] text-leaf-soft">
+            Back office
+          </p>
+          <div className="px-1">
+            <ActiveBranchPicker variant="sidebar" />
+          </div>
+        </div>
+
+        <div ref={navScrollRef} className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3">
           <NavSections
             sections={groups}
             activeHref={activeHref}
@@ -257,40 +283,48 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
             collapsed={collapsed}
           />
         </div>
+
+        {session && (
+          <div
+            className={cn(
+              'flex flex-shrink-0 items-center justify-center gap-2.5 border-t border-leaf px-2 py-3',
+              !collapsed && 'sm:justify-start sm:px-4',
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className="grid size-9 flex-none place-items-center rounded-full bg-leaf-soft text-sm font-bold text-leaf-ink"
+            >
+              {initialsOf(session.fullName)}
+            </span>
+            <div
+              className={cn('hidden min-w-0 flex-1 items-center gap-2', !collapsed && 'sm:flex')}
+            >
+              <div className="flex min-w-0 flex-1 flex-col leading-tight">
+                <strong className="truncate text-sm text-surface">{session.fullName}</strong>
+                <span className="truncate text-xs text-leaf-soft">
+                  {session.roleIds.join(', ')}
+                </span>
+              </div>
+              <SignOutButton
+                audience="staff"
+                className="h-9 flex-none px-2 text-sm text-leaf-soft underline hover:bg-leaf hover:text-leaf-soft focus-visible:outline-leaf-soft"
+              />
+            </div>
+          </div>
+        )}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 flex-shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-6">
-          <nav aria-label="Breadcrumb" className="min-w-0 truncate text-sm text-ink-muted">
-            <span className={cn(activeLabel ? 'hidden sm:inline' : 'font-semibold text-ink')}>
-              Amar Gram staff
-            </span>
-            {activeLabel && (
-              <>
-                <span aria-hidden="true" className="mx-2 hidden text-ink-faint sm:inline">
-                  /
-                </span>
-                <span className="font-semibold text-ink">{activeLabel}</span>
-              </>
-            )}
-          </nav>
-          <div className="flex flex-shrink-0 items-center gap-3 text-sm text-ink-muted">
-            {session && (
-              <>
-                {/* Below `sm` (the same 640px floor the rail nav collapses at, UI-1), the header
-                    has no room left for the name+role text once the breadcrumb and the always-
-                    visible Sign out button are accounted for — hidden rather than truncated, since
-                    a cut-off role list reads worse than not showing it at all at this width. */}
-                <span className="hidden truncate sm:inline">
-                  {session.fullName} · {session.roleIds.join(', ')}
-                </span>
-                <SignOutButton audience="staff" />
-              </>
-            )}
-          </div>
+        {/* Below `sm` only: the rail has no room for the title or Sign out (the aside footer has them at sm+). */}
+        <header className="flex h-14 flex-shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:hidden">
+          <p className="min-w-0 truncate font-display text-base font-semibold text-ink">
+            {activeLabel ?? 'Amar Gram staff'}
+          </p>
+          {session && <SignOutButton audience="staff" />}
         </header>
 
-        <main id="main-content" className="min-w-0 flex-1 px-6 py-7">
+        <main id="main-content" className="min-w-0 flex-1 px-7 py-6">
           {children}
         </main>
       </div>
@@ -298,47 +332,48 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Initials for the sidebar avatar: the first letters of the first and last words of the name. */
+function initialsOf(fullName: string): string {
+  const words = fullName.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '?';
+  const first = words[0]?.charAt(0) ?? '';
+  const last = words.length > 1 ? (words[words.length - 1]?.charAt(0) ?? '') : '';
+  return (first + last).toUpperCase();
+}
+
 /** Area files name their icons as lucide strings (nav/types.ts); the shell maps them here. */
 const NAV_ICONS: Record<string, LucideIcon> = {
   'bar-chart': ChartColumn,
-  bed: Bed,
   boxes: Boxes,
   building: Building2,
   calendar: Calendar,
-  'calendar-days': CalendarDays,
   'calendar-off': CalendarOff,
-  'calendar-plus': CalendarPlus,
-  cat: Cat,
   'chart-column': ChartColumn,
-  'clipboard-list': ClipboardList,
   copy: Copy,
-  'flask-conical': FlaskConical,
   home: House,
   inbox: Inbox,
   'layout-dashboard': LayoutDashboard,
-  'list-checks': ListChecks,
   mail: Mail,
   package: Package,
-  pill: Pill,
+  'package-check': PackageCheck,
   receipt: Receipt,
-  scissors: Scissors,
+  repeat: Repeat,
   settings: Settings,
   'settings-2': Settings2,
   shield: Shield,
-  'shield-alert': ShieldAlert,
+  'shopping-basket': ShoppingBasket,
   'shopping-cart': ShoppingCart,
-  stethoscope: Stethoscope,
   store: Store,
-  syringe: Syringe,
   truck: Truck,
   undo: Undo2,
   'user-plus': UserPlus,
+  'user-search': UserSearch,
   users: Users,
 };
 
 /**
  * The one renderer for both the always-in-flow aside nav and the below-`sm` sheet's nav
- * (ARCHITECTURE gate LOW, HO-CAT-002 4th pass): one link per item with its icon, the current page
+ * (ARCHITECTURE gate LOW): one link per item with its icon, the current page
  * marked (`aria-current="page"`, a teal tint), grouped by daily job (staff-nav-groups.ts).
  *
  * `mode="compact"` is the aside: below `sm` it is always the `w-16` rail (icons only, the label as
@@ -368,11 +403,13 @@ function NavSections({
   // A closed group's links: gone from the sheet and the expanded aside, but the icon rail (below
   // sm, or collapsed) keeps every icon — it has no headings to open.
   // (The sheet uses the hidden attribute: those links are truly gone, for assistive tech too.)
+  // The compact nav lives in the dark banana-leaf aside; the full nav is in the light sheet.
+  const dark = mode === 'compact';
   const closedLinks = mode === 'full' || collapsed ? undefined : 'sm:hidden';
 
   if (sections.length === 0) {
     return (
-      <p className={cn('px-2 text-sm text-ink-muted', labelOnly)}>
+      <p className={cn('px-2 text-sm', dark ? 'text-leaf-soft' : 'text-ink-muted', labelOnly)}>
         No areas registered yet — see web/README.md.
       </p>
     );
@@ -391,21 +428,27 @@ function NavSections({
           >
             {section.label && (
               <>
-                {/* text-ink-muted, not text-ink-faint (HO-CAT-002 E17/UI-6): 4.5:1 on the surface. */}
+                {/* text-ink-muted, not text-ink-faint (the scaffold handover E17/UI-6): 4.5:1 on the surface. */}
                 <button
                   type="button"
                   aria-expanded={open}
                   aria-controls={listId}
                   onClick={() => onToggleGroup(section.key)}
                   className={cn(
-                    'h-8 w-full items-center justify-between gap-2 rounded-[8px] px-2.5 text-left text-[11px] font-bold uppercase tracking-[0.09em] text-ink-muted transition-colors hover:bg-surface-sunken hover:text-ink',
+                    'h-8 w-full items-center justify-between gap-2 rounded-[8px] px-2.5 text-left text-[11px] font-bold uppercase tracking-[0.09em] transition-colors',
+                    dark
+                      ? 'text-leaf-soft hover:bg-leaf focus-visible:outline-leaf-soft'
+                      : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
                     labelOnlyFlex,
                   )}
                 >
                   <span className="truncate">{section.label}</span>
                   <span className="flex flex-none items-center gap-2">
                     {!open && holdsCurrent && (
-                      <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" />
+                      <span
+                        aria-hidden="true"
+                        className={cn('size-1.5 rounded-full', dark ? 'bg-leaf-soft' : 'bg-accent')}
+                      />
                     )}
                     <ChevronDown
                       size={15}
@@ -420,7 +463,7 @@ function NavSections({
                 {mode === 'compact' && (
                   <span
                     aria-hidden="true"
-                    className={cn('mx-3 my-1 block h-px bg-border', !collapsed && 'sm:hidden')}
+                    className={cn('mx-3 my-1 block h-px bg-leaf', !collapsed && 'sm:hidden')}
                   />
                 )}
               </>
@@ -431,7 +474,7 @@ function NavSections({
               className={cn('flex flex-col gap-0.5', !open && closedLinks)}
             >
               {section.items.map((item) => {
-                const Icon = (item.icon && NAV_ICONS[item.icon]) || PawPrint;
+                const Icon = (item.icon && NAV_ICONS[item.icon]) || Sprout;
                 const active = item.href === activeHref;
                 return (
                   <Link
@@ -443,11 +486,16 @@ function NavSections({
                     // The accessible name is always the full label, whichever width is showing.
                     aria-label={mode === 'compact' ? item.label : undefined}
                     className={cn(
-                      'group flex h-9 items-center gap-3 rounded-[10px] px-2.5 text-sm font-medium no-underline transition-colors',
+                      'group flex min-h-10 items-center gap-3 rounded-[var(--radius-md)] px-2.5 text-sm font-medium no-underline transition-colors',
                       mode === 'compact' && cn('justify-center', !collapsed && 'sm:justify-start'),
+                      dark && 'focus-visible:outline-leaf-soft',
                       active
-                        ? 'bg-accent-soft text-accent-ink'
-                        : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
+                        ? dark
+                          ? 'bg-leaf-soft text-leaf-ink'
+                          : 'bg-accent-soft text-accent-ink'
+                        : dark
+                          ? 'text-leaf-soft hover:bg-leaf'
+                          : 'text-ink-muted hover:bg-surface-sunken hover:text-ink',
                     )}
                   >
                     <Icon
@@ -456,7 +504,13 @@ function NavSections({
                       aria-hidden="true"
                       className={cn(
                         'flex-none',
-                        active ? 'text-accent' : 'text-ink-faint group-hover:text-ink-muted',
+                        dark
+                          ? active
+                            ? 'text-leaf-ink'
+                            : 'text-leaf-soft'
+                          : active
+                            ? 'text-accent'
+                            : 'text-ink-faint group-hover:text-ink-muted',
                       )}
                     />
                     <span

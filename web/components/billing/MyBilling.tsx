@@ -17,7 +17,7 @@ import { InvoiceStatusPill, PaymentStatusPill } from './StatusPill';
  * billing page, on the warm customer layer: what they owe and have credit for, their issued invoices,
  * their payments with receipts, and loyalty points when enabled. Drafts and pending payments are
  * never shown (the server does not return them). There is **no pay-online control** anywhere — paying
- * is by bank transfer or at the clinic (see each invoice).
+ * is by bank transfer or at the shop (see each invoice).
  */
 export function MyBillingSummary() {
   const summary = useMyBillingSummary();
@@ -31,7 +31,7 @@ export function MyBillingSummary() {
           <Stat label="Overdue" note={moneySign(s.overdue.amount) === 'positive' && s.oldestDueOn ? `Overdue since ${formatDateOnly(s.oldestDueOn)}` : undefined}>
             <Amount money={s.overdue} />
           </Stat>
-          <Stat label="Your credit" note="Money the clinic holds for you; ask us to use it on an invoice.">
+          <Stat label="Your credit" note="Money we hold for you; ask us to use it on an invoice.">
             <Amount money={s.freeCredit} />
           </Stat>
           {s.loyaltyEnabled && (
@@ -65,7 +65,7 @@ export function MyInvoicesList() {
       isLoading={invoices.isLoading}
       isError={invoices.isError}
       onRetry={() => void invoices.refetch()}
-      emptyState={{ title: 'You have no invoices yet.', description: 'When the clinic or the shop bills you, the invoice appears here.' }}
+      emptyState={{ title: 'You have no invoices yet.', description: 'When the shop bills you, the invoice appears here.' }}
       pager={
         invoices.data
           ? { pageNumber: invoices.data.pageNumber, pageSize: invoices.data.pageSize, totalCount: invoices.data.totalCount, onPageChange: (n) => setValue('ipage', String(n)) }
@@ -153,7 +153,7 @@ export function MyBillingPage() {
       </Section>
       <MyLoyaltySection />
       <p className="text-sm text-ink-muted">
-        You can pay by bank transfer (the details are on each invoice) or at the clinic by cash or card.
+        You can pay by bank transfer (the details are on each invoice) or at the shop by cash or card.
       </p>
     </div>
   );

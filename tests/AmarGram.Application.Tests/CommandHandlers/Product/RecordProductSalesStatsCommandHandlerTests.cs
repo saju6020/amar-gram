@@ -1,0 +1,76 @@
+using AmarGram.Application.CommandHandlers.Product;
+using AmarGram.Application.Commands.Product;
+using AmarGram.Application.Tests.TestSupport;
+using AmarGram.Domain.Aggregates.Product;
+using AmarGram.Domain.Models;
+using AmarGram.Shared.Common.Constants;
+using AmarGram.Shared.Common.Enums;
+using Microsoft.Extensions.Logging.Abstractions;
+using Platform.Infrastructure.Common.Security;
+
+namespace AmarGram.Application.Tests.CommandHandlers.Product;
+
+public sealed class RecordProductSalesStatsCommandHandlerTests
+{
+    private static UserContext SystemContext() => new(Guid.NewGuid(), Guid.NewGuid());
+
+    private static ProductAggregate SeedProduct()
+    {
+        var product = new ProductAggregate(Guid.NewGuid());
+        product.Create(new ProductCreateDto(ProductKind.Standard, "Bamboo Broom", "Acme", ProductCategory.HouseholdAndCare,
+            null, Guid.NewGuid(), "bamboo-broom", null, null, SystemContext(), Guid.NewGuid()));
+        return product;
+    }
+
+    [Fact]
+    public async Task Record_UnknownProduct_ReturnsProductNotFound()
+    {
+        var productRepository = new FakeAggregateRootRepository<ProductAggregate>();
+        var statsRepository = new FakeAggregateRootRepository<ProductSalesStatsAggregate>();
+        var handler = new RecordProductSalesStatsCommandHandler(NullLogger<RecordProductSalesStatsCommandHandler>.Instance, productRepository, statsRepository, TimeProvider.System);
+
+        var response = await handler.HandleAsync(new RecordProductSalesStatsCommand
+        { ProductId = Guid.NewGuid(), UnitsSold90d = 5, AsOf = DateTimeOffset.UtcNow, UserContext = SystemContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true });
+
+        Assert.False(response.IsSuccess);
+        Assert.Contains(response.ValidationResult!.Errors, e => e.ErrorCode == BusinessViolationCodes.ProductNotFound);
+    }
+
+    [Fact]
+    public async Task Record_FirstPush_Saves()
+    {
+        var product = SeedProduct();
+        var productRepository = new FakeAggregateRootRepository<ProductAggregate>();
+        productRepository.Seed(product);
+        var statsRepository = new FakeAggregateRootRepository<ProductSalesStatsAggregate>();
+        var handler = new RecordProductSalesStatsCommandHandler(NullLogger<RecordProductSalesStatsCommandHandler>.Instance, productRepository, statsRepository, TimeProvider.System);
+
+        var response = await handler.HandleAsync(new RecordProductSalesStatsCommand
+        { ProductId = product.Id, UnitsSold90d = 5, AsOf = DateTimeOffset.UtcNow, UserContext = SystemContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true });
+
+        Assert.True(response.IsSuccess);
+        Assert.Single(statsRepository.Saved);
+    }
+
+    [Fact]
+    public async Task Record_StalePush_NoOp_DoesNotUpdate()
+    {
+        var product = SeedProduct();
+        var productRepository = new FakeAggregateRootRepository<ProductAggregate>();
+        productRepository.Seed(product);
+        var statsRepository = new FakeAggregateRootRepository<ProductSalesStatsAggregate>();
+
+        var now = DateTimeOffset.UtcNow;
+        var existing = new ProductSalesStatsAggregate(product.Id);
+        existing.Apply(new ProductSalesStatsApplyDto(10, now, now, SystemContext(), Guid.NewGuid()));
+        statsRepository.Seed(existing);
+
+        var handler = new RecordProductSalesStatsCommandHandler(NullLogger<RecordProductSalesStatsCommandHandler>.Instance, productRepository, statsRepository, TimeProvider.System);
+        var response = await handler.HandleAsync(new RecordProductSalesStatsCommand
+        { ProductId = product.Id, UnitsSold90d = 999, AsOf = now.AddMinutes(-1), UserContext = SystemContext(), CorrelationId = Guid.NewGuid(), ValidateCommand = true });
+
+        Assert.True(response.IsSuccess);
+        Assert.Empty(statsRepository.Updated);
+        Assert.Equal(10, existing.UnitsSold90d);
+    }
+}

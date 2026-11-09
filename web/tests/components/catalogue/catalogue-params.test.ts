@@ -13,14 +13,14 @@ import {
 describe('catalogueParams — HO-SHP-002 §8.4, ADR-FE-031', () => {
   it('U-A6: round-trips, drops unknown params and keeps repeated brand values in order', () => {
     const input = new URLSearchParams(
-      'brand=Whiskas&brand=Me-O&utm_source=mail&origin=TH&sort=price_asc&q=salmon&bogus=1&brand=Whiskas',
+      'brand=Padma&brand=Teesta&utm_source=mail&origin=TH&sort=price_asc&q=oats&bogus=1&brand=Padma',
     );
     const parsed = parseCatalogueParams(input);
-    expect(parsed.brand).toEqual(['Whiskas', 'Me-O']);
+    expect(parsed.brand).toEqual(['Padma', 'Teesta']);
     expect(parsed.origin).toEqual(['TH']);
     expect(parsed.sort).toBe('price_asc');
     expect(toSearchParams(parsed).toString()).toBe(
-      'q=salmon&brand=Whiskas&brand=Me-O&origin=TH&sort=price_asc',
+      'q=oats&brand=Padma&brand=Teesta&origin=TH&sort=price_asc',
     );
     expect(toSearchParams(parseCatalogueParams(toSearchParams(parsed))).toString()).toBe(
       toSearchParams(parsed).toString(),
@@ -50,10 +50,10 @@ describe('catalogueParams — HO-SHP-002 §8.4, ADR-FE-031', () => {
     const withOrigin = withFilterChange(start, { origin: ['TH'] });
     expect(withOrigin.pageNumber).toBe(1);
     const withBrand = withFilterChange(withOrigin, {
-      brand: toggleValue(withOrigin.brand, 'Whiskas'),
+      brand: toggleValue(withOrigin.brand, 'Padma'),
     });
     const sorted = { ...withBrand, sort: 'price_desc' as const };
-    expect(toQueryString(sorted)).toBe('?brand=Whiskas&origin=TH&sort=price_desc');
+    expect(toQueryString(sorted)).toBe('?brand=Padma&origin=TH&sort=price_desc');
   });
 
   it('maps lang to the API locale and counts active filters', () => {
@@ -68,9 +68,29 @@ describe('catalogueParams — HO-SHP-002 §8.4, ADR-FE-031', () => {
 
   it('clear all keeps the search text, sort and language', () => {
     const parsed = parseCatalogueParams(
-      new URLSearchParams('q=salmon&brand=A&origin=TH&sort=rating&lang=bn&pageNumber=3'),
+      new URLSearchParams('q=oats&brand=A&origin=TH&sort=rating&lang=bn&pageNumber=3'),
     );
     const cleared = clearFilters(parsed);
-    expect(toSearchParams(cleared).toString()).toBe('q=salmon&sort=rating&lang=bn');
+    expect(toSearchParams(cleared).toString()).toBe('q=oats&sort=rating&lang=bn');
+  });
+
+  // HO-P5 S1 U8: `district` is a repeatable list, handled exactly as `origin` is.
+  it('U8: district is parsed as a list, sent to the API, counted, and cleared like origin', () => {
+    const parsed = parseCatalogueParams(
+      new URLSearchParams('district=Dinajpur&district=Sylhet&district=Dinajpur&origin=BD&q=oats'),
+    );
+    expect(parsed.district).toEqual(['Dinajpur', 'Sylhet']);
+    expect(toApiSearchParams(parsed).getAll('district')).toEqual(['Dinajpur', 'Sylhet']);
+    expect(toSearchParams(parsed).toString()).toBe(
+      'q=oats&origin=BD&district=Dinajpur&district=Sylhet',
+    );
+    expect(activeFilterCount(parsed)).toBe(3);
+    expect(parseCatalogueParams({ district: ['A', 'B'] }).district).toEqual(['A', 'B']);
+    expect(parseCatalogueParams({ district: ' ' }).district).toEqual([]);
+    const toggled = withFilterChange(parsed, { district: toggleValue(parsed.district, 'Sylhet') });
+    expect(toggled.district).toEqual(['Dinajpur']);
+    expect(toggled.pageNumber).toBe(1);
+    // Clear filters drops the district and keeps the search, as it does for origin.
+    expect(toSearchParams(clearFilters(parsed)).toString()).toBe('q=oats');
   });
 });

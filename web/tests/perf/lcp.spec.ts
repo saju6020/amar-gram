@@ -12,7 +12,7 @@ import { loadInventory } from './inventory';
  * Needs a PRODUCTION build against the REAL API (`PERF_SERVER=start`, built with
  * `NEXT_PUBLIC_USE_MOCKS=false`); the throttled numbers from `next dev` mean nothing. `/portal` and
  * `/checkout` need a signed-in customer: set `E2E_CUSTOMER_IDENTIFIER` and `E2E_CUSTOMER_PASSWORD`
- * (a customer who has cats, orders and invoices); without them those rows are skipped, with the
+ * (a customer who has orders and invoices); without them those rows are skipped, with the
  * reason. The budget is never relaxed to make the run green (ADR-FE-148).
  */
 const budgets = JSON.parse(
@@ -53,7 +53,7 @@ for (const route of budgets.routes) {
     const password = process.env.E2E_CUSTOMER_PASSWORD;
     test.skip(
       needsCustomer && (!identifier || !password),
-      'BLOCKED: needs E2E_CUSTOMER_IDENTIFIER / E2E_CUSTOMER_PASSWORD (a customer with cats, orders and invoices) on the real API',
+      'BLOCKED: needs E2E_CUSTOMER_IDENTIFIER / E2E_CUSTOMER_PASSWORD (a customer with orders and invoices) on the real API',
     );
     test.setTimeout(RUNS * 60_000);
 

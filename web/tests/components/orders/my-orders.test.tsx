@@ -13,7 +13,7 @@ import { TrackingPanel } from '@/components/orders/OrderPanels';
 import type { CustomerOrderDetail } from '@/lib/api/my-orders';
 import { CARD_NUMBER_MESSAGE } from '@/lib/validation/cardNumberGuard';
 
-vi.mock('next/navigation', () => import('../booking/nav-mock'));
+vi.mock('next/navigation', () => import('../common/nav-mock'));
 
 function renderWithClient(ui: ReactElement) {
   const client = new QueryClient({
@@ -47,9 +47,8 @@ function order(overrides: Partial<CustomerOrderDetail> = {}): CustomerOrderDetai
         lineId: 'ln1',
         lineNumber: 1,
         skuId: 's1',
-        productName: 'Whiskas Kitten',
+        productName: 'Thai Jasmine Rice',
         variantLabel: '1 kg',
-        cat: null,
         quantity: 2,
         unitPrice: money('500.00'),
         lineSubtotal: money('1000.00'),
@@ -374,20 +373,20 @@ describe('Return request - U-C7', () => {
     status: 'Delivered',
     canRequestReturn: true,
     lines: [
-      { ...order().lines[0]!, lineId: 'food', productName: 'Royal Canin Kitten' },
-      { ...order().lines[0]!, lineId: 'litter', lineNumber: 2, productName: 'Tofu Litter' },
+      { ...order().lines[0]!, lineId: 'food', productName: 'Organic Rolled Oats' },
+      { ...order().lines[0]!, lineId: 'jute', lineNumber: 2, productName: 'Jute Shopping Bag' },
     ],
     returnableLines: [
       { lineId: 'food', maxQuantity: 2, returnClass: 'Food' },
-      { lineId: 'litter', maxQuantity: 2, returnClass: 'Litter' },
+      { lineId: 'jute', maxQuantity: 2, returnClass: 'Household' },
     ],
   });
 
-  it('shows the opened-food and used-litter policy once a line is chosen, and caps the quantity', async () => {
+  it('shows the opened-food and used-item policy once a line is chosen, and caps the quantity', async () => {
     serveOrder(delivered);
     const user = userEvent.setup();
     renderWithClient(<ReturnRequestScreen orderId="o1" />);
-    await screen.findByRole('heading', { name: 'Request a return' });
+    await screen.findByRole('heading', { name: 'Return an item' });
     await user.click(screen.getAllByRole('checkbox')[0]!);
     expect(
       screen.getByText(
@@ -397,7 +396,11 @@ describe('Return request - U-C7', () => {
     expect(screen.getByText('Up to 2.')).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Sealed/ })).toBeChecked();
     await user.click(screen.getAllByRole('checkbox')[1]!);
-    expect(screen.getByText("Used litter can't be returned.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Used household and care items can't be returned unless faulty or recalled.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it('renders the server 400 against the line it names, not at the top', async () => {
@@ -413,14 +416,14 @@ describe('Return request - U-C7', () => {
     );
     const user = userEvent.setup();
     renderWithClient(<ReturnRequestScreen orderId="o1" />);
-    await screen.findByRole('heading', { name: 'Request a return' });
+    await screen.findByRole('heading', { name: 'Return an item' });
     await user.click(screen.getAllByRole('checkbox')[0]!);
     await user.click(screen.getByRole('radio', { name: /Opened/ }));
     await user.click(screen.getByRole('button', { name: 'Send return request' }));
     const message = await screen.findByText(
       'Opened food can only be returned for a quality problem.',
     );
-    expect(message.closest('fieldset')).toHaveTextContent('Royal Canin Kitten');
+    expect(message.closest('fieldset')).toHaveTextContent('Organic Rolled Oats');
     expect(message).toHaveAttribute('role', 'alert');
     expect(document.body.textContent).not.toMatch(/OpenedFoodNotReturnable/);
   });
@@ -474,14 +477,14 @@ describe('Order detail - Hearth hero, tracker and disabled reasons', () => {
     );
   });
 
-  it('Cancel is disabled with its reason and the branch contact once the order has left the shop; Request a return says why not yet', async () => {
+  it('Cancel is disabled with its reason and the branch contact once the order has left the shop; Return an item says why not yet', async () => {
     serveOrder(order({ status: 'Dispatched', canCancel: false }));
     renderWithClient(<MyOrderDetail orderId="o1" />);
     const cancel = await screen.findByRole('button', { name: 'Cancel order' });
     expect(cancel).toBeDisabled();
     expect(cancel).toHaveAccessibleDescription(/already left the shop/);
     expect(screen.getByRole('heading', { name: 'Contact the shop' })).toBeInTheDocument();
-    const returns = screen.getByRole('button', { name: 'Request a return' });
+    const returns = screen.getByRole('button', { name: 'Return an item' });
     expect(returns).toBeDisabled();
     expect(returns).toHaveAccessibleDescription(
       'You can request a return once the order has been delivered.',
@@ -503,9 +506,24 @@ describe('Arriving from checkout', () => {
   it('thanks the customer and names the order, above the details', async () => {
     serveOrder(order({ status: 'Confirmed' }));
     renderWithClient(<MyOrderDetail orderId="o1" justPlaced />);
-    const banner = (await screen.findByText(/is placed./)).closest('p')!;
-    expect(banner).toHaveAttribute('role', 'status');
-    expect(banner).toHaveTextContent(/Thank you, your order ORD-2026-000200 is placed\./);
+    // HO-P3 S4 (D-3): the design's confirmation block.
+    const heading = await screen.findByRole('heading', { name: 'Thank you! Your order is in.' });
+    const block = screen.getByTestId('order-placed');
+    expect(block).toContainElement(heading);
+    expect(within(block).getByRole('status')).toHaveTextContent(/Order ORD-2026-000200 arrives/);
+    expect(within(block).getByRole('link', { name: 'Track this order' })).toHaveAttribute(
+      'href',
+      '#order-detail',
+    );
+    expect(within(block).getByRole('link', { name: 'Keep shopping' })).toHaveAttribute(
+      'href',
+      '/shop',
+    );
+    // ...above the order's own details.
+    expect(
+      block.compareDocumentPosition(screen.getByRole('heading', { level: 1 })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('a bank-transfer order still shows its payment instructions under the thank-you', async () => {
@@ -518,14 +536,18 @@ describe('Arriving from checkout', () => {
       }),
     );
     renderWithClient(<MyOrderDetail orderId="o1" justPlaced />);
-    expect(await screen.findByText(/your order ORD-2026-000200 is placed/)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Thank you! Your order is in.' }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('order-placed')).toHaveTextContent(/Please transfer/);
     expect(screen.getByRole('heading', { name: 'Pay by bank transfer' })).toBeInTheDocument();
+    expect(screen.getByRole('timer')).toBeInTheDocument();
   });
 
   it('opened from My orders, there is no thank-you', async () => {
     serveOrder(order({ status: 'Confirmed' }));
     renderWithClient(<MyOrderDetail orderId="o1" />);
     await screen.findByRole('link', { name: /all orders/i });
-    expect(screen.queryByText(/is placed\./)).not.toBeInTheDocument();
+    expect(screen.queryByText('Thank you! Your order is in.')).not.toBeInTheDocument();
   });
 });

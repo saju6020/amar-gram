@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#fbf6ef;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#e8894a;--warm-ink:#8a3f14;--warm-soft:#fdeee2}
+:root{--surface-page:#FBF3E2;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:14px;--warm:#EDA73A;--warm-ink:#7A3B10;--warm-soft:#FBF1DC}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -57,14 +57,14 @@ a{color:var(--accent-ink)}
 </helmet>
 <div style="width:1280px;height:1000px;background:var(--surface-page)">
   <div class="topnav">
-    <div class="brand">PurrCare</div>
-    <nav class="pnav" aria-label="Portal"><a href="#">My cats</a><a href="#">Appointments</a><a href="#">Shop</a><a href="#">Orders</a><a class="active" aria-current="page" href="MySubscriptions.dc.html">Subscriptions</a><a href="#">Inbox</a></nav>
+    <div class="brand">Amar Gram</div>
+    <nav class="pnav" aria-label="Portal"><a href="#">Home</a><a href="#">Shop</a><a href="#">Orders</a><a class="active" aria-current="page" href="MySubscriptions.dc.html">Subscriptions</a><a href="#">Inbox</a></nav>
     <div class="who"><div class="avatar">FY</div>Farhana Yasmin</div>
   </div>
   <div class="wrap">
     <a class="back" href="MySubscriptions.dc.html">← My subscriptions</a>
     <div class="titlerow">
-      <h1 class="h1">Kitten dry food</h1>
+      <h1 class="h1">Red lentils</h1>
       <span class="badge b-warn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Suspended</span>
     </div>
     <div class="muted" style="font-size:14px">1 kg bag · suspended on Sat 19 Sep 2026</div>
@@ -73,7 +73,7 @@ a{color:var(--accent-ink)}
       <div class="colmain">
         <div class="banner" role="region" aria-label="Why this subscription is suspended">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
-          <div><strong>Suspended — no orders are being placed</strong>Paused after 2 unpaid orders. Please contact the shop on <strong style="display:inline">01700 100200</strong> (Uttara) to restart it.
+          <div><strong>Suspended — no orders are being placed</strong>Paused after 2 unpaid orders. Please contact the shop on <strong style="display:inline">01700 100200</strong> (Uttara outlet) to restart it.
             <div class="acts"><button type="button" class="btn-dg">Cancel subscription</button></div>
           </div>
         </div>
@@ -107,36 +107,12 @@ a{color:var(--accent-ink)}
       </div>
 
       <div class="colside">
-        <div class="cap">The same banner for every other reason</div>
-
-        <div class="reason">When the prescription authorisation ends</div>
-        <div class="banner">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
-          <div><strong>Suspended — Renal Support dry food</strong>Mittens' authorisation for this food has ended. It restarts automatically when the vet renews it.
-            <div class="acts"><a href="#" class="btn">Book a consultation</a></div>
-          </div>
-        </div>
+        <div class="cap">The same banner for the other reason</div>
 
         <div class="reason">When the product is withdrawn</div>
         <div class="banner">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
-          <div><strong>Suspended — Ocean fish dry food</strong>This product is no longer available.
-            <div class="acts"><button type="button" class="btn-dg">Cancel subscription</button></div>
-          </div>
-        </div>
-
-        <div class="reason">When the cat has died</div>
-        <div class="banner neutral">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <div><strong>Stopped — Urinary care dry food</strong>This subscription was for Bijli, so we've stopped it. We're sorry for your loss.
-            <div class="acts"><button type="button" class="btn-dg">Cancel subscription</button></div>
-          </div>
-        </div>
-
-        <div class="reason">When the cat moves to another owner</div>
-        <div class="banner neutral">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <div><strong>Stopped — Weight control dry food</strong>This subscription was for Tiger, who is no longer registered to your account, so no more orders will be placed.
+          <div><strong>Suspended — Pure cow ghee</strong>This product is no longer available.
             <div class="acts"><button type="button" class="btn-dg">Cancel subscription</button></div>
           </div>
         </div>

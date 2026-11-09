@@ -1,0 +1,25 @@
+using AmarGram.Domain.ValueObjects;
+using AmarGram.Shared.Common.Enums;
+
+namespace AmarGram.Domain.Models;
+
+/// <summary>
+/// HO-BIL-001 §8.3/§8.4: the fields <c>ChargeAggregate.Record(ChargeRequestDto)</c> validates,
+/// passed to <c>IBillableChargeRecorder.RecordAsync</c>. Producer rule 3 (§8.4): "Supply prices and
+/// discounts already computed; Billing validates, never reprices."
+/// </summary>
+public sealed record ChargeRequestDto(
+    Guid CustomerId,
+    Guid BranchId,
+    BusinessLine BusinessLine,
+    ItemKind ItemKind,
+    ChargeSourceKind SourceKind,
+    Guid SourceId,
+    string SourceLineRef,
+    string Description,
+    decimal Quantity,
+    Money UnitPrice,
+    Money LineDiscount,
+    Guid TaxClassId,
+    DateOnly ServiceDate,
+    string? ReportingTag = null);

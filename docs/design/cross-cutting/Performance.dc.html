@@ -8,10 +8,10 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
-:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2b2823}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--overlay:rgba(28,26,23,.4);--radius-lg:16px;--radius-pill:999px;--offline-ink:#2A1F12}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 a{color:var(--accent-ink)}
@@ -111,7 +111,7 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
 </style>
 </helmet>
 <div style="width:1280px;height:1120px;background:var(--surface-page);position:relative;overflow:hidden">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who">Rezwan Ahmed · Administrator</div></div>
   <div class="main" style="max-width:1040px">
     <h1 class="h1">Storefront performance</h1>
     <p class="sub">How fast the shop feels to real customers, measured in their own browsers. Each number is the 75th percentile: three in four visits were at least this fast. A route with fewer than 50 visits in the range gets no verdict. Staff pages are not measured.</p>
@@ -128,35 +128,35 @@ pre{background:var(--surface-sunken);border:1px solid var(--border);border-radiu
     <section class="card chart" aria-labelledby="ch-h" style="margin-bottom:18px">
       <h2 class="h2" id="ch-h">Largest Contentful Paint, p75 by route — budget 2.5 s</h2>
       <svg viewBox="0 0 960 250" role="img" aria-label="Bar chart of p75 LCP per route against the 2.5 second budget. Values are in the table below.">
-        <g font-family="Public Sans, system-ui, sans-serif" font-size="12" fill="#5c574f">
+        <g font-family="Work Sans, system-ui, sans-serif" font-size="12" fill="#69553C">
           <!-- gridlines -->
-          <g stroke="#e5e1d8" stroke-width="1">
+          <g stroke="#E5DCC8" stroke-width="1">
             <line x1="150" y1="10" x2="150" y2="220"/><line x1="290" y1="10" x2="290" y2="220"/><line x1="430" y1="10" x2="430" y2="220"/><line x1="570" y1="10" x2="570" y2="220"/><line x1="710" y1="10" x2="710" y2="220"/><line x1="850" y1="10" x2="850" y2="220"/>
           </g>
           <text x="150" y="238" text-anchor="middle">0 s</text><text x="290" y="238" text-anchor="middle">1 s</text><text x="430" y="238" text-anchor="middle">2 s</text><text x="570" y="238" text-anchor="middle">3 s</text><text x="710" y="238" text-anchor="middle">4 s</text><text x="850" y="238" text-anchor="middle">5 s</text>
           <!-- bars: 140px per second, one hue -->
-          <g fill="#15605a">
+          <g fill="#B4531A">
             <path d="M150 20h248a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H150Z"/>
             <path d="M150 54h301a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H150Z"/>
             <path d="M150 88h416a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H150Z"/>
             <path d="M150 122h273a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H150Z"/>
             <path d="M150 156h308a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H150Z" opacity=".35"/>
           </g>
-          <text x="140" y="37" text-anchor="end" fill="#1c1a17">/</text>
-          <text x="140" y="71" text-anchor="end" fill="#1c1a17">/shop</text>
-          <text x="140" y="105" text-anchor="end" fill="#1c1a17">/shop/[slug]</text>
-          <text x="140" y="139" text-anchor="end" fill="#1c1a17">/cart</text>
-          <text x="140" y="173" text-anchor="end" fill="#1c1a17">/checkout</text>
-          <text x="140" y="207" text-anchor="end" fill="#1c1a17">/portal</text>
-          <text x="410" y="37" fill="#1c1a17">1.8 s</text>
-          <text x="463" y="71" fill="#1c1a17">2.15 s</text>
-          <text x="578" y="105" fill="#1c1a17" font-weight="700">3.0 s · over budget</text>
-          <text x="435" y="139" fill="#1c1a17">1.98 s</text>
-          <text x="508" y="173" fill="#5c574f">2.23 s · 31 visits, not enough data</text>
-          <text x="156" y="207" fill="#5c574f">No visits in this range</text>
+          <text x="140" y="37" text-anchor="end" fill="#2A1F12">/</text>
+          <text x="140" y="71" text-anchor="end" fill="#2A1F12">/shop</text>
+          <text x="140" y="105" text-anchor="end" fill="#2A1F12">/shop/[slug]</text>
+          <text x="140" y="139" text-anchor="end" fill="#2A1F12">/cart</text>
+          <text x="140" y="173" text-anchor="end" fill="#2A1F12">/checkout</text>
+          <text x="140" y="207" text-anchor="end" fill="#2A1F12">/portal</text>
+          <text x="410" y="37" fill="#2A1F12">1.8 s</text>
+          <text x="463" y="71" fill="#2A1F12">2.15 s</text>
+          <text x="578" y="105" fill="#2A1F12" font-weight="700">3.0 s · over budget</text>
+          <text x="435" y="139" fill="#2A1F12">1.98 s</text>
+          <text x="508" y="173" fill="#69553C">2.23 s · 31 visits, not enough data</text>
+          <text x="156" y="207" fill="#69553C">No visits in this range</text>
           <!-- budget line -->
-          <line x1="500" y1="10" x2="500" y2="220" stroke="#1c1a17" stroke-width="2" stroke-dasharray="5 4"/>
-          <text x="504" y="18" fill="#1c1a17" font-weight="700">Budget 2.5 s</text>
+          <line x1="500" y1="10" x2="500" y2="220" stroke="#2A1F12" stroke-width="2" stroke-dasharray="5 4"/>
+          <text x="504" y="18" fill="#2A1F12" font-weight="700">Budget 2.5 s</text>
         </g>
       </svg>
       <p class="hint" style="margin:6px 0 0">Faded bar: too few visits to judge. Hovering a bar shows its sample count and value in the built page.</p>

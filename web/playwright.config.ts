@@ -1,6 +1,6 @@
 import { defineConfig, devices, type PlaywrightTestConfig } from '@playwright/test';
 
-// HO-CAT-002 §16 — Playwright E2E, run against MSW first, then against the real API (§5.1).
+// Playwright E2E, run against MSW first, then against the real API (§5.1).
 // Each area adds its own specs under tests/e2e/; this config is shared and shouldn't need
 // per-area edits.
 //
@@ -62,7 +62,7 @@ if (process.env.E2E_REAL_API === '1') {
 
 export default defineConfig({
   testDir: './tests/e2e',
-  // Issues.md #2: refuses port 3000 and any real API on catecommerce_dev before a single test runs.
+  // Issues.md #2: refuses port 3000 and any real API on amargram_dev before a single test runs.
   globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
@@ -76,5 +76,8 @@ export default defineConfig({
     command: 'npm run dev',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
+    // HO-P5 Amended (au): keep every compiled route for the run (`next.config.ts`), or route disposal mid-run
+    // serves pages whose client chunk 404s. A server you start yourself needs `E2E_KEEP_ROUTES=1` too.
+    env: { E2E_KEEP_ROUTES: '1' },
   },
 });

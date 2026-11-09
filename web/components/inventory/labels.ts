@@ -57,8 +57,6 @@ export const STORAGE_CONDITION_OPTIONS: ReadonlyArray<{ value: StorageCondition;
 export const LOCATION_KIND_LABELS: Readonly<Record<StockLocationKind, string>> = {
   ShopFloor: 'Shop floor',
   Warehouse: 'Warehouse',
-  ClinicDispensary: 'Clinic dispensary',
-  BoardingStore: 'Boarding store',
   Quarantine: 'Quarantine',
 };
 
@@ -76,9 +74,6 @@ export const MOVEMENT_LABELS: Readonly<Record<string, string>> = {
   CountLoss: 'count losses',
   Wastage: 'wastage',
   Sale: 'sales',
-  Dispense: 'dispensing medicine',
-  ClinicalUse: 'clinical use',
-  BoardingUse: 'boarding use',
   Return: 'customer returns',
 };
 
@@ -89,7 +84,6 @@ export function movementLabel(movement: string): string {
 export const STOCK_CLASS_OPTIONS = [
   { value: '', label: 'All classes' },
   { value: 'Food', label: 'Food' },
-  { value: 'Medicine', label: 'Medicine' },
   { value: 'Consumable', label: 'Consumable' },
   { value: 'General', label: 'General' },
 ] as const;
@@ -129,7 +123,6 @@ export const CONSIGNMENT_STATUS_LABELS: Readonly<Record<ConsignmentStatus, strin
 export const DOCUMENT_KIND_LABELS: Readonly<Record<ImportDocumentKind, string>> = {
   ImportPermit: 'Import permit',
   HealthCertificate: 'Health certificate',
-  VeterinaryCertificate: 'Veterinary certificate',
   CustomsDeclaration: 'Customs declaration',
   BillOfLading: 'Bill of lading',
   CommercialInvoice: 'Commercial invoice',
@@ -176,7 +169,7 @@ export const ADJUSTMENT_REASONS: ReadonlyArray<{
   { value: 'Damage', label: 'Damaged', help: 'Stock was damaged and cannot be used.', direction: 'removes' },
   { value: 'Theft', label: 'Theft or loss', help: 'Stock has gone missing.', direction: 'removes' },
   { value: 'Sampling', label: 'Sampling', help: 'Units given away or used as samples.', direction: 'removes' },
-  { value: 'InternalUse', label: 'Internal use', help: 'Used by the clinic or shop itself.', direction: 'removes' },
+  { value: 'InternalUse', label: 'Internal use', help: 'Used by the shop itself.', direction: 'removes' },
   { value: 'Expired', label: 'Expired', help: 'Written down because it passed its expiry date.', direction: 'removes' },
   { value: 'RecallDisposal', label: 'Recall disposal', help: 'Recalled stock being disposed of.', direction: 'removes' },
   { value: 'Found', label: 'Found', help: 'Stock found that the books did not show.', direction: 'adds' },
@@ -195,7 +188,7 @@ export function describeAlert(kind: AlertKind, thresholdDays: number | null): st
         ? 'Expiring soon'
         : `Expires in ${thresholdDays} ${thresholdDays === 1 ? 'day' : 'days'} or less`;
     case 'Expired':
-      return 'Expired — cannot be sold, dispensed or fed';
+      return 'Expired — cannot be sold or used';
     case 'LowStock':
       return 'Below reorder point';
     case 'Shortfall':
@@ -230,9 +223,6 @@ export const LEDGER_KIND_LABELS: Readonly<Record<string, string>> = {
   CountLoss: 'Count loss',
   Wastage: 'Written off',
   Sale: 'Sold',
-  Dispense: 'Dispensed',
-  ClinicalUse: 'Used in clinic',
-  BoardingUse: 'Fed during boarding',
   Return: 'Returned',
 };
 
@@ -249,29 +239,18 @@ export const REFERENCE_KIND_LABELS: Readonly<Record<string, string>> = {
   StorageBreach: 'Storage breach',
   CustomerOrder: 'Customer order',
   PosSale: 'Counter sale',
-  Prescription: 'Prescription',
-  Visit: 'Clinic visit',
-  Surgery: 'Surgery',
-  BoardingStay: 'Boarding stay',
   CustomerReturn: 'Customer return',
-  ControlledDrugCorrection: 'Controlled-drug correction',
 };
 
 export function referenceKindLabel(kind: string): string {
   return REFERENCE_KIND_LABELS[kind] ?? kind;
 }
 
-/** The recall trace's movement kinds in the words a pharmacist would use. */
+/** The recall trace's movement kinds in plain words. */
 export function traceKindLabel(kind: string): string {
   switch (kind) {
     case 'Sale':
       return 'Bought';
-    case 'Dispense':
-      return 'Dispensed';
-    case 'BoardingUse':
-      return 'Fed during boarding';
-    case 'ClinicalUse':
-      return 'Used in clinic';
     default:
       return ledgerKindLabel(kind);
   }

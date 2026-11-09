@@ -3,37 +3,35 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Panel } from '@/components/back-office/Panel';
 import { LimitedMarkup } from '@/components/content/LimitedMarkup';
-import { submitSection } from '@/lib/shop/submitSection';
-import { categoryLabel, subcategoryLabel } from '@/lib/shop/labels';
+import { submitProductSection } from './submitProductSection';
+import {
+  CERTIFICATIONS,
+  categoryLabel,
+  certificationLabel,
+  isFoodCategory,
+  subcategoryLabel,
+} from '@/lib/shop/labels';
 import type { CategoryNode } from '@/lib/api/shop-catalogue';
 import type { TaxClass } from '@/lib/api/admin-catalogue';
 import type { StaffProductDetail } from '@/lib/api/staff-shop';
+import { SUBSCRIBABLE_HELP } from '@/lib/subscriptions/copy';
 import { Field, SectionFrame, inputClass } from './SectionFrame';
-
-export const HEALTH_FOCUSES = [
-  'Sterilised',
-  'WeightManagement',
-  'Urinary',
-  'Renal',
-  'Digestive',
-  'SkinAndCoat',
-  'Hairball',
-  'Dental',
-  'Sensitive',
-] as const;
 
 const schema = z.object({
   name: z.string().trim().min(1, 'Enter the product name.').max(200),
-  brand: z.string().trim().min(1, 'Enter the brand.').max(100),
+  brand: z.string().trim().min(1, 'Enter the producer.').max(100),
   description: z.string().max(5000, 'Keep the description under 5000 characters.'),
   subcategory: z.string(),
   tags: z.string(),
   countryOfOriginCode: z.string(),
+  districtOfOrigin: z.string().max(60, 'Keep the district to 60 characters or fewer.'),
   taxClassId: z.string().min(1, 'Choose a tax class.'),
   listedOnStorefront: z.boolean(),
+  isSubscribable: z.boolean(),
   isExpiryTracked: z.boolean(),
-  healthFocus: z.array(z.string()),
+  certifications: z.array(z.string()),
   slug: z.string().trim().min(1, 'Enter the web address.'),
 });
 export type DetailsFormValues = z.infer<typeof schema>;
@@ -44,10 +42,12 @@ const KNOWN = [
   'subcategory',
   'tags',
   'countryOfOriginCode',
+  'districtOfOrigin',
   'taxClassId',
   'listedOnStorefront',
+  'isSubscribable',
   'isExpiryTracked',
-  'healthFocus',
+  'certifications',
   'slug',
 ] as const;
 
@@ -73,11 +73,19 @@ export interface ProductDetailsFormProps {
 }
 
 /**
- * HO-SHP-002 §11.6 `ProductDetailsForm` — US-SHP-01. Description is LimitedMarkup with a live
- * preview through the SHARED renderer (what staff see is what the shop shows). The slug is read-only
- * once the product has been published; the category is read-only while the product is active.
- * *Track expiry* is locked on for food. Health focus (food) is saved with the details and loaded from
- * the staff read (HO-SHP-001-FU1), so a save that does not touch it sends back what is stored.
+ * HO-SHP-002 §11.6 `ProductDetailsForm` — US-SHP-01; HO-P4 §11.4.5 layout. Two columns at 1024 px
+ * and up inside ONE form and ONE `PUT`: the main card (name, brand / producer, web address,
+ * description, tags) and the "Organise" aside (category, subcategory, tax class, country of origin,
+ * certifications, listed in shop, track batches and expiry). The publish status, its checklist and
+ * the Publish / Unpublish / Archive commands live in the editor header's Status card, never in this
+ * form (a status change is a command, not a saved field).
+ *
+ * Description is LimitedMarkup with a live preview through the SHARED renderer (what staff see is
+ * what the shop shows). The slug is read-only once the product has been published; the category is
+ * read-only while the product is active. *Track batches and expiry* is locked on for food.
+ * Certifications (HO-P2 §1.3, food only — the API clears them on non-food) are saved with the
+ * details and loaded from the staff read (HO-SHP-001-FU1), so a save that does not touch them
+ * sends back what is stored.
  */
 export function ProductDetailsForm({
   product,
@@ -87,7 +95,7 @@ export function ProductDetailsForm({
   onSave,
   onReload,
 }: ProductDetailsFormProps) {
-  const isFood = product.category === 'CatFood' && product.kind === 'Standard';
+  const isFood = isFoodCategory(product.category) && product.kind === 'Standard';
   const {
     register,
     handleSubmit,
@@ -104,10 +112,12 @@ export function ProductDetailsForm({
       subcategory: product.subcategory ?? '',
       tags: product.tags.join(', '),
       countryOfOriginCode: product.countryOfOriginCode ?? '',
+      districtOfOrigin: product.districtOfOrigin ?? '',
       taxClassId: product.taxClassId,
       listedOnStorefront: product.listedOnStorefront,
+      isSubscribable: product.isSubscribable === true,
       isExpiryTracked: isFood ? true : product.isExpiryTracked,
-      healthFocus: product.healthFocus ?? [],
+      certifications: product.certifications ?? [],
       slug: product.slug,
     },
   });
@@ -115,6 +125,135 @@ export function ProductDetailsForm({
   const tags = normaliseTags(watch('tags') ?? '');
   const subcategories = categories.find((c) => c.value === product.category)?.subcategories ?? [];
   const slugLocked = !!product.firstPublishedOn;
+
+  const organise = (
+    <Panel title="Organise" as="aside">
+      <div className="flex flex-col gap-4">
+        <Field
+          id="pd-category"
+          label="Category"
+          hint={
+            product.status === 'Active'
+              ? 'The category is locked while the product is active.'
+              : undefined
+          }
+        >
+          <select
+            id="pd-category"
+            className={inputClass}
+            disabled
+            value={product.category}
+            onChange={() => undefined}
+          >
+            <option value={product.category}>{categoryLabel(product.category)}</option>
+          </select>
+        </Field>
+        {subcategories.length > 0 && (
+          <Field id="pd-sub" label="Subcategory" error={errors.subcategory?.message}>
+            <select id="pd-sub" className={inputClass} {...register('subcategory')}>
+              <option value="">None</option>
+              {subcategories.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {subcategoryLabel(s.value)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+        <Field id="pd-tax" label="Tax class" error={errors.taxClassId?.message}>
+          <select id="pd-tax" className={inputClass} {...register('taxClassId')}>
+            {taxClasses.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field
+          id="pd-country"
+          label="Country of origin"
+          hint={isFood ? 'Required to publish a food product.' : undefined}
+        >
+          <select id="pd-country" className={inputClass} {...register('countryOfOriginCode')}>
+            <option value="">Not set</option>
+            {countries.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field
+          id="pd-district"
+          label="District of origin"
+          error={errors.districtOfOrigin?.message}
+          hint="Optional. For a product grown in Bangladesh, shown in the shop, for example Dinajpur."
+        >
+          <input
+            id="pd-district"
+            className={`${inputClass} min-h-11`}
+            maxLength={60}
+            aria-invalid={!!errors.districtOfOrigin}
+            {...register('districtOfOrigin')}
+          />
+        </Field>
+        {isFood && (
+          <fieldset className="m-0 border-0 p-0">
+            <legend className="mb-1 p-0 text-sm font-semibold text-ink">Certifications</legend>
+            <p className="mb-2 text-xs text-ink-muted">
+              Saved with the details. Certified organic needs the certifier and certificate number
+              before the product can be published.
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {CERTIFICATIONS.map((certification) => (
+                <label key={certification} className="flex items-center gap-2 text-sm text-ink">
+                  <input
+                    type="checkbox"
+                    value={certification}
+                    className="h-4 w-4 accent-leaf"
+                    {...register('certifications')}
+                  />
+                  {certificationLabel(certification)}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
+        <label className="flex items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-leaf"
+            {...register('listedOnStorefront')}
+          />
+          Listed in shop
+        </label>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="pd-subscribable" className="flex min-h-11 items-center gap-2 text-sm text-ink">
+            <input
+              id="pd-subscribable"
+              type="checkbox"
+              className="h-5 w-5 accent-leaf"
+              aria-describedby="pd-subscribable-help"
+              {...register('isSubscribable')}
+            />
+            Can be subscribed to
+          </label>
+          <p id="pd-subscribable-help" className="text-xs text-ink-muted">
+            {SUBSCRIBABLE_HELP}
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-leaf"
+            disabled={isFood}
+            {...register('isExpiryTracked')}
+          />
+          Track batches and expiry{isFood ? ' (always on for food)' : ''}
+        </label>
+      </div>
+    </Panel>
+  );
 
   return (
     <SectionFrame
@@ -124,8 +263,9 @@ export function ProductDetailsForm({
       isSubmitting={isSubmitting}
       isSubmitSuccessful={isSubmitSuccessful}
       onReload={onReload}
+      aside={organise}
       onSubmit={handleSubmit(async (values) => {
-        const ok = await submitSection(
+        const ok = await submitProductSection(
           () => onSave({ ...values, tagList: normaliseTags(values.tags) }),
           setError,
           KNOWN,
@@ -141,7 +281,7 @@ export function ProductDetailsForm({
           {...register('name')}
         />
       </Field>
-      <Field id="pd-brand" label="Brand" error={errors.brand?.message}>
+      <Field id="pd-brand" label="Brand / producer" error={errors.brand?.message}>
         <input
           id="pd-brand"
           className={inputClass}
@@ -150,37 +290,24 @@ export function ProductDetailsForm({
         />
       </Field>
       <Field
-        id="pd-cat"
-        label="Category"
+        id="pd-slug"
+        label="Web address (slug)"
+        error={errors.slug?.message}
         hint={
-          product.status === 'Active'
-            ? 'The category is locked while the product is active.'
-            : undefined
+          slugLocked
+            ? 'The web address can’t change once a product has been published.'
+            : 'Can be changed until the first publication.'
         }
       >
-        <select
-          id="pd-cat"
+        <input
+          id="pd-slug"
           className={inputClass}
-          disabled
-          value={product.category}
-          onChange={() => undefined}
-        >
-          <option value={product.category}>{categoryLabel(product.category)}</option>
-        </select>
+          readOnly={slugLocked}
+          aria-invalid={!!errors.slug}
+          {...register('slug')}
+        />
       </Field>
-      {subcategories.length > 0 && (
-        <Field id="pd-sub" label="Subcategory" error={errors.subcategory?.message}>
-          <select id="pd-sub" className={inputClass} {...register('subcategory')}>
-            <option value="">None</option>
-            {subcategories.map((s) => (
-              <option key={s.value} value={s.value}>
-                {subcategoryLabel(s.value)}
-              </option>
-            ))}
-          </select>
-        </Field>
-      )}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         <Field
           id="pd-desc"
           label="Description"
@@ -200,7 +327,7 @@ export function ProductDetailsForm({
           <div
             role="group"
             aria-label="Description preview"
-            className="min-h-24 rounded-[var(--radius-sm)] border border-border bg-surface p-3 text-sm"
+            className="min-h-24 rounded-[var(--radius-md)] border border-border bg-surface p-3 text-sm"
           >
             <LimitedMarkup body={description || ''} className="space-y-2" />
           </div>
@@ -212,83 +339,6 @@ export function ProductDetailsForm({
         hint={`Separate with commas. Saved as: ${tags.length ? tags.join(', ') : 'none'}`}
       >
         <input id="pd-tags" className={inputClass} {...register('tags')} />
-      </Field>
-      <Field
-        id="pd-country"
-        label="Country of origin"
-        hint={isFood ? 'Required to publish a food product.' : undefined}
-      >
-        <select id="pd-country" className={inputClass} {...register('countryOfOriginCode')}>
-          <option value="">Not set</option>
-          {countries.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field id="pd-tax" label="Tax class" error={errors.taxClassId?.message}>
-        <select id="pd-tax" className={inputClass} {...register('taxClassId')}>
-          {taxClasses.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <label className="flex items-center gap-2 text-sm text-ink">
-        <input
-          type="checkbox"
-          className="h-4 w-4 accent-[var(--accent)]"
-          {...register('listedOnStorefront')}
-        />
-        Show in online shop
-      </label>
-      <label className="flex items-center gap-2 text-sm text-ink">
-        <input
-          type="checkbox"
-          className="h-4 w-4 accent-[var(--accent)]"
-          disabled={isFood}
-          {...register('isExpiryTracked')}
-        />
-        Track expiry{isFood ? ' (always on for food)' : ''}
-      </label>
-      {isFood && (
-        <fieldset className="m-0 border-0 p-0">
-          <legend className="mb-1 p-0 text-sm font-semibold text-ink">Health focus</legend>
-          <p className="mb-2 text-xs text-ink-muted">Saved with the details.</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            {HEALTH_FOCUSES.map((focus) => (
-              <label key={focus} className="flex items-center gap-1.5 text-sm text-ink">
-                <input
-                  type="checkbox"
-                  value={focus}
-                  className="h-4 w-4 accent-[var(--accent)]"
-                  {...register('healthFocus')}
-                />
-                {subcategoryLabel(focus)}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      )}
-      <Field
-        id="pd-slug"
-        label="Web address (slug)"
-        error={errors.slug?.message}
-        hint={
-          slugLocked
-            ? 'The web address can’t change once a product has been published.'
-            : 'Can be changed until the first publication.'
-        }
-      >
-        <input
-          id="pd-slug"
-          className={inputClass}
-          readOnly={slugLocked}
-          aria-invalid={!!errors.slug}
-          {...register('slug')}
-        />
       </Field>
     </SectionFrame>
   );

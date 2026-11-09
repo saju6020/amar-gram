@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 /**
- * `components/common/LoadingState.tsx` — HO-CAT-002 §11.7, Definition of Done: "Skeletons for
+ * `components/common/LoadingState.tsx` — the scaffold handover §11.7, Definition of Done: "Skeletons for
  * loading, not spinners, on list and profile screens."
  *
  * Renders `rows` shimmering placeholder bars (respecting `prefers-reduced-motion` via Tailwind's

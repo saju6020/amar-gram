@@ -92,12 +92,12 @@ describe('getPublic — S11 and S12', () => {
       return Response.json({});
     });
     try {
-      await getProductDetailServer('kitten');
+      await getProductDetailServer('oats');
     } finally {
       spy.mockRestore();
     }
     expect(calls).toEqual([
-      { url: expect.stringContaining('/api/shop/products/kitten'), revalidate: 0 },
+      { url: expect.stringContaining('/api/shop/products/oats'), revalidate: 0 },
     ]);
   });
 
@@ -107,14 +107,14 @@ describe('getPublic — S11 and S12', () => {
       http.get('*/api/shop/locales', () =>
         HttpResponse.json({ defaultLocale: 'en', locales: ['en', 'bn'] }),
       ),
-      http.get('*/api/shop/products/kitten', ({ request }) => {
+      http.get('*/api/shop/products/oats', ({ request }) => {
         seen.push(new URL(request.url).search);
         return HttpResponse.json({});
       }),
     );
-    await getProductDetailServer('kitten', 'bn');
-    await getProductDetailServer('kitten', 'zz-random-1');
-    await getProductDetailServer('kitten');
+    await getProductDetailServer('oats', 'bn');
+    await getProductDetailServer('oats', 'zz-random-1');
+    await getProductDetailServer('oats');
     expect(seen).toEqual(['?locale=bn', '', '']);
   });
 
@@ -124,13 +124,13 @@ describe('getPublic — S11 and S12', () => {
     ]);
     const seen: string[] = [];
     server.use(
-      http.get('*/api/shop/products/kitten/reviews', ({ request }) => {
+      http.get('*/api/shop/products/oats/reviews', ({ request }) => {
         seen.push(new URL(request.url).search);
         return HttpResponse.json({});
       }),
     );
-    await getProductReviewsServer('kitten', 99999);
-    await getProductReviewsServer('kitten', -3);
+    await getProductReviewsServer('oats', 99999);
+    await getProductReviewsServer('oats', -3);
     expect(seen).toEqual(['?pageNumber=500', '']);
   });
 });

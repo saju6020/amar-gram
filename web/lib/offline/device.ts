@@ -11,7 +11,7 @@ import { notifyOfflineStoreChanged } from './events';
  *    successful snapshot sync for that same person, which needs a live session.
  *
  * It holds no personal data (opaque ids and timestamps). Off by default (OQ-1): a personal laptop
- * should not silently keep a patient list.
+ * should not silently keep a customer list.
  */
 export interface DeviceSettings {
   offlineEnabled: boolean;

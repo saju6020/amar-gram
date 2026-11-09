@@ -8,12 +8,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 /**
- * HO-CAT-002 TEST gate, sixth pass — MEDIUM, now fixed by the 7th pass's Radix-`Dialog` rebuild.
+ * Staff shell TEST gate, sixth pass — MEDIUM, now fixed by the 7th pass's Radix-`Dialog` rebuild.
  *
  * Original finding: neither the hand-rolled drawer's `Escape` `keydown` handler nor its scrim's
  * `onClick` ever called `.focus()` on the toggle — both closed the drawer but left focus wherever
  * it already was (a nav link after Tab had moved it there, or `document.body` entirely after a
- * scrim click), never actually "returning" it as HO-CAT-002 §8.5 requires. Every existing
+ * scrim click), never actually "returning" it as §8.5 requires. Every existing
  * `Escape`/scrim-click case only ever closed the drawer *immediately* after opening it, before Tab
  * had moved focus anywhere, so none of them exercised a genuine return — this file's own two cases
  * were written specifically to move focus first, which is what made the gap reproducible.
@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
  * kept, updated to the new selectors, as the permanent regression test for exactly the behaviour
  * the original finding described — it now watches the fix hold, rather than watching the bug fail.
  */
-test.describe('StaffShell nav sheet at 360px returns focus to its trigger on close (HO-CAT-002 TEST gate, 6th pass, fixed 7th pass)', () => {
+test.describe('StaffShell nav sheet at 360px returns focus to its trigger on close (staff shell TEST gate, 6th pass, fixed 7th pass)', () => {
   test('Escape returns focus to the trigger even after Tab moved focus onto a sheet nav link', async ({
     page,
   }) => {

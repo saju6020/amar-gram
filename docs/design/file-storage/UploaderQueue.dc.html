@@ -8,9 +8,9 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:wght@600&family=Public+Sans:ital,wght@0,400;0,600;0,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--surface-page:#faf9f6;--surface:#fff;--surface-sunken:#f2efe7;--ink:#1c1a17;--ink-muted:#5c574f;--ink-faint:#8c8578;--border:#e5e1d8;--border-strong:#cbc3b2;--accent:#15605a;--accent-ink:#0e4a45;--accent-soft:rgba(21,96,90,.08);--warning-bg:#fbf0dc;--warning-ink:#6e4700;--danger-bg:#fbe9e7;--danger-ink:#8f1d1d;--font-display:"Newsreader",Georgia,serif;--font-sans:"Public Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
+:root{--surface-page:#F7F4EC;--surface:#fff;--surface-sunken:#F0E9DA;--ink:#2A1F12;--ink-muted:#69553C;--ink-faint:#8C7B61;--border:#E5DCC8;--border-strong:#CDBB99;--accent:#B4531A;--accent-ink:#8A3D11;--accent-soft:rgba(180,83,26,.08);--warning-bg:#FCEBC7;--warning-ink:#6e4700;--danger-bg:#FBE3DA;--danger-ink:#8A2814;--font-display:"Fraunces",Georgia,serif;--font-sans:"Work Sans",system-ui,sans-serif;--radius-sm:6px;--radius-md:10px}
 *{box-sizing:border-box}
 body{margin:0;font-family:var(--font-sans);background:var(--surface-page);color:var(--ink)}
 .topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:#fff}
@@ -57,58 +57,58 @@ progress::-webkit-progress-value{background:var(--accent);border-radius:3px}
 </style>
 </helmet>
 <div style="width:1280px;height:900px;background:var(--surface-page);overflow:auto;position:relative">
-  <div class="topnav"><div class="brand">PurrCare · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Dr. Nusrat Jahan · Vet</div></div>
+  <div class="topnav"><div class="brand">Amar Gram · staff</div><div class="who"><select class="branchpick" aria-label="Active branch"><option>Uttara (primary)</option><option>Banani</option></select>Nusrat Jahan · Warehouse lead</div></div>
   <div class="main">
-    <div class="titlerow"><h1 class="h1">Milo — CBC and chemistry panel</h1></div>
-    <p class="sub">Diagnostic order DX-2026-0418 · host page is illustrative (HO-EMR-002). Three files chosen at once; they upload one at a time (ADR-FE-150).</p>
+    <div class="titlerow"><h1 class="h1">Delivery GRN-2026-0418 — Satkhira Honey Collective</h1></div>
+    <p class="sub">Goods received at Uttara warehouse · host page is illustrative (HO-SHP-002). Three files chosen at once; they upload one at a time (ADR-FE-150).</p>
     <div class="grid">
       <div class="card">
-        <h2>Enter results</h2>
+        <h2>Supplier documents</h2>
         <div class="two">
-          <div class="field"><label for="r-date">Result date</label><input id="r-date" value="23 Sep 2026"></div>
-          <div class="field"><label for="r-note">Note <span style="font-weight:400;color:var(--ink-muted)">(optional)</span></label><input id="r-note" value="External lab — Popular Diagnostics"></div>
+          <div class="field"><label for="r-date">Received on</label><input id="r-date" value="23 Sep 2026"></div>
+          <div class="field"><label for="r-note">Note <span style="font-weight:400;color:var(--ink-muted)">(optional)</span></label><input id="r-note" value="Challan, organic certificate and weights"></div>
         </div>
         <div class="field" style="margin-bottom:0"><label>Attachments</label></div>
         <button type="button" class="drop" aria-describedby="q-hint">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
           <span class="dt">Choose files or drop them here</span>
-          <span class="dh" id="q-hint">· PDF, JPEG, PNG or DICOM · up to 50 MB each</span>
+          <span class="dh" id="q-hint">· PDF, JPEG, PNG or XLSX · up to 50 MB each</span>
         </button>
         <ul class="queue" aria-label="Files">
           <li class="frow">
             <div class="ftype" aria-hidden="true">PDF</div>
             <div class="fbody">
-              <div class="fname">cbc-panel-page1.pdf</div>
+              <div class="fname">challan-0418.pdf</div>
               <div class="fmeta">1.8 MB · <span class="st-ok"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Uploaded</span></div>
             </div>
-            <button type="button" class="btn-sm" aria-label="Remove cbc-panel-page1.pdf">Remove</button>
+            <button type="button" class="btn-sm" aria-label="Remove challan-0418.pdf">Remove</button>
           </li>
           <li class="frow" style="border-color:var(--accent)">
             <div class="ftype" aria-hidden="true">JPG</div>
             <div class="fbody">
-              <div class="fname">chemistry-printout.jpg</div>
+              <div class="fname">organic-certificate-scan.jpg</div>
               <div class="fmeta">6.4 MB · Uploading — 4.0 MB of 6.4 MB (62%)</div>
-              <progress max="100" value="62" aria-label="Uploading chemistry-printout.jpg"></progress>
+              <progress max="100" value="62" aria-label="Uploading organic-certificate-scan.jpg"></progress>
             </div>
-            <button type="button" class="btn-sm" aria-label="Cancel uploading chemistry-printout.jpg">Cancel</button>
+            <button type="button" class="btn-sm" aria-label="Cancel uploading organic-certificate-scan.jpg">Cancel</button>
           </li>
           <li class="frow">
-            <div class="ftype" aria-hidden="true">DCM</div>
+            <div class="ftype" aria-hidden="true">XLS</div>
             <div class="fbody">
-              <div class="fname">thorax-lateral.dcm</div>
-              <div class="fmeta">24.0 MB · <span class="st-wait"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Waiting — starts when the one above finishes</span></div>
+              <div class="fname">delivery-weights.xlsx</div>
+              <div class="fmeta">3.1 MB · <span class="st-wait"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Waiting — starts when the one above finishes</span></div>
             </div>
-            <button type="button" class="btn-sm" aria-label="Remove thorax-lateral.dcm from the queue">Remove</button>
+            <button type="button" class="btn-sm" aria-label="Remove delivery-weights.xlsx from the queue">Remove</button>
           </li>
         </ul>
         <div style="margin-top:18px">
-          <button type="button" class="btn" disabled aria-describedby="q-reason">Attach results</button>
+          <button type="button" class="btn" disabled aria-describedby="q-reason">Attach documents</button>
           <p class="reason" id="q-reason">Available when the 2 remaining uploads finish. You can keep typing meanwhile.</p>
         </div>
       </div>
       <aside class="anno" aria-label="Design notes">
         <h3>Live region so far (polite)</h3>
-        <div class="live">"cbc-panel-page1.pdf uploaded."<br><s>"chemistry-printout.jpg 62%"</s> — never announced</div>
+        <div class="live">"challan-0418.pdf uploaded."<br><s>"organic-certificate-scan.jpg 62%"</s> — never announced</div>
         <h3>What this board shows</h3>
         <ul>
           <li>Each file has its own <code>&lt;progress&gt;</code> with an accessible name; the byte count is visible text, not colour.</li>

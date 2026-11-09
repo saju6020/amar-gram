@@ -14,7 +14,7 @@ describe('shop mock contract — HO-SHP-002 §12', () => {
   });
 
   it('searches with typos and answers a zero-result search with suggestions', async () => {
-    const typo = (await (await fetch(`${base}/api/shop/products?q=royal%20canan`)).json()) as {
+    const typo = (await (await fetch(`${base}/api/shop/products?q=jasmin%20rice`)).json()) as {
       totalCount: number;
     };
     expect(typo.totalCount).toBeGreaterThan(0);

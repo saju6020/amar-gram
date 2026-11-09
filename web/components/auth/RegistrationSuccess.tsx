@@ -49,7 +49,7 @@ export function RegistrationSuccess({ signInHref = '/sign-in' }: { signInHref?: 
         <ArrowRight size={16} aria-hidden="true" />
       </Link>
       <p className="text-[13px] text-ink-muted">
-        After signing in you can add your cats, book a visit or shop for supplies.
+        After signing in you can shop, track your orders and save favourites.
       </p>
     </div>
   );

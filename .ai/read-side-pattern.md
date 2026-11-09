@@ -21,26 +21,26 @@ unchanged and still enforced: **`Application` never references `Read`, and `Read
 ```csharp
 using Platform.Infrastructure.Core.Queries;
 
-namespace CatEcommerce.Read.QueryHandlers.Appointment;
+namespace AmarGram.Read.QueryHandlers.Order;
 
-public sealed class GetDayScheduleQueryHandler(
-    ILogger<GetDayScheduleQueryHandler> logger,
-    CatEcommerceDbContext db)
-    : IQueryHandlerAsync<GetDayScheduleQuery, IReadOnlyList<AppointmentListItem>>
+public sealed class GetDayOrdersQueryHandler(
+    ILogger<GetDayOrdersQueryHandler> logger,
+    AmarGramDbContext db)
+    : IQueryHandlerAsync<GetDayOrdersQuery, IReadOnlyList<OrderListItem>>
 {
-    public async Task<QueryResponse<IReadOnlyList<AppointmentListItem>>> HandleAsync(
-        GetDayScheduleQuery query)
+    public async Task<QueryResponse<IReadOnlyList<OrderListItem>>> HandleAsync(
+        GetDayOrdersQuery query)
     {
-        var items = await db.Appointments
+        var items = await db.Orders
             .AsNoTracking()
-            .Where(a => a.ScheduledOn == query.Day)
-            .OrderBy(a => a.ScheduledFor)
-            .Select(a => new AppointmentListItem(
-                a.Id, a.CatName, a.ScheduledFor, a.Status.DisplayName))
+            .Where(a => a.PlacedOn == query.Day)
+            .OrderBy(a => a.PlacedAt)
+            .Select(a => new OrderListItem(
+                a.Id, a.CustomerName, a.PlacedAt, a.Status.DisplayName))
             .Skip(query.Skip).Take(query.Take)
             .ToListAsync();
 
-        return new QueryResponse<IReadOnlyList<AppointmentListItem>> { Result = items };
+        return new QueryResponse<IReadOnlyList<OrderListItem>> { Result = items };
     }
 }
 ```
@@ -52,12 +52,12 @@ public sealed class GetDayScheduleQueryHandler(
 Filter criteria only. No logic, no defaults hiding a business rule.
 
 ```csharp
-namespace CatEcommerce.Read.Queries.Appointment;
+namespace AmarGram.Read.Queries.Order;
 
-public sealed class GetDayScheduleQuery : Query<IReadOnlyList<AppointmentListItem>>
+public sealed class GetDayOrdersQuery : Query<IReadOnlyList<OrderListItem>>
 {
     public required DateOnly Day { get; init; }
-    public Guid? VetId { get; init; }
+    public Guid? BranchId { get; init; }
 }
 ```
 
@@ -72,8 +72,8 @@ public sealed class GetDayScheduleQuery : Query<IReadOnlyList<AppointmentListIte
 Shaped for the screen, not for the domain.
 
 ```csharp
-public sealed record AppointmentListItem(
-    Guid Id, string CatName, DateTime ScheduledFor, string Status);
+public sealed record OrderListItem(
+    Guid Id, string CustomerName, DateTime PlacedAt, string Status);
 ```
 
 Gone with MongoDB and the projections: `ViewModelBase`, `[BsonIgnoreExtraElements]`, public
@@ -84,12 +84,12 @@ ViewModel any more — the query handler builds it.
 
 ## 4. Rules
 
-1. **Project, never rehydrate.** Loading a `CatAggregate` to render four columns pulls its whole
+1. **Project, never rehydrate.** Loading a `ProductAggregate` to render four columns pulls its whole
    object graph and its invariant machinery to produce four fields.
 2. **`Select` before `ToListAsync`.** Projection happens in the database, not in memory.
 3. **`AsNoTracking()` on every read.** A tracked read in a request that also writes can produce
    surprising saves.
-4. **Paginate every list** (SRS UI-4). An unpaginated list of cats works fine for two years and
+4. **Paginate every list** (SRS UI-4). An unpaginated list of products works fine for two years and
    then does not.
 5. **A query never writes.** Not an audit row, not a "last viewed" stamp. If something must be
    recorded on read, dispatch a command.
@@ -101,8 +101,8 @@ ViewModel any more — the query handler builds it.
 
 ## 5. Reads that span aggregates
 
-Reporting (SRS §8) legitimately spans contexts — revenue by business line needs appointments,
-orders and boarding stays together. A query handler may join across them: it is one database and
+Reporting (SRS §8) legitimately spans contexts — revenue by business line needs orders,
+invoices and subscriptions together. A query handler may join across them: it is one database and
 one solution, and the write-side aggregate boundary does not constrain a read.
 
 What it must not do is **bypass an aggregate to change something**. Reading widely is fine;

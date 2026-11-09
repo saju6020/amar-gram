@@ -50,12 +50,17 @@ export const accountsFixtureIds = {
 
   // Staff.
   adminStaffId: 's0000000-0000-0000-0000-000000000001',
-  adminIdentifier: 'admin@purrcare.test',
+  adminIdentifier: 'admin@amargram.test',
   adminPassword: 'AdminPass123!',
-  nurseStaffId: 's0000000-0000-0000-0000-000000000002',
-  nurseIdentifier: 'nurse@purrcare.test',
-  nursePassword: 'NursePass123!',
+  // A non-admin staff member with the Reception role (key names kept for existing callers).
+  stockStaffId: 's0000000-0000-0000-0000-000000000002',
+  stockIdentifier: 'stock@amargram.test',
+  stockPassword: 'StockPass123!',
   noPasswordStaffId: 's0000000-0000-0000-0000-000000000003',
+  // A non-admin staff member with the Inventory role: no NotificationLog.View (notifications E-E2).
+  inventoryStaffId: 's0000000-0000-0000-0000-000000000004',
+  inventoryIdentifier: 'inventory@amargram.test',
+  inventoryPassword: 'InventoryPass123!',
 
   // Walk-in / duplicates.
   walkInDuplicateMobile: '01755555555', // an existing customer's PRIMARY — refuses (201 elsewhere)
@@ -63,7 +68,6 @@ export const accountsFixtureIds = {
 
   duplicateGroupCustomerA: 'd0000000-0000-0000-0000-00000000000a',
   duplicateGroupCustomerB: 'd0000000-0000-0000-0000-00000000000b',
-  duplicateCatDeceased: 'e0000000-0000-0000-0000-000000000001',
 
   mergeAlreadyMergedId: 'd0000000-0000-0000-0000-00000000000c',
   mergeNotDuplicatesId: 'd0000000-0000-0000-0000-00000000000d',
@@ -108,15 +112,23 @@ interface StoredCustomer {
   }>;
   /** HO-NTF-002 §11.2 — the channel chosen for important messages; absent/null until chosen. */
   preferredChannel?: 'Sms' | 'Email' | null;
-  catCount: number;
-  cats: Array<{
-    id: string;
-    name: string;
-    species: string;
-    breed: string | null;
-    sex: string;
-    isDeceased: boolean;
-  }>;
+  // HO-P5 BG-19 -- what staff keep about a customer. The server computes `orderCount` and `lifetimeSpend` from orders and
+  // payments (StaffCustomerViewModel.cs:3-13); this store has neither, so they are seeded figures (the mock's role).
+  /** District of the default delivery address; `null` when there is none. */
+  area?: string | null;
+  orderCount?: number;
+  lifetimeSpendCents?: number;
+  /** In the order staff entered them. */
+  tags?: string[];
+  /** Oldest first as stored; the read sorts newest first. */
+  notes?: StoredCustomerNote[];
+}
+
+interface StoredCustomerNote {
+  id: string;
+  text: string;
+  authorStaffId: string;
+  createdOn: string;
 }
 
 interface StoredStaffAccount {
@@ -128,6 +140,9 @@ interface StoredStaffAccount {
    *  password; see that function's own comment. `null` still means "no password set". */
   password: string | null;
   roleIds: string[];
+  /** HO-P5 BG-22 -- a sign-in lockout still running at the read makes the status `Locked`
+   *  (Shared/Helpers/StaffAccountStatusRules.cs:5-16). Set only through `setMockStaffLockedUntil`. */
+  lockedUntil?: string | null;
 }
 
 /**
@@ -170,14 +185,14 @@ function seedPreferences() {
   return [
     {
       channel: 'SMS',
-      category: 'Appointments',
+      category: 'Orders',
       isGranted: true,
       isEditable: false,
       isAlwaysOn: true,
     },
     {
       channel: 'Email',
-      category: 'Appointments',
+      category: 'Orders',
       isGranted: true,
       isEditable: false,
       isAlwaysOn: true,
@@ -199,6 +214,64 @@ function seedPreferences() {
   ];
 }
 
+type StoredAddress = StoredCustomer['addresses'][number];
+
+/** HO-P6 S0: the signed-in customer's seeded address book, "Home" (the default) and "Office". The subscriptions mock's
+ *  seeded subscriptions point at these ids (`subscriptionFixtureIds.addresses`, pinned equal by a test). */
+function seedSamAddresses(): StoredAddress[] {
+  return [
+    {
+      id: '5a000000-0000-0000-0000-000000000001',
+      label: 'Home',
+      line1: 'House 7, Road 3, Dhanmondi',
+      line2: null,
+      city: 'Dhaka',
+      district: 'Dhaka',
+      postalCode: '1205',
+      deliveryInstructions: null,
+      isDefault: true,
+    },
+    {
+      id: '5a000000-0000-0000-0000-000000000002',
+      label: 'Office',
+      line1: 'Level 4, 21 Kemal Ataturk Avenue, Banani',
+      line2: null,
+      city: 'Dhaka',
+      district: 'Dhaka',
+      postalCode: '1213',
+      deliveryInstructions: null,
+      isDefault: false,
+    },
+  ];
+}
+
+/** HO-P6 S0: address books of customers the subscriptions seeds name but this mock holds no account for (staff views
+ *  only; they never sign in). Read through `findCustomerAddress` only, never listed or editable. */
+const seedOnlyAddressBooks: ReadonlyArray<{ customerId: string; addressId: string; label: string; line1: string }> = [
+  { customerId: 'c0000000-0000-0000-0000-0000000000a2', addressId: '5a000000-0000-0000-0000-000000000011', label: 'Home', line1: 'House 12, Road 9, Mohammadpur' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a4', addressId: '5a000000-0000-0000-0000-000000000013', label: 'Home', line1: 'Flat 3B, 45 Mirpur Road' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a5', addressId: '5a000000-0000-0000-0000-000000000014', label: 'Home', line1: 'House 88, Sector 7, Uttara' },
+  { customerId: 'c0000000-0000-0000-0000-0000000000a6', addressId: '5a000000-0000-0000-0000-000000000015', label: 'Home', line1: 'House 5, Lane 2, Gulshan' },
+];
+
+/**
+ * HO-P6 S0 (Amended (b)): read-only lookup of one address in Accounts' address book, the single source the
+ * subscriptions mock resolves `deliveryAddress` / `deliveryAddressMissing` from (SubscriptionViews.cs:93-102).
+ * `undefined` when the customer has no such address (never added, or deleted).
+ */
+export function findCustomerAddress(
+  customerId: string,
+  addressId: string,
+): { id: string; label: string; line1: string; city: string } | undefined {
+  const customer = customers.get(customerId);
+  const found = customer
+    ? customer.addresses.find((a) => a.id === addressId)
+    : seedOnlyAddressBooks
+        .filter((b) => b.customerId === customerId && b.addressId === addressId)
+        .map((b) => ({ id: b.addressId, label: b.label, line1: b.line1, city: 'Dhaka' }))[0];
+  return found ? { id: found.id, label: found.label, line1: found.line1, city: found.city } : undefined;
+}
+
 function seedCustomers(): Map<string, StoredCustomer> {
   const customers = new Map<string, StoredCustomer>();
 
@@ -214,17 +287,18 @@ function seedCustomers(): Map<string, StoredCustomer> {
     registrationChannel: 'SelfService',
     status: 'Active',
     mergedIntoCustomerId: null,
-    addresses: [],
+    addresses: seedSamAddresses(),
     preferences: seedPreferences(),
-    catCount: 1,
-    cats: [
+    area: 'Dhanmondi',
+    orderCount: 3,
+    lifetimeSpendCents: 425_000,
+    tags: ['Regular'],
+    notes: [
       {
-        id: 'f0000000-0000-0000-0000-000000000001',
-        name: 'Momo',
-        species: 'Cat',
-        breed: null,
-        sex: 'Female',
-        isDeceased: false,
+        id: 'n0000000-0000-0000-0000-000000000001',
+        text: 'Prefers delivery after 5pm. Call the guard at the gate.',
+        authorStaffId: accountsFixtureIds.stockStaffId,
+        createdOn: '2026-10-20T09:15:00.000Z',
       },
     ],
   });
@@ -244,8 +318,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   const dupMobileWithEmailId = crypto.randomUUID();
@@ -263,8 +335,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   const dupEmailOnlyId = crypto.randomUUID();
@@ -282,8 +352,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   const otherActiveCustomerId = crypto.randomUUID();
@@ -301,8 +369,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   // Walk-in duplicate fixtures: one hit only as a PRIMARY number, one only as an ADDITIONAL number
@@ -322,8 +388,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
   const additionalOnlyMatchId = crypto.randomUUID();
   customers.set(additionalOnlyMatchId, {
@@ -340,11 +404,9 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
-  // Duplicates report fixture: two members sharing a mobile number, one with a deceased cat.
+  // Duplicates report fixture: two members sharing a mobile number.
   customers.set(accountsFixtureIds.duplicateGroupCustomerA, {
     id: accountsFixtureIds.duplicateGroupCustomerA,
     fullName: 'Duplicate Alpha',
@@ -359,17 +421,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 1,
-    cats: [
-      {
-        id: accountsFixtureIds.duplicateCatDeceased,
-        name: 'Late Cat',
-        species: 'Cat',
-        breed: null,
-        sex: 'Male',
-        isDeceased: true,
-      },
-    ],
   });
   customers.set(accountsFixtureIds.duplicateGroupCustomerB, {
     id: accountsFixtureIds.duplicateGroupCustomerB,
@@ -385,17 +436,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 1,
-    cats: [
-      {
-        id: 'e0000000-0000-0000-0000-000000000002',
-        name: 'Live Cat',
-        species: 'Cat',
-        breed: null,
-        sex: 'Female',
-        isDeceased: false,
-      },
-    ],
   });
 
   // Merge-outcome fixtures.
@@ -413,8 +453,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: accountsFixtureIds.duplicateGroupCustomerA,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
   customers.set(accountsFixtureIds.mergeNotDuplicatesId, {
     id: accountsFixtureIds.mergeNotDuplicatesId,
@@ -430,8 +468,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
   customers.set(accountsFixtureIds.merge5xxId, {
     id: accountsFixtureIds.merge5xxId,
@@ -447,8 +483,6 @@ function seedCustomers(): Map<string, StoredCustomer> {
     mergedIntoCustomerId: null,
     addresses: [],
     preferences: seedPreferences(),
-    catCount: 0,
-    cats: [],
   });
 
   return customers;
@@ -464,13 +498,16 @@ function seedStaffAccounts(): Map<string, StoredStaffAccount> {
     password: hashPassword(accountsFixtureIds.adminPassword),
     roleIds: ['Administrator'],
   });
-  staff.set(accountsFixtureIds.nurseStaffId, {
-    id: accountsFixtureIds.nurseStaffId,
-    fullName: 'Nadia Nurse',
+  staff.set(accountsFixtureIds.stockStaffId, {
+    id: accountsFixtureIds.stockStaffId,
+    fullName: 'Nadia Karim',
     mobileNumber: null,
-    emailAddress: accountsFixtureIds.nurseIdentifier,
-    password: hashPassword(accountsFixtureIds.nursePassword),
-    roleIds: ['Nurse'],
+    emailAddress: accountsFixtureIds.stockIdentifier,
+    password: hashPassword(accountsFixtureIds.stockPassword),
+    // Stock.View without receiving or procurement (tests/e2e/fixtures.ts `secondStaff`). Inventory can receive and
+    // view procurement, so it does not fit here; Reception keeps the documented contract
+    // (HO-P4 Amended, E-X3).
+    roleIds: ['Reception'],
   });
   staff.set(accountsFixtureIds.noPasswordStaffId, {
     id: accountsFixtureIds.noPasswordStaffId,
@@ -479,6 +516,15 @@ function seedStaffAccounts(): Map<string, StoredStaffAccount> {
     emailAddress: null,
     password: null,
     roleIds: ['Reception'],
+  });
+  staff.set(accountsFixtureIds.inventoryStaffId, {
+    id: accountsFixtureIds.inventoryStaffId,
+    fullName: 'Rafiq Hossain',
+    mobileNumber: null,
+    emailAddress: accountsFixtureIds.inventoryIdentifier,
+    password: hashPassword(accountsFixtureIds.inventoryPassword),
+    // Reception can read the message log (ActionRoles.Notifications.cs), so the 403 case needs another role.
+    roleIds: ['Inventory'],
   });
   return staff;
 }
@@ -516,7 +562,8 @@ interface StaffSessionRecord {
  */
 const canPersist =
   typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
-const PERSIST_KEY = '__purrcare_accounts_mock_db__';
+// HO-P5: bumped when customers gained tags and notes and staff accounts gained a lockout, so an older tab's saved state is not read.
+const PERSIST_KEY = '__amargram_accounts_mock_db_p7__';
 
 function persistMockState(): void {
   if (!canPersist) return;
@@ -556,6 +603,17 @@ let customers = new Map(persisted?.customers ?? seedCustomers());
 let staffAccounts = new Map(persisted?.staffAccounts ?? seedStaffAccounts());
 const customerSessions = new Map<string, CustomerSessionRecord>(persisted?.customerSessions ?? []);
 const staffSessions = new Map<string, StaffSessionRecord>(persisted?.staffSessions ?? []);
+/** The mocked captcha shows its fixed answer, ABCDE, so a person trying the register page in mocked mode can read
+ *  and type it (it used to be a 1x1 pixel, which rendered as a blank box). */
+const MOCK_CAPTCHA_IMAGE = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="70" viewBox="0 0 200 70">' +
+    '<rect width="200" height="70" fill="#f3ead6"/>' +
+    '<path d="M8 50 C 50 20, 90 60, 192 22" stroke="#b9a37a" stroke-width="2" fill="none"/>' +
+    '<path d="M8 22 C 60 55, 120 10, 192 48" stroke="#c9b48a" stroke-width="1.5" fill="none"/>' +
+    '<text x="100" y="47" text-anchor="middle" font-family="monospace" font-size="34" font-weight="700" ' +
+    'letter-spacing="8" fill="#2b2a24">ABCDE</text>' +
+    '</svg>',
+)}`;
 const consumedCaptchas = new Map<string, string>(); // captchaId -> answer, removed on first use — never persisted (short-lived by design)
 
 /** Restores every seeded fixture and clears all sessions — call from a test's `beforeEach`. */
@@ -566,6 +624,29 @@ export function resetAccountsMockData(): void {
   staffSessions.clear();
   consumedCaptchas.clear();
   if (canPersist) window.sessionStorage.removeItem(PERSIST_KEY);
+}
+
+/** HO-P5 Amended (as): the BG-19 summary fields `StaffCustomerViewModel.cs:11-13` always sends, for the operations
+ *  mock's anonymised read-back (an erased customer keeps its record date and its order figures; its area, tags and
+ *  notes are personal data and read back empty). `null` for an unknown id. */
+export function erasedStaffCustomerSummary(customerId: string): {
+  customerSince: string;
+  area: null;
+  orderCount: number;
+  lifetimeSpend: { amount: string; currencyCode: 'BDT' };
+  tags: string[];
+  noteCount: number;
+} | null {
+  const customer = customers.get(customerId);
+  if (!customer) return null;
+  return {
+    customerSince: customer.registeredOn,
+    area: null,
+    orderCount: customer.orderCount ?? 0,
+    lifetimeSpend: { amount: centsText(customer.lifetimeSpendCents ?? 0), currencyCode: 'BDT' },
+    tags: [],
+    noteCount: 0,
+  };
 }
 
 /** Test-only: forces the given staff token's next session read to report `session_idle_timeout`
@@ -751,13 +832,18 @@ function preferencesBody(customer: StoredCustomer) {
 /**
  * HO-NTF-002 mock hooks (additive, read-only for the rest of this file). The notifications mock
  * (`mocks/handlers/notifications/**`) needs two facts this module owns: which roles a staff cookie
- * carries (so `NotificationLog.*` can answer 403 for a nurse, E-E2) and a way to flip the seeded
+ * carries (so `NotificationLog.*` can answer 403 for an inventory clerk, E-E2) and a way to flip the seeded
  * customer's marketing consent when an unsubscribe link is used (E-D1). Returns `null` when the
  * request carries no staff session at all, which the notifications mock treats as "not modelled".
  */
 export function getStaffRoleIdsForRequest(request: Request): string[] | null {
   const resolved = requireStaffSession(request);
   return resolved ? resolved.staff.roleIds : null;
+}
+
+/** HO-P5 BG-23: the roles of a staff account by id, for the roster mock's `StaffNotRosterable` check; `null` when there is no such account. */
+export function getMockStaffRoleIds(staffAccountId: string): string[] | null {
+  return staffAccounts.get(staffAccountId)?.roleIds ?? null;
 }
 
 /** Turns marketing consent off for `channel` ('Email' | 'Sms'). Returns whether it WAS on. */
@@ -852,14 +938,41 @@ function staffStatusBody(session: StaffSessionRecord, staff: StoredStaffAccount)
   };
 }
 
+/** HO-P5 BG-22 -- no password is NotSetUp, a lockout still running is Locked, otherwise Active
+ *  (Shared/Helpers/StaffAccountStatusRules.cs:11-15). */
+function staffAccountStatus(staff: StoredStaffAccount, asOfMs: number): 'Active' | 'NotSetUp' | 'Locked' {
+  if (!staff.password) return 'NotSetUp';
+  return staff.lockedUntil && asOfMs < new Date(staff.lockedUntil).getTime() ? 'Locked' : 'Active';
+}
+
+/** Test seam: puts a sign-in lockout on a staff account so the list reads `Locked` (the mock has no lockout of its own). */
+export function setMockStaffLockedUntil(staffAccountId: string, lockedUntil: string | null): void {
+  const staff = staffAccounts.get(staffAccountId);
+  if (staff) {
+    staff.lockedUntil = lockedUntil;
+    persistMockState();
+  }
+}
+
+export interface MockStaffBranch {
+  id: string;
+  name: string;
+  isPrimary: boolean;
+}
+
+/**
+ * HO-P5 BG-22 -- the assigned branches of a staff account, the primary first and then by name (empty with no explicit
+ * assignment). The assignments live in `mocks/handlers/admin/branches.ts`, which imports this module, so it registers
+ * itself here instead of this file importing it (a cycle).
+ */
+let staffBranchesProvider: (staffAccountId: string) => MockStaffBranch[] = () => [];
+export function registerStaffBranchesProvider(provider: (staffAccountId: string) => MockStaffBranch[]): void {
+  staffBranchesProvider = provider;
+}
+
 const ROLE_CATALOGUE = {
-  roleIds: ['Administrator', 'Reception', 'Nurse', 'Vet'],
-  capabilities: [
-    'Manage staff accounts',
-    'Register customers',
-    'View clinical records',
-    'Merge duplicate customers',
-  ],
+  roleIds: ['Administrator', 'Reception', 'Inventory'],
+  capabilities: ['Manage staff accounts', 'Register customers', 'Merge duplicate customers'],
   cells: [
     {
       capability: 'Manage staff accounts',
@@ -868,21 +981,10 @@ const ROLE_CATALOGUE = {
       qualifier: null,
     },
     { capability: 'Manage staff accounts', roleId: 'Reception', access: 'None', qualifier: null },
-    { capability: 'Manage staff accounts', roleId: 'Nurse', access: 'None', qualifier: null },
-    { capability: 'Manage staff accounts', roleId: 'Vet', access: 'None', qualifier: null },
+    { capability: 'Manage staff accounts', roleId: 'Inventory', access: 'None', qualifier: null },
     { capability: 'Register customers', roleId: 'Administrator', access: 'Full', qualifier: null },
     { capability: 'Register customers', roleId: 'Reception', access: 'Full', qualifier: null },
-    { capability: 'Register customers', roleId: 'Nurse', access: 'None', qualifier: null },
-    { capability: 'Register customers', roleId: 'Vet', access: 'None', qualifier: null },
-    {
-      capability: 'View clinical records',
-      roleId: 'Administrator',
-      access: 'Full',
-      qualifier: null,
-    },
-    { capability: 'View clinical records', roleId: 'Reception', access: 'None', qualifier: null },
-    { capability: 'View clinical records', roleId: 'Nurse', access: 'Full', qualifier: null },
-    { capability: 'View clinical records', roleId: 'Vet', access: 'Full', qualifier: null },
+    { capability: 'Register customers', roleId: 'Inventory', access: 'None', qualifier: null },
     {
       capability: 'Merge duplicate customers',
       roleId: 'Administrator',
@@ -895,8 +997,12 @@ const ROLE_CATALOGUE = {
       access: 'None',
       qualifier: null,
     },
-    { capability: 'Merge duplicate customers', roleId: 'Nurse', access: 'None', qualifier: null },
-    { capability: 'Merge duplicate customers', roleId: 'Vet', access: 'None', qualifier: null },
+    {
+      capability: 'Merge duplicate customers',
+      roleId: 'Inventory',
+      access: 'None',
+      qualifier: null,
+    },
   ],
 };
 
@@ -906,9 +1012,13 @@ const ACTION_ROLES: Record<string, string[]> = {
   'StaffAccounts.ChangeRoles': ['Administrator'],
   'StaffAccounts.SetPassword': ['Administrator'],
   'StaffAccounts.UpdateDetails': ['Administrator'],
-  'Customers.View': ['Reception', 'Nurse', 'Vet', 'Administrator'],
+  'Customers.View': ['Reception', 'Administrator'],
   'Customers.RegisterWalkIn': ['Reception', 'Administrator'],
   'Customers.Merge': ['Administrator'],
+  // HO-P5 BG-19 -- Shared/Constants/ActionRoles.Accounts.cs:33-35.
+  'Customers.AddNote': ['Reception', 'Administrator'],
+  'Customers.SetTags': ['Reception', 'Administrator'],
+  'Customers.RequestPasswordReset': ['Reception', 'Administrator'],
 };
 
 function forbidden() {
@@ -938,6 +1048,31 @@ function requireAction(
   return permitted ? resolved : forbidden();
 }
 
+/** Integer minor units as the server's money string ("4250.00"). */
+function centsText(cents: number): string {
+  const sign = cents < 0 ? '-' : '';
+  const abs = Math.abs(cents);
+  return `${sign}${Math.trunc(abs / 100)}.${String(abs % 100).padStart(2, '0')}`;
+}
+
+/** `IdentifierMasking.Mask` (Shared/Helpers/IdentifierMasking.cs:11-24): `s***@example.com`, or `***` and the last three
+ *  characters of a number. This is what the staff-started reset reports instead of the raw destination. */
+function maskIdentifier(identifier: string): string {
+  const at = identifier.indexOf('@');
+  if (at >= 0) return `${identifier.charAt(0)}***${identifier.slice(at)}`;
+  return `***${identifier.length >= 3 ? identifier.slice(-3) : identifier}`;
+}
+
+/** `CustomerStaffRecordSupport.EnsureActiveCustomerAsync` (CustomerStaffRecordCommandHandlers.cs:108-125): a missing customer
+ *  and a merged or anonymised one are each a 400 on `CustomerId`, not a 404. */
+function staffRecordRefusal(customer: StoredCustomer | undefined) {
+  if (!customer)
+    return validationError('CustomerId', 'CustomerNotFound', 'This customer record was not found.', 'CustomerStaffRecordAggregate');
+  if (customer.status !== 'Active')
+    return validationError('CustomerId', 'AccountNotActive', 'This account is not active.', 'CustomerStaffRecordAggregate');
+  return null;
+}
+
 // -------------------------------------------------------------------------------------------
 // Handlers
 // -------------------------------------------------------------------------------------------
@@ -950,8 +1085,7 @@ export const accountsHandlers: HttpHandler[] = [
     return HttpResponse.json(
       {
         captchaId,
-        imageDataUrl:
-          'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        imageDataUrl: MOCK_CAPTCHA_IMAGE,
         expiresInSeconds: 120,
       },
       { headers: { 'Cache-Control': 'no-store' } },
@@ -1037,8 +1171,6 @@ export const accountsHandlers: HttpHandler[] = [
       mergedIntoCustomerId: null,
       addresses: [],
       preferences: seedPreferences(),
-      catCount: 0,
-      cats: [],
     });
     persistMockState();
     return HttpResponse.json({ customerId: id }, { status: 201 });
@@ -1379,18 +1511,11 @@ export const accountsHandlers: HttpHandler[] = [
         },
         addresses: customer.addresses,
         notificationPreferences: customer.preferences,
-        cats: customer.cats.map((c) => ({
-          id: c.id,
-          name: c.name,
-          species: c.species,
-          breed: c.breed,
-          sex: c.sex,
-        })),
       },
       {
         headers: {
           'Cache-Control': 'no-store',
-          'Content-Disposition': 'attachment; filename="purrcare-my-data.json"',
+          'Content-Disposition': 'attachment; filename="amargram-my-data.json"',
         },
       },
     );
@@ -1443,6 +1568,8 @@ export const accountsHandlers: HttpHandler[] = [
     if (roleId) rows = rows.filter((s) => s.roleIds.includes(roleId));
     const totalCount = rows.length;
     const start = (pageNumber - 1) * pageSize;
+    const asOf = Date.now();
+    // HO-P5 BG-22 -- Read/QueryHandlers/Account/GetStaffAccountsQueryHandler.cs:36-47.
     const items = rows.slice(start, start + pageSize).map((s) => ({
       id: s.id,
       fullName: s.fullName,
@@ -1450,6 +1577,8 @@ export const accountsHandlers: HttpHandler[] = [
       emailAddress: s.emailAddress,
       roleIds: s.roleIds,
       hasPassword: !!s.password,
+      status: staffAccountStatus(s, asOf),
+      branches: staffBranchesProvider(s.id),
     }));
     return HttpResponse.json({ items, pageNumber, pageSize, totalCount });
   }),
@@ -1692,8 +1821,6 @@ export const accountsHandlers: HttpHandler[] = [
       mergedIntoCustomerId: null,
       addresses: [],
       preferences: seedPreferences(),
-      catCount: 0,
-      cats: [],
     });
     persistMockState();
     return HttpResponse.json({ customerId: id }, { status: 201 });
@@ -1750,7 +1877,6 @@ export const accountsHandlers: HttpHandler[] = [
       fullName: c.fullName,
       mobileNumber: c.mobileNumber,
       emailAddress: c.emailAddress,
-      cats: c.cats.map((cat) => ({ catId: cat.id, name: cat.name, isDeceased: cat.isDeceased })),
       mobileMatchedOn: 'Primary' as const,
       recordStatus: c.password ? ('Complete' as const) : ('Incomplete' as const),
       registrationChannel: c.registrationChannel,
@@ -1763,7 +1889,72 @@ export const accountsHandlers: HttpHandler[] = [
     });
   }),
 
-  // GET /api/staff/customers/{id} — Q-H1
+  // GET /api/staff/customers/browse — HO-P5 BG-19. Registered before `:customerId` so "browse" is not read as an id.
+  // StaffCustomersController.cs:52-74; BrowseCustomersQueryHandler.cs:17-71.
+  http.get('*/api/staff/customers/browse', ({ request }) => {
+    const resolved = requireAction(request, 'Customers.View');
+    if (resolved instanceof Response) return resolved;
+    const url = new URL(request.url);
+    const search = url.searchParams.get('search');
+    const tag = url.searchParams.get('tag');
+    const sort = url.searchParams.get('sort');
+    const pageNumberText = url.searchParams.get('pageNumber');
+    const pageSizeText = url.searchParams.get('pageSize');
+    const requestedPage = pageNumberText === null ? undefined : Number(pageNumberText);
+    const requestedSize = pageSizeText === null ? undefined : Number(pageSizeText);
+    // The same four refusals, in the controller's order, with its `{ error }` body (a bare 400, not a ValidationResponse).
+    if (requestedPage !== undefined && requestedPage > 1_000_000)
+      return HttpResponse.json({ error: 'pageNumber cannot exceed 1000000.' }, { status: 400 });
+    if (requestedSize !== undefined && requestedSize > 100)
+      return HttpResponse.json({ error: 'pageSize cannot exceed 100.' }, { status: 400 });
+    if (sort !== null && sort !== 'recent' && sort !== 'name')
+      return HttpResponse.json({ error: "sort must be 'recent' or 'name'." }, { status: 400 });
+    if ((search !== null && search.length > 100) || (tag !== null && tag.length > 100))
+      return HttpResponse.json({ error: 'search and tag cannot exceed 100 characters.' }, { status: 400 });
+
+    const pageNumber = requestedPage && requestedPage > 0 ? requestedPage : 1;
+    const pageSize = requestedSize && requestedSize > 0 ? requestedSize : 20;
+
+    // Only active customers: a merged or anonymised record is not one staff browse to.
+    let rows = [...customers.values()].filter((c) => c.status === 'Active');
+    const term = search?.trim();
+    if (term) {
+      const lower = term.toLowerCase();
+      const digits = term.replace(/\D/g, '');
+      // A mobile matches only for a phone-like term ("01711 000", "+880-17…") with three or more digits, so a name with
+      // digits in it does not hit random mobiles.
+      const phoneLike = /^[\d +-]+$/.test(term) && digits.length >= 3;
+      rows = rows.filter(
+        (c) =>
+          c.fullName.toLowerCase().includes(lower) ||
+          (c.emailAddress ?? '').toLowerCase().includes(lower) ||
+          (phoneLike && (c.mobileNumber ?? '').includes(digits)),
+      );
+    }
+    const wantedTag = tag?.trim();
+    if (wantedTag) rows = rows.filter((c) => (c.tags ?? []).includes(wantedTag));
+
+    rows.sort(
+      sort === 'name'
+        ? (a, b) => a.fullName.localeCompare(b.fullName) || a.id.localeCompare(b.id)
+        : (a, b) => b.registeredOn.localeCompare(a.registeredOn) || a.id.localeCompare(b.id),
+    );
+    const start = (pageNumber - 1) * pageSize;
+    const items = rows.slice(start, start + pageSize).map((c) => ({
+      id: c.id,
+      fullName: c.fullName,
+      mobileNumber: c.mobileNumber,
+      emailAddress: c.emailAddress,
+      recordStatus: c.password ? 'Complete' : 'Incomplete',
+      status: c.status,
+      customerSince: c.registeredOn,
+      area: c.area ?? null,
+      tags: c.tags ?? [],
+    }));
+    return HttpResponse.json({ items, pageNumber, pageSize, totalCount: rows.length });
+  }),
+
+  // GET /api/staff/customers/{id} — Q-H1 (+ HO-P5 BG-19 summary: StaffCustomerViewModel.cs:11-13)
   http.get('*/api/staff/customers/:customerId', ({ request, params }) => {
     const resolved = requireAction(request, 'Customers.View');
     if (resolved instanceof Response) return resolved;
@@ -1776,16 +1967,113 @@ export const accountsHandlers: HttpHandler[] = [
       emailAddress: customer.emailAddress,
       recordStatus: customer.password ? 'Complete' : 'Incomplete',
       registrationChannel: customer.registrationChannel,
-      catCount: customer.catCount,
-      // CR MEDIUM 2 (first-pass gate fix round, item 13) — the actual per-cat list, matching
-      // GetStaffCustomerQueryHandler's own extension; always in sync with catCount above.
-      cats: customer.cats.map((cat) => ({
-        catId: cat.id,
-        name: cat.name,
-        isDeceased: cat.isDeceased,
-      })),
       status: customer.status,
       mergedIntoCustomerId: customer.mergedIntoCustomerId,
+      customerSince: customer.registeredOn,
+      area: customer.area ?? null,
+      orderCount: customer.orderCount ?? 0,
+      lifetimeSpend: { amount: centsText(customer.lifetimeSpendCents ?? 0), currencyCode: 'BDT' },
+      tags: customer.tags ?? [],
+      noteCount: (customer.notes ?? []).length,
+    });
+  }),
+
+  // GET /api/staff/customers/{id}/notes — newest first; an unknown customer reads as an empty list (200),
+  // as GetCustomerNotesQueryHandler.cs:66-86 does.
+  http.get('*/api/staff/customers/:customerId/notes', ({ request, params }) => {
+    const resolved = requireAction(request, 'Customers.View');
+    if (resolved instanceof Response) return resolved;
+    const notes = [...(customers.get(params.customerId as string)?.notes ?? [])]
+      .sort((a, b) => b.createdOn.localeCompare(a.createdOn) || a.id.localeCompare(b.id))
+      .map((n) => ({
+        id: n.id,
+        text: n.text,
+        authorStaffId: n.authorStaffId,
+        authorName: staffAccounts.get(n.authorStaffId)?.fullName ?? null,
+        createdOn: n.createdOn,
+      }));
+    return HttpResponse.json(notes);
+  }),
+
+  // POST /api/staff/customers/{id}/notes — 201 { noteId }. Order: the command validator (shape), then the active-customer
+  // check, then the aggregate (trim, 1-1000, 200 per customer): AddCustomerNoteCommandValidator,
+  // CustomerStaffRecordCommandHandlers.cs:14-62, CustomerStaffRecordAggregate.cs:35-53.
+  http.post('*/api/staff/customers/:customerId/notes', async ({ request, params }) => {
+    const resolved = requireAction(request, 'Customers.AddNote');
+    if (resolved instanceof Response) return resolved;
+    const body = (await request.json().catch(() => ({}))) as { text?: string | null };
+    const text = body.text ?? '';
+    if (text.trim() === '')
+      return validationError('Text', 'NotEmptyValidator', "'Text' must not be empty.", 'AddCustomerNoteCommand');
+    if (text.length > 2000)
+      return validationError(
+        'Text',
+        'MaximumLengthValidator',
+        `The length of 'Text' must be 2000 characters or fewer. You entered ${text.length} characters.`,
+        'AddCustomerNoteCommand',
+      );
+    const customer = customers.get(params.customerId as string);
+    const refusal = staffRecordRefusal(customer);
+    if (refusal) return refusal;
+    const trimmed = text.trim();
+    if (trimmed.length > 1000)
+      return validationError('Text', 'InvalidCustomerNote', 'A note must be between 1 and 1000 characters.', 'CustomerStaffRecordAggregate');
+    const notes = customer!.notes ?? (customer!.notes = []);
+    if (notes.length >= 200)
+      return validationError('Text', 'CustomerNoteLimitExceeded', 'No more than 200 notes are kept on one customer.', 'CustomerStaffRecordAggregate');
+    const noteId = crypto.randomUUID();
+    notes.push({ id: noteId, text: trimmed, authorStaffId: resolved.staff.id, createdOn: iso(now()) });
+    persistMockState();
+    return HttpResponse.json({ noteId }, { status: 201 });
+  }),
+
+  // PUT /api/staff/customers/{id}/tags — 200 { tags } as stored: trimmed, de-duplicated without regard to case keeping the first
+  // spelling. CustomerStaffRecordAggregate.cs:55-86; SetCustomerTagsCommandValidator.
+  http.put('*/api/staff/customers/:customerId/tags', async ({ request, params }) => {
+    const resolved = requireAction(request, 'Customers.SetTags');
+    if (resolved instanceof Response) return resolved;
+    const body = (await request.json().catch(() => ({}))) as { tags?: Array<string | null> | null };
+    const requested = body.tags ?? [];
+    if (requested.length > 50)
+      return validationError('Tags', 'PredicateValidator', 'has too many tags.', 'SetCustomerTagsCommand');
+    const customer = customers.get(params.customerId as string);
+    const refusal = staffRecordRefusal(customer);
+    if (refusal) return refusal;
+    const cleaned: string[] = [];
+    for (const raw of requested) {
+      const tag = (raw ?? '').trim();
+      if (tag === '' || tag.length > 30 || /[\u0000-\u001f\u007f-\u009f]/.test(tag))
+        return validationError('Tags', 'InvalidCustomerTag', 'A tag must be between 1 and 30 characters.', 'CustomerStaffRecordAggregate');
+      if (!cleaned.some((t) => t.toLowerCase() === tag.toLowerCase())) cleaned.push(tag);
+    }
+    if (cleaned.length > 10)
+      return validationError('Tags', 'CustomerTagLimitExceeded', 'No more than 10 tags are allowed on one customer.', 'CustomerStaffRecordAggregate');
+    customer!.tags = cleaned;
+    persistMockState();
+    return HttpResponse.json({ tags: cleaned });
+  }),
+
+  // POST /api/staff/customers/{id}/password-reset — { channel, maskedDestination, expiresOn }, never the token. The
+  // customer's own mobile if they have one, else their email; the destination is masked as IdentifierMasking.Mask does.
+  // RequestCustomerPasswordResetCommandHandler.cs:34-80 (token lifetime 15 minutes: AccountOptions.cs:26).
+  http.post('*/api/staff/customers/:customerId/password-reset', ({ request, params }) => {
+    const resolved = requireAction(request, 'Customers.RequestPasswordReset');
+    if (resolved instanceof Response) return resolved;
+    const customer = customers.get(params.customerId as string);
+    const refusal = staffRecordRefusal(customer);
+    if (refusal) return refusal;
+    const destination = customer!.mobileNumber ?? customer!.emailAddress;
+    if (!destination)
+      return validationError(
+        'CustomerId',
+        'NoResetChannel',
+        'This customer has no mobile number or email address to send a reset to.',
+        'CustomerStaffRecordAggregate',
+      );
+    return HttpResponse.json({
+      channel: customer!.mobileNumber ? 'Mobile' : 'Email',
+      maskedDestination: maskIdentifier(destination),
+      expiresOn: iso(new Date(now().getTime() + 15 * 60_000)),
     });
   }),
 
@@ -1829,10 +2117,6 @@ export const accountsHandlers: HttpHandler[] = [
     const alreadyApplied = duplicate.mergedIntoCustomerId === body.survivingCustomerId;
     duplicate.status = 'Merged';
     duplicate.mergedIntoCustomerId = body.survivingCustomerId;
-    survivor.cats.push(...duplicate.cats);
-    survivor.catCount += duplicate.cats.length;
-    duplicate.cats = [];
-    duplicate.catCount = 0;
     persistMockState();
 
     return HttpResponse.json({

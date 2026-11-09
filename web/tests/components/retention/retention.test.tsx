@@ -33,16 +33,16 @@ beforeEach(() => {
 });
 
 describe('U-B1 RetentionScheduleTable', () => {
-  it('shows every class with its period and end action; clinical, financial, regulatory and audit are "Review only"', () => {
+  it('shows every class with its period and end action; financial, regulatory and audit are "Review only"', () => {
     renderWithClient(<RetentionScheduleTable schedule={buildSchedule()} />);
     const rows = screen.getAllByRole('row').slice(1);
-    expect(rows).toHaveLength(11);
+    expect(rows).toHaveLength(10);
     const rowOf = (title: string) => rows.find((r) => within(r).queryByText(title))!;
-    for (const title of ['Clinical records', 'Financial records', 'Regulatory records', 'Audit trail']) {
+    for (const title of ['Financial records', 'Regulatory records', 'Audit trail']) {
       expect(within(rowOf(title)).getByText('Review only')).toBeInTheDocument();
     }
-    expect(within(rowOf('Clinical records')).getByText('7 years')).toBeInTheDocument();
-    expect(within(rowOf('Clinical records')).getByRole('link', { name: 'Change in settings' })).toHaveAttribute('href', '/staff/admin/settings');
+    expect(within(rowOf('Financial records')).getByText('10 years')).toBeInTheDocument();
+    expect(within(rowOf('Financial records')).getByRole('link', { name: 'Change in settings' })).toHaveAttribute('href', '/staff/admin/settings');
     expect(within(rowOf('Security artefacts')).getByText('Purge')).toBeInTheDocument();
     expect(within(rowOf('Customer personal data')).getByText('Anonymise on request')).toBeInTheDocument();
     expect(screen.getByText('audit.audit_entry')).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe('U-B2 RunRetentionNow', () => {
     renderWithClient(<RunRetentionNow />);
     await user.click(screen.getByRole('button', { name: 'Run retention now' }));
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('It will not delete clinical, financial, regulatory or audit records');
+    expect(dialog).toHaveTextContent('It will not delete financial, regulatory or audit records');
     await user.click(within(dialog).getByRole('button', { name: 'Run retention' }));
     await waitFor(() => expect(toast).toHaveBeenCalled());
   });
@@ -118,7 +118,7 @@ describe('U-B5 / U-B6 ErasePersonalDataPanel', () => {
   it('lists what is erased and what is kept with its period, and requires channel and identity check', async () => {
     const user = userEvent.setup();
     renderWithClient(<ErasePersonalDataPanel customer={customer} />);
-    expect(await screen.findByText(/Clinical records for 7 years and financial\s+records for 10 years/)).toBeInTheDocument();
+    expect(await screen.findByText(/Financial records for 10 years, because the law\s+requires it/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/reason/i)).toBeNull(); // no free text (HO-XCT-001 2026-10-12)
     expect(screen.queryByRole('textbox')).toBeNull();
     await user.click(screen.getByRole('button', { name: /Erase personal data/ }));

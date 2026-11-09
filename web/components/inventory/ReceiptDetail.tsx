@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ActionLink } from '@/components/back-office/ActionLink';
 import { Banner, DefinitionList, PageHeading, Panel } from './fields';
 import { StackedTable } from './StackedTable';
 import { StorageChip } from './StorageChip';
@@ -27,12 +28,12 @@ export function ReceiptDetail({ receipt, timeZoneId }: { receipt: GoodsReceiptDe
         title={receipt.number}
         description={`Received ${formatInZone(receipt.receivedOn, timeZoneId)}`}
         actions={
-          <Link
+          <ActionLink
             href={`/staff/inventory/ledger?from=${day}&to=${day}&referenceKind=GoodsReceipt&referenceId=${receipt.id}`}
-            className="text-sm font-semibold text-accent-ink"
+            variant="outline"
           >
             See its ledger entries
-          </Link>
+          </ActionLink>
         }
       />
       <Banner tone="neutral">A posted receipt is permanent. If something was wrong, record an adjustment.</Banner>

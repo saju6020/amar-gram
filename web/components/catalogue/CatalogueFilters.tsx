@@ -2,9 +2,10 @@
 
 import { useId, useState } from 'react';
 import { Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { pillInputClass } from '@/components/hearth/fields';
 import { countryFlag } from '@/lib/format/shop';
-import { categoryLabel, lifeStageLabel, proteinLabel, subcategoryLabel } from '@/lib/shop/labels';
+import { categoryLabel, certificationLabel, subcategoryLabel } from '@/lib/shop/labels';
 import { toggleValue, type CatalogueParams } from '@/lib/shop/catalogueParams';
 import type { CatalogueFilters as Facets, CategoryNode } from '@/lib/api/shop-catalogue';
 import { CheckOption, FilterGroup, RadioOption } from './FilterGroup';
@@ -19,10 +20,14 @@ export interface CatalogueFiltersProps {
   hideOrigin?: boolean;
   priceMode: 'button' | 'live';
   onChange: (patch: Partial<CatalogueParams>) => void;
+  /** Drops every filter (keeps the search). Offered as the outline *Clear filters* pill when given. */
+  onClear?: () => void;
 }
 
 const RATINGS = [4, 3, 2] as const;
-/** Brands shown before "Show all" — the facet list arrives most-products-first. */
+/** The one certification with its own switch row; the others stay as checkboxes. */
+const ORGANIC = 'CertifiedOrganic';
+/** Producers shown before "Show all" — the facet list arrives most-products-first. */
 const BRANDS_COLLAPSED = 8;
 
 /**
@@ -30,7 +35,7 @@ const BRANDS_COLLAPSED = 8;
  * and closing (2026-10-16). On arrival only Category is open (owner, 2026-10-17: no scrollbar on
  * landing); every other group starts closed unless it already holds a choice. The
  * facet options and counts come from `GET /api/shop/filters`; nothing here counts or filters
- * (ADR-FE-031). The brand search box narrows the OPTION LIST only, never the results.
+ * (ADR-FE-031). The producer search box (producers are the API's `brand`) narrows the OPTION LIST only, never the results.
  */
 export function CatalogueFilters({
   value,
@@ -40,24 +45,29 @@ export function CatalogueFilters({
   hideOrigin,
   priceMode,
   onChange,
+  onClear,
 }: CatalogueFiltersProps) {
   const uid = useId();
   const [brandSearch, setBrandSearch] = useState('');
   const [showAllBrands, setShowAllBrands] = useState(false);
   const brandQuery = brandSearch.toLowerCase().trim();
   const matchingBrands = facets.brands.filter((b) => b.name.toLowerCase().includes(brandQuery));
-  // Collapsed, the list keeps the top brands plus anything already ticked, so a choice never hides.
+  // Collapsed, the list keeps the top producers plus anything already ticked, so a choice never hides.
   const collapsible = !brandQuery && !showAllBrands && matchingBrands.length > BRANDS_COLLAPSED;
   const brands = collapsible
     ? matchingBrands.filter((b, i) => i < BRANDS_COLLAPSED || value.brand.includes(b.name))
     : matchingBrands;
+  const districts = facets.districts;
   const selectedCategory = categories.find((c) => c.value === value.category);
+  const organicOffered =
+    facets.certifications.some((c) => c.value === ORGANIC) || value.certification.includes(ORGANIC);
+  const otherCertifications = facets.certifications.filter((c) => c.value !== ORGANIC);
 
   return (
     <div className="flex flex-col gap-3">
       <FilterGroup legend="Category" active={!!value.category}>
         <RadioOption
-          id={`${uid}-cat-all`}
+          id={`${uid}-category-all`}
           name={`${uid}-category`}
           label="All categories"
           checked={!value.category}
@@ -66,7 +76,7 @@ export function CatalogueFilters({
         {categories.map((category) => (
           <div key={category.value} className="flex flex-col gap-1.5">
             <RadioOption
-              id={`${uid}-cat-${category.value}`}
+              id={`${uid}-category-${category.value}`}
               name={`${uid}-category`}
               label={categoryLabel(category.value)}
               count={category.productCount}
@@ -93,11 +103,7 @@ export function CatalogueFilters({
       </FilterGroup>
 
       {!hideOrigin && facets.origins.length > 0 && (
-        <FilterGroup
-          legend="Country of origin"
-          defaultOpen={false}
-          active={value.origin.length > 0}
-        >
+        <FilterGroup legend="Origin" defaultOpen={false} active={value.origin.length > 0}>
           {facets.origins.map((origin) => {
             const flag = countryFlag(origin.code);
             return (
@@ -122,17 +128,33 @@ export function CatalogueFilters({
         </FilterGroup>
       )}
 
+      {/* HO-P5 G1: districts of origin, in the order and with the counts the API sends. */}
+      {districts.length > 0 && (
+        <FilterGroup legend="District" defaultOpen={false} active={value.district.length > 0}>
+          {districts.map((district) => (
+            <CheckOption
+              key={district.value}
+              id={`${uid}-district-${district.value}`}
+              label={district.value}
+              count={district.count}
+              checked={value.district.includes(district.value)}
+              onChange={() => onChange({ district: toggleValue(value.district, district.value) })}
+            />
+          ))}
+        </FilterGroup>
+      )}
+
       {facets.brands.length > 0 && (
-        <FilterGroup legend="Brand" defaultOpen={false} active={value.brand.length > 0}>
+        <FilterGroup legend="Producer" defaultOpen={false} active={value.brand.length > 0}>
           {facets.brands.length > 8 && (
             <div>
               <label htmlFor={`${uid}-brand-search`} className="sr-only">
-                Search brands
+                Search producers
               </label>
               <input
                 id={`${uid}-brand-search`}
                 type="search"
-                placeholder="Search brands"
+                placeholder="Search producers"
                 value={brandSearch}
                 onChange={(event) => setBrandSearch(event.target.value)}
                 className={pillInputClass}
@@ -149,7 +171,7 @@ export function CatalogueFilters({
               onChange={() => onChange({ brand: toggleValue(value.brand, brand.name) })}
             />
           ))}
-          {brands.length === 0 && <p className="text-xs text-ink-muted">No brands match.</p>}
+          {brands.length === 0 && <p className="text-xs text-ink-muted">No producers match.</p>}
           {!brandQuery && matchingBrands.length > BRANDS_COLLAPSED && (
             <button
               type="button"
@@ -157,37 +179,32 @@ export function CatalogueFilters({
               onClick={() => setShowAllBrands((shown) => !shown)}
               className="self-start text-sm font-medium text-accent-ink underline-offset-2 hover:underline"
             >
-              {showAllBrands ? 'Show fewer brands' : `Show all ${matchingBrands.length} brands`}
+              {showAllBrands
+                ? 'Show fewer producers'
+                : `Show all ${matchingBrands.length} producers`}
             </button>
           )}
         </FilterGroup>
       )}
 
-      {facets.lifeStages.length > 0 && (
-        <FilterGroup legend="Life stage" defaultOpen={false} active={value.lifeStage.length > 0}>
-          {facets.lifeStages.map((stage) => (
+      {otherCertifications.length > 0 && (
+        <FilterGroup
+          legend="Certification"
+          defaultOpen={false}
+          active={value.certification.some((c) => c !== ORGANIC)}
+        >
+          {otherCertifications.map((certification) => (
             <CheckOption
-              key={stage.value}
-              id={`${uid}-stage-${stage.value}`}
-              label={lifeStageLabel(stage.value)}
-              count={stage.count}
-              checked={value.lifeStage.includes(stage.value)}
-              onChange={() => onChange({ lifeStage: toggleValue(value.lifeStage, stage.value) })}
-            />
-          ))}
-        </FilterGroup>
-      )}
-
-      {facets.proteinSources.length > 0 && (
-        <FilterGroup legend="Protein source" defaultOpen={false} active={value.protein.length > 0}>
-          {facets.proteinSources.map((protein) => (
-            <CheckOption
-              key={protein.value}
-              id={`${uid}-protein-${protein.value}`}
-              label={proteinLabel(protein.value)}
-              count={protein.count}
-              checked={value.protein.includes(protein.value)}
-              onChange={() => onChange({ protein: toggleValue(value.protein, protein.value) })}
+              key={certification.value}
+              id={`${uid}-certification-${certification.value}`}
+              label={certificationLabel(certification.value)}
+              count={certification.count}
+              checked={value.certification.includes(certification.value)}
+              onChange={() =>
+                onChange({
+                  certification: toggleValue(value.certification, certification.value),
+                })
+              }
             />
           ))}
         </FilterGroup>
@@ -229,6 +246,28 @@ export function CatalogueFilters({
           />
         ))}
       </FilterGroup>
+
+      {organicOffered && (
+        <label
+          htmlFor={`${uid}-organic`}
+          className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-2xl bg-leaf-soft px-3.5 text-leaf-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+        >
+          <span className="font-semibold">Certified organic only</span>
+          <input
+            id={`${uid}-organic`}
+            type="checkbox"
+            checked={value.certification.includes(ORGANIC)}
+            onChange={() => onChange({ certification: toggleValue(value.certification, ORGANIC) })}
+            className="size-[22px] flex-none accent-leaf"
+          />
+        </label>
+      )}
+
+      {onClear && (
+        <Button variant="secondary" size="pillMd" className="border-ink" onClick={onClear}>
+          Clear filters
+        </Button>
+      )}
     </div>
   );
 }

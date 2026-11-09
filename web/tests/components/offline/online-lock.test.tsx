@@ -7,7 +7,7 @@ import { useStaffLockState } from '@/components/staff/IdleLockContext';
 import { resetConnectivityForTests } from '@/lib/connectivity/monitor';
 import { STAFF_SESSION_QUERY_KEY } from '@/lib/hooks/useSession';
 import { readDeviceSettings } from '@/lib/offline/device';
-import { readLatestSnapshot, enableOfflineCopy } from '@/lib/offline/snapshot';
+import { enableOfflineCopy } from '@/lib/offline/snapshot';
 import { recordFor, installMemoryBackend, removeMemoryBackend, renderWithClient } from './offlineTestUtils';
 import { resetXctMock, xctFixtureIds, xctMock } from '@/mocks/handlers/operations';
 
@@ -15,7 +15,7 @@ const replace = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace, push: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/staff/front-desk',
+  usePathname: () => '/staff',
 }));
 vi.mock('@/components/ui/use-toast', () => ({ toast: vi.fn() }));
 
@@ -121,17 +121,6 @@ describe('ARCHITECTURE HIGH: the online idle lock must not feed the offline boar
     xctMock.pingMode = 'fail'; // the cable is pulled
     renderWithClient(<OfflineBoard />);
     expect(await screen.findByText('Locked. Sign in again when the connection returns.')).toBeInTheDocument();
-    expect(screen.queryByText('Luna')).toBeNull();
-  });
-});
-
-describe('records written before phone numbers were dropped', () => {
-  it('are cleaned when read, in memory and in the store', async () => {
-    const record = recordFor();
-    expect(JSON.stringify(record)).toContain('customerPhone'); // the fixture is the old shape
-    stores.snapshot.set(record.branchId, record);
-    const read = await readLatestSnapshot();
-    expect(JSON.stringify(read)).not.toContain('customerPhone');
-    await waitFor(() => expect(JSON.stringify([...stores.snapshot.values()])).not.toContain('customerPhone'));
+    expect(screen.queryByText(/Read-only copy for this device/)).toBeNull();
   });
 });

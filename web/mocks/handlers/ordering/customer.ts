@@ -11,13 +11,11 @@ import {
   violations,
 } from './fixtures';
 import {
-  CAT_NAMES,
   MAX_CART_LINES,
   MAX_QUANTITY_PER_LINE,
   PICKUP_BRANCHES,
   addDays,
   allocateOrder,
-  authorisedCatsFor,
   db,
   expireOverdueTransfers,
   findOrder,
@@ -39,6 +37,7 @@ import {
 } from './store';
 import { computeQuote, type QuoteChoicesInput, type QuoteLineInput } from './quote';
 import { testControl } from './control';
+import { SUBSCRIPTION_DISCOUNT_LABEL } from '../subscriptions/discountLabel';
 
 /**
  * `mocks/handlers/ordering/customer.ts` — HO-ORD-002 §12.1. The cart, checkout and customer-order
@@ -49,6 +48,34 @@ import { testControl } from './control';
  */
 
 const API = '*/api';
+
+/** `OrderRules.MaxRiderNoteLength` (src/Shared/AmarGram.Shared/Common/Constants/OrderRules.cs:16). */
+const MAX_RIDER_NOTE_LENGTH = 300;
+
+/**
+ * `PlaceOrderCommandValidator` on `RiderNote`: at most 300 characters and no control characters (tab, LF and CR
+ * are allowed) - App/CommandHandlers/Validators/PlaceOrderCommandValidator.cs:24, with `ControlCharacters.ContainsDisallowed`
+ * (Shared/Common/Helpers/ControlCharacters.cs:17-27). FluentValidation's default codes name the rule that failed.
+ */
+function riderNoteProblems(note: unknown) {
+  if (typeof note !== 'string') return [];
+  const problems: Array<{ propertyName: string; errorCode: string; errorMessage: string }> = [];
+  if (note.length > MAX_RIDER_NOTE_LENGTH) {
+    problems.push({
+      propertyName: 'RiderNote',
+      errorCode: 'MaximumLengthValidator',
+      errorMessage: `The length of 'Rider Note' must be ${MAX_RIDER_NOTE_LENGTH} characters or fewer. You entered ${note.length} characters.`,
+    });
+  }
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(note)) {
+    problems.push({
+      propertyName: 'RiderNote',
+      errorCode: 'PredicateValidator',
+      errorMessage: "'Rider Note' must not contain control characters.",
+    });
+  }
+  return problems;
+}
 
 interface AddressRecord {
   id: string;
@@ -84,14 +111,6 @@ function cartView(request: Request) {
     const stock = stockOf(l.skuId);
     const purchasable = !!info && info.purchasable && info.priceCents !== null && stock > 0;
     const unit = info?.priceCents ?? null;
-    let prescriptionStatus: string | null = null;
-    if (info?.requiresPrescription) {
-      prescriptionStatus = !l.catId
-        ? 'CatRequired'
-        : authorisedCatsFor(l.skuId).includes(l.catId)
-          ? 'Authorised'
-          : 'NotAuthorised';
-    }
     return {
       lineId: l.lineId,
       skuId: l.skuId,
@@ -100,14 +119,11 @@ function cartView(request: Request) {
       variantLabel: info?.variantLabel ?? '',
       imagePath: null,
       quantity: l.quantity,
-      cat: l.catId ? { id: l.catId, name: CAT_NAMES[l.catId] ?? 'Your cat' } : null,
       unitPrice: unit !== null ? money(unit) : null,
       priceWhenAdded: money(l.priceWhenAddedCents),
       priceChanged: unit !== null && unit !== l.priceWhenAddedCents,
       availability: !purchasable ? 'Unavailable' : stock < l.quantity ? 'Limited' : 'InStock',
       availableQuantity: purchasable && stock < l.quantity ? stock : null,
-      requiresPrescription: info?.requiresPrescription ?? false,
-      prescriptionStatus,
       lineSubtotal: purchasable && unit !== null ? money(unit * l.quantity) : null,
     };
   });
@@ -125,7 +141,7 @@ function cartView(request: Request) {
   };
 }
 
-function addToCart(lines: DbCartLine[], skuId: string, quantity: number, catId: string | null) {
+function addToCart(lines: DbCartLine[], skuId: string, quantity: number) {
   const info = skuInfo(skuId);
   if (!info || !info.purchasable || info.priceCents === null) {
     return violation('SkuId', 'SkuUnavailable', "This item isn't available right now.");
@@ -140,19 +156,7 @@ function addToCart(lines: DbCartLine[], skuId: string, quantity: number, catId: 
       `You can buy between 1 and ${MAX_QUANTITY_PER_LINE} of an item at a time.`,
     );
   }
-  if (info.requiresPrescription) {
-    if (!catId) {
-      return violation('CatId', 'PrescriptionCatRequired', `Choose which cat '${info.productName}' is for.`);
-    }
-    if (!authorisedCatsFor(skuId).includes(catId)) {
-      return violation(
-        'CatId',
-        'PrescriptionNotAuthorised',
-        `${CAT_NAMES[catId] ?? 'That cat'} has no current vet authorisation for '${info.productName}'.`,
-      );
-    }
-  }
-  const existing = lines.find((l) => l.skuId === skuId && l.catId === (info.requiresPrescription ? catId : null));
+  const existing = lines.find((l) => l.skuId === skuId);
   if (existing) {
     if (existing.quantity + quantity > MAX_QUANTITY_PER_LINE) {
       return violation('Quantity', 'QuantityOutOfRange', `You can buy at most ${MAX_QUANTITY_PER_LINE} of an item at a time.`);
@@ -168,7 +172,6 @@ function addToCart(lines: DbCartLine[], skuId: string, quantity: number, catId: 
     lineId: uuid(),
     skuId,
     quantity,
-    catId: info.requiresPrescription ? catId : null,
     priceWhenAddedCents: info.priceCents,
   };
   lines.push(line);
@@ -181,7 +184,6 @@ function quoteLines(request: Request): QuoteLineInput[] {
     lineId: l.lineId,
     skuId: l.skuId,
     quantity: l.quantity,
-    catId: l.catId,
     priceWhenAddedCents: l.priceWhenAddedCents,
   }));
 }
@@ -226,14 +228,14 @@ function returnedQuantityOpen(order: DbOrder, lineId: string): number {
     .reduce((sum, l) => sum + l.quantity, 0);
 }
 
-export function orderLineView(l: DbOrderLine) {
+/** `discountLabel` is the order's subscription label, sent on a line that carries a discount (OrderQueryHandlers.cs:153). */
+export function orderLineView(l: DbOrderLine, discountLabel: string | null = null) {
   return {
     lineId: l.lineId,
     lineNumber: l.lineNumber,
     skuId: l.skuId,
     productName: l.productName,
     variantLabel: l.variantLabel,
-    cat: l.catId ? { id: l.catId, name: CAT_NAMES[l.catId] ?? 'Your cat' } : null,
     quantity: l.quantity,
     unitPrice: money(l.unitCents),
     lineSubtotal: money(l.subtotalCents),
@@ -242,7 +244,13 @@ export function orderLineView(l: DbOrderLine) {
     taxRatePercent: l.taxRatePercent,
     taxAmount: money(l.taxCents),
     lineTotal: money(l.totalCents),
+    discountLabel: l.discountCents > 0 ? discountLabel : null,
   };
+}
+
+/** The label a subscription order's discounted lines and its item-discount total carry; `null` for every other order. */
+export function discountLabelOf(o: Pick<DbOrder, 'channel'>): string | null {
+  return o.channel === 'Subscription' ? SUBSCRIPTION_DISCOUNT_LABEL : null;
 }
 
 export function totalsView(o: DbOrder) {
@@ -253,6 +261,7 @@ export function totalsView(o: DbOrder) {
     deliveryCharge: money(o.deliveryChargeCents),
     taxTotal: money(o.taxCents),
     grandTotal: money(o.grandTotalCents),
+    lineDiscountLabel: o.lineDiscountCents > 0 ? discountLabelOf(o) : null,
   };
 }
 
@@ -286,7 +295,7 @@ function customerSummary(o: DbOrder) {
   };
 }
 
-function customerDetail(o: DbOrder) {
+export function customerDetail(o: DbOrder) {
   const returnable =
     o.status === 'Delivered' && o.returnWindowEndsOn !== null && o.returnWindowEndsOn >= todayLocal()
       ? o.lines
@@ -305,9 +314,11 @@ function customerDetail(o: DbOrder) {
     fulfilmentMethod: o.fulfilmentMethod,
     paymentMethod: o.paymentMethod,
     branchTimeZoneId: ids.timeZoneId,
-    lines: o.lines.map(orderLineView),
+    // `imagePath` and `riderNote` are always present on the server's views, null when none (Read/ViewModels/
+    // OrderViewModels.cs:15, :23); the mock has no product photos on order lines. Found by the contract check, HO-P6 integration part 2.
+    lines: o.lines.map((l) => ({ ...orderLineView(l, discountLabelOf(o)), imagePath: null })),
     totals: totalsView(o),
-    fulfilment: o.fulfilment,
+    fulfilment: { ...o.fulfilment, riderNote: o.fulfilment.riderNote ?? null },
     statusHistory: o.history.map((h) => ({ to: h.to, changedOn: h.changedOn })),
     paymentDueBy: o.status === 'PendingPayment' ? o.paymentDueBy : o.paymentMethod === 'BankTransfer' ? o.paymentDueBy : null,
     transferInstructions: transferInstructionsOf(o),
@@ -355,8 +366,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
   ),
 
   http.post(`${API}/cart/lines`, async ({ request }) => {
-    const body = (await request.json()) as { skuId: string; quantity?: number; catId?: string | null };
-    const result = addToCart(myLines(request), body.skuId, body.quantity ?? 1, body.catId ?? null);
+    const body = (await request.json()) as { skuId: string; quantity?: number };
+    const result = addToCart(myLines(request), body.skuId, body.quantity ?? 1);
     if (result instanceof Response) return result;
     return HttpResponse.json({ lineId: result.lineId, cartId: 'ca000000-0000-0000-0000-000000000001' }, { status: 201 });
   }),
@@ -364,18 +375,12 @@ export const customerOrderingHandlers: HttpHandler[] = [
   http.put(`${API}/cart/lines/:lineId`, async ({ request, params }) => {
     const line = myLines(request).find((l) => l.lineId === params.lineId);
     if (!line) return notFound();
-    const body = (await request.json()) as { quantity?: number | null; catId?: string | null };
+    const body = (await request.json()) as { quantity?: number | null };
     if (body.quantity !== undefined && body.quantity !== null) {
       if (!Number.isInteger(body.quantity) || body.quantity < 1 || body.quantity > MAX_QUANTITY_PER_LINE) {
         return violation('Quantity', 'QuantityOutOfRange', `You can buy between 1 and ${MAX_QUANTITY_PER_LINE} of an item at a time.`);
       }
       line.quantity = body.quantity;
-    }
-    if (body.catId) {
-      if (!authorisedCatsFor(line.skuId).includes(body.catId)) {
-        return violation('CatId', 'PrescriptionNotAuthorised', `${CAT_NAMES[body.catId] ?? 'That cat'} has no current vet authorisation for this food.`);
-      }
-      line.catId = body.catId;
     }
     persist();
     return noContent();
@@ -395,7 +400,7 @@ export const customerOrderingHandlers: HttpHandler[] = [
     const dropped: Array<{ productName: string; reason: string }> = [];
     let merged = 0;
     for (const guest of db.guestLines) {
-      const existing = db.customerLines.find((l) => l.skuId === guest.skuId && l.catId === guest.catId);
+      const existing = db.customerLines.find((l) => l.skuId === guest.skuId);
       if (existing) {
         existing.quantity = Math.min(existing.quantity + guest.quantity, MAX_QUANTITY_PER_LINE);
         merged += 1;
@@ -434,12 +439,15 @@ export const customerOrderingHandlers: HttpHandler[] = [
       return violation('Idempotency-Key', 'RequestInProgress', 'This order is already being placed.', 409);
     }
     const body = (await request.json()) as Record<string, string | undefined>;
+    // The validator runs before the handler, so a refused note is a 400 whatever the quote says.
+    const noteProblems = riderNoteProblems(body.riderNote);
+    if (noteProblems.length > 0) return violations(noteProblems);
     if (testControl.failNextPlacement === 'StockNoLongerAvailable') {
       testControl.failNextPlacement = null;
       return violation(
         'Lines',
         'StockNoLongerAvailable',
-        "Sorry — 'Royal Canin Kitten' has just sold out. It has been removed from your order; please review and place it again.",
+        "Sorry — 'Organic Rolled Oats' has just sold out. It has been removed from your order; please review and place it again.",
         409,
       );
     }
@@ -457,7 +465,7 @@ export const customerOrderingHandlers: HttpHandler[] = [
     if (!result.canPlace) {
       const code = result.blocking[0] ?? 'NothingToPlace';
       const property =
-        code === 'PaymentMethodUnavailable' ? 'PaymentMethod' : code === 'PolicyAcceptanceRequired' ? 'Policies' : code === 'PrescriptionCatRequired' ? 'Lines' : 'FulfilmentMethod';
+        code === 'PaymentMethodUnavailable' ? 'PaymentMethod' : code === 'PolicyAcceptanceRequired' ? 'Policies' : 'FulfilmentMethod';
       return violation(property, code, '');
     }
 
@@ -474,7 +482,6 @@ export const customerOrderingHandlers: HttpHandler[] = [
       skuId: p.skuId,
       productName: p.productName,
       variantLabel: p.variantLabel,
-      catId: p.catId,
       quantity: p.quantity,
       unitCents: p.unitCents,
       subtotalCents: p.subtotalCents,
@@ -525,6 +532,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
         pickupBranchId: method === 'Pickup' ? (branch?.id ?? null) : null,
         pickupBranchName: method === 'Pickup' ? (branch?.name ?? null) : null,
         pickupBranchAddress: method === 'Pickup' ? (branch?.address ?? null) : null,
+        // G4: kept for Delivery, silently dropped for Pickup (App/CommandHandlers/Order/OrderPlacement.cs:21-33).
+        riderNote: method === 'Delivery' ? body.riderNote || null : null,
       },
       history: [{ from: null, to: transfer ? 'PendingPayment' : 'Confirmed', changedOn: placedOn, changedBy: ids.customerId, changedByName: null, note: null }],
       paymentDueBy: transfer ? new Date(Date.now() + db.transferWindowSeconds * 1000).toISOString() : null,
@@ -627,7 +636,9 @@ export const customerOrderingHandlers: HttpHandler[] = [
     const replay = db.idempotency[key];
     if (replay) return HttpResponse.json(replay.body as object, { status: replay.status });
     const order = mine(params.orderId);
-    if (!order) return notFound();
+    // Not one of this mock's orders: return nothing so MSW tries the next handler for the route (the
+    // portal mock owns the dashboard's fixture orders, HO-P3 TEST gate E13/E14). The last one answers 404.
+    if (!order) return;
     const unavailable: Array<{ productName: string; reason: string }> = [];
     let added = 0;
     for (const l of order.lines) {
@@ -636,10 +647,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
         unavailable.push({ productName: l.productName, reason: 'NotPurchasable' });
       } else if (stockOf(l.skuId) <= 0) {
         unavailable.push({ productName: l.productName, reason: 'OutOfStock' });
-      } else if (info.requiresPrescription && (!l.catId || !authorisedCatsFor(l.skuId).includes(l.catId))) {
-        unavailable.push({ productName: l.productName, reason: 'PrescriptionNotAuthorised' });
       } else {
-        const result = addToCart(db.customerLines, l.skuId, l.quantity, l.catId);
+        const result = addToCart(db.customerLines, l.skuId, l.quantity);
         if (result instanceof Response) unavailable.push({ productName: l.productName, reason: 'SkuUnavailable' });
         else added += 1;
       }
@@ -676,8 +685,8 @@ export const customerOrderingHandlers: HttpHandler[] = [
         line.reason !== 'Recalled'
       ) {
         problems.push({ propertyName: `Lines[${index}]`, errorCode: 'ReturnNotEligibleOpenedFood', errorMessage: "Opened food can only be returned if there's a quality problem or a recall." });
-      } else if (orderLine.returnClass === 'Litter' && line.condition === 'Used') {
-        problems.push({ propertyName: `Lines[${index}]`, errorCode: 'ReturnNotEligibleUsedLitter', errorMessage: 'Used litter cannot be returned.' });
+      } else if (orderLine.returnClass === 'Household' && line.condition === 'Used') {
+        problems.push({ propertyName: `Lines[${index}]`, errorCode: 'ReturnNotEligibleUsedItem', errorMessage: 'Used items cannot be returned.' });
       }
     });
     if (problems.length > 0) return violations(problems);
