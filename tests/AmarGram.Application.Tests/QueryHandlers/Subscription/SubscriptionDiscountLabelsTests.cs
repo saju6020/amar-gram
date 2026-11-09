@@ -1,4 +1,6 @@
 using AmarGram.Read.QueryHandlers.Subscription;
+using AmarGram.Shared.Common.Constants;
+using AmarGram.Shared.Common.Enums;
 
 namespace AmarGram.Application.Tests.QueryHandlers.Subscription;
 
@@ -22,4 +24,17 @@ public sealed class SubscriptionDiscountLabelsTests
     [Fact]
     public void NoDiscountedLine_MeansNoLabel() =>
         Assert.Null(SubscriptionDiscountLabels.TotalsLabel([(0m, null), (0m, Ten)]));
+
+    [Fact]
+    public void ASubscriptionOrder_ShowsNoDiscountCode() =>
+        Assert.Null(SubscriptionDiscountLabels.StaffDiscountCode(OrderChannel.Subscription, SubscriptionMessages.DiscountLabel));
+
+    [Theory]
+    [InlineData("WELCOME10")]
+    [InlineData(null)]
+    public void AnyOtherOrder_ShowsItsCodeAsTyped(string? code)
+    {
+        Assert.Equal(code, SubscriptionDiscountLabels.StaffDiscountCode(OrderChannel.Online, code));
+        Assert.Equal(code, SubscriptionDiscountLabels.StaffDiscountCode(OrderChannel.Counter, code));
+    }
 }
