@@ -87,8 +87,14 @@ customer; an unavailable product also suspends. Staff (`Subscriptions.Manage`) r
 - Tests: `tests/*/Subscriptions/`, `tests/AmarGram.IntegrationTests/Endpoints/Subscriptions*EndpointTests.cs`
   (the discount test shares `AdministrationGlobalSettingsCollection`: the setting is global)
 
+## Owner decisions 2026-11-09 (fix/p6-owner-backend)
+- Clearing `Product.IsSubscribable` only blocks NEW subscriptions; the cycle path checks purchasability only, never the flag (test `I_D8`). `ProductUnavailable` is for genuinely unpurchasable products.
+- Subscriber discount setting stays administrator-only (403 for shop manager).
+- Discount is labelled: order line `discountLabel`, order totals `lineDiscountLabel`, invoice line/totals `discountLabel`, PDF line detail ("Subscription discount (10%)") via `Read/QueryHandlers/Subscription/SubscriptionDiscountLabels.cs`.
+- `GET /api/staff/subscriptions[/export.csv]?nextDeliveryOn=yyyy-MM-dd`: Active and NextDeliveryOn == date (same rule as `due-tomorrow`); bad date -> 400 `{ error }`.
+
 ## Remaining work
-- HO-SUB-002 web screens; invoice rendering of the discount is Ordering/Billing's
+- HO-SUB-002 web screens
 - No SMS / email provider: outside Development only the in-app copy reaches a customer
 - I-D9 (a customer change racing C8) is guarded by `xmin` but has no dedicated test
 - Auto-charge / failed-charge retry stay out of scope until a gateway exists (SRS Phase 5)

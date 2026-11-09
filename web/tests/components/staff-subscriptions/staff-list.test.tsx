@@ -7,6 +7,7 @@ import { ApiError, ApiForbiddenError } from '@/lib/api/client';
 import { PERMISSION_DENIED_MESSAGE } from '@/lib/api/errors';
 import * as billing from '@/lib/api/billing-staff';
 import { subscriptionFixtureIds } from '../../../mocks/handlers/subscriptions/fixtures';
+import { dueTomorrowOf } from '../../../mocks/handlers/subscriptions/store';
 import { currentUrl, setUrl } from '../common/nav-mock';
 import { actAs, freshStore, recordRequests, renderScreen } from './helpers';
 
@@ -103,6 +104,38 @@ describe('U27 staff list', () => {
     renderScreen(<StaffSubscriptionsList />);
     await screen.findByRole('table', { name: 'Subscriptions' });
     expect(seen[0]!.searchParams.has('status')).toBe(false);
+  });
+
+  it('narrows to the next-delivery day from the address, shows it as a removable chip, and sends it to the server and the export', async () => {
+    const user = userEvent.setup();
+    const { dueOn } = dueTomorrowOf();
+    setUrl(`/staff/subscriptions?status=Active&nextDeliveryOn=${dueOn}`);
+    const seen = recordRequests('/api/staff/subscriptions');
+    renderScreen(<StaffSubscriptionsList />);
+    const table = await screen.findByRole('table', { name: 'Subscriptions' });
+    expect(seen[0]!.searchParams.get('nextDeliveryOn')).toBe(dueOn);
+    expect(within(table).getByRole('link', { name: /Garam Masala Blend/ })).toBeInTheDocument();
+    expect(within(table).getAllByRole('row').length - 1).toBe(dueTomorrowOf().count);
+
+    await user.click(await screen.findByRole('button', { name: 'Export CSV' }));
+    await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
+    expect(new URL(download.mock.calls[0]![0], 'http://x').searchParams.get('nextDeliveryOn')).toBe(dueOn);
+
+    const chip = screen.getByRole('button', { name: /Remove filter: Next delivery/ });
+    expect(chip).toHaveTextContent(/^Next delivery: /);
+    expect(chip).toHaveClass('min-h-11');
+    await user.click(chip);
+    expect(currentUrl()).not.toContain('nextDeliveryOn');
+    expect(screen.queryByRole('button', { name: /Remove filter: Next delivery/ })).not.toBeInTheDocument();
+  });
+
+  it('does not send a next-delivery day that is not a real date (a hand-edited address)', async () => {
+    setUrl('/staff/subscriptions?nextDeliveryOn=2026-02-31');
+    const seen = recordRequests('/api/staff/subscriptions');
+    renderScreen(<StaffSubscriptionsList />);
+    await screen.findByRole('table', { name: 'Subscriptions' });
+    expect(seen[0]!.searchParams.has('nextDeliveryOn')).toBe(false);
+    expect(screen.queryByRole('button', { name: /Remove filter: Next delivery/ })).not.toBeInTheDocument();
   });
 
   it('shows the empty state, and a way back, when nothing matches', async () => {

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using AmarGram.Application.Commands.Subscription;
 using AmarGram.Domain.DomainServices;
 using AmarGram.Shared.Common.Constants;
@@ -202,6 +203,21 @@ public sealed class SubscriptionsGenerationEndpointTests(OrderingApiFactory fact
             Assert.Equal(SubscriptionMessages.DiscountLabel, order.DiscountCodeText);
             Assert.Equal(10m, Assert.Single(await CyclesAsync(id)).DiscountPercent);
 
+            // Owner decision 2026-11-09: the discount is named, not a bare line discount -- on the order (customer and staff views) and on the invoice.
+            var customerOrder = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await shop.Customer.GetAsync($"/api/customers/me/orders/{order.Id}")));
+            Assert.Equal("Subscription discount (10%)", customerOrder.GetProperty("lines")[0].GetProperty("discountLabel").GetString());
+            Assert.Equal("Subscription discount (10%)", customerOrder.GetProperty("totals").GetProperty("lineDiscountLabel").GetString());
+            var staffOrder = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await (await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId)).GetAsync($"/api/staff/orders/{order.Id}")));
+            Assert.Equal("Subscription discount (10%)", staffOrder.GetProperty("totals").GetProperty("lineDiscountLabel").GetString());
+
+            var invoiceId = staffOrder.GetProperty("invoiceId");
+            Assert.Equal(JsonValueKind.String, invoiceId.ValueKind);
+            {
+                var invoice = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await (await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId)).GetAsync($"/api/staff/billing/invoices/{invoiceId.GetGuid()}")));
+                Assert.Equal("Subscription discount (10%)", invoice.GetProperty("totals").GetProperty("discountLabel").GetString());
+                Assert.Contains(invoice.GetProperty("lines").EnumerateArray(), l => l.GetProperty("discountLabel").GetString() == "Subscription discount (10%)");
+            }
+
             // I-D6: change the discount after generation -- the existing cycle and order keep 10 %. (The clock has moved days on: sign the administrator in again.)
             await SetSettingAsync(await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId), SettingKeys.SubscriptionDiscountPercent, "0");
             var reloaded = Assert.Single(await OrdersOfAsync(shop.CustomerId));
@@ -212,6 +228,55 @@ public sealed class SubscriptionsGenerationEndpointTests(OrderingApiFactory fact
         {
             await SetSettingAsync(await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId), SettingKeys.SubscriptionDiscountPercent, "0");
         }
+    }
+
+    [Fact]
+    public async Task I_D5b_AnOrderWithoutTheSubscriberDiscount_CarriesNoDiscountLabel()
+    {
+        var shop = await SetUpSubscribableShopAsync();   // the discount setting is 0 by default: no discount, so no label
+        var view = await SubscribeAsync(shop);
+        AdvanceToLocal(DateOf(view, "nextDeliveryOn"));
+        await RunSubscriptionWorkAsync(shop.CustomerId);
+
+        var order = Assert.Single(await OrdersOfAsync(shop.CustomerId));
+        var customerOrder = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await shop.Customer.GetAsync($"/api/customers/me/orders/{order.Id}")));
+        Assert.Equal(JsonValueKind.Null, customerOrder.GetProperty("totals").GetProperty("lineDiscountLabel").ValueKind);
+        Assert.Equal(JsonValueKind.Null, customerOrder.GetProperty("lines")[0].GetProperty("discountLabel").ValueKind);
+    }
+
+    // -- Owner decision 2026-11-09: clearing "Can be subscribed to" never stops an existing subscription --
+
+    [Fact]
+    public async Task I_D8_ClearingTheSubscribableFlag_DoesNotStopAnExistingSubscription_ItsNextCycleStillRaisesItsOrder()
+    {
+        var shop = await SetUpSubscribableShopAsync();
+        var view = await SubscribeAsync(shop, quantity: 2, interval: 4);
+        var id = view.GetProperty("id").GetGuid();
+        var due = DateOf(view, "nextDeliveryOn");
+
+        await SetSubscribableAsync(shop.Context, shop.Food, subscribable: false);
+
+        AdvanceToLocal(due);
+        await RunSubscriptionWorkAsync(shop.CustomerId);
+
+        var order = Assert.Single(await OrdersOfAsync(shop.CustomerId));
+        Assert.Equal(OrderChannel.Subscription, order.Channel);
+        var cycle = Assert.Single(await CyclesAsync(id));
+        Assert.Equal(SubscriptionCycleOutcome.Generated, cycle.Outcome);
+        Assert.Equal(order.Id, cycle.OrderId);
+
+        var after = await GetAsync(shop.Customer, id);
+        Assert.Equal("Active", after.GetProperty("status").GetString());
+        Assert.Equal(due.AddDays(28), DateOf(after, "nextDeliveryOn"));
+    }
+
+    [Fact]
+    public async Task I_D8b_ClearingTheSubscribableFlag_StillRefusesANewSubscription()
+    {
+        var shop = await SetUpSubscribableShopAsync();
+        await SetSubscribableAsync(shop.Context, shop.Food, subscribable: false);
+
+        await RefusedAsync(await TrySubscribeAsync(shop), BusinessViolationCodes.SkuNotSubscribable);
     }
 
     [Fact]

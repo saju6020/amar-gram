@@ -389,6 +389,11 @@ the API returns, in the commerce zone, formatted `ddd d MMM`:
 A failed cycle **consumes** the cycle: the subscription moves on to the next date, and the customer is
 told what failed (`subscription.cycle-failed`). Out-of-stock cycles are **not retried** (OQ-4).
 
+> **Owner decision 2026-11-09** (appended; the text above is unchanged). `ProductUnavailable` in step 6 means the product is genuinely unpurchasable (inactive or archived
+> SKU, unpublished product, no stock to sell). Clearing the product's "Can be subscribed to" flag (`IsSubscribable`) is **not** such a case: it only stops *new* subscriptions
+> being started (C1 still refuses with `SkuNotSubscribable`). An existing subscription is never paused, suspended, skipped or failed because the flag is off; its cycles keep
+> raising orders. The cycle path (`PlaceSubscriptionOrderCommandHandler`) checks purchasability only, never the flag; test `I_D8`.
+
 ### 8.7 `SubscriptionCycleAggregate` — US-SUB-01 AC2, US-SUB-04, US-SUB-06
 
 | Field | Notes |
@@ -635,6 +640,8 @@ HO-NTF-001's `NotificationSubjectKind` gains **`SubscriptionCycleDue`** and
 No migration — values are rows (HO-ADM-001 §10.2). The HO-ADM-002 settings screen lists them with no
 frontend change, because it renders every registry entry. **That screen is how the shop manager
 configures the discount** (US-SUB-04).
+
+> **Owner decision 2026-11-09**: that setting is **administrator-only** (the shop manager is refused with 403) and the discount is labelled on the order and the invoice ("Subscription discount (10%)": order line `discountLabel`, totals `lineDiscountLabel`; invoice line and totals `discountLabel`; invoice PDF line detail).
 
 ### 10.3 Other constants
 

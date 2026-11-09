@@ -247,6 +247,22 @@ export function placeText(terms: SubscriptionTerms): string {
   return 'Delivery address needed';
 }
 
+/**
+ * The terms panel's place row, split so the sentence is not said twice (it used to read "Deliver to me" then "Deliver to Home: ...").
+ * The label says which way the order travels; the value is only where.
+ */
+export function placeRowLabel(terms: Pick<SubscriptionTerms, 'fulfilment'>): string {
+  return terms.fulfilment === 'Pickup' ? 'Collect from' : 'Deliver to';
+}
+export function placeRowValue(terms: SubscriptionTerms): string {
+  if (terms.fulfilment === 'Pickup') return terms.pickupBranch ? terms.pickupBranch.name : 'An outlet';
+  if (terms.deliveryAddress) {
+    const { label, line1, city } = terms.deliveryAddress;
+    return `${label}: ${[line1, city].filter(Boolean).join(', ')}`;
+  }
+  return 'Delivery address needed';
+}
+
 /** "2 × every 4 weeks, Deliver to Home: House 12, Dhaka, Cash on delivery". */
 export function termsSummaryText(terms: SubscriptionTerms): string {
   return [
@@ -333,9 +349,9 @@ export const WITHDRAW_TITLE = 'Withdraw scheduled changes?';
 
 // ---- back-office touch points (HO-P6 S3, Amended (m)) ----------------------------------------------------
 
-/** The product editor's help under "Can be subscribed to" (OQ-18; consequence `ProductAggregate.Subscription.cs:4-7`). */
+/** The product editor's help under "Can be subscribed to" (OQ-18; owner decision 2026-11-09: turning it off only stops new subscriptions). */
 export const SUBSCRIBABLE_HELP =
-  'Customers can start a repeat delivery of any pack size. Turning it off does not cancel existing subscriptions: their next order is not placed and they are suspended.';
+  'Customers can start a repeat delivery of any pack size. Turning it off stops new subscriptions; existing subscriptions carry on as normal.';
 /** The customer profile's Subscriptions tab: the empty text and the counts line. */
 export const NO_CURRENT_SUBSCRIPTIONS = 'No current subscriptions.';
 export const customerSubscriptionCounts = (suspendedCount: number, cancelledCount: number): string =>

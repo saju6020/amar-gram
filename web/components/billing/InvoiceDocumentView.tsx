@@ -54,7 +54,20 @@ export function InvoiceDocumentView({
     { id: 'kind', header: 'Kind', cell: (l) => l.itemKind },
     { id: 'qty', header: 'Qty', numeric: true, cell: (l) => l.quantity },
     { id: 'unit', header: 'Unit price', numeric: true, cell: (l) => <Amount money={l.unitPrice} /> },
-    { id: 'discount', header: 'Discount', numeric: true, cell: (l) => <Amount money={l.lineDiscount} /> },
+    {
+      id: 'discount',
+      header: 'Discount',
+      numeric: true,
+      cell: (l) =>
+        l.discountLabel ? (
+          <span className="inline-flex flex-col items-end">
+            <Amount money={l.lineDiscount} />
+            <span className="text-xs text-ink-muted">{l.discountLabel}</span>
+          </span>
+        ) : (
+          <Amount money={l.lineDiscount} />
+        ),
+    },
     { id: 'loyalty', header: 'Loyalty share', numeric: true, cell: (l) => <Amount money={l.invoiceDiscountShare} /> },
     { id: 'class', header: 'Tax class', cell: (l) => l.taxClassCode ?? '—' },
     { id: 'rate', header: 'Rate %', numeric: true, cell: (l) => `${l.taxRatePercent}%` },
@@ -159,7 +172,7 @@ export function InvoiceDocumentView({
         <dl className="ml-auto grid w-full max-w-sm grid-cols-[1fr_auto] gap-x-4 gap-y-1 text-sm">
           <dt className="text-ink-muted">Net</dt>
           <dd className="text-right"><Amount money={invoice.totals.net} /></dd>
-          <dt className="text-ink-muted">Discounts</dt>
+          <dt className="text-ink-muted">{invoice.totals.discountLabel || 'Discounts'}</dt>
           <dd className="text-right"><Amount money={invoice.totals.discount} /></dd>
           <dt className="text-ink-muted">Tax</dt>
           <dd className="text-right"><Amount money={invoice.totals.tax} /></dd>

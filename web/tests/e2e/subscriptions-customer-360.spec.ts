@@ -92,10 +92,10 @@ test('Subscribe: delivery, the inline address form, and pickup', async ({ page }
   await page.getByRole('button', { name: 'Add a new address' }).click();
   const dialog = page.getByRole('dialog', { name: 'Add address' });
   await expect(dialog).toBeVisible();
-  // Handover Amended (j): the dialog's fields and its Cancel and Save buttons are 44 px; its 24 px close X is not checked.
+  // Handover Amended (j): the dialog's fields and its Cancel and Save buttons and its close X are 44 px (owner fix 2026-11-09: the X was 24 px).
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
   const small = await dialog.evaluate((root) =>
-    Array.from(root.querySelectorAll('input, textarea, select, button:not([aria-label="Close"])'))
+    Array.from(root.querySelectorAll('input, textarea, select, button'))
       .map((el) => ({ name: (el.textContent || el.id).trim(), h: el.getBoundingClientRect().height }))
       .filter((x) => x.h < 43.5),
   );

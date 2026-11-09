@@ -56,6 +56,34 @@ test.describe('ShopManager', () => {
     await expect(page).toHaveURL(new RegExp(`${SUBSCRIPTIONS}$`));
   });
 
+  test('nextDeliveryOn narrows the list to that day, shows as a removable chip, and goes into the export', async ({ page }) => {
+    await openReportsAs(page, 'ShopManager', SUBSCRIPTIONS);
+    const dueOn = await page.evaluate(async () => {
+      const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
+      const response = await fetch(`${base}/api/staff/subscriptions/due-tomorrow`, { credentials: 'include' });
+      return ((await response.json()) as { dueOn: string }).dueOn;
+    });
+    await expect(subscriptionRows(page).first()).toBeVisible();
+    const all = await subscriptionRows(page).count();
+    await page.goto(`${SUBSCRIPTIONS}?status=Active&nextDeliveryOn=${dueOn}`);
+    const chip = page.getByRole('button', { name: /^Remove filter: Next delivery/ });
+    await expect(chip).toBeVisible();
+    await expect(chip).toContainText('Next delivery:');
+    await expect(subscriptionRows(page).first()).toBeVisible();
+    const narrowed = await subscriptionRows(page).count();
+    expect(narrowed).toBeGreaterThanOrEqual(1);
+    expect(narrowed).toBeLessThan(all);
+
+    const exportRequest = page.waitForRequest((r) => r.url().includes('/export.csv'));
+    await page.getByRole('button', { name: 'Export CSV' }).click();
+    expect(new URL((await exportRequest).url()).searchParams.get('nextDeliveryOn')).toBe(dueOn);
+
+    await chip.click();
+    await expect(page).not.toHaveURL(/nextDeliveryOn/);
+    await expect(chip).toHaveCount(0);
+    await expect(page).toHaveURL(/status=Active/);
+  });
+
   test('search, sort and a row link to the detail', async ({ page }) => {
     await openReportsAs(page, 'ShopManager', SUBSCRIPTIONS);
     await page.getByRole('searchbox', { name: 'Customer, mobile or product' }).fill('shirin');

@@ -9,11 +9,14 @@ import type { TabsProps } from './tabs-shared';
  * semantics as `PillTabs`; only the look differs. A strip too wide for the screen scrolls inside
  * itself rather than widening the page.
  */
-export function UnderlineTabs(props: TabsProps) {
+export function UnderlineTabs({ wrap = false, ...props }: TabsProps & {
+  /** Let the tabs wrap onto more rows so every one is visible without a hidden scroll (a short strip such as the customer profile's). */
+  wrap?: boolean;
+}) {
   return (
     <TabsBase
       {...props}
-      containerClass="flex gap-1 overflow-x-auto border-b border-border"
+      containerClass={cn('flex gap-x-1 border-b border-border', wrap ? 'flex-wrap' : 'overflow-x-auto')}
       itemClass={(selected) =>
         cn(
           '-mb-px inline-flex min-h-11 flex-none items-center gap-2 whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors',

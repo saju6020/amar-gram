@@ -10,7 +10,8 @@ import {
   NO_DELIVERY_SCHEDULED,
   endedOnText,
   pendingChangeLines,
-  placeText,
+  placeRowLabel,
+  placeRowValue,
   NEXT_DELIVERY_HELP,
   PAUSED_NO_DELIVERIES_TEXT,
   cutoffSentence,
@@ -21,7 +22,6 @@ import {
 import { formatCommerceInstantLong, isZeroPercent } from '@/lib/subscriptions/dates';
 import {
   intervalLabel,
-  subscriptionFulfilmentLabel,
   subscriptionPaymentMethodLabel,
   suspensionReasonCustomerText,
 } from '@/lib/subscriptions/labels';
@@ -160,7 +160,7 @@ export function TermsPanel({
       <dl className="m-0 flex flex-col gap-2">
         <Row label="Quantity">{terms.quantity}</Row>
         <Row label="How often">{intervalLabel(terms.intervalWeeks)}</Row>
-        <Row label={subscriptionFulfilmentLabel(terms.fulfilment)}>{placeText(terms)}</Row>
+        <Row label={placeRowLabel(terms)}>{placeRowValue(terms)}</Row>
         <Row label="Payment">{subscriptionPaymentMethodLabel(terms.paymentMethod)}</Row>
       </dl>
       {terms.deliveryAddressMissing && (

@@ -53,6 +53,8 @@ public sealed class GetStaffSubscriptionsQuery : Query<PagedResult<StaffSubscrip
     public string? Text { get; init; }
     public string? Sort { get; init; }
     public Guid? CustomerId { get; init; }
+    /// <summary>Only <c>Active</c> subscriptions whose next delivery is on this commerce-zone date (the due-tomorrow rule).</summary>
+    public DateOnly? NextDeliveryOn { get; init; }
 }
 
 /// <summary>US-SUB-06 AC2 -- suspended for unpaid cycles, and at-risk (Active with an unpaid streak of at least one, or a cycle still awaiting payment).</summary>
@@ -79,6 +81,7 @@ public sealed class ExportSubscriptionsQuery : Query<IReadOnlyList<StaffSubscrip
     public SubscriptionPaymentMethod? PaymentMethod { get; init; }
     public string? Text { get; init; }
     public string? Sort { get; init; }
+    public DateOnly? NextDeliveryOn { get; init; }
 }
 
 /// <summary>The dashboard's "Subscription orders due tomorrow" and the subscriptions at a glance.</summary>

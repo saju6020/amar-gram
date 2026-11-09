@@ -195,4 +195,18 @@ public sealed class SubscriptionMessagesAndConventionTests
         var properties = typeof(SubscriptionAggregate).GetProperties().Concat(typeof(SubscriptionCycleAggregate).GetProperties()).Select(p => p.Name);
         Assert.DoesNotContain(properties, n => n.Contains("Reservation") || n.Contains("Batch") || n.Contains("Invoice") || n.Contains("Total") || n.Contains("Price"));
     }
+
+    [Theory]
+    [InlineData(10, "Subscription discount (10%)")]
+    [InlineData(7.5, "Subscription discount (7.5%)")]
+    [InlineData(10.00, "Subscription discount (10%)")]
+    public void TheDiscountLabel_NamesThePercentage_AsTheOwnerAsked(double percent, string expected) =>
+        Assert.Equal(expected, SubscriptionMessages.DiscountLabelWith((decimal)percent));
+
+    [Fact]
+    public void TheDiscountLabel_IsThePlainText_WhenThePercentageIsUnknownOrZero()
+    {
+        Assert.Equal(SubscriptionMessages.DiscountLabel, SubscriptionMessages.DiscountLabelWith(null));
+        Assert.Equal(SubscriptionMessages.DiscountLabel, SubscriptionMessages.DiscountLabelWith(0m));
+    }
 }

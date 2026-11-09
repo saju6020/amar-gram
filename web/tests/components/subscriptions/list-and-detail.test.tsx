@@ -171,7 +171,11 @@ describe('the detail, unlocked (U16)', () => {
     await detailReady(ids.mine.activeUnlocked);
     const terms = screen.getByRole('region', { name: 'Your subscription' });
     expect(terms).toHaveTextContent('Every 4 weeks');
-    expect(terms).toHaveTextContent('Deliver to Home');
+    // Owner fix 2026-11-09: the place is said once -- label "Deliver to", value "Home: ...".
+    expect(within(terms).getByText('Deliver to', { selector: 'dt' })).toBeInTheDocument();
+    expect(terms).toHaveTextContent(/Home: House 7/);
+    expect(terms).not.toHaveTextContent('Deliver to me');
+    expect(terms.textContent?.match(/Deliver to/g)).toHaveLength(1);
     expect(terms).toHaveTextContent('Cash on delivery');
     const estimate = screen.getByRole('region', { name: 'Estimate for each delivery' });
     expect(estimate).toHaveTextContent('2 × ৳650.00');

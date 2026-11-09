@@ -6,6 +6,7 @@ using AmarGram.Domain.Aggregates.Order;
 using AmarGram.Domain.DomainServices;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Read.Queries.Order;
+using AmarGram.Read.QueryHandlers.Subscription;
 using AmarGram.Read.ViewModels;
 using AmarGram.Shared.Common.Constants;
 using AmarGram.Shared.Common.Enums;
@@ -168,6 +169,8 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
             .Where(a => RequiredAction(a) is { } action && ActionRoles.TryGetRoles(action, out var roles) && roles.Intersect(query.UserContext?.Roles ?? [], StringComparer.Ordinal).Any())
             .Select(a => a.ToString()).ToList();
 
+        var discountLabel = (await SubscriptionDiscountLabels.ForOrdersAsync(db, [head.Id])).GetValueOrDefault(head.Id);
+
         var view = new StaffOrderDetailViewModel(
             head.Id, head.Version, head.OrderNumber, head.PlacedOn, head.Channel.DisplayName, head.CustomerId, head.Status.DisplayName, head.FulfilmentMethod.DisplayName,
             head.PaymentMethod.DisplayName, timeZoneId,
@@ -177,7 +180,8 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
                 l.Allocations.Select(a => new StaffAllocationViewModel(a.BatchId, a.LotNumber, a.BatchExpiresOn, a.LocationId, locations.GetValueOrDefault(a.LocationId, string.Empty), a.Quantity)).ToList(),
                 l.IsPicked, l.PickedOn, l.PickedBy)).ToList(),
             new OrderTotalsViewModel(
-                Money(head.Totals.Subtotal), Money(head.Totals.LineDiscountTotal), Money(head.Totals.OrderDiscount), Money(head.Totals.DeliveryCharge), Money(head.Totals.TaxTotal), Money(head.Totals.GrandTotal)),
+                Money(head.Totals.Subtotal), Money(head.Totals.LineDiscountTotal), Money(head.Totals.OrderDiscount), Money(head.Totals.DeliveryCharge), Money(head.Totals.TaxTotal), Money(head.Totals.GrandTotal),
+                head.Totals.LineDiscountTotal > 0m ? discountLabel : null),
             new OrderFulfilmentViewModel(
                 head.F.RecipientName, head.F.RecipientPhone, head.F.Line1, head.F.Line2, head.F.City, head.F.District, head.F.PostalCode, head.F.DeliveryInstructions, head.F.ZoneName,
                 head.F.ServiceLevel?.DisplayName, head.F.SlotDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), head.F.SlotWindowLabel, head.F.PickupBranchId, pickupName, pickupAddress, head.F.RiderNote),

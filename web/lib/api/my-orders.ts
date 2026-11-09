@@ -67,6 +67,8 @@ export interface OrderLine {
   lineTotal: Money;
   /** The product's current photo, a signed API-relative URL (customer views only; absent or null when none). */
   imagePath?: string | null;
+  /** "Subscription discount (10%)" on a subscription order's discounted line; null otherwise. // Read/ViewModels/OrderViewModels.cs:16 (owner decision 2026-11-09) */
+  discountLabel?: string | null;
 }
 
 export interface OrderFulfilmentView {

@@ -118,6 +118,8 @@ export interface OrderTotals {
   deliveryCharge: Money;
   taxTotal: Money;
   grandTotal: Money;
+  /** What `lineDiscountTotal` is, when it is the subscriber discount ("Subscription discount (10%)"); null otherwise. // Read/ViewModels/OrderViewModels.cs:20 (owner decision 2026-11-09) */
+  lineDiscountLabel?: string | null;
 }
 
 export interface PendingPolicy {

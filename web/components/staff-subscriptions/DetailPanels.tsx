@@ -4,12 +4,12 @@ import type { StaffSubscriptionDetail } from '@/lib/api/staff-subscriptions';
 import {
   ADDRESS_REMOVED_STAFF,
   cutoffSentence,
+  placeRowLabel,
   pendingChangeLines,
   staffScheduleLockedText,
 } from '@/lib/subscriptions/copy';
 import {
   intervalLabel,
-  subscriptionFulfilmentLabel,
   subscriptionPaymentMethodLabel,
 } from '@/lib/subscriptions/labels';
 import { CustomerLink, nextDeliveryText } from './SubscriptionRowCells';
@@ -76,7 +76,7 @@ export function TermsPanel({ subscription }: { subscription: StaffSubscriptionDe
       <DetailList>
         <DetailRow label="Per delivery">{t.quantity}</DetailRow>
         <DetailRow label="How often">{intervalLabel(t.intervalWeeks)}</DetailRow>
-        <DetailRow label={subscriptionFulfilmentLabel(t.fulfilment)}>
+        <DetailRow label={placeRowLabel(t)}>
           {t.fulfilment === 'Pickup'
             ? (t.pickupBranch?.name ?? '—')
             : t.deliveryAddress

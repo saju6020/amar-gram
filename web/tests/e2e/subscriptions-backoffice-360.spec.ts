@@ -59,7 +59,7 @@ for (const viewport of VIEWPORTS) {
       await openReportsAs(page, 'Administrator', `/staff/shop/products/${NEEM.productId}`);
       const box = page.getByRole('checkbox', { name: 'Can be subscribed to' });
       await expect(box).toBeVisible();
-      await expect(box).toHaveAccessibleDescription(/Turning it off does not cancel existing subscriptions/);
+      await expect(box).toHaveAccessibleDescription(/Turning it off stops new subscriptions; existing subscriptions carry on as normal/);
       await checkScreen(page, box.locator('xpath=ancestor::label[1]'), viewport.width);
     });
 
@@ -76,6 +76,37 @@ for (const viewport of VIEWPORTS) {
       await expectTargets(page.getByRole('tablist', { name: 'Customer details' }));
     });
 
+    test('every customer profile tab is visible without a hidden scroll', async ({ page }) => {
+      await openReportsAs(page, 'Administrator', `/staff/customers/${ids.customerId}`);
+      const list = page.getByRole('tablist', { name: 'Customer details' });
+      await expect(list).toBeVisible();
+      const tabs = list.getByRole('tab');
+      expect(await tabs.count()).toBeGreaterThanOrEqual(4);
+      expect(await list.evaluate((el) => el.scrollWidth - el.clientWidth), 'the tab bar scrolls sideways').toBeLessThanOrEqual(1);
+      // Horizontally, every tab lies inside the screen (the page may need a vertical scroll to reach the bar).
+      for (const tab of await tabs.all()) {
+        const box = (await tab.boundingBox())!;
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+      }
+      await expect(page.getByRole('tab', { name: /^Billing$/ })).toBeVisible();
+      await expect(page.getByRole('tab', { name: /^Notes \(\d+\)$/ })).toBeVisible();
+    });
+
+    test('the erase-personal-data panel keeps its two selects inside the card at 44 px', async ({ page }) => {
+      await openReportsAs(page, 'Administrator', `/staff/customers/${ids.customerId}`);
+      const card = page.getByRole('region', { name: 'Erase personal data' });
+      await card.scrollIntoViewIfNeeded();
+      const cardBox = (await card.boundingBox())!;
+      for (const select of await card.getByRole('combobox').all()) {
+        const box = (await select.boundingBox())!;
+        expect(box.x).toBeGreaterThanOrEqual(cardBox.x);
+        expect(box.x + box.width).toBeLessThanOrEqual(cardBox.x + cardBox.width + 0.5);
+        expect(box.height).toBeGreaterThanOrEqual(43.5);
+      }
+      await checkScreen(page, card, viewport.width);
+    });
+
     test('the dashboard attention panel with the subscription rows', async ({ page }) => {
       await openReportsAs(page, 'Administrator', '/staff');
       await expect(page.getByRole('link', { name: /Subscription orders due tomorrow/ })).toBeVisible();
@@ -90,8 +121,8 @@ for (const viewport of VIEWPORTS) {
       await expect(channel).toBeVisible();
       await expect(channel).toHaveValue('Subscription');
       await expect(channel.locator('option')).toHaveText(['Any channel', 'Online', 'Counter', 'Subscription']);
-      // The Channel select is the control this slice changes; the other filters are the orders screen's own.
-      await checkScreen(page, page.locator('#oq-channel').locator('xpath=..'), viewport.width);
+      // Every More-filters control and both date inputs are 44 px (owner fix 2026-11-09; the filters were 36-40 px).
+      await checkScreen(page, page.getByRole('search', { name: 'Order filters' }), viewport.width);
     });
   });
 }

@@ -20,7 +20,7 @@ import {
   setMockSubscriptionRoles,
 } from '../../../mocks/handlers/subscriptions/staff';
 import { subscriptionFixtureIds } from '../../../mocks/handlers/subscriptions/fixtures';
-import { findSubscription, setMaxExportRows } from '../../../mocks/handlers/subscriptions/store';
+import { dueTomorrowOf, findSubscription, setMaxExportRows } from '../../../mocks/handlers/subscriptions/store';
 import { findSku } from '../../../mocks/handlers/shop/store';
 import { freshStore } from './helpers';
 
@@ -109,6 +109,8 @@ describe('U34 filters: the controller\'s plain { error } 400 (:143-145), checked
     ['status', { status: 'Dormant' }, 'status is not a subscription status.'],
     ['suspensionReason', { suspensionReason: 'Boredom' }, 'suspensionReason is not a suspension reason.'],
     ['paymentMethod', { paymentMethod: 'Barter' }, 'paymentMethod is not a payment method.'],
+    ['nextDeliveryOn', { nextDeliveryOn: '2026-02-31' }, 'nextDeliveryOn must be yyyy-MM-dd.'],
+    ['nextDeliveryOn (text)', { nextDeliveryOn: 'tomorrow' }, 'nextDeliveryOn must be yyyy-MM-dd.'],
   ])('a bad %s is 400 { error }, with no errors array', async (_name, filters, message) => {
     const error = await failure(() => listStaffSubscriptions(filters as never));
     expect(error).toBeInstanceOf(ApiValidationError);
@@ -124,6 +126,19 @@ describe('U34 filters: the controller\'s plain { error } 400 (:143-145), checked
     expect(page.items.every((i) => i.status === 'Suspended' && i.paymentMethod === 'BankTransfer')).toBe(true);
     const blank = await apiFetch<{ totalCount: number }>('/api/staff/subscriptions?status=&suspensionReason=');
     expect(blank.totalCount).toBe((await listStaffSubscriptions()).totalCount);
+  });
+
+  it('nextDeliveryOn keeps only subscriptions whose next delivery is that day, in the list and the export', async () => {
+    const { dueOn } = dueTomorrowOf();
+    const page = await listStaffSubscriptions({ nextDeliveryOn: dueOn });
+    expect(page.items.length).toBeGreaterThan(0);
+    expect(page.items.every((i) => i.nextDeliveryOn === dueOn)).toBe(true);
+    const active = await listStaffSubscriptions({ status: 'Active', nextDeliveryOn: dueOn });
+    expect(active.totalCount).toBe(dueTomorrowOf().count);
+    const exported = await download(subscriptionsCsvPath({ status: 'Active', nextDeliveryOn: dueOn }));
+    expect(exported.text.trim().split(/\r?\n/).length - 1).toBe(active.totalCount);
+    const none = await listStaffSubscriptions({ nextDeliveryOn: '2001-01-01' });
+    expect(none.totalCount).toBe(0);
   });
 
   it('an unknown sort is the default, never a 400 (SubscriptionStaffQueryHandlers.cs:37-43)', async () => {

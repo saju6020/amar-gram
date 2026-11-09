@@ -129,6 +129,8 @@ export interface StaffSubscriptionFilters {
   paymentMethod?: SubscriptionPaymentMethod;
   /** Product name, customer name or mobile, case-insensitive (SubscriptionStaffQueryHandlers.cs:26-32). */
   q?: string;
+  /** `yyyy-MM-dd`: only subscriptions whose next delivery is on that day (the due-tomorrow definition); a bad date is 400 `{ error }`. */
+  nextDeliveryOn?: string;
   /** `nextDeliveryOn` (default), `-nextDeliveryOn`, `status`, `product`; anything else is the default (:37-43). */
   sort?: string;
   pageNumber?: number;
@@ -161,7 +163,7 @@ function query(params: Record<string, string | number | undefined>): string {
   return text ? `?${text}` : '';
 }
 
-/** T1: `GET ?status=&suspensionReason=&paymentMethod=&q=&sort=&pageNumber=&pageSize=` (`Subscriptions.View`). */
+/** T1: `GET ?status=&suspensionReason=&paymentMethod=&q=&nextDeliveryOn=&sort=&pageNumber=&pageSize=` (`Subscriptions.View`). */
 export function listStaffSubscriptions(
   filters: StaffSubscriptionFilters = {},
 ): Promise<PagedResult<StaffSubscriptionRow>> {

@@ -1,5 +1,6 @@
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import { isGuid } from '@/lib/validation/guid';
+import { isCalendarDate } from '@/lib/subscriptions/dates';
 import { accountsFixtureIds, getStaffRoleIdsForRequest } from '../areas/accounts';
 import {
   MAX_NOTE_LENGTH,
@@ -108,6 +109,7 @@ interface Filters {
   status: SubscriptionStatusName | null;
   suspensionReason: (typeof REASONS)[number] | null;
   paymentMethod: (typeof METHODS)[number] | null;
+  nextDeliveryOn: string | null;
   text: string;
   sort: string;
 }
@@ -120,10 +122,14 @@ function readFilters(url: URL): Filters | Response {
   if (!reason.ok) return plainError('suspensionReason is not a suspension reason.'); // :144
   const method = parseEnum(url.searchParams.get('paymentMethod'), METHODS);
   if (!method.ok) return plainError('paymentMethod is not a payment method.'); // :145
+  // `nextDeliveryOn`: blank is no filter; anything but a real `yyyy-MM-dd` day is a `{ error }` 400, after the three above.
+  const day = url.searchParams.get('nextDeliveryOn') ?? ''; // not trimmed: the server refuses a padded date
+  if (day !== '' && !isCalendarDate(day)) return plainError('nextDeliveryOn must be yyyy-MM-dd.');
   return {
     status: status.value,
     suspensionReason: reason.value,
     paymentMethod: method.value,
+    nextDeliveryOn: day === '' ? null : day,
     text: (url.searchParams.get('q') ?? '').trim().toLowerCase(),
     sort: (url.searchParams.get('sort') ?? 'nextDeliveryOn').toLowerCase(),
   };
@@ -135,6 +141,7 @@ function filtered(f: Filters): DbSubscription[] {
     if (f.status && s.status !== f.status) return false;
     if (f.suspensionReason && s.suspensionReason !== f.suspensionReason) return false;
     if (f.paymentMethod && s.terms.paymentMethod !== f.paymentMethod) return false;
+    if (f.nextDeliveryOn && s.nextDeliveryOn !== f.nextDeliveryOn) return false;
     if (f.text === '') return true;
     const customer = customerView(s.customerId);
     return (

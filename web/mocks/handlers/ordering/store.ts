@@ -870,8 +870,10 @@ function seedOrders(): DbOrder[] {
 function seedSubscriptionOrders(): DbOrder[] {
   return subscriptionOrderSeeds().map((seed) => {
     const minutes = seed.placedDaysAgo * 1440;
-    const item = line(1, seed.skuId, seed.quantity);
-    const discount = Math.round(item.subtotalCents / 10);
+    const base = line(1, seed.skuId, seed.quantity);
+    const discount = Math.round(base.subtotalCents / 10);
+    // The subscriber discount is a line discount (the server labels it from `LineDiscount`, OrderQueryHandlers.cs:153-156).
+    const item = { ...base, discountCents: discount, totalCents: base.subtotalCents - discount };
     const order = orderFrom({
       id: seed.orderId,
       seq: Number(seed.orderNumber.slice(-6)),
@@ -883,8 +885,9 @@ function seedSubscriptionOrders(): DbOrder[] {
       customerId: seed.customerId,
       customerName: seed.customerName,
       lines: [item],
-      extra: { customerMobile: seed.customerMobile, orderDiscountCents: discount },
+      extra: { customerMobile: seed.customerMobile },
     });
+    order.lineDiscountCents = discount;
     order.grandTotalCents = order.subtotalCents - discount + order.deliveryChargeCents;
     order.fulfilment.recipientPhone = seed.customerMobile;
 

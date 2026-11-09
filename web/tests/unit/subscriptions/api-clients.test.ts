@@ -193,6 +193,7 @@ describe('staff subscription client (T1-T9)', () => {
         suspensionReason: 'UnpaidCycles',
         paymentMethod: 'BankTransfer',
         q: 'sam',
+        nextDeliveryOn: '2026-11-10',
         sort: '-nextDeliveryOn',
         pageNumber: 2,
         pageSize: 10,
@@ -206,6 +207,7 @@ describe('staff subscription client (T1-T9)', () => {
         suspensionReason: 'UnpaidCycles',
         paymentMethod: 'BankTransfer',
         q: 'sam',
+        nextDeliveryOn: '2026-11-10',
         sort: '-nextDeliveryOn',
         pageNumber: '2',
         pageSize: '10',
@@ -237,12 +239,13 @@ describe('staff subscription client (T1-T9)', () => {
     const path = staff.subscriptionsCsvPath({
       status: 'Active',
       q: 'oats',
+      nextDeliveryOn: '2026-11-10',
       pageNumber: 2,
       pageSize: 50,
     });
     expect(path.startsWith(`${STAFF}/export.csv?`)).toBe(true);
     const query = new URLSearchParams(path.split('?')[1]);
-    expect(Object.fromEntries(query)).toEqual({ status: 'Active', q: 'oats' });
+    expect(Object.fromEntries(query)).toEqual({ status: 'Active', q: 'oats', nextDeliveryOn: '2026-11-10' });
     expect(staff.subscriptionsCsvPath({})).toBe(`${STAFF}/export.csv`);
   });
 

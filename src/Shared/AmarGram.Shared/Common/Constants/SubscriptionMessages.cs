@@ -20,6 +20,10 @@ public static class SubscriptionMessages
     /// <summary>The label the subscriber discount carries on the order's line and in its discount text (HO-SUB-001 §4.2, US-SUB-04).</summary>
     public const string DiscountLabel = "Subscription discount";
 
+    /// <summary><c>Subscription discount (10%)</c> -- the label an order or invoice shows for the subscriber discount; the plain <see cref="DiscountLabel"/> when the percentage is unknown.</summary>
+    public static string DiscountLabelWith(decimal? percent) =>
+        percent is { } p and > 0m ? $"{DiscountLabel} ({p.ToString("0.##", CultureInfo.InvariantCulture)}%)" : DiscountLabel;
+
     public const string EstimateNote = "Delivery and tax are added when each order is placed.";
 
     /// <summary><c>Tue 20 Oct</c>.</summary>
