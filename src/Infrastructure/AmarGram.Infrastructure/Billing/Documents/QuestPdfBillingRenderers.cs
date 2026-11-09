@@ -203,6 +203,15 @@ internal static class BillingPdf
     public static string Money(decimal amount, string currencyCode) =>
         $"{currencyCode} {amount.ToString("N2", CultureInfo.InvariantCulture)}";
 
+    /// <summary>The small grey line under an item: its kind, then the line discount (named when it has a label, e.g. "Subscription discount (10%) BDT 18.00") and the loyalty share.</summary>
+    public static string LineDetail(DocumentLine line, string currencyCode)
+    {
+        var detail = new List<string> { line.ItemKind };
+        if (line.LineDiscount > 0m) detail.Add((line.DiscountLabel ?? "discount") + " " + Money(line.LineDiscount, currencyCode));
+        if (line.InvoiceDiscountShare > 0m) detail.Add("loyalty " + Money(line.InvoiceDiscountShare, currencyCode));
+        return string.Join(" · ", detail);
+    }
+
     public static void LinesTable(IContainer container, IReadOnlyList<DocumentLine> lines, string currencyCode)
     {
         container.Table(table =>
@@ -243,10 +252,7 @@ internal static class BillingPdf
                 table.Cell().Element(Cell).Column(item =>
                 {
                     item.Item().Text(line.Description);
-                    var detail = new List<string> { line.ItemKind };
-                    if (line.LineDiscount > 0m) detail.Add((line.DiscountLabel ?? "discount") + " " + Money(line.LineDiscount, currencyCode));
-                    if (line.InvoiceDiscountShare > 0m) detail.Add("loyalty " + Money(line.InvoiceDiscountShare, currencyCode));
-                    item.Item().Text(string.Join(" · ", detail)).FontSize(7).FontColor(Colors.Grey.Darken1);
+                    item.Item().Text(LineDetail(line, currencyCode)).FontSize(7).FontColor(Colors.Grey.Darken1);
                 });
                 table.Cell().Element(Cell).Text(line.BusinessLine);
                 table.Cell().Element(Cell).AlignRight().Text(line.Quantity.ToString("0.###", CultureInfo.InvariantCulture));

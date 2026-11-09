@@ -88,8 +88,7 @@ internal static class InvoiceDetailBuilder
         var labels = await SubscriptionDiscountLabels.ForOrdersAsync(
             db, lines.Where(l => l.SourceKind == ChargeSourceKind.Order && l.LineDiscount > 0m).Select(l => l.SourceId).Distinct().ToList());
         string? LabelOf(InvoiceLineRow l) => l.SourceKind == ChargeSourceKind.Order && l.LineDiscount > 0m ? labels.GetValueOrDefault(l.SourceId) : null;
-        var distinctLabels = lines.Select(LabelOf).Where(x => x is not null).Distinct().ToList();
-        var totalsLabel = distinctLabels.Count == 1 && lines.Where(l => l.LineDiscount > 0m).All(l => LabelOf(l) is not null) ? distinctLabels[0] : null;
+        var totalsLabel = SubscriptionDiscountLabels.TotalsLabel(lines.Select(l => (l.LineDiscount, LabelOf(l))));
 
         IReadOnlyList<InvoiceLineViewModel> lineViews;
         InvoiceTotalsViewModel totals;
