@@ -123,7 +123,7 @@ function readFilters(url: URL): Filters | Response {
   const method = parseEnum(url.searchParams.get('paymentMethod'), METHODS);
   if (!method.ok) return plainError('paymentMethod is not a payment method.'); // :145
   // `nextDeliveryOn`: blank is no filter; anything but a real `yyyy-MM-dd` day is a `{ error }` 400, after the three above.
-  const day = (url.searchParams.get('nextDeliveryOn') ?? '').trim();
+  const day = url.searchParams.get('nextDeliveryOn') ?? ''; // not trimmed: the server refuses a padded date
   if (day !== '' && !isCalendarDate(day)) return plainError('nextDeliveryOn must be yyyy-MM-dd.');
   return {
     status: status.value,
