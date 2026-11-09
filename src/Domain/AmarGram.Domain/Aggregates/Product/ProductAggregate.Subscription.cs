@@ -3,7 +3,9 @@ namespace AmarGram.Domain.Aggregates.Product;
 /// <summary>
 /// HO-SUB-001 (BG-15, HO-P4 §11.4.5) -- the staff-editable "Can be subscribed to" flag. A partial of its own so the Subscriptions slice adds one property and
 /// one method to the Product root without touching the file other areas edit. A SKU of the product can be subscribed to only while this is set and the SKU is
-/// purchasable; clearing it never touches existing subscriptions -- their next cycle simply fails <c>ProductUnavailable</c> and suspends (HO-SUB-001 §8.6).
+/// purchasable. Clearing it only stops NEW subscriptions being started (owner decision 2026-11-09): existing subscriptions are never paused, suspended, skipped or failed
+/// because of it and keep getting their deliveries. A cycle fails <c>ProductUnavailable</c> and suspends only when the product is genuinely unpurchasable (unpublished,
+/// archived, inactive SKU, no stock to sell), which is a separate rule (HO-SUB-001 §8.6).
 /// </summary>
 public sealed partial class ProductAggregate
 {

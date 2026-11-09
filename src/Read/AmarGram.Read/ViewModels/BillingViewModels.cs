@@ -36,7 +36,8 @@ public sealed record ChargeViewModel(
 public sealed record InvoiceLineViewModel(
     Guid LineId, Guid? ChargeId, string BusinessLine, string ItemKind, string SourceKind, Guid SourceId, string Description,
     string Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineDiscount, MoneyViewModel InvoiceDiscountShare, Guid TaxClassId,
-    string? TaxClassCode, string TaxRatePercent, MoneyViewModel NetAmount, MoneyViewModel TaxAmount, MoneyViewModel GrossAmount, int SortOrder);
+    string? TaxClassCode, string TaxRatePercent, MoneyViewModel NetAmount, MoneyViewModel TaxAmount, MoneyViewModel GrossAmount, int SortOrder,
+    string? DiscountLabel = null); // owner decision 2026-11-09: "Subscription discount (10%)" when the line's discount is the subscriber discount
 
 public sealed record SellerViewModel(
     string LegalName, string TaxRegistrationNumber, string AddressText, string? Phone, string? Email, string? InvoiceFooter,
@@ -46,7 +47,8 @@ public sealed record BillToViewModel(string FullName, string? Mobile, string? Em
 
 public sealed record LoyaltyRedemptionViewModel(int Points, MoneyViewModel Value, Guid LoyaltyEntryId);
 
-public sealed record InvoiceTotalsViewModel(MoneyViewModel Net, MoneyViewModel Discount, MoneyViewModel Tax, MoneyViewModel Total);
+public sealed record InvoiceTotalsViewModel(MoneyViewModel Net, MoneyViewModel Discount, MoneyViewModel Tax, MoneyViewModel Total,
+    string? DiscountLabel = null); // owner decision 2026-11-09: set when every discounted line carries the same subscription label
 
 public sealed record InvoiceSummaryViewModel(
     Guid InvoiceId, string? Number, string Status, Guid CustomerId, string CustomerName, Guid BranchId, DateOnly? IssueDate, DateOnly? DueOn,

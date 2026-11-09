@@ -5,6 +5,7 @@ using AmarGram.Domain.DomainServices;
 using AmarGram.Infrastructure.Billing.Documents;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Read.Queries.Billing;
+using AmarGram.Read.QueryHandlers.Subscription;
 using AmarGram.Read.ViewModels;
 using AmarGram.Shared.Common.Constants;
 using AmarGram.Shared.Common.Enums;
@@ -84,6 +85,10 @@ internal static class InvoiceDetailBuilder
 
         var lines = await InvoiceProjections.LinesAsync(db, invoice.Id);
         var isDraft = invoice.Status == InvoiceStatus.Draft;
+        var labels = await SubscriptionDiscountLabels.ForOrdersAsync(
+            db, lines.Where(l => l.SourceKind == ChargeSourceKind.Order && l.LineDiscount > 0m).Select(l => l.SourceId).Distinct().ToList());
+        string? LabelOf(InvoiceLineRow l) => l.SourceKind == ChargeSourceKind.Order && l.LineDiscount > 0m ? labels.GetValueOrDefault(l.SourceId) : null;
+        var totalsLabel = SubscriptionDiscountLabels.TotalsLabel(lines.Select(l => (l.LineDiscount, LabelOf(l))));
 
         IReadOnlyList<InvoiceLineViewModel> lineViews;
         InvoiceTotalsViewModel totals;
@@ -102,16 +107,16 @@ internal static class InvoiceDetailBuilder
                     BillingMoney.Quantity(l.Quantity), BillingMoney.Of(l.UnitPrice, currency), BillingMoney.Of(l.LineDiscount, currency),
                     BillingMoney.Of(e.Result.InvoiceDiscountShare, currency), l.TaxClassId, e.TaxClassCode,
                     (e.RatePercent ?? 0m).ToString("F2", System.Globalization.CultureInfo.InvariantCulture), BillingMoney.Of(e.Result.NetAmount, currency),
-                    BillingMoney.Of(e.Result.TaxAmount, currency), BillingMoney.Of(e.Result.GrossAmount, currency), l.SortOrder);
+                    BillingMoney.Of(e.Result.TaxAmount, currency), BillingMoney.Of(e.Result.GrossAmount, currency), l.SortOrder, LabelOf(l));
             }).ToList();
-            totals = InvoiceEstimator.TotalsOf(estimate.Totals, currency);
+            totals = InvoiceEstimator.TotalsOf(estimate.Totals, currency) with { DiscountLabel = totalsLabel };
         }
         else
         {
-            lineViews = lines.Select(l => l.ToView(currency)).ToList();
+            lineViews = lines.Select(l => l.ToView(currency) with { DiscountLabel = LabelOf(l) }).ToList();
             totals = new InvoiceTotalsViewModel(
                 BillingMoney.Of(invoice.NetTotal, currency), BillingMoney.Of(invoice.DiscountTotal, currency),
-                BillingMoney.Of(invoice.TaxTotal, currency), BillingMoney.Of(invoice.Total, currency));
+                BillingMoney.Of(invoice.TaxTotal, currency), BillingMoney.Of(invoice.Total, currency), totalsLabel);
         }
 
         var outstanding = isDraft ? 0m : invoice.Outstanding;
@@ -227,9 +232,13 @@ public sealed class GetInvoiceDocumentQueryHandler(AmarGramDbContext db)
             ? await db.Set<InvoiceAggregate>().AsNoTracking().Where(i => i.Id == correctsId).Select(i => i.Number).FirstOrDefaultAsync() : null;
         var payments = await InvoiceDocumentPayments.ForInvoiceAsync(db, invoice.Id);
 
-        var lines = (await InvoiceProjections.LinesAsync(db, invoice.Id)).Select((l, index) => new DocumentLine(
+        var lineRows = await InvoiceProjections.LinesAsync(db, invoice.Id);
+        var labels = await SubscriptionDiscountLabels.ForOrdersAsync(
+            db, lineRows.Where(l => l.SourceKind == ChargeSourceKind.Order && l.LineDiscount > 0m).Select(l => l.SourceId).Distinct().ToList());
+        var lines = lineRows.Select((l, index) => new DocumentLine(
             index + 1, l.BusinessLine.DisplayName, l.ItemKind.DisplayName, l.Description, l.Quantity, l.UnitPrice, l.LineDiscount, l.InvoiceDiscountShare,
-            l.TaxClassCode, l.TaxRatePercent, l.NetAmount, l.TaxAmount, l.GrossAmount)).ToList();
+            l.TaxClassCode, l.TaxRatePercent, l.NetAmount, l.TaxAmount, l.GrossAmount,
+            l.SourceKind == ChargeSourceKind.Order && l.LineDiscount > 0m ? labels.GetValueOrDefault(l.SourceId) : null)).ToList();
 
         var document = new InvoiceDocument(
             invoice.Id, invoice.Number, invoice.CurrencyCode, invoice.IssuedOn.Value, timeZoneId, invoice.DueOn,

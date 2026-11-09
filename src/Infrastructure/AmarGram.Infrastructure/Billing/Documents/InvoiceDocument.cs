@@ -5,7 +5,8 @@ public sealed record DocumentBankAccount(string BankName, string AccountName, st
 /// <summary>One printed line: <c>NetAmount</c> is after every discount and before tax (US-BIL-07).</summary>
 public sealed record DocumentLine(
     int No, string BusinessLine, string ItemKind, string Description, decimal Quantity, decimal UnitPrice, decimal LineDiscount,
-    decimal InvoiceDiscountShare, string? TaxClassCode, decimal TaxRatePercent, decimal NetAmount, decimal TaxAmount, decimal GrossAmount);
+    decimal InvoiceDiscountShare, string? TaxClassCode, decimal TaxRatePercent, decimal NetAmount, decimal TaxAmount, decimal GrossAmount,
+    string? DiscountLabel = null);
 
 public sealed record DocumentPayment(string ReceiptNumber, string Method, decimal Amount, DateOnly OnDate);
 

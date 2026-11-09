@@ -15,13 +15,16 @@ namespace AmarGram.Read.QueryHandlers.Subscription;
 internal static class StaffSubscriptionRows
 {
     public static IQueryable<SubscriptionAggregate> Filter(
-        AmarGramDbContext db, SubscriptionStatus? status, SubscriptionSuspensionReason? suspensionReason, SubscriptionPaymentMethod? paymentMethod, string? text, Guid? customerId)
+        AmarGramDbContext db, SubscriptionStatus? status, SubscriptionSuspensionReason? suspensionReason, SubscriptionPaymentMethod? paymentMethod, string? text, Guid? customerId,
+        DateOnly? nextDeliveryOn = null)
     {
         var q = db.Subscriptions.AsNoTracking().AsQueryable();
         if (customerId is { } cid) q = q.Where(s => s.CustomerId == cid);
         if (status is not null) q = q.Where(s => s.Status == status);
         if (suspensionReason is not null) q = q.Where(s => s.SuspensionReason == suspensionReason);
         if (paymentMethod is not null) q = q.Where(s => s.Terms.PaymentMethod == paymentMethod);
+        // "Due on a date" is the due-tomorrow count's own definition (GetSubscriptionDueTomorrowQueryHandler): Active and NextDeliveryOn on that commerce-zone date.
+        if (nextDeliveryOn is { } due) q = q.Where(s => s.Status == SubscriptionStatus.Active && s.NextDeliveryOn == due);
 
         if (!string.IsNullOrWhiteSpace(text))
         {
@@ -69,7 +72,7 @@ public sealed class GetStaffSubscriptionsQueryHandler(AmarGramDbContext db, Subs
     public async Task<QueryResponse<PagedResult<StaffSubscriptionRowViewModel>>> HandleAsync(GetStaffSubscriptionsQuery query)
     {
         var (pageNumber, pageSize) = SubscriptionPaging.Of(query.PageNumber, query.PageSize);
-        var rows = StaffSubscriptionRows.Filter(db, query.Status, query.SuspensionReason, query.PaymentMethod, query.Text, query.CustomerId);
+        var rows = StaffSubscriptionRows.Filter(db, query.Status, query.SuspensionReason, query.PaymentMethod, query.Text, query.CustomerId, query.NextDeliveryOn);
 
         var total = await rows.CountAsync();
         var page = await StaffSubscriptionRows.Sorted(rows, query.Sort).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
@@ -89,7 +92,7 @@ public sealed class ExportSubscriptionsQueryHandler(AmarGramDbContext db, Subscr
     public async Task<QueryResponse<IReadOnlyList<StaffSubscriptionRowViewModel>>> HandleAsync(ExportSubscriptionsQuery query)
     {
         var sorted = StaffSubscriptionRows.Sorted(
-            StaffSubscriptionRows.Filter(db, query.Status, query.SuspensionReason, query.PaymentMethod, query.Text, null), query.Sort);
+            StaffSubscriptionRows.Filter(db, query.Status, query.SuspensionReason, query.PaymentMethod, query.Text, null, query.NextDeliveryOn), query.Sort);
 
         var result = new List<StaffSubscriptionRowViewModel>();
         const int batch = 500;
@@ -199,8 +202,8 @@ public sealed class GetCustomerSubscriptionSummaryQueryHandler(AmarGramDbContext
     }
 }
 
-/// <summary>HO-SUB-001 (BG-15) -- the dashboard's "Subscription orders due tomorrow": Active subscriptions whose next order is raised tomorrow in the commerce zone,
-/// with the live and suspended counts for context.</summary>
+/// <summary>HO-SUB-001 (BG-15) -- the dashboard's "Subscription orders due tomorrow": Active subscriptions whose next order is raised tomorrow in the commerce zone
+/// (the same "due on a date" rule as the staff list's <c>nextDeliveryOn</c> filter), with the live and suspended counts for context.</summary>
 public sealed class GetSubscriptionDueTomorrowQueryHandler(AmarGramDbContext db, ICommerceClock commerceClock)
     : IQueryHandlerAsync<GetSubscriptionDueTomorrowQuery, SubscriptionDueTomorrowViewModel>
 {

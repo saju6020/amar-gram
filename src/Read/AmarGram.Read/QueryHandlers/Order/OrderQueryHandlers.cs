@@ -6,6 +6,7 @@ using AmarGram.Infrastructure.Persistence;
 using AmarGram.Read.Queries.Order;
 using AmarGram.Read.QueryHandlers.Product;
 using AmarGram.Read.QueryHandlers.StoredFile;
+using AmarGram.Read.QueryHandlers.Subscription;
 using AmarGram.Read.ViewModels;
 using AmarGram.Shared.Common.Constants;
 using AmarGram.Shared.Common.Enums;
@@ -142,14 +143,17 @@ public sealed class GetCustomerOrderDetailQueryHandler(AmarGramDbContext db, IBu
         // The product's current photo, for the customer's own order screens (2026-10-16); staff views carry none.
         var imageBySku = await ProductImageUrls.ForSkusAsync(db, fileSigner, head.Lines.Select(l => l.SkuId).Distinct().ToList());
 
+        var discountLabel = (await SubscriptionDiscountLabels.ForOrdersAsync(db, [head.Id])).GetValueOrDefault(head.Id);
+
         var view = new CustomerOrderDetailViewModel(
             head.Id, head.OrderNumber, head.PlacedOn, head.Status.DisplayName, head.FulfilmentMethod.DisplayName, head.PaymentMethod.DisplayName, timeZoneId,
             head.Lines.Select(l => new OrderLineViewModel(
                 l.Id, l.LineNumber, l.SkuId, l.ProductName, l.VariantLabel,
                 l.Quantity, Money(l.UnitPrice), Money(l.LineSubtotal), Money(l.LineDiscount), Money(l.OrderDiscountShare), l.TaxRatePercent, Money(l.TaxAmount), Money(l.LineTotal),
-                imageBySku.GetValueOrDefault(l.SkuId))).ToList(),
+                imageBySku.GetValueOrDefault(l.SkuId), l.LineDiscount > 0m ? discountLabel : null)).ToList(),
             new OrderTotalsViewModel(
-                Money(head.Totals.Subtotal), Money(head.Totals.LineDiscountTotal), Money(head.Totals.OrderDiscount), Money(head.Totals.DeliveryCharge), Money(head.Totals.TaxTotal), Money(head.Totals.GrandTotal)),
+                Money(head.Totals.Subtotal), Money(head.Totals.LineDiscountTotal), Money(head.Totals.OrderDiscount), Money(head.Totals.DeliveryCharge), Money(head.Totals.TaxTotal), Money(head.Totals.GrandTotal),
+                head.Totals.LineDiscountTotal > 0m ? discountLabel : null),
             new OrderFulfilmentViewModel(
                 head.F.RecipientName, head.F.RecipientPhone, head.F.Line1, head.F.Line2, head.F.City, head.F.District, head.F.PostalCode, head.F.DeliveryInstructions, head.F.ZoneName,
                 head.F.ServiceLevel?.DisplayName, head.F.SlotDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), head.F.SlotWindowLabel, head.F.PickupBranchId, pickupName, pickupAddress, head.F.RiderNote),
