@@ -244,7 +244,7 @@ internal static class BillingPdf
                 {
                     item.Item().Text(line.Description);
                     var detail = new List<string> { line.ItemKind };
-                    if (line.LineDiscount > 0m) detail.Add("discount " + Money(line.LineDiscount, currencyCode));
+                    if (line.LineDiscount > 0m) detail.Add((line.DiscountLabel ?? "discount") + " " + Money(line.LineDiscount, currencyCode));
                     if (line.InvoiceDiscountShare > 0m) detail.Add("loyalty " + Money(line.InvoiceDiscountShare, currencyCode));
                     item.Item().Text(string.Join(" · ", detail)).FontSize(7).FontColor(Colors.Grey.Darken1);
                 });

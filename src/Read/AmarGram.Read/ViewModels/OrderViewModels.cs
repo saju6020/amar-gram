@@ -12,10 +12,12 @@ public sealed record CustomerOrderSummaryViewModel(
 public sealed record OrderLineViewModel(
     Guid LineId, int LineNumber, Guid SkuId, string ProductName, string VariantLabel, int Quantity, MoneyViewModel UnitPrice, MoneyViewModel LineSubtotal,
     MoneyViewModel LineDiscount, MoneyViewModel OrderDiscountShare, decimal TaxRatePercent, MoneyViewModel TaxAmount, MoneyViewModel LineTotal,
-    string? ImagePath = null);
+    string? ImagePath = null,
+    string? DiscountLabel = null); // owner decision 2026-11-09: "Subscription discount (10%)" on a subscription order's discounted line; null otherwise
 
 public sealed record OrderTotalsViewModel(
-    MoneyViewModel Subtotal, MoneyViewModel LineDiscountTotal, MoneyViewModel OrderDiscount, MoneyViewModel DeliveryCharge, MoneyViewModel TaxTotal, MoneyViewModel GrandTotal);
+    MoneyViewModel Subtotal, MoneyViewModel LineDiscountTotal, MoneyViewModel OrderDiscount, MoneyViewModel DeliveryCharge, MoneyViewModel TaxTotal, MoneyViewModel GrandTotal,
+    string? LineDiscountLabel = null); // owner decision 2026-11-09: what LineDiscountTotal is, when it is the subscriber discount
 
 public sealed record OrderFulfilmentViewModel(
     string RecipientName, string? RecipientPhone, string? Line1, string? Line2, string? City, string? District, string? PostalCode, string? DeliveryInstructions,
