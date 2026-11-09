@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using AmarGram.Api.Authorization;
 using AmarGram.Api.Contracts.Subscription;
@@ -26,12 +27,13 @@ public sealed class StaffSubscriptionsController(IInMemoryDispatcher dispatcher,
     [RequireAction(Actions.Subscriptions.View)]
     public async Task<IActionResult> List(
         [FromQuery] string? status, [FromQuery] string? suspensionReason, [FromQuery] string? paymentMethod, [FromQuery] string? q, [FromQuery] string? sort,
-        [FromQuery] int? pageNumber, [FromQuery] int? pageSize)
+        [FromQuery] string? nextDeliveryOn, [FromQuery] int? pageNumber, [FromQuery] int? pageSize)
     {
         if (!TryFilters(status, suspensionReason, paymentMethod, out var s, out var r, out var m, out var invalid)) return invalid!;
+        if (!TryDueDate(nextDeliveryOn, out var due, out invalid)) return invalid!;
 
         var user = userContextProvider.GetUserContext();
-        var query = new GetStaffSubscriptionsQuery { Status = s, SuspensionReason = r, PaymentMethod = m, Text = q, Sort = sort, UserContext = user, CorrelationId = Guid.NewGuid() };
+        var query = new GetStaffSubscriptionsQuery { Status = s, SuspensionReason = r, PaymentMethod = m, Text = q, Sort = sort, NextDeliveryOn = due, UserContext = user, CorrelationId = Guid.NewGuid() };
         if (PagingHelper.ApplyPaging(query, pageNumber, pageSize) is { } bad) return bad;
 
         return Ok((await dispatcher.GetResultAsync(query)).Result);
@@ -60,12 +62,14 @@ public sealed class StaffSubscriptionsController(IInMemoryDispatcher dispatcher,
     /// <summary>Streamed CSV, at most <see cref="SubscriptionRules.MaxExportRows"/> rows (<c>413</c> above), with the CSV-injection guard on every text cell.</summary>
     [HttpGet("export.csv")]
     [RequireAction(Actions.Subscriptions.Export)]
-    public async Task<IActionResult> Export([FromQuery] string? status, [FromQuery] string? suspensionReason, [FromQuery] string? paymentMethod, [FromQuery] string? q, [FromQuery] string? sort)
+    public async Task<IActionResult> Export([FromQuery] string? status, [FromQuery] string? suspensionReason, [FromQuery] string? paymentMethod, [FromQuery] string? q, [FromQuery] string? sort,
+        [FromQuery] string? nextDeliveryOn)
     {
         if (!TryFilters(status, suspensionReason, paymentMethod, out var s, out var r, out var m, out var invalid)) return invalid!;
+        if (!TryDueDate(nextDeliveryOn, out var due, out invalid)) return invalid!;
 
         var rows = (await dispatcher.GetResultAsync(new ExportSubscriptionsQuery
-        { Status = s, SuspensionReason = r, PaymentMethod = m, Text = q, Sort = sort, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() })).Result ?? [];
+        { Status = s, SuspensionReason = r, PaymentMethod = m, Text = q, Sort = sort, NextDeliveryOn = due, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() })).Result ?? [];
         if (rows.Count > SubscriptionRules.MaxExportRows) return StatusCode(StatusCodes.Status413PayloadTooLarge, new { error = "Too many rows to export. Narrow the filters." });
 
         var csv = InventoryCsv.Build(
@@ -131,6 +135,22 @@ public sealed class StaffSubscriptionsController(IInMemoryDispatcher dispatcher,
     {
         var detail = (await dispatcher.GetResultAsync(new GetStaffSubscriptionDetailQuery { SubscriptionId = id, UserContext = userContextProvider.GetUserContext(), CorrelationId = Guid.NewGuid() })).Result;
         return detail is null ? NotFound() : Ok(detail.Subscription);
+    }
+
+    /// <summary>The optional <c>nextDeliveryOn</c> filter: a commerce-zone local date, <c>yyyy-MM-dd</c> exactly; absent or blank means no filter.</summary>
+    private bool TryDueDate(string? text, out DateOnly? due, out IActionResult? invalid)
+    {
+        invalid = null;
+        due = null;
+        if (string.IsNullOrWhiteSpace(text)) return true;
+        if (!DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+        {
+            invalid = BadRequest(new { error = "nextDeliveryOn must be yyyy-MM-dd." });
+            return false;
+        }
+
+        due = parsed;
+        return true;
     }
 
     private bool TryFilters(
