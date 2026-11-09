@@ -369,6 +369,22 @@ test('E-F1: a customer opens their invoice and downloads the PDF; another custom
   await page.getByRole('button', { name: 'Create account' }).click();
   // Owner, 2026-10-19: a new customer is signed in straight after registering (no second sign-in).
   await expect(page).toHaveURL(/\/portal\//, { timeout: 20_000 });
+  // A new account on the seeded database has Privacy to accept, and the portal's modal "Updated policies" prompt hides
+  // the rest of the page from the accessibility tree until it is accepted (HO-P6 integration part 2, Amended (r)).
+  const pending = await page.evaluate(async () => {
+    const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
+    const res = await fetch(`${base}/api/customers/me/policy-acceptances/pending`, { credentials: 'include' });
+    return ((await res.json()) as unknown[]).length;
+  });
+  if (pending > 0) {
+    const policies = page.getByRole('dialog', { name: 'Updated policies' });
+    await expect(policies).toBeVisible({ timeout: 20_000 });
+    for (let left = pending; left > 0; left--) {
+      await policies.getByRole('button', { name: 'Accept' }).first().click();
+      await expect(policies.getByRole('button', { name: 'Accept' })).toHaveCount(left - 1, { timeout: 20_000 });
+    }
+    await expect(policies).toBeHidden({ timeout: 20_000 });
+  }
   const customerId = await page.evaluate(async () => {
     const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
     const res = await fetch(`${base}/api/auth/session`, { credentials: 'include' });
