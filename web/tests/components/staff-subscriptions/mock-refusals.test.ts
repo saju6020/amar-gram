@@ -109,8 +109,8 @@ describe('U34 filters: the controller\'s plain { error } 400 (:143-145), checked
     ['status', { status: 'Dormant' }, 'status is not a subscription status.'],
     ['suspensionReason', { suspensionReason: 'Boredom' }, 'suspensionReason is not a suspension reason.'],
     ['paymentMethod', { paymentMethod: 'Barter' }, 'paymentMethod is not a payment method.'],
-    ['nextDeliveryOn', { nextDeliveryOn: '2026-02-31' }, 'nextDeliveryOn is not a date (yyyy-MM-dd).'],
-    ['nextDeliveryOn (text)', { nextDeliveryOn: 'tomorrow' }, 'nextDeliveryOn is not a date (yyyy-MM-dd).'],
+    ['nextDeliveryOn', { nextDeliveryOn: '2026-02-31' }, 'nextDeliveryOn must be yyyy-MM-dd.'],
+    ['nextDeliveryOn (text)', { nextDeliveryOn: 'tomorrow' }, 'nextDeliveryOn must be yyyy-MM-dd.'],
   ])('a bad %s is 400 { error }, with no errors array', async (_name, filters, message) => {
     const error = await failure(() => listStaffSubscriptions(filters as never));
     expect(error).toBeInstanceOf(ApiValidationError);

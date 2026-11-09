@@ -124,7 +124,7 @@ function readFilters(url: URL): Filters | Response {
   if (!method.ok) return plainError('paymentMethod is not a payment method.'); // :145
   // `nextDeliveryOn`: blank is no filter; anything but a real `yyyy-MM-dd` day is a `{ error }` 400, after the three above.
   const day = (url.searchParams.get('nextDeliveryOn') ?? '').trim();
-  if (day !== '' && !isCalendarDate(day)) return plainError('nextDeliveryOn is not a date (yyyy-MM-dd).');
+  if (day !== '' && !isCalendarDate(day)) return plainError('nextDeliveryOn must be yyyy-MM-dd.');
   return {
     status: status.value,
     suspensionReason: reason.value,
