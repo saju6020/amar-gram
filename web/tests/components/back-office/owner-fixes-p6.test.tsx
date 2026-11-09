@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { UnderlineTabs } from '@/components/back-office/UnderlineTabs';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { placeRowLabel, placeRowValue } from '@/lib/subscriptions/copy';
 import type { SubscriptionTerms } from '@/lib/api/subscriptions';
 
@@ -34,6 +34,24 @@ describe('dialog close control', () => {
       </Dialog>,
     );
     expect(screen.getByRole('button', { name: 'Close' })).toHaveClass('size-11');
+  });
+});
+
+describe('dialog header', () => {
+  it('keeps a title clear of the close X: right padding past the 44 px target, whatever the dialog', () => {
+    render(
+      <Dialog open>
+        <DialogContent>
+          <DialogHeader data-testid="head">
+            <DialogTitle>A very long dialog title that would otherwise run under the close control</DialogTitle>
+            <DialogDescription>Body</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>,
+    );
+    expect(screen.getByTestId('head')).toHaveClass('pr-8');
+    // A caller's own class is kept beside it.
+    expect(screen.getByTestId('head')).toHaveClass('mb-4');
   });
 });
 

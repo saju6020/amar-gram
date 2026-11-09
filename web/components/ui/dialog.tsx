@@ -137,7 +137,8 @@ export const DialogContent = React.forwardRef<
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('mb-4 flex flex-col gap-1.5', className)} {...props} />;
+  // pr-8: the 44 px close X reaches 50 px in from the edge and the panel pads 24 px, so a long title stops short of it.
+  return <div className={cn('mb-4 flex flex-col gap-1.5 pr-8', className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
