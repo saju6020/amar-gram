@@ -103,6 +103,38 @@ public sealed class SubscriptionsStaffAndLifecycleEndpointTests(OrderingApiFacto
         Assert.Equal("Asia/Dhaka", tile.GetProperty("commerceTimeZoneId").GetString());
     }
 
+    [Fact]
+    public async Task TheStaffList_AndTheExport_FilterByNextDeliveryOn_AgreeWithTheDueTomorrowCount_AndRefuseABadDate()
+    {
+        var shop = await SetUpSubscribableShopAsync();
+        var due = Today.AddDays(5);
+        var id = (await SubscribeAsync(shop, first: due)).GetProperty("id").GetGuid();
+        AdvanceToLocal(due.AddDays(-1));
+
+        var admin = await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId);
+        var tile = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await admin.GetAsync("/api/staff/subscriptions/due-tomorrow")));
+        var tomorrow = DateOf(tile, "dueOn");
+
+        var list = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await admin.GetAsync($"/api/staff/subscriptions?nextDeliveryOn={tomorrow:yyyy-MM-dd}&pageSize=100")));
+        Assert.Equal(tile.GetProperty("count").GetInt32(), list.GetProperty("totalCount").GetInt32());   // the count and the filtered list agree
+        Assert.Contains(list.GetProperty("items").EnumerateArray(), i => i.GetProperty("id").GetGuid() == id);
+        Assert.All(list.GetProperty("items").EnumerateArray(), i => Assert.Equal(tomorrow, DateOf(i, "nextDeliveryOn")));
+
+        var other = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await admin.GetAsync($"/api/staff/subscriptions?nextDeliveryOn={tomorrow.AddDays(30):yyyy-MM-dd}&pageSize=100")));
+        Assert.DoesNotContain(other.GetProperty("items").EnumerateArray(), i => i.GetProperty("id").GetGuid() == id);
+
+        var csv = await BodyAsync(await ExpectAsync(HttpStatusCode.OK, await admin.GetAsync($"/api/staff/subscriptions/export.csv?nextDeliveryOn={tomorrow:yyyy-MM-dd}")));
+        Assert.Contains(id.ToString(), csv);
+        var csvOther = await BodyAsync(await ExpectAsync(HttpStatusCode.OK, await admin.GetAsync($"/api/staff/subscriptions/export.csv?nextDeliveryOn={tomorrow.AddDays(30):yyyy-MM-dd}")));
+        Assert.DoesNotContain(id.ToString(), csvOther);
+
+        foreach (var bad in new[] { "tomorrow", "2026-13-40", "09/11/2026", "20261109" })
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, (await admin.GetAsync($"/api/staff/subscriptions?nextDeliveryOn={Uri.EscapeDataString(bad)}")).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await admin.GetAsync($"/api/staff/subscriptions/export.csv?nextDeliveryOn={Uri.EscapeDataString(bad)}")).StatusCode);
+        }
+    }
+
     // ── I-X3: the CSV export ─────────────────────────────────────────────────────────────────────
 
     [Fact]
