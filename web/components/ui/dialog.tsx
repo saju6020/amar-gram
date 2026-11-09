@@ -123,7 +123,8 @@ export const DialogContent = React.forwardRef<
         {children}
         {!hideClose && (
           <DialogPrimitive.Close
-            className="absolute right-4 top-4 rounded-[var(--radius-sm)] p-1 text-ink-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            // The icon stays 16 px; the button is the 44 px target, placed so the icon sits where it always did.
+            className="absolute right-1.5 top-1.5 inline-flex size-11 items-center justify-center rounded-[var(--radius-sm)] text-ink-muted hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             aria-label="Close"
           >
             <X size={16} aria-hidden="true" />

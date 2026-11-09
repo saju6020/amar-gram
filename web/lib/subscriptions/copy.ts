@@ -247,6 +247,22 @@ export function placeText(terms: SubscriptionTerms): string {
   return 'Delivery address needed';
 }
 
+/**
+ * The terms panel's place row, split so the sentence is not said twice (it used to read "Deliver to me" then "Deliver to Home: ...").
+ * The label says which way the order travels; the value is only where.
+ */
+export function placeRowLabel(terms: Pick<SubscriptionTerms, 'fulfilment'>): string {
+  return terms.fulfilment === 'Pickup' ? 'Collect from' : 'Deliver to';
+}
+export function placeRowValue(terms: SubscriptionTerms): string {
+  if (terms.fulfilment === 'Pickup') return terms.pickupBranch ? terms.pickupBranch.name : 'An outlet';
+  if (terms.deliveryAddress) {
+    const { label, line1, city } = terms.deliveryAddress;
+    return `${label}: ${[line1, city].filter(Boolean).join(', ')}`;
+  }
+  return 'Delivery address needed';
+}
+
 /** "2 × every 4 weeks, Deliver to Home: House 12, Dhaka, Cash on delivery". */
 export function termsSummaryText(terms: SubscriptionTerms): string {
   return [

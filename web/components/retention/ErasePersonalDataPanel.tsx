@@ -114,20 +114,20 @@ export function ErasePersonalDataPanel({ customer }: { customer: ErasableCustome
 
       {customer.status !== 'Merged' && (
         <form onSubmit={handleSubmit((values) => setPending(values))} noValidate className="flex flex-col gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-1">
               <label htmlFor="erase-channel" className="text-sm font-semibold text-ink">How was the request made?</label>
               <select id="erase-channel" defaultValue="" aria-invalid={Boolean(errors.channel)}
-                className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 py-2 text-sm text-ink" {...register('channel')}>
+                className="min-h-11 w-full min-w-0 max-w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 py-2 text-sm text-ink" {...register('channel')}>
                 <option value="" disabled>Choose…</option>
                 {ERASURE_CHANNELS.map((c) => <option key={c} value={c}>{ERASURE_CHANNEL_LABEL[c]}</option>)}
               </select>
               {errors.channel && <p role="alert" className="text-sm text-danger-ink">{errors.channel.message}</p>}
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <label htmlFor="erase-identity" className="text-sm font-semibold text-ink">How was identity checked?</label>
               <select id="erase-identity" defaultValue="" aria-invalid={Boolean(errors.identityCheck)}
-                className="rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 py-2 text-sm text-ink" {...register('identityCheck')}>
+                className="min-h-11 w-full min-w-0 max-w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface px-2 py-2 text-sm text-ink" {...register('identityCheck')}>
                 <option value="" disabled>Choose…</option>
                 {ERASURE_IDENTITY_CHECKS.map((c) => <option key={c} value={c}>{ERASURE_IDENTITY_CHECK_LABEL[c]}</option>)}
               </select>
@@ -136,7 +136,7 @@ export function ErasePersonalDataPanel({ customer }: { customer: ErasableCustome
           </div>
           {errors.root && <p role="alert" className="text-sm text-danger-ink">{errors.root.message}</p>}
           <div>
-            <WriteButton type="submit" variant="destructive">Erase personal data…</WriteButton>
+            <WriteButton type="submit" variant="destructive" className="min-h-11">Erase personal data…</WriteButton>
           </div>
         </form>
       )}

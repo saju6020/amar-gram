@@ -264,19 +264,19 @@ export function StaffOrderQueue() {
         <details open={moreActive} className="rounded-2xl border border-border bg-surface p-3">
           <summary className="cursor-pointer text-sm font-semibold text-ink">More filters</summary>
           <form role="search" aria-label="Order filters" className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(event) => event.preventDefault()}>
-            <SelectField id="oq-status" label="Status" value={values.status} onChange={(e) => set('status', e.target.value)}>
+            <SelectField id="oq-status" label="Status" className="min-h-11" value={values.status} onChange={(e) => set('status', e.target.value)}>
               <option value="">Any status</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>{orderStatusLabel(s)}</option>
               ))}
             </SelectField>
-            <SelectField id="oq-fulfilment" label="Fulfilment" value={values.fulfilment} onChange={(e) => set('fulfilment', e.target.value)}>
+            <SelectField id="oq-fulfilment" label="Fulfilment" className="min-h-11" value={values.fulfilment} onChange={(e) => set('fulfilment', e.target.value)}>
               <option value="">Any</option>
               {FULFILMENTS.map((f) => (
                 <option key={f} value={f}>{fulfilmentLabel(f)}</option>
               ))}
             </SelectField>
-            <SelectField id="oq-payment" label="Payment method" value={values.paymentMethod} onChange={(e) => set('paymentMethod', e.target.value)}>
+            <SelectField id="oq-payment" label="Payment method" className="min-h-11" value={values.paymentMethod} onChange={(e) => set('paymentMethod', e.target.value)}>
               <option value="">Any</option>
               {PAYMENTS.map((p) => (
                 <option key={p} value={p}>{paymentMethodLabel(p)}</option>
@@ -288,8 +288,8 @@ export function StaffOrderQueue() {
               <option value="Counter">Counter</option>
               <option value="Subscription">Subscription</option>
             </SelectField>
-            <TextField id="oq-from" label="Placed from" type="date" value={values.from} onChange={(e) => set('from', e.target.value)} />
-            <TextField id="oq-to" label="Placed to" type="date" value={values.to} onChange={(e) => set('to', e.target.value)} />
+            <TextField id="oq-from" label="Placed from" className="min-h-11" type="date" value={values.from} onChange={(e) => set('from', e.target.value)} />
+            <TextField id="oq-to" label="Placed to" className="min-h-11" type="date" value={values.to} onChange={(e) => set('to', e.target.value)} />
           </form>
         </details>
         <ManifestDownload />

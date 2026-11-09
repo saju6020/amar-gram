@@ -107,6 +107,7 @@ export function CustomerProfile({
       <div className="flex flex-col gap-4">
         <UnderlineTabs
           mode="state"
+          wrap
           label="Customer details"
           items={tabs}
           value={tab}

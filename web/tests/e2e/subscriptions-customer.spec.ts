@@ -246,6 +246,31 @@ test.describe('manage (US-SUB-02, US-SUB-06)', () => {
   });
 });
 
+test.describe('owner fixes 2026-11-09 (S1 visual findings)', () => {
+  test('the terms panel says where once, and the history table starts the order number at the row top', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await signedIn(page);
+    await page.goto(`/portal/subscriptions/${mine.activeUnlocked}`);
+    const terms = page.getByRole('region', { name: 'Your subscription' });
+    await expect(terms.locator('dt', { hasText: /^Deliver to$/ })).toBeVisible();
+    await expect(terms.locator('dd', { hasText: /^Home: / })).toBeVisible();
+    await expect(terms.getByText('Deliver to me')).toHaveCount(0);
+
+    const row = page.getByRole('table', { name: /Deliveries so far/ }).getByRole('row').nth(1);
+    await expect(row).toBeVisible();
+    const tops = await row.evaluate((tr) =>
+      Array.from(tr.querySelectorAll('td')).map((cell) => {
+        const inner = cell.querySelector('a, span') ?? cell;
+        const range = document.createRange();
+        range.selectNodeContents(cell.firstChild?.nodeType === 3 ? cell : inner);
+        return range.getBoundingClientRect().top;
+      }),
+    );
+    // The date, the outcome and the order number start on the same line (the link used to sit about one line lower).
+    expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+  });
+});
+
 test.describe('the reminder link (US-SUB-03, ADR-FE-111)', () => {
   test('?skip= matching the next delivery opens the confirmation and changes nothing until confirmed', async ({ page }) => {
     await signedIn(page);

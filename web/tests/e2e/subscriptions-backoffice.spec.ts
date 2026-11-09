@@ -120,7 +120,12 @@ test.describe('dashboard (BG-15, OQ-12)', () => {
     await expect(page.getByLabel('Status')).toHaveValue('Active');
     // The list holds exactly the counted subscriptions, and the day shows as a removable filter.
     await expect(page.getByRole('button', { name: /Remove filter: Next delivery/ })).toBeVisible();
-    await expect(page.getByText(`${served.count} total`)).toBeVisible();
+    const rows = page
+      .getByRole('table', { name: 'Subscriptions' })
+      .getByRole('row')
+      .filter({ has: page.getByRole('cell') })
+      .or(page.getByRole('list', { name: 'Subscriptions' }).getByRole('listitem'));
+    await expect(rows).toHaveCount(served.count);
   });
 });
 

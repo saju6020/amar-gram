@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import type { SubscriptionCycle } from '@/lib/api/subscriptions';
 import { useNarrowContainer } from '@/lib/hooks/useIsNarrow';
@@ -16,12 +17,16 @@ const PAGE = 12;
 
 type Layout = 'table' | 'cards';
 
-function OrderLink({ cycle }: { cycle: SubscriptionCycle }) {
-  if (!cycle.orderId || !cycle.orderNumber) return <span className="text-ink-muted">No order</span>;
+function OrderLink({ cycle, inTable }: { cycle: SubscriptionCycle; inTable?: boolean }) {
+  if (!cycle.orderId || !cycle.orderNumber) return <span className={cn('text-ink-muted', inTable && 'inline-block pt-2')}>No order</span>;
   return (
     <Link
       href={`/portal/orders/${encodeURIComponent(cycle.orderId)}`}
-      className="inline-flex min-h-11 items-center font-semibold text-accent-ink"
+      className={cn(
+        'inline-flex min-h-11 font-semibold text-accent-ink',
+        // In the table the number starts at the row's top like the date and the outcome beside it; the 44 px target stays.
+        inTable ? 'items-start pt-2' : 'items-center',
+      )}
     >
       {cycle.orderNumber}
     </Link>
@@ -35,8 +40,8 @@ function CycleRow({ cycle, zone, layout }: { cycle: SubscriptionCycle; zone: str
       <tr className="border-t border-border align-top">
         <td className="py-2 pr-4 font-semibold text-ink">{formatCycleDate(cycle.cycleOn)}</td>
         <td className="py-2 pr-4 text-ink">{what}</td>
-        <td className="py-2">
-          <OrderLink cycle={cycle} />
+        <td className="py-0">
+          <OrderLink cycle={cycle} inTable />
         </td>
       </tr>
     );
