@@ -37,6 +37,7 @@ import {
 } from './store';
 import { computeQuote, type QuoteChoicesInput, type QuoteLineInput } from './quote';
 import { testControl } from './control';
+import { SUBSCRIPTION_DISCOUNT_LABEL } from '../subscriptions/discountLabel';
 
 /**
  * `mocks/handlers/ordering/customer.ts` — HO-ORD-002 §12.1. The cart, checkout and customer-order
@@ -227,7 +228,8 @@ function returnedQuantityOpen(order: DbOrder, lineId: string): number {
     .reduce((sum, l) => sum + l.quantity, 0);
 }
 
-export function orderLineView(l: DbOrderLine) {
+/** `discountLabel` is the order's subscription label, sent on a line that carries a discount (OrderQueryHandlers.cs:153). */
+export function orderLineView(l: DbOrderLine, discountLabel: string | null = null) {
   return {
     lineId: l.lineId,
     lineNumber: l.lineNumber,
@@ -242,7 +244,13 @@ export function orderLineView(l: DbOrderLine) {
     taxRatePercent: l.taxRatePercent,
     taxAmount: money(l.taxCents),
     lineTotal: money(l.totalCents),
+    discountLabel: l.discountCents > 0 ? discountLabel : null,
   };
+}
+
+/** The label a subscription order's discounted lines and its item-discount total carry; `null` for every other order. */
+export function discountLabelOf(o: Pick<DbOrder, 'channel'>): string | null {
+  return o.channel === 'Subscription' ? SUBSCRIPTION_DISCOUNT_LABEL : null;
 }
 
 export function totalsView(o: DbOrder) {
@@ -253,6 +261,7 @@ export function totalsView(o: DbOrder) {
     deliveryCharge: money(o.deliveryChargeCents),
     taxTotal: money(o.taxCents),
     grandTotal: money(o.grandTotalCents),
+    lineDiscountLabel: o.lineDiscountCents > 0 ? discountLabelOf(o) : null,
   };
 }
 
@@ -286,7 +295,7 @@ function customerSummary(o: DbOrder) {
   };
 }
 
-function customerDetail(o: DbOrder) {
+export function customerDetail(o: DbOrder) {
   const returnable =
     o.status === 'Delivered' && o.returnWindowEndsOn !== null && o.returnWindowEndsOn >= todayLocal()
       ? o.lines
@@ -307,7 +316,7 @@ function customerDetail(o: DbOrder) {
     branchTimeZoneId: ids.timeZoneId,
     // `imagePath` and `riderNote` are always present on the server's views, null when none (Read/ViewModels/
     // OrderViewModels.cs:15, :23); the mock has no product photos on order lines. Found by the contract check, HO-P6 integration part 2.
-    lines: o.lines.map((l) => ({ ...orderLineView(l), imagePath: null })),
+    lines: o.lines.map((l) => ({ ...orderLineView(l, discountLabelOf(o)), imagePath: null })),
     totals: totalsView(o),
     fulfilment: { ...o.fulfilment, riderNote: o.fulfilment.riderNote ?? null },
     statusHistory: o.history.map((h) => ({ to: h.to, changedOn: h.changedOn })),

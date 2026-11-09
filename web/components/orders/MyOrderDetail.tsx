@@ -102,6 +102,8 @@ function Detail({ order, justPlaced }: { order: CustomerOrderDetail; justPlaced:
     lineTotal: line.lineTotal,
     taxRatePercent: line.taxRatePercent,
     imageUrl: resolveFileUrl(line.imagePath),
+    discountLabel: line.discountLabel,
+    lineDiscount: line.lineDiscount,
   }));
   const f = order.fulfilment;
   const pickup = order.fulfilmentMethod === 'Pickup';

@@ -199,6 +199,8 @@ export interface InvoiceTotals {
   discount: Money;
   tax: Money;
   total: Money;
+  /** Set when every discounted line carries the same subscription label. // Read/ViewModels/BillingViewModels.cs:51 (owner decision 2026-11-09) */
+  discountLabel?: string | null;
 }
 
 export interface InvoicePreviewLine {
@@ -286,6 +288,8 @@ export interface InvoiceLine {
   taxAmount: Money;
   grossAmount: Money;
   sortOrder: number;
+  /** "Subscription discount (10%)" when the line's discount is the subscriber discount; null otherwise. // Read/ViewModels/BillingViewModels.cs:40 (owner decision 2026-11-09) */
+  discountLabel?: string | null;
 }
 
 export interface InvoicePaymentRow {

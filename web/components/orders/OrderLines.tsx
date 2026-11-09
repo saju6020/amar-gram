@@ -21,6 +21,9 @@ export interface DisplayLine {
   taxRatePercent?: number;
   /** The line's photo (an absolute, resolved URL); without one the hearth tile is the pack drawing. */
   imageUrl?: string | null;
+  /** The server's label for the line's discount ("Subscription discount (10%)"), with the amount taken off; absent for a line with none. */
+  discountLabel?: string | null;
+  lineDiscount?: Money;
 }
 
 const TILE_TONES: PackTone[] = ['warm', 'sunken', 'teal'];
@@ -91,6 +94,11 @@ export function OrderLines({
                   : ` · tax ${line.taxRatePercent}%`
                 : ''}
             </p>
+            {line.discountLabel && line.lineDiscount && (
+              <p className="text-sm text-ink-muted [overflow-wrap:anywhere]">
+                {line.discountLabel} <Amount money={line.lineDiscount} />
+              </p>
+            )}
             {extra?.(line)}
           </div>
           <p

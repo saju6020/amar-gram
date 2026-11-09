@@ -3,6 +3,7 @@ import { addDaysIso, todayInZone } from '@/lib/format/time';
 import { looksLikeCardNumber } from '@/lib/validation/cardNumberGuard';
 import { clearPersisted, loadPersisted, savePersisted } from '../admin/fixtures';
 import { billingIds as ids } from './fixtures';
+import { SUBSCRIPTION_DISCOUNT_LABEL, isSubscriptionOrderId } from '../subscriptions/discountLabel';
 
 /**
  * `mocks/handlers/billing/store.ts` — HO-BIL-002 §12. One in-memory (sessionStorage-persisted, like
@@ -1050,7 +1051,23 @@ export function lineView(l: DbLine, invoice: DbInvoice) {
     taxAmount: money(a.taxCents),
     grossAmount: money(a.grossCents),
     sortOrder: l.sortOrder,
+    discountLabel: lineDiscountLabelOf(l),
   };
+}
+
+/** InvoiceQueryHandlers.cs:88-116: a discounted line that came from a subscription order carries the subscription label. */
+export function lineDiscountLabelOf(l: Pick<DbLine, 'sourceKind' | 'sourceId' | 'discountCents'>): string | null {
+  return l.discountCents > 0 && l.sourceKind === 'Order' && isSubscriptionOrderId(l.sourceId)
+    ? SUBSCRIPTION_DISCOUNT_LABEL
+    : null;
+}
+
+/** The totals label: set only when every discounted line carries the same label (SubscriptionDiscountLabels.TotalsLabel). */
+export function totalsDiscountLabelOf(lines: Array<Pick<DbLine, 'sourceKind' | 'sourceId' | 'discountCents'>>): string | null {
+  const discounted = lines.filter((l) => l.discountCents > 0);
+  if (discounted.length === 0) return null;
+  const labels = new Set(discounted.map(lineDiscountLabelOf));
+  return labels.size === 1 ? [...labels][0]! : null;
 }
 
 export function allowedActionsOf(invoice: DbInvoice): string[] {
@@ -1117,6 +1134,7 @@ export function invoiceDetail(invoice: DbInvoice) {
       discount: money(totals.discount),
       tax: money(totals.tax),
       total: money(totals.total),
+      discountLabel: totalsDiscountLabelOf(invoice.lines),
     },
     isEstimate: !frozen,
     paid: money(invoice.paidCents),
