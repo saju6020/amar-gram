@@ -23,6 +23,12 @@ internal static class SubscriptionDiscountLabels
         return labels.Count == 1 ? labels[0] : null;
     }
 
+    /// <summary>The discount code a staff screen shows for an order. A subscription order stores the subscriber discount's label in the code column (ADR-242: a synthetic
+    /// rule, never a stored code), so it has no code to show; the discount itself is named on the line-discount row ("Subscription discount (10%)").
+    /// Owner decision 2026-11-09: the screens must not call it a discount code.</summary>
+    public static string? StaffDiscountCode(OrderChannel channel, string? discountCodeText) =>
+        channel == OrderChannel.Subscription ? null : discountCodeText;
+
     /// <summary>Order id -> label, only for the subscription orders among <paramref name="orderIds"/>.</summary>
     public static async Task<IReadOnlyDictionary<Guid, string>> ForOrdersAsync(AmarGramDbContext db, IReadOnlyCollection<Guid> orderIds)
     {

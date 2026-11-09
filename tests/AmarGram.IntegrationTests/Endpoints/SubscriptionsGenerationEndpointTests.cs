@@ -209,6 +209,7 @@ public sealed class SubscriptionsGenerationEndpointTests(OrderingApiFactory fact
             Assert.Equal("Subscription discount (10%)", customerOrder.GetProperty("totals").GetProperty("lineDiscountLabel").GetString());
             var staffOrder = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await (await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId)).GetAsync($"/api/staff/orders/{order.Id}")));
             Assert.Equal("Subscription discount (10%)", staffOrder.GetProperty("totals").GetProperty("lineDiscountLabel").GetString());
+            Assert.Equal(JsonValueKind.Null, staffOrder.GetProperty("discountCode").ValueKind);   // the label is not a discount code (owner wording fix 2026-11-09)
 
             var invoiceId = staffOrder.GetProperty("invoiceId");
             Assert.Equal(JsonValueKind.String, invoiceId.ValueKind);
