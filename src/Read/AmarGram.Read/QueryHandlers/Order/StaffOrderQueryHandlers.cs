@@ -192,7 +192,7 @@ public sealed class GetStaffOrderDetailQueryHandler(AmarGramDbContext db) : IQue
             head.Ship is null ? null : new StaffShipmentViewModel(head.Ship.CourierId, head.Ship.CourierName, head.Ship.TrackingNumber, head.Ship.TrackingUrl, head.Ship.DispatchedOn, head.Ship.LastTrackingStatus, head.Ship.LastTrackingEventOn, head.Ship.RiderId, head.Ship.RiderName),
             head.CollectByDate, head.InvoiceId, head.InvoiceNumber,
             head.Payments.Select(p => new StaffPaymentRefViewModel(p.PaymentId, p.Method, Money(p.Amount), p.RecordedOn)).ToList(), head.CreditNoteIds,
-            Money(head.AmountPaid), Money(head.AmountRefunded), Money(head.RefundDue), head.DiscountCodeText, head.CustomerAnonymised, allowed, head.PackedOn);
+            Money(head.AmountPaid), Money(head.AmountRefunded), Money(head.RefundDue), SubscriptionDiscountLabels.StaffDiscountCode(head.Channel, head.DiscountCodeText), head.CustomerAnonymised, allowed, head.PackedOn);
 
         return new QueryResponse<StaffOrderDetailViewModel?> { Result = view };
     }
