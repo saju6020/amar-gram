@@ -463,7 +463,7 @@ Six areas of the original product (73 stories) were removed with the Amar Gram p
 **AC:**
 - Given an upcoming charge, then a notification is sent the configured number of days before, with a link to skip or change.
 
-**US-SUB-04** — As a shop manager, I want a subscription discount, so that customers are rewarded for committing.
+**US-SUB-04** — As an administrator, I want to set a subscription discount, so that customers are rewarded for committing. (owner decision 2026-11-09: the administrator sets the discount; the shop manager cannot, and the shop manager role is refused with 403. The discount is shown on the order and the invoice labelled "Subscription discount (N%)".)
 `C` · `3` · Traces: FR-SUB-5
 **AC:**
 - Given a configured discount, then it applies to every subscription order and is shown on the invoice.
