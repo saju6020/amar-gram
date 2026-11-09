@@ -87,7 +87,13 @@ const bindingError = (field: string) =>
     { status: 400 },
   );
 
-const notFound = () => new HttpResponse(null, { status: 404 });
+// ASP.NET's ProblemDetails for `NotFound()` under [ApiController], as the real API sends it (without its traceId); the same
+// body for a missing id and for someone else's (ADR-248). Seen on the real API, HO-P6 integration part 2.
+const notFound = () =>
+  HttpResponse.json(
+    { type: 'https://tools.ietf.org/html/rfc9110#section-15.5.5', title: 'Not Found', status: 404 },
+    { status: 404, headers: { 'Content-Type': 'application/problem+json; charset=utf-8' } },
+  );
 
 function violationResponse(error: ScheduleViolation) {
   // SubscriptionHttp.Failure (SubscriptionHttp.cs:34-40): not-found codes 404, StaleVersion 409, everything else 400.

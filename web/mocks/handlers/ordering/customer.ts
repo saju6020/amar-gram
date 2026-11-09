@@ -305,9 +305,11 @@ function customerDetail(o: DbOrder) {
     fulfilmentMethod: o.fulfilmentMethod,
     paymentMethod: o.paymentMethod,
     branchTimeZoneId: ids.timeZoneId,
-    lines: o.lines.map(orderLineView),
+    // `imagePath` and `riderNote` are always present on the server's views, null when none (Read/ViewModels/
+    // OrderViewModels.cs:15, :23); the mock has no product photos on order lines. Found by the contract check, HO-P6 integration part 2.
+    lines: o.lines.map((l) => ({ ...orderLineView(l), imagePath: null })),
     totals: totalsView(o),
-    fulfilment: o.fulfilment,
+    fulfilment: { ...o.fulfilment, riderNote: o.fulfilment.riderNote ?? null },
     statusHistory: o.history.map((h) => ({ to: h.to, changedOn: h.changedOn })),
     paymentDueBy: o.status === 'PendingPayment' ? o.paymentDueBy : o.paymentMethod === 'BankTransfer' ? o.paymentDueBy : null,
     transferInstructions: transferInstructionsOf(o),

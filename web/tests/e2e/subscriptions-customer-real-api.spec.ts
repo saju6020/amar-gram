@@ -10,7 +10,8 @@ import { test, expect, type Page } from '@playwright/test';
  * without one it is recorded "not run" in the slice report.
  *
  * It pins the wire the mocks were written from: the key set of the options read, the `{ error }` 400 for a bad status, the
- * bodiless 404 for an unknown subscription, and the empty paged list.
+ * ProblemDetails 404 for an unknown subscription, and the empty paged list. (The 404 was first written here as bodiless; the
+ * real API sends ASP.NET's ProblemDetails, so HO-P6 integration part 2 pins that instead, and the mocks send it too.)
  */
 test.skip(process.env.E2E_REAL_API !== '1', 'real-API run only (E2E_REAL_API=1)');
 test.skip(process.env.NEXT_PUBLIC_USE_MOCKS !== 'false', 'needs NEXT_PUBLIC_USE_MOCKS=false');
@@ -44,6 +45,27 @@ async function register(page: Page, name: string, mobile: string): Promise<void>
   await page.getByLabel(/security check/i).fill(CAPTCHA_ANSWER);
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page).toHaveURL(/\/portal\//, { timeout: 15_000 });
+  await acceptPendingPolicies(page);
+}
+
+/**
+ * A new account on a seeded database has a policy to accept (seed-dev publishes Privacy with acceptance required), and the
+ * portal's modal "Updated policies" dialog makes the rest of the page inert until it is accepted. The API's pending list
+ * decides: when it is non-empty the dialog must appear and close once each is accepted; when empty, there is none.
+ * (HO-P6 integration part 2: without this, every case here failed on the seeded scratch database.)
+ */
+async function acceptPendingPolicies(page: Page): Promise<void> {
+  const pending = await call(page, '/api/customers/me/policy-acceptances/pending');
+  expect(pending.status).toBe(200);
+  const count = (pending.body as unknown[]).length;
+  const dialog = page.getByRole('dialog', { name: 'Updated policies' });
+  if (count === 0) return;
+  await expect(dialog).toBeVisible({ timeout: 20_000 });
+  for (let left = count; left > 0; left--) {
+    await dialog.getByRole('button', { name: 'Accept' }).first().click();
+    await expect(dialog.getByRole('button', { name: 'Accept' })).toHaveCount(left - 1, { timeout: 20_000 });
+  }
+  await expect(dialog).toBeHidden({ timeout: 20_000 });
 }
 
 test('a new customer: the empty list, the menu entry, and the wire the mocks mirror', async ({ page }) => {
@@ -67,11 +89,14 @@ test('a new customer: the empty list, the menu entry, and the wire the mocks mir
   expect(bad.status).toBe(400);
   expect(bad.body).toEqual({ error: 'status must be live or cancelled.' });
 
-  // C4/C5: an unknown subscription is a 404 with no body, the same as someone else's (ADR-248).
+  // C4/C5: an unknown subscription is ASP.NET's plain ProblemDetails 404 (`NotFound()` under [ApiController]), the same as
+  // someone else's (ADR-248): no field names the subscription or says whether it exists.
   for (const path of [`/api/customers/me/subscriptions/${GHOST}`, `/api/customers/me/subscriptions/${GHOST}/cycles`]) {
     const missing = await call(page, path);
     expect(missing.status).toBe(404);
-    expect(missing.text).toBe('');
+    const { traceId, ...problem } = missing.body as Record<string, unknown>;
+    expect(typeof traceId).toBe('string');
+    expect(problem).toEqual({ type: 'https://tools.ietf.org/html/rfc9110#section-15.5.5', title: 'Not Found', status: 404 });
   }
   await page.goto(`/portal/subscriptions/${GHOST}`);
   await expect(page.getByText("We couldn't find that subscription.")).toBeVisible({ timeout: 20_000 });

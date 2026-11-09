@@ -74,10 +74,14 @@ test('the unpaid worklist loads and is clean', async ({ page }) => {
   await expectNoHorizontalScroll(page);
 });
 
-test('a detail opens from the list, reception sees no actions and an accountant can export', async ({ page }) => {
+test('a detail opens from the list, reception sees no actions and an accountant can export', async ({ page }, testInfo) => {
   await signInAs(page, 'shopManager');
   await page.goto('/staff/subscriptions');
-  const first = page.getByRole('table', { name: 'Subscriptions' }).getByRole('row').nth(1).getByRole('link').last();
+  // At 360 the list is a card list, not a table (S2 E-cases); its first card's first link is the subscription.
+  const first =
+    testInfo.project.name === 'mobile-360'
+      ? page.getByRole('list', { name: 'Subscriptions' }).getByRole('listitem').first().getByRole('link').first()
+      : page.getByRole('table', { name: 'Subscriptions' }).getByRole('row').nth(1).getByRole('link').last();
   await slow(first).toBeVisible();
   const href = await first.getAttribute('href');
   expect(href).toMatch(/^\/staff\/subscriptions\/[0-9a-f-]{36}$/);

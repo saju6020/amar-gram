@@ -149,6 +149,9 @@ function getList(url: URL) {
     pageNumber,
     pageSize,
     totalCount: items.length,
+    // CatalogueItem.cs:41-43: how many cards the filtered list has. The mock still lists one card per product (the server
+    // lists one per size, CatalogueSizeExpansion.cs), so here it equals totalCount (HO-P6 integration part 2, finding).
+    totalItemCount: items.length,
     appliedFilters: {
       q: q || null,
       category: sp.get('category'),

@@ -18,8 +18,8 @@ import { useDashboard } from '@/lib/hooks/useReports';
  * tab is visible (ADR-FE-135), then (HO-P5 S2) the 14-day sales chart (BG-1) and the orders-in-progress
  * pipeline (BG-2), then "Needs attention" and "Latest orders". Cash on delivery with riders (BG-5) is one
  * of the server's tiles and needs no component. The active-branch picker is in the staff shell's
- * sidebar. A `403` renders `PermissionDeniedState`; the nav entry is presentation only. Not built:
- * subscriptions due (BG-15, deferred).
+ * sidebar. A `403` renders `PermissionDeniedState`; the nav entry is presentation only. Subscriptions
+ * due tomorrow and suspended subscriptions (BG-15) are rows in `DashboardAttention` (HO-P6 S3, §11.4.4).
  */
 export default function StaffHomePage() {
   const dashboard = useDashboard();
