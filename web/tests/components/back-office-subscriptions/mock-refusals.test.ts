@@ -154,6 +154,33 @@ describe('U39 isSubscribable on the details PUT (P1, P2)', () => {
     expect((await getStaffProduct(id)).isSubscribable).toBe(true);
   });
 
+  it('the 400 for a non-boolean is the real API body (HO-P6 integration part 2, T12)', async () => {
+    const id = shopFixtureIds.multiVariantProductId;
+    const request = { ...(await baseRequest(id)), isSubscribable: 'yes' as never };
+    const error = (await failure(() => updateProductDetails(id, request))) as ApiValidationError;
+    const raw = JSON.stringify(request);
+    const position = raw.indexOf('"isSubscribable":"yes"') + '"isSubscribable":"yes"'.length;
+    expect(error.response.errors).toEqual({
+      request: ['The request field is required.'],
+      '$.isSubscribable': [
+        `The JSON value could not be converted to System.Nullable\`1[System.Boolean]. Path: $.isSubscribable | LineNumber: 0 | BytePositionInLine: ${position}.`,
+      ],
+    });
+  });
+
+  it('a save that changes the flag moves the version by 2; the same value or none by 1 (HO-P6 integration part 2)', async () => {
+    const id = shopFixtureIds.multiVariantProductId;
+    const v0 = (await getStaffProduct(id)).version;
+    await updateProductDetails(id, { ...(await baseRequest(id)), isSubscribable: false });
+    expect((await getStaffProduct(id)).version).toBe(v0 + 2);
+    await updateProductDetails(id, { ...(await baseRequest(id)), isSubscribable: false });
+    expect((await getStaffProduct(id)).version).toBe(v0 + 3);
+    await updateProductDetails(id, await baseRequest(id));
+    expect((await getStaffProduct(id)).version).toBe(v0 + 4);
+    await updateProductDetails(id, { ...(await baseRequest(id)), isSubscribable: true });
+    expect((await getStaffProduct(id)).version).toBe(v0 + 6);
+  });
+
   it("C1's subscribable follows the flag immediately", async () => {
     document.cookie = 'pc_session=test; path=/'; // C1 is a customer endpoint
     const id = shopFixtureIds.multiVariantProductId;

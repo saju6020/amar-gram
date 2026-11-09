@@ -99,16 +99,30 @@ function conflict(p: MockProduct, expected: number) {
   );
 }
 
-/** What ASP.NET's `[ApiController]` answers when `isSubscribable` is not a boolean (an object-shaped `errors`). */
-function subscribableBindingError() {
+/**
+ * What ASP.NET's `[ApiController]` answers when `isSubscribable` is not a boolean: System.Text.Json fails on the
+ * `bool?` (StaffProductRequests.cs:32-33), so the whole body is unbound and both keys are reported. Copied from the real
+ * API on 2026-11-09 (HO-P6 integration part 2, S3 TEST T12) without its `traceId`. The byte position is where the
+ * reader stopped: the end of a string or number token, or one past the first byte of anything else.
+ */
+function subscribableBindingError(raw: string) {
+  const found = /"isSubscribable"\s*:\s*/.exec(raw);
+  const start = found ? found.index + found[0].length : 0;
+  const token = raw.slice(start).match(/^"(?:[^"\\]|\\.)*"|^-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/)?.[0] ?? raw.charAt(start);
+  const position = new TextEncoder().encode(raw.slice(0, start) + token).length;
   return HttpResponse.json(
     {
       type: 'https://tools.ietf.org/html/rfc9110#section-15.5.1',
       title: 'One or more validation errors occurred.',
       status: 400,
-      errors: { isSubscribable: ['The value provided for isSubscribable is not valid.'] },
+      errors: {
+        request: ['The request field is required.'],
+        '$.isSubscribable': [
+          `The JSON value could not be converted to System.Nullable\`1[System.Boolean]. Path: $.isSubscribable | LineNumber: 0 | BytePositionInLine: ${position}.`,
+        ],
+      },
     },
-    { status: 400 },
+    { status: 400, headers: { 'Content-Type': 'application/problem+json; charset=utf-8' } },
   );
 }
 
@@ -565,9 +579,15 @@ export const staffHandlers: HttpHandler[] = [
 
   http.put('*/api/staff/shop/products/:productId', async ({ params, request }) => {
     // Model binding runs before the version check and the command: a non-boolean `isSubscribable` is a 400 first.
-    const sent = ((await request.clone().json().catch(() => ({}))) ?? {}) as Record<string, unknown>;
+    const raw = await request.clone().text();
+    let sent: Record<string, unknown> = {};
+    try {
+      sent = (JSON.parse(raw) ?? {}) as Record<string, unknown>;
+    } catch {
+      /* not JSON: the write below reads it as an empty body, as before */
+    }
     if (sent.isSubscribable !== undefined && sent.isSubscribable !== null && typeof sent.isSubscribable !== 'boolean')
-      return subscribableBindingError();
+      return subscribableBindingError(raw);
     return write(String(params.productId), request, (p, b) => {
       if (!String(b.name ?? '').trim())
         return badRequest('Name', 'InvalidProductName', 'Enter a product name.');
@@ -598,7 +618,12 @@ export const staffHandlers: HttpHandler[] = [
       }
       // `bool? IsSubscribable` (StaffProductRequests.cs:32-33): omitted or null leaves it, a boolean sets it
       // (UpdateProductDetailsCommandHandler.cs:62). A non-boolean was refused above, before the command.
-      if (typeof b.isSubscribable === 'boolean') p.isSubscribable = b.isSubscribable;
+      // A change of the flag moves the version once more on top of `write`'s bump, as `SetSubscribable` does
+      // (ProductAggregate.Subscription.cs:14-20); the same value is idempotent. Seen on the real API: a flip goes +2.
+      if (typeof b.isSubscribable === 'boolean' && b.isSubscribable !== (p.isSubscribable === true)) {
+        p.isSubscribable = b.isSubscribable;
+        p.version += 1;
+      }
     });
   }),
 
