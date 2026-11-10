@@ -253,7 +253,9 @@ public sealed class SubscriptionsGenerationEndpointTests(OrderingApiFactory fact
     private const string TenPercent = "Subscription discount (10%)";
     private const string FivePercent = "Subscription discount (5%)";
 
-    /// <summary>Records one discounted order-sourced charge through the Billing port, exactly as Ordering does (see BillingIntegrationTestBase.RecordChargeAsync).</summary>
+    /// <summary>Records one discounted order-sourced charge through the Billing port, exactly as Ordering does (see BillingIntegrationTestBase.RecordChargeAsync).
+    /// The discount amount is arbitrary and is not tied to the order's real totals: labels come only from the order's channel,
+    /// its cycle's percent and a non-zero line discount, so do not add money assertions that link the two.</summary>
     private async Task<Guid> RecordOrderChargeAsync(Shop shop, Guid orderId, string lineRef, decimal discount)
     {
         var request = new ChargeRequestDto(

@@ -56,6 +56,7 @@ export async function acceptPendingPolicies(page: Page): Promise<void> {
     return { status: response.status, count: Array.isArray(body) ? body.length : -1 };
   });
   expect(pending.status).toBe(200);
+  expect(pending.count, 'the pending-policies body must be an array').toBeGreaterThanOrEqual(0);
   if (pending.count === 0) return;
   const dialog = page.getByRole('dialog', { name: 'Updated policies' });
   await expect(dialog).toBeVisible({ timeout: 20_000 });

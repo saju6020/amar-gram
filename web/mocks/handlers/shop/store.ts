@@ -216,7 +216,8 @@ export interface CardOptions {
 export function catalogueCards(p: MockProduct, options: CardOptions) {
   const base = catalogueItem(p);
   const sizes = activeSkus(p).filter((s) => s.price !== null);
-  if (sizes.length === 0) return [base];
+  // No priced size: the server sends the base row with skuId and sizeLabel present and null.
+  if (sizes.length === 0) return [{ ...base, skuId: null as string | null, sizeLabel: null as string | null }];
   if (sizes.length === 1) {
     const only = sizes[0]!;
     return [{ ...base, skuId: only.skuId, sizeLabel: sizeLabelOf(only), compareAtPrice: compareAtOf(only) }];

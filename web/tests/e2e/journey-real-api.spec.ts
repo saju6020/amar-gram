@@ -429,7 +429,8 @@ test.describe('staff', () => {
   test('5c. delivery zones list Dhaka', async () => {
     await page.goto('/staff/admin/delivery-zones');
     await expect(page.getByRole('heading', { name: 'Delivery zones' }).first()).toBeVisible();
-    await expect(page.getByRole('main').getByText('Dhaka').first()).toBeVisible();
+    // ResponsiveTable names its table (desktop) or list (360) after the caption, so this finds a zone row, not a heading.
+    await expect(page.getByRole('main').getByLabel('Delivery zones').first().getByText('Dhaka').first()).toBeVisible();
     await expectNoErrorState(page);
   });
 

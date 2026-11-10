@@ -64,12 +64,29 @@ describe('shop mock contract — HO-SHP-002 §12', () => {
       expect(oats.map((i) => i.skuId)).toEqual([shopFixtureIds.skuOats400]);
     });
 
+    it('applies the minimum price per size too, so only the dearer sizes are shown', async () => {
+      const all = await list('q=rolled%20oats');
+      const dearest = Number(
+        all.items.find((i) => i.skuId === shopFixtureIds.skuOats4kg)?.fromPrice?.amount,
+      );
+      const body = await list(`q=rolled%20oats&minPrice=${dearest}`);
+      const oats = body.items.filter((i) => i.slug === 'organic-rolled-oats');
+      expect(oats.map((i) => i.skuId)).toEqual([shopFixtureIds.skuOats4kg]);
+    });
+
+    it('always sends skuId and sizeLabel, as the server does (null when a product has no priced size)', async () => {
+      const body = await list('');
+      for (const item of body.items) {
+        expect(item).toHaveProperty('skuId');
+        expect(item).toHaveProperty('sizeLabel');
+      }
+    });
+
     it('pages per product: totalCount counts products, totalItemCount is at least the active sizes', async () => {
       const body = await list('');
       const products = new Set(body.items.map((i) => i.productId));
       expect(products.size).toBeLessThanOrEqual(body.pageSize);
       expect(body.items.length).toBeGreaterThan(products.size);
-      expect(body.totalItemCount).toBeGreaterThanOrEqual(body.totalCount);
       expect(body.totalItemCount).toBeGreaterThan(body.totalCount);
     });
   });
