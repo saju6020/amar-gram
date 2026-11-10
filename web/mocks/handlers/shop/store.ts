@@ -189,6 +189,68 @@ export function catalogueItem(p: MockProduct) {
   };
 }
 
+/** As the real `Sku.LabelFor` (and `CatalogueSizeExpansion.SizeLabelOf`): null when the SKU has no axis. */
+function sizeLabelOf(s: MockSku): string | null {
+  const axes = [
+    s.sizeOrWeight,
+    s.flavour,
+    s.colour,
+    s.packQuantity !== null ? `Pack of ${s.packQuantity}` : null,
+  ].filter((x): x is string => !!x && x.trim() !== '');
+  return axes.length > 0 ? axes.join(' · ') : null;
+}
+
+export interface CardOptions {
+  dearestFirst: boolean;
+  minPrice: number | null;
+  maxPrice: number | null;
+  inStockOnly: boolean;
+}
+
+/**
+ * One card per size, as `Read/QueryHandlers/Product/CatalogueSizeExpansion.cs` does for each product on a page.
+ * A product with one priced active SKU (or none) keeps its single row, now naming its size; with several, each
+ * priced active SKU is a card (cheapest first, dearest first on price high-to-low, ties by SKU code) carrying its
+ * own price, "Was" price, stock and primary photo. Only the price and in-stock filters apply per size here.
+ */
+export function catalogueCards(p: MockProduct, options: CardOptions) {
+  const base = catalogueItem(p);
+  const sizes = activeSkus(p).filter((s) => s.price !== null);
+  if (sizes.length === 0) return [base];
+  if (sizes.length === 1) {
+    const only = sizes[0]!;
+    return [{ ...base, skuId: only.skuId, sizeLabel: sizeLabelOf(only), compareAtPrice: compareAtOf(only) }];
+  }
+  const direction = options.dearestFirst ? -1 : 1;
+  const ordered = [...sizes].sort(
+    (a, b) =>
+      direction * (Number(a.price) - Number(b.price)) ||
+      (a.code < b.code ? -1 : a.code > b.code ? 1 : 0),
+  );
+  return ordered.flatMap((s) => {
+    const amount = Number(s.price);
+    if (options.minPrice !== null && amount < options.minPrice) return [];
+    if (options.maxPrice !== null && amount > options.maxPrice) return [];
+    const inStock = skuAvailability(p, s) === 'InStock';
+    if (options.inStockOnly && !inStock) return [];
+    const photo = p.images.find((i) => i.isPrimary && i.skuId === s.skuId);
+    return [
+      {
+        ...base,
+        skuId: s.skuId,
+        sizeLabel: sizeLabelOf(s),
+        fromPrice: money(Number(s.price).toFixed(2)),
+        priceVaries: false,
+        compareAtPrice: compareAtOf(s),
+        availability: inStock ? ('InStock' as const) : ('OutOfStock' as const),
+        primaryImage: photo
+          ? { ...imageFor(p, true, s.skuId), altText: photo.altText }
+          : base.primaryImage,
+      },
+    ];
+  });
+}
+
 export function detailView(p: MockProduct, locale: string | undefined) {
   const translation = locale ? p.translations.find((t) => t.locale === locale) : undefined;
   const pick = (field: 'name' | 'description' | 'ingredientList', base: string | null) => {

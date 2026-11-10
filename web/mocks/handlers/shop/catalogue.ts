@@ -2,6 +2,7 @@ import { isFoodCategory } from '@/lib/shop/labels';
 import { http, HttpResponse, type HttpHandler } from 'msw';
 import { COUNTRY_NAMES, CATEGORY_TREE, badRequest, type MockProduct } from './fixtures';
 import {
+  catalogueCards,
   catalogueItem,
   db,
   detailView,
@@ -141,17 +142,28 @@ function getList(url: URL) {
 
   const pageSize = Math.min(Number(sp.get('pageSize') ?? '24') || 24, 48);
   const pageNumber = Math.max(1, Number(sp.get('pageNumber') ?? '1') || 1);
+  // Paging stays per product; each product on the page is then spread into its sizes (CatalogueSizeExpansion.cs).
   const page = items.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+  const cardOptions = {
+    dearestFirst: sort === 'price_desc',
+    minPrice: minPrice ? Number(minPrice) : null,
+    maxPrice: maxPrice ? Number(maxPrice) : null,
+    inStockOnly: sp.get('availability') === 'inStock',
+  };
+  // GetCatalogueQueryHandler.cs:61-63: the larger of the product count and the filtered products' active SKUs.
+  const activeSkuCount = items.reduce(
+    (n, p) => n + p.skus.filter((s) => s.status === 'Active').length,
+    0,
+  );
 
   const popular = [...storefrontProducts()].sort((a, b) => b.sold - a.sold).slice(0, 8);
   return {
-    items: page.map(catalogueItem),
+    items: page.flatMap((p) => catalogueCards(p, cardOptions)),
     pageNumber,
     pageSize,
     totalCount: items.length,
-    // CatalogueItem.cs:41-43: how many cards the filtered list has. The mock still lists one card per product (the server
-    // lists one per size, CatalogueSizeExpansion.cs), so here it equals totalCount (HO-P6 integration part 2, finding).
-    totalItemCount: items.length,
+    // CatalogueItem.cs:41-43 / GetCatalogueQueryHandler.cs:61-63: how many cards the filtered list has.
+    totalItemCount: Math.max(items.length, activeSkuCount),
     appliedFilters: {
       q: q || null,
       category: sp.get('category'),

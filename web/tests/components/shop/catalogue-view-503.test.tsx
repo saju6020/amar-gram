@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement } from 'react';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/mocks/server';
+import { shopFixtureIds } from '@/mocks/handlers/shop/fixtures';
 import { CatalogueView } from '@/app/(shop)/_components/CatalogueView';
 import { EMPTY_CATALOGUE_PARAMS } from '@/lib/shop/catalogueParams';
 
@@ -53,7 +54,10 @@ describe('CatalogueView server rendering — HO-SHP-002 §8.2', () => {
         await CatalogueView({ params: EMPTY_CATALOGUE_PARAMS, basePath: '/shop/products' }),
       ),
     );
-    expect(html).toContain('href="/shop/products/organic-rolled-oats"');
+    // One card per size (owner, 2026-10-18): oats has three sizes, so three cards, each linking to its own size.
+    expect(html).toContain(`href="/shop/products/organic-rolled-oats?sku=${shopFixtureIds.skuOats400}"`);
+    expect(html).toContain(`href="/shop/products/organic-rolled-oats?sku=${shopFixtureIds.skuOats2kg}"`);
+    expect(html).toContain(`href="/shop/products/organic-rolled-oats?sku=${shopFixtureIds.skuOats4kg}"`);
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('href="/shop/products?pageNumber=2"');
   });

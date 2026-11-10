@@ -215,7 +215,15 @@ test.describe('Rendering structure (NFR-PRF-1, E-X3 structure)', () => {
       /\/shop\/products\/organic-rolled-oats$/,
     );
     await page.goto('/shop/products');
-    expect(await page.content()).toContain('href="/shop/products/organic-rolled-oats"');
+    // One card per size (owner, 2026-10-18): every oats size is a real link to its own size.
+    const html = await page.content();
+    for (const skuId of [
+      shopFixtureIds.skuOats400,
+      shopFixtureIds.skuOats2kg,
+      shopFixtureIds.skuOats4kg,
+    ]) {
+      expect(html).toContain(`href="/shop/products/organic-rolled-oats?sku=${skuId}"`);
+    }
     await context.close();
   });
 

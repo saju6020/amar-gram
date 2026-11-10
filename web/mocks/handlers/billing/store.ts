@@ -1530,6 +1530,8 @@ export function cashUpFor(date: string, branchId: string) {
       countsInCash: isCash,
       carriedIn: false,
       label: `${receiptText(p.receiptSeq) ?? ''} · ${customerName(p.customerId)}`,
+      // Always on the wire, null for the till (CashUpRows.SourceOf: only a staff collector's cash has a key).
+      sourceKey: null,
     });
     if (isCash) {
       cash += p.amountCents;
@@ -1556,6 +1558,7 @@ export function cashUpFor(date: string, branchId: string) {
       countsInCash: true,
       carriedIn: false,
       label: r.reason,
+      sourceKey: null,
     });
   }
   const carried = db.carriedIn.filter((c) => c.date === date);
@@ -1571,6 +1574,7 @@ export function cashUpFor(date: string, branchId: string) {
       countsInCash: true,
       carriedIn: true,
       label: c.label,
+      sourceKey: null,
     });
   }
   // Staff-collected cash on delivery counts in the cash and is a source of its own (HO-P5 BG-20).
