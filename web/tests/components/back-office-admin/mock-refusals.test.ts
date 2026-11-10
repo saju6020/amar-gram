@@ -73,6 +73,15 @@ describe('PUT …/cash-ups/{date}/count with counts[] — StaffCashUpController.
     expect(sources[1]!.expected.amount).toBe('1200.00');
   });
 
+  it('sends sourceKey on every line, as CashUpLineViewModel does: null for the till, the staff key for the collector (CashUpRows.SourceOf)', async () => {
+    const lines = (await getCashUp(SRC_DAY)).lines;
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((l) => 'sourceKey' in l)).toBe(true);
+    const staffLine = lines.find((l) => l.collector === 'Staff');
+    expect(staffLine?.sourceKey).toBe('staff:s0000000-0000-0000-0000-0000000000b1');
+    expect(lines.filter((l) => l !== staffLine).every((l) => l.sourceKey === null)).toBe(true);
+  });
+
   it('sets the total to the server\'s sum of the sources, with each source\'s variance counted minus expected (signed)', async () => {
     const [till, staff] = await sourceKeys();
     const before = await getCashUp(SRC_DAY);
