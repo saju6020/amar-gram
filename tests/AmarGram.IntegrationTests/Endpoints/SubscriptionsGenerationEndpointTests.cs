@@ -3,6 +3,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using AmarGram.Application.Commands.Subscription;
 using AmarGram.Domain.DomainServices;
+using AmarGram.Domain.Models;
+using AmarGram.Domain.ValueObjects;
+using AmarGram.Infrastructure.Persistence;
 using AmarGram.Shared.Common.Constants;
 using AmarGram.Shared.Common.Enums;
 using Microsoft.Extensions.DependencyInjection;
@@ -243,6 +246,125 @@ public sealed class SubscriptionsGenerationEndpointTests(OrderingApiFactory fact
         var customerOrder = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await shop.Customer.GetAsync($"/api/customers/me/orders/{order.Id}")));
         Assert.Equal(JsonValueKind.Null, customerOrder.GetProperty("totals").GetProperty("lineDiscountLabel").ValueKind);
         Assert.Equal(JsonValueKind.Null, customerOrder.GetProperty("lines")[0].GetProperty("discountLabel").ValueKind);
+    }
+
+    // -- Owner decision 2026-11-09 (owner asked for the mixed cases 2026-11-10): the invoice's discount total is named only when EVERY discounted line carries the same label --
+
+    private const string TenPercent = "Subscription discount (10%)";
+    private const string FivePercent = "Subscription discount (5%)";
+
+    /// <summary>Records one discounted order-sourced charge through the Billing port, exactly as Ordering does (see BillingIntegrationTestBase.RecordChargeAsync).</summary>
+    private async Task<Guid> RecordOrderChargeAsync(Shop shop, Guid orderId, string lineRef, decimal discount)
+    {
+        var request = new ChargeRequestDto(
+            shop.CustomerId, shop.Context.BranchId, BusinessLine.Shop, ItemKind.Product, ChargeSourceKind.Order, orderId, lineRef, "Mixed label " + lineRef,
+            1m, new Money(500m, "BDT"), new Money(discount, "BDT"), shop.Context.ZeroTaxClassId, Today);
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var id = await scope.ServiceProvider.GetRequiredService<IBillableChargeRecorder>().RecordAsync(request);
+        await scope.ServiceProvider.GetRequiredService<AmarGramDbContext>().SaveChangesAsync();
+        return id;
+    }
+
+    /// <summary>Builds a draft and an issued invoice from the same kind of charges and asserts: each line keeps its own label, the totals carry none.</summary>
+    private async Task AssertMixedInvoiceAsync(
+        Shop shop, IReadOnlyList<(Guid OrderId, decimal Discount)> discounted, IReadOnlyList<string?> expectedLabels)
+    {
+        async Task<HttpClient> AdminAsync() => await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId);
+        async Task<Guid[]> ChargesAsync(string tag)
+        {
+            var ids = new List<Guid>();
+            foreach (var (orderId, discount) in discounted) ids.Add(await RecordOrderChargeAsync(shop, orderId, tag + ids.Count, discount));
+            return ids.ToArray();
+        }
+
+        void AssertLabels(JsonElement invoice)
+        {
+            var lines = invoice.GetProperty("lines").EnumerateArray().OrderBy(l => l.GetProperty("description").GetString()).ToList();
+            Assert.Equal(expectedLabels.Count, lines.Count);
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var label = lines[i].GetProperty("discountLabel");
+                if (expectedLabels[i] is null) Assert.Equal(JsonValueKind.Null, label.ValueKind);
+                else Assert.Equal(expectedLabels[i], label.GetString());
+            }
+
+            Assert.Equal(JsonValueKind.Null, invoice.GetProperty("totals").GetProperty("discountLabel").ValueKind);   // a total that would name only part of itself names nothing
+            Assert.True(AmountOf(invoice.GetProperty("totals").GetProperty("discount")) > 0m);                          // ...although the discount itself is still counted
+        }
+
+        // A draft (the estimate path).
+        var admin = await AdminAsync();
+        var draftCharges = await ChargesAsync("d");
+        var draftResponse = await ExpectAsync(HttpStatusCode.Created, await admin.PostAsJsonAsync("/api/staff/billing/invoices", new { customerId = shop.CustomerId, chargeIds = draftCharges }, Json));
+        var draftId = (await ReadAsync(draftResponse)).GetProperty("invoiceId").GetGuid();
+        var draft = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await admin.GetAsync($"/api/staff/billing/invoices/{draftId}")));
+        Assert.True(draft.GetProperty("isEstimate").GetBoolean());
+        AssertLabels(draft);
+
+        // An issued invoice (the frozen path).
+        var issueCharges = await ChargesAsync("i");
+        var issued = await ReadAsync(await ExpectAsync(HttpStatusCode.Created,
+            await admin.PostAsJsonAsync("/api/staff/billing/invoices/issue-from-charges", new { customerId = shop.CustomerId, selector = new { chargeIds = issueCharges } }, Json)));
+        var invoice = await ReadAsync(await ExpectAsync(HttpStatusCode.OK, await admin.GetAsync($"/api/staff/billing/invoices/{issued.GetProperty("invoiceId").GetGuid()}")));
+        Assert.False(invoice.GetProperty("isEstimate").GetBoolean());
+        AssertLabels(invoice);
+    }
+
+    [Fact]
+    public async Task I_D5c_AnInvoiceMixingASubscriptionDiscountWithAnOrdinaryDiscount_NamesEachLine_ButNotTheTotal()
+    {
+        var shop = await SetUpSubscribableShopAsync();
+        Factory.Clock.Advance(TimeSpan.FromHours(1));   // keep the settings audit rows out of the Administration audit test's window (see I_D5)
+        await SetSettingAsync(await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId), SettingKeys.SubscriptionDiscountPercent, "10");
+        try
+        {
+            var view = await SubscribeAsync(shop, quantity: 2);
+            AdvanceToLocal(DateOf(view, "nextDeliveryOn"));
+            await RunSubscriptionWorkAsync(shop.CustomerId);
+            var subscriptionOrder = Assert.Single(await OrdersOfAsync(shop.CustomerId));
+            Assert.Equal(OrderChannel.Subscription, subscriptionOrder.Channel);
+
+            var ordinaryOrderId = Guid.NewGuid();   // an ordinary (non-subscription) order's discounted line: no such order is a subscription order, so it has no label
+
+            // Lines are listed by description: "Mixed label d0/i0" is the subscription line, "...d1/i1" the ordinary one.
+            await AssertMixedInvoiceAsync(shop, [(subscriptionOrder.Id, 40m), (ordinaryOrderId, 30m)], [TenPercent, null]);
+        }
+        finally
+        {
+            await SetSettingAsync(await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId), SettingKeys.SubscriptionDiscountPercent, "0");
+        }
+    }
+
+    [Fact]
+    public async Task I_D5d_AnInvoiceMixingTwoSubscriptionDiscountPercentages_NamesEachLine_ButNotTheTotal()
+    {
+        var shop = await SetUpSubscribableShopAsync();
+        Factory.Clock.Advance(TimeSpan.FromHours(1));
+        await SetSettingAsync(await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId), SettingKeys.SubscriptionDiscountPercent, "10");
+        try
+        {
+            var view = await SubscribeAsync(shop, quantity: 2);
+            var id = view.GetProperty("id").GetGuid();
+            var first = DateOf(view, "nextDeliveryOn");
+            AdvanceToLocal(first);
+            await RunSubscriptionWorkAsync(shop.CustomerId);
+
+            // The administrator lowers the discount; the subscription's next cycle is snapshotted at 5 %.
+            await SetSettingAsync(await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId), SettingKeys.SubscriptionDiscountPercent, "5");
+            AdvanceToLocal(first.AddDays(28));
+            await RunSubscriptionWorkAsync(shop.CustomerId);
+
+            var cycles = await CyclesAsync(id);
+            Assert.Equal([10m, 5m], cycles.Select(c => c.DiscountPercent).ToArray());
+            var orders = await OrdersOfAsync(shop.CustomerId);
+            Assert.Equal(2, orders.Count);
+
+            await AssertMixedInvoiceAsync(shop, [(orders[0].Id, 40m), (orders[1].Id, 20m)], [TenPercent, FivePercent]);
+        }
+        finally
+        {
+            await SetSettingAsync(await SignInStaffAsync(shop.Context.AdminMobile, shop.Context.AdminPassword, shop.Context.BranchId), SettingKeys.SubscriptionDiscountPercent, "0");
+        }
     }
 
     // -- Owner decision 2026-11-09: clearing "Can be subscribed to" never stops an existing subscription --
