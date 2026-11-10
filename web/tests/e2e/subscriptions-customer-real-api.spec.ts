@@ -1,6 +1,7 @@
 // Plain Playwright `test`, not ./fixtures: that wrapper waits for MSW's service worker, which never
 // exists when NEXT_PUBLIC_USE_MOCKS=false (the whole point of this spec).
 import { test, expect, type Page } from '@playwright/test';
+import { acceptPendingPolicies } from './shop-helpers';
 
 /**
  * HO-P6 S1 §16 E18: the customer subscription screens and the wire they read, against the REAL API
@@ -46,26 +47,6 @@ async function register(page: Page, name: string, mobile: string): Promise<void>
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page).toHaveURL(/\/portal\//, { timeout: 15_000 });
   await acceptPendingPolicies(page);
-}
-
-/**
- * A new account on a seeded database has a policy to accept (seed-dev publishes Privacy with acceptance required), and the
- * portal's modal "Updated policies" dialog makes the rest of the page inert until it is accepted. The API's pending list
- * decides: when it is non-empty the dialog must appear and close once each is accepted; when empty, there is none.
- * (HO-P6 integration part 2: without this, every case here failed on the seeded scratch database.)
- */
-async function acceptPendingPolicies(page: Page): Promise<void> {
-  const pending = await call(page, '/api/customers/me/policy-acceptances/pending');
-  expect(pending.status).toBe(200);
-  const count = (pending.body as unknown[]).length;
-  const dialog = page.getByRole('dialog', { name: 'Updated policies' });
-  if (count === 0) return;
-  await expect(dialog).toBeVisible({ timeout: 20_000 });
-  for (let left = count; left > 0; left--) {
-    await dialog.getByRole('button', { name: 'Accept' }).first().click();
-    await expect(dialog.getByRole('button', { name: 'Accept' })).toHaveCount(left - 1, { timeout: 20_000 });
-  }
-  await expect(dialog).toBeHidden({ timeout: 20_000 });
 }
 
 test('a new customer: the empty list, the menu entry, and the wire the mocks mirror', async ({ page }) => {

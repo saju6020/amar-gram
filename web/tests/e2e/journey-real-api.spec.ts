@@ -5,6 +5,7 @@ import {
   type BrowserContext,
   type Page,
 } from '@playwright/test';
+import { acceptPendingPolicies, withFilters } from './shop-helpers';
 
 /**
  * The end-to-end customer and staff journey against the REAL API (no MSW). It exists because screen tests run against
@@ -119,16 +120,6 @@ async function expectNoErrorState(page: Page) {
   await expect(page.getByText(/something went wrong/i)).toHaveCount(0);
 }
 
-async function acceptPoliciesIfAsked(page: Page) {
-  const dialog = page.getByRole('dialog', { name: 'Updated policies' });
-  if (await dialog.isVisible().catch(() => false)) {
-    for (let guard = 0; guard < 5 && (await dialog.isVisible().catch(() => false)); guard++) {
-      await dialog.getByRole('button', { name: 'Accept' }).first().click();
-      await page.waitForTimeout(500);
-    }
-  }
-}
-
 /** Fills a sign-in form once the page has hydrated (a fill that lands before hydration is wiped by React). */
 async function fillSignIn(page: Page, identifier: string, password: string) {
   await page.waitForLoadState('networkidle');
@@ -190,24 +181,27 @@ test.describe('a new visitor', () => {
       )
       .toBe(true);
 
-    // The brand filter lists the seeded brands, and only those.
-    const brandGroup = visitor.getByRole('group', { name: 'Producer' }).first();
-    await expect(brandGroup).toBeVisible();
-    // Only Category starts open (owner, 2026-10-17); open the Producer group before reading its options.
-    const brandToggle = brandGroup.getByRole('button', { name: 'Producer', exact: true });
-    if ((await brandToggle.getAttribute('aria-expanded')) === 'false') await brandToggle.click();
-    const showAll = brandGroup.getByRole('button', { name: /Show all \d+ producers/ });
-    if (await showAll.isVisible().catch(() => false)) await showAll.click();
-    for (const brand of SEEDED_BRANDS) {
-      await expect(
-        brandGroup.getByRole('checkbox', { name: new RegExp(`^${brand}`) }),
-      ).toBeVisible();
-    }
-    await expect(brandGroup.getByRole('checkbox')).toHaveCount(SEEDED_BRANDS.length);
+    // The brand filter lists the seeded brands, and only those. Desktop shows the panel inline; at 360 px the same groups
+    // live in the Filters sheet (withFilters opens it), and the category choice is made in that same sheet.
+    await withFilters(visitor, async (scope) => {
+      const brandGroup = scope.getByRole('group', { name: 'Producer' }).first();
+      await expect(brandGroup).toBeVisible();
+      // Only Category starts open (owner, 2026-10-17); open the Producer group before reading its options.
+      const brandToggle = brandGroup.getByRole('button', { name: 'Producer', exact: true });
+      if ((await brandToggle.getAttribute('aria-expanded')) === 'false') await brandToggle.click();
+      const showAll = brandGroup.getByRole('button', { name: /Show all \d+ producers/ });
+      if (await showAll.isVisible().catch(() => false)) await showAll.click();
+      for (const brand of SEEDED_BRANDS) {
+        await expect(
+          brandGroup.getByRole('checkbox', { name: new RegExp(`^${brand}`) }),
+        ).toBeVisible();
+      }
+      await expect(brandGroup.getByRole('checkbox')).toHaveCount(SEEDED_BRANDS.length);
 
-    // The catalogue is 84 cards over several pages (newest first), so Kalijira Rice is not on the first one: narrow to
-    // its category the way a shopper would, then open it.
-    await visitor.getByRole('radio', { name: /^Rice & grains/ }).check();
+      // The catalogue is 84 cards over several pages (newest first), so Kalijira Rice is not on the first one: narrow to
+      // its category the way a shopper would, then open it.
+      await scope.getByRole('radio', { name: /^Rice & grains/ }).check();
+    });
     await expect(visitor).toHaveURL(/category=/);
 
     // Open a product and add it to the cart: the count appears in the header.
@@ -302,7 +296,7 @@ test.describe('the seeded customer', () => {
   test('4. delivery checkout: Dhaka address, Standard, cash on delivery, priced review, order placed and listed', async () => {
     await signInCustomer(page, CUSTOMER.email, CUSTOMER.password, '/cart');
     await expect(page).toHaveURL(/\/cart/);
-    await acceptPoliciesIfAsked(page);
+    await acceptPendingPolicies(page);
 
     // Start from an empty cart (an earlier run may have left items, and the delivery fee depends on the total).
     const csrf = async () =>
@@ -332,7 +326,7 @@ test.describe('the seeded customer', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: /^Checkout$/ }),
     ).toBeVisible();
-    await acceptPoliciesIfAsked(page);
+    await acceptPendingPolicies(page);
 
     // Delivery -> the saved Dhaka address.
     await expect(page.getByLabel(/Home/)).toBeChecked();
