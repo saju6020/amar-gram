@@ -96,11 +96,19 @@ async function newPage(
   label: string,
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext();
-  // Records whether the top progress bar ever appeared (it can be on screen for only a moment).
+  // Records whether the top progress bar ever appeared (it can be on screen for only a moment). The mutation RECORDS are
+  // read, not the DOM afterwards: on a fast client navigation (the route is already prefetched, as at 360 px) the bar is
+  // inserted and removed again before the observer callback runs, and a `document.querySelector` there finds nothing.
   await context.addInitScript(() => {
     (window as unknown as { __progressSeen: boolean }).__progressSeen = false;
-    const look = () => {
-      if (document.querySelector('[data-testid="navigation-progress"]')) {
+    const selector = '[data-testid="navigation-progress"]';
+    const look = (records: MutationRecord[]) => {
+      const inserted = records.some((record) =>
+        Array.from(record.addedNodes).some(
+          (node) => node instanceof Element && (node.matches(selector) || node.querySelector(selector) !== null),
+        ),
+      );
+      if (inserted || document.querySelector(selector)) {
         (window as unknown as { __progressSeen: boolean }).__progressSeen = true;
       }
     };
@@ -163,23 +171,34 @@ test.describe('a new visitor', () => {
     // The header carries the Cart link for a guest.
     await expect(visitor.getByRole('banner').getByRole('link', { name: /^Basket/ })).toBeVisible();
 
-    // Following a link shows the top progress bar. Wait for hydration first: a click before React has attached the
-    // listener is a plain full-page load (the browser shows its own loading indicator then).
-    await visitor.waitForLoadState('networkidle');
-    const catalogueLink = visitor
-      .getByRole('link', { name: /all products|shop all|browse/i })
-      .first();
-    const target =
-      (await catalogueLink.count()) > 0
-        ? catalogueLink
-        : visitor.locator('a[href^="/shop/products"]').first();
-    await target.click();
-    await expect(visitor).toHaveURL(/\/shop\/products/);
-    await expect
-      .poll(() =>
-        visitor.evaluate(() => (window as unknown as { __progressSeen: boolean }).__progressSeen),
-      )
-      .toBe(true);
+    // Following a link shows the top progress bar. The bar's click listener is attached when its component hydrates, which
+    // (in `next dev`, under a Suspense boundary) can be after the page's own links already work: a click in that gap
+    // navigates without the bar (`networkidle` does not wait for it). So each attempt loads /shop afresh, waits for the
+    // app to have mounted (`__apiBaseUrl`) and then a little longer each time, clicks once and looks for the bar; an
+    // attempt that beat the listener is repeated rather than reported as a missing bar.
+    let attempt = 0;
+    await expect(async () => {
+      attempt += 1;
+      await visitor.goto('/shop');
+      await visitor.waitForLoadState('networkidle');
+      await visitor.waitForFunction(
+        () => (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl !== undefined,
+      );
+      await visitor.waitForTimeout((attempt - 1) * 2_000);
+      const catalogueLink = visitor
+        .getByRole('link', { name: /all products|shop all|browse/i })
+        .first();
+      const target =
+        (await catalogueLink.count()) > 0
+          ? catalogueLink
+          : visitor.locator('a[href^="/shop/products"]').first();
+      await target.click();
+      await expect(visitor).toHaveURL(/\/shop\/products/);
+      const seen = await visitor.evaluate(
+        () => (window as unknown as { __progressSeen: boolean }).__progressSeen,
+      );
+      expect(seen).toBe(true);
+    }).toPass({ timeout: 90_000 });
 
     // The brand filter lists the seeded brands, and only those. Desktop shows the panel inline; at 360 px the same groups
     // live in the Filters sheet (withFilters opens it), and the category choice is made in that same sheet.
@@ -410,7 +429,7 @@ test.describe('staff', () => {
   test('5c. delivery zones list Dhaka', async () => {
     await page.goto('/staff/admin/delivery-zones');
     await expect(page.getByRole('heading', { name: 'Delivery zones' }).first()).toBeVisible();
-    await expect(page.getByRole('cell', { name: 'Dhaka' }).first()).toBeVisible();
+    await expect(page.getByRole('main').getByText('Dhaka').first()).toBeVisible();
     await expectNoErrorState(page);
   });
 

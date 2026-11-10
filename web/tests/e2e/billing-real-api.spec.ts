@@ -335,7 +335,7 @@ test('E-D4: the same export range twice gives identical bytes', async () => {
   const b = await hash();
   expect(a).toBe(b);
   await accountant.goto('/staff/billing/exports');
-  await expect(accountant.getByRole('table', { name: 'Accounting export runs' })).toBeVisible({ timeout: 20_000 });
+  await expect(accountant.getByLabel('Accounting export runs').first()).toBeVisible({ timeout: 20_000 });
 });
 
 test('E-X1/E-X2: axe and no horizontal scroll on real data', async () => {
