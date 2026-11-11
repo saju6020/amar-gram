@@ -247,7 +247,10 @@ public sealed class AdminBranchCardsAndStaffListEndpointTests(AdministrationApiF
         frozenAdmin.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(frozenSignIn, "pc_csrf"));
 
         for (var i = 0; i < 4; i++)
-            await FrozenClient().PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = active.Mobile, password = "wrong-password-" + i }, Json);
+        {
+            using var attempt = FrozenClient();
+            await attempt.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = active.Mobile, password = "wrong-password-" + i }, Json);
+        }
         Assert.Equal("Locked", (await StaffRowAsync(frozenAdmin, active.StaffAccountId, activeName)).GetProperty("status").GetString());
     }
 

@@ -263,6 +263,8 @@ public sealed class ScheduledReportRunner(
     /// the second save then meets the first one's new version. Advancing is by slot, so the other runner's advance is the same outcome: the conflict is not a failure of the run, and it must
     /// not turn into a Failed run record (the stale schedule entity would also poison the scope's next save). If something else changed the schedule meanwhile, the next cycle finds the slot
     /// already recorded and advances again.
+    /// Callers must not save anything else in this scope afterwards: after a swallowed conflict the scope's context still tracks the schedule that failed to save, so its next
+    /// <c>SaveChanges</c> would try that update again and throw. Both callers return straight after (the work cycle opens one scope per schedule).
     /// </summary>
     private async Task AdvanceAsync(Guid scheduleId, DateTimeOffset dueOn, UserContext userContext)
     {

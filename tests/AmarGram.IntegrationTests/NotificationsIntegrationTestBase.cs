@@ -42,10 +42,10 @@ public abstract class NotificationsIntegrationTestBase(NotificationsApiFactory f
             long previous = long.MaxValue;
             for (var pass = 0; pass < 400; pass++)
             {
-                var now = DateTimeOffset.UtcNow;
                 long waiting;
                 await using (var scope = Factory.Services.CreateAsyncScope())
                 {
+                    var now = scope.ServiceProvider.GetRequiredService<TimeProvider>().GetUtcNow(); // the clock the worker uses, not the wall clock
                     var db = scope.ServiceProvider.GetRequiredService<AmarGram.Infrastructure.Persistence.AmarGramDbContext>();
                     waiting = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(db.NotificationRequests,
                                   r => r.Status == NotificationRequestStatus.Pending && r.LastAttemptOn == null && (r.SendAfter == null || r.SendAfter <= now))

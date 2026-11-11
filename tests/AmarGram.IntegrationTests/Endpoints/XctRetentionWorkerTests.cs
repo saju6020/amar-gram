@@ -21,8 +21,8 @@ using Xunit;
 namespace AmarGram.IntegrationTests.Endpoints;
 
 /// <summary>
-/// HO-XCT-001 section 16 C -- the retention run, purge, redaction and review end to end. Serialised with the erasure tests (<c>XctRetention</c>) because a
-/// daily pass acts on EVERY due row in the shared branch database. Every case seeds its own rows and asserts only on their ids (rule 9); a run left
+/// HO-XCT-001 section 16 C -- the retention run, purge, redaction and review end to end. Serialised with the other retention classes (<c>XctRetention</c>); the erasure classes moved to the serial global-settings collection, which runs after the parallel phase, so they
+/// never overlap it either. A daily pass acts on EVERY due row in the shared branch database. Every case seeds its own rows and asserts only on their ids (rule 9); a run left
 /// <c>Requested</c> by one case is driven to completion by the next (the table is protected and can never be cleaned up, rule 10).
 /// </summary>
 [Collection("XctRetention")]

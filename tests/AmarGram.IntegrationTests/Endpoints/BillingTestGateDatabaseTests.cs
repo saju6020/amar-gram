@@ -156,7 +156,7 @@ public sealed partial class BillingTestGateDatabaseTests(BillingApiFactory facto
             {
                 // Ids and instants in a JSON snapshot are long digit-and-dash runs too (a GUID whose groups happen to be all digits, a timestamp); they are
                 // not what is being looked for, so they are blanked first.
-                var value = Noise().Replace(reader.GetString(0), " ");
+                var value = CardNumberNoise.Blank(reader.GetString(0));
                 if (CardNumberGuard.LooksLikeCardNumber(value))
                     offenders.Add($"{schema}.{table}.{column}: {Snippet(value)}");
             }
@@ -165,10 +165,6 @@ public sealed partial class BillingTestGateDatabaseTests(BillingApiFactory facto
         Assert.True(scanned > 50, $"Only {scanned} columns were scanned.");
         Assert.True(offenders.Count == 0, $"{offenders.Count} card-like value(s) stored: " + string.Join(" || ", offenders.Take(10)));
     }
-
-    // Ids (dashed GUIDs and 32-character hex ids, which a provider message id or a product link carries), instants, our own document numbers, E.164 Bangladeshi mobile numbers and JSON's own backslash-u escapes (four digits next to the value they quote) are long digit runs that are not card numbers.
-    [System.Text.RegularExpressions.GeneratedRegex(@"[0-9a-fA-F]{24,}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?|\\u[0-9A-Fa-f]{4}|\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2}( [AP]M)?( [+-]\d{2}:\d{2})?|(INV|CN)-[A-Za-z0-9]+-\d{4}-\d{6}|880\d{10}")]
-    private static partial System.Text.RegularExpressions.Regex Noise();
 
     private static string Snippet(string value)
     {
