@@ -25,7 +25,7 @@ public sealed class GetStaffAccountsQueryHandler(AmarGramDbContext db, TimeProvi
         var totalCount = await filtered.CountAsync();
 
         var rows = await filtered
-            .OrderBy(s => s.FullName)
+            .OrderBy(s => s.FullName).ThenBy(s => s.Id) // FullName is not unique: without a tie-break, equal names change order between pages
             .Skip(query.Skip).Take(query.Take)
             .Select(s => new
             {

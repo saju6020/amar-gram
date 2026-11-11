@@ -61,7 +61,8 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
     public async Task I_A3_AWriteInsideTheReadOnlyScope_FailsWith25006_AndNothingIsWritten()
     {
         var (context, client) = await ContextWithRoleAsync(StaffRoles.Administrator);
-        var before = await WithDbAsync(db => db.Database.SqlQuery<int>($"select count(*)::int as \"Value\" from admin.branch").SingleAsync());
+        // Count only the row the write source tries to insert (code and name 'X'): the branch table as a whole grows whenever another test class creates a branch.
+        var before = await WithDbAsync(db => db.Database.SqlQuery<int>($"select count(*)::int as \"Value\" from admin.branch where code = 'X' and name = 'X'").SingleAsync());
 
         // Through the dispatcher the PostgresException reaches the caller untouched, so the SQLSTATE is observable.
         await using (var scope = Factory.Services.CreateAsyncScope())
@@ -81,7 +82,7 @@ public sealed class ReportingFoundationEndpointTests(ReportingApiFactory factory
         var response = await client.GetAsync($"/api/staff/reports/{ReportingFixtures.WriteKey}" + Query(context, Today, Today));
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
-        var after = await WithDbAsync(db => db.Database.SqlQuery<int>($"select count(*)::int as \"Value\" from admin.branch").SingleAsync());
+        var after = await WithDbAsync(db => db.Database.SqlQuery<int>($"select count(*)::int as \"Value\" from admin.branch where code = 'X' and name = 'X'").SingleAsync());
         Assert.Equal(before, after);
     }
 

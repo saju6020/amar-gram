@@ -14,7 +14,9 @@ namespace AmarGram.IntegrationTests.Endpoints;
 /// idempotent; <c>Completed</c> (never a throw) for a customer it has no data for; never <c>Failed</c> for an anonymised customer; and it logs
 /// no personal value. A new context that registers an eraser is covered automatically.
 /// </summary>
-[Collection("XctRetention")]
+// Creates a GLOBAL requires-acceptance policy: every customer in the shared database sees it as pending (and every checkout quote is blocked) until accepted.
+// Serialised with the global-setting tests (DisableParallelization), so it never overlaps a checkout or a pending-policy assertion in a parallel class.
+[Collection(AmarGram.IntegrationTests.Endpoints.AdministrationGlobalSettingsCollection.Name)]
 public sealed class XctErasureContractTests(XctApiFactory factory) : XctIntegrationTestBase(factory)
 {
     private static UserContext Worker => new(SystemActors.RetentionWorker, Guid.Empty);

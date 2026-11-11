@@ -739,6 +739,11 @@ public sealed class ReportingScheduleDstEndpointTests(ReportingApiFactory factor
     }
 }
 
+/// <summary>The schedule classes run alone (DisableParallelization): their fake clocks and delivery passes must not meet another class's notification worker, which would expand or send
+/// their requests through ITS OWN sender and clock (the email lands in the other host's sink and the row never reaches the state the test waits for).</summary>
+[CollectionDefinition(ScheduleTestBase.CollectionName, DisableParallelization = true)]
+public sealed class ReportingSchedulesCollection;
+
 /// <summary>What both schedule test classes share: building schedules, driving the cycles, and reading what they produced.</summary>
 public abstract class ScheduleTestBase(ReportingApiFactory factory) : ReportingIntegrationTestBase(factory)
 {
