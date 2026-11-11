@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Below 768 px the filter panel is a sheet (UI-1). */
 export function isMobile(page: Page): boolean {
@@ -40,4 +40,29 @@ export async function setMaintenance(page: Page, on: boolean, message = ''): Pro
     },
     { on, message },
   );
+}
+
+/**
+ * Real-API runs only. A new account (and a seeded customer after a policy is republished) has policies to accept, and the
+ * portal's modal "Updated policies" dialog makes the rest of the page inert until each is accepted. The API's pending list
+ * decides: when it is non-empty the dialog must appear and close once each is accepted; when empty, there is none.
+ * Used by `subscriptions-customer-real-api` and `journey-real-api` (they each had a copy).
+ */
+export async function acceptPendingPolicies(page: Page): Promise<void> {
+  const pending = await page.evaluate(async () => {
+    const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
+    const response = await fetch(`${base}/api/customers/me/policy-acceptances/pending`, { credentials: 'include' });
+    const body: unknown = response.ok ? await response.json() : null;
+    return { status: response.status, count: Array.isArray(body) ? body.length : -1 };
+  });
+  expect(pending.status).toBe(200);
+  expect(pending.count, 'the pending-policies body must be an array').toBeGreaterThanOrEqual(0);
+  if (pending.count === 0) return;
+  const dialog = page.getByRole('dialog', { name: 'Updated policies' });
+  await expect(dialog).toBeVisible({ timeout: 20_000 });
+  for (let left = pending.count; left > 0; left--) {
+    await dialog.getByRole('button', { name: 'Accept' }).first().click();
+    await expect(dialog.getByRole('button', { name: 'Accept' })).toHaveCount(left - 1, { timeout: 20_000 });
+  }
+  await expect(dialog).toBeHidden({ timeout: 20_000 });
 }

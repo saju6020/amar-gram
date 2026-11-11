@@ -108,7 +108,8 @@ test('E-A1: three charges on one invoice, tax per line, a number in the branch s
   await admin.getByRole('button', { name: 'Issue invoice' }).click();
   await admin.getByRole('dialog').getByRole('button', { name: 'Issue invoice' }).click();
   await expect(admin.getByRole('heading', { level: 1 })).toContainText(/INV-.+-\d{4}-\d{6}/, { timeout: 30_000 });
-  const lines = admin.getByRole('table', { name: 'Invoice lines' });
+  // A table on a wide screen, a list of cards at 360 px (ResponsiveTable): match the labelled region either way.
+  const lines = admin.getByLabel('Invoice lines').first();
   for (const text of ['Organic rice 5 kg (real)', 'Mustard oil 1 L (real)', 'Home delivery (real)', '15.00%']) await expect(lines).toContainText(text);
   state.invoice1 = admin.url().split('/').pop()!;
   state.number1 = (await admin.getByRole('heading', { level: 1 }).textContent())!;
@@ -334,7 +335,7 @@ test('E-D4: the same export range twice gives identical bytes', async () => {
   const b = await hash();
   expect(a).toBe(b);
   await accountant.goto('/staff/billing/exports');
-  await expect(accountant.getByRole('table', { name: 'Accounting export runs' })).toBeVisible({ timeout: 20_000 });
+  await expect(accountant.getByLabel('Accounting export runs').first()).toBeVisible({ timeout: 20_000 });
 });
 
 test('E-X1/E-X2: axe and no horizontal scroll on real data', async () => {

@@ -5,6 +5,7 @@ import {
   type BrowserContext,
   type Page,
 } from '@playwright/test';
+import { acceptPendingPolicies, withFilters } from './shop-helpers';
 
 /**
  * The end-to-end customer and staff journey against the REAL API (no MSW). It exists because screen tests run against
@@ -95,11 +96,19 @@ async function newPage(
   label: string,
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext();
-  // Records whether the top progress bar ever appeared (it can be on screen for only a moment).
+  // Records whether the top progress bar ever appeared (it can be on screen for only a moment). The mutation RECORDS are
+  // read, not the DOM afterwards: on a fast client navigation (the route is already prefetched, as at 360 px) the bar is
+  // inserted and removed again before the observer callback runs, and a `document.querySelector` there finds nothing.
   await context.addInitScript(() => {
     (window as unknown as { __progressSeen: boolean }).__progressSeen = false;
-    const look = () => {
-      if (document.querySelector('[data-testid="navigation-progress"]')) {
+    const selector = '[data-testid="navigation-progress"]';
+    const look = (records: MutationRecord[]) => {
+      const inserted = records.some((record) =>
+        Array.from(record.addedNodes).some(
+          (node) => node instanceof Element && (node.matches(selector) || node.querySelector(selector) !== null),
+        ),
+      );
+      if (inserted || document.querySelector(selector)) {
         (window as unknown as { __progressSeen: boolean }).__progressSeen = true;
       }
     };
@@ -117,16 +126,6 @@ async function newPage(
 async function expectNoErrorState(page: Page) {
   await expect(page.getByText(/couldn.t load/i)).toHaveCount(0);
   await expect(page.getByText(/something went wrong/i)).toHaveCount(0);
-}
-
-async function acceptPoliciesIfAsked(page: Page) {
-  const dialog = page.getByRole('dialog', { name: 'Updated policies' });
-  if (await dialog.isVisible().catch(() => false)) {
-    for (let guard = 0; guard < 5 && (await dialog.isVisible().catch(() => false)); guard++) {
-      await dialog.getByRole('button', { name: 'Accept' }).first().click();
-      await page.waitForTimeout(500);
-    }
-  }
 }
 
 /** Fills a sign-in form once the page has hydrated (a fill that lands before hydration is wiped by React). */
@@ -172,42 +171,56 @@ test.describe('a new visitor', () => {
     // The header carries the Cart link for a guest.
     await expect(visitor.getByRole('banner').getByRole('link', { name: /^Basket/ })).toBeVisible();
 
-    // Following a link shows the top progress bar. Wait for hydration first: a click before React has attached the
-    // listener is a plain full-page load (the browser shows its own loading indicator then).
-    await visitor.waitForLoadState('networkidle');
-    const catalogueLink = visitor
-      .getByRole('link', { name: /all products|shop all|browse/i })
-      .first();
-    const target =
-      (await catalogueLink.count()) > 0
-        ? catalogueLink
-        : visitor.locator('a[href^="/shop/products"]').first();
-    await target.click();
-    await expect(visitor).toHaveURL(/\/shop\/products/);
-    await expect
-      .poll(() =>
-        visitor.evaluate(() => (window as unknown as { __progressSeen: boolean }).__progressSeen),
-      )
-      .toBe(true);
+    // Following a link shows the top progress bar. The bar's click listener is attached when its component hydrates, which
+    // (in `next dev`, under a Suspense boundary) can be after the page's own links already work: a click in that gap
+    // navigates without the bar (`networkidle` does not wait for it). So each attempt loads /shop afresh, waits for the
+    // app to have mounted (`__apiBaseUrl`) and then a little longer each time, clicks once and looks for the bar; an
+    // attempt that beat the listener is repeated rather than reported as a missing bar.
+    let attempt = 0;
+    await expect(async () => {
+      attempt += 1;
+      await visitor.goto('/shop');
+      await visitor.waitForLoadState('networkidle');
+      await visitor.waitForFunction(
+        () => (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl !== undefined,
+      );
+      await visitor.waitForTimeout((attempt - 1) * 2_000);
+      const catalogueLink = visitor
+        .getByRole('link', { name: /all products|shop all|browse/i })
+        .first();
+      const target =
+        (await catalogueLink.count()) > 0
+          ? catalogueLink
+          : visitor.locator('a[href^="/shop/products"]').first();
+      await target.click();
+      await expect(visitor).toHaveURL(/\/shop\/products/);
+      const seen = await visitor.evaluate(
+        () => (window as unknown as { __progressSeen: boolean }).__progressSeen,
+      );
+      expect(seen).toBe(true);
+    }).toPass({ timeout: 90_000 });
 
-    // The brand filter lists the seeded brands, and only those.
-    const brandGroup = visitor.getByRole('group', { name: 'Producer' }).first();
-    await expect(brandGroup).toBeVisible();
-    // Only Category starts open (owner, 2026-10-17); open the Producer group before reading its options.
-    const brandToggle = brandGroup.getByRole('button', { name: 'Producer', exact: true });
-    if ((await brandToggle.getAttribute('aria-expanded')) === 'false') await brandToggle.click();
-    const showAll = brandGroup.getByRole('button', { name: /Show all \d+ producers/ });
-    if (await showAll.isVisible().catch(() => false)) await showAll.click();
-    for (const brand of SEEDED_BRANDS) {
-      await expect(
-        brandGroup.getByRole('checkbox', { name: new RegExp(`^${brand}`) }),
-      ).toBeVisible();
-    }
-    await expect(brandGroup.getByRole('checkbox')).toHaveCount(SEEDED_BRANDS.length);
+    // The brand filter lists the seeded brands, and only those. Desktop shows the panel inline; at 360 px the same groups
+    // live in the Filters sheet (withFilters opens it), and the category choice is made in that same sheet.
+    await withFilters(visitor, async (scope) => {
+      const brandGroup = scope.getByRole('group', { name: 'Producer' }).first();
+      await expect(brandGroup).toBeVisible();
+      // Only Category starts open (owner, 2026-10-17); open the Producer group before reading its options.
+      const brandToggle = brandGroup.getByRole('button', { name: 'Producer', exact: true });
+      if ((await brandToggle.getAttribute('aria-expanded')) === 'false') await brandToggle.click();
+      const showAll = brandGroup.getByRole('button', { name: /Show all \d+ producers/ });
+      if (await showAll.isVisible().catch(() => false)) await showAll.click();
+      for (const brand of SEEDED_BRANDS) {
+        await expect(
+          brandGroup.getByRole('checkbox', { name: new RegExp(`^${brand}`) }),
+        ).toBeVisible();
+      }
+      await expect(brandGroup.getByRole('checkbox')).toHaveCount(SEEDED_BRANDS.length);
 
-    // The catalogue is 84 cards over several pages (newest first), so Kalijira Rice is not on the first one: narrow to
-    // its category the way a shopper would, then open it.
-    await visitor.getByRole('radio', { name: /^Rice & grains/ }).check();
+      // The catalogue is 84 cards over several pages (newest first), so Kalijira Rice is not on the first one: narrow to
+      // its category the way a shopper would, then open it.
+      await scope.getByRole('radio', { name: /^Rice & grains/ }).check();
+    });
     await expect(visitor).toHaveURL(/category=/);
 
     // Open a product and add it to the cart: the count appears in the header.
@@ -302,7 +315,7 @@ test.describe('the seeded customer', () => {
   test('4. delivery checkout: Dhaka address, Standard, cash on delivery, priced review, order placed and listed', async () => {
     await signInCustomer(page, CUSTOMER.email, CUSTOMER.password, '/cart');
     await expect(page).toHaveURL(/\/cart/);
-    await acceptPoliciesIfAsked(page);
+    await acceptPendingPolicies(page);
 
     // Start from an empty cart (an earlier run may have left items, and the delivery fee depends on the total).
     const csrf = async () =>
@@ -332,7 +345,7 @@ test.describe('the seeded customer', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: /^Checkout$/ }),
     ).toBeVisible();
-    await acceptPoliciesIfAsked(page);
+    await acceptPendingPolicies(page);
 
     // Delivery -> the saved Dhaka address.
     await expect(page.getByLabel(/Home/)).toBeChecked();
@@ -416,7 +429,8 @@ test.describe('staff', () => {
   test('5c. delivery zones list Dhaka', async () => {
     await page.goto('/staff/admin/delivery-zones');
     await expect(page.getByRole('heading', { name: 'Delivery zones' }).first()).toBeVisible();
-    await expect(page.getByRole('cell', { name: 'Dhaka' }).first()).toBeVisible();
+    // ResponsiveTable names its table (desktop) or list (360) after the caption, so this finds a zone row, not a heading.
+    await expect(page.getByRole('main').getByLabel('Delivery zones').first().getByText('Dhaka').first()).toBeVisible();
     await expectNoErrorState(page);
   });
 
