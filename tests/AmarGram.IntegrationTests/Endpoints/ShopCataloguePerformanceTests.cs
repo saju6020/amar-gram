@@ -36,6 +36,8 @@ namespace AmarGram.IntegrationTests.Endpoints;
 /// size or a cache in front of the list.
 /// </summary>
 [Trait("Category", "Performance")]
+// A wall-clock p95 budget is only meaningful when nothing else is hitting the database: in the serial phase (DisableParallelization) it runs after every parallel class has finished.
+[Collection(AmarGram.IntegrationTests.Endpoints.AdministrationGlobalSettingsCollection.Name)]
 public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestOutputHelper output) : ShopIntegrationTestBase(factory)
 {
     private const string FixtureBrand = "zz Perf Fixture";
@@ -54,6 +56,10 @@ public sealed class ShopCataloguePerformanceTests(ShopApiFactory factory, ITestO
     public async Task I_E11_CatalogueP95_AtTwentyThousandSkus_IsWithinBudget()
     {
         await EnsureFixtureAsync();
+
+        // A freshly bulk-seeded database has no planner statistics until autovacuum catches up; measure the query, not the stale plan.
+        await using (var statsScope = Factory.Services.CreateAsyncScope())
+            await statsScope.ServiceProvider.GetRequiredService<AmarGramDbContext>().Database.ExecuteSqlRawAsync("ANALYZE");
 
         // The shared rate limit (120/min/IP, I-E10) would throttle a 300-request run from one TestServer
         // address; the limit itself is not what is measured here.
