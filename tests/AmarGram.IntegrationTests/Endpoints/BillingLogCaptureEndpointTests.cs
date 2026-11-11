@@ -18,6 +18,9 @@ public sealed partial class BillingLogCaptureEndpointTests(BillingLoggedApiFacto
     [GeneratedRegex(@"(?:\d[ -]?){13,19}")]
     private static partial Regex DigitRun();
 
+    [GeneratedRegex(@"[0-9a-fA-F]{24,}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?|\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2}( [AP]M)?( [+-]\d{2}:\d{2})?|(INV|CN)-[A-Za-z0-9]+-\d{4}-\d{6}|880\d{10}")]
+    private static partial Regex Noise();
+
     [Fact]
     public async Task I_X1_NoCardNumber_NoStatementDescription_NoReasonOrNoteText_NoCustomerName_IsEverLogged()
     {
@@ -94,7 +97,9 @@ public sealed partial class BillingLogCaptureEndpointTests(BillingLoggedApiFacto
 
         // Nothing in any line looks like a card number: a 13-19 digit run (spaces or dashes allowed) that passes Luhn. (Ids and timestamps
         // are digit runs too, so the check is the same one the guard uses.)
-        var offenders = DigitRun().Matches(all).Select(m => m.Value).Where(AmarGram.Shared.Common.Helpers.CardNumberGuard.LooksLikeCardNumber).Take(5).ToList();
+        // Ids and instants are digit runs too (a GUID whose last groups happen to be digits, a timestamp); blank them first, as the XI-9 sweep and the trace sweep do.
+        var cleaned = Noise().Replace(all, " ");
+        var offenders = DigitRun().Matches(cleaned).Select(m => m.Value).Where(AmarGram.Shared.Common.Helpers.CardNumberGuard.LooksLikeCardNumber).Take(5).ToList();
         Assert.True(offenders.Count == 0, "A card-like number was logged: " + string.Join(" | ", offenders.Select(o => o[..Math.Min(4, o.Length)] + "...")));
     }
 }
