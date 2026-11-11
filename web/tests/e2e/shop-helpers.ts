@@ -49,6 +49,8 @@ export async function setMaintenance(page: Page, on: boolean, message = ''): Pro
  * Used by `subscriptions-customer-real-api` and `journey-real-api` (they each had a copy).
  */
 export async function acceptPendingPolicies(page: Page): Promise<void> {
+  // Right after a navigation the app may not have mounted yet; without its API base the fetch would go to the web server (404).
+  await page.waitForFunction(() => (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl !== undefined);
   const pending = await page.evaluate(async () => {
     const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
     const response = await fetch(`${base}/api/customers/me/policy-acceptances/pending`, { credentials: 'include' });

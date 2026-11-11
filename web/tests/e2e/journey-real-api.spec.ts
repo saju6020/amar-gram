@@ -307,7 +307,11 @@ test.describe('the seeded customer', () => {
   test('4. delivery checkout: Dhaka address, Standard, cash on delivery, priced review, order placed and listed', async () => {
     await signInCustomer(page, CUSTOMER.email, CUSTOMER.password, '/cart');
     await expect(page).toHaveURL(/\/cart/);
+    // The "Updated policies" dialog is mounted by the portal layout only, so it never opens on /cart: a customer with a
+    // policy still to accept (a fresh database) accepts it on a portal page, then returns to the cart.
+    await page.goto('/portal/orders');
     await acceptPendingPolicies(page);
+    await page.goto('/cart');
 
     // Start from an empty cart (an earlier run may have left items, and the delivery fee depends on the total).
     const csrf = async () =>
