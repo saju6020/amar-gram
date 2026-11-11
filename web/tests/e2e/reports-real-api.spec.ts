@@ -81,8 +81,8 @@ async function api(page: Page, method: string, path: string, body?: unknown, hea
  * heading "Margin" exists solely in the loading skeleton, which E-C used to catch by luck.
  */
 async function issueOneInvoiceToday(page: Page): Promise<void> {
-  const items = (json: unknown): Array<Record<string, any>> =>
-    Array.isArray(json) ? json : ((json as { items?: Array<Record<string, any>> } | null)?.items ?? []);
+  const items = (json: unknown): Array<Record<string, string>> =>
+    Array.isArray(json) ? json : ((json as { items?: Array<Record<string, string>> } | null)?.items ?? []);
   const mobile = '01911000009';
   const found = items((await api(page, 'GET', `/api/staff/customers?mobile=${mobile}`)).json).find(
     (c) => c.fullName === 'Reports Walkin',
