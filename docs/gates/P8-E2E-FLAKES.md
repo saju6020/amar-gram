@@ -39,3 +39,8 @@ Cleanup: next dev and API stopped, ports 3138 and 5127 free; `amargram_p8_realap
 
 - reports E-X "page scrolls sideways" (2 px on document and body) failed in the first two full runs and in four combined runs, and passed in all later ones. Not reproduced in isolation, not caused by these changes. Worth a look if it returns (the helper reports only totals, not which element overflows).
 - The 12 Vitest failures above are load-sensitive timeouts in inventory and POS tests.
+
+## Review follow-up (CODE_REVIEW 5cb05a5)
+
+- The pre-mount start is now a timestamp; on mount it is used once and ignored if older than 2 s (a stale start from a navigation long over no longer lights the bar).
+- Vitest in `issues-4-5-6.test.tsx` covers the pre-mount path with `vi.resetModules()` between cases: internal link before render shows the bar on mount; external or modified click before render shows none; a start older than 2 s is ignored; the start is consumed once. The file passes (11 tests), `tsc` and eslint on the touched files are clean. No e2e was run for this follow-up.

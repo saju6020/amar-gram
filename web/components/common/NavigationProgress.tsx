@@ -21,12 +21,14 @@ function isSamePageTarget(url: URL) {
 
 /** The mounted component's starter; null until it hydrates. */
 let onStart: (() => void) | null = null;
-/** A navigation began before the component hydrated: the bar starts as soon as it mounts. */
-let startedBeforeMount = false;
+/** When (ms) a navigation began before the component hydrated; null if none. The bar starts as soon as it mounts. */
+let startedBeforeMount: number | null = null;
+/** A start older than this is stale (the navigation is long over or never happened): ignore it on mount. */
+const PRE_MOUNT_MAX_AGE_MS = 2_000;
 
 function start() {
   if (onStart) onStart();
-  else startedBeforeMount = true;
+  else startedBeforeMount = Date.now();
 }
 
 function onClick(event: MouseEvent) {
@@ -92,10 +94,9 @@ export function NavigationProgress() {
   // module-level listeners (below) from the "remember it" fallback.
   useEffect(() => {
     onStart = () => setActive(true);
-    if (startedBeforeMount) {
-      startedBeforeMount = false;
-      setActive(true);
-    }
+    const pendingSince = startedBeforeMount;
+    startedBeforeMount = null;
+    if (pendingSince !== null && Date.now() - pendingSince <= PRE_MOUNT_MAX_AGE_MS) setActive(true);
     return () => {
       onStart = null;
     };
