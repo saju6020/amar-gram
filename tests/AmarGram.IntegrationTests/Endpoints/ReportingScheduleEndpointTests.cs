@@ -219,6 +219,46 @@ public sealed class ReportingScheduleEndpointTests(ReportingApiFactory factory) 
         }
     }
 
+    /// <summary>
+    /// Deterministic companion to I_G3: the slot is run and advanced by one runner scope, then a second runner scope works the SAME slot. It must not record a Failed run
+    /// (its advance finds the slot already advanced) and must report that its run was not kept.
+    /// </summary>
+    [Fact]
+    public async Task I_G3b_ASecondRunnerForAnAlreadyAdvancedSlot_RecordsNoFailedRun_AndKeepsNothing()
+    {
+        await RetireOtherSchedulesAsync();
+        var context = await CreateBillingContextAsync();
+        var inventory = await SeedRecipientAsync(context, StaffRoles.Inventory);
+        var created = await CreateScheduleAsync(context.Admin, Body(context, ReportingFixtures.RowsKey, "Today", "10:00", [inventory.Id]));
+        try
+        {
+            await AdvanceToAsync(created.NextRunOn!.Value);
+            var due = created.NextRunOn!.Value;
+
+            async Task<ScheduledRunOutcome?> RunAsync()
+            {
+                await using var scope = Factory.Services.CreateAsyncScope();
+                return await scope.ServiceProvider.GetRequiredService<ScheduledReportRunner>()
+                    .RunAsync(created.ScheduleId, due, ReportRunTrigger.Schedule, new UserContext(ReportingSystemActors.ReportingWorker, Guid.Empty));
+            }
+
+            var first = await RunAsync();
+            Assert.True(first!.Created);
+            var second = await RunAsync();
+            Assert.False(second!.Created);
+            Assert.Equal(first.RunId, second.RunId);
+
+            var admin = await FreshAdminAsync(context);
+            var runs = await RunsAsync(admin, created.ScheduleId);
+            var kept = Assert.Single(runs);
+            Assert.NotEqual("Failed", kept.GetProperty("status").GetString());
+        }
+        finally
+        {
+            await CancelAsync(context.Admin, created.ScheduleId);
+        }
+    }
+
     // ── I-G4: catching up after downtime ────────────────────────────────────────────────────────────
     [Fact]
     public async Task I_G4_AfterThreeDaysOfDowntime_OneCycleMakesOneRunForTheLatestSlot_AndTheNextRunIsTomorrow()
@@ -738,6 +778,11 @@ public sealed class ReportingScheduleDstEndpointTests(ReportingApiFactory factor
         return (staff.StaffAccountId, staff.Mobile, staff.Password, await SignInStaffAsync(staff.Mobile, staff.Password));
     }
 }
+
+/// <summary>The schedule classes run alone (DisableParallelization): their fake clocks and delivery passes must not meet another class's notification worker, which would expand or send
+/// their requests through ITS OWN sender and clock (the email lands in the other host's sink and the row never reaches the state the test waits for).</summary>
+[CollectionDefinition(ScheduleTestBase.CollectionName, DisableParallelization = true)]
+public sealed class ReportingSchedulesCollection;
 
 /// <summary>What both schedule test classes share: building schedules, driving the cycles, and reading what they produced.</summary>
 public abstract class ScheduleTestBase(ReportingApiFactory factory) : ReportingIntegrationTestBase(factory)

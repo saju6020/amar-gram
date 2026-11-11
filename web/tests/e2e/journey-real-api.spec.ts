@@ -171,34 +171,26 @@ test.describe('a new visitor', () => {
     // The header carries the Cart link for a guest.
     await expect(visitor.getByRole('banner').getByRole('link', { name: /^Basket/ })).toBeVisible();
 
-    // Following a link shows the top progress bar. The bar's click listener is attached when its component hydrates, which
-    // (in `next dev`, under a Suspense boundary) can be after the page's own links already work: a click in that gap
-    // navigates without the bar (`networkidle` does not wait for it). So each attempt loads /shop afresh, waits for the
-    // app to have mounted (`__apiBaseUrl`) and then a little longer each time, clicks once and looks for the bar; an
-    // attempt that beat the listener is repeated rather than reported as a missing bar.
-    let attempt = 0;
-    await expect(async () => {
-      attempt += 1;
-      await visitor.goto('/shop');
-      await visitor.waitForLoadState('networkidle');
-      await visitor.waitForFunction(
-        () => (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl !== undefined,
-      );
-      await visitor.waitForTimeout((attempt - 1) * 2_000);
-      const catalogueLink = visitor
-        .getByRole('link', { name: /all products|shop all|browse/i })
-        .first();
-      const target =
-        (await catalogueLink.count()) > 0
-          ? catalogueLink
-          : visitor.locator('a[href^="/shop/products"]').first();
-      await target.click();
-      await expect(visitor).toHaveURL(/\/shop\/products/);
-      const seen = await visitor.evaluate(
-        () => (window as unknown as { __progressSeen: boolean }).__progressSeen,
-      );
-      expect(seen).toBe(true);
-    }).toPass({ timeout: 90_000 });
+    // Following a link shows the top progress bar. The bar's listeners are attached when its module loads (not when its
+    // component hydrates), so a click as soon as the app has mounted (`__apiBaseUrl`) must still start it. No
+    // `networkidle` and no retry: one click, and the bar has to have appeared.
+    await visitor.waitForFunction(
+      () => (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl !== undefined,
+    );
+    const catalogueLink = visitor
+      .getByRole('link', { name: /all products|shop all|browse/i })
+      .first();
+    const target =
+      (await catalogueLink.count()) > 0
+        ? catalogueLink
+        : visitor.locator('a[href^="/shop/products"]').first();
+    await target.click();
+    await expect(visitor).toHaveURL(/\/shop\/products/);
+    await expect
+      .poll(() =>
+        visitor.evaluate(() => (window as unknown as { __progressSeen: boolean }).__progressSeen),
+      )
+      .toBe(true);
 
     // The brand filter lists the seeded brands, and only those. Desktop shows the panel inline; at 360 px the same groups
     // live in the Filters sheet (withFilters opens it), and the category choice is made in that same sheet.
@@ -315,7 +307,11 @@ test.describe('the seeded customer', () => {
   test('4. delivery checkout: Dhaka address, Standard, cash on delivery, priced review, order placed and listed', async () => {
     await signInCustomer(page, CUSTOMER.email, CUSTOMER.password, '/cart');
     await expect(page).toHaveURL(/\/cart/);
+    // The "Updated policies" dialog is mounted by the portal layout only, so it never opens on /cart: a customer with a
+    // policy still to accept (a fresh database) accepts it on a portal page, then returns to the cart.
+    await page.goto('/portal/orders');
     await acceptPendingPolicies(page);
+    await page.goto('/cart');
 
     // Start from an empty cart (an earlier run may have left items, and the delivery fee depends on the total).
     const csrf = async () =>

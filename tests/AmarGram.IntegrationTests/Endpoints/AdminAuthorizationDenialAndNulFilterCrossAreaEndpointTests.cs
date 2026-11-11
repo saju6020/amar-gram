@@ -23,6 +23,9 @@ namespace AmarGram.IntegrationTests.Endpoints;
 ///    customer registration now rejects a NUL before the CAPTCHA is ever checked or consumed. SECURITY
 ///    pass 5 ran ad-hoc probes for this (see docs/gates/HO-ADM-001-SECURITY.md) but no probe became a
 ///    committed, repeatable test in either area's suite.</summary>
+// Creates a GLOBAL requires-acceptance policy: every customer in the shared database sees it as pending (and every checkout quote is blocked) until accepted.
+// Serialised with the global-setting tests (DisableParallelization), so it never overlaps a checkout or a pending-policy assertion in a parallel class.
+[Collection(AmarGram.IntegrationTests.Endpoints.AdministrationGlobalSettingsCollection.Name)]
 public sealed class AdminAuthorizationDenialAndNulFilterCrossAreaEndpointTests(AdministrationApiFactory factory)
     : AdministrationIntegrationTestBase(factory)
 {

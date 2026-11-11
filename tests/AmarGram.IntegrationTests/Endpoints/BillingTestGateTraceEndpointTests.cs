@@ -65,9 +65,6 @@ public sealed partial class BillingTestGateTraceEndpointTests(BillingTraceApiFac
     [GeneratedRegex(@"(?:\d[ -]?){13,19}")]
     private static partial Regex DigitRun();
 
-    [GeneratedRegex(@"[0-9a-fA-F]{24,}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?|(INV|CN)-[A-Za-z0-9]+-\d{4}-\d{6}|880\d{10}|\b1\d{12}\b")]
-    private static partial Regex Noise();
-
 
     // ── XI-1 (retries observed) ─────────────────────────────────────────────────────────────────────
     /// <summary>XI-1b -- with two hosts on one database (so the in-process gate cannot serialise them) forty invoices are issued at once; every response is 201
@@ -238,7 +235,7 @@ public sealed partial class BillingTestGateTraceEndpointTests(BillingTraceApiFac
 
         // Trace lines are full of ids, instants and tick counts, which are long digit runs that pass Luhn one time in ten. They are blanked first; what is left
         // is asked of the guard. A failure shows the masked text around the run so the category is visible without printing the digits.
-        var cleaned = Noise().Replace(all, " ");
+        var cleaned = CardNumberNoise.BlankTrace(all);
         var offenders = DigitRun().Matches(cleaned).Where(m => AmarGram.Shared.Common.Helpers.CardNumberGuard.LooksLikeCardNumber(m.Value)).Take(5)
             .Select(m => Regex.Replace(cleaned.Substring(Math.Max(0, m.Index - 30), Math.Min(cleaned.Length - Math.Max(0, m.Index - 30), m.Length + 40)), "[0-9]", "#")).ToList();
         Assert.True(offenders.Count == 0, "A card-like number was logged, in: " + string.Join(" || ", offenders));

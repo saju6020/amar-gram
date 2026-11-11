@@ -240,8 +240,10 @@ test('E-C3/E-C4 run retention now, then the run detail; the schedule keeps finan
   await page.goto('/staff/admin/retention/runs');
   await expect(page.getByRole('table')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('table').getByRole('link').first().click();
-  await expect(page.getByRole('heading', { name: 'Retention run' })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText(/never deleted by a run/)).toBeVisible();
+  // exact: the list page's own heading is "Retention runs", which a substring match accepts while the detail route is
+  // still compiling; the next assertion then waits only its default 5 s for text that exists on the detail page alone.
+  await expect(page.getByRole('heading', { name: 'Retention run', exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/never deleted by a run/)).toBeVisible({ timeout: 30_000 });
   const text = await page.locator('main').innerText();
   expect(text).not.toMatch(/ErasureScopeFailing|PurgeSourceNotRegistered|errorCode/);
 });

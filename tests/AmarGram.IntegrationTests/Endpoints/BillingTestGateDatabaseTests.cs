@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Http.Json;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Shared.Common.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +41,15 @@ public sealed partial class BillingTestGateDatabaseTests(BillingApiFactory facto
         var withoutTrigger = new List<string>();
         var deleted = new List<string>();
         var tested = new List<string>();
+
+        // The probe needs rows to try to delete. Whether other suites have already filled the billing tables depends on the order the classes ran in (on a fresh database
+        // this test can run first), so put a customer, an invoice, a payment and its allocation there first.
+        var context = await CreateBillingContextAsync();
+        var customerId = await SeedCustomerAsync(context);
+        var (invoiceId, _, _) = await IssueSimpleInvoiceAsync(context, customerId, 1000m);
+        var payment = await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 400m, allocations: [(invoiceId, 400m)]);
+        await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync($"/api/staff/billing/invoices/{invoiceId}/credit-notes", new { kind = "Return", reason = "Returned", fullCredit = true }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync("/api/staff/billing/refunds", new { paymentId = payment.GetProperty("paymentId").GetGuid(), method = "CashInStore", amount = 50m, reason = "Part refund" }, Json));
 
         await using var connection = Open();
         foreach (var table in BillingTables())
@@ -145,7 +156,7 @@ public sealed partial class BillingTestGateDatabaseTests(BillingApiFactory facto
             {
                 // Ids and instants in a JSON snapshot are long digit-and-dash runs too (a GUID whose groups happen to be all digits, a timestamp); they are
                 // not what is being looked for, so they are blanked first.
-                var value = Noise().Replace(reader.GetString(0), " ");
+                var value = CardNumberNoise.Blank(reader.GetString(0));
                 if (CardNumberGuard.LooksLikeCardNumber(value))
                     offenders.Add($"{schema}.{table}.{column}: {Snippet(value)}");
             }
@@ -154,10 +165,6 @@ public sealed partial class BillingTestGateDatabaseTests(BillingApiFactory facto
         Assert.True(scanned > 50, $"Only {scanned} columns were scanned.");
         Assert.True(offenders.Count == 0, $"{offenders.Count} card-like value(s) stored: " + string.Join(" || ", offenders.Take(10)));
     }
-
-    // Ids (dashed GUIDs and 32-character hex ids, which a provider message id or a product link carries), instants, our own document numbers, E.164 Bangladeshi mobile numbers and JSON's own backslash-u escapes (four digits next to the value they quote) are long digit runs that are not card numbers.
-    [System.Text.RegularExpressions.GeneratedRegex(@"[0-9a-fA-F]{24,}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?|\\u[0-9A-Fa-f]{4}|(INV|CN)-[A-Za-z0-9]+-\d{4}-\d{6}|880\d{10}")]
-    private static partial System.Text.RegularExpressions.Regex Noise();
 
     private static string Snippet(string value)
     {

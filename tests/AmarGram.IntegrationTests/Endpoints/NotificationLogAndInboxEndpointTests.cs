@@ -66,7 +66,7 @@ public sealed class NotificationLogAndInboxEndpointTests(NotificationsApiFactory
         var byRecipient = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         Assert.NotEmpty(byRecipient.GetProperty("items").EnumerateArray());
 
-        var byTemplate = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?templateKey={NotificationTemplateCatalogue.BillingInvoiceIssued}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
+        var byTemplate = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?templateKey={NotificationTemplateCatalogue.BillingInvoiceIssued}&recipientId={customerId}&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);
         Assert.Contains(byTemplate.GetProperty("items").EnumerateArray(), i => i.GetProperty("recipientId").GetGuid() == customerId);
 
         var byStatus = await adminClient.GetFromJsonAsync<JsonElement>($"/api/admin/notifications?recipientId={customerId}&status=Undeliverable&from={Uri.EscapeDataString(from.ToString("O"))}&to={Uri.EscapeDataString(to.ToString("O"))}", Json);

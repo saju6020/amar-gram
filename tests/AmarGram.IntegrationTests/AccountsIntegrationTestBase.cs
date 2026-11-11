@@ -12,7 +12,7 @@ public abstract class AccountsIntegrationTestBase(AccountsApiFactory factory) : 
     });
 
     /// <summary>Mints a collision-resistant test mobile number -- §16.1 rule 1.</summary>
-    protected static string NewMobile() => "01" + Random.Shared.NextInt64(100_000_000, 999_999_999);
+    protected static string NewMobile() => "01" + Random.Shared.Next(3, 10) + Random.Shared.NextInt64(10_000_000, 100_000_000);
 
     protected static string NewEmail() => $"t-{Guid.NewGuid():N}@example.test";
 

@@ -26,7 +26,7 @@ public abstract class AdministrationIntegrationTestBase(AdministrationApiFactory
         HandleCookies = true
     });
 
-    protected static string NewMobile() => "01" + Random.Shared.NextInt64(100_000_000, 999_999_999);
+    protected static string NewMobile() => "01" + Random.Shared.Next(3, 10) + Random.Shared.NextInt64(10_000_000, 100_000_000);
 
     protected static string ExtractCookieValue(HttpResponseMessage response, string cookieName)
     {
@@ -38,7 +38,10 @@ public abstract class AdministrationIntegrationTestBase(AdministrationApiFactory
 
     /// <summary>Seeds a staff account with the given roles directly through the repository (§16.1
     /// rule 7), gives it a password, then returns credentials for a real sign-in.</summary>
-    protected async Task<(Guid StaffAccountId, string Mobile, string Password)> SeedStaffAsync(params string[] roles)
+    protected Task<(Guid StaffAccountId, string Mobile, string Password)> SeedStaffAsync(params string[] roles) => SeedNamedStaffAsync("Test Staff", roles);
+
+    /// <summary>The same as <see cref="SeedStaffAsync"/> with a caller-chosen full name -- unique names let a test find its own row in the staff list (every default seed is "Test Staff").</summary>
+    protected async Task<(Guid StaffAccountId, string Mobile, string Password)> SeedNamedStaffAsync(string fullName, params string[] roles)
     {
         await using var scope = Factory.Services.CreateAsyncScope();
         var repository = scope.ServiceProvider.GetRequiredService<IAggregateRootRepository<StaffAccountAggregate>>();
@@ -47,7 +50,7 @@ public abstract class AdministrationIntegrationTestBase(AdministrationApiFactory
         var mobile = NewMobile();
         var staff = new StaffAccountAggregate(Guid.NewGuid());
         staff.Create(new StaffAccountCreationDto(
-            "Test Staff", MobileNumber.Create(mobile), null, roles,
+            fullName, MobileNumber.Create(mobile), null, roles,
             new UserContext(Guid.NewGuid(), Guid.NewGuid()), Guid.NewGuid()));
         await repository.SaveAsync(staff, EventPublishOption.InMemoryPublishOnly);
 

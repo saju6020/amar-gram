@@ -178,6 +178,10 @@ public sealed class AdminGlobalSettingsLiveEffectEndpointTests(AdministrationApi
         var newValue = originalValue == "20" ? "21" : "20";
         try
         {
+            // An effective value that is only the definition's default is not stored in the global row, so the "before" snapshot would not mention it at all
+            // (true on a fresh database, false after some earlier test stored it). Store it first; the change under test then has a real before value.
+            await ChangeSettingAsync(client, key, originalValue);
+
             var from = DateTimeOffset.UtcNow.AddMinutes(-5);
 
             await ChangeSettingAsync(client, key, newValue);

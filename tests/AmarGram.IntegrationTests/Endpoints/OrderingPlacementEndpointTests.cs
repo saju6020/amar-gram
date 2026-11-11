@@ -12,6 +12,9 @@ namespace AmarGram.IntegrationTests;
 /// I-D1, I-D2, I-D4, I-D6, I-D7, I-D8 (atomicity), I-D9 (twenty parallel placements for the last unit), I-D10 / I-D11 (double submit), I-D12 (a discount's
 /// last use), I-D13, I-D14 (no card data anywhere) and the placement halves of I-E1 (a transfer order) and I-F12 (a pickup order paid on collection).
 /// </summary>
+// Creates a GLOBAL requires-acceptance policy: every customer in the shared database sees it as pending (and every checkout quote is blocked) until accepted.
+// Serialised with the global-setting tests (DisableParallelization), so it never overlaps a checkout or a pending-policy assertion in a parallel class.
+[Collection(AmarGram.IntegrationTests.Endpoints.AdministrationGlobalSettingsCollection.Name)]
 public sealed class OrderingPlacementEndpointTests(OrderingApiFactory factory) : OrderingShopTestBase(factory)
 {
     // ── I-D7 (US-ORD-08 AC1, US-ORD-20 AC1) ─────────────────────────────────────────────────────────

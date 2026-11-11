@@ -183,6 +183,16 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
         Assert.Equal(HttpStatusCode.OK, signIn.StatusCode);
         client.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(signIn, "pc_csrf"));
 
+        // The store root is a shared on-disk folder (every run and database writes to it), so only objects that appear
+        // DURING this request are judged: snapshot first.
+        string[] before;
+        await using (var beforeScope = failingFactory.Services.CreateAsyncScope())
+        {
+            var beforeRoot = beforeScope.ServiceProvider.GetRequiredService<IOptions<FileStorageOptions>>().Value.LocalStoreRoot;
+            var beforeDir = Path.Combine(beforeRoot, "ProductImage");
+            before = Directory.Exists(beforeDir) ? Directory.GetFiles(beforeDir, "*", SearchOption.AllDirectories) : [];
+        }
+
         using var form = BuildUpload(MinimalPng(), "product.png", "image/png");
         var response = await client.PostAsync("/api/staff/files?purpose=ProductImage", form);
 
@@ -202,7 +212,7 @@ public sealed class FilesEndpointTests(FilesApiFactory factory) : FilesIntegrati
                 .Select(f => f.StorageKey)
                 .ToListAsync();
 
-            foreach (var objectFile in Directory.GetFiles(productImageDir, "*", SearchOption.AllDirectories))
+            foreach (var objectFile in Directory.GetFiles(productImageDir, "*", SearchOption.AllDirectories).Except(before))
             {
                 var relativeKey = Path.GetRelativePath(options.LocalStoreRoot, objectFile).Replace('\\', '/');
                 Assert.Contains(relativeKey, knownKeys);
