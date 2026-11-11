@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-html-link-for-pages -- plain <a> on purpose: the bar must catch any internal link. */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { withCustomerNext } from '@/lib/routing/portal-links';
@@ -74,6 +74,59 @@ describe('Issues.md #6 — NavigationProgress', () => {
     await renderBar();
     act(() => startNavigationProgress());
     expect(screen.getByTestId('navigation-progress')).toBeInTheDocument();
+  });
+});
+
+describe('NavigationProgress — a click before the component has mounted', () => {
+  beforeEach(() => {
+    pathname = '/shop';
+    search = '';
+    window.history.replaceState(null, '', '/shop');
+    vi.resetModules(); // fresh module state (and fresh listeners) for each case
+    document.body.innerHTML =
+      '<a href="/shop/products">Products</a><a href="https://example.com/">Elsewhere</a>';
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+  });
+
+  async function load() {
+    return import('@/components/common/NavigationProgress');
+  }
+
+  it('shows the bar on mount after an internal link was clicked before render', async () => {
+    const { NavigationProgress } = await load();
+    fireEvent.click(screen.getByText('Products'));
+    render(<NavigationProgress />);
+    expect(screen.getByTestId('navigation-progress')).toBeInTheDocument();
+  });
+
+  it('shows no bar after an external link or a modified click before render', async () => {
+    const { NavigationProgress } = await load();
+    fireEvent.click(screen.getByText('Elsewhere'));
+    fireEvent.click(screen.getByText('Products'), { ctrlKey: true });
+    render(<NavigationProgress />);
+    expect(screen.queryByTestId('navigation-progress')).not.toBeInTheDocument();
+  });
+
+  it('ignores a pre-mount start older than 2 seconds', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const { NavigationProgress } = await load();
+    fireEvent.click(screen.getByText('Products'));
+    vi.setSystemTime(Date.now() + 2_500);
+    render(<NavigationProgress />);
+    expect(screen.queryByTestId('navigation-progress')).not.toBeInTheDocument();
+  });
+
+  it('uses the pre-mount start only once', async () => {
+    const { NavigationProgress } = await load();
+    fireEvent.click(screen.getByText('Products'));
+    const first = render(<NavigationProgress />);
+    expect(screen.getByTestId('navigation-progress')).toBeInTheDocument();
+    first.unmount();
+    render(<NavigationProgress />);
+    expect(screen.queryByTestId('navigation-progress')).not.toBeInTheDocument();
   });
 });
 

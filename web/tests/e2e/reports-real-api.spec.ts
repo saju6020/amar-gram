@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { readFileSync } from 'node:fs';
 // Plain Playwright `test`, not ./fixtures: that wrapper waits for MSW's service worker, which never
 // exists when NEXT_PUBLIC_USE_MOCKS=false (the whole point of this spec).
@@ -49,6 +50,64 @@ async function signInAs(page: Page, person: string): Promise<void> {
     { mobile, password },
   );
   slow(status).toBe(200);
+}
+
+const todayDhaka = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });
+
+/** Calls the API from the signed-in page (cookies and CSRF as the app sends them). */
+async function api(page: Page, method: string, path: string, body?: unknown, headers: Record<string, string> = {}) {
+  return page.evaluate(
+    async ({ method, path, body, headers, branchId }) => {
+      const base = (window as unknown as { __apiBaseUrl?: string }).__apiBaseUrl ?? '';
+      const csrf = decodeURIComponent(
+        (document.cookie.split('; ').find((c) => c.startsWith('pc_csrf=')) ?? '').slice(8),
+      );
+      const res = await fetch(`${base}${path}`, {
+        method,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, 'X-Branch-Id': branchId, ...headers },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      const text = await res.text();
+      return { status: res.status, text, json: text.startsWith('{') || text.startsWith('[') ? JSON.parse(text) : null };
+    },
+    { method, path, body, headers, branchId: seed!.branchId },
+  );
+}
+
+/**
+ * Issues one invoice dated today, so the revenue report has a row to show. The report's default period is the PREVIOUS
+ * month and a fresh database has no invoices at all: without data the page shows only "No results", and the column
+ * heading "Margin" exists solely in the loading skeleton, which E-C used to catch by luck.
+ */
+async function issueOneInvoiceToday(page: Page): Promise<void> {
+  const items = (json: unknown): Array<Record<string, string>> =>
+    Array.isArray(json) ? json : ((json as { items?: Array<Record<string, string>> } | null)?.items ?? []);
+  const mobile = '01911000009';
+  const found = items((await api(page, 'GET', `/api/staff/customers?mobile=${mobile}`)).json).find(
+    (c) => c.fullName === 'Reports Walkin',
+  );
+  let customerId = found?.customerId ?? found?.id;
+  if (!customerId) {
+    const created = await api(page, 'POST', '/api/staff/customers', { fullName: 'Reports Walkin', mobileNumber: mobile });
+    expect(created.status, created.text).toBeLessThan(300);
+    customerId = created.json.customerId ?? created.json.id;
+  }
+  const taxClasses = items((await api(page, 'GET', '/api/admin/tax-classes')).json);
+  const taxClassId = (taxClasses.find((t) => t.code === 'STANDARD') ?? taxClasses[0])?.id;
+  const charge = await api(page, 'POST', '/api/staff/billing/charges', {
+    customerId, description: 'Reports E-C charge', unitPrice: '100', taxClassId, quantity: '1',
+    serviceDate: todayDhaka(), businessLine: 'Shop',
+  });
+  expect(charge.status, charge.text).toBe(201);
+  const draft = await api(page, 'POST', '/api/staff/billing/invoices', { customerId, chargeIds: [charge.json.chargeId] });
+  expect(draft.status, draft.text).toBe(201);
+  const detail = await api(page, 'GET', `/api/staff/billing/invoices/${draft.json.invoiceId}`);
+  const issued = await api(
+    page, 'POST', `/api/staff/billing/invoices/${draft.json.invoiceId}/issue`,
+    { expectedVersion: detail.json.version }, { 'Idempotency-Key': crypto.randomUUID() },
+  );
+  expect(issued.status, issued.text).toBe(200);
 }
 
 async function open(page: Page, person: string, path: string): Promise<void> {
@@ -124,11 +183,20 @@ test('E-C real: stock, revenue and growth reports open; margin is for the accoun
     await slow(page.getByRole('heading', { level: 1 })).toBeVisible();
     await slow(page.locator('#main-content').getByRole('alert')).toHaveCount(0);
   }
-  await open(page, 'Accountant', '/staff/reports/revenue-by-business-line');
+  // The Margin column is only drawn when the report has rows: give it one (an invoice dated today) and ask for today.
+  await open(page, 'Administrator', '/staff/reports/stock-position');
+  await issueOneInvoiceToday(page);
+  await open(page, 'Accountant', `/staff/reports/revenue-by-business-line?from=${todayDhaka()}&to=${todayDhaka()}`);
   await slow(
     page.getByRole('heading', { level: 1, name: 'Revenue by sales channel' }),
   ).toBeVisible();
-  await slow(page.getByText(/Margin/).first()).toBeVisible({ timeout: 30_000 });
+  // The rows come from the reporting views, which can trail the invoice by a moment: reload until the result has rows.
+  await expect(async () => {
+    await page.reload();
+    const result = page.getByLabel(/^Revenue by sales channel · /);
+    await expect(result).toBeVisible({ timeout: 15_000 });
+    await expect(result.getByText('Margin', { exact: true }).first()).toBeVisible();
+  }).toPass({ timeout: 60_000 });
   await open(page, 'ShopManager', '/staff/reports/revenue-by-business-line');
   await slow(page.getByText(/have permission/i)).toBeVisible();
   await open(page, 'Accountant', '/staff/reports/payment-reconciliation');
