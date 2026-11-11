@@ -48,3 +48,20 @@ The 4 skips are the existing skipped tests (unchanged).
 ## Remaining risk
 
 Tests that share one database stay statistically exposed to unseen interactions; the serial collection `AdministrationGlobalSettings` now holds more classes (it runs after the parallel phase, so the suite is slightly slower to finish its tail). `amargram_p8_it` and `amargram_p8_it2` were dropped at the end; `amargram_dev` was never touched.
+
+## Follow-up after SECURITY and CODE_REVIEW (both PASS)
+
+- **One shared card-noise filter** (`tests/AmarGram.IntegrationTests/CardNumberNoise.cs`) replaces the three drifted copies (XI_9, I_X1, trace sweep). The unanchored `880\d{10}` is gone (it masked real cards such as `4880123456789012`); every alternative is anchored with `(?<![0-9A-Za-z])` / `(?![0-9A-Za-z])`, the instant fraction is `(\.\d{1,7})?`. The trace sweep adds its 13-digit epoch through `BlankTrace`.
+- **Self-test** `Unit/CardNumberNoiseTests.cs` (fast, no database): plain, spaced and dashed card numbers, `4880...`, a `5880...` card, cards next to an instant, a US-format instant and a GUID in both orders, a card glued to an instant (`PAN/1/2026 10:00:00`, `2026-11-11T10:00:00.PANZ`) all stay flagged; GUIDs, instants, document numbers, a BD mobile with country code and a 24+ hex token are not. Known limit, by design: a card number glued to hex letters inside one 24+ character hex token reads as an id.
+- **Consequence found by the full run:** without the 880 mask XI_9 flagged `RecipientPhone` values. The cause was test data: `NewMobile()` made `01` + any 9 digits (operator digit 0 to 2 is not a real Bangladeshi mobile, so the guard does not exclude it). All 10 generators now make `01` + 3-9 + 8 digits. A scratch database filled by earlier runs of this suite still holds the old numbers, so use a fresh database for XI_9 (the same applies to any database used before this commit).
+- `ScheduledReportRunner.AdvanceAsync`: comment that the scope must not be reused after a swallowed conflict.
+- Deterministic `I_G3b_ASecondRunnerForAnAlreadyAdvancedSlot_RecordsNoFailedRun_AndKeepsNothing`: one runner scope runs and advances the slot, a second works the same slot: no Failed run, `Created == false`, same run id.
+- CR LOWs: stale `XctRetention` comments fixed in XctErasureEndpointTests and XctRetentionWorkerTests; the lockout test's `FrozenClient()` clients are disposed; the notification backlog drain reads the factory's `TimeProvider`.
+
+### Results
+
+- Changed/new tests (CardNumberNoiseTests, reporting schedule classes incl. I_G3 and I_G3b, ReportingTestGate, GateFix, CrossCutting, BillingTestGate incl. XI_9, BillingLogCapture I_X1, staff list, NotificationClaimAndDelivery): 92 passed, 1 skipped, 0 failed (before the mobile-number change).
+- Domain 1810, Application 582, Infrastructure 182 passed, 0 failed.
+- Full integration run on a fresh database with the mask removed but the old mobile generator: 1 failed (XI_9, 34 `RecipientPhone` values), which led to the generator fix above.
+- Full integration run on a fresh database, final code: **1407 passed, 0 failed, 4 skipped, total 1411** (12 m 17 s). The total rose from 1389 by the 22 cases of CardNumberNoiseTests (21 theory cases plus I_G3b).
+- Scratch database dropped afterwards.
