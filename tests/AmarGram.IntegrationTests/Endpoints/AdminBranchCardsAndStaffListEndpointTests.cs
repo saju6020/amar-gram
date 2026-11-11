@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Time.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -232,10 +235,20 @@ public sealed class AdminBranchCardsAndStaffListEndpointTests(AdministrationApiF
         Assert.Equal("NotSetUp", notSetUp.GetProperty("status").GetString());
         Assert.False(notSetUp.GetProperty("hasPassword").GetBoolean());
 
-        // Wrong passwords until the throttle locks the account.
+        // Wrong passwords until the throttle locks the account. The lockout is 5 s after the third failure: on a busy machine the real clock can run past it before the list is read,
+        // so these steps run on a host whose clock stands still (the lock then cannot expire between the failures and the read).
+        using var frozenFactory = Factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+            services.AddSingleton<TimeProvider>(new FakeTimeProvider(DateTimeOffset.UtcNow))));
+        HttpClient FrozenClient() => frozenFactory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost/"), HandleCookies = true });
+
+        using var frozenAdmin = FrozenClient();
+        var frozenSignIn = await frozenAdmin.PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = admin.Mobile, password = admin.Password }, Json);
+        Assert.Equal(HttpStatusCode.OK, frozenSignIn.StatusCode);
+        frozenAdmin.DefaultRequestHeaders.Add("X-CSRF-Token", ExtractCookieValue(frozenSignIn, "pc_csrf"));
+
         for (var i = 0; i < 4; i++)
-            await CreateClient().PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = active.Mobile, password = "wrong-password-" + i }, Json);
-        Assert.Equal("Locked", (await StaffRowAsync(client, active.StaffAccountId, activeName)).GetProperty("status").GetString());
+            await FrozenClient().PostAsJsonAsync("/api/staff/auth/sign-in", new { identifier = active.Mobile, password = "wrong-password-" + i }, Json);
+        Assert.Equal("Locked", (await StaffRowAsync(frozenAdmin, active.StaffAccountId, activeName)).GetProperty("status").GetString());
     }
 
     [Fact]

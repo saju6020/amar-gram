@@ -22,8 +22,47 @@ namespace AmarGram.IntegrationTests;
 /// TRUNCATE). Helpers mint fresh staff and customers per test, and run the notification
 /// worker's passes directly (the worker loop itself is off in Testing).</summary>
 public abstract class NotificationsIntegrationTestBase(NotificationsApiFactory factory)
-    : AmarGramIntegrationTestBase<NotificationsApiFactory>(factory)
+    : AmarGramIntegrationTestBase<NotificationsApiFactory>(factory), IAsyncLifetime
 {
+    private static readonly SemaphoreSlim DrainGate = new(1, 1);
+    private static readonly HashSet<Type> DrainedClasses = [];
+
+    /// <summary>
+    /// A delivery pass handles only the oldest <c>Worker:BatchSize</c> (50) requests of the WHOLE shared database, and the hosted worker is off in Testing, so every notification
+    /// the other areas' tests requested (orders, invoices, resets) piles up unprocessed. By the time the notification classes run in a full suite the backlog is longer than one
+    /// pass, and a test that runs one pass and expects ITS notification to exist fails depending on how much ran before it. Each notification test class therefore first drains the
+    /// backlog that exists when it starts (once per class, bounded, stops when a pass makes no progress).
+    /// </summary>
+    public async Task InitializeAsync()
+    {
+        await DrainGate.WaitAsync();
+        try
+        {
+            if (!DrainedClasses.Add(GetType())) return;
+            long previous = long.MaxValue;
+            for (var pass = 0; pass < 400; pass++)
+            {
+                var now = DateTimeOffset.UtcNow;
+                long waiting;
+                await using (var scope = Factory.Services.CreateAsyncScope())
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<AmarGram.Infrastructure.Persistence.AmarGramDbContext>();
+                    waiting = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(db.NotificationRequests,
+                                  r => r.Status == NotificationRequestStatus.Pending && r.LastAttemptOn == null && (r.SendAfter == null || r.SendAfter <= now))
+                              + await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(db.Notifications,
+                                  n => n.Status == NotificationStatus.Queued && (n.NotBefore == null || n.NotBefore <= now));
+                }
+
+                if (waiting == 0 || waiting >= previous) return;
+                previous = waiting;
+                await RunDeliveryPassAsync();
+            }
+        }
+        finally { DrainGate.Release(); }
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
     protected override HttpClient CreateClient() => Factory.CreateClient(new WebApplicationFactoryClientOptions
     {
         BaseAddress = new Uri("https://localhost/"),
