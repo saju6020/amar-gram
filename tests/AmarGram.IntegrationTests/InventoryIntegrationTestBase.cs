@@ -33,7 +33,7 @@ public abstract class InventoryIntegrationTestBase(InventoryApiFactory factory) 
     protected static HttpClient CreateClientOn(WebApplicationFactory<Program> apiFactory) =>
         apiFactory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost/"), HandleCookies = true });
 
-    protected static string NewMobile() => "01" + Random.Shared.NextInt64(100_000_000, 999_999_999);
+    protected static string NewMobile() => "01" + Random.Shared.Next(3, 10) + Random.Shared.NextInt64(10_000_000, 100_000_000);
 
     protected static string NewCode(string prefix = "T") => $"{prefix}{Guid.NewGuid():N}"[..12].ToUpperInvariant();
 

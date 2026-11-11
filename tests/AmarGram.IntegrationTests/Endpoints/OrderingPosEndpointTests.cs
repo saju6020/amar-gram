@@ -25,12 +25,29 @@ public sealed class OrderingPosEndpointTests(OrderingApiFactory factory) : Order
         return new Till(shop, cashier, food, bag);
     }
 
-    /// <summary>A valid GTIN-13 (the catalogue checks the check digit) that no other test uses.</summary>
+    /// <summary>A valid GTIN-13 (the catalogue checks the check digit) that no other test uses, and that does NOT pass Luhn: a
+    /// 13-digit number that does is, to the card-number guard and the XI_9/I_X1 sweeps, a card number (about one random EAN in ten).</summary>
     private static string NewBarcode()
     {
-        var body = "89" + Random.Shared.NextInt64(0, 10_000_000_000L).ToString("D10");
-        var sum = body.Select((c, i) => (c - '0') * (i % 2 == 0 ? 1 : 3)).Sum();
-        return body + ((10 - sum % 10) % 10);
+        while (true)
+        {
+            var body = "89" + Random.Shared.NextInt64(0, 10_000_000_000L).ToString("D10");
+            var sum = body.Select((c, i) => (c - '0') * (i % 2 == 0 ? 1 : 3)).Sum();
+            var barcode = body + ((10 - sum % 10) % 10);
+            if (!PassesLuhn(barcode)) return barcode;
+        }
+    }
+
+    private static bool PassesLuhn(string digits)
+    {
+        var sum = 0;
+        for (var i = 0; i < digits.Length; i++)
+        {
+            var d = digits[digits.Length - 1 - i] - '0';
+            if (i % 2 == 1) { d *= 2; if (d > 9) d -= 9; }
+            sum += d;
+        }
+        return sum % 10 == 0;
     }
 
     /// <summary>ADR-216: every sale names the buyer (name and mobile, both required). With no mobile given, a fresh one is used -- a brand-new walk-in customer.</summary>

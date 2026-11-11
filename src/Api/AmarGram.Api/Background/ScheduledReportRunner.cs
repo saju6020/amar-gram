@@ -258,8 +258,25 @@ public sealed class ScheduledReportRunner(
         return new ScheduledRunOutcome(runId, ScheduledReportRunStatus.Failed.DisplayName, 0, failureCode, true);
     }
 
-    private async Task AdvanceAsync(Guid scheduleId, DateTimeOffset dueOn, UserContext userContext) =>
-        await dispatcher.SendAsync(new AdvanceReportScheduleCommand { ScheduleId = scheduleId, DueOn = dueOn, UserContext = userContext, CorrelationId = Guid.NewGuid(), ValidateCommand = true });
+    /// <summary>
+    /// Moves the schedule past the slot. Two runners working the same slot both end here (the one whose run was not kept still advances, so a crash between "run recorded" and "advanced" heals);
+    /// the second save then meets the first one's new version. Advancing is by slot, so the other runner's advance is the same outcome: the conflict is not a failure of the run, and it must
+    /// not turn into a Failed run record (the stale schedule entity would also poison the scope's next save). If something else changed the schedule meanwhile, the next cycle finds the slot
+    /// already recorded and advances again.
+    /// Callers must not save anything else in this scope afterwards: after a swallowed conflict the scope's context still tracks the schedule that failed to save, so its next
+    /// <c>SaveChanges</c> would try that update again and throw. Both callers return straight after (the work cycle opens one scope per schedule).
+    /// </summary>
+    private async Task AdvanceAsync(Guid scheduleId, DateTimeOffset dueOn, UserContext userContext)
+    {
+        try
+        {
+            await dispatcher.SendAsync(new AdvanceReportScheduleCommand { ScheduleId = scheduleId, DueOn = dueOn, UserContext = userContext, CorrelationId = Guid.NewGuid(), ValidateCommand = true });
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+        {
+            logger.LogInformation("Report schedule {ScheduleId} was advanced past slot {DueOn} by another runner.", scheduleId, dueOn);
+        }
+    }
 
     private static TimeZoneInfo ResolveZone(string id)
     {

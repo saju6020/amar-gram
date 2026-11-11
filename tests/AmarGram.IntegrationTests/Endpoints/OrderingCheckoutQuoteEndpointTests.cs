@@ -10,6 +10,9 @@ namespace AmarGram.IntegrationTests;
 /// component of the price), I-D3 (outside every zone, pickup offered), I-D4 (slots), I-D6 (cash on delivery hidden with its reason), the discount reasons
 /// (I-D12's quote half) and I-D13's quote half (a pending policy). Placement (I-D7 to I-D12) is built after the Billing seam is decided -- HO-ORD-001 §1 Amended.
 /// </summary>
+// Creates a GLOBAL requires-acceptance policy: every customer in the shared database sees it as pending (and every checkout quote is blocked) until accepted.
+// Serialised with the global-setting tests (DisableParallelization), so it never overlaps a checkout or a pending-policy assertion in a parallel class.
+[Collection(AmarGram.IntegrationTests.Endpoints.AdministrationGlobalSettingsCollection.Name)]
 public sealed class OrderingCheckoutQuoteEndpointTests(OrderingApiFactory factory) : OrderingIntegrationTestBase(factory)
 {
     private sealed record Shop(

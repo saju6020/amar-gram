@@ -18,10 +18,12 @@ using Xunit;
 namespace AmarGram.IntegrationTests.Endpoints;
 
 /// <summary>
-/// HO-XCT-001 section 16 B -- the erasure ledger end to end. Serialised with the other retention-cycle classes (<c>XctRetention</c>) because an erasure
-/// pass processes EVERY due ledger in the shared database, so two classes running passes at once would act on each other's customers.
+/// HO-XCT-001 section 16 B -- the erasure ledger end to end. Runs in the serial global-settings collection (<c>AdministrationGlobalSettings</c>, DisableParallelization: it runs after the parallel phase, so it also never overlaps the
+/// <c>XctRetention</c> classes) because an erasure pass processes EVERY due ledger in the shared database, so two classes running passes at once would act on each other's customers.
 /// </summary>
-[Collection("XctRetention")]
+// Creates a GLOBAL requires-acceptance policy: every customer in the shared database sees it as pending (and every checkout quote is blocked) until accepted.
+// Serialised with the global-setting tests (DisableParallelization), so it never overlaps a checkout or a pending-policy assertion in a parallel class.
+[Collection(AmarGram.IntegrationTests.Endpoints.AdministrationGlobalSettingsCollection.Name)]
 public sealed class XctErasureEndpointTests(XctApiFactory factory) : XctIntegrationTestBase(factory)
 {
     private const string FixedIp = "203.0.113.9";
