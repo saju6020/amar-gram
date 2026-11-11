@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Http.Json;
 using AmarGram.Infrastructure.Persistence;
 using AmarGram.Shared.Common.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +41,15 @@ public sealed partial class BillingTestGateDatabaseTests(BillingApiFactory facto
         var withoutTrigger = new List<string>();
         var deleted = new List<string>();
         var tested = new List<string>();
+
+        // The probe needs rows to try to delete. Whether other suites have already filled the billing tables depends on the order the classes ran in (on a fresh database
+        // this test can run first), so put a customer, an invoice, a payment and its allocation there first.
+        var context = await CreateBillingContextAsync();
+        var customerId = await SeedCustomerAsync(context);
+        var (invoiceId, _, _) = await IssueSimpleInvoiceAsync(context, customerId, 1000m);
+        var payment = await RecordPaymentAsync(context.Admin, customerId, "CashInStore", 400m, allocations: [(invoiceId, 400m)]);
+        await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync($"/api/staff/billing/invoices/{invoiceId}/credit-notes", new { kind = "Return", reason = "Returned", fullCredit = true }, Json));
+        await ExpectAsync(HttpStatusCode.Created, await context.Admin.PostAsJsonAsync("/api/staff/billing/refunds", new { paymentId = payment.GetProperty("paymentId").GetGuid(), method = "CashInStore", amount = 50m, reason = "Part refund" }, Json));
 
         await using var connection = Open();
         foreach (var table in BillingTables())
